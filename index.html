@@ -244,6 +244,16 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
     <button class="ghost" id="demo">Sample</button>
   </div>
   <div id="diag" style="margin-top:10px;font-size:13px;color:var(--soft)"></div>
+  <details style="margin-top:13px" open>
+    <summary>Load from api.0xbeta.dev (no copy-paste)</summary>
+    <p class="hint" style="margin-top:8px">MLB only for now — that's the only sport the Worker's market list covers.
+      Only pulls rows where BettingPros has actually filled in a real probability/EV (most rows on a given day don't
+      have this yet, so a small or empty board here is the API being honest, not broken).</p>
+    <div class="row" style="margin-top:8px">
+      <button class="ghost" id="loadApi">Load today's props (MLB)</button>
+      <span id="apiStatus" style="font-size:13px;color:var(--soft)"></span>
+    </div>
+  </details>
   <details style="margin-top:13px">
     <summary>Odds API cross-check (optional, spends credits)</summary>
     <div class="row" style="margin-top:10px">
@@ -808,7 +818,10 @@ async function attachGameInfo(rows){
   const sports=[...new Set(rows.map(r=>r.sport).filter(s=>ESPN_MAP[s]))];
   await Promise.all(sports.map(fetchScoreboard));
   rows.forEach(r=>{
-    const ev=findGame(scoreboardCache[r.sport], r.matchup||r.game);
+    // API-loaded rows don't know home/away order, so matchupAlt (swapped) is
+    // tried as a fallback — pasted rows never set matchupAlt, so this is a no-op for them.
+    let ev=findGame(scoreboardCache[r.sport], r.matchup||r.game);
+    if(!ev && r.matchupAlt) ev=findGame(scoreboardCache[r.sport], r.matchupAlt);
     r.gameInfo = gameStatusOf(ev);
   });
 }
@@ -1201,6 +1214,58 @@ async function run(){
   }
 }
 document.getElementById('run').addEventListener('click',run);
+
+/* ============ load from api.0xbeta.dev (bypasses copy-paste) ============
+   Maps the Worker's already-normalized /props rows into the exact shape
+   parse() produces, then runs the same audit()/render()/attachGameInfo()
+   pipeline the paste box uses. Nothing about scoring/screening logic here —
+   this only replaces where `rows` comes from. */
+const API_BASE = 'https://api.0xbeta.dev';
+function apiRowToInternal(p){
+  if(p.prob==null || p.odds==null) return null;             // no real fair value to screen against
+  const offeredRaw = fmtOdds(p.odds);
+  const offeredProb = toProb(p.odds);
+  const fairProb = p.prob;
+  const fairRaw = fmtOdds(americanOf(fairProb));
+  const game = p.game || (p.team ? p.team : '');             // '' means attachGameInfo just won't find a match
+  return {
+    name: p.player, game, side: p.side==='over'?'O':'U', matchup: game, noMatchup: !p.game,
+    matchupAlt: p.game_alt || null,
+    sport: p.sport||'MLB', market: p.line+' '+p.market, kind:'prop', book: p.book,
+    offeredRaw, fairRaw, offeredProb, fairProb,
+    screenerEV: p.ev!=null ? p.ev*100 : null,
+  };
+}
+async function loadApi(){
+  const btn=document.getElementById('loadApi'), status=document.getElementById('apiStatus');
+  const was=btn.textContent; btn.textContent='Loading…'; btn.disabled=true; status.textContent='';
+  try{
+    const date=document.getElementById('slate').value;
+    const url=API_BASE+'/props?date='+encodeURIComponent(date)+'&sport=MLB&ev_only=1';
+    const res=await fetch(url);
+    if(!res.ok) throw new Error('Worker returned '+res.status);
+    const data=await res.json();
+    const rows=(data.props||[]).map(apiRowToInternal).filter(Boolean);
+    if(!rows.length){
+      status.textContent='0 props with real EV filled in right now (checked '+(data.source_count||0)+' from BettingPros). Try again closer to game time, or use the paste box.';
+    } else {
+      status.textContent='Loaded '+rows.length+' of '+(data.source_count||0)+' props with real EV.';
+    }
+    lastRows=rows;
+    const c=cfgRead(); render(audit(lastRows,c),c); save();
+    if(lastRows.length){
+      attachGameInfo(lastRows).then(async ()=>{
+        await attachAutoGrades(lastRows);
+        if(lastRows.length){ const c2=cfgRead(); render(audit(lastRows,c2),c2); }
+      });
+    }
+  }catch(e){
+    status.textContent='Load failed: '+e.message+' — is the Worker reachable?';
+  }finally{
+    btn.textContent=was; btn.disabled=false;
+  }
+}
+document.getElementById('loadApi').addEventListener('click',loadApi);
 document.getElementById('clear').addEventListener('click',()=>{
   document.getElementById('input').value=''; lastRows=[]; render([],cfgRead());
 });
