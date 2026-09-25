@@ -253,6 +253,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
       of each.</p>
     <div class="row" style="margin-top:8px">
       <select id="apiSport" style="font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--rule);border-radius:7px;background:var(--panel);color:var(--ink)">
+        <option value="ALL">All sports</option>
         <option value="MLB">MLB</option>
         <option value="NFL">NFL</option>
         <option value="NCAAF">NCAAF</option>
@@ -1231,6 +1232,15 @@ document.getElementById('run').addEventListener('click',run);
    pipeline the paste box uses. Nothing about scoring/screening logic here —
    this only replaces where `rows` comes from. */
 const API_BASE = 'https://api.0xbeta.dev';
+// Mirrors the Worker's BOOKS map (index.js) — lowercase keys, matched as
+// substrings against whatever the person typed in "Books you can bet", the
+// same way the paste-box screen already matches book names loosely.
+const BOOK_IDS = {
+  draftkings:12, fanduel:10, betmgm:19, caesars:13, 'hard rock':49,
+  pinnacle:2, 'thescore':33, fanatics:14, novig:60, prizepicks:37,
+  prophetx:38, underdog:36, kalshi:68, polymarket:73, betr:45, fliff:39,
+  sleeper:63, betrivers:18, bet365:24, tipico:26, pointsbet:71,
+};
 function apiRowToInternal(p){
   if(p.prob==null || p.odds==null) return null;             // no real fair value to screen against
   const offeredRaw = fmtOdds(p.odds);
@@ -1246,22 +1256,53 @@ function apiRowToInternal(p){
     screenerEV: p.ev!=null ? p.ev*100 : null,
   };
 }
+const API_SPORTS=['MLB','NFL','NCAAF','NBA','WNBA','MLS'];
+async function fetchApiSport(sport, date, booksParam){
+  const url=API_BASE+'/props?date='+encodeURIComponent(date)+'&sport='+encodeURIComponent(sport)+'&ev_only=1'+booksParam;
+  const res=await fetch(url);
+  if(!res.ok) throw new Error(sport+': Worker returned '+res.status);
+  return res.json();
+}
 async function loadApi(){
   const btn=document.getElementById('loadApi'), status=document.getElementById('apiStatus');
-  const sport=document.getElementById('apiSport').value;
+  const sportSel=document.getElementById('apiSport').value;
+  const sports=sportSel==='ALL'?API_SPORTS:[sportSel];
   const was=btn.textContent; btn.textContent='Loading…'; btn.disabled=true; status.textContent='';
   try{
     const date=document.getElementById('slate').value;
-    const url=API_BASE+'/props?date='+encodeURIComponent(date)+'&sport='+encodeURIComponent(sport)+'&ev_only=1';
-    const res=await fetch(url);
-    if(!res.ok) throw new Error('Worker returned '+res.status);
-    const data=await res.json();
-    const rows=(data.props||[]).map(apiRowToInternal).filter(Boolean);
+    // Reuses the same "Books you can bet" field the paste-box screen already uses —
+    // one place to update when an account opens or closes, instead of editing the Worker.
+    // Blank means all books, same as it already means for the pasted board.
+    const booksTyped=document.getElementById('books').value.split(',').map(s=>s.trim()).filter(Boolean);
+    const bookIds=booksTyped.map(name=>{
+      const hit=Object.entries(BOOK_IDS).find(([k])=>name.toLowerCase().includes(k));
+      return hit?hit[1]:null;
+    }).filter(id=>id!==null);
+    const unmatchedBooks=booksTyped.filter(name=>!Object.keys(BOOK_IDS).some(k=>name.toLowerCase().includes(k)));
+    const booksParam='&bp_books='+encodeURIComponent(bookIds.join(','));
+
+    const results=await Promise.allSettled(sports.map(s=>fetchApiSport(s,date,booksParam)));
+    let rows=[], totalSource=0, perSport=[], failed=[];
+    results.forEach((r,i)=>{
+      const sport=sports[i];
+      if(r.status==='rejected'){ failed.push(sport); return; }
+      const data=r.value;
+      const sportRows=(data.props||[]).map(apiRowToInternal).filter(Boolean);
+      rows=rows.concat(sportRows);
+      totalSource+=(data.source_count||0);
+      if(sportRows.length) perSport.push(sport+': '+sportRows.length);
+    });
+
+    let statusMsg;
     if(!rows.length){
-      status.textContent='0 '+sport+' props with real EV filled in right now (checked '+(data.source_count||0)+' from BettingPros). Try again closer to game time, or use the paste box.';
+      statusMsg='0 props with real EV filled in right now across '+sports.join(', ')+' (checked '+totalSource+' total from BettingPros). Try again closer to game time, or use the paste box.';
     } else {
-      status.textContent='Loaded '+rows.length+' of '+(data.source_count||0)+' '+sport+' props with real EV.';
+      statusMsg='Loaded '+rows.length+' of '+totalSource+' props with real EV'+
+        (sportSel==='ALL'?' ('+perSport.join(', ')+')':'')+'.';
     }
+    if(failed.length) statusMsg+=' — '+failed.join(', ')+' failed to load, try again.';
+    if(unmatchedBooks.length) statusMsg+=' (Not recognized for the API filter: '+unmatchedBooks.join(', ')+' — check spelling or ask to add it.)';
+    status.textContent=statusMsg;
     lastRows=rows;
     const c=cfgRead(); render(audit(lastRows,c),c); save();
     if(lastRows.length){
