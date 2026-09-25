@@ -426,6 +426,10 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
         <label class="filter-label">Stake Max $</label>
         <input type="number" id="filterStakeMax" class="filter-input" value="" placeholder="any" step="0.25">
       </div>
+      <div class="filter-group">
+        <label class="filter-label">Pinnacle Gap Min %</label>
+        <input type="number" id="filterGapMin" class="filter-input" value="" placeholder="any" step="0.5">
+      </div>
     </div>
     <div class="filter-actions">
       <button class="btn-reset" id="resetFilters">🧦 OPTIMIZATION bets</button>
@@ -436,6 +440,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
     <thead><tr>
       <th>Team / Player</th><th>Sport</th><th style="text-align:center">Market</th><th class="num">Odds</th><th class="num">Fair Value</th>
       <th class="num">Market EV</th><th style="text-align:center">Bet Now</th>
+      <th class="num">Pinnacle</th>
       <th class="num">Fee</th><th class="num">Net</th><th class="num">Stake</th><th>Notes</th>
     </tr></thead>
     <tbody id="tbody"></tbody>
@@ -879,6 +884,11 @@ function render(rows,cfg){
         (r.autoGrade==='win'?' <b class="gradeW">W</b>':r.autoGrade==='loss'?' <b class="gradeL">L</b>':'')+
         '</div>'+
         (bookLogo(r.book)?'':'<div class="meta book">'+esc(r.book||'book?')+'</div>')+'</td>'+
+      '<td class="num">'+(r.pinnacleOdds?
+        '<span style="'+(r.pinnacleGap!=null&&r.pinnacleGap>=3?'color:var(--warn);font-weight:700':'')+'">'+esc(r.pinnacleOdds)+
+        (r.pinnacleGap!=null?' <span class="meta">('+r.pinnacleGap.toFixed(1)+'% gap)</span>':'')+
+        (r.pinnacleGap!=null&&r.pinnacleGap>=3?' <span class="tag t-warn">worth a look</span>':'')+'</span>'
+        :'<span class="meta">—</span>')+'</td>'+
       '<td class="num">'+(r.fee===undefined?'—':(r.fee?'−'+pct(r.fee):'—'))+'</td>'+
       '<td class="num"><span class="net '+(r.net>0?'up':'down')+'">'+
         (r.net===null||r.net===undefined?'—':pct(r.net))+'</span></td>'+
@@ -1405,6 +1415,7 @@ let filterGrossMin = null;
 let filterGrossMax = null;
 let filterStakeMin = null;
 let filterStakeMax = null;
+let filterGapMin = null;
 
 function applyAdvancedFilters(rows) {
   return rows.filter(r => {
@@ -1432,6 +1443,10 @@ function applyAdvancedFilters(rows) {
       if (filterStakeMax !== null && stake > filterStakeMax) return false;
     }
     
+    if (filterGapMin !== null) {
+      if (r.pinnacleGap == null || r.pinnacleGap < filterGapMin) return false;
+    }
+    
     return true;
   });
 }
@@ -1457,6 +1472,7 @@ function resetFilters() {
   filterGrossMax = null;
   filterStakeMin = null;
   filterStakeMax = null;
+  filterGapMin = null;
   sortBy = 'educated';
   
   document.getElementById('filterPlayer').value = '';
@@ -1471,6 +1487,7 @@ function resetFilters() {
   document.getElementById('filterGrossMax').value = '';
   document.getElementById('filterStakeMin').value = '';
   document.getElementById('filterStakeMax').value = '';
+  document.getElementById('filterGapMin').value = '';
   document.getElementById('sortBy').value = 'educated';
   
   rerenderWithFilters();
@@ -1494,6 +1511,7 @@ document.getElementById('filterGrossMin').addEventListener('change', (e)=>{ filt
 document.getElementById('filterGrossMax').addEventListener('change', (e)=>{ filterGrossMax=e.target.value?parseFloat(e.target.value):null; rerenderWithFilters(); });
 document.getElementById('filterStakeMin').addEventListener('change', (e)=>{ filterStakeMin=e.target.value?parseFloat(e.target.value):null; rerenderWithFilters(); });
 document.getElementById('filterStakeMax').addEventListener('change', (e)=>{ filterStakeMax=e.target.value?parseFloat(e.target.value):null; rerenderWithFilters(); });
+document.getElementById('filterGapMin').addEventListener('change', (e)=>{ filterGapMin=e.target.value?parseFloat(e.target.value):null; rerenderWithFilters(); });
 
 // Reset button
 document.getElementById('resetFilters').addEventListener('click', resetFilters);
@@ -1534,6 +1552,9 @@ function apiRowToInternal(p, sport){
     sport, market: p.line+' '+p.market, kind:'prop', book: p.book,
     offeredRaw, fairRaw, offeredProb, fairProb,
     screenerEV: p.ev!=null ? p.ev*100 : null,
+    // Worker's match key (event_id-market_id-participant_id-side) — used to look
+    // up this same player/market/side against a separate Pinnacle-only fetch.
+    apiKey: p.key || null,
   };
 }
 const API_SPORTS=['MLB','NFL','NCAAF','NBA','WNBA','MLS'];
@@ -1556,12 +1577,31 @@ async function autoFillWeek(sport){
 }
 document.getElementById('apiSport').addEventListener('change',toggleApiWeekFields);
 toggleApiWeekFields();
-async function fetchApiSport(sport, date, booksParam, weekParam){
+async function fetchApiSport(sport, date, booksParam, weekParam, evOnly){
   const dateOrWeek=(WEEK_BASED_SPORTS.includes(sport)&&weekParam)?weekParam:'&date='+encodeURIComponent(date);
-  const url=API_BASE+'/props?sport='+encodeURIComponent(sport)+dateOrWeek+'&ev_only=1'+booksParam;
+  const evParam = evOnly===false ? '&ev_only=0' : '&ev_only=1';
+  const url=API_BASE+'/props?sport='+encodeURIComponent(sport)+dateOrWeek+evParam+booksParam;
   const res=await fetch(url);
   if(!res.ok) throw new Error(sport+': Worker returned '+res.status);
   return res.json();
+}
+// Fetches Pinnacle's own line (book_id 2) for the same sport/date/week, so each
+// row can show what the sharp book has for comparison. ev_only=0 here — we just
+// want Pinnacle's odds/prob for the same side, not BettingPros' EV computation
+// against it, so this catches more matches than the ev_only=1 primary pull.
+const pinnacleCache={};
+async function fetchPinnacleMap(sport, date, weekParam){
+  const cacheKey=sport+':'+date+':'+(weekParam||'');
+  if(pinnacleCache[cacheKey]) return pinnacleCache[cacheKey];
+  try{
+    const data=await fetchApiSport(sport, date, '&bp_books=2', weekParam, false);
+    const map={};
+    (data.props||[]).forEach(p=>{
+      if(p.key && p.odds!=null) map[p.key]={odds:p.odds, prob:p.prob};
+    });
+    pinnacleCache[cacheKey]=map;
+    return map;
+  }catch(e){ pinnacleCache[cacheKey]={}; return {}; }
 }
 async function loadApi(){
   const btn=document.getElementById('loadApi'), status=document.getElementById('apiStatus');
@@ -1621,6 +1661,25 @@ async function loadApi(){
     status.textContent=statusMsg;
     lastRows=rows;
     const c=cfgRead(); render(audit(lastRows,c),c); save();
+
+    // Attach Pinnacle's own line to each row for comparison — separate fetch
+    // (book_id 2 only), matched by the Worker's event/market/participant/side key.
+    // Runs after the board is already shown, then re-renders once gaps are known.
+    Promise.all(sports.map(s=>fetchPinnacleMap(s, date, weekParam))).then(maps=>{
+      const merged={};
+      maps.forEach(m=>Object.assign(merged,m));
+      lastRows.forEach(r=>{
+        if(!r.apiKey || !merged[r.apiKey]) return;
+        const pin=merged[r.apiKey];
+        r.pinnacleOdds=fmtOdds(pin.odds);
+        r.pinnacleProb=pin.prob;
+        if(pin.prob!=null && r.offeredProb!=null){
+          r.pinnacleGap=Math.abs(r.offeredProb-pin.prob)*100;
+        }
+      });
+      if(lastRows.length){ const c3=cfgRead(); render(audit(lastRows,c3),c3); }
+    });
+
     if(lastRows.length){
       attachGameInfo(lastRows).then(async ()=>{
         await attachAutoGrades(lastRows);
