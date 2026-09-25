@@ -645,7 +645,7 @@ function audit(rows,cfg){
     }
     if(r.screenerEV!==null&&r.screenerEV!==undefined&&Math.abs(r.screenerEV/100-r.gross)>0.015)
       r.flags.push(['warn','screener said '+r.screenerEV+'%, math says '+pct(r.gross)]);
-    if(gameCount[r.game]>3) r.flags.push(['warn','×'+gameCount[r.game]+' this game']);
+    if(gameCount[r.game]>3) r.flags.push(['warn','×'+gameCount[r.game]]);
     if(r.noMatchup) r.flags.push(['warn','no opponent on the board']);
 
     /* Already in the log? Say so before you place it, and say whether the price
@@ -1241,7 +1241,7 @@ const BOOK_IDS = {
   prophetx:38, underdog:36, kalshi:68, polymarket:73, betr:45, fliff:39,
   sleeper:63, betrivers:18, bet365:24, tipico:26, pointsbet:71,
 };
-function apiRowToInternal(p){
+function apiRowToInternal(p, sport){
   if(p.prob==null || p.odds==null) return null;             // no real fair value to screen against
   const offeredRaw = fmtOdds(p.odds);
   const offeredProb = toProb(p.odds);
@@ -1251,7 +1251,11 @@ function apiRowToInternal(p){
   return {
     name: p.player, game, side: p.side==='over'?'O':'U', matchup: game, noMatchup: !p.game,
     matchupAlt: p.game_alt || null,
-    sport: p.sport||'MLB', market: p.line+' '+p.market, kind:'prop', book: p.book,
+    // sport comes from which fetch this row belongs to, not p.sport — the Worker's
+    // normalized rows don't carry a per-prop sport field, only the response as a
+    // whole does, so trusting a per-row field here silently mislabeled every sport
+    // but the last one fetched as MLB.
+    sport, market: p.line+' '+p.market, kind:'prop', book: p.book,
     offeredRaw, fairRaw, offeredProb, fairProb,
     screenerEV: p.ev!=null ? p.ev*100 : null,
   };
@@ -1283,14 +1287,16 @@ async function loadApi(){
 
     const results=await Promise.allSettled(sports.map(s=>fetchApiSport(s,date,booksParam)));
     let rows=[], totalSource=0, perSport=[], failed=[];
+    let totalDebug={total:0,no_recommended_side:0,line_mismatch:0,pickem:0,not_your_book:0,odds_out_of_range:0,no_ev:0,kept:0};
     results.forEach((r,i)=>{
       const sport=sports[i];
       if(r.status==='rejected'){ failed.push(sport); return; }
       const data=r.value;
-      const sportRows=(data.props||[]).map(apiRowToInternal).filter(Boolean);
+      const sportRows=(data.props||[]).map(p=>apiRowToInternal(p,sport)).filter(Boolean);
       rows=rows.concat(sportRows);
       totalSource+=(data.source_count||0);
       if(sportRows.length) perSport.push(sport+': '+sportRows.length);
+      if(data.debug) for(const k in totalDebug) totalDebug[k]+=(data.debug[k]||0);
     });
 
     let statusMsg;
@@ -1300,6 +1306,11 @@ async function loadApi(){
       statusMsg='Loaded '+rows.length+' of '+totalSource+' props with real EV'+
         (sportSel==='ALL'?' ('+perSport.join(', ')+')':'')+'.';
     }
+    // Breakdown of where props got dropped before screening even saw them —
+    // so "why so few" has a number to point at instead of another guess.
+    statusMsg+=' [pulled '+totalDebug.total+', not-your-book '+totalDebug.not_your_book+
+      ', odds-range '+totalDebug.odds_out_of_range+', no-EV '+totalDebug.no_ev+
+      ', line-mismatch '+totalDebug.line_mismatch+', pick\u2019em '+totalDebug.pickem+']';
     if(failed.length) statusMsg+=' — '+failed.join(', ')+' failed to load, try again.';
     if(unmatchedBooks.length) statusMsg+=' (Not recognized for the API filter: '+unmatchedBooks.join(', ')+' — check spelling or ask to add it.)';
     status.textContent=statusMsg;
