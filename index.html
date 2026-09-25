@@ -1235,11 +1235,15 @@ const API_BASE = 'https://api.0xbeta.dev';
 // Mirrors the Worker's BOOKS map (index.js) — lowercase keys, matched as
 // substrings against whatever the person typed in "Books you can bet", the
 // same way the paste-box screen already matches book names loosely.
+// Values are arrays: some names cover more than one BettingPros book_id —
+// "Polymarket" alone means both id 73 and id 75 ("Polymarket US"), and
+// missing the second one was why an earlier pull returned 2 rows instead
+// of the ~136 the site itself finds for the same book set (2026-09-24).
 const BOOK_IDS = {
-  draftkings:12, fanduel:10, betmgm:19, caesars:13, 'hard rock':49,
-  pinnacle:2, 'thescore':33, fanatics:14, novig:60, prizepicks:37,
-  prophetx:38, underdog:36, kalshi:68, polymarket:73, betr:45, fliff:39,
-  sleeper:63, betrivers:18, bet365:24, tipico:26, pointsbet:71,
+  draftkings:[12], fanduel:[10], betmgm:[19], caesars:[13], 'hard rock':[49],
+  pinnacle:[2], 'thescore':[33], fanatics:[14], novig:[60], prizepicks:[37],
+  prophetx:[38], underdog:[36], kalshi:[68], polymarket:[73,75], betr:[45],
+  fliff:[39], sleeper:[63], betrivers:[18], bet365:[24], tipico:[26], pointsbet:[71],
 };
 function apiRowToInternal(p, sport){
   if(p.prob==null || p.odds==null) return null;             // no real fair value to screen against
@@ -1278,10 +1282,10 @@ async function loadApi(){
     // one place to update when an account opens or closes, instead of editing the Worker.
     // Blank means all books, same as it already means for the pasted board.
     const booksTyped=document.getElementById('books').value.split(',').map(s=>s.trim()).filter(Boolean);
-    const bookIds=booksTyped.map(name=>{
+    const bookIds=[...new Set(booksTyped.flatMap(name=>{
       const hit=Object.entries(BOOK_IDS).find(([k])=>name.toLowerCase().includes(k));
-      return hit?hit[1]:null;
-    }).filter(id=>id!==null);
+      return hit?hit[1]:[];
+    }))];
     const unmatchedBooks=booksTyped.filter(name=>!Object.keys(BOOK_IDS).some(k=>name.toLowerCase().includes(k)));
     const booksParam='&bp_books='+encodeURIComponent(bookIds.join(','));
 
