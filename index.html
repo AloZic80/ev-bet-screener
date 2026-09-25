@@ -1361,10 +1361,15 @@ async function loadApi(){
         (sportSel==='ALL'?' ('+perSport.join(', ')+')':'')+'.';
     }
     // Breakdown of where props got dropped before screening even saw them —
-    // so "why so few" has a number to point at instead of another guess.
-    statusMsg+=' [pulled '+totalDebug.total+', not-your-book '+totalDebug.not_your_book+
+    // every bucket shown now, so the numbers actually sum to `pulled` instead
+    // of leaving an unexplained gap (no-side was missing before: 931 of 1376
+    // fell into no-recommended-side, dwarfing every other bucket, and none of
+    // this reached the screener's own audit() gates at all).
+    statusMsg+=' [pulled '+totalDebug.total+', no-side '+totalDebug.no_recommended_side+
+      ', not-your-book '+totalDebug.not_your_book+
       ', odds-range '+totalDebug.odds_out_of_range+', no-EV '+totalDebug.no_ev+
-      ', line-mismatch '+totalDebug.line_mismatch+', pick\u2019em '+totalDebug.pickem+']';
+      ', line-mismatch '+totalDebug.line_mismatch+', pick\u2019em '+totalDebug.pickem+
+      ', kept '+totalDebug.kept+']';
     if(failed.length) statusMsg+=' — '+failed.join(', ')+' failed to load, try again.';
     if(unmatchedBooks.length) statusMsg+=' (Not recognized for the API filter: '+unmatchedBooks.join(', ')+' — check spelling or ask to add it.)';
     status.textContent=statusMsg;
