@@ -268,9 +268,8 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
       <button class="ghost" id="loadApi">Load today's props</button>
       <span id="apiStatus" style="font-size:13px;color:var(--soft)"></span>
     </div>
-    <p class="hint" id="apiWeekHint" style="display:none;margin-top:6px">NFL/NCAAF are organized by week, not date — leave Week blank to
-      let BettingPros pick the current week itself (not reliable so far, only 1 NFL row came back that way), or type the week number
-      you want directly.</p>
+    <p class="hint" id="apiWeekHint" style="display:none;margin-top:6px">NFL/NCAAF are organized by week, not date — Week auto-fills
+      from ESPN's own current-week number the moment you pick one of these sports. Overwrite it to check a different week instead.</p>
   </details>
   <details style="margin-top:13px">
     <summary>Odds API cross-check (optional, spends credits)</summary>
@@ -793,13 +792,33 @@ const ESPN_MAP = {
 const ABBR_FIX = {WSH:'WAS',JAC:'JAX',LAR:'LA',LVR:'LV',NOS:'NO',SFO:'SF',TBB:'TB',
   KCC:'KC',GBP:'GB',NEP:'NE',WAS_:'WSH', CHW:'CWS', OAK:'ATH'};
 function normAbbr(a){ a=(a||'').toUpperCase(); return ABBR_FIX[a]||a; }
+const ESPN_WEEK_BASED = new Set(['NFL','NCAAF']); // games span Thu-Mon, not one calendar day
 const scoreboardCache={};
+const weekCache={}; // ESPN's own current-week number per sport, from the same scoreboard call
 async function fetchScoreboard(sport){
   const path=ESPN_MAP[sport]; if(!path) return [];
   if(scoreboardCache[sport]) return scoreboardCache[sport];
   try{
-    const extra = sport==='NCAAF' ? '&groups=80&limit=400' : '&limit=300';
-    const res = await fetch('https://site.api.espn.com/apis/site/v2/sports/'+path+'/scoreboard?dates='+todayYMD()+extra);
+    if(ESPN_WEEK_BASED.has(sport)){
+      // "today" alone misses most of the week's games (NFL/NCAAF run Thu-Mon), so this
+      // needs the whole week's slate, not one date. Learn the week number first (a
+      // lightweight today-only call still returns correct week metadata even when zero
+      // games fall on today), then re-fetch by week to get every game in it.
+      let wk=weekCache[sport];
+      if(wk==null){
+        const metaRes = await fetch('https://site.api.espn.com/apis/site/v2/sports/'+path+'/scoreboard?dates='+todayYMD());
+        const meta = await metaRes.json();
+        wk = meta.week?.number ?? null;
+        weekCache[sport]=wk;
+      }
+      if(wk==null){ scoreboardCache[sport]=[]; return []; } // ESPN gave us nothing to go on — don't guess a week
+      const extra = sport==='NCAAF' ? '&groups=80&limit=400' : '&limit=300';
+      const res = await fetch('https://site.api.espn.com/apis/site/v2/sports/'+path+'/scoreboard?week='+wk+'&seasontype=2'+extra);
+      const data = await res.json();
+      scoreboardCache[sport]=data.events||[];
+      return scoreboardCache[sport];
+    }
+    const res = await fetch('https://site.api.espn.com/apis/site/v2/sports/'+path+'/scoreboard?dates='+todayYMD()+'&limit=300');
     const data = await res.json();
     scoreboardCache[sport]=data.events||[];
   }catch(e){ scoreboardCache[sport]=[]; }
@@ -1274,9 +1293,20 @@ function apiRowToInternal(p, sport){
 const API_SPORTS=['MLB','NFL','NCAAF','NBA','WNBA','MLS'];
 const WEEK_BASED_SPORTS=['NFL','NCAAF']; // mirrors the Worker's WEEK_BASED set
 function toggleApiWeekFields(){
-  const isWeekBased=WEEK_BASED_SPORTS.includes(document.getElementById('apiSport').value);
+  const sport=document.getElementById('apiSport').value;
+  const isWeekBased=WEEK_BASED_SPORTS.includes(sport);
   document.getElementById('apiWeekFields').style.display=isWeekBased?'inline':'none';
   document.getElementById('apiWeekHint').style.display=isWeekBased?'block':'none';
+  if(isWeekBased) autoFillWeek(sport);
+}
+async function autoFillWeek(sport){
+  const weekInput=document.getElementById('apiWeek');
+  if(weekInput.value.trim()) return; // don't overwrite a value already typed in
+  weekInput.placeholder='checking ESPN…';
+  await fetchScoreboard(sport); // populates weekCache as a side effect
+  const wk=weekCache[sport];
+  if(wk!=null && !weekInput.value.trim()){ weekInput.value=wk; weekInput.title='Auto-filled from ESPN — overwrite to use a different week'; }
+  else weekInput.placeholder='week';
 }
 document.getElementById('apiSport').addEventListener('change',toggleApiWeekFields);
 toggleApiWeekFields();
