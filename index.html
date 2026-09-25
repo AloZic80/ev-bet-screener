@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Prop Bet Cheat Sheet v2.38</title>
+<title>Prop Bet Cheat Sheet v2.39</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -200,6 +200,16 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
   .board-score{border-right:0; border-bottom:1px solid var(--rule); width:100%}
   .tabs{gap:18px}
 }
+.filter-panel{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:16px}
+.filter-group{display:flex; flex-direction:column}
+.filter-label{font-size:12px; font-weight:600; color:var(--soft); margin-bottom:4px; text-transform:uppercase; letter-spacing:.05em}
+.filter-input,.filter-slider{width:100%; font-family:inherit; font-size:13px; padding:6px 8px; border:1px solid var(--rule); border-radius:6px; background:var(--panel-2); color:var(--ink)}
+.filter-input:focus-visible,.filter-slider:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+.range-sliders{display:flex; gap:8px; align-items:center}
+.range-sliders input{flex:1}
+.filter-actions{display:flex; gap:8px; flex-wrap:wrap}
+.btn-reset{font-family:inherit; font-size:13px; font-weight:600; cursor:pointer; padding:8px 16px; border-radius:6px; background:var(--live-bg); color:var(--live); border:1px solid var(--live); transition:all 0.2s}
+.btn-reset:hover{background:var(--live); color:white}
 </style>
 </head>
 <body>
@@ -208,7 +218,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 <div class="head">
   <div class="head-row">
     <div>
-      <h1>Prop Bet Cheat Sheet <span class="ver">v2.38</span></h1>
+      <h1>Prop Bet Cheat Sheet <span class="ver">v2.39</span></h1>
       <div class="date">Board for <input type="date" id="slate"></div>
       <div class="built">Build 22 Sep 2026</div>
     </div>
@@ -341,7 +351,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
       <select id="sortBy" style="width:100%;font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--rule);border-radius:7px;background:var(--panel);color:var(--ink)">
         <option value="net">Net EV % (best first)</option>
         <option value="gross">Gross EV % (best first)</option>
-        <option value="odds">Odds (most confident first)</option>
+        <option value="odds">Odds (best)</option>
         <option value="sport">Sport</option>
       </select>
     </div>
@@ -363,6 +373,64 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
       </label>
     </div>
   </div>
+
+  <!-- ===== FILTER PANEL ===== -->
+  <div style="background:var(--panel-2);border-radius:8px;padding:14px;margin-bottom:16px">
+    <div class="filter-panel">
+      <div class="filter-group">
+        <label class="filter-label">Player</label>
+        <input type="text" id="filterPlayer" class="filter-input" placeholder="Search…">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Team</label>
+        <input type="text" id="filterTeam" class="filter-input" placeholder="Search…">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Book</label>
+        <input type="text" id="filterBook" class="filter-input" placeholder="Search…">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Market</label>
+        <input type="text" id="filterMarket" class="filter-input" placeholder="Search…">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Odds Min</label>
+        <input type="number" id="filterOddsMin" class="filter-input" value="-300" step="10">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Odds Max</label>
+        <input type="number" id="filterOddsMax" class="filter-input" value="500" step="10">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Net EV Min %</label>
+        <input type="number" id="filterNetMin" class="filter-input" value="" placeholder="any" step="0.1">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Net EV Max %</label>
+        <input type="number" id="filterNetMax" class="filter-input" value="" placeholder="any" step="0.1">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Gross EV Min %</label>
+        <input type="number" id="filterGrossMin" class="filter-input" value="" placeholder="any" step="0.1">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Gross EV Max %</label>
+        <input type="number" id="filterGrossMax" class="filter-input" value="" placeholder="any" step="0.1">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Stake Min $</label>
+        <input type="number" id="filterStakeMin" class="filter-input" value="" placeholder="any" step="0.25">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Stake Max $</label>
+        <input type="number" id="filterStakeMax" class="filter-input" value="" placeholder="any" step="0.25">
+      </div>
+    </div>
+    <div class="filter-actions">
+      <button class="btn-reset" id="resetFilters">🧦 OPTIMIZATION bets</button>
+    </div>
+  </div>
+
   <div class="scroll"><table>
     <thead><tr>
       <th>Team / Player</th><th>Sport</th><th style="text-align:center">Market</th><th class="num">Odds</th><th class="num">Fair Value</th>
@@ -732,6 +800,7 @@ function render(rows,cfg){
   const isStarted=r=>r.gameInfo && (r.gameInfo.state==='in'||r.gameInfo.state==='post');
   if(cfg.hideStarted) shown=shown.filter(r=>!isStarted(r));
   if(filterSport) shown=shown.filter(r=>r.sport===filterSport);
+  shown=applyAdvancedFilters(shown);
   shown.sort((a,b)=>{
     if(!showRejects && a.pass!==b.pass) return a.pass?-1:1;
     const sa=isStarted(a), sb=isStarted(b);
@@ -1290,9 +1359,109 @@ let sortBy = 'net';
 let filterSport = '';
 let showRejects = false;
 
-document.getElementById('sortBy').addEventListener('change', (e)=>{ sortBy=e.target.value; if(lastRows.length){ const c=cfgRead(); render(audit(lastRows,c),c); } });
-document.getElementById('filterSport').addEventListener('change', (e)=>{ filterSport=e.target.value; if(lastRows.length){ const c=cfgRead(); render(audit(lastRows,c),c); } });
-document.getElementById('showRejects').addEventListener('change', (e)=>{ showRejects=e.target.checked; if(lastRows.length){ const c=cfgRead(); render(audit(lastRows,c),c); } });
+// Comprehensive filter state
+let filterPlayer = '';
+let filterTeam = '';
+let filterBook = '';
+let filterMarket = '';
+let filterOddsMin = -300;
+let filterOddsMax = 500;
+let filterNetMin = null;
+let filterNetMax = null;
+let filterGrossMin = null;
+let filterGrossMax = null;
+let filterStakeMin = null;
+let filterStakeMax = null;
+
+function applyAdvancedFilters(rows) {
+  return rows.filter(r => {
+    if (filterPlayer && !(r.name || '').toLowerCase().includes(filterPlayer.toLowerCase())) return false;
+    if (filterTeam && !(r.game || '').toLowerCase().includes(filterTeam.toLowerCase())) return false;
+    if (filterBook && !(r.book || '').toLowerCase().includes(filterBook.toLowerCase())) return false;
+    if (filterMarket && !(r.market || '').toLowerCase().includes(filterMarket.toLowerCase())) return false;
+    
+    const odds = parseFloat(r.offeredRaw);
+    if (!isNaN(odds)) {
+      if (odds < filterOddsMin || odds > filterOddsMax) return false;
+    }
+    
+    const netEV = (r.net || 0) * 100;
+    if (filterNetMin !== null && netEV < filterNetMin) return false;
+    if (filterNetMax !== null && netEV > filterNetMax) return false;
+    
+    const grossEV = (r.gross || 0) * 100;
+    if (filterGrossMin !== null && grossEV < filterGrossMin) return false;
+    if (filterGrossMax !== null && grossEV > filterGrossMax) return false;
+    
+    const stake = parseFloat(r.stake);
+    if (!isNaN(stake)) {
+      if (filterStakeMin !== null && stake < filterStakeMin) return false;
+      if (filterStakeMax !== null && stake > filterStakeMax) return false;
+    }
+    
+    return true;
+  });
+}
+
+function rerenderWithFilters() {
+  if (lastRows.length) {
+    const c = cfgRead();
+    const audited = audit(lastRows, c);
+    render(audited, c);
+  }
+}
+
+function resetFilters() {
+  filterPlayer = '';
+  filterTeam = '';
+  filterBook = '';
+  filterMarket = '';
+  filterOddsMin = -300;
+  filterOddsMax = 500;
+  filterNetMin = null;
+  filterNetMax = null;
+  filterGrossMin = null;
+  filterGrossMax = null;
+  filterStakeMin = null;
+  filterStakeMax = null;
+  
+  document.getElementById('filterPlayer').value = '';
+  document.getElementById('filterTeam').value = '';
+  document.getElementById('filterBook').value = '';
+  document.getElementById('filterMarket').value = '';
+  document.getElementById('filterOddsMin').value = '-300';
+  document.getElementById('filterOddsMax').value = '500';
+  document.getElementById('filterNetMin').value = '';
+  document.getElementById('filterNetMax').value = '';
+  document.getElementById('filterGrossMin').value = '';
+  document.getElementById('filterGrossMax').value = '';
+  document.getElementById('filterStakeMin').value = '';
+  document.getElementById('filterStakeMax').value = '';
+  
+  rerenderWithFilters();
+}
+
+// Event listeners for sort/filter
+document.getElementById('sortBy').addEventListener('change', (e)=>{ sortBy=e.target.value; rerenderWithFilters(); });
+document.getElementById('filterSport').addEventListener('change', (e)=>{ filterSport=e.target.value; rerenderWithFilters(); });
+document.getElementById('showRejects').addEventListener('change', (e)=>{ showRejects=e.target.checked; rerenderWithFilters(); });
+
+// Event listeners for advanced filters
+document.getElementById('filterPlayer').addEventListener('input', (e)=>{ filterPlayer=e.target.value; rerenderWithFilters(); });
+document.getElementById('filterTeam').addEventListener('input', (e)=>{ filterTeam=e.target.value; rerenderWithFilters(); });
+document.getElementById('filterBook').addEventListener('input', (e)=>{ filterBook=e.target.value; rerenderWithFilters(); });
+document.getElementById('filterMarket').addEventListener('input', (e)=>{ filterMarket=e.target.value; rerenderWithFilters(); });
+document.getElementById('filterOddsMin').addEventListener('change', (e)=>{ filterOddsMin=parseFloat(e.target.value)||0; rerenderWithFilters(); });
+document.getElementById('filterOddsMax').addEventListener('change', (e)=>{ filterOddsMax=parseFloat(e.target.value)||0; rerenderWithFilters(); });
+document.getElementById('filterNetMin').addEventListener('change', (e)=>{ filterNetMin=e.target.value?parseFloat(e.target.value):null; rerenderWithFilters(); });
+document.getElementById('filterNetMax').addEventListener('change', (e)=>{ filterNetMax=e.target.value?parseFloat(e.target.value):null; rerenderWithFilters(); });
+document.getElementById('filterGrossMin').addEventListener('change', (e)=>{ filterGrossMin=e.target.value?parseFloat(e.target.value):null; rerenderWithFilters(); });
+document.getElementById('filterGrossMax').addEventListener('change', (e)=>{ filterGrossMax=e.target.value?parseFloat(e.target.value):null; rerenderWithFilters(); });
+document.getElementById('filterStakeMin').addEventListener('change', (e)=>{ filterStakeMin=e.target.value?parseFloat(e.target.value):null; rerenderWithFilters(); });
+document.getElementById('filterStakeMax').addEventListener('change', (e)=>{ filterStakeMax=e.target.value?parseFloat(e.target.value):null; rerenderWithFilters(); });
+
+// Reset button
+document.getElementById('resetFilters').addEventListener('click', resetFilters);
 
 /* ============ load from api.0xbeta.dev (bypasses copy-paste) ============
    Maps the Worker's already-normalized /props rows into the exact shape
