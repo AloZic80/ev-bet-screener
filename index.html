@@ -261,9 +261,16 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
         <option value="WNBA">WNBA</option>
         <option value="MLS">MLS</option>
       </select>
+      <span id="apiWeekFields" style="display:none">
+        <input type="number" id="apiSeason" value="2026" title="Season year" style="width:70px;font-family:inherit;font-size:14px;padding:8px 6px;border:1px solid var(--rule);border-radius:7px;background:var(--panel);color:var(--ink)">
+        <input type="number" id="apiWeek" placeholder="week" min="0" max="20" title="Week number" style="width:60px;font-family:inherit;font-size:14px;padding:8px 6px;border:1px solid var(--rule);border-radius:7px;background:var(--panel);color:var(--ink)">
+      </span>
       <button class="ghost" id="loadApi">Load today's props</button>
       <span id="apiStatus" style="font-size:13px;color:var(--soft)"></span>
     </div>
+    <p class="hint" id="apiWeekHint" style="display:none;margin-top:6px">NFL/NCAAF are organized by week, not date — leave Week blank to
+      let BettingPros pick the current week itself (not reliable so far, only 1 NFL row came back that way), or type the week number
+      you want directly.</p>
   </details>
   <details style="margin-top:13px">
     <summary>Odds API cross-check (optional, spends credits)</summary>
@@ -1265,8 +1272,17 @@ function apiRowToInternal(p, sport){
   };
 }
 const API_SPORTS=['MLB','NFL','NCAAF','NBA','WNBA','MLS'];
-async function fetchApiSport(sport, date, booksParam){
-  const url=API_BASE+'/props?date='+encodeURIComponent(date)+'&sport='+encodeURIComponent(sport)+'&ev_only=1'+booksParam;
+const WEEK_BASED_SPORTS=['NFL','NCAAF']; // mirrors the Worker's WEEK_BASED set
+function toggleApiWeekFields(){
+  const isWeekBased=WEEK_BASED_SPORTS.includes(document.getElementById('apiSport').value);
+  document.getElementById('apiWeekFields').style.display=isWeekBased?'inline':'none';
+  document.getElementById('apiWeekHint').style.display=isWeekBased?'block':'none';
+}
+document.getElementById('apiSport').addEventListener('change',toggleApiWeekFields);
+toggleApiWeekFields();
+async function fetchApiSport(sport, date, booksParam, weekParam){
+  const dateOrWeek=(WEEK_BASED_SPORTS.includes(sport)&&weekParam)?weekParam:'&date='+encodeURIComponent(date);
+  const url=API_BASE+'/props?sport='+encodeURIComponent(sport)+dateOrWeek+'&ev_only=1'+booksParam;
   const res=await fetch(url);
   if(!res.ok) throw new Error(sport+': Worker returned '+res.status);
   return res.json();
@@ -1278,6 +1294,10 @@ async function loadApi(){
   const was=btn.textContent; btn.textContent='Loading…'; btn.disabled=true; status.textContent='';
   try{
     const date=document.getElementById('slate').value;
+    // Only applies to NFL/NCAAF fetches within this batch — day-based sports ignore it.
+    const seasonVal=document.getElementById('apiSeason').value.trim();
+    const weekVal=document.getElementById('apiWeek').value.trim();
+    const weekParam=(seasonVal&&weekVal)?('&bp_season='+encodeURIComponent(seasonVal)+'&bp_week='+encodeURIComponent(weekVal)):null;
     // Reuses the same "Books you can bet" field the paste-box screen already uses —
     // one place to update when an account opens or closes, instead of editing the Worker.
     // Blank means all books, same as it already means for the pasted board.
@@ -1289,7 +1309,7 @@ async function loadApi(){
     const unmatchedBooks=booksTyped.filter(name=>!Object.keys(BOOK_IDS).some(k=>name.toLowerCase().includes(k)));
     const booksParam='&bp_books='+encodeURIComponent(bookIds.join(','));
 
-    const results=await Promise.allSettled(sports.map(s=>fetchApiSport(s,date,booksParam)));
+    const results=await Promise.allSettled(sports.map(s=>fetchApiSport(s,date,booksParam,weekParam)));
     let rows=[], totalSource=0, perSport=[], failed=[];
     let totalDebug={total:0,no_recommended_side:0,line_mismatch:0,pickem:0,not_your_book:0,odds_out_of_range:0,no_ev:0,kept:0};
     results.forEach((r,i)=>{
