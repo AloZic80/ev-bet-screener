@@ -349,6 +349,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
     <div class="field" style="flex:1;min-width:160px;margin:0">
       <label for="sortBy" style="display:block;font-size:12.5px;color:var(--soft);margin-bottom:5px">Sort by</label>
       <select id="sortBy" style="width:100%;font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--rule);border-radius:7px;background:var(--panel);color:var(--ink)">
+        <option value="educated">Educated guess (hit rate)</option>
         <option value="net">Net EV % (best first)</option>
         <option value="gross">Gross EV % (best first)</option>
         <option value="odds">Odds (best)</option>
@@ -805,6 +806,38 @@ function render(rows,cfg){
     if(!showRejects && a.pass!==b.pass) return a.pass?-1:1;
     const sa=isStarted(a), sb=isStarted(b);
     if(sa!==sb) return sa?1:-1;
+    
+    if(sortBy==='educated'){
+      // Hit rate per EV bucket (5% bands), sport-specific. Falls back to net EV if data thin.
+      const getBucketKey = (bet) => {
+        const ev = Math.max(0, Math.min((bet.net||0)*100, 40));
+        const bucket = Math.floor(ev/5)*5;
+        return bet.sport + ':' + bucket;
+      };
+      const hitRateOf = (bucketKey) => {
+        // Count wins/samples for this bucket from gradeHistory
+        const [sport, bucket] = bucketKey.split(':');
+        let wins = 0, total = 0;
+        Object.values(gradeHistory).forEach(entry => {
+          if(entry.sport === sport) {
+            const ev = Math.max(0, Math.min((entry.gross||0)*100, 40));
+            const entryBucket = Math.floor(ev/5)*5;
+            if(entryBucket === parseInt(bucket)) {
+              total++;
+              if(entry.won) wins++;
+            }
+          }
+        });
+        return total >= 8 ? wins/total : null;
+      };
+      const getScore = (bet) => {
+        const key = getBucketKey(bet);
+        const rate = hitRateOf(key);
+        return rate!==null ? rate : (bet.net||0);
+      };
+      return getScore(b) - getScore(a);
+    }
+    
     if(sortBy==='net') return (b.net||0)-(a.net||0);
     if(sortBy==='gross') return (b.gross||0)-(a.gross||0);
     if(sortBy==='odds') return Math.abs(a.offeredRaw||0)-Math.abs(b.offeredRaw||0);
@@ -1355,7 +1388,7 @@ async function run(){
 document.getElementById('run').addEventListener('click',run);
 
 // Global sort/filter state
-let sortBy = 'net';
+let sortBy = 'educated';
 let filterSport = '';
 let showRejects = false;
 
@@ -1424,6 +1457,7 @@ function resetFilters() {
   filterGrossMax = null;
   filterStakeMin = null;
   filterStakeMax = null;
+  sortBy = 'educated';
   
   document.getElementById('filterPlayer').value = '';
   document.getElementById('filterTeam').value = '';
@@ -1437,6 +1471,7 @@ function resetFilters() {
   document.getElementById('filterGrossMax').value = '';
   document.getElementById('filterStakeMin').value = '';
   document.getElementById('filterStakeMax').value = '';
+  document.getElementById('sortBy').value = 'educated';
   
   rerenderWithFilters();
 }
