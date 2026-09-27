@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Prop Bet Cheat Sheet v2.39</title>
+<title>Prop Bet Cheat Sheet v2.40</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -218,7 +218,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 <div class="head">
   <div class="head-row">
     <div>
-      <h1>Prop Bet Cheat Sheet <span class="ver">v2.39</span></h1>
+      <h1>Prop Bet Cheat Sheet <span class="ver">v2.40</span></h1>
       <div class="date">Board for <input type="date" id="slate"></div>
       <div class="built">Build 22 Sep 2026</div>
     </div>
@@ -228,6 +228,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 
 <div class="tabs">
   <button class="tab on" data-view="v-board">Board</button>
+  <button class="tab" data-view="v-money">Moneylines</button>
   <button class="tab" data-view="v-log">Bet log</button>
   <button class="tab" data-view="v-perf">Performance</button>
 </div>
@@ -463,6 +464,39 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
     </div>
   </div>
   <div class="calcout" id="calcout"></div>
+</div>
+</div>
+
+<!-- ======================= MONEYLINES ======================= -->
+<div class="view" id="v-money">
+<div class="panel">
+  <h2>Moneylines</h2>
+  <p class="hint">Pulled straight from BettingPros' own odds API (not a paste) — real games, real books, their own cover-probability/EV numbers per line. NFL only for now; other sports need their moneyline market_id confirmed first.</p>
+  <div class="row" style="margin-top:0">
+    <select id="moneySport" style="font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--rule);border-radius:7px;background:var(--panel);color:var(--ink)">
+      <option value="NFL">NFL</option>
+    </select>
+    <button class="ghost" id="loadMoney">Load moneylines</button>
+    <span id="moneyStatus" style="font-size:13px;color:var(--soft)"></span>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <div class="field" style="max-width:160px">
+      <label for="moneyMinEv" style="display:block;font-size:12.5px;color:var(--soft);margin-bottom:5px">Min EV %</label>
+      <input type="number" id="moneyMinEv" value="0" step="0.5" style="width:100%;font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--rule);border-radius:7px;background:var(--panel);color:var(--ink)">
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Lines</h2>
+  <div class="scroll"><table>
+    <thead><tr>
+      <th>Matchup</th><th>Team</th><th>Book</th><th class="num">Odds</th>
+      <th class="num">Cover %</th><th class="num">EV</th><th class="num">Rating</th><th style="text-align:center">Bet Now</th>
+    </tr></thead>
+    <tbody id="moneyBody"></tbody>
+  </table></div>
+  <div class="empty" id="moneyEmpty">Pick a sport and load moneylines.</div>
 </div>
 </div>
 
@@ -1693,6 +1727,78 @@ async function loadApi(){
   }
 }
 document.getElementById('loadApi').addEventListener('click',loadApi);
+
+/* ============ Moneylines tab ============
+   Pulls the Worker's /moneyline endpoint — already-clean rows with real
+   opponent pairing done server-side (see HANDOFF.md). NFL only until other
+   sports' moneyline market_id gets confirmed the same way NFL's was. */
+const MONEY_BOOK_NAMES={12:'DraftKings',10:'FanDuel',19:'BetMGM',13:'Caesars',49:'Hard Rock',
+  2:'Pinnacle',33:'theScore',14:'Fanatics',60:'Novig',37:'PrizePicks',38:'ProphetX',
+  36:'Underdog',68:'Kalshi',73:'Polymarket',75:'Polymarket US',45:'Betr',39:'Fliff',
+  63:'Sleeper',18:'BetRivers',24:'Bet365',26:'Tipico',71:'PointsBet',0:'Best odds'};
+let moneyRows=[];
+async function loadMoneylines(){
+  const btn=document.getElementById('loadMoney'), status=document.getElementById('moneyStatus');
+  const sport=document.getElementById('moneySport').value;
+  const was=btn.textContent; btn.textContent='Loading…'; btn.disabled=true; status.textContent='';
+  try{
+    const url=API_BASE+'/moneyline?sport='+encodeURIComponent(sport);
+    const res=await fetch(url);
+    if(!res.ok){
+      const body=await res.text().catch(()=>'');
+      throw new Error('Worker returned '+res.status+(body?(' — '+body):''));
+    }
+    const data=await res.json();
+    // Only current (not opening) lines with a real EV number computed — opening
+    // lines are historical reference, not something to bet right now.
+    moneyRows=(data.rows||[]).filter(r=>r.tag==='current' && r.expected_value!=null);
+    status.textContent=(data.count||0)+' lines across '+(data.games?data.games.length:0)+' games';
+    renderMoneylines();
+  }catch(e){
+    status.textContent='Load failed: '+e.message;
+    moneyRows=[];
+    renderMoneylines();
+  }finally{
+    btn.textContent=was; btn.disabled=false;
+  }
+}
+function renderMoneylines(){
+  const tbody=document.getElementById('moneyBody'), empty=document.getElementById('moneyEmpty');
+  const minEvRaw=document.getElementById('moneyMinEv').value.trim();
+  const minEv=minEvRaw===''?null:parseFloat(minEvRaw);
+  let rows=moneyRows.slice();
+  if(minEv!=null && !isNaN(minEv)) rows=rows.filter(r=>(r.expected_value*100)>=minEv);
+  rows.sort((a,b)=>(b.expected_value||0)-(a.expected_value||0));
+  if(!rows.length){
+    tbody.innerHTML='';
+    empty.style.display='block';
+    empty.textContent=moneyRows.length?'No lines clear that EV floor — lower it or load again later.':'Pick a sport and load moneylines.';
+    return;
+  }
+  empty.style.display='none';
+  tbody.innerHTML=rows.map(r=>{
+    const evPct=(r.expected_value*100).toFixed(1);
+    const coverPct=r.cover_probability!=null?(r.cover_probability*100).toFixed(1):'—';
+    const oddsStr=r.cost>0?('+'+r.cost):String(r.cost);
+    const bookLabel=MONEY_BOOK_NAMES[r.book_id]||('Book '+r.book_id);
+    const evColor=r.expected_value>0?'var(--live)':'var(--out)';
+    const label=(r.label && r.label!==r.team)?(r.label+' ('+r.team+')'):r.team;
+    return '<tr>'+
+      '<td>'+(r.matchup||'—')+'</td>'+
+      '<td>'+label+'</td>'+
+      '<td>'+bookLabel+'</td>'+
+      '<td class="num">'+oddsStr+'</td>'+
+      '<td class="num">'+coverPct+'%</td>'+
+      '<td class="num" style="color:'+evColor+'">'+evPct+'%</td>'+
+      '<td class="num">'+(r.bet_rating??'—')+'</td>'+
+      '<td style="text-align:center">'+(r.link?('<a class="betnow" href="'+r.link+'" target="_blank" rel="noopener">Bet</a>'):'—')+'</td>'+
+      '</tr>';
+  }).join('');
+}
+document.getElementById('loadMoney').addEventListener('click',loadMoneylines);
+document.getElementById('moneyMinEv').addEventListener('change',renderMoneylines);
+renderMoneylines();
+
 document.getElementById('clear').addEventListener('click',()=>{
   document.getElementById('input').value=''; lastRows=[]; render([],cfgRead());
 });
