@@ -481,7 +481,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
   </div>
   <div class="row" style="margin-top:10px">
     <div class="field" style="max-width:160px">
-      <label for="moneyMinEv" style="display:block;font-size:12.5px;color:var(--soft);margin-bottom:5px">Min EV %</label>
+      <label for="moneyMinEv" style="display:block;font-size:12.5px;color:var(--soft);margin-bottom:5px">Min edge vs Pinnacle %</label>
       <input type="number" id="moneyMinEv" value="0" step="0.5" style="width:100%;font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--rule);border-radius:7px;background:var(--panel);color:var(--ink)">
     </div>
   </div>
@@ -489,10 +489,12 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 
 <div class="panel">
   <h2>Lines</h2>
+  <p class="hint">"Edge vs Pinnacle" is the real answer to "is this good value" — Pinnacle's own two-sided line, de-vigged into a true win probability, compared against what this book is actually offering. BettingPros' own EV/Cover % (its model's opinion) are shown alongside for reference, not as the primary signal.</p>
   <div class="scroll"><table>
     <thead><tr>
       <th>Matchup</th><th>Team</th><th>Book</th><th class="num">Odds</th>
-      <th class="num">Cover %</th><th class="num">EV</th><th class="num">Rating</th><th style="text-align:center">Bet Now</th>
+      <th class="num">Pinnacle Fair</th><th class="num">Edge vs Pinnacle</th>
+      <th class="num">Cover %</th><th class="num">BP EV</th><th class="num">Rating</th><th style="text-align:center">Bet Now</th>
     </tr></thead>
     <tbody id="moneyBody"></tbody>
   </table></div>
@@ -1749,10 +1751,13 @@ async function loadMoneylines(){
       throw new Error('Worker returned '+res.status+(body?(' — '+body):''));
     }
     const data=await res.json();
-    // Only current (not opening) lines with a real EV number computed — opening
-    // lines are historical reference, not something to bet right now.
-    moneyRows=(data.rows||[]).filter(r=>r.tag==='current' && r.expected_value!=null);
-    status.textContent=(data.count||0)+' lines across '+(data.games?data.games.length:0)+' games';
+    // Only current (not opening) lines. edge_vs_pinnacle may be null for a
+    // row if Pinnacle didn't have a two-sided line for that game — those
+    // still show (BP's own numbers are still real), just without the
+    // Pinnacle comparison columns filled in.
+    moneyRows=(data.rows||[]).filter(r=>r.tag==='current');
+    const pinnaclePct=data.pinnacle_games_matched!=null?(' — Pinnacle matched on '+data.pinnacle_games_matched+' games'):'';
+    status.textContent=(data.count||0)+' lines across '+(data.games?data.games.length:0)+' games'+pinnaclePct;
     renderMoneylines();
   }catch(e){
     status.textContent='Load failed: '+e.message;
@@ -1764,32 +1769,44 @@ async function loadMoneylines(){
 }
 function renderMoneylines(){
   const tbody=document.getElementById('moneyBody'), empty=document.getElementById('moneyEmpty');
-  const minEvRaw=document.getElementById('moneyMinEv').value.trim();
-  const minEv=minEvRaw===''?null:parseFloat(minEvRaw);
+  const minEdgeRaw=document.getElementById('moneyMinEv').value.trim();
+  const minEdge=minEdgeRaw===''?null:parseFloat(minEdgeRaw);
   let rows=moneyRows.slice();
-  if(minEv!=null && !isNaN(minEv)) rows=rows.filter(r=>(r.expected_value*100)>=minEv);
-  rows.sort((a,b)=>(b.expected_value||0)-(a.expected_value||0));
+  if(minEdge!=null && !isNaN(minEdge)){
+    // Rows with no Pinnacle match at all get excluded once a floor is set —
+    // there's nothing to compare against, so they can't clear a bar.
+    rows=rows.filter(r=>r.edge_vs_pinnacle!=null && (r.edge_vs_pinnacle*100)>=minEdge);
+  }
+  rows.sort((a,b)=>(b.edge_vs_pinnacle ?? -Infinity)-(a.edge_vs_pinnacle ?? -Infinity));
   if(!rows.length){
     tbody.innerHTML='';
     empty.style.display='block';
-    empty.textContent=moneyRows.length?'No lines clear that EV floor — lower it or load again later.':'Pick a sport and load moneylines.';
+    empty.textContent=moneyRows.length?'No lines clear that edge floor — lower it, or Pinnacle may not have matched these games yet.':'Pick a sport and load moneylines.';
     return;
   }
   empty.style.display='none';
   tbody.innerHTML=rows.map(r=>{
-    const evPct=(r.expected_value*100).toFixed(1);
-    const coverPct=r.cover_probability!=null?(r.cover_probability*100).toFixed(1):'—';
     const oddsStr=r.cost>0?('+'+r.cost):String(r.cost);
     const bookLabel=MONEY_BOOK_NAMES[r.book_id]||('Book '+r.book_id);
-    const evColor=r.expected_value>0?'var(--live)':'var(--out)';
     const label=(r.label && r.label!==r.team)?(r.label+' ('+r.team+')'):r.team;
+
+    const pinFairStr=r.pinnacle_odds!=null?((r.pinnacle_odds>0?'+':'')+r.pinnacle_odds):'—';
+    const edgeStr=r.edge_vs_pinnacle!=null?((r.edge_vs_pinnacle*100).toFixed(1)+'%'):'—';
+    const edgeColor=r.edge_vs_pinnacle==null?'var(--soft)':(r.edge_vs_pinnacle>0?'var(--live)':'var(--out)');
+
+    const bpEvStr=r.expected_value!=null?((r.expected_value*100).toFixed(1)+'%'):'—';
+    const bpEvColor=r.expected_value==null?'var(--soft)':(r.expected_value>0?'var(--live)':'var(--out)');
+    const coverPct=r.cover_probability!=null?(r.cover_probability*100).toFixed(1)+'%':'—';
+
     return '<tr>'+
       '<td>'+(r.matchup||'—')+'</td>'+
       '<td>'+label+'</td>'+
       '<td>'+bookLabel+'</td>'+
       '<td class="num">'+oddsStr+'</td>'+
-      '<td class="num">'+coverPct+'%</td>'+
-      '<td class="num" style="color:'+evColor+'">'+evPct+'%</td>'+
+      '<td class="num">'+pinFairStr+'</td>'+
+      '<td class="num" style="color:'+edgeColor+'">'+edgeStr+'</td>'+
+      '<td class="num">'+coverPct+'</td>'+
+      '<td class="num" style="color:'+bpEvColor+'">'+bpEvStr+'</td>'+
       '<td class="num">'+(r.bet_rating??'—')+'</td>'+
       '<td style="text-align:center">'+(r.link?('<a class="betnow" href="'+r.link+'" target="_blank" rel="noopener">Bet</a>'):'—')+'</td>'+
       '</tr>';
