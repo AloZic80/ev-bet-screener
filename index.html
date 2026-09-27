@@ -481,7 +481,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
   </div>
   <div class="row" style="margin-top:10px">
     <div class="field" style="max-width:160px">
-      <label for="moneyMinEv" style="display:block;font-size:12.5px;color:var(--soft);margin-bottom:5px">Min edge vs Pinnacle %</label>
+      <label for="moneyMinEv" style="display:block;font-size:12.5px;color:var(--soft);margin-bottom:5px">Min edge vs consensus %</label>
       <input type="number" id="moneyMinEv" value="0" step="0.5" style="width:100%;font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--rule);border-radius:7px;background:var(--panel);color:var(--ink)">
     </div>
   </div>
@@ -489,11 +489,11 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 
 <div class="panel">
   <h2>Lines</h2>
-  <p class="hint">"Edge vs Pinnacle" is the real answer to "is this good value" — Pinnacle's own two-sided line, de-vigged into a true win probability, compared against what this book is actually offering. BettingPros' own EV/Cover % (its model's opinion) are shown alongside for reference, not as the primary signal.</p>
+  <p class="hint">"Edge vs consensus" is the real answer to "is this good value" — the devigged average of every book we pull for that game, turned into a true win probability, compared against what this specific book is offering. (Pinnacle isn't in BettingPros' data for this market — confirmed 2026-09-27 — so this is the sharp-line substitute.) BettingPros' own EV/Cover % (its model's opinion) are shown alongside for reference, not as the primary signal.</p>
   <div class="scroll"><table>
     <thead><tr>
       <th>Matchup</th><th>Team</th><th>Book</th><th class="num">Odds</th>
-      <th class="num">Pinnacle Fair</th><th class="num">Edge vs Pinnacle</th>
+      <th class="num">Consensus Fair</th><th class="num">Edge vs Consensus</th>
       <th class="num">Cover %</th><th class="num">BP EV</th><th class="num">Rating</th><th style="text-align:center">Bet Now</th>
     </tr></thead>
     <tbody id="moneyBody"></tbody>
@@ -1751,13 +1751,12 @@ async function loadMoneylines(){
       throw new Error('Worker returned '+res.status+(body?(' — '+body):''));
     }
     const data=await res.json();
-    // Only current (not opening) lines. edge_vs_pinnacle may be null for a
-    // row if Pinnacle didn't have a two-sided line for that game — those
-    // still show (BP's own numbers are still real), just without the
-    // Pinnacle comparison columns filled in.
-    moneyRows=(data.rows||[]).filter(r=>r.tag==='current');
-    const pinnaclePct=data.pinnacle_games_matched!=null?(' — Pinnacle matched on '+data.pinnacle_games_matched+' games'):'';
-    status.textContent=(data.count||0)+' lines across '+(data.games?data.games.length:0)+' games'+pinnaclePct;
+    // Only current (not opening) lines, and skip book_id 0 — that's
+    // BettingPros' own "best odds" aggregate column, not a real bettable
+    // book (no real link, and it's excluded from the consensus calc too).
+    moneyRows=(data.rows||[]).filter(r=>r.tag==='current' && r.book_id!==0);
+    const consensusPct=data.consensus_games_matched!=null?(' — consensus computed for '+data.consensus_games_matched+' games'):'';
+    status.textContent=(data.count||0)+' lines across '+(data.games?data.games.length:0)+' games'+consensusPct;
     renderMoneylines();
   }catch(e){
     status.textContent='Load failed: '+e.message;
@@ -1773,15 +1772,15 @@ function renderMoneylines(){
   const minEdge=minEdgeRaw===''?null:parseFloat(minEdgeRaw);
   let rows=moneyRows.slice();
   if(minEdge!=null && !isNaN(minEdge)){
-    // Rows with no Pinnacle match at all get excluded once a floor is set —
-    // there's nothing to compare against, so they can't clear a bar.
-    rows=rows.filter(r=>r.edge_vs_pinnacle!=null && (r.edge_vs_pinnacle*100)>=minEdge);
+    // Rows with no consensus computed at all get excluded once a floor is
+    // set — there's nothing to compare against, so they can't clear a bar.
+    rows=rows.filter(r=>r.edge_vs_consensus!=null && (r.edge_vs_consensus*100)>=minEdge);
   }
-  rows.sort((a,b)=>(b.edge_vs_pinnacle ?? -Infinity)-(a.edge_vs_pinnacle ?? -Infinity));
+  rows.sort((a,b)=>(b.edge_vs_consensus ?? -Infinity)-(a.edge_vs_consensus ?? -Infinity));
   if(!rows.length){
     tbody.innerHTML='';
     empty.style.display='block';
-    empty.textContent=moneyRows.length?'No lines clear that edge floor — lower it, or Pinnacle may not have matched these games yet.':'Pick a sport and load moneylines.';
+    empty.textContent=moneyRows.length?'No lines clear that edge floor — lower it, or consensus may not have been computable for these games yet.':'Pick a sport and load moneylines.';
     return;
   }
   empty.style.display='none';
@@ -1790,9 +1789,9 @@ function renderMoneylines(){
     const bookLabel=MONEY_BOOK_NAMES[r.book_id]||('Book '+r.book_id);
     const label=(r.label && r.label!==r.team)?(r.label+' ('+r.team+')'):r.team;
 
-    const pinFairStr=r.pinnacle_odds!=null?((r.pinnacle_odds>0?'+':'')+r.pinnacle_odds):'—';
-    const edgeStr=r.edge_vs_pinnacle!=null?((r.edge_vs_pinnacle*100).toFixed(1)+'%'):'—';
-    const edgeColor=r.edge_vs_pinnacle==null?'var(--soft)':(r.edge_vs_pinnacle>0?'var(--live)':'var(--out)');
+    const consFairStr=r.consensus_fair_probability!=null?((r.consensus_fair_probability*100).toFixed(1)+'%'):'—';
+    const edgeStr=r.edge_vs_consensus!=null?((r.edge_vs_consensus*100).toFixed(1)+'%'):'—';
+    const edgeColor=r.edge_vs_consensus==null?'var(--soft)':(r.edge_vs_consensus>0?'var(--live)':'var(--out)');
 
     const bpEvStr=r.expected_value!=null?((r.expected_value*100).toFixed(1)+'%'):'—';
     const bpEvColor=r.expected_value==null?'var(--soft)':(r.expected_value>0?'var(--live)':'var(--out)');
@@ -1803,7 +1802,7 @@ function renderMoneylines(){
       '<td>'+label+'</td>'+
       '<td>'+bookLabel+'</td>'+
       '<td class="num">'+oddsStr+'</td>'+
-      '<td class="num">'+pinFairStr+'</td>'+
+      '<td class="num">'+consFairStr+'</td>'+
       '<td class="num" style="color:'+edgeColor+'">'+edgeStr+'</td>'+
       '<td class="num">'+coverPct+'</td>'+
       '<td class="num" style="color:'+bpEvColor+'">'+bpEvStr+'</td>'+
