@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Prop Bet Cheat Sheet v2.40</title>
+<title>Prop Bet Cheat Sheet v2.41</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -218,7 +218,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 <div class="head">
   <div class="head-row">
     <div>
-      <h1>Prop Bet Cheat Sheet <span class="ver">v2.40</span></h1>
+      <h1>Prop Bet Cheat Sheet <span class="ver">v2.41</span></h1>
       <div class="date">Board for <input type="date" id="slate"></div>
       <div class="built">Build 22 Sep 2026</div>
     </div>
@@ -480,8 +480,15 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
     <span id="moneyStatus" style="font-size:13px;color:var(--soft)"></span>
   </div>
   <div class="row" style="margin-top:10px">
+    <div class="field" style="max-width:190px">
+      <label for="moneyBasis" style="display:block;font-size:12.5px;color:var(--soft);margin-bottom:5px">Judge value against</label>
+      <select id="moneyBasis" style="width:100%;font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--rule);border-radius:7px;background:var(--panel);color:var(--ink)">
+        <option value="pinnacle">Pinnacle (sharp line)</option>
+        <option value="consensus">Consensus (all books)</option>
+      </select>
+    </div>
     <div class="field" style="max-width:160px">
-      <label for="moneyMinEv" style="display:block;font-size:12.5px;color:var(--soft);margin-bottom:5px">Min edge vs consensus %</label>
+      <label for="moneyMinEv" style="display:block;font-size:12.5px;color:var(--soft);margin-bottom:5px">Min edge %</label>
       <input type="number" id="moneyMinEv" value="0" step="0.5" style="width:100%;font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--rule);border-radius:7px;background:var(--panel);color:var(--ink)">
     </div>
   </div>
@@ -489,10 +496,11 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 
 <div class="panel">
   <h2>Lines</h2>
-  <p class="hint">"Edge vs consensus" is the real answer to "is this good value" — the devigged average of every book we pull for that game, turned into a true win probability, compared against what this specific book is offering. (Pinnacle isn't in BettingPros' data for this market — confirmed 2026-09-27 — so this is the sharp-line substitute.) BettingPros' own EV/Cover % (its model's opinion) are shown alongside for reference, not as the primary signal.</p>
+  <p class="hint">"Edge" is the real answer to "is this good value": a fair win probability with the vig stripped out, compared against what this specific book is offering. <b>Pinnacle</b> is the sharp reference (its line devigged, pulled via pinnapi.com); <b>Consensus</b> is the devigged average of every book we pull, and is the fallback when Pinnacle data isn't available. BettingPros' own EV/Cover % (its model's opinion) are shown for reference only.</p>
   <div class="scroll"><table>
     <thead><tr>
       <th>Matchup</th><th>Team</th><th>Book</th><th class="num">Odds</th>
+      <th class="num">Pinnacle</th><th class="num">Edge vs Pinnacle</th>
       <th class="num">Consensus Fair</th><th class="num">Edge vs Consensus</th>
       <th class="num">Cover %</th><th class="num">BP EV</th><th class="num">Rating</th><th style="text-align:center">Bet Now</th>
     </tr></thead>
@@ -1755,8 +1763,23 @@ async function loadMoneylines(){
     // BettingPros' own "best odds" aggregate column, not a real bettable
     // book (no real link, and it's excluded from the consensus calc too).
     moneyRows=(data.rows||[]).filter(r=>r.tag==='current' && r.book_id!==0);
-    const consensusPct=data.consensus_games_matched!=null?(' — consensus computed for '+data.consensus_games_matched+' games'):'';
-    status.textContent=(data.count||0)+' lines across '+(data.games?data.games.length:0)+' games'+consensusPct;
+    const gameCount=data.games?data.games.length:0;
+    const pin=data.pinnacle||{};
+    const pinMatched=data.pinnacle_games_matched||0;
+    let pinNote;
+    if(pin.status==='ok' && pinMatched>0){
+      pinNote=' — Pinnacle matched on '+pinMatched+' of '+gameCount+' games';
+    }else if(pin.status==='ok'){
+      pinNote=' — Pinnacle returned data but 0 games matched (falling back to consensus)';
+    }else if(pin.status==='no_key'){
+      pinNote=' — Pinnacle not configured on the Worker yet (using consensus)';
+    }else{
+      pinNote=' — Pinnacle unavailable ('+(pin.status||'unknown')+'), using consensus';
+    }
+    // If Pinnacle gave us nothing usable, don't leave the table judged against
+    // an empty column — switch the basis to consensus so results still show.
+    if(pinMatched===0) document.getElementById('moneyBasis').value='consensus';
+    status.textContent=(data.count||0)+' lines across '+gameCount+' games'+pinNote;
     renderMoneylines();
   }catch(e){
     status.textContent='Load failed: '+e.message;
@@ -1770,28 +1793,35 @@ function renderMoneylines(){
   const tbody=document.getElementById('moneyBody'), empty=document.getElementById('moneyEmpty');
   const minEdgeRaw=document.getElementById('moneyMinEv').value.trim();
   const minEdge=minEdgeRaw===''?null:parseFloat(minEdgeRaw);
+  // Which fair line the filter and sort judge against. Both edges are always
+  // shown in the table — this only picks which one drives ranking/filtering.
+  const basis=document.getElementById('moneyBasis').value;
+  const edgeKey=basis==='pinnacle'?'edge_vs_pinnacle':'edge_vs_consensus';
   let rows=moneyRows.slice();
   if(minEdge!=null && !isNaN(minEdge)){
-    // Rows with no consensus computed at all get excluded once a floor is
-    // set — there's nothing to compare against, so they can't clear a bar.
-    rows=rows.filter(r=>r.edge_vs_consensus!=null && (r.edge_vs_consensus*100)>=minEdge);
+    // Rows with nothing to compare against on this basis are excluded once a
+    // floor is set — they can't clear a bar they have no number for.
+    rows=rows.filter(r=>r[edgeKey]!=null && (r[edgeKey]*100)>=minEdge);
   }
-  rows.sort((a,b)=>(b.edge_vs_consensus ?? -Infinity)-(a.edge_vs_consensus ?? -Infinity));
+  rows.sort((a,b)=>(b[edgeKey] ?? -Infinity)-(a[edgeKey] ?? -Infinity));
   if(!rows.length){
     tbody.innerHTML='';
     empty.style.display='block';
-    empty.textContent=moneyRows.length?'No lines clear that edge floor — lower it, or consensus may not have been computable for these games yet.':'Pick a sport and load moneylines.';
+    empty.textContent=moneyRows.length?'No lines clear that edge floor on this basis — lower it, or switch what you judge value against.':'Pick a sport and load moneylines.';
     return;
   }
   empty.style.display='none';
+  const edgeCell=(v)=>{
+    if(v==null) return '<td class="num" style="color:var(--soft)">—</td>';
+    return '<td class="num" style="color:'+(v>0?'var(--live)':'var(--out)')+'">'+(v*100).toFixed(1)+'%</td>';
+  };
   tbody.innerHTML=rows.map(r=>{
     const oddsStr=r.cost>0?('+'+r.cost):String(r.cost);
     const bookLabel=MONEY_BOOK_NAMES[r.book_id]||('Book '+r.book_id);
     const label=(r.label && r.label!==r.team)?(r.label+' ('+r.team+')'):r.team;
 
+    const pinOddsStr=r.pinnacle_odds!=null?((r.pinnacle_odds>0?'+':'')+r.pinnacle_odds):'—';
     const consFairStr=r.consensus_fair_probability!=null?((r.consensus_fair_probability*100).toFixed(1)+'%'):'—';
-    const edgeStr=r.edge_vs_consensus!=null?((r.edge_vs_consensus*100).toFixed(1)+'%'):'—';
-    const edgeColor=r.edge_vs_consensus==null?'var(--soft)':(r.edge_vs_consensus>0?'var(--live)':'var(--out)');
 
     const bpEvStr=r.expected_value!=null?((r.expected_value*100).toFixed(1)+'%'):'—';
     const bpEvColor=r.expected_value==null?'var(--soft)':(r.expected_value>0?'var(--live)':'var(--out)');
@@ -1802,8 +1832,10 @@ function renderMoneylines(){
       '<td>'+label+'</td>'+
       '<td>'+bookLabel+'</td>'+
       '<td class="num">'+oddsStr+'</td>'+
+      '<td class="num">'+pinOddsStr+'</td>'+
+      edgeCell(r.edge_vs_pinnacle)+
       '<td class="num">'+consFairStr+'</td>'+
-      '<td class="num" style="color:'+edgeColor+'">'+edgeStr+'</td>'+
+      edgeCell(r.edge_vs_consensus)+
       '<td class="num">'+coverPct+'</td>'+
       '<td class="num" style="color:'+bpEvColor+'">'+bpEvStr+'</td>'+
       '<td class="num">'+(r.bet_rating??'—')+'</td>'+
@@ -1813,6 +1845,7 @@ function renderMoneylines(){
 }
 document.getElementById('loadMoney').addEventListener('click',loadMoneylines);
 document.getElementById('moneyMinEv').addEventListener('change',renderMoneylines);
+document.getElementById('moneyBasis').addEventListener('change',renderMoneylines);
 renderMoneylines();
 
 document.getElementById('clear').addEventListener('click',()=>{
