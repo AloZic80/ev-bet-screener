@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Prop Bet Cheat Sheet v2.43</title>
+<title>Prop Bet Cheat Sheet v2.44</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -142,6 +142,11 @@ tbody tr.corr:hover td{background:var(--warn-bg); filter:brightness(.98)}
 .s-NBA{background:#FFDCD2; color:#8F3418}
 .s-NFL{background:#D2EBF5; color:#0F5570}
 .s-NHL{background:#D9E0FA; color:#2A3A85}
+.s-NCAAB{background:#FBE3EC; color:#8C2350}
+.s-MLS{background:#E7EAEF; color:#414C5C}
+.stars{color:#E0A100; letter-spacing:1px; font-size:13px; white-space:nowrap}
+.stars .off{color:var(--rule)}
+.cover{font-weight:700; font-size:14px; font-variant-numeric:tabular-nums}
 :root[data-theme="dark"] .s-MLB{background:#123A28; color:#5FE0A0}
 :root[data-theme="dark"] .s-NCAAF{background:#2A1F44; color:#BCA4FF}
 :root[data-theme="dark"] .s-SOCCER{background:#242F3C; color:#AEBFD2}
@@ -149,6 +154,9 @@ tbody tr.corr:hover td{background:var(--warn-bg); filter:brightness(.98)}
 :root[data-theme="dark"] .s-NBA{background:#3A1E14; color:#FFA68A}
 :root[data-theme="dark"] .s-NFL{background:#12313F; color:#78D4EE}
 :root[data-theme="dark"] .s-NHL{background:#1B2540; color:#9DB3FF}
+:root[data-theme="dark"] .s-NCAAB{background:#3A1626; color:#FF9CC2}
+:root[data-theme="dark"] .s-MLS{background:#242F3C; color:#AEBFD2}
+:root[data-theme="dark"] .stars{color:#FFC94D}
 .mkt-line{font-weight:600; font-size:15px; text-align:center}
 .mkt-sub{color:var(--soft); font-size:12.5px; text-align:center}
 .blogo{width:22px; height:22px; border-radius:5px; vertical-align:middle;
@@ -218,7 +226,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 <div class="head">
   <div class="head-row">
     <div>
-      <h1>Prop Bet Cheat Sheet <span class="ver">v2.43</span></h1>
+      <h1>Prop Bet Cheat Sheet <span class="ver">v2.44</span></h1>
       <div class="date">Board for <input type="date" id="slate"></div>
       <div class="built">Build 22 Sep 2026</div>
     </div>
@@ -259,7 +267,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
     <summary>Load from api.0xbeta.dev (no copy-paste)</summary>
     <p class="hint" style="margin-top:8px">Only pulls rows where BettingPros has actually filled in a real probability/EV
       (most rows on a given day don't have this yet, so a small or empty board here is the API being honest, not broken).
-      MLB's market list is filtered to real stat markets; the other five sports currently pull everything BettingPros
+      MLB's market list is filtered to real stat markets; the other sports currently pull everything BettingPros
       returns by default, so unfamiliar market names may show up as "Market &lt;id&gt;" until we've seen a live sample
       of each.</p>
     <div class="row" style="margin-top:8px">
@@ -269,6 +277,8 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
         <option value="NFL">NFL</option>
         <option value="NCAAF">NCAAF</option>
         <option value="NBA">NBA</option>
+        <option value="NHL">NHL</option>
+        <option value="NCAAB">NCAAB</option>
         <option value="WNBA">WNBA</option>
         <option value="MLS">MLS</option>
       </select>
@@ -350,6 +360,8 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
     <div class="field" style="flex:1;min-width:160px;margin:0">
       <label for="sortBy" style="display:block;font-size:12.5px;color:var(--soft);margin-bottom:5px">Sort by</label>
       <select id="sortBy" style="width:100%;font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--rule);border-radius:7px;background:var(--panel);color:var(--ink)">
+        <option value="top" selected>Top bets (stars, then cover %)</option>
+        <option value="cover">Cover % (highest first)</option>
         <option value="educated">Educated guess (hit rate)</option>
         <option value="net">Net EV % (best first)</option>
         <option value="gross">Gross EV % (best first)</option>
@@ -365,6 +377,8 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
         <option value="NFL">NFL</option>
         <option value="NCAAF">NCAAF</option>
         <option value="NBA">NBA</option>
+        <option value="NHL">NHL</option>
+        <option value="NCAAB">NCAAB</option>
         <option value="WNBA">WNBA</option>
         <option value="MLS">MLS</option>
       </select>
@@ -428,6 +442,20 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
         <input type="number" id="filterStakeMax" class="filter-input" value="" placeholder="any" step="0.25">
       </div>
       <div class="filter-group">
+        <label class="filter-label">Stars Min</label>
+        <select id="filterStarsMin" class="filter-input">
+          <option value="">any</option>
+          <option value="5">5 ★</option>
+          <option value="4">4+ ★</option>
+          <option value="3">3+ ★</option>
+          <option value="2">2+ ★</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Cover % Min</label>
+        <input type="number" id="filterCoverMin" class="filter-input" value="" placeholder="any" step="1">
+      </div>
+      <div class="filter-group">
         <label class="filter-label">Pinnacle Gap Min %</label>
         <input type="number" id="filterGapMin" class="filter-input" value="" placeholder="any" step="0.5">
       </div>
@@ -439,8 +467,11 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 
   <div class="scroll"><table>
     <thead><tr>
-      <th>Team / Player</th><th>Sport</th><th style="text-align:center">Market</th><th class="num">Odds</th><th class="num">Fair Value</th>
-      <th class="num">Market EV</th><th style="text-align:center">Bet Now</th>
+      <th>Team / Player</th><th>Sport</th><th style="text-align:center">Market</th><th class="num">Odds</th>
+      <th class="num" title="BettingPros' probability this bet wins (fair odds underneath)">Cover %</th>
+      <th class="num" title="BettingPros' bet rating, 1-5">Stars</th>
+      <th class="num" title="How often this side hit: last 15 games when available, otherwise season">Hit rate</th>
+      <th class="num" title="Cover % against the offered price, before fees. Model is noted underneath.">EV</th><th style="text-align:center">Bet Now</th>
       <th class="num">Pinnacle</th>
       <th class="num">Fee</th><th class="num">Net</th><th class="num">Stake</th><th>Notes</th>
     </tr></thead>
@@ -740,7 +771,11 @@ function pairUp(rows){
       if(a.fairProb===null||b.fairProb===null) continue;
       const da=direction(a),db=direction(b),la=lineVal(a),lb=lineVal(b);
       let match=false;
-      if((da==='O'&&db==='U')||(da==='U'&&db==='O')) match = la!==null&&lb!==null&&Math.abs(la-lb)<1e-6;
+      // Over/Under only pairs with the SAME player and SAME market. Before v2.44 any
+      // O 1.5 / U 1.5 in the same game paired up across different players (Simpson
+      // U1.5 TB vs another player's O1.5), "summed to 140%" and got rejected.
+      if((da==='O'&&db==='U')||(da==='U'&&db==='O')) match = a.name===b.name && a.market===b.market &&
+        la!==null&&lb!==null&&Math.abs(la-lb)<1e-6;
       else if((da==='F'&&db==='D')||(da==='D'&&db==='F')) match = la!==null&&lb!==null&&Math.abs(Math.abs(la)-Math.abs(lb))<1e-6;
       else if(da==='ML'&&db==='ML') match = a.name!==b.name;
       if(match){ const s=a.fairProb+b.fairProb; a.pairSum=s; b.pairSum=s; }
@@ -887,6 +922,17 @@ function render(rows,cfg){
       return getScore(b) - getScore(a);
     }
     
+    // Top bets: BettingPros' star rating first, then its cover probability.
+    // Paste-box rows have no stars, so they sort after every rated row.
+    if(sortBy==='top'){
+      const st=x=>(x.stars==null?-1:x.stars);
+      if(st(b)!==st(a)) return st(b)-st(a);
+      return (b.fairProb||0)-(a.fairProb||0);
+    }
+    if(sortBy==='cover'){
+      if((b.fairProb||0)!==(a.fairProb||0)) return (b.fairProb||0)-(a.fairProb||0);
+      return (b.stars==null?-1:b.stars)-(a.stars==null?-1:a.stars);
+    }
     if(sortBy==='net') return (b.net||0)-(a.net||0);
     if(sortBy==='gross') return (b.gross||0)-(a.gross||0);
     if(sortBy==='odds') return Math.abs(a.offeredRaw||0)-Math.abs(b.offeredRaw||0);
@@ -921,8 +967,12 @@ function render(rows,cfg){
       '<td><span class="sport s-'+esc(r.sport)+'">'+esc(r.sport)+'</span></td>'+
       '<td style="text-align:center">'+mktCell+'</td>'+
       '<td class="num"><span class="odds-cell">'+esc(fmtOdds(r.offeredRaw))+logoTag(r.book)+'</span></td>'+
-      '<td class="num">'+esc(fmtOdds(r.fairRaw))+'</td>'+
-      '<td class="num">'+(r.gross===null?'—':pct(r.gross))+'</td>'+
+      '<td class="num">'+(r.fairProb==null?'—':'<span class="cover">'+pct(r.fairProb)+'</span>'+
+        '<div class="meta">fair '+esc(fmtOdds(r.fairRaw))+'</div>')+'</td>'+
+      '<td class="num">'+starsHtml(r.stars)+'</td>'+
+      '<td class="num">'+hitHtml(r)+'</td>'+
+      '<td class="num">'+(r.gross===null?'—':pct(r.gross))+
+        (r.evModel?'<div class="meta">'+(r.evModel==='market'?'market':'projection')+'</div>':'')+'</td>'+
       '<td style="text-align:center"><div class="betnow'+
         (r.autoGrade==='win'?' won':r.autoGrade==='loss'?' lost':'')+'">'+esc(betNow)+logoTag(r.book)+
         (r.autoGrade==='win'?' <b class="gradeW">W</b>':r.autoGrade==='loss'?' <b class="gradeL">L</b>':'')+
@@ -967,6 +1017,20 @@ function render(rows,cfg){
   if(rows.length&&!shown.length) empty.textContent='Every bet failed a screen. Switch on the rejects to see why each one died.';
 }
 
+/* Stars and hit rate cells (API rows only — the paste box doesn't carry them). */
+function starsHtml(n){
+  if(n==null) return '<span class="meta">—</span>';
+  const k=Math.max(0,Math.min(5,Math.round(n)));
+  return '<span class="stars" title="BettingPros rating: '+k+' of 5">'+'★'.repeat(k)+'<span class="off">'+'★'.repeat(5-k)+'</span></span>';
+}
+function hitHtml(r){
+  if(r.l15N){ const h=Math.round(r.l15Hit*r.l15N);
+    return pct(r.l15Hit,0)+'<div class="meta">L15 · '+h+'/'+r.l15N+'</div>'; }
+  if(r.seasonN){ const h=Math.round(r.seasonHit*r.seasonN);
+    return pct(r.seasonHit,0)+'<div class="meta">season · '+h+'/'+r.seasonN+'</div>'; }
+  return '<span class="meta">—</span>';
+}
+
 /* ============ bet log ============ */
 let logged=[];
 function betNowOf(r){
@@ -976,7 +1040,8 @@ function betNowOf(r){
 /* ============ live schedule / results (ESPN public scoreboard, no key needed) ============ */
 const ESPN_MAP = {
   MLB:'baseball/mlb', NFL:'football/nfl', NCAAF:'football/college-football',
-  NBA:'basketball/nba', WNBA:'basketball/wnba', MLS:'soccer/usa.1'
+  NBA:'basketball/nba', WNBA:'basketball/wnba', MLS:'soccer/usa.1',
+  NHL:'hockey/nhl', NCAAB:'basketball/mens-college-basketball'
 };
 const ABBR_FIX = {WSH:'WAS',JAC:'JAX',LAR:'LA',LVR:'LV',NOS:'NO',SFO:'SF',TBB:'TB',
   KCC:'KC',GBP:'GB',NEP:'NE',WAS_:'WSH', CHW:'CWS', OAK:'ATH'};
@@ -1092,7 +1157,9 @@ function statForMarket(box, playerName, market, sport){
       [/PASS.*TD/,['TD']],[/RUSH.*TD/,['TD']],[/REC.*TD/,['TD']],[/INT/,['INT']]],
     NCAAF:'NFL', WNBA:[[/\bPTS\b|POINTS/,['PTS']],[/\bREB\b|REBOUNDS/,['REB']],[/\bAST\b|ASSISTS/,['AST']],
       [/\bSTL\b/,['STL']],[/\bBLK\b/,['BLK']],[/3PT|THREE/,['3PT']]],
-    MLS:[[/GOAL/,['G']],[/ASSIST/,['A']],[/SHOTS ON/,['SOG']],[/SHOTS/,['SH']]]
+    MLS:[[/GOAL/,['G']],[/ASSIST/,['A']],[/SHOTS ON/,['SOG']],[/SHOTS/,['SH']]],
+    NHL:[], // not verified against ESPN's NHL boxscore labels yet: no auto W/L rather than a wrong one
+    NCAAB:'NBA'
   };
   let r = rules[sport]; if(r==='NFL') r=rules.NFL;
   if(r==='NBA') r=rules.WNBA;
@@ -1442,7 +1509,7 @@ async function run(){
 document.getElementById('run').addEventListener('click',run);
 
 // Global sort/filter state
-let sortBy = 'educated';
+let sortBy = 'top';
 let filterSport = '';
 let showRejects = false;
 
@@ -1460,6 +1527,8 @@ let filterGrossMax = null;
 let filterStakeMin = null;
 let filterStakeMax = null;
 let filterGapMin = null;
+let filterStarsMin = null;
+let filterCoverMin = null;
 
 function applyAdvancedFilters(rows) {
   return rows.filter(r => {
@@ -1490,6 +1559,10 @@ function applyAdvancedFilters(rows) {
     if (filterGapMin !== null) {
       if (r.pinnacleGap == null || r.pinnacleGap < filterGapMin) return false;
     }
+
+    // Unrated rows (paste box) drop out once a star minimum is set.
+    if (filterStarsMin !== null && (r.stars == null || r.stars < filterStarsMin)) return false;
+    if (filterCoverMin !== null && (r.fairProb == null || r.fairProb*100 < filterCoverMin)) return false;
     
     return true;
   });
@@ -1517,7 +1590,9 @@ function resetFilters() {
   filterStakeMin = null;
   filterStakeMax = null;
   filterGapMin = null;
-  sortBy = 'educated';
+  filterStarsMin = null;
+  filterCoverMin = null;
+  sortBy = 'top';
   
   document.getElementById('filterPlayer').value = '';
   document.getElementById('filterTeam').value = '';
@@ -1532,7 +1607,9 @@ function resetFilters() {
   document.getElementById('filterStakeMin').value = '';
   document.getElementById('filterStakeMax').value = '';
   document.getElementById('filterGapMin').value = '';
-  document.getElementById('sortBy').value = 'educated';
+  document.getElementById('filterStarsMin').value = '';
+  document.getElementById('filterCoverMin').value = '';
+  document.getElementById('sortBy').value = 'top';
   
   rerenderWithFilters();
 }
@@ -1556,6 +1633,8 @@ document.getElementById('filterGrossMax').addEventListener('change', (e)=>{ filt
 document.getElementById('filterStakeMin').addEventListener('change', (e)=>{ filterStakeMin=e.target.value?parseFloat(e.target.value):null; rerenderWithFilters(); });
 document.getElementById('filterStakeMax').addEventListener('change', (e)=>{ filterStakeMax=e.target.value?parseFloat(e.target.value):null; rerenderWithFilters(); });
 document.getElementById('filterGapMin').addEventListener('change', (e)=>{ filterGapMin=e.target.value?parseFloat(e.target.value):null; rerenderWithFilters(); });
+document.getElementById('filterStarsMin').addEventListener('change', (e)=>{ filterStarsMin=e.target.value?parseFloat(e.target.value):null; rerenderWithFilters(); });
+document.getElementById('filterCoverMin').addEventListener('change', (e)=>{ filterCoverMin=e.target.value?parseFloat(e.target.value):null; rerenderWithFilters(); });
 
 // Reset button
 document.getElementById('resetFilters').addEventListener('click', resetFilters);
@@ -1596,12 +1675,18 @@ function apiRowToInternal(p, sport){
     sport, market: p.line+' '+p.market, kind:'prop', book: p.book,
     offeredRaw, fairRaw, offeredProb, fairProb,
     screenerEV: p.ev!=null ? p.ev*100 : null,
+    // v2.44: what the BettingPros app shows on a pick card
+    stars: p.rating!=null ? Number(p.rating) : null,
+    l15Hit: p.l15_hit!=null ? p.l15_hit : null, l15N: p.l15_n||0,
+    seasonHit: p.season_hit!=null ? p.season_hit : null, seasonN: p.season_n||0,
+    evModel: p.ev_model || null,
     // Worker's match key (event_id-market_id-participant_id-side) — used to look
     // up this same player/market/side against a separate Pinnacle-only fetch.
     apiKey: p.key || null,
   };
 }
-const API_SPORTS=['MLB','NFL','NCAAF','NBA','WNBA','MLS'];
+// NHL and NCAAB added v2.44 (official API key). Out-of-season sports just come back empty.
+const API_SPORTS=['MLB','NFL','NCAAF','NBA','NHL','NCAAB','WNBA','MLS'];
 const WEEK_BASED_SPORTS=['NFL','NCAAF']; // mirrors the Worker's WEEK_BASED set
 function toggleApiWeekFields(){
   const sport=document.getElementById('apiSport').value;
@@ -1669,7 +1754,14 @@ async function loadApi(){
     const unmatchedBooks=booksTyped.filter(name=>!Object.keys(BOOK_IDS).some(k=>name.toLowerCase().includes(k)));
     const booksParam='&bp_books='+encodeURIComponent(bookIds.join(','));
 
-    const results=await Promise.allSettled(sports.map(s=>fetchApiSport(s,date,booksParam,weekParam)));
+    // One sport at a time, not all at once: each sport can be up to 10 BettingPros
+    // calls, and firing 8 sports in parallel is what trips a 429.
+    const results=[];
+    for(const s of sports){
+      if(sports.length>1) status.textContent='Loading '+s+'…';
+      try{ results.push({status:'fulfilled', value:await fetchApiSport(s,date,booksParam,weekParam)}); }
+      catch(e){ results.push({status:'rejected', reason:e}); }
+    }
     let rows=[], totalSource=0, perSport=[], failed=[];
     let totalDebug={total:0,no_recommended_side:0,line_mismatch:0,pickem:0,not_your_book:0,odds_out_of_range:0,no_ev:0,kept:0};
     results.forEach((r,i)=>{
@@ -1700,6 +1792,12 @@ async function loadApi(){
       ', odds-range '+totalDebug.odds_out_of_range+', no-EV '+totalDebug.no_ev+
       ', line-mismatch '+totalDebug.line_mismatch+', pick\u2019em '+totalDebug.pickem+
       ', kept '+totalDebug.kept+']';
+    if(rows.length){
+      const nMkt=rows.filter(r=>r.evModel==='market').length;
+      statusMsg+= nMkt===rows.length ? ' EV model: market (matches the app).'
+        : nMkt ? ' EV model: market on '+nMkt+' of '+rows.length+', projection on the rest.'
+        : ' EV model: projection (Market EV not included on this key\u2019s tier).';
+    }
     if(failed.length) statusMsg+=' — '+failed.join(', ')+' failed to load, try again.';
     if(unmatchedBooks.length) statusMsg+=' (Not recognized for the API filter: '+unmatchedBooks.join(', ')+' — check spelling or ask to add it.)';
     status.textContent=statusMsg;
@@ -1709,7 +1807,7 @@ async function loadApi(){
     // Attach Pinnacle's own line to each row for comparison — separate fetch
     // (book_id 2 only), matched by the Worker's event/market/participant/side key.
     // Runs after the board is already shown, then re-renders once gaps are known.
-    Promise.all(sports.map(s=>fetchPinnacleMap(s, date, weekParam))).then(maps=>{
+    (async()=>{ const m=[]; for(const s of sports) m.push(await fetchPinnacleMap(s, date, weekParam)); return m; })().then(maps=>{
       const merged={};
       maps.forEach(m=>Object.assign(merged,m));
       lastRows.forEach(r=>{
