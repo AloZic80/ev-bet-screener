@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Prop Bet Cheat Sheet v2.44</title>
+<title>Prop Bet Cheat Sheet v2.45</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -113,6 +113,17 @@ thead th{font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform
   border-bottom:1px solid var(--rule)}
 tbody td{padding:9px 8px; border-bottom:1px solid var(--rule-2); vertical-align:middle}
 tbody tr:hover{background:var(--panel-2)}
+/* v2.45 board: header stays pinned while the rows scroll under it */
+.scroll.board{max-height:78vh; overflow:auto}
+.scroll.board thead th{position:sticky; top:0; z-index:3; background:var(--panel);
+  padding-top:10px; box-shadow:inset 0 -1px 0 var(--rule)}
+/* zebra rows so lines are easy to tell apart (dupe/same-game colors still win) */
+#tbody tr:nth-child(even):not(.dupe):not(.corr) td{background:#E6EBF1}
+:root[data-theme="dark"] #tbody tr:nth-child(even):not(.dupe):not(.corr) td{background:#22303F}
+#tbody tr:not(.dupe):not(.corr):hover td{background:var(--panel-2); filter:brightness(.97)}
+th.sortable{cursor:pointer; user-select:none}
+th.sortable:hover{color:var(--ink)}
+th.sortable .arrow{font-size:10px; margin-left:3px; color:var(--accent)}
 tbody tr.out td{opacity:.45}
 tbody tr.dupe td{background:var(--out-bg)}
 tbody tr.dupe td:first-child{box-shadow:inset 4px 0 0 var(--out)}
@@ -226,7 +237,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 <div class="head">
   <div class="head-row">
     <div>
-      <h1>Prop Bet Cheat Sheet <span class="ver">v2.44</span></h1>
+      <h1>Prop Bet Cheat Sheet <span class="ver">v2.45</span></h1>
       <div class="date">Board for <input type="date" id="slate"></div>
       <div class="built">Build 22 Sep 2026</div>
     </div>
@@ -455,25 +466,21 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
         <label class="filter-label">Cover % Min</label>
         <input type="number" id="filterCoverMin" class="filter-input" value="" placeholder="any" step="1">
       </div>
-      <div class="filter-group">
-        <label class="filter-label">Pinnacle Gap Min %</label>
-        <input type="number" id="filterGapMin" class="filter-input" value="" placeholder="any" step="0.5">
-      </div>
     </div>
     <div class="filter-actions">
       <button class="btn-reset" id="resetFilters">🧦 OPTIMIZATION bets</button>
     </div>
   </div>
 
-  <div class="scroll"><table>
-    <thead><tr>
-      <th>Team / Player</th><th>Sport</th><th style="text-align:center">Market</th><th class="num">Odds</th>
-      <th class="num" title="BettingPros' probability this bet wins (fair odds underneath)">Cover %</th>
-      <th class="num" title="BettingPros' bet rating, 1-5">Stars</th>
-      <th class="num" title="How often this side hit: last 15 games when available, otherwise season">Hit rate</th>
-      <th class="num" title="Cover % against the offered price, before fees. Model is noted underneath.">EV</th><th style="text-align:center">Bet Now</th>
-      <th class="num">Pinnacle</th>
-      <th class="num">Fee</th><th class="num">Net</th><th class="num">Stake</th><th>Notes</th>
+  <div class="scroll board"><table>
+    <thead><tr id="boardHead">
+      <th class="sortable" data-col="name">Team / Player</th><th class="sortable" data-col="sport">Sport</th>
+      <th class="sortable" data-col="market" style="text-align:center">Market</th><th class="num sortable" data-col="odds">Odds</th>
+      <th class="num sortable" data-col="cover" title="BettingPros' probability this bet wins (fair odds underneath)">Cover %</th>
+      <th class="num sortable" data-col="stars" title="BettingPros' bet rating, 1-5">Stars</th>
+      <th class="num sortable" data-col="hit" title="How often this side hit: last 15 games when available, otherwise season">Hit rate</th>
+      <th class="num sortable" data-col="ev" title="Cover % against the offered price, before fees. Model is noted underneath.">EV</th><th style="text-align:center">Bet Now</th>
+      <th class="num sortable" data-col="fee">Fee</th><th class="num sortable" data-col="net">Net</th><th class="num sortable" data-col="stake">Stake</th><th>Notes</th>
     </tr></thead>
     <tbody id="tbody"></tbody>
   </table></div>
@@ -890,6 +897,13 @@ function render(rows,cfg){
     if(!showRejects && a.pass!==b.pass) return a.pass?-1:1;
     const sa=isStarted(a), sb=isStarted(b);
     if(sa!==sb) return sa?1:-1;
+    if(colSort){
+      const va=colVal(a,colSort), vb=colVal(b,colSort);
+      if(va==null && vb==null) return 0;
+      if(va==null) return 1; if(vb==null) return -1;   // blanks always last
+      if(typeof va==='string') return colDir*va.localeCompare(vb);
+      return colDir*(va-vb);
+    }
     
     if(sortBy==='educated'){
       // Hit rate per EV bucket (5% bands), sport-specific. Falls back to net EV if data thin.
@@ -978,11 +992,6 @@ function render(rows,cfg){
         (r.autoGrade==='win'?' <b class="gradeW">W</b>':r.autoGrade==='loss'?' <b class="gradeL">L</b>':'')+
         '</div>'+
         (bookLogo(r.book)?'':'<div class="meta book">'+esc(r.book||'book?')+'</div>')+'</td>'+
-      '<td class="num">'+(r.pinnacleOdds?
-        '<span style="'+(r.pinnacleGap!=null&&r.pinnacleGap>=3?'color:var(--warn);font-weight:700':'')+'">'+esc(r.pinnacleOdds)+
-        (r.pinnacleGap!=null?' <span class="meta">('+r.pinnacleGap.toFixed(1)+'% gap)</span>':'')+
-        (r.pinnacleGap!=null&&r.pinnacleGap>=3?' <span class="tag t-warn">worth a look</span>':'')+'</span>'
-        :'<span class="meta">—</span>')+'</td>'+
       '<td class="num">'+(r.fee===undefined?'—':(r.fee?'−'+pct(r.fee):'—'))+'</td>'+
       '<td class="num"><span class="net '+(r.net>0?'up':'down')+'">'+
         (r.net===null||r.net===undefined?'—':pct(r.net))+'</span></td>'+
@@ -1510,6 +1519,32 @@ document.getElementById('run').addEventListener('click',run);
 
 // Global sort/filter state
 let sortBy = 'top';
+let colSort = null;   // v2.45: header-click sort key (overrides the dropdown until it changes)
+let colDir = 1;       // 1 = low→high / A→Z, -1 = high→low / Z→A
+function colVal(r,k){
+  switch(k){
+    case 'name': return (r.name||'').toLowerCase();
+    case 'sport': return (r.sport||'').toLowerCase();
+    case 'market': { const m=(r.market||'').match(/^([+-]?[\d.]+)\s+(.*)$/);
+      return m ? m[2].toLowerCase()+' '+String(parseFloat(m[1])+1000).padStart(8,'0') : (r.market||'').toLowerCase(); }
+    case 'odds': { const v=parseFloat(r.offeredRaw); return isNaN(v)?null:v; }
+    case 'cover': return r.fairProb;
+    case 'stars': return r.stars;
+    case 'hit': return r.l15N ? r.l15Hit : (r.seasonN ? r.seasonHit : null);
+    case 'ev': return r.gross;
+    case 'fee': return r.fee;
+    case 'net': return r.net;
+    case 'stake': return r.stake||null;
+  }
+  return null;
+}
+function paintSortArrows(){
+  document.querySelectorAll('#boardHead th.sortable').forEach(th=>{
+    const old=th.querySelector('.arrow'); if(old) old.remove();
+    if(colSort===th.dataset.col){ const a=document.createElement('span'); a.className='arrow';
+      a.textContent=colDir===1?'▲':'▼'; th.appendChild(a); }
+  });
+}
 let filterSport = '';
 let showRejects = false;
 
@@ -1593,6 +1628,7 @@ function resetFilters() {
   filterStarsMin = null;
   filterCoverMin = null;
   sortBy = 'top';
+  colSort = null; paintSortArrows();
   
   document.getElementById('filterPlayer').value = '';
   document.getElementById('filterTeam').value = '';
@@ -1606,7 +1642,6 @@ function resetFilters() {
   document.getElementById('filterGrossMax').value = '';
   document.getElementById('filterStakeMin').value = '';
   document.getElementById('filterStakeMax').value = '';
-  document.getElementById('filterGapMin').value = '';
   document.getElementById('filterStarsMin').value = '';
   document.getElementById('filterCoverMin').value = '';
   document.getElementById('sortBy').value = 'top';
@@ -1615,7 +1650,12 @@ function resetFilters() {
 }
 
 // Event listeners for sort/filter
-document.getElementById('sortBy').addEventListener('change', (e)=>{ sortBy=e.target.value; rerenderWithFilters(); });
+document.getElementById('sortBy').addEventListener('change', (e)=>{ sortBy=e.target.value; colSort=null; paintSortArrows(); rerenderWithFilters(); });
+document.querySelectorAll('#boardHead th.sortable').forEach(th=>th.addEventListener('click',()=>{
+  const k=th.dataset.col;
+  if(colSort===k) colDir=-colDir; else { colSort=k; colDir=1; }
+  paintSortArrows(); rerenderWithFilters();
+}));
 document.getElementById('filterSport').addEventListener('change', (e)=>{ filterSport=e.target.value; rerenderWithFilters(); });
 document.getElementById('showRejects').addEventListener('change', (e)=>{ showRejects=e.target.checked; rerenderWithFilters(); });
 
@@ -1632,7 +1672,6 @@ document.getElementById('filterGrossMin').addEventListener('change', (e)=>{ filt
 document.getElementById('filterGrossMax').addEventListener('change', (e)=>{ filterGrossMax=e.target.value?parseFloat(e.target.value):null; rerenderWithFilters(); });
 document.getElementById('filterStakeMin').addEventListener('change', (e)=>{ filterStakeMin=e.target.value?parseFloat(e.target.value):null; rerenderWithFilters(); });
 document.getElementById('filterStakeMax').addEventListener('change', (e)=>{ filterStakeMax=e.target.value?parseFloat(e.target.value):null; rerenderWithFilters(); });
-document.getElementById('filterGapMin').addEventListener('change', (e)=>{ filterGapMin=e.target.value?parseFloat(e.target.value):null; rerenderWithFilters(); });
 document.getElementById('filterStarsMin').addEventListener('change', (e)=>{ filterStarsMin=e.target.value?parseFloat(e.target.value):null; rerenderWithFilters(); });
 document.getElementById('filterCoverMin').addEventListener('change', (e)=>{ filterCoverMin=e.target.value?parseFloat(e.target.value):null; rerenderWithFilters(); });
 
@@ -1804,23 +1843,8 @@ async function loadApi(){
     lastRows=rows;
     const c=cfgRead(); render(audit(lastRows,c),c); save();
 
-    // Attach Pinnacle's own line to each row for comparison — separate fetch
-    // (book_id 2 only), matched by the Worker's event/market/participant/side key.
-    // Runs after the board is already shown, then re-renders once gaps are known.
-    (async()=>{ const m=[]; for(const s of sports) m.push(await fetchPinnacleMap(s, date, weekParam)); return m; })().then(maps=>{
-      const merged={};
-      maps.forEach(m=>Object.assign(merged,m));
-      lastRows.forEach(r=>{
-        if(!r.apiKey || !merged[r.apiKey]) return;
-        const pin=merged[r.apiKey];
-        r.pinnacleOdds=fmtOdds(pin.odds);
-        r.pinnacleProb=pin.prob;
-        if(pin.prob!=null && r.offeredProb!=null){
-          r.pinnacleGap=Math.abs(r.offeredProb-pin.prob)*100;
-        }
-      });
-      if(lastRows.length){ const c3=cfgRead(); render(audit(lastRows,c3),c3); }
-    });
+    // v2.45: Pinnacle comparison removed — BettingPros' own cover %/stars replace it,
+    // and dropping the extra book_id=2 pull halves the calls per load.
 
     if(lastRows.length){
       attachGameInfo(lastRows).then(async ()=>{
