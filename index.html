@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Prop Bet Cheat Sheet v2.45</title>
+<title>Prop Bet Cheat Sheet v2.46</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -122,6 +122,21 @@ tbody tr:hover{background:var(--panel-2)}
 :root[data-theme="dark"] #tbody tr:nth-child(even):not(.dupe):not(.corr) td{background:#22303F}
 #tbody tr:not(.dupe):not(.corr):hover td{background:var(--panel-2); filter:brightness(.97)}
 th.sortable{cursor:pointer; user-select:none}
+/* v2.46 sweet-spot badge + "I bet this" editor */
+.sweet{display:inline-block; margin-top:4px; font-size:10.5px; font-weight:700; letter-spacing:.04em;
+  padding:2px 8px; border-radius:20px; background:#D6F5E3; color:#0B6B3A; white-space:nowrap}
+:root[data-theme="dark"] .sweet{background:#123A28; color:#5FE0A0}
+.sweetbar{display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; font-size:13px; color:var(--soft);
+  background:var(--panel-2); border-radius:8px; padding:10px 14px; margin-bottom:12px}
+.sweetbar input{width:62px; font-family:inherit; font-size:13px; padding:5px 6px; border:1px solid var(--rule);
+  border-radius:6px; background:var(--panel); color:var(--ink)}
+.sweetbar b{color:var(--ink)}
+button.log.sm{padding:4px 10px; font-size:11.5px; margin-top:5px}
+tr.editor td{background:var(--accent-bg) !important}
+.editor-row{display:flex; flex-wrap:wrap; align-items:center; gap:10px; font-size:13px}
+.editor-row select,.editor-row input{font-family:inherit; font-size:13px; padding:6px 8px; border:1px solid var(--rule);
+  border-radius:6px; background:var(--panel); color:var(--ink)}
+.editor-row input{width:80px}
 th.sortable:hover{color:var(--ink)}
 th.sortable .arrow{font-size:10px; margin-left:3px; color:var(--accent)}
 tbody tr.out td{opacity:.45}
@@ -237,7 +252,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 <div class="head">
   <div class="head-row">
     <div>
-      <h1>Prop Bet Cheat Sheet <span class="ver">v2.45</span></h1>
+      <h1>Prop Bet Cheat Sheet <span class="ver">v2.46</span></h1>
       <div class="date">Board for <input type="date" id="slate"></div>
       <div class="built">Build 22 Sep 2026</div>
     </div>
@@ -399,6 +414,16 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
         <input type="checkbox" id="showRejects" style="width:15px;height:15px;accent-color:var(--accent)"> Show rejected bets
       </label>
     </div>
+  </div>
+
+  <!-- ===== SWEET SPOT (v2.46) ===== -->
+  <div class="sweetbar">
+    <b>🎯 Sweet spot</b>
+    <label>Stars ≥ <input type="number" id="swStars" value="4" min="1" max="5" step="1"></label>
+    <label>Cover ≥ <input type="number" id="swCover" value="60" step="1">%</label>
+    <label>Net EV ≥ <input type="number" id="swNet" value="5" step="0.5">%</label>
+    <label>Odds <input type="number" id="swOMin" value="-250" step="10"> to <input type="number" id="swOMax" value="150" step="10"></label>
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="swOnly" style="width:15px;height:15px;accent-color:var(--accent)"> Only show sweet spot</label>
   </div>
 
   <!-- ===== FILTER PANEL ===== -->
@@ -893,6 +918,8 @@ function render(rows,cfg){
   if(cfg.hideStarted) shown=shown.filter(r=>!isStarted(r));
   if(filterSport) shown=shown.filter(r=>r.sport===filterSport);
   shown=applyAdvancedFilters(shown);
+  const swc=swCfg();
+  if(swc.only) shown=shown.filter(r=>isSweet(r,swc));
   shown.sort((a,b)=>{
     if(!showRejects && a.pass!==b.pass) return a.pass?-1:1;
     const sa=isStarted(a), sb=isStarted(b);
@@ -977,7 +1004,8 @@ function render(rows,cfg){
       : fmtOdds(r.offeredRaw);
     tr.innerHTML=
       '<td><div class="pick">'+esc(r.name)+'</div>'+
-        (r.matchup?'<div class="meta">'+esc(r.matchup)+'</div>':'')+'</td>'+
+        (r.matchup?'<div class="meta">'+esc(r.matchup)+'</div>':'')+
+        (isSweet(r,swc)?'<span class="sweet" title="Inside your sweet-spot settings">🎯 SWEET SPOT</span>':'')+'</td>'+
       '<td><span class="sport s-'+esc(r.sport)+'">'+esc(r.sport)+'</span></td>'+
       '<td style="text-align:center">'+mktCell+'</td>'+
       '<td class="num"><span class="odds-cell">'+esc(fmtOdds(r.offeredRaw))+logoTag(r.book)+'</span></td>'+
@@ -991,7 +1019,10 @@ function render(rows,cfg){
         (r.autoGrade==='win'?' won':r.autoGrade==='loss'?' lost':'')+'">'+esc(betNow)+logoTag(r.book)+
         (r.autoGrade==='win'?' <b class="gradeW">W</b>':r.autoGrade==='loss'?' <b class="gradeL">L</b>':'')+
         '</div>'+
-        (bookLogo(r.book)?'':'<div class="meta book">'+esc(r.book||'book?')+'</div>')+'</td>'+
+        (bookLogo(r.book)?'':'<div class="meta book">'+esc(r.book||'book?')+'</div>')+
+        '<div>'+(r.prior
+          ? '<button class="log sm undo bet-undo" data-idx="'+r.idx+'">Undo bet</button>'
+          : '<button class="log sm bet-btn" data-idx="'+r.idx+'">I bet this</button>')+'</div></td>'+
       '<td class="num">'+(r.fee===undefined?'—':(r.fee?'−'+pct(r.fee):'—'))+'</td>'+
       '<td class="num"><span class="net '+(r.net>0?'up':'down')+'">'+
         (r.net===null||r.net===undefined?'—':pct(r.net))+'</span></td>'+
@@ -1000,6 +1031,13 @@ function render(rows,cfg){
       '<td>'+(tags||'<span class="tag t-live">clear</span>')+'</td>';
     tb.appendChild(tr);
   });
+
+  tb.querySelectorAll('button.bet-btn').forEach(btn=>btn.addEventListener('click',()=>{
+    const r=lastRows.find(x=>x.idx===+btn.dataset.idx); if(r) openBetEditor(btn.closest('tr'), r);
+  }));
+  tb.querySelectorAll('button.bet-undo').forEach(btn=>btn.addEventListener('click',()=>{
+    const r=lastRows.find(x=>x.idx===+btn.dataset.idx); if(r) undoBet(r);
+  }));
 
   const dupes=passing.filter(r=>r.prior).length, corrs=passing.filter(r=>r.corr).length;
   document.getElementById('count').textContent=passing.length;
@@ -1024,6 +1062,65 @@ function render(rows,cfg){
 
   empty.style.display = shown.length?'none':'block';
   if(rows.length&&!shown.length) empty.textContent='Every bet failed a screen. Switch on the rejects to see why each one died.';
+}
+
+/* ============ sweet spot (v2.46) ============ */
+const SW_IDS=['swStars','swCover','swNet','swOMin','swOMax'];
+function swCfg(){
+  const v=id=>parseFloat(document.getElementById(id).value);
+  return {stars:v('swStars'), cover:v('swCover'), net:v('swNet'), oMin:v('swOMin'), oMax:v('swOMax'),
+          only:document.getElementById('swOnly').checked};
+}
+function isSweet(r,c){
+  c=c||swCfg();
+  if(!r.pass || r.stars==null || r.fairProb==null || r.net==null) return false;
+  const odds=parseFloat(r.offeredRaw);
+  return r.stars>=c.stars && r.fairProb*100>=c.cover && r.net*100>=c.net &&
+         !isNaN(odds) && odds>=c.oMin && odds<=c.oMax;
+}
+function saveSweet(){ try{ const o={}; SW_IDS.forEach(k=>o[k]=document.getElementById(k).value);
+  o.swOnly=document.getElementById('swOnly').checked; localStorage.setItem('mbev.sweet',JSON.stringify(o)); }catch(e){} }
+function loadSweet(){ try{ const o=JSON.parse(localStorage.getItem('mbev.sweet')||'null'); if(!o) return;
+  SW_IDS.forEach(k=>{ if(o[k]!==undefined) document.getElementById(k).value=o[k]; });
+  document.getElementById('swOnly').checked=!!o.swOnly; }catch(e){} }
+
+/* ============ "I bet this" (v2.46) ============
+   Logs the bet with the book/odds/stake you actually got — same player and
+   market, but the book and price can differ from what the board showed. */
+const BET_BOOKS=['DraftKings','FanDuel','BetMGM','Caesars','Fanatics','bet365','Hard Rock','BetRivers',
+  'Novig','Kalshi','Polymarket','ProphetX','Fliff','theScore Bet'];
+function openBetEditor(tr, r){
+  const next=tr.nextElementSibling;
+  if(next && next.classList.contains('editor')){ next.remove(); return; }
+  document.querySelectorAll('#tbody tr.editor').forEach(e=>e.remove());
+  const books=[r.book].concat(BET_BOOKS.filter(b=>b.toLowerCase()!==(r.book||'').toLowerCase())).filter(Boolean);
+  const ed=document.createElement('tr'); ed.className='editor';
+  ed.innerHTML='<td colspan="13"><div class="editor-row">'+
+    '<b>'+esc(r.name)+' — '+esc(betNowOf(r))+'</b>'+
+    '<label>Book <select class="eb-book">'+books.map(b=>'<option>'+esc(b)+'</option>').join('')+'</select></label>'+
+    '<label>Odds you got <input class="eb-odds" type="text" value="'+esc(r.offeredRaw)+'"></label>'+
+    '<label>Stake $ <input class="eb-stake" type="number" step="0.25" value="'+(r.stake?r.stake.toFixed(2):'')+'"></label>'+
+    '<button class="log sm eb-save">Save bet</button> <button class="log sm undo eb-cancel">Cancel</button>'+
+    '<span class="meta eb-msg"></span></div></td>';
+  tr.after(ed);
+  ed.querySelector('.eb-cancel').addEventListener('click',()=>ed.remove());
+  ed.querySelector('.eb-save').addEventListener('click',()=>{
+    const odds=ed.querySelector('.eb-odds').value.trim().replace(/^(\d)/,'+$1');
+    const prob=toProb(odds);
+    if(prob===null){ ed.querySelector('.eb-msg').textContent='Odds not readable — use e.g. -110 or +120'; return; }
+    const book=ed.querySelector('.eb-book').value;
+    const stake=parseFloat(ed.querySelector('.eb-stake').value)||0;
+    const cfg=cfgRead();
+    const gross=r.fairProb!=null ? r.fairProb/prob-1 : null;
+    const fee=feeRate(book, prob, cfg.fees);
+    const net=gross==null?null:(gross-fee)/(1+fee);
+    addToLog(Object.assign({}, r, {book, offeredRaw:odds, offeredProb:prob, gross, net, stake}));
+    renderLog(); renderPerf(); refresh();
+  });
+}
+function undoBet(r){
+  const i=logged.findIndex(L=>matchKeyOf(L)===matchKey(r));
+  if(i>=0){ logged.splice(i,1); saveLog(); renderLog(); renderPerf(); refresh(); }
 }
 
 /* Stars and hit rate cells (API rows only — the paste box doesn't carry them). */
@@ -2221,6 +2318,8 @@ function loadCfg(){
   const d=new Date(), p=n=>String(n).padStart(2,'0');
   document.getElementById('slate').value=d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
 })();
+SW_IDS.concat(['swOnly']).forEach(id=>document.getElementById(id).addEventListener('change',()=>{ saveSweet(); rerenderWithFilters(); }));
+loadSweet();
 loadCfg(); loadLog(); manual(); render([],cfgRead()); renderLog(); renderPerf();
 </script>
 </body>
