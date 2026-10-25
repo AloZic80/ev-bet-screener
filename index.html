@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Prop Bet Cheat Sheet v2.60</title>
+<title>Prop Bet Cheat Sheet v2.61</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -296,6 +296,17 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 .range-sliders{display:flex; gap:8px; align-items:center}
 .range-sliders input{flex:1}
 .filter-actions{display:flex; gap:8px; flex-wrap:wrap}
+/* v2.61 */
+.board-opts{margin:0 0 12px}
+.board-opts>summary{cursor:pointer; font-weight:600; font-size:14px; padding:8px 0; color:var(--ink); list-style:none}
+.board-opts>summary::-webkit-details-marker{display:none}
+.board-opts>summary::before{content:'▸ '; color:var(--soft)}
+.board-opts[open]>summary::before{content:'▾ '}
+.board-opts>summary .sub{font-weight:400; color:var(--soft); font-size:12.5px; margin-left:6px}
+.board-opts[open]{padding-bottom:4px}
+tr.skiprow td{background:var(--panel)!important; box-shadow:none!important}
+tr.skiprow td>*{opacity:.42; transition:opacity .15s}
+tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 .btn-reset{font-family:inherit; font-size:13px; font-weight:600; cursor:pointer; padding:8px 16px; border-radius:6px; background:var(--live-bg); color:var(--live); border:1px solid var(--live); transition:all 0.2s}
 .btn-reset:hover{background:var(--live); color:white}
 </style>
@@ -306,7 +317,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 <div class="head">
   <div class="head-row">
     <div>
-      <h1>Prop Bet Cheat Sheet <span class="ver" id="verTag">v2.60</span></h1>
+      <h1>Prop Bet Cheat Sheet <span class="ver" id="verTag">v2.61</span></h1>
       <div class="date">Board for <input type="date" id="slate"></div>
       <div class="built">Build 22 Sep 2026</div>
     </div>
@@ -319,6 +330,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
   <button class="tab" data-view="v-money">Moneylines</button>
   <button class="tab" data-view="v-log">Bet log</button>
   <button class="tab" data-view="v-perf">Performance</button>
+  <button class="tab" data-view="v-settings">Settings</button>
 </div>
 
 <!-- ======================= BOARD ======================= -->
@@ -412,58 +424,10 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
   </details>
 </details>
 
-<details class="panel fold">
-  <summary><h2>Screens <span class="sub">odds range, EV floor, books, fees</span></h2></summary>
-  <p class="hint">A bet has to clear all of these. Widening them until something appears is how you end up on the rows that only look good.</p>
-  <div class="grid">
-    <div class="field"><label for="oMin">Odds floor</label><input id="oMin" type="number" value="-300" step="5"></div>
-    <div class="field"><label for="oMax">Odds ceiling</label><input id="oMax" type="number" value="500" step="5"></div>
-    <div class="field"><label for="eMin">Net EV floor %</label><input id="eMin" type="number" value="1.5" step="0.5"></div>
-    <div class="field"><label for="eMax">Gross EV ceiling %</label><input id="eMax" type="number" value="40" step="0.5"></div>
-    <div class="field"><label for="devig">Devig tolerance %</label><input id="devig" type="number" value="2" step="0.5"></div>
-  </div>
-  <div class="field" style="margin-top:13px">
-    <label for="books">Books you can bet, comma separated. Blank means all</label>
-    <input id="books" type="text" value="DraftKings, Polymarket, Novig, Kalshi" spellcheck="false">
-  </div>
-  <div class="checks">
-    <label><input type="checkbox" id="cDeriv" checked> No quarter or half markets</label>
-    <label><input type="checkbox" id="cProp" checked> No college player props</label>
-    <label><input type="checkbox" id="cDfs" checked> No DFS pick'em</label>
-    <label><input type="checkbox" id="cShow"> Show the rejects</label>
-    <label><input type="checkbox" id="cHideStarted"> Hide games already started/final</label>
-  </div>
-  <details>
-    <summary>Platform fees — verify these on each site before trusting a net number</summary>
-    <div class="grid" style="margin-top:12px">
-      <div class="field"><label for="fKalshi">Kalshi % of price</label><input id="fKalshi" type="number" value="7" step="0.5"></div>
-      <div class="field"><label for="fProphet">ProphetX % of stake</label><input id="fProphet" type="number" value="1" step="0.25"></div>
-      <div class="field"><label for="fPoly">Polymarket % of stake</label><input id="fPoly" type="number" value="0" step="0.25"></div>
-      <div class="field"><label for="fNovig">Novig % of stake</label><input id="fNovig" type="number" value="0" step="0.25"></div>
-      <div class="field"><label for="fFliff">Fliff % of stake</label><input id="fFliff" type="number" value="0" step="0.25"></div>
-      <div class="field"><label for="fBook">Licensed books % of stake</label><input id="fBook" type="number" value="0" step="0.25"></div>
-    </div>
-    <p class="hint" style="margin:12px 0 0">Kalshi runs on a curve rather than a flat rate: <strong>7% × price × (1 − price)</strong> per contract, which is <strong>7% × (1 − price)</strong> of what you put up. A short favorite costs about 2.3%, an even-money bet 3.5%, a +400 longshot 5.6%. The fee is charged on top of the contract cost, so net EV is <strong>(gross − fee) ÷ (1 + fee)</strong>. Kalshi also rounds each order's fee up to the next cent; the board includes that when it counts whole contracts.</p>
-  </details>
-</details>
-
-<details class="panel fold">
-  <summary><h2>Stake sizing <span class="sub">bankroll and Kelly</span></h2></summary>
-  <p class="hint">Kelly scales a bet to its edge. The haircut shrinks that edge first, because the fair values behind it move and the biggest ones move most. What survives gets clamped to the range you actually bet in.</p>
-  <div class="grid">
-    <div class="field"><label for="bank">Bankroll $</label><input id="bank" type="number" value="1000" step="25"></div>
-    <div class="field"><label for="kelly">Kelly fraction</label><input id="kelly" type="number" value="0.25" step="0.05"></div>
-    <div class="field"><label for="shrink">Edge haircut</label><input id="shrink" type="number" value="0.5" step="0.1"></div>
-    <div class="field"><label for="sMin">Smallest bet $</label><input id="sMin" type="number" value="1.00" step="0.5"></div>
-    <div class="field"><label for="sMax">Largest bet $</label><input id="sMax" type="number" value="10.00" step="0.5"></div>
-    <div class="field"><label for="mWeight" title="How far to trust BettingPros' model over the market price when sizing. 0 = market only, 1 = model only.">Model weight (0–1)</label><input id="mWeight" type="number" value="0.35" step="0.05" min="0" max="1"></div>
-    <div class="field"><label for="gameCap" title="Most you'll have riding on one game across all bets">Max per game $</label><input id="gameCap" type="number" value="20" step="0.5"></div>
-  </div>
-  <p class="hint" style="margin:12px 0 0">Stakes size off a blend: the market's no-vig price pulled toward BettingPros' number by the model weight (0.35 = mostly market). If there's no market price for a bet, the model number is used with the haircut. Bets on a game you already have money on are trimmed so the game stays under the per-game max.</p>
-</details>
-
 <div class="panel">
   <h2>The board</h2>
+  <details class="board-opts" id="boardOpts">
+  <summary>Board options <span class="sub">sort, sport, sweet spot, filters</span></summary>
   <div class="row" style="margin-bottom:15px;gap:15px;flex-wrap:wrap">
     <div class="field" style="flex:1;min-width:160px;margin:0">
       <label for="sortBy" style="display:block;font-size:12.5px;color:var(--soft);margin-bottom:5px">Sort by</label>
@@ -576,11 +540,9 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
         <input type="number" id="filterCoverMin" class="filter-input" value="" placeholder="any" step="1">
       </div>
     </div>
-    <div class="filter-actions">
-      <button class="btn-reset" id="resetFilters">🧦 OPTIMIZATION bets</button>
-    </div>
   </div>
 
+  </details>
   <label class="notes-all"><input type="checkbox" id="notesAll" style="width:15px;height:15px;accent-color:var(--accent)"> Show all notes</label>
   <div class="swipe-hint">Swipe sideways for stars, Bet Now and hit rate →</div>
   <div class="scroll board"><table>
@@ -620,6 +582,60 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 </div>
 
 <!-- ======================= MONEYLINES ======================= -->
+<!-- v2.61: settings moved off the Board -->
+<div class="view" id="v-settings">
+<details class="panel fold" open>
+  <summary><h2>Screens <span class="sub">odds range, EV floor, books, fees</span></h2></summary>
+  <p class="hint">A bet has to clear all of these. Widening them until something appears is how you end up on the rows that only look good.</p>
+  <div class="grid">
+    <div class="field"><label for="oMin">Odds floor</label><input id="oMin" type="number" value="-300" step="5"></div>
+    <div class="field"><label for="oMax">Odds ceiling</label><input id="oMax" type="number" value="500" step="5"></div>
+    <div class="field"><label for="eMin">Net EV floor %</label><input id="eMin" type="number" value="1.5" step="0.5"></div>
+    <div class="field"><label for="eMax">Gross EV ceiling %</label><input id="eMax" type="number" value="40" step="0.5"></div>
+    <div class="field"><label for="devig">Devig tolerance %</label><input id="devig" type="number" value="2" step="0.5"></div>
+  </div>
+  <div class="field" style="margin-top:13px">
+    <label for="books">Books you can bet, comma separated. Blank means all</label>
+    <input id="books" type="text" value="DraftKings, Polymarket, Novig, Kalshi" spellcheck="false">
+  </div>
+  <div class="checks">
+    <label><input type="checkbox" id="cDeriv" checked> No quarter or half markets</label>
+    <label><input type="checkbox" id="cProp" checked> No college player props</label>
+    <label><input type="checkbox" id="cDfs" checked> No DFS pick'em</label>
+    <label><input type="checkbox" id="cShow"> Show the rejects</label>
+    <label><input type="checkbox" id="cHideStarted"> Hide games already started/final</label>
+  </div>
+  <details>
+    <summary>Platform fees — verify these on each site before trusting a net number</summary>
+    <div class="grid" style="margin-top:12px">
+      <div class="field"><label for="fKalshi">Kalshi % of price</label><input id="fKalshi" type="number" value="7" step="0.5"></div>
+      <div class="field"><label for="fProphet">ProphetX % of stake</label><input id="fProphet" type="number" value="1" step="0.25"></div>
+      <div class="field"><label for="fPoly">Polymarket % of stake</label><input id="fPoly" type="number" value="0" step="0.25"></div>
+      <div class="field"><label for="fNovig">Novig % of stake</label><input id="fNovig" type="number" value="0" step="0.25"></div>
+      <div class="field"><label for="fFliff">Fliff % of stake</label><input id="fFliff" type="number" value="0" step="0.25"></div>
+      <div class="field"><label for="fBook">Licensed books % of stake</label><input id="fBook" type="number" value="0" step="0.25"></div>
+    </div>
+    <p class="hint" style="margin:12px 0 0">Kalshi runs on a curve rather than a flat rate: <strong>7% × price × (1 − price)</strong> per contract, which is <strong>7% × (1 − price)</strong> of what you put up. A short favorite costs about 2.3%, an even-money bet 3.5%, a +400 longshot 5.6%. The fee is charged on top of the contract cost, so net EV is <strong>(gross − fee) ÷ (1 + fee)</strong>. Kalshi also rounds each order's fee up to the next cent; the board includes that when it counts whole contracts.</p>
+  </details>
+</details>
+
+<details class="panel fold" open>
+  <summary><h2>Stake sizing <span class="sub">bankroll and Kelly</span></h2></summary>
+  <p class="hint">Kelly scales a bet to its edge. The haircut shrinks that edge first, because the fair values behind it move and the biggest ones move most. What survives gets clamped to the range you actually bet in.</p>
+  <div class="grid">
+    <div class="field"><label for="bank">Bankroll $</label><input id="bank" type="number" value="1000" step="25"></div>
+    <div class="field"><label for="kelly">Kelly fraction</label><input id="kelly" type="number" value="0.25" step="0.05"></div>
+    <div class="field"><label for="shrink">Edge haircut</label><input id="shrink" type="number" value="0.5" step="0.1"></div>
+    <div class="field"><label for="sMin">Smallest bet $</label><input id="sMin" type="number" value="1.00" step="0.5"></div>
+    <div class="field"><label for="sMax">Largest bet $</label><input id="sMax" type="number" value="10.00" step="0.5"></div>
+    <div class="field"><label for="mWeight" title="How far to trust BettingPros' model over the market price when sizing. 0 = market only, 1 = model only.">Model weight (0–1)</label><input id="mWeight" type="number" value="0.35" step="0.05" min="0" max="1"></div>
+    <div class="field"><label for="gameCap" title="Most you'll have riding on one game across all bets">Max per game $</label><input id="gameCap" type="number" value="20" step="0.5"></div>
+  </div>
+  <p class="hint" style="margin:12px 0 0">Stakes size off a blend: the market's no-vig price pulled toward BettingPros' number by the model weight (0.35 = mostly market). If there's no market price for a bet, the model number is used with the haircut. Bets on a game you already have money on are trimmed so the game stays under the per-game max.</p>
+</details>
+
+</div>
+
 <div class="view" id="v-money">
 <div class="panel">
   <h2>Moneylines</h2>
@@ -692,6 +708,15 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
   </table></div>
   <div class="empty" id="logEmpty">No bets logged. Run a board and press Log on the ones you take.</div>
 </div>
+
+<!-- v2.61 -->
+<div class="panel" id="removedPanel" style="display:none">
+  <h2>Removed / cancelled <span class="sub" id="removedTotal"></span></h2>
+  <div class="scroll"><table>
+    <thead><tr><th>Removed</th><th>Bet</th><th class="num">Stake</th><th class="num">Lost cancelling</th><th></th></tr></thead>
+    <tbody id="removedBody"></tbody>
+  </table></div>
+</div>
 </div>
 
 <!-- ======================= PERFORMANCE ======================= -->
@@ -728,7 +753,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 
 </div>
 <script>
-const SCREENER_VERSION='v2.60';
+const SCREENER_VERSION='v2.61';
 // the header and tab title always show this one number
 document.title='Prop Bet Cheat Sheet '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -955,7 +980,7 @@ function audit(rows,cfg){
   const gameCount={};
   rows.forEach(r=>{ gameCount[r.game]=(gameCount[r.game]||0)+1; });
   rows.forEach((r,idx)=>{
-    r.idx=idx; r.flags=[]; delete r.moved; delete r.riskCand; delete r.risk; delete r.glConflict; delete r.glBest; delete r.prior; delete r.corr; delete r.contracts; delete r.gameInPlay; delete r.gameWeighted; delete r.samePlayer; delete r.capTrimmed;
+    r.idx=idx; r.flags=[]; delete r.moved; delete r.removed; delete r.riskCand; delete r.risk; delete r.glConflict; delete r.glBest; delete r.prior; delete r.corr; delete r.contracts; delete r.gameInPlay; delete r.gameWeighted; delete r.samePlayer; delete r.capTrimmed;
     if(r.offeredProb===null||r.fairProb===null){
       r.flags.push(['out','odds unreadable']); r.gross=null; r.net=null; r.pass=false; r.stake=0; return;
     }
@@ -997,7 +1022,10 @@ function audit(rows,cfg){
     // v2.56: same bet, but the line has moved since you took it (43.5 → 44.5)
     const moved = !prior && logged.find(L=>onBoard(L) && !L.sold && String(L.name||'').toLowerCase()===String(r.name||'').toLowerCase() &&
       (L.kind||'')===(r.kind||'') && marketStem(L.market)===marketStem(r.market) && (sideOf(L)||'')===(r.side||'') && L.market!==r.market);
-    if(moved){ r.moved=moved; r.flags.push(['dupe','ALREADY BET at '+(moved.betnow||moved.market)+' — the line moved since']); }
+    if(moved){ r.moved=moved; r.flags.push(['dupe','you have '+(moved.betnow||moved.market)+' — a different line of this bet ($'+(moved.stake||0).toFixed(2)+' on '+(moved.book||'?')+')']); }
+    // v2.61: you removed this exact bet
+    if(!prior){ const rm=removedBets.filter(R=>onBoard(R) && coreKey(R.name,R.market,sideOf(R))===coreKey(r.name,r.market,r.side)).pop();
+      if(rm){ r.removed=rm; r.flags.push(['warn','you removed this bet'+(rm.lost>0?' (lost $'+rm.lost.toFixed(2)+' cancelling)':'')]); } }
     if(otherSide) r.flags.push(['warn','you bet the '+(sideOf(otherSide)==='O'?'Over':'Under')+' on this — this is the other side']);
     if(prior){
       r.prior = prior;
@@ -1102,6 +1130,8 @@ function audit(rows,cfg){
   });
   // v2.56: a bet you already hold at another line gets no new stake
   rows.forEach(r=>{ if(r.moved && r.stake>0){ r.stake=0; delete r.contracts; } });
+  // v2.61: say it once — drop the notes that repeat "you already have this bet"
+  rows.forEach(r=>{ if(r.moved) r.flags=r.flags.filter(f=>!/one per player|Same game as your/.test(f[1])); });
   // v2.55: game lines on the same game — moneyline/spread on either team are one bet "axis",
   // the total (Over/Under) is another. Two bets on one axis either cancel (opposite sides,
   // e.g. PIT −3.5 + NO +2.5 both lose on a 3-point PIT win) or double up the same outcome.
@@ -1119,7 +1149,7 @@ function audit(rows,cfg){
       if(held){
         r.glConflict={held:true, label:held.name+' '+(held.betnow||held.market||'')};
         if(r.stake>0){ r.stake=0; delete r.contracts; }
-        r.flags.push(['corr','you already bet '+r.glConflict.label+' on this game — one '+(ax==='total'?'total':'side')+' bet per game']);
+        if(!r.moved) r.flags.push(['corr','you already bet '+r.glConflict.label+' on this game — one '+(ax==='total'?'total':'side')+' bet per game']);
         return;
       }
       if(r.stake>0) (groups[r.game+'|'+ax]=groups[r.game+'|'+ax]||[]).push(r);
@@ -1252,7 +1282,9 @@ function render(rows,cfg){
   shown.forEach(r=>{
     const tr=document.createElement('tr');
     const started = r.gameInfo && (r.gameInfo.state==='in'||r.gameInfo.state==='post');
-    tr.className = (r.pass?'':'out ') + (r.prior?'dupe':(r.corr?'corr':'')) + (started?' gameover':'');
+    // v2.61: anything you shouldn't place is greyed out (still readable on hover / with notes open)
+    const isSkip = !r.prior && (!(r.stake>0) || r.removed);
+    tr.className = (r.pass?'':'out ') + (r.prior?'dupe':(r.corr?'corr':'')) + (started?' gameover':'') + (isSkip?' skiprow':'');
     const gTag = !r.gameInfo ? ''
       : r.gameInfo.state==='post' ? '<span class="tag t-out">Final — '+esc(r.gameInfo.detail||'game over')+'</span>'
       : r.gameInfo.state==='in'   ? '<span class="tag t-warn">Live — started '+esc(r.gameInfo.timeCT)+'</span>'
@@ -1308,7 +1340,7 @@ function render(rows,cfg){
         (bookLogo(r.book)?'':'<div class="meta book">'+esc(r.book||'book?')+'</div>')+
         '<div class="btnrow">'+(r.prior
           ? '<button class="log sm undo bet-undo" data-idx="'+r.idx+'">Undo bet</button>'
-          : '<button class="log sm bet-btn" data-idx="'+r.idx+'">I bet this</button>')+
+          : '<button class="log sm bet-btn" data-idx="'+r.idx+'">'+(r.moved?'Add this line too':'I bet this')+'</button>')+
           '<button class="log sm parlay'+(inParlay(r)?' on':'')+' parlay-btn" data-idx="'+r.idx+'" title="Mark as used in a parlay">'+
           (inParlay(r)?'In parlay ✓':'Parlay')+'</button></div></td>';
     cells.fee='<td class="num">'+(r.fee===undefined?'—':(r.fee?'−'+pct(r.fee):'—'))+'</td>';
@@ -1317,6 +1349,7 @@ function render(rows,cfg){
         (r.stake&&r.contracts?'<div class="meta">'+r.contracts+'xC</div>':'')+'</td>';
     tr.innerHTML=BOARD_COLS.map(c=>cells[c]).join('');
     tb.appendChild(tr);
+    if(nOpen) tr.classList.add('nopen');
     if(nTags && nOpen){
       const nr=document.createElement('tr'); nr.className='notes-row '+tr.className;
       nr.innerHTML='<td colspan="'+BOARD_COLS.length+'"><div class="tags">'+tags+'</div></td>';
@@ -1340,7 +1373,7 @@ function render(rows,cfg){
     const r=lastRows.find(x=>x.idx===+btn.dataset.idx); if(r) toggleParlay(r);
   }));
   tb.querySelectorAll('button.bet-undo').forEach(btn=>btn.addEventListener('click',()=>{
-    const r=lastRows.find(x=>x.idx===+btn.dataset.idx); if(r) undoBet(r);
+    const r=lastRows.find(x=>x.idx===+btn.dataset.idx); if(r) undoBet(r, btn.closest('tr'));
   }));
 
   const dupes=passing.filter(r=>r.prior).length, corrs=passing.filter(r=>r.corr).length;
@@ -1573,9 +1606,10 @@ function toggleParlay(r){
   saveParlays(); refresh();
 }
 
-function undoBet(r){
-  const i=logged.indexOf(r.prior);
-  if(i>=0){ logged.splice(i,1); saveLog(); renderLog(); renderPerf(); refresh(); }
+function undoBet(r, tr){
+  if(!r.prior) return;
+  if(tr) askRemove(tr, r.prior, BOARD_COLS.length);   // v2.61: ask never-placed vs cancelled-with-loss
+  else removeBet(r.prior, 0);
 }
 
 /* v2.51: column order (Team/Player is pinned when scrolling sideways) */
@@ -1595,7 +1629,9 @@ function decisionHtml(r,cfg){
   if(r.prior) return r.prior.sold ? d('dec-done','SOLD','cashed out')
     : dl('dec-done','ALREADY BET', [$(r.prior.stake||0)+' on', esc(r.prior.book||'?')]);
   if(!r.pass) return d('dec-skip','SKIP', (r.flags.find(f=>f[0]==='out')||[,''])[1]);
-  if(r.moved) return dl('dec-done','ALREADY BET', [esc(r.moved.betnow||r.moved.market), 'line moved']);
+  if(r.removed) return r.moved ? dl('dec-skip','BET REMOVED', ['you still have', esc(lineOnly(r.moved))])
+                                : dl('dec-skip','BET REMOVED', [r.removed.lost>0?'lost $'+r.removed.lost.toFixed(2):'never placed']);
+  if(r.moved) return dl('dec-skip','YOU HAVE '+esc(lineOnly(r.moved)), ['this row is '+esc(lineOnly({betnow:betNowOf(r)}))]);
   if(r.glConflict) return r.glConflict.held
     ? dl('dec-skip','SKIP', ['already bet', esc(r.glConflict.label)])
     : dl('dec-skip','SKIP', [esc(r.glConflict.label)+' is better', r.glConflict.theirs+' vs '+r.glConflict.mine]);
@@ -1992,6 +2028,38 @@ function betStillOpen(b){
   return d>=0 && d<=1;
 }
 function onBoard(b){ return b.date===document.getElementById('slate').value || betStillOpen(b); }
+/* v2.61: bets you removed / cancelled — kept for the record (and any money lost cancelling) */
+let removedBets=[];
+function loadRemoved(){ try{ removedBets=JSON.parse(localStorage.getItem('mbev.removed')||'[]'); }catch(e){ removedBets=[]; } }
+function saveRemoved(){ try{ localStorage.setItem('mbev.removed',JSON.stringify(removedBets)); }catch(e){} }
+loadRemoved();
+function lineOnly(b){ return String(b.betnow||b.market||'').replace(/\s+[+-]\d+$/,''); }
+function removeBet(bet, lost){
+  const i=logged.indexOf(bet); if(i<0) return;
+  logged.splice(i,1);
+  removedBets.push(Object.assign({}, bet, {removedAt:new Date().toISOString(), lost:+(lost||0), placed:lost>0}));
+  saveLog(); saveRemoved(); renderLog(); renderPerf(); refresh();
+}
+/* Ask how the removal went: never placed ($0) or cancelled with a loss. Shown inline under a table row. */
+function askRemove(anchorTr, bet, cols){
+  const next=anchorTr.nextElementSibling;
+  if(next && next.classList.contains('rm-ask')){ next.remove(); return; }
+  document.querySelectorAll('tr.rm-ask').forEach(e=>e.remove());
+  const tr=document.createElement('tr'); tr.className='editor rm-ask';
+  tr.innerHTML='<td colspan="'+cols+'"><div class="editor-row"><b>Remove '+esc(bet.name)+' — '+esc(bet.betnow||bet.market)+'?</b>'+
+    '<button class="log sm rm-never">Never placed ($0)</button>'+
+    '<span class="meta">or cancelled, lost $</span><input class="rm-lost" type="number" step="0.01" min="0" placeholder="0.30" style="width:80px">'+
+    '<button class="log sm rm-save">Remove with loss</button> <button class="log sm undo rm-cancel">Keep it</button>'+
+    '<span class="meta rm-msg"></span></div></td>';
+  anchorTr.after(tr);
+  tr.querySelector('.rm-never').addEventListener('click',()=>{ tr.remove(); removeBet(bet,0); });
+  tr.querySelector('.rm-cancel').addEventListener('click',()=>tr.remove());
+  tr.querySelector('.rm-save').addEventListener('click',()=>{
+    const v=parseFloat(tr.querySelector('.rm-lost').value);
+    if(!(v>=0)){ tr.querySelector('.rm-msg').textContent='Enter what you lost (0 is fine)'; return; }
+    tr.remove(); removeBet(bet,v);
+  });
+}
 function coreKey(name,market,side){ return [name,market,side||''].join('|').toLowerCase(); }
 function marketStem(m){ return String(m||'').replace(/^[+-]?[\d.]+\s+/,'').toLowerCase(); }
 function propKey(r){ return [document.getElementById('slate').value,r.name,r.market].join('|').toLowerCase(); }
@@ -2082,9 +2150,23 @@ function renderLog(){
     saveLog(); renderLog(); renderPerf(); refresh();
   }));
   tb.querySelectorAll('button.kill:not(.sell)').forEach(btn=>btn.addEventListener('click',()=>{
-    logged.splice(parseInt(btn.dataset.i,10),1); saveLog(); renderLog(); renderPerf(); refresh();
+    const b=logged[parseInt(btn.dataset.i,10)]; if(b) askRemove(btn.closest('tr'), b, 11);
   }));
   empty.style.display = logged.length?'none':'block';
+  renderRemoved();
+}
+function renderRemoved(){
+  const panel=document.getElementById('removedPanel'), tb=document.getElementById('removedBody');
+  panel.style.display=removedBets.length?'block':'none';
+  const lost=removedBets.reduce((t,b)=>t+(b.lost||0),0);
+  document.getElementById('removedTotal').textContent=removedBets.length+' bet'+(removedBets.length===1?'':'s')+' · lost $'+lost.toFixed(2)+' cancelling';
+  tb.innerHTML=removedBets.map((b,i)=>'<tr><td class="meta" style="white-space:nowrap">'+esc((b.removedAt||'').slice(0,16).replace('T',' '))+'</td>'+
+    '<td><div class="pick">'+esc(b.name)+'</div><div class="meta">'+esc(b.betnow||b.market)+' · '+esc(b.book||'')+'</div></td>'+
+    '<td class="num">$'+(b.stake||0).toFixed(2)+'</td>'+
+    '<td class="num">'+(b.lost>0?'<span style="color:var(--out)">−$'+b.lost.toFixed(2)+'</span>':'never placed')+'</td>'+
+    '<td><button class="kill rm-forget" data-i="'+i+'" title="Delete this record">forget</button></td></tr>').join('');
+  tb.querySelectorAll('button.rm-forget').forEach(btn=>btn.addEventListener('click',()=>{
+    removedBets.splice(+btn.dataset.i,1); saveRemoved(); renderRemoved(); refresh(); }));
 }
 
 /* ============ calibration (v2.48) ============ */
@@ -2418,7 +2500,7 @@ document.getElementById('filterStarsMin').addEventListener('change', (e)=>{ filt
 document.getElementById('filterCoverMin').addEventListener('change', (e)=>{ filterCoverMin=e.target.value?parseFloat(e.target.value):null; rerenderWithFilters(); });
 
 // Reset button
-document.getElementById('resetFilters').addEventListener('click', resetFilters);
+// v2.61: the OPTIMIZATION bets button was removed
 
 /* ============ load from api.0xbeta.dev (bypasses copy-paste) ============
    Maps the Worker's already-normalized /props rows into the exact shape
@@ -2916,7 +2998,7 @@ document.getElementById('books').addEventListener('input',()=>{ refresh(); save(
 function betIdentity(b){ return b.id || [b.date,b.name,b.market,sideOf(b),b.book,b.odds,b.stake].join('|').toLowerCase(); }
 document.getElementById('backupLog').addEventListener('click',()=>{
   const payload={kind:'mbev-betlog', v:1, savedAt:new Date().toISOString(), screener:SCREENER_VERSION,
-    log:logged, parlays, gradeHistory};
+    log:logged, parlays, gradeHistory, removed:removedBets};
   const blob=new Blob([JSON.stringify(payload,null,1)],{type:'application/json'});
   const d=new Date(), p=n=>String(n).padStart(2,'0');
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
@@ -2936,7 +3018,9 @@ document.getElementById('restoreFile').addEventListener('change',async e=>{
     p.log.forEach(b=>{ if(!b||!b.name) return; const k=betIdentity(b); if(have.has(k)){ skipped++; return; } have.add(k); logged.push(b); added++; });
     let pAdded=0; Object.entries(p.parlays||{}).forEach(([k,v])=>{ if(!parlays[k]){ parlays[k]=v; pAdded++; } });
     let gAdded=0; Object.entries(p.gradeHistory||{}).forEach(([k,v])=>{ if(!gradeHistory[k]){ gradeHistory[k]=v; gAdded++; } });
-    saveLog(); saveParlays(); saveGradeHistory(); renderLog(); renderPerf(); refresh();
+    const rk=b=>(b.removedAt||'')+'|'+betIdentity(b), haveR=new Set(removedBets.map(rk));
+    (p.removed||[]).forEach(b=>{ if(b && !haveR.has(rk(b))){ removedBets.push(b); haveR.add(rk(b)); } });
+    saveLog(); saveParlays(); saveGradeHistory(); saveRemoved(); renderLog(); renderPerf(); refresh();
     st.textContent='Restored '+added+' bet'+(added===1?'':'s')+(skipped?' ('+skipped+' already here)':'')+
       (pAdded?', '+pAdded+' parlay mark'+(pAdded===1?'':'s'):'')+(gAdded?', '+gAdded+' graded pick'+(gAdded===1?'':'s'):'')+'.';
   }catch(err){ st.textContent='Could not read that file: '+err.message; }
@@ -3206,6 +3290,27 @@ function loadCfg(){
 SW_IDS.concat(SW_CHECKS).forEach(id=>document.getElementById(id).addEventListener('change',()=>{ saveSweet(); rerenderWithFilters(); }));
 loadSweet(); loadParlays();
 loadCfg(); loadLog(); manual(); render([],cfgRead()); renderLog(); renderPerf();
+/* v2.61: keep every open copy of the screener in sync — a stale tab must never write an old list back */
+function syncFromStorage(){
+  let changed=false;
+  const same=(key,val)=>{ try{ return (localStorage.getItem(key)||'') === JSON.stringify(val); }catch(e){ return true; } };
+  try{
+    if(localStorage.getItem('mbev.log')!==null && !same('mbev.log',logged)){ loadLog(); changed=true; }
+    if(localStorage.getItem('mbev.parlay')!==null && !same('mbev.parlay',parlays)){ loadParlays(); changed=true; }
+    if(localStorage.getItem('mbev.removed')!==null && !same('mbev.removed',removedBets)){ loadRemoved(); changed=true; }
+  }catch(e){}
+  if(changed){ renderLog(); renderPerf(); refresh(); }
+  return changed;
+}
+window.addEventListener('storage',e=>{
+  if(['mbev.log','mbev.parlay','mbev.removed'].includes(e.key)) syncFromStorage();
+  else if(e.key==='mbev.cfg'){ loadCfg(); refresh(); }
+});
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') syncFromStorage(); });
+window.addEventListener('focus',syncFromStorage);
+(function(){ const d=document.getElementById('boardOpts');
+  try{ d.open=localStorage.getItem('mbev.boardOpts')==='1'; }catch(e){}
+  d.addEventListener('toggle',()=>{ try{ localStorage.setItem('mbev.boardOpts', d.open?'1':'0'); }catch(e){} }); })();
 (function(){ const cb=document.getElementById('notesAll'); cb.checked=notesAll;
   cb.addEventListener('change',()=>{ notesAll=cb.checked; openNotes.clear(); saveNotesAll(); refresh(); }); })();
 restoreBoard(); refreshBudget();
