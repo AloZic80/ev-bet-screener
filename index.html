@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Prop Bet Cheat Sheet v2.57</title>
+<title>Prop Bet Cheat Sheet v2.58</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -131,6 +131,7 @@ th.sortable{cursor:pointer; user-select:none}
 td.notes{min-width:230px; max-width:340px; white-space:normal}
 td.notes .tag{white-space:normal}
 .dec{font-weight:700; font-size:12.5px; letter-spacing:.02em; white-space:nowrap}
+.dec-lines{white-space:nowrap; line-height:1.35}   /* v2.58: short stacked lines, not one long one */
 .dec-bet{color:var(--live)} .dec-skip{color:var(--soft)} .dec-lim{color:var(--warn)} .dec-done{color:var(--out)}
 .swipe-hint{display:none; font-size:12px; color:var(--soft); margin:0 0 6px}
 @media (max-width:760px){ .swipe-hint{display:block} .scroll.board td.c-name{min-width:118px} }
@@ -294,7 +295,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 <div class="head">
   <div class="head-row">
     <div>
-      <h1>Prop Bet Cheat Sheet <span class="ver" id="verTag">v2.57</span></h1>
+      <h1>Prop Bet Cheat Sheet <span class="ver" id="verTag">v2.58</span></h1>
       <div class="date">Board for <input type="date" id="slate"></div>
       <div class="built">Build 22 Sep 2026</div>
     </div>
@@ -715,7 +716,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 
 </div>
 <script>
-const SCREENER_VERSION='v2.57';
+const SCREENER_VERSION='v2.58';
 // the header and tab title always show this one number
 document.title='Prop Bet Cheat Sheet '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -1471,14 +1472,17 @@ const BOARD_COLS=['name','market','odds','cover','net','stake','stars','betnow',
 function decisionHtml(r,cfg){
   const $=x=>'$'+x.toFixed(2);
   const d=(cls,txt,sub)=>'<div class="dec '+cls+'">'+txt+'</div>'+(sub?'<div class="meta">'+sub+'</div>':'');
+  // v2.58: several short lines under the decision
+  const dl=(cls,txt,lines)=>'<div class="dec '+cls+'">'+txt+'</div><div class="meta dec-lines">'+lines.join('<br>')+'</div>';
   const has=re=>r.flags.some(f=>re.test(f[1]));
   if(r.prior) return d('dec-done', r.prior.sold?'SOLD':'ALREADY BET', r.prior.sold?'cashed out':($(r.prior.stake||0)+' on '+(r.prior.book||'?')));
   if(!r.pass) return d('dec-skip','SKIP', (r.flags.find(f=>f[0]==='out')||[,''])[1]);
-  if(r.moved) return d('dec-done','ALREADY BET', esc(r.moved.betnow||r.moved.market)+' — line moved');
-  if(r.glConflict) return d('dec-skip','SKIP', r.glConflict.held ? 'you already bet '+esc(r.glConflict.label)
-    : esc(r.glConflict.label)+' is the better bet ('+r.glConflict.theirs+' vs '+r.glConflict.mine+')');
+  if(r.moved) return dl('dec-done','ALREADY BET', [esc(r.moved.betnow||r.moved.market), 'line moved']);
+  if(r.glConflict) return r.glConflict.held
+    ? dl('dec-skip','SKIP', ['already bet', esc(r.glConflict.label)])
+    : dl('dec-skip','SKIP', [esc(r.glConflict.label)+' is better', r.glConflict.theirs+' vs '+r.glConflict.mine]);
   if(r.stake>0){
-    if(r.glBest) return d('dec-bet','BET '+$(r.stake),'best bet, '+esc(r.glBest.join(', '))+(r.glBest.length>1?' are':' is')+' skipped');
+    if(r.glBest) return dl('dec-bet','BET '+$(r.stake), ['best bet'].concat(r.glBest.map(x=>esc(x)+' skipped')));
     if(r.risk) return d('dec-lim','RISK '+$(r.stake),'outlier, below market — small on purpose');
     if(r.outlier) return d('dec-lim','OUTLIER '+$(r.stake),'capped at the minimum');
     if(r.capTrimmed) return d('dec-lim','LIMITED '+$(r.stake),'game cap');
