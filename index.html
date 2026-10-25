@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Prop Bet Cheat Sheet v2.51</title>
+<title>Prop Bet Cheat Sheet v2.53</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -294,7 +294,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 <div class="head">
   <div class="head-row">
     <div>
-      <h1>Prop Bet Cheat Sheet <span class="ver">v2.51</span></h1>
+      <h1>Prop Bet Cheat Sheet <span class="ver" id="verTag">v2.53</span></h1>
       <div class="date">Board for <input type="date" id="slate"></div>
       <div class="built">Build 22 Sep 2026</div>
     </div>
@@ -425,7 +425,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
       <div class="field"><label for="fFliff">Fliff % of stake</label><input id="fFliff" type="number" value="0" step="0.25"></div>
       <div class="field"><label for="fBook">Licensed books % of stake</label><input id="fBook" type="number" value="0" step="0.25"></div>
     </div>
-    <p class="hint" style="margin:12px 0 0">Kalshi runs on a curve rather than a flat rate: <strong>7% × price × (1 − price)</strong> per contract, which is <strong>7% × (1 − price)</strong> of what you put up. A short favorite costs about 2.3%, an even-money bet 3.5%, a +400 longshot 5.6%. The fee is charged on top of the contract cost, so net EV is <strong>(gross − fee) ÷ (1 + fee)</strong>. Kalshi also rounds each order's fee up to the next cent, worth up to 0.4% on a $2.50 ticket and not modelled here.</p>
+    <p class="hint" style="margin:12px 0 0">Kalshi runs on a curve rather than a flat rate: <strong>7% × price × (1 − price)</strong> per contract, which is <strong>7% × (1 − price)</strong> of what you put up. A short favorite costs about 2.3%, an even-money bet 3.5%, a +400 longshot 5.6%. The fee is charged on top of the contract cost, so net EV is <strong>(gross − fee) ÷ (1 + fee)</strong>. Kalshi also rounds each order's fee up to the next cent; the board includes that when it counts whole contracts.</p>
   </details>
 </details>
 
@@ -433,13 +433,13 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
   <summary><h2>Stake sizing <span class="sub">bankroll and Kelly</span></h2></summary>
   <p class="hint">Kelly scales a bet to its edge. The haircut shrinks that edge first, because the fair values behind it move and the biggest ones move most. What survives gets clamped to the range you actually bet in.</p>
   <div class="grid">
-    <div class="field"><label for="bank">Bankroll $</label><input id="bank" type="number" value="500" step="25"></div>
+    <div class="field"><label for="bank">Bankroll $</label><input id="bank" type="number" value="1000" step="25"></div>
     <div class="field"><label for="kelly">Kelly fraction</label><input id="kelly" type="number" value="0.25" step="0.05"></div>
     <div class="field"><label for="shrink">Edge haircut</label><input id="shrink" type="number" value="0.5" step="0.1"></div>
-    <div class="field"><label for="sMin">Smallest bet $</label><input id="sMin" type="number" value="2.50" step="0.5"></div>
-    <div class="field"><label for="sMax">Largest bet $</label><input id="sMax" type="number" value="5.00" step="0.5"></div>
+    <div class="field"><label for="sMin">Smallest bet $</label><input id="sMin" type="number" value="1.00" step="0.5"></div>
+    <div class="field"><label for="sMax">Largest bet $</label><input id="sMax" type="number" value="10.00" step="0.5"></div>
     <div class="field"><label for="mWeight" title="How far to trust BettingPros' model over the market price when sizing. 0 = market only, 1 = model only.">Model weight (0–1)</label><input id="mWeight" type="number" value="0.35" step="0.05" min="0" max="1"></div>
-    <div class="field"><label for="gameCap" title="Most you'll have riding on one game across all bets">Max per game $</label><input id="gameCap" type="number" value="10" step="0.5"></div>
+    <div class="field"><label for="gameCap" title="Most you'll have riding on one game across all bets">Max per game $</label><input id="gameCap" type="number" value="20" step="0.5"></div>
   </div>
   <p class="hint" style="margin:12px 0 0">Stakes size off a blend: the market's no-vig price pulled toward BettingPros' number by the model weight (0.35 = mostly market). If there's no market price for a bet, the model number is used with the haircut. Bets on a game you already have money on are trimmed so the game stays under the per-game max.</p>
 </details>
@@ -705,7 +705,10 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 
 </div>
 <script>
-const SCREENER_VERSION='v2.52';
+const SCREENER_VERSION='v2.53';
+// the header and tab title always show this one number
+document.title='Prop Bet Cheat Sheet '+SCREENER_VERSION;
+{ const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
 const DEVIG_METHOD='multiplicative v1';
 /* ============ odds math ============ */
 function toProb(o){
@@ -912,7 +915,7 @@ function cfgRead(){
     devig:v('devig')/100,
     books:document.getElementById('books').value.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean),
     bank:v('bank'), kelly:v('kelly'), shrink:v('shrink'), sMin:v('sMin'), sMax:v('sMax'),
-    mWeight:(x=>isNaN(x)?0.35:Math.max(0,Math.min(1,x)))(parseFloat(document.getElementById('mWeight').value)), gameCap:v('gameCap')||10,
+    mWeight:(x=>isNaN(x)?0.35:Math.max(0,Math.min(1,x)))(parseFloat(document.getElementById('mWeight').value)), gameCap:v('gameCap')||20,
     deriv:document.getElementById('cDeriv').checked,
     prop:document.getElementById('cProp').checked,
     dfs:document.getElementById('cDfs').checked,
@@ -2827,6 +2830,7 @@ function save(){
     const o={};
     KEYS.forEach(k=>o[k]=document.getElementById(k).value);
     CHECKS.forEach(k=>o[k]=document.getElementById(k).checked);
+    o.cfgVer=2.53;
     localStorage.setItem('mbev.cfg',JSON.stringify(o));
   }catch(e){}
 }
@@ -2834,8 +2838,15 @@ function loadCfg(){
   try{
     const raw=localStorage.getItem('mbev.cfg'); if(!raw) return;
     const o=JSON.parse(raw);
+    // v2.53: one-time move from the old $500 / $2.50–$5 / $10 defaults to $1000 / $1–$10 / $20 —
+    // only values still at the old default are changed; anything you typed yourself is kept
+    if(!(o.cfgVer>=2.53)){
+      const old={bank:500, sMin:2.5, sMax:5, gameCap:10};
+      Object.keys(old).forEach(k=>{ if(o[k]===undefined || parseFloat(o[k])===old[k]) delete o[k]; });
+    }
     KEYS.forEach(k=>{ if(o[k]!==undefined) document.getElementById(k).value=o[k]; });
     CHECKS.forEach(k=>{ if(o[k]!==undefined) document.getElementById(k).checked=o[k]; });
+    if(!(o.cfgVer>=2.53)) save();
   }catch(e){}
 }
 /* theme — explicit choice, remembered per browser */
