@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Prop Bet Cheat Sheet v2.59</title>
+<title>Prop Bet Cheat Sheet v2.60</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -11,7 +11,7 @@
 :root{
   --page:#FFFFFF; --panel:#FFFFFF; --panel-2:#FAFBFC; --rail:#F1F3F6;
   --rule:#E4E8EE; --rule-2:#EFF2F5; --ink:#15181D; --soft:#5C6674; --dim:#5F6A78;
-  --live:#12A150; --live-bg:#E4F7EC;
+  --live:#12A150; --live-bg:#E4F7EC; --neon:#0B8F3A;
   --warn:#B5730A; --warn-bg:#FDF2DC;
   --out:#C2372B;  --out-bg:#FBE9E7;
   --accent:#2563EB; --accent-bg:#EEF3FE;
@@ -23,7 +23,7 @@
 :root[data-theme="dark"]{
   --page:#0B1017; --panel:#131C27; --panel-2:#18222F; --rail:#1F2B3A;
   --rule:#26333F; --rule-2:#1F2A36; --ink:#E9EEF4; --soft:#93A3B5; --dim:#93A2B3;
-  --live:#3ED98A; --live-bg:#12301F;
+  --live:#3ED98A; --live-bg:#12301F; --neon:#39FF14;
   --warn:#F2B44C; --warn-bg:#31260F;
   --out:#FF7B6B;  --out-bg:#331714;
   --accent:#5B9BFF; --accent-bg:#13203A;
@@ -128,8 +128,19 @@ th.sortable{cursor:pointer; user-select:none}
 .scroll.board thead th.c-name{z-index:4}
 #tbody tr.dupe td.c-name{background:var(--out-bg)}
 #tbody tr.corr td.c-name{background:var(--warn-bg)}
-td.notes{min-width:230px; max-width:340px; white-space:normal}
-td.notes .tag{white-space:normal}
+/* v2.60: notes live in a collapsible full-width strip under the row */
+.kick{font-size:11px; color:var(--soft); margin-top:2px; white-space:nowrap}
+.kick.live{color:var(--neon); font-weight:700}
+.kick.final{opacity:.85}
+.ntog{display:inline-flex; align-items:center; gap:5px; margin-top:4px; padding:1px 8px; border-radius:999px; border:1px solid var(--line);
+  background:transparent; color:var(--soft); font:inherit; font-size:11px; cursor:pointer}
+.ntog:hover{color:var(--ink)}
+.ntog .dot{width:7px; height:7px; border-radius:50%; background:var(--live)}
+.ntog .dot.warn{background:var(--warn)} .ntog .dot.bad{background:var(--out)}
+tr.notes-row td{padding:4px 12px 10px; border-top:0}
+tr.notes-row .tags{display:flex; flex-wrap:wrap; gap:6px; position:sticky; left:12px; max-width:min(1100px, calc(100vw - 48px))}
+tr.notes-row .tag{white-space:normal}
+.notes-all{display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--soft); cursor:pointer; margin:0 0 8px}
 .dec{font-weight:700; font-size:12.5px; letter-spacing:.02em; white-space:nowrap}
 .dec-lines{white-space:nowrap; line-height:1.35}   /* v2.58: short stacked lines, not one long one */
 .dec-bet{color:var(--live)} .dec-skip{color:var(--soft)} .dec-lim{color:var(--warn)} .dec-done{color:var(--out)}
@@ -295,7 +306,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 <div class="head">
   <div class="head-row">
     <div>
-      <h1>Prop Bet Cheat Sheet <span class="ver" id="verTag">v2.59</span></h1>
+      <h1>Prop Bet Cheat Sheet <span class="ver" id="verTag">v2.60</span></h1>
       <div class="date">Board for <input type="date" id="slate"></div>
       <div class="built">Build 22 Sep 2026</div>
     </div>
@@ -570,7 +581,8 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
     </div>
   </div>
 
-  <div class="swipe-hint">Swipe sideways for stars, Bet Now, hit rate and notes →</div>
+  <label class="notes-all"><input type="checkbox" id="notesAll" style="width:15px;height:15px;accent-color:var(--accent)"> Show all notes</label>
+  <div class="swipe-hint">Swipe sideways for stars, Bet Now and hit rate →</div>
   <div class="scroll board"><table>
     <thead><tr id="boardHead">
       <th class="sortable c-name" data-col="name">Team / Player</th>
@@ -582,7 +594,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
       <th style="text-align:center">Bet Now</th>
       <th class="num sortable" data-col="hit" title="How often this side hit: last 15 games when available, otherwise season">Hit rate</th>
       <th class="sortable" data-col="sport">Sport</th>
-      <th class="num sortable" data-col="fee">Fee</th><th>Notes</th>
+      <th class="num sortable" data-col="fee">Fee</th>
     </tr></thead>
     <tbody id="tbody"></tbody>
   </table></div>
@@ -716,7 +728,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 
 </div>
 <script>
-const SCREENER_VERSION='v2.59';
+const SCREENER_VERSION='v2.60';
 // the header and tab title always show this one number
 document.title='Prop Bet Cheat Sheet '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -1251,7 +1263,17 @@ function render(rows,cfg){
     const pTag = inParlay(r) ? '<span class="tag t-parlay">IN PARLAY</span>' : '';
     const cTag = r.mktNet==null ? '' : '<span class="tag '+(r.mktNet>0?'t-live':'t-warn')+'" title="This price against the market\'s no-vig price, after fees">'+
       (r.mktNet>0?'beats market +':'below market ')+pct(r.mktNet)+'</span>';
-    const tags=pTag+gTag+cTag+oaTag+r.flags.map(f=>'<span class="tag t-'+f[0]+'">'+esc(f[1])+'</span>').join('');
+    // v2.60: kickoff moves under the name, so it's not repeated in the notes
+    const tags=pTag+cTag+oaTag+r.flags.map(f=>'<span class="tag t-'+f[0]+'">'+esc(f[1])+'</span>').join('');
+    const nTags=(pTag?1:0)+(cTag?1:0)+(oaTag?1:0)+r.flags.length;
+    const worst=r.flags.some(f=>f[0]==='out'||f[0]==='dupe') ? 'bad'
+      : (r.flags.some(f=>f[0]==='warn'||f[0]==='corr') || (r.mktNet!=null&&r.mktNet<=0) || r.oddsApi===null) ? 'warn' : '';
+    const nKey=String(r.apiKey||(r.name+'|'+r.market+'|'+(r.side||'')+'|'+r.book));
+    const nOpen=notesAll || openNotes.has(nKey);
+    const kick = !r.gameInfo ? ''
+      : r.gameInfo.state==='post' ? '<div class="kick final">Final — '+esc(r.gameInfo.detail||'game over')+'</div>'
+      : r.gameInfo.state==='in'   ? '<div class="kick live">LIVE · started '+esc(r.gameInfo.timeCT)+'</div>'
+      : '<div class="kick">'+esc(r.gameInfo.timeCT||'')+'</div>';
     const mk=(r.market||'').match(/^([+-]?[\d.]+)\s+(.*)$/);
     const mktCell = mk
       ? '<div class="mkt-line">'+esc(mk[1])+'</div><div class="mkt-sub">'+esc(mk[2])+'</div>'
@@ -1264,8 +1286,10 @@ function render(rows,cfg){
     const cells={};
     cells.name=
       '<td class="c-name"><div class="pick">'+esc(r.name)+'</div>'+
-        (r.matchup?'<div class="meta">'+esc(r.matchup)+'</div>':'')+
-        (isSweet(r,swc)?'<span class="sweet" title="Inside your sweet-spot settings">🎯 SWEET SPOT</span>':'')+'</td>';
+        (r.matchup?'<div class="meta">'+esc(r.matchup)+'</div>':'')+kick+
+        (isSweet(r,swc)?'<span class="sweet" title="Inside your sweet-spot settings">🎯 SWEET SPOT</span>':'')+
+        (nTags?'<div><button class="ntog" data-nkey="'+esc(nKey)+'" aria-expanded="'+nOpen+'" title="Show or hide the notes for this bet">'+
+          '<span class="dot '+worst+'"></span>'+(nOpen?'▾ ':'▸ ')+nTags+' note'+(nTags===1?'':'s')+'</button></div>':'')+'</td>';
     cells.sport='<td><span class="sport s-'+esc(r.sport)+'">'+esc(r.sport)+'</span></td>';
     cells.market='<td style="text-align:center">'+mktCell+'</td>';
     cells.odds='<td style="text-align:center"><div class="odds-stack">'+(bookLogo(r.book)?logoTag(r.book):'<span class="meta">'+esc(r.book||'book?')+'</span>')+
@@ -1291,11 +1315,24 @@ function render(rows,cfg){
     cells.stake='<td class="num">'+decisionHtml(r,cfg)+
         (r.stake&&r.mktProb!=null&&r.blendProb!=null?'<div class="meta" title="Probability used for sizing: market blended with the model">sized at '+pct(r.blendProb)+'</div>':'')+
         (r.stake&&r.contracts?'<div class="meta">'+r.contracts+'xC</div>':'')+'</td>';
-    cells.notes='<td class="notes">'+(tags||'<span class="tag t-live">clear</span>')+'</td>';
     tr.innerHTML=BOARD_COLS.map(c=>cells[c]).join('');
     tb.appendChild(tr);
+    if(nTags && nOpen){
+      const nr=document.createElement('tr'); nr.className='notes-row '+tr.className;
+      nr.innerHTML='<td colspan="'+BOARD_COLS.length+'"><div class="tags">'+tags+'</div></td>';
+      tb.appendChild(nr);
+    }
   });
 
+  tb.querySelectorAll('button.ntog').forEach(btn=>btn.addEventListener('click',()=>{
+    const k=btn.dataset.nkey;
+    if(notesAll){   // leaving "show all": keep the others open, close just this one
+      tb.querySelectorAll('button.ntog').forEach(b=>openNotes.add(b.dataset.nkey));
+      notesAll=false; document.getElementById('notesAll').checked=false; saveNotesAll();
+    }
+    if(openNotes.has(k)) openNotes.delete(k); else openNotes.add(k);
+    refresh();
+  }));
   tb.querySelectorAll('button.bet-btn').forEach(btn=>btn.addEventListener('click',()=>{
     const r=lastRows.find(x=>x.idx===+btn.dataset.idx); if(r) openBetEditor(btn.closest('tr'), r);
   }));
@@ -1373,7 +1410,7 @@ function openBetEditor(tr, r){
   // v2.59: the line can be changed (Under 38.5 on another app instead of 39.5)
   const lineM=String(r.market||'').match(/^([+-]?[\d.]+)\s+(.*)$/);
   const oldLine=lineM?parseFloat(lineM[1]):null, signed=lineM?/^[+-]/.test(lineM[1]):false;
-  ed.innerHTML='<td colspan="12"><div class="editor-row">'+
+  ed.innerHTML='<td colspan="'+BOARD_COLS.length+'"><div class="editor-row">'+
     '<b>'+esc(r.name)+' — '+esc(betNowOf(r))+'</b>'+
     (lineM?'<label title="Change it if you took a different number somewhere else">Line <input class="eb-line" type="number" step="0.5" value="'+esc(lineM[1].replace(/^\+/,''))+'" style="width:70px"></label>':'')+
     '<label>Book <select class="eb-book">'+books.map(b=>'<option>'+esc(b)+'</option>').join('')+'</select></label>'+
@@ -1542,7 +1579,12 @@ function undoBet(r){
 }
 
 /* v2.51: column order (Team/Player is pinned when scrolling sideways) */
-const BOARD_COLS=['name','market','odds','cover','net','stake','stars','betnow','hit','sport','fee','notes'];
+const BOARD_COLS=['name','market','odds','cover','net','stake','stars','betnow','hit','sport','fee'];
+/* v2.60: notes open per row, or all at once (remembered per browser) */
+const openNotes=new Set();
+let notesAll=false;
+try{ notesAll=localStorage.getItem('mbev.notesAll')==='1'; }catch(e){}
+function saveNotesAll(){ try{ localStorage.setItem('mbev.notesAll', notesAll?'1':'0'); }catch(e){} }
 /* v2.51: one plain decision per row; the tags in Notes are the detail */
 function decisionHtml(r,cfg){
   const $=x=>'$'+x.toFixed(2);
@@ -1550,7 +1592,8 @@ function decisionHtml(r,cfg){
   // v2.58: several short lines under the decision
   const dl=(cls,txt,lines)=>'<div class="dec '+cls+'">'+txt+'</div><div class="meta dec-lines">'+lines.join('<br>')+'</div>';
   const has=re=>r.flags.some(f=>re.test(f[1]));
-  if(r.prior) return d('dec-done', r.prior.sold?'SOLD':'ALREADY BET', r.prior.sold?'cashed out':($(r.prior.stake||0)+' on '+(r.prior.book||'?')));
+  if(r.prior) return r.prior.sold ? d('dec-done','SOLD','cashed out')
+    : dl('dec-done','ALREADY BET', [$(r.prior.stake||0)+' on', esc(r.prior.book||'?')]);
   if(!r.pass) return d('dec-skip','SKIP', (r.flags.find(f=>f[0]==='out')||[,''])[1]);
   if(r.moved) return dl('dec-done','ALREADY BET', [esc(r.moved.betnow||r.moved.market), 'line moved']);
   if(r.glConflict) return r.glConflict.held
@@ -1577,7 +1620,7 @@ function decisionHtml(r,cfg){
 function starsHtml(n){
   if(n==null) return '<span class="meta">—</span>';
   const k=Math.max(0,Math.min(5,Math.round(n)));
-  return '<span class="stars" title="BettingPros rating: '+k+' of 5">'+'★'.repeat(k)+'<span class="off">'+'★'.repeat(5-k)+'</span></span>';
+  return '<span class="stars" title="BettingPros rating: '+k+' of 5" style="white-space:nowrap">'+k+' ★</span>';   // v2.60: number + one star
 }
 function hitHtml(r){
   if(r.l15N){ const h=Math.round(r.l15Hit*r.l15N);
@@ -3163,6 +3206,8 @@ function loadCfg(){
 SW_IDS.concat(SW_CHECKS).forEach(id=>document.getElementById(id).addEventListener('change',()=>{ saveSweet(); rerenderWithFilters(); }));
 loadSweet(); loadParlays();
 loadCfg(); loadLog(); manual(); render([],cfgRead()); renderLog(); renderPerf();
+(function(){ const cb=document.getElementById('notesAll'); cb.checked=notesAll;
+  cb.addEventListener('change',()=>{ notesAll=cb.checked; openNotes.clear(); saveNotesAll(); refresh(); }); })();
 restoreBoard(); refreshBudget();
 </script>
 </body>
