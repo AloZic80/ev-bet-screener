@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Prop Bet Cheat Sheet v2.71</title>
+<title>0xBeta Screener v2.72</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -480,6 +480,10 @@ button.linkbtn:hover{color:var(--ink)}
 .pc-hdr{display:grid; grid-template-columns:minmax(200px,1.15fr) auto minmax(250px,1.3fr); align-items:center; gap:10px 18px; padding:10px 16px; background:var(--panel-2); border-bottom:1px solid var(--rule)}
 .pc-who{display:flex; align-items:center; gap:12px; min-width:0}
 .pc-logo{width:44px; height:44px; object-fit:contain; flex:none}
+.pc-combo{position:relative; width:54px; height:54px; border-radius:11px; overflow:hidden; flex:none}
+.pc-combo .pc-cl{position:absolute; left:-12px; top:9px; width:42px; height:42px; object-fit:contain; opacity:.38}
+.pc-combo .pc-hs{position:absolute; right:-6px; bottom:0; height:54px; width:auto}
+.pc-combo.nohs .pc-cl{left:7px; top:7px; width:40px; height:40px; opacity:1}
 .pc-sport{display:inline-flex; align-items:center; justify-content:center; border-radius:50%; background:var(--rail); font-size:11px; font-weight:800; color:var(--soft)}
 .pc-nm{font-size:20px; font-weight:700; line-height:1.15; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .pc-sub{font-size:12.5px; color:var(--soft); font-weight:600}
@@ -535,7 +539,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>Prop Bet Cheat Sheet <span class="ver" id="verTag">v2.71</span></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v2.72</span></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -992,9 +996,9 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v2.71';
+const SCREENER_VERSION='v2.72';
 // the header and tab title always show this one number
-document.title='Prop Bet Cheat Sheet '+SCREENER_VERSION;
+document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
 const DEVIG_METHOD='multiplicative v1';
 /* ============ odds math ============ */
@@ -1042,7 +1046,22 @@ const LOGOS={
 const TEAM_LOGOS_BUILTIN={};
 let teamLogos={}; try{ teamLogos=JSON.parse(localStorage.getItem('mbev.teamlogos')||'{}')||{}; }catch(e){ teamLogos={}; }
 function saveTeamLogos(){ try{ localStorage.setItem('mbev.teamlogos', JSON.stringify(teamLogos)); return true; }catch(e){ return false; } }
-function teamLogo(sport, abbr, fallback){ const k=String(sport||'').toUpperCase()+':'+normAbbr(abbr); return teamLogos[k]||TEAM_LOGOS_BUILTIN[k]||fallback||''; }
+const BP_LOGO_SPORTS={NFL:'nfl',NBA:'nba',MLB:'mlb',NHL:'nhl',WNBA:'wnba'};   // v2.72: BettingPros' crisp SVG logos
+const LOGO_FALLBACK={};   // BettingPros SVG url -> ESPN url, used if the SVG doesn't load
+function teamLogo(sport, abbr, fallback){
+  const S=String(sport||'').toUpperCase(), k=S+':'+normAbbr(abbr);
+  if(teamLogos[k]||TEAM_LOGOS_BUILTIN[k]) return teamLogos[k]||TEAM_LOGOS_BUILTIN[k];
+  const path=BP_LOGO_SPORTS[S], raw=String(abbr||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(path && raw){ const u='https://www.bettingpros.com/assets/images/logos/svg/'+path+'/'+raw+'.svg'; if(fallback) LOGO_FALLBACK[u]=fallback; return u; }
+  return fallback||'';
+}
+// a BettingPros logo that fails to load is swapped for ESPN's (once) before anything hides it
+document.addEventListener('error', e=>{
+  const el=e.target; if(!el || !el.tagName) return;
+  const isSvgImg=el.tagName.toLowerCase()==='image', src=isSvgImg?el.getAttribute('href'):el.getAttribute('src');
+  const fb=src && LOGO_FALLBACK[src];
+  if(fb && el.dataset.fb!=='used'){ el.dataset.fb='used'; if(isSvgImg) el.setAttribute('href',fb); else el.src=fb; e.stopImmediatePropagation(); }
+}, true);
 function bookLogo(book){
   const b=(book||'').toLowerCase();
   for(const k in LOGOS) if(b.indexOf(k)>=0) return LOGOS[k];
@@ -1875,7 +1894,11 @@ function placeCardHtml(r,cfg,o){
   const game=away&&home ? team(away)+'<div class="pc-when"><b>'+esc(when)+'</b>'+(gi.tv?'<span class="pc-tv">'+esc(gi.tv)+'</span>':'')+'</div>'+team(home,true)
                          : (when?'<div class="pc-when"><b>'+esc(when)+'</b></div>':'');
   const myLogo=mine?LG(mine):(myAb?teamLogo(r.sport,myAb,''):'');
-  const avatar=myLogo ? '<img class="pc-logo" src="'+esc(myLogo)+'" alt="" loading="lazy">' : '<span class="pc-logo pc-sport">'+esc(r.sport)+'</span>';
+  const FP={NFL:'nfl',NBA:'nba',MLB:'mlb',NHL:'nhl'}[r.sport];
+  const tcol=mine?ezColor({color:mine.color, alternateColor:mine.alt}):'#3B4656';
+  const shot=(FP && r.pid) ? 'https://images.fantasypros.com/images/players/'+FP+'/'+encodeURIComponent(r.pid)+'/headshot/210x210.webp' : '';
+  const avatar=(myLogo||shot) ? '<span class="pc-combo'+(shot?'':' nohs')+'" style="background:'+tcol+'">'+(myLogo?'<img class="pc-cl" src="'+esc(myLogo)+'" alt="" loading="lazy">':'')+
+      (shot?'<img class="pc-hs" src="'+esc(shot)+'" alt="" loading="lazy" onerror="if(!this.dataset.p){this.dataset.p=1;this.src=this.src.replace(\'.webp\',\'.png\')}else{this.parentNode.classList.add(\'nohs\');this.remove()}">':'')+'</span>' : '<span class="pc-logo pc-sport">'+esc(r.sport)+'</span>';
   const pick=r.side==='O'?'OVER':r.side==='U'?'UNDER':String(myAb||r.name||'').toUpperCase();
   const ev=r.net==null?'—':(r.net>0?'+':'')+pct(r.net);
   const nS=r.stars==null?null:Math.max(0,Math.min(5,Math.round(r.stars)));
@@ -1883,7 +1906,7 @@ function placeCardHtml(r,cfg,o){
   const book=bookLogo(r.book)?logoTag(r.book):'<i>'+esc(bookLabel(r.book)||'book?')+'</i>';
   return '<div class="pcard" data-idx="'+r.idx+'">'+
     '<div class="pc-hdr"><div class="pc-who">'+avatar+'<div style="min-width:0"><div class="pc-nm" title="'+esc(r.name)+'">'+esc(r.name)+'</div>'+
-      '<div class="pc-sub">'+(r.pos?esc(r.pos)+' · ':'')+'<b>'+esc(gameTxt)+'</b>'+(o.sweet?' · <span class="sweet">🎯 SWEET SPOT</span>':'')+'</div></div></div>'+
+      '<div class="pc-sub">'+(r.pos?esc(r.pos)+' · ':'')+(r.jersey!=null&&r.jersey!==''?'#'+esc(r.jersey)+' · ':'')+'<b>'+esc(gameTxt)+'</b>'+(o.sweet?' · <span class="sweet">🎯 SWEET SPOT</span>':'')+'</div></div></div>'+
       '<div class="pc-mkt"><div class="pc-mt">'+esc((line?line+' ':'')+mname)+'</div>'+(cons?'<div class="pc-mo">'+esc(cons)+'</div>':'')+'</div>'+
       '<div class="pc-game">'+game+'</div></div>'+
     '<div class="pc-stats">'+
@@ -2335,7 +2358,7 @@ function gameStatusOf(ev){
   const tm=dt.toLocaleTimeString('en-US',{...opts,hour:'numeric',minute:'2-digit'});
   const timeCT=wd+' '+md+' '+tm+' CT';
   const comp=(ev.competitions&&ev.competitions[0])||{};
-  const teams=compsOf(ev).map(c=>{ const t=c.team||{}; return {ha:c.homeAway, abbr:normAbbr(t.abbreviation), name:t.shortDisplayName||t.name||t.abbreviation||'', logo:t.logo||'', rec:(c.records&&c.records[0]&&c.records[0].summary)||''}; });
+  const teams=compsOf(ev).map(c=>{ const t=c.team||{}; return {ha:c.homeAway, abbr:normAbbr(t.abbreviation), name:t.shortDisplayName||t.name||t.abbreviation||'', logo:t.logo||'', rec:(c.records&&c.records[0]&&c.records[0].summary)||'', color:t.color||'', alt:t.alternateColor||''}; });
   const tv=[...new Set([].concat(...(comp.broadcasts||[]).map(b=>b.names||[])))].slice(0,2).join(' · ');
   return {state:st.state, detail:st.shortDetail||'', timeCT, eventId:ev.id, startISO:isNaN(dt)?null:dt.toISOString(), teams, tv};   // v2.69: teams + tv
 }
@@ -3830,6 +3853,7 @@ function apiRowToInternal(p, sport){
     mktProb: p.mkt_prob!=null ? p.mkt_prob : null,
     team: p.team || null, consOdds: p.consensus_odds!=null ? p.consensus_odds : null,
     projValue: p.proj!=null && !isNaN(+p.proj) ? +p.proj : null, pos: p.pos || null,   // v2.69: for the cards
+    pid: p.pid!=null ? String(p.pid) : null, jersey: p.jersey!=null ? p.jersey : null,  // v2.72: headshot + #
     consOtherOdds: p.consensus_other_odds!=null ? p.consensus_other_odds : null,
     // Worker's match key (event_id-market_id-participant_id-side) — used to look
     // up this same player/market/side against a separate Pinnacle-only fetch.
@@ -3971,7 +3995,7 @@ function gameRowsToInternal(data, kind, sport){
    NBA doesn't wipe the NFL rows you loaded earlier. */
 const BOARD_KEY='mbev.board';
 const KEEP_FIELDS=['mktSharp','mktConsensus','name','game','side','matchup','matchupAlt','noMatchup','sport','market','kind','book','offeredRaw','fairRaw',
-  'offeredProb','fairProb','screenerEV','apiKey','stars','l15Hit','l15N','seasonHit','seasonN','evModel','consensusEdge','mktProb','team','consOdds','consOtherOdds','gameInfo','src','projValue','pos'];
+  'offeredProb','fairProb','screenerEV','apiKey','stars','l15Hit','l15N','seasonHit','seasonN','evModel','consensusEdge','mktProb','team','consOdds','consOtherOdds','gameInfo','src','projValue','pos','pid','jersey'];
 function slimRow(r){ const o={}; KEEP_FIELDS.forEach(k=>{ if(r[k]!==undefined) o[k]=r[k]; }); return o; }
 function boardPayload(){ return {v:1, savedAt:new Date().toISOString(), slate:document.getElementById('slate').value, rows:lastRows.map(slimRow)}; }
 function autoSaveBoard(){ try{ localStorage.setItem(BOARD_KEY, JSON.stringify(boardPayload())); }catch(e){} }
@@ -4086,7 +4110,7 @@ document.getElementById('saveBoard').addEventListener('click',()=>{
   const blob=new Blob([JSON.stringify(boardPayload(),null,1)],{type:'application/json'});
   const d=new Date(), p=n=>String(n).padStart(2,'0');
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='board-'+d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+'.json';
+  a.download='0xbeta-board-'+d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+'.json';
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 });
 function boardAsText(rows){
@@ -4307,7 +4331,7 @@ document.getElementById('backupLog').addEventListener('click',()=>{
   const blob=new Blob([JSON.stringify(payload,null,1)],{type:'application/json'});
   const d=new Date(), p=n=>String(n).padStart(2,'0');
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='betlog-'+d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+'.json';
+  a.download='0xbeta-betlog-'+d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+'.json';
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
   document.getElementById('backupStatus').textContent='Backed up '+logged.length+' bets.';
 });
