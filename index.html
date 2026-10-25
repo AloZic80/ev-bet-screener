@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Prop Bet Cheat Sheet v2.62</title>
+<title>Prop Bet Cheat Sheet v2.63</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -15,6 +15,8 @@
   --warn:#B5730A; --warn-bg:#FDF2DC;
   --out:#C2372B;  --out-bg:#FBE9E7;
   --accent:#2563EB; --accent-bg:#EEF3FE;
+  --jetta:#0044F0; --jetta-text:#0044F0; --board-tint:#F4F7FF;   /* v2.63: the blue of the Mk4 dash */
+  --gain:#0B7A3B; --loss:#B42318;   /* profit / loss text, AA on white and on the board tint */
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
@@ -27,6 +29,8 @@
   --warn:#F2B44C; --warn-bg:#31260F;
   --out:#FF7B6B;  --out-bg:#331714;
   --accent:#5B9BFF; --accent-bg:#13203A;
+  --jetta:#2F6BFF; --jetta-text:#8AB0FF; --board-tint:#0F1A33;   /* brighter on dark so text stays readable */
+  --gain:#3ED98A; --loss:#FF7B6B;
   color-scheme:dark;
 }
 *,*::before,*::after{box-sizing:inherit}
@@ -156,6 +160,7 @@ details.fold>summary h2::before{content:'▸'; color:var(--accent); font-size:12
 details.fold[open]>summary h2::before{content:'▾'}
 details.fold[open]>summary h2{margin-bottom:12px; padding-bottom:11px; border-bottom:1px solid var(--rule)}
 details.fold>summary h2 .sub{text-transform:none; letter-spacing:0; font-weight:500; color:var(--dim)}
+.panel h2 .sub{text-transform:none; letter-spacing:0; font-weight:500; color:var(--dim); margin-left:6px}   /* v2.63: plain panels too */
 .loadbar select,.loadbar input[type=number],.loadbar input[type=password]{font-family:inherit; font-size:14px; padding:8px 10px;
   border:1px solid var(--rule); border-radius:7px; background:var(--panel); color:var(--ink)}
 .budget{display:inline-block; font-size:12px; font-weight:600; padding:4px 10px; border-radius:20px;
@@ -297,6 +302,19 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 .range-sliders input{flex:1}
 .filter-actions{display:flex; gap:8px; flex-wrap:wrap}
 /* v2.61 */
+/* v2.63: the board stands apart — its own shade and a Jetta-blue border */
+.board-panel{--panel:var(--board-tint); background:var(--board-tint); border:2px solid var(--jetta)}
+.board-panel>h2{color:var(--jetta-text)}
+:root[data-theme="dark"] .board-panel{box-shadow:0 0 0 1px rgba(47,107,255,.25), 0 0 22px rgba(47,107,255,.28)}
+.today-line{font-size:13.5px; color:var(--soft); margin:-4px 0 12px}
+.today-line b{color:var(--ink)}
+.today-line b.pl-up{color:var(--gain)} .today-line b.pl-down{color:var(--loss)}
+.pl-up{color:var(--gain)} .pl-down{color:var(--loss)}
+table.days tr.today td{background:var(--accent-bg)}
+table.days tfoot td{border-top:2px solid var(--rule); font-weight:600}
+.goalbar{height:4px; width:64px; margin:4px 0 0 auto; border-radius:3px; background:var(--rule)}
+.goalbar i{display:block; height:100%; border-radius:3px; background:var(--accent)}
+.goalbar i.hit{background:var(--live)}
 .board-bar{display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; margin:0 0 10px; font-size:13px; color:var(--soft)}
 .board-bar .bar-item{display:flex; align-items:center; gap:6px}
 .bar-sel{font-family:inherit; font-size:13px; padding:6px 8px; border:1px solid var(--rule); border-radius:7px; background:var(--panel); color:var(--ink)}
@@ -322,7 +340,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div>
-      <h1>Prop Bet Cheat Sheet <span class="ver" id="verTag">v2.62</span></h1>
+      <h1>Prop Bet Cheat Sheet <span class="ver" id="verTag">v2.63</span></h1>
       <div class="date">Board for <input type="date" id="slate"></div>
       <div class="built">Build 22 Sep 2026</div>
     </div>
@@ -429,8 +447,9 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
   </details>
 </details>
 
-<div class="panel">
+<div class="panel board-panel">
   <h2>The board</h2>
+  <div class="today-line" id="todayLine"></div>
   <!-- v2.62: one slim line of view controls; set-once settings live in the Settings tab -->
   <div class="board-bar">
     <label class="bar-item">Sort <select id="sortBy" class="bar-sel">
@@ -545,6 +564,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
     <div class="field"><label for="sMax">Largest bet $</label><input id="sMax" type="number" value="10.00" step="0.5"></div>
     <div class="field"><label for="mWeight" title="How far to trust BettingPros' model over the market price when sizing. 0 = market only, 1 = model only.">Model weight (0–1)</label><input id="mWeight" type="number" value="0.35" step="0.05" min="0" max="1"></div>
     <div class="field"><label for="gameCap" title="Most you'll have riding on one game across all bets">Max per game $</label><input id="gameCap" type="number" value="20" step="0.5"></div>
+    <div class="field"><label for="dayGoal" title="How many bets you aim for per game day. Shown on the Board and in Bets by game day. 0 turns it off.">Daily bet goal</label><input id="dayGoal" type="number" value="20" step="1" min="0"></div>
   </div>
   <p class="hint" style="margin:12px 0 0">Stakes size off a blend: the market's no-vig price pulled toward BettingPros' number by the model weight (0.35 = mostly market). If there's no market price for a bet, the model number is used with the haircut. Bets on a game you already have money on are trimmed so the game stays under the per-game max.</p>
 </details>
@@ -669,6 +689,17 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 <!-- ======================= LOG ======================= -->
 <div class="view" id="v-log">
+<!-- v2.63 -->
+<div class="panel">
+  <h2>Bets by game day <span class="sub">counted on the day the game is played, not the day you logged it</span></h2>
+  <div class="scroll"><table class="days">
+    <thead><tr><th>Game day</th><th class="num">Bets</th><th class="num">Staked</th><th class="num">W–L–P</th><th class="num">Pending</th><th class="num">Profit</th><th class="num" title="Bets the screener had a stake on when you logged them, vs. ones you took against it (skips, red price checks, games already started). Bets logged before v2.63 weren't tagged.">Screener's list</th></tr></thead>
+    <tbody id="daysBody"></tbody>
+    <tfoot id="daysFoot"></tfoot>
+  </table></div>
+  <p class="hint" style="margin:8px 0 0">Profit counts settled bets only: wins from your odds and stake (fees included), losses, sales and money lost cancelling. Pending bets aren't in it yet.</p>
+</div>
+
 <div class="panel">
   <h2>Bets you took</h2>
   <p class="hint">Log a bet from the board, then come back after the game starts and enter where the line closed. Closing line value is the only thing that tells you whether an edge was real before you have hundreds of settled bets.</p>
@@ -742,7 +773,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v2.62';
+const SCREENER_VERSION='v2.63';
 // the header and tab title always show this one number
 document.title='Prop Bet Cheat Sheet '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -794,8 +825,10 @@ function bookLogo(book){
 }
 function logoTag(book,cls){
   const u=bookLogo(book);
-  return u ? '<img class="blogo '+(cls||'')+'" src="'+u+'" alt="'+esc(book)+'" title="'+esc(book)+'">' : '';
+  return u ? '<img class="blogo '+(cls||'')+'" src="'+u+'" alt="'+esc(bookLabel(book))+'" title="'+esc(bookLabel(book))+'">' : '';
 }
+/* v2.63: shorter display names (the saved book name doesn't change) */
+function bookLabel(book){ return String(book||'').replace(/^draftkings predictions$/i,'DK Predictions'); }
 const SPORTS=['NCAAF','NCAAB','NCAAMB','NCAAWB','NCAAFB','MLB','NBA','NHL','NFL','WNBA','MLS','SOCCER','MMA','TENNIS','GOLF'];
 const DERIV=/\b(1Q|2Q|3Q|4Q|1H|2H|1ST HALF|2ND HALF|FIRST HALF|SECOND HALF|1ST QUARTER|QUARTER|HALF)\b/i;
 const TEAMMKT=/MONEYLINE|SPREAD|RUN LINE|PUCK LINE|TOTAL POINTS|TOTAL RUNS|TOTAL GOALS|TEAM TOTAL/i;
@@ -953,6 +986,7 @@ function cfgRead(){
     books:document.getElementById('books').value.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean),
     bank:v('bank'), kelly:v('kelly'), shrink:v('shrink'), sMin:v('sMin'), sMax:v('sMax'),
     mWeight:(x=>isNaN(x)?0.35:Math.max(0,Math.min(1,x)))(parseFloat(document.getElementById('mWeight').value)), gameCap:v('gameCap')||20,
+    dayGoal:(x=>isNaN(x)?20:Math.max(0,Math.round(x)))(parseFloat(document.getElementById('dayGoal').value)),
     deriv:document.getElementById('cDeriv').checked,
     prop:document.getElementById('cProp').checked,
     dfs:document.getElementById('cDfs').checked,
@@ -1011,7 +1045,7 @@ function audit(rows,cfg){
     // v2.56: same bet, but the line has moved since you took it (43.5 → 44.5)
     const moved = !prior && logged.find(L=>onBoard(L) && !L.sold && String(L.name||'').toLowerCase()===String(r.name||'').toLowerCase() &&
       (L.kind||'')===(r.kind||'') && marketStem(L.market)===marketStem(r.market) && (sideOf(L)||'')===(r.side||'') && L.market!==r.market);
-    if(moved){ r.moved=moved; r.flags.push(['dupe','you have '+(moved.betnow||moved.market)+' — a different line of this bet ($'+(moved.stake||0).toFixed(2)+' on '+(moved.book||'?')+')']); }
+    if(moved){ r.moved=moved; r.flags.push(['dupe','you have '+(moved.betnow||moved.market)+' — a different line of this bet ($'+(moved.stake||0).toFixed(2)+' on '+bookLabel(moved.book||'?')+')']); }
     // v2.61: you removed this exact bet
     if(!prior){ const rm=removedBets.filter(R=>onBoard(R) && coreKey(R.name,R.market,sideOf(R))===coreKey(r.name,r.market,r.side)).pop();
       if(rm){ r.removed=rm; r.flags.push(['warn','you removed this bet'+(rm.lost>0?' (lost $'+rm.lost.toFixed(2)+' cancelling)':'')]); } }
@@ -1028,7 +1062,7 @@ function audit(rows,cfg){
       }
       if(prior.sold) r.flags.unshift(['sold','SOLD for $'+Number(prior.sold.price).toFixed(2)+' ('+(prior.sold.price-(prior.stake||0)>=0?'+':'−')+'$'+Math.abs(prior.sold.price-(prior.stake||0)).toFixed(2)+')']);
       r.flags.unshift(['dupe','ALREADY BET at '+fmtOdds(prior.odds)+
-        (prior.book&&prior.book!==r.book?' on '+prior.book:'')+verdict]);
+        (prior.book&&prior.book!==r.book?' on '+bookLabel(prior.book):'')+verdict]);
     } else {
       /* Not the same bet, but the same game — you already have exposure there. */
       const slate = document.getElementById('slate').value;
@@ -1269,6 +1303,7 @@ function render(rows,cfg){
   // v2.62: skipped game lines go to the Skip group; the winning row still names them
 
   lastShown=shown;
+  renderTodayLine();
   const rb=document.getElementById('refreshApi'); if(rb) rb.disabled=!lastRows.some(x=>String(x.src||'').startsWith('api:'));
   const GROUP_NAMES=['Place these','Already bet','Skip','Started or over'];
   const groupCount=[0,0,0,0]; shown.forEach(r=>groupCount[grpOf(r)]++);
@@ -1325,7 +1360,7 @@ function render(rows,cfg){
           '<span class="dot '+worst+'"></span>'+(nOpen?'▾ ':'▸ ')+nTags+' note'+(nTags===1?'':'s')+'</button></div>':'')+'</td>';
     cells.sport='<td><span class="sport s-'+esc(r.sport)+'">'+esc(r.sport)+'</span></td>';
     cells.market='<td style="text-align:center">'+mktCell+'</td>';
-    cells.odds='<td style="text-align:center"><div class="odds-stack">'+(bookLogo(r.book)?logoTag(r.book):'<span class="meta">'+esc(r.book||'book?')+'</span>')+
+    cells.odds='<td style="text-align:center"><div class="odds-stack">'+(bookLogo(r.book)?logoTag(r.book):'<span class="meta">'+esc(bookLabel(r.book)||'book?')+'</span>')+
         '<span>'+esc(fmtOdds(r.offeredRaw))+'</span></div></td>';
     cells.cover='<td class="num">'+(r.fairProb==null?'—':'<span class="cover">'+pct(r.fairProb)+'</span>'+
         '<div class="meta">fair '+esc(fmtOdds(r.fairRaw))+'</div>'+
@@ -1338,7 +1373,7 @@ function render(rows,cfg){
         (r.autoGrade==='win'?' won':r.autoGrade==='loss'?' lost':'')+'">'+esc(betNow)+logoTag(r.book)+
         (r.autoGrade==='win'?' <b class="gradeW">W</b>':r.autoGrade==='loss'?' <b class="gradeL">L</b>':'')+
         '</div>'+
-        (bookLogo(r.book)?'':'<div class="meta book">'+esc(r.book||'book?')+'</div>')+
+        (bookLogo(r.book)?'':'<div class="meta book">'+esc(bookLabel(r.book)||'book?')+'</div>')+
         '<div class="btnrow">'+(r.prior
           ? '<button class="log sm undo bet-undo" data-idx="'+r.idx+'">Undo bet</button>'
           : '<button class="log sm bet-btn" data-idx="'+r.idx+'">'+(r.moved?'Add this line too':'I bet this')+'</button>')+
@@ -1447,7 +1482,7 @@ function openBetEditor(tr, r){
   ed.innerHTML='<td colspan="'+BOARD_COLS.length+'"><div class="editor-row">'+
     '<b>'+esc(r.name)+' — '+esc(betNowOf(r))+'</b>'+
     (lineM?'<label title="Change it if you took a different number somewhere else">Line <input class="eb-line" type="number" step="0.5" value="'+esc(lineM[1].replace(/^\+/,''))+'" style="width:70px"></label>':'')+
-    '<label>Book <select class="eb-book">'+books.map(b=>'<option>'+esc(b)+'</option>').join('')+'</select></label>'+
+    '<label>Book <select class="eb-book">'+books.map(b=>'<option value="'+esc(b)+'">'+esc(bookLabel(b))+'</option>').join('')+'</select></label>'+
     '<label title="What the app shows: American odds, or a % price">Enter as <select class="eb-mode"><option value="odds">odds</option><option value="pct">%</option></select></label>'+
     '<span class="eb-plain" style="display:contents">'+
       '<label>Odds you got <input class="eb-odds" type="text" value="'+esc(r.offeredRaw)+'"></label>'+
@@ -1579,6 +1614,13 @@ function openBetEditor(tr, r){
     const gross=fairUse!=null ? fairUse/prob-1 : null;
     const net=gross==null?null:(gross-fee)/(1+fee);
     const extra={book, offeredRaw:odds, offeredProb:prob, gross, net, stake, fee};
+    // v2.63: what the screener said about the row you clicked (before your own stake/odds replace it)
+    extra.said=saidOf(r);
+    if(extra.said){
+      if(v) extra.said.check=v.level;                      // the "worth it?" check when you saved
+      if(v && v.level==='bad') extra.said.onList=false;    // saved against a red flag = not on the list
+      if(lineChanged()) extra.said.lineChanged=true;
+    }
     if(lineChanged()){
       const nl=newLine(), txt=(signed&&nl>0?'+':'')+nl;
       extra.market=txt+' '+lineM[2];
@@ -1628,7 +1670,7 @@ function decisionHtml(r,cfg){
   const dl=(cls,txt,lines)=>'<div class="dec '+cls+'">'+txt+'</div><div class="meta dec-lines">'+lines.join('<br>')+'</div>';
   const has=re=>r.flags.some(f=>re.test(f[1]));
   if(r.prior) return r.prior.sold ? d('dec-done','SOLD','cashed out')
-    : dl('dec-done','ALREADY BET', [$(r.prior.stake||0)+' on', esc(r.prior.book||'?')]);
+    : dl('dec-done','ALREADY BET', [$(r.prior.stake||0)+' on', esc(bookLabel(r.prior.book)||'?')]);
   if(!r.pass) return d('dec-skip','SKIP', (r.flags.find(f=>f[0]==='out')||[,''])[1]);
   if(r.removed) return r.moved ? dl('dec-skip','BET REMOVED', ['you still have', esc(lineOnly(r.moved))])
                                 : dl('dec-skip','BET REMOVED', [r.removed.lost>0?'lost $'+r.removed.lost.toFixed(2):'never placed']);
@@ -2068,6 +2110,22 @@ function propKeyOf(b){ return [b.date,b.name,b.market].join('|').toLowerCase(); 
 function betKey(r){ return [document.getElementById('slate').value,r.name,r.market,r.book,r.offeredRaw].join('|'); }
 function loadLog(){ try{ logged=JSON.parse(localStorage.getItem('mbev.log')||'[]'); }catch(e){ logged=[]; } }
 function saveLog(){ try{ localStorage.setItem('mbev.log',JSON.stringify(logged)); }catch(e){} }
+/* v2.63: what the screener said about a row, in one word — saved with every bet you log.
+   "On the list" = the screener had a stake on it (BET / RISK / OUTLIER / LIMITED) and the game hadn't started. */
+function saidOf(r){
+  if(!r) return null;
+  const started = r.gameInfo && (r.gameInfo.state==='in'||r.gameInfo.state==='post');
+  let d;
+  if(!r.pass) d='SKIP';
+  else if(r.removed) d='BET REMOVED';
+  else if(r.moved) d='YOU HAVE';
+  else if(r.glConflict) d='SKIP';
+  else if(r.stake>0) d = r.risk?'RISK' : r.outlier?'OUTLIER' : r.capTrimmed?'LIMITED' : 'BET';
+  else d = (r.flags||[]).some(f=>/game cap/.test(f[1])) ? 'LIMITED' : 'SKIP';
+  if(started) d='STARTED';
+  const onList = !started && !!r.pass && r.stake>0 && !r.removed && !r.moved && !r.glConflict;
+  return {decision:d, stake:r.stake>0?+(+r.stake).toFixed(2):0, onList};
+}
 function addToLog(r){
   if(!r) return;
   logged.push({
@@ -2086,7 +2144,8 @@ function addToLog(r){
       logitGap:r.logitGap!=null?+r.logitGap.toFixed(4):null, stars:r.stars!=null?r.stars:null, evModel:r.evModel||null,
       consensus:{bet_side:r.consOdds!=null?r.consOdds:null, other_side:r.consOtherOdds!=null?r.consOtherOdds:null},
       fee:r.fee!=null?+r.fee.toFixed(5):null, fees:Object.assign({},cfgRead().fees),
-      outlier:!!r.outlier, risk:!!r.risk, sizedAt:r.blendProb!=null?+r.blendProb.toFixed(4):null }
+      outlier:!!r.outlier, risk:!!r.risk, sizedAt:r.blendProb!=null?+r.blendProb.toFixed(4):null,
+      said: r.said || saidOf(r) }
   });
   saveLog();
 }
@@ -2114,7 +2173,7 @@ function renderLog(){
     tr.innerHTML=
       '<td class="meta" style="white-space:nowrap">'+esc(b.date)+'</td>'+
       '<td><div class="pick">'+esc(b.name)+'</div><div class="meta">'+esc(b.betnow||b.market)+'</div>'+
-      '<div class="meta">'+(bookLogo(b.book)?logoTag(b.book,'sm')+' ':'')+'<span class="book">'+esc(b.book)+'</span></div></td>'+
+      '<div class="meta">'+(bookLogo(b.book)?logoTag(b.book,'sm')+' ':'')+'<span class="book">'+esc(bookLabel(b.book))+'</span></div></td>'+
       '<td><span class="sport s-'+esc(b.sport)+'">'+esc(b.sport)+'</span></td>'+
       '<td class="num">'+esc(fmtOdds(b.odds))+'</td>'+
       '<td class="num">'+esc(fmtOdds(b.fair))+'</td>'+
@@ -2154,7 +2213,87 @@ function renderLog(){
     const b=logged[parseInt(btn.dataset.i,10)]; if(b) askRemove(btn.closest('tr'), b, 11);
   }));
   empty.style.display = logged.length?'none':'block';
-  renderRemoved();
+  renderRemoved(); renderDays(); renderTodayLine();
+}
+/* v2.63: bets by GAME day (kickoff in Central time; the board date if no kickoff was saved) */
+function ctDay(ms){ return new Date(ms).toLocaleDateString('en-CA',{timeZone:'America/Chicago'}); }
+function gameDayOf(b){
+  if(b.start){ const t=Date.parse(b.start); if(!isNaN(t)) return ctDay(t); }
+  return b.date || '';
+}
+function betProfit(b){
+  const st=+b.stake||0;
+  if(b.sold) return +((+b.sold.price||0) - st).toFixed(2);
+  if(b.result==='loss') return -st;
+  if(b.result==='push') return 0;
+  if(b.result==='win'){
+    const p=toProb(b.odds); if(p==null) return null;
+    const fee=+b.fee||0;   // fee charged on top of the price (Kalshi): stake = cost × (1 + fee)
+    return +(st*((1/p)-1-fee)/(1+fee)).toFixed(2);
+  }
+  return null;   // not settled yet
+}
+function blankDay(day){ return {day,bets:0,staked:0,w:0,l:0,p:0,sold:0,pend:0,profit:0,settled:0,on:0,against:0,unknown:0,cancelled:0,cancelLost:0}; }
+function dayStats(){
+  const days={};
+  const at=day=>days[day]||(days[day]=blankDay(day));
+  logged.forEach(b=>{
+    const d=at(gameDayOf(b));
+    d.bets++; d.staked+=(+b.stake||0);
+    if(b.sold) d.sold++;
+    else if(b.result==='win') d.w++; else if(b.result==='loss') d.l++; else if(b.result==='push') d.p++; else d.pend++;
+    const pr=betProfit(b); if(pr!=null){ d.profit+=pr; d.settled++; }
+    const s=b.snap&&b.snap.said;
+    if(!s) d.unknown++; else if(s.onList) d.on++; else d.against++;
+  });
+  removedBets.forEach(b=>{ if(!(b.lost>0)) return; const d=at(gameDayOf(b)); d.cancelled++; d.cancelLost+=b.lost; d.profit-=b.lost; d.settled++; });
+  return days;
+}
+function money(x,signed){ return (x<0?'−':(signed&&x>0?'+':''))+'$'+Math.abs(x).toFixed(2); }
+function dayLabel(day){
+  const d=new Date(day+'T12:00:00');
+  return isNaN(d)?esc(day):d.toLocaleDateString('en-US',{weekday:'short',month:'numeric',day:'numeric'});
+}
+function dayCells(d,goal,bank){
+  const pct=goal>0?Math.min(100,Math.round(100*d.bets/goal)):0;
+  const wlp=(d.w+d.l+d.p)? d.w+'–'+d.l+'–'+d.p : '—';
+  return '<td class="num"><b>'+d.bets+'</b>'+(goal>0?' <span class="meta">/ '+goal+'</span><div class="goalbar"><i style="width:'+pct+'%"'+(d.bets>=goal?' class="hit"':'')+'></i></div>':'')+'</td>'+
+    '<td class="num">'+(d.staked?money(d.staked):'—')+(d.staked&&bank?'<div class="meta">'+(100*d.staked/bank).toFixed(1)+'% of bankroll</div>':'')+'</td>'+
+    '<td class="num">'+wlp+(d.sold?'<div class="meta">'+d.sold+' sold</div>':'')+(d.cancelled?'<div class="meta">'+d.cancelled+' cancelled</div>':'')+'</td>'+
+    '<td class="num">'+(d.pend||'—')+'</td>'+
+    '<td class="num">'+(d.settled?'<b class="'+(d.profit>=0?'pl-up':'pl-down')+'">'+money(d.profit,true)+'</b>':'—')+'</td>'+
+    '<td class="num">'+(!d.bets ? '—'
+      : (d.on||d.against) ? d.on+' on'+(d.against?' · <span class="pl-down">'+d.against+' against</span>':'')+(d.unknown?'<div class="meta">'+d.unknown+' not tagged</div>':'')
+      : '<span class="meta">not tagged</span>')+'</td>';
+}
+function renderDays(){
+  const tb=document.getElementById('daysBody'), tf=document.getElementById('daysFoot'); if(!tb) return;
+  const cfg=cfgRead(), goal=cfg.dayGoal, bank=cfg.bank||0;
+  const stats=dayStats(), today=ctDay(Date.now());
+  const shift=n=>ctDay(Date.parse(today+'T12:00:00Z')+n*86400e3);
+  const list=[]; for(let i=0;i<7;i++) list.push(shift(-i));                          // today and the 6 days before
+  Object.keys(stats).forEach(k=>{ if(k>today && k<=shift(7) && !list.includes(k)) list.push(k); });   // upcoming days with bets
+  list.sort().reverse();
+  tb.innerHTML=list.map(day=>'<tr'+(day===today?' class="today"':'')+'><td style="white-space:nowrap">'+dayLabel(day)+
+    (day===today?' <span class="tag t-live">today</span>':'')+'</td>'+dayCells(stats[day]||blankDay(day),goal,bank)+'</tr>').join('');
+  const wk=blankDay('week'); let active=0;
+  list.filter(day=>day<=today).forEach(day=>{ const d=stats[day]; if(!d) return; if(d.bets) active++;
+    Object.keys(wk).forEach(k=>{ if(typeof wk[k]==='number') wk[k]+=d[k]; }); });
+  tf.innerHTML='<tr class="total"><td><b>Last 7 days</b>'+(wk.bets?'<div class="meta">'+(wk.bets/7).toFixed(1)+' a day on average</div>':'')+'</td>'+
+    dayCells(wk,goal>0?goal*7:0,bank)+'</tr>';
+}
+/* v2.63: one line on the Board — today's games */
+function renderTodayLine(){
+  const el=document.getElementById('todayLine'); if(!el) return;
+  const cfg=cfgRead(), goal=cfg.dayGoal, today=ctDay(Date.now());
+  const d=dayStats()[today];
+  if(!d || !d.bets){ el.innerHTML="Today's games: <b>0"+(goal>0?' / '+goal:'')+'</b> bets'; return; }
+  const parts=["Today's games: <b>"+d.bets+(goal>0?' / '+goal:'')+'</b> bets', money(d.staked)+' staked'+(cfg.bank?' ('+(100*d.staked/cfg.bank).toFixed(1)+'% of bankroll)':'')];
+  if(d.w+d.l+d.p) parts.push(d.w+'–'+d.l+'–'+d.p);
+  if(d.pend) parts.push(d.pend+' pending');
+  if(d.settled) parts.push('<b class="'+(d.profit>=0?'pl-up':'pl-down')+'">'+money(d.profit,true)+'</b>');
+  if(d.against) parts.push('<span class="pl-down">'+d.against+' against the screener</span>');
+  el.innerHTML=parts.join(' · ');
 }
 function renderRemoved(){
   const panel=document.getElementById('removedPanel'), tb=document.getElementById('removedBody');
@@ -2162,7 +2301,7 @@ function renderRemoved(){
   const lost=removedBets.reduce((t,b)=>t+(b.lost||0),0);
   document.getElementById('removedTotal').textContent=removedBets.length+' bet'+(removedBets.length===1?'':'s')+' · lost $'+lost.toFixed(2)+' cancelling';
   tb.innerHTML=removedBets.map((b,i)=>'<tr><td class="meta" style="white-space:nowrap">'+esc((b.removedAt||'').slice(0,16).replace('T',' '))+'</td>'+
-    '<td><div class="pick">'+esc(b.name)+'</div><div class="meta">'+esc(b.betnow||b.market)+' · '+esc(b.book||'')+'</div></td>'+
+    '<td><div class="pick">'+esc(b.name)+'</div><div class="meta">'+esc(b.betnow||b.market)+' · '+esc(bookLabel(b.book))+'</div></td>'+
     '<td class="num">$'+(b.stake||0).toFixed(2)+'</td>'+
     '<td class="num">'+(b.lost>0?'<span style="color:var(--out)">−$'+b.lost.toFixed(2)+'</span>':'never placed')+'</td>'+
     '<td><button class="kill rm-forget" data-i="'+i+'" title="Delete this record">forget</button></td></tr>').join('');
@@ -2584,6 +2723,9 @@ async function apiGet(path){
   if(data && data._meta && data._meta.budget) showBudget(data._meta.budget);
   if(!res.ok){
     if(res.status===401) throw new Error('locked — enter the screener passphrase below the load bar');
+    const bud=data&&data._meta&&data._meta.budget;
+    if(res.status===429 && bud && bud.next_free_at)   // v2.63: say when the next call frees up
+      throw new Error(((data&&data.error)||'API limit reached')+' — next call '+fmtCT(bud.next_free_at)+'. Saved boards still work');
     throw new Error((data&&data.error)||('Worker returned '+res.status));
   }
   return data;
@@ -2598,10 +2740,21 @@ async function fetchApiSport(sport, date, booksParam, weekParam, evOnly, fresh){
   const evParam = evOnly===false ? '&ev_only=0' : '&ev_only=1';
   return apiGet('/props?sport='+encodeURIComponent(sport)+dateOrWeek+evParam+booksParam+'&pages='+apiPages()+(fresh?'&fresh=1':''));
 }
+let lastBudget=null;
+function fmtCT(iso){ const d=new Date(iso); return isNaN(d)?'':d.toLocaleString('en-US',{timeZone:'America/Chicago',weekday:'short',hour:'numeric',minute:'2-digit'}); }
 function showBudget(b){
   const el=document.getElementById('apiBudget'); if(!el||!b) return;
-  const left=(b.limit||50)-(b.used||0);
-  el.textContent = b.exhausted ? 'API today: limit reached' : 'API today: '+(b.used||0)+' / '+(b.limit||50);
+  lastBudget=b;
+  const limit=b.limit||50, used=b.used||0, left=limit-used, rolling=b.window==='24h';
+  if(rolling){   // v2.63 Worker: 50 calls in any 24 hours
+    el.textContent = b.exhausted ? 'API limit reached'+(b.next_free_at?' · next call '+fmtCT(b.next_free_at):'')
+                                 : 'API (24 h): '+used+' / '+limit;
+    el.title = b.exhausted ? (b.blocked_by_bettingpros?'BettingPros said the limit is used up. ':'')+'Saved boards and the 30-minute cache still work.'
+             : (b.frees_one_at?'Counts calls in the last 24 hours. The oldest one drops off '+fmtCT(b.frees_one_at)+'.':'Counts calls in the last 24 hours.');
+  } else {
+    el.textContent = b.exhausted ? 'API today: limit reached' : 'API today: '+used+' / '+limit;
+    el.title='';
+  }
   el.className='budget'+(b.exhausted||left<=0?' out':(left<=10?' low':''));
 }
 async function refreshBudget(){
@@ -2982,9 +3135,9 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
   t.classList.add('on'); document.getElementById(t.dataset.view).classList.add('on');
 }));
-const NUMS=['oMin','oMax','eMin','eMax','devig','bank','kelly','shrink','sMin','sMax','mWeight','gameCap',
+const NUMS=['oMin','oMax','eMin','eMax','devig','bank','kelly','shrink','sMin','sMax','mWeight','gameCap','dayGoal',
             'fKalshi','fProphet','fPoly','fNovig','fFliff','fBook'];
-NUMS.forEach(id=>document.getElementById(id).addEventListener('input',()=>{ refresh(); manual(); save(); }));
+NUMS.forEach(id=>document.getElementById(id).addEventListener('input',()=>{ refresh(); manual(); save(); renderDays(); }));
 ['fKalshi','fProphet','fPoly','fNovig','fFliff','fBook'].forEach(id=>document.getElementById(id).addEventListener('input',renderMoneylines));
 document.getElementById('books').addEventListener('input',()=>{ refresh(); save(); });
 ['cDeriv','cProp','cDfs','cShow'].forEach(id=>
