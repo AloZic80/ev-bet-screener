@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Prop Bet Cheat Sheet v2.53</title>
+<title>Prop Bet Cheat Sheet v2.54</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -294,7 +294,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 <div class="head">
   <div class="head-row">
     <div>
-      <h1>Prop Bet Cheat Sheet <span class="ver" id="verTag">v2.53</span></h1>
+      <h1>Prop Bet Cheat Sheet <span class="ver" id="verTag">v2.54</span></h1>
       <div class="date">Board for <input type="date" id="slate"></div>
       <div class="built">Build 22 Sep 2026</div>
     </div>
@@ -338,7 +338,13 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
       <option value="props">Player props</option>
       <option value="moneyline">Moneylines (NFL)</option>
       <option value="spread">Spreads (NFL)</option>
-      <option value="total" disabled>Totals (coming: needs market IDs)</option>
+      <option value="total">Totals (NFL)</option>
+    </select>
+    <select id="apiPages" title="How many props to pull per sport. Each 20 props is 1 API call (50 a day).">
+      <option value="2">40 props (2 calls)</option>
+      <option value="3">60 props (3 calls)</option>
+      <option value="4">80 props (4 calls)</option>
+      <option value="5" selected>100 props (5 calls)</option>
     </select>
     <span id="apiWeekFields" style="display:none">
       <input type="number" id="apiSeason" value="2026" title="Season year" style="width:78px">
@@ -705,7 +711,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 
 </div>
 <script>
-const SCREENER_VERSION='v2.53';
+const SCREENER_VERSION='v2.54';
 // the header and tab title always show this one number
 document.title='Prop Bet Cheat Sheet '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -2203,6 +2209,7 @@ function toggleApiWeekFields(){
   document.getElementById('apiWeekFields').style.display=isWeekBased?'inline':'none';
   document.getElementById('apiWeekHint').style.display=isWeekBased?'block':'none';
   if(isWeekBased) autoFillWeek(sport);
+  const pg=document.getElementById('apiPages'); if(pg) pg.style.display=document.getElementById('apiType').value==='props'?'':'none';
 }
 async function autoFillWeek(sport){
   const weekInput=document.getElementById('apiWeek');
@@ -2232,10 +2239,15 @@ async function apiGet(path){
   }
   return data;
 }
+// v2.54: props per sport — 20 per page, 1 API call per page (Worker allows up to 5)
+function apiPages(){ const n=parseInt((document.getElementById('apiPages')||{}).value,10); return n>=1&&n<=5?n:2; }
+(function(){ const el=document.getElementById('apiPages');
+  try{ const v=localStorage.getItem('mbev.pages'); if(v) el.value=v; }catch(e){}
+  el.addEventListener('change',()=>{ try{ localStorage.setItem('mbev.pages',el.value); }catch(e){} toggleApiWeekFields(); }); })();
 async function fetchApiSport(sport, date, booksParam, weekParam, evOnly, fresh){
   const dateOrWeek=(WEEK_BASED_SPORTS.includes(sport)&&weekParam)?weekParam:'&date='+encodeURIComponent(date);
   const evParam = evOnly===false ? '&ev_only=0' : '&ev_only=1';
-  return apiGet('/props?sport='+encodeURIComponent(sport)+dateOrWeek+evParam+booksParam+(fresh?'&fresh=1':''));
+  return apiGet('/props?sport='+encodeURIComponent(sport)+dateOrWeek+evParam+booksParam+'&pages='+apiPages()+(fresh?'&fresh=1':''));
 }
 function showBudget(b){
   const el=document.getElementById('apiBudget'); if(!el||!b) return;
@@ -2246,15 +2258,15 @@ function showBudget(b){
 async function refreshBudget(){
   try{ const res=await fetch(API_BASE+'/budget',{headers:apiHeaders()}); if(res.ok) showBudget(await res.json()); }catch(e){}
 }
-/* NFL moneylines/spreads from the Worker's /v3/offers routes -> board rows.
+/* NFL moneylines/spreads/totals from the Worker's /v3/offers routes -> board rows.
    One row per team (per line for spreads): the best current price among your books. */
 function gameRowsToInternal(data, kind, sport){
   const games=new Map((data.games||[]).map(g=>[String(g.event_id),g]));
   const best=new Map();
   (data.rows||[]).forEach(x=>{
     if(x.tag!=='current' || x.book_id===0 || x.cost==null) return;
-    if(kind==='spread' && x.is_main===false) return;
-    const key=x.event_id+'|'+x.team+'|'+(kind==='spread'?x.line:'');
+    if((kind==='spread'||kind==='total') && x.is_main===false) return;
+    const key=x.event_id+'|'+x.team+'|'+(kind==='spread'||kind==='total'?x.line:'');
     const cur=best.get(key);
     if(!cur || toProb(fmtOdds(x.cost)) < toProb(fmtOdds(cur.cost))) best.set(key,x);   // lower implied prob = better price
   });
@@ -2264,6 +2276,25 @@ function gameRowsToInternal(data, kind, sport){
     const fairProb=x.cover_probability!=null ? x.cover_probability : (x.consensus_fair_probability!=null?x.consensus_fair_probability:null);
     const ln=(kind==='spread' && x.line!=null) ? ((x.line>0?'+':'')+x.line) : '';
     const game=x.matchup || (g&&g.matchup) || String(x.event_id);
+    if(kind==='total'){
+      // v2.54: game totals — the "player" is the game, side is O/U, market is "41.5 Total"
+      const away=x.away||(g&&g.away), home=x.home||(g&&g.home);
+      const nm=(away&&home)?away+' @ '+home:game;
+      const row={
+        name:nm, game, matchup:'Game total', matchupAlt:null, noMatchup:false,
+        side: x.side==='Under'?'U':'O', sport, market:(x.line!=null?x.line:'?')+' Total', kind:'total',
+        book: MONEY_BOOK_NAMES[x.book_id] || ('Book '+x.book_id),
+        offeredRaw, offeredProb, fairProb, fairRaw: fairProb!=null?fmtOdds(americanOf(fairProb)):null,
+        screenerEV: x.expected_value!=null ? x.expected_value*100 : null,
+        stars: x.bet_rating!=null?Number(x.bet_rating):null, l15Hit:null, l15N:0, seasonHit:null, seasonN:0,
+        evModel:'projection', consensusEdge: x.edge_vs_consensus!=null ? x.edge_vs_consensus : null,
+        mktProb: x.consensus_fair_probability!=null ? x.consensus_fair_probability : null,
+        apiKey: x.event_id+'-total-'+x.side+'-'+x.line,
+      };
+      const kick=x.kickoff||(g&&g.kickoff);
+      if(kick){ const d=new Date(kick); if(!isNaN(d)) row.gameInfo={state:'pre', timeCT:d.toLocaleString('en-US',{timeZone:'America/Chicago',weekday:'short',month:'2-digit',day:'2-digit',year:'2-digit',hour:'numeric',minute:'2-digit'})+' CT'}; }
+      return row;
+    }
     const row={
       name: x.label || x.team, game, matchup: x.team+' vs '+(x.opponent||'?'), matchupAlt:null, noMatchup:!x.opponent,
       side:'', sport, market: kind==='spread' ? ln+' Spread' : 'Moneyline', kind,
@@ -2358,10 +2389,11 @@ async function loadApi(fresh){
       const nMkt=rows.filter(r=>r.evModel==='market').length;
       if(rows.length) msg+= nMkt===rows.length ? ' · EV model: market' : nMkt ? ' · EV model: market on '+nMkt+', proj. on the rest' : ' · EV model: proj.';
     } else {
-      if(sport!=='NFL') throw new Error((type==='moneyline'?'Moneylines':'Spreads')+' are only confirmed for NFL so far');
+      const typeName={moneyline:'moneylines',spread:'spreads',total:'totals'}[type];
+      if(sport!=='NFL') throw new Error(typeName[0].toUpperCase()+typeName.slice(1)+' are only confirmed for NFL so far');
       data=await apiGet('/'+type+'?sport=NFL'+booksParam+(fresh?'&fresh=1':''));
       rows=gameRowsToInternal(data, type, 'NFL');
-      msg = rows.length ? 'Loaded '+rows.length+' NFL '+(type==='moneyline'?'moneylines':'spreads')+' (best price per side across your books)'
+      msg = rows.length ? 'Loaded '+rows.length+' NFL '+typeName+' (best price per side across your books)'
                         : (data.note || '0 NFL '+type+' lines right now');
     }
 
@@ -2388,7 +2420,8 @@ async function loadApi(fresh){
 }
 document.getElementById('loadApi').addEventListener('click',()=>loadApi(false));
 document.getElementById('refreshApi').addEventListener('click',()=>{
-  if(confirm('Refresh now skips the 30-minute cache and uses API calls (1–2 for this load). Continue?')) loadApi(true);
+  const n=document.getElementById('apiType').value==='props'?apiPages():2;
+  if(confirm('Refresh now skips the 30-minute cache and uses API calls (up to '+n+' for this load). Continue?')) loadApi(true);
 });
 
 /* save / copy / open / clear */
