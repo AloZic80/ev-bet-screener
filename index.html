@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Prop Bet Cheat Sheet v2.61</title>
+<title>Prop Bet Cheat Sheet v2.62</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -297,13 +297,18 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 .range-sliders input{flex:1}
 .filter-actions{display:flex; gap:8px; flex-wrap:wrap}
 /* v2.61 */
-.board-opts{margin:0 0 12px}
-.board-opts>summary{cursor:pointer; font-weight:600; font-size:14px; padding:8px 0; color:var(--ink); list-style:none}
-.board-opts>summary::-webkit-details-marker{display:none}
-.board-opts>summary::before{content:'▸ '; color:var(--soft)}
-.board-opts[open]>summary::before{content:'▾ '}
-.board-opts>summary .sub{font-weight:400; color:var(--soft); font-size:12.5px; margin-left:6px}
-.board-opts[open]{padding-bottom:4px}
+.board-bar{display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; margin:0 0 10px; font-size:13px; color:var(--soft)}
+.board-bar .bar-item{display:flex; align-items:center; gap:6px}
+.bar-sel{font-family:inherit; font-size:13px; padding:6px 8px; border:1px solid var(--rule); border-radius:7px; background:var(--panel); color:var(--ink)}
+.bar-search{font-family:inherit; font-size:13px; padding:6px 10px; border:1px solid var(--rule); border-radius:7px; background:var(--panel); color:var(--ink); width:190px}
+.bar-check{display:flex; align-items:center; gap:6px; cursor:pointer}
+.bar-check input{width:15px; height:15px; accent-color:var(--accent)}
+.filter-chips{display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:0 0 10px; font-size:12.5px; color:var(--warn)}
+.filter-chips .chip{background:var(--warn-bg); color:var(--warn); border-radius:999px; padding:2px 9px; font-weight:600}
+.filter-chips button{font:inherit; font-size:12px; background:none; border:0; color:var(--accent); cursor:pointer; text-decoration:underline}
+tr.group-row td{padding:10px 12px 4px; border-top:0; background:transparent!important}
+tr.group-row .glabel{position:sticky; left:12px; display:inline-block; font-size:11.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--soft)}
+tr.group-row .glabel b{color:var(--ink)}
 tr.skiprow td{background:var(--panel)!important; box-shadow:none!important}
 tr.skiprow td>*{opacity:.42; transition:opacity .15s}
 tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
@@ -317,7 +322,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div>
-      <h1>Prop Bet Cheat Sheet <span class="ver" id="verTag">v2.61</span></h1>
+      <h1>Prop Bet Cheat Sheet <span class="ver" id="verTag">v2.62</span></h1>
       <div class="date">Board for <input type="date" id="slate"></div>
       <div class="built">Build 22 Sep 2026</div>
     </div>
@@ -426,12 +431,9 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 <div class="panel">
   <h2>The board</h2>
-  <details class="board-opts" id="boardOpts">
-  <summary>Board options <span class="sub">sort, sport, sweet spot, filters</span></summary>
-  <div class="row" style="margin-bottom:15px;gap:15px;flex-wrap:wrap">
-    <div class="field" style="flex:1;min-width:160px;margin:0">
-      <label for="sortBy" style="display:block;font-size:12.5px;color:var(--soft);margin-bottom:5px">Sort by</label>
-      <select id="sortBy" style="width:100%;font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--rule);border-radius:7px;background:var(--panel);color:var(--ink)">
+  <!-- v2.62: one slim line of view controls; set-once settings live in the Settings tab -->
+  <div class="board-bar">
+    <label class="bar-item">Sort <select id="sortBy" class="bar-sel">
         <option value="top" selected>Top bets (stars, then cover %)</option>
         <option value="cover">Cover % (highest first)</option>
         <option value="educated">Educated guess (hit rate)</option>
@@ -439,11 +441,8 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
         <option value="gross">Gross EV % (best first)</option>
         <option value="odds">Odds (best)</option>
         <option value="sport">Sport</option>
-      </select>
-    </div>
-    <div class="field" style="flex:1;min-width:160px;margin:0">
-      <label for="filterSport" style="display:block;font-size:12.5px;color:var(--soft);margin-bottom:5px">Filter sport</label>
-      <select id="filterSport" style="width:100%;font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--rule);border-radius:7px;background:var(--panel);color:var(--ink)">
+      </select></label>
+    <label class="bar-item">Sport <select id="filterSport" class="bar-sel">
         <option value="">All sports</option>
         <option value="MLB">MLB</option>
         <option value="NFL">NFL</option>
@@ -453,97 +452,13 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
         <option value="NCAAB">NCAAB</option>
         <option value="WNBA">WNBA</option>
         <option value="MLS">MLS</option>
-      </select>
-    </div>
-    <div class="field" style="flex:1;min-width:160px;margin:0">
-      <label for="showRejects" style="display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer;margin:8px 0 0">
-        <input type="checkbox" id="showRejects" style="width:15px;height:15px;accent-color:var(--accent)"> Show rejected bets
-      </label>
-    </div>
+      </select></label>
+    <input type="text" id="filterPlayer" class="bar-search" placeholder="Search player or team…" aria-label="Search player or team">
+    <label class="bar-check"><input type="checkbox" id="swOnly"> Only sweet spot</label>
+    <label class="bar-check"><input type="checkbox" id="showRejects"> Show rejected</label>
+    <label class="bar-check"><input type="checkbox" id="notesAll"> Show all notes</label>
   </div>
-
-  <!-- ===== SWEET SPOT (v2.46) ===== -->
-  <div class="sweetbar">
-    <b>🎯 Sweet spot</b>
-    <label>Stars ≥ <input type="number" id="swStars" value="3" min="1" max="5" step="1"></label>
-    <label>+EV <input type="number" id="swNetMin" value="2" step="0.5"> to <input type="number" id="swNetMax" value="10" step="0.5">%</label>
-    <label>Odds <input type="number" id="swOMin" value="-150" step="10"> to <input type="number" id="swOMax" value="150" step="10"></label>
-    <label style="display:flex;align-items:center;gap:6px;cursor:pointer" title="When the market's no-vig price is known, the offered price has to beat it"><input type="checkbox" id="swMkt" checked style="width:15px;height:15px;accent-color:var(--accent)"> Must beat market price</label>
-    <label title="Treated as the model disagreeing with the market, not an edge">Outlier: EV over <input type="number" id="swOutlier" value="15" step="1">% or model <input type="number" id="swGap" value="8" step="1"> pts over market</label>
-    <label title="An outlier that's also below the market price is skipped — except for a few small 'risk bets' a day, the closest ones to the market. 0 turns them off.">Risk bets: up to <input type="number" id="swRiskN" value="2" min="0" step="1"> a day at the minimum, if no worse than <input type="number" id="swRiskGap" value="3" min="0" step="0.5">% below market</label>
-    <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="swOnly" style="width:15px;height:15px;accent-color:var(--accent)"> Only show sweet spot</label>
-  </div>
-
-  <!-- ===== FILTER PANEL ===== -->
-  <div style="background:var(--panel-2);border-radius:8px;padding:14px;margin-bottom:16px">
-    <div class="filter-panel">
-      <div class="filter-group">
-        <label class="filter-label" for="filterPlayer">Player</label>
-        <input type="text" id="filterPlayer" class="filter-input" placeholder="Search…">
-      </div>
-      <div class="filter-group">
-        <label class="filter-label" for="filterTeam">Team</label>
-        <input type="text" id="filterTeam" class="filter-input" placeholder="Search…">
-      </div>
-      <div class="filter-group">
-        <label class="filter-label" for="filterBook">Book</label>
-        <input type="text" id="filterBook" class="filter-input" placeholder="Search…">
-      </div>
-      <div class="filter-group">
-        <label class="filter-label" for="filterMarket">Market</label>
-        <input type="text" id="filterMarket" class="filter-input" placeholder="Search…">
-      </div>
-      <div class="filter-group">
-        <label class="filter-label" for="filterOddsMin">Odds Min</label>
-        <input type="number" id="filterOddsMin" class="filter-input" value="-300" step="10">
-      </div>
-      <div class="filter-group">
-        <label class="filter-label" for="filterOddsMax">Odds Max</label>
-        <input type="number" id="filterOddsMax" class="filter-input" value="500" step="10">
-      </div>
-      <div class="filter-group">
-        <label class="filter-label" for="filterNetMin">Net EV Min %</label>
-        <input type="number" id="filterNetMin" class="filter-input" value="" placeholder="any" step="0.1">
-      </div>
-      <div class="filter-group">
-        <label class="filter-label" for="filterNetMax">Net EV Max %</label>
-        <input type="number" id="filterNetMax" class="filter-input" value="" placeholder="any" step="0.1">
-      </div>
-      <div class="filter-group">
-        <label class="filter-label" for="filterGrossMin">Gross EV Min %</label>
-        <input type="number" id="filterGrossMin" class="filter-input" value="" placeholder="any" step="0.1">
-      </div>
-      <div class="filter-group">
-        <label class="filter-label" for="filterGrossMax">Gross EV Max %</label>
-        <input type="number" id="filterGrossMax" class="filter-input" value="" placeholder="any" step="0.1">
-      </div>
-      <div class="filter-group">
-        <label class="filter-label" for="filterStakeMin">Stake Min $</label>
-        <input type="number" id="filterStakeMin" class="filter-input" value="" placeholder="any" step="0.25">
-      </div>
-      <div class="filter-group">
-        <label class="filter-label" for="filterStakeMax">Stake Max $</label>
-        <input type="number" id="filterStakeMax" class="filter-input" value="" placeholder="any" step="0.25">
-      </div>
-      <div class="filter-group">
-        <label class="filter-label" for="filterStarsMin">Stars Min</label>
-        <select id="filterStarsMin" class="filter-input">
-          <option value="">any</option>
-          <option value="5">5 ★</option>
-          <option value="4">4+ ★</option>
-          <option value="3">3+ ★</option>
-          <option value="2">2+ ★</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <label class="filter-label" for="filterCoverMin">Cover % Min</label>
-        <input type="number" id="filterCoverMin" class="filter-input" value="" placeholder="any" step="1">
-      </div>
-    </div>
-  </div>
-
-  </details>
-  <label class="notes-all"><input type="checkbox" id="notesAll" style="width:15px;height:15px;accent-color:var(--accent)"> Show all notes</label>
+  <div class="filter-chips" id="filterChips" style="display:none"></div>
   <div class="swipe-hint">Swipe sideways for stars, Bet Now and hit rate →</div>
   <div class="scroll board"><table>
     <thead><tr id="boardHead">
@@ -634,6 +549,80 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
   <p class="hint" style="margin:12px 0 0">Stakes size off a blend: the market's no-vig price pulled toward BettingPros' number by the model weight (0.35 = mostly market). If there's no market price for a bet, the model number is used with the haircut. Bets on a game you already have money on are trimmed so the game stays under the per-game max.</p>
 </details>
 
+<details class="panel fold" open>
+  <summary><h2>Sweet spot &amp; outliers <span class="sub">what gets the 🎯 badge, what counts as an outlier, risk bets</span></h2></summary>
+  <p class="hint">The sweet spot only marks rows. The outlier and risk-bet settings change stakes: an outlier is capped at the minimum, and one that is also below the market is skipped unless it fits the risk-bet allowance.</p>
+  <div class="sweetbar">
+    <label>Stars ≥ <input type="number" id="swStars" value="3" min="1" max="5" step="1"></label>
+    <label>+EV <input type="number" id="swNetMin" value="2" step="0.5"> to <input type="number" id="swNetMax" value="10" step="0.5">%</label>
+    <label>Odds <input type="number" id="swOMin" value="-150" step="10"> to <input type="number" id="swOMax" value="150" step="10"></label>
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer" title="When the market's no-vig price is known, the offered price has to beat it"><input type="checkbox" id="swMkt" checked style="width:15px;height:15px;accent-color:var(--accent)"> Must beat market price</label>
+    <label title="Treated as the model disagreeing with the market, not an edge">Outlier: EV over <input type="number" id="swOutlier" value="15" step="1">% or model <input type="number" id="swGap" value="8" step="1"> pts over market</label>
+    <label title="An outlier that's also below the market price is skipped — except for a few small 'risk bets' a day, the closest ones to the market. 0 turns them off.">Risk bets: up to <input type="number" id="swRiskN" value="2" min="0" step="1"> a day at the minimum, if no worse than <input type="number" id="swRiskGap" value="3" min="0" step="0.5">% below market</label>
+  </div>
+</details>
+
+<details class="panel fold" open>
+  <summary><h2>Board filters <span class="sub">hide rows on the board · reset when the page reloads</span></h2></summary>
+  <p class="hint">These only hide rows; they never change a decision or a stake. When one is hiding rows, the board says so above the table.</p>
+  <div class="filter-panel">
+      <div class="filter-group">
+        <label class="filter-label" for="filterBook">Book</label>
+        <input type="text" id="filterBook" class="filter-input" placeholder="Search…">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label" for="filterMarket">Market</label>
+        <input type="text" id="filterMarket" class="filter-input" placeholder="Search…">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label" for="filterOddsMin">Odds Min</label>
+        <input type="number" id="filterOddsMin" class="filter-input" value="-300" step="10">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label" for="filterOddsMax">Odds Max</label>
+        <input type="number" id="filterOddsMax" class="filter-input" value="500" step="10">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label" for="filterNetMin">Net EV Min %</label>
+        <input type="number" id="filterNetMin" class="filter-input" value="" placeholder="any" step="0.1">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label" for="filterNetMax">Net EV Max %</label>
+        <input type="number" id="filterNetMax" class="filter-input" value="" placeholder="any" step="0.1">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label" for="filterGrossMin">Gross EV Min %</label>
+        <input type="number" id="filterGrossMin" class="filter-input" value="" placeholder="any" step="0.1">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label" for="filterGrossMax">Gross EV Max %</label>
+        <input type="number" id="filterGrossMax" class="filter-input" value="" placeholder="any" step="0.1">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label" for="filterStakeMin">Stake Min $</label>
+        <input type="number" id="filterStakeMin" class="filter-input" value="" placeholder="any" step="0.25">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label" for="filterStakeMax">Stake Max $</label>
+        <input type="number" id="filterStakeMax" class="filter-input" value="" placeholder="any" step="0.25">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label" for="filterStarsMin">Stars Min</label>
+        <select id="filterStarsMin" class="filter-input">
+          <option value="">any</option>
+          <option value="5">5 ★</option>
+          <option value="4">4+ ★</option>
+          <option value="3">3+ ★</option>
+          <option value="2">2+ ★</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label" for="filterCoverMin">Cover % Min</label>
+        <input type="number" id="filterCoverMin" class="filter-input" value="" placeholder="any" step="1">
+      </div>
+  </div>
+  <button class="ghost" id="clearFilters">Clear filters</button>
+</details>
 </div>
 
 <div class="view" id="v-money">
@@ -753,7 +742,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v2.61';
+const SCREENER_VERSION='v2.62';
 // the header and tab title always show this one number
 document.title='Prop Bet Cheat Sheet '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -1198,14 +1187,28 @@ function render(rows,cfg){
   const isStarted=r=>r.gameInfo && (r.gameInfo.state==='in'||r.gameInfo.state==='post');
   if(cfg.hideStarted) shown=shown.filter(r=>!isStarted(r));
   if(filterSport) shown=shown.filter(r=>r.sport===filterSport);
-  shown=applyAdvancedFilters(shown);
+  shown=shown.filter(passesSearch);
+  // v2.62: Settings-tab filters hide rows — say so above the table
+  {
+    const before=shown.length;
+    shown=shown.filter(passesSettingsFilters);
+    const act=activeSettingsFilters(), hidden=before-shown.length, el=document.getElementById('filterChips');
+    if(act.length && hidden>0){
+      el.style.display='flex';
+      el.innerHTML='Filters on, hiding '+hidden+' row'+(hidden===1?'':'s')+': '+act.map(t=>'<span class="chip">'+esc(t)+'</span>').join('')+
+        ' <button type="button" id="chipClear">clear</button>';
+      document.getElementById('chipClear').addEventListener('click', clearSettingsFilters);
+    } else { el.style.display='none'; el.innerHTML=''; }
+  }
   if(filterCorrOnly) shown=shown.filter(r=>r.corr||r.prior);
   const swc=swCfg();
   if(swc.only) shown=shown.filter(r=>isSweet(r,swc));
+  // v2.62: three groups — bets to place, bets you already have, then everything to skip.
+  // Your sort (or a column-header click) applies inside each group.
+  const grpOf=x=> x.prior ? 1 : isStarted(x) ? 3 : (x.pass && x.stake>0 && !x.removed) ? 0 : 2;
   shown.sort((a,b)=>{
-    if(!showRejects && a.pass!==b.pass) return a.pass?-1:1;
-    const sa=isStarted(a), sb=isStarted(b);
-    if(sa!==sb) return sa?1:-1;
+    const ga=grpOf(a), gb=grpOf(b);
+    if(ga!==gb) return ga-gb;
     if(colSort){
       const va=colVal(a,colSort), vb=colVal(b,colSort);
       if(va==null && vb==null) return 0;
@@ -1263,27 +1266,25 @@ function render(rows,cfg){
     if(sortBy==='sport') return (a.sport||'').localeCompare(b.sport||'');
     return qualityScore(b)-qualityScore(a);
   });
-  // v2.57: a skipped game line sits right under the bet it lost to
-  {
-    const byIdx=new Map(shown.map(r=>[r.idx,r]));
-    const kids=new Map();
-    shown.forEach(r=>{ if(r.glConflict && !r.glConflict.held && byIdx.has(r.glConflict.bestIdx)){
-      (kids.get(r.glConflict.bestIdx)||kids.set(r.glConflict.bestIdx,[]).get(r.glConflict.bestIdx)).push(r); } });
-    if(kids.size){
-      const moved=new Set([].concat(...kids.values()));
-      const out=[];
-      shown.forEach(r=>{ if(moved.has(r)) return; out.push(r); (kids.get(r.idx)||[]).forEach(k=>out.push(k)); });
-      shown=out;
-    }
-  }
+  // v2.62: skipped game lines go to the Skip group; the winning row still names them
 
   lastShown=shown;
   const rb=document.getElementById('refreshApi'); if(rb) rb.disabled=!lastRows.some(x=>String(x.src||'').startsWith('api:'));
+  const GROUP_NAMES=['Place these','Already bet','Skip','Started or over'];
+  const groupCount=[0,0,0,0]; shown.forEach(r=>groupCount[grpOf(r)]++);
+  let lastGroup=-1;
   shown.forEach(r=>{
+    const g=grpOf(r);
+    if(g!==lastGroup){
+      lastGroup=g;
+      const gr=document.createElement('tr'); gr.className='group-row';
+      gr.innerHTML='<td colspan="'+BOARD_COLS.length+'"><span class="glabel"><b>'+GROUP_NAMES[g]+'</b> · '+groupCount[g]+'</span></td>';
+      tb.appendChild(gr);
+    }
     const tr=document.createElement('tr');
     const started = r.gameInfo && (r.gameInfo.state==='in'||r.gameInfo.state==='post');
     // v2.61: anything you shouldn't place is greyed out (still readable on hover / with notes open)
-    const isSkip = !r.prior && (!(r.stake>0) || r.removed);
+    const isSkip = !r.prior && (!(r.stake>0) || r.removed || started);   // v2.62: a game that already started can't be placed
     tr.className = (r.pass?'':'out ') + (r.prior?'dupe':(r.corr?'corr':'')) + (started?' gameover':'') + (isSkip?' skiprow':'');
     const gTag = !r.gameInfo ? ''
       : r.gameInfo.state==='post' ? '<span class="tag t-out">Final — '+esc(r.gameInfo.detail||'game over')+'</span>'
@@ -2388,10 +2389,34 @@ let filterGapMin = null;
 let filterStarsMin = null;
 let filterCoverMin = null;
 
+// v2.62: the board's one search box matches the player OR the team / game
+function passesSearch(r){
+  if(!filterPlayer) return true;
+  const q=filterPlayer.toLowerCase();
+  return [r.name, r.game, r.matchup, r.team].some(x=>String(x||'').toLowerCase().includes(q));
+}
+// v2.62: what the Settings-tab board filters are hiding, in plain words (defaults left out)
+function activeSettingsFilters(){
+  const out=[], n=(v,suf)=>v+(suf||'');
+  if(filterBook) out.push('Book "'+filterBook+'"');
+  if(filterMarket) out.push('Market "'+filterMarket+'"');
+  if(filterOddsMin!==-300) out.push('Odds ≥ '+(isFinite(filterOddsMin)?filterOddsMin:'any'));
+  if(filterOddsMax!==500) out.push('Odds ≤ '+(isFinite(filterOddsMax)?filterOddsMax:'any'));
+  if(filterNetMin!==null) out.push('Net EV ≥ '+n(filterNetMin,'%'));
+  if(filterNetMax!==null) out.push('Net EV ≤ '+n(filterNetMax,'%'));
+  if(filterGrossMin!==null) out.push('Gross EV ≥ '+n(filterGrossMin,'%'));
+  if(filterGrossMax!==null) out.push('Gross EV ≤ '+n(filterGrossMax,'%'));
+  if(filterStakeMin!==null) out.push('Stake ≥ $'+filterStakeMin);
+  if(filterStakeMax!==null) out.push('Stake ≤ $'+filterStakeMax);
+  if(filterStarsMin!==null) out.push('Stars ≥ '+filterStarsMin);
+  if(filterCoverMin!==null) out.push('Cover ≥ '+n(filterCoverMin,'%'));
+  return out;
+}
 function applyAdvancedFilters(rows) {
-  return rows.filter(r => {
-    if (filterPlayer && !(r.name || '').toLowerCase().includes(filterPlayer.toLowerCase())) return false;
-    if (filterTeam && !(r.game || '').toLowerCase().includes(filterTeam.toLowerCase())) return false;
+  return rows.filter(r => passesSearch(r) && passesSettingsFilters(r));
+}
+function passesSettingsFilters(r){
+  {
     if (filterBook && !(r.book || '').toLowerCase().includes(filterBook.toLowerCase())) return false;
     if (filterMarket && !(r.market || '').toLowerCase().includes(filterMarket.toLowerCase())) return false;
     
@@ -2423,7 +2448,7 @@ function applyAdvancedFilters(rows) {
     if (filterCoverMin !== null && (r.fairProb == null || r.fairProb*100 < filterCoverMin)) return false;
     
     return true;
-  });
+  }
 }
 
 function rerenderWithFilters() {
@@ -2434,43 +2459,17 @@ function rerenderWithFilters() {
   }
 }
 
-function resetFilters() {
-  filterPlayer = '';
-  filterTeam = '';
-  filterBook = '';
-  filterMarket = '';
-  filterOddsMin = -300;
-  filterOddsMax = 500;
-  filterNetMin = null;
-  filterNetMax = null;
-  filterGrossMin = null;
-  filterGrossMax = null;
-  filterStakeMin = null;
-  filterStakeMax = null;
-  filterGapMin = null;
-  filterStarsMin = null;
-  filterCoverMin = null;
-  sortBy = 'top';
-  colSort = null; paintSortArrows();
-  
-  document.getElementById('filterPlayer').value = '';
-  document.getElementById('filterTeam').value = '';
-  document.getElementById('filterBook').value = '';
-  document.getElementById('filterMarket').value = '';
-  document.getElementById('filterOddsMin').value = '-300';
-  document.getElementById('filterOddsMax').value = '500';
-  document.getElementById('filterNetMin').value = '';
-  document.getElementById('filterNetMax').value = '';
-  document.getElementById('filterGrossMin').value = '';
-  document.getElementById('filterGrossMax').value = '';
-  document.getElementById('filterStakeMin').value = '';
-  document.getElementById('filterStakeMax').value = '';
-  document.getElementById('filterStarsMin').value = '';
-  document.getElementById('filterCoverMin').value = '';
-  document.getElementById('sortBy').value = 'top';
-  
+// v2.62: "Clear filters" (Settings tab, and the note above the board) — back to defaults
+function clearSettingsFilters(){
+  filterBook=''; filterMarket=''; filterOddsMin=-300; filterOddsMax=500;
+  filterNetMin=null; filterNetMax=null; filterGrossMin=null; filterGrossMax=null;
+  filterStakeMin=null; filterStakeMax=null; filterGapMin=null; filterStarsMin=null; filterCoverMin=null;
+  const set=(id,v)=>{ const e=document.getElementById(id); if(e) e.value=v; };
+  set('filterBook',''); set('filterMarket',''); set('filterOddsMin','-300'); set('filterOddsMax','500');
+  ['filterNetMin','filterNetMax','filterGrossMin','filterGrossMax','filterStakeMin','filterStakeMax','filterStarsMin','filterCoverMin'].forEach(id=>set(id,''));
   rerenderWithFilters();
 }
+document.getElementById('clearFilters').addEventListener('click', clearSettingsFilters);
 
 // Event listeners for sort/filter
 document.getElementById('sortBy').addEventListener('change', (e)=>{ sortBy=e.target.value; colSort=null; paintSortArrows(); rerenderWithFilters(); });
@@ -2484,7 +2483,6 @@ document.getElementById('showRejects').addEventListener('change', (e)=>{ showRej
 
 // Event listeners for advanced filters
 document.getElementById('filterPlayer').addEventListener('input', (e)=>{ filterPlayer=e.target.value; rerenderWithFilters(); });
-document.getElementById('filterTeam').addEventListener('input', (e)=>{ filterTeam=e.target.value; rerenderWithFilters(); });
 document.getElementById('filterBook').addEventListener('input', (e)=>{ filterBook=e.target.value; rerenderWithFilters(); });
 document.getElementById('filterMarket').addEventListener('input', (e)=>{ filterMarket=e.target.value; rerenderWithFilters(); });
 const numOr=(v,fallback)=>{ const x=parseFloat(String(v).trim()); return isNaN(x)?fallback:x; };
@@ -3049,6 +3047,9 @@ document.getElementById('wipe').addEventListener('click',()=>{
    bet, and saves it as the closing price (plus a full snapshot). A moved line is
    recorded but not used — prices at different lines aren't comparable. */
 document.getElementById('grabClose').addEventListener('click', async ()=>{
+  logBusy++; try{ await grabCloseRun(); } finally { logBusy--; syncFromStorage(); }
+});
+async function grabCloseRun(){
   const st=document.getElementById('closeStatus');
   const keyRe=/^(\d+)-(\d+)-(\d+)-(over|under)$/;
   const now=Date.now();
@@ -3104,9 +3105,12 @@ document.getElementById('grabClose').addEventListener('click', async ()=>{
   st.textContent='Closing lines: '+got+' saved'+(moved?', '+moved+' line moved (kept for the record, not used)':'')+
     (missing?', '+missing+' not found':'')+(failed?', '+failed+' failed':'')+
     (early.length?' · '+early.length+' too early':'')+(started.length?' · '+started.length+' already started':'')+'.';
-});
+}
 document.getElementById('checkResults').addEventListener('click', async ()=>{
   if(!logged.length) return;
+  logBusy++; try{ await checkResultsRun(); } finally { logBusy--; syncFromStorage(); }
+});
+async function checkResultsRun(){
   const btn=document.getElementById('checkResults'); const was=btn.textContent;
   btn.textContent='Checking…'; btn.disabled=true;
   const sports=[...new Set(logged.map(b=>b.sport).filter(s=>ESPN_MAP[s]))];
@@ -3126,7 +3130,7 @@ document.getElementById('checkResults').addEventListener('click', async ()=>{
   }
   saveLog(); renderLog(); renderPerf();
   btn.textContent=was; btn.disabled=false;
-});
+}
 (function(){
   const onBox=document.getElementById('oddsApiOn'), ctr=document.getElementById('oddsApiControls'),
         keyIn=document.getElementById('oddsApiKey');
@@ -3291,7 +3295,9 @@ SW_IDS.concat(SW_CHECKS).forEach(id=>document.getElementById(id).addEventListene
 loadSweet(); loadParlays();
 loadCfg(); loadLog(); manual(); render([],cfgRead()); renderLog(); renderPerf();
 /* v2.61: keep every open copy of the screener in sync — a stale tab must never write an old list back */
+let logBusy=0;   // v2.62: an async job (closing grab, result check) is editing the log — don't swap it out mid-way
 function syncFromStorage(){
+  if(logBusy>0) return false;
   let changed=false;
   const same=(key,val)=>{ try{ return (localStorage.getItem(key)||'') === JSON.stringify(val); }catch(e){ return true; } };
   try{
@@ -3308,9 +3314,6 @@ window.addEventListener('storage',e=>{
 });
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') syncFromStorage(); });
 window.addEventListener('focus',syncFromStorage);
-(function(){ const d=document.getElementById('boardOpts');
-  try{ d.open=localStorage.getItem('mbev.boardOpts')==='1'; }catch(e){}
-  d.addEventListener('toggle',()=>{ try{ localStorage.setItem('mbev.boardOpts', d.open?'1':'0'); }catch(e){} }); })();
 (function(){ const cb=document.getElementById('notesAll'); cb.checked=notesAll;
   cb.addEventListener('change',()=>{ notesAll=cb.checked; openNotes.clear(); saveNotesAll(); refresh(); }); })();
 restoreBoard(); refreshBudget();
