@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Prop Bet Cheat Sheet v2.66</title>
+<title>Prop Bet Cheat Sheet v2.67</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -334,6 +334,18 @@ table.days tfoot td{border-top:2px solid var(--rule); font-weight:600}
 .lcash{display:flex; flex-wrap:wrap; gap:6px; align-items:center; font-size:12.5px}
 .lcash input{width:72px; font:inherit; font-size:12.5px; padding:4px 6px; border:1px solid var(--rule); border-radius:6px; background:var(--panel); color:var(--ink)}
 @media (max-width:760px){ .lbet{grid-template-columns:1fr} }
+.lbox{display:block}
+.lbox-top{display:flex; flex-wrap:wrap; gap:4px 14px; align-items:baseline; margin-bottom:6px}
+.lbox-top .tv{font-weight:600; font-size:12.5px; color:var(--soft)}
+.lbox-main{display:flex; align-items:center; gap:16px}
+.lteams{flex:0 1 240px; display:flex; flex-direction:column; gap:4px}
+.lteam{display:flex; align-items:center; gap:8px; font-size:16px}
+.lteam img,.lteam .nologo{width:24px; height:24px; object-fit:contain; flex:none}
+.lteam .ball{font-size:13px}
+.lteam .lscore{margin-left:auto; font-size:18px; font-weight:800; font-variant-numeric:tabular-nums}
+.lteam.dim{opacity:.6}
+.lsit{border-left:1px solid var(--rule); padding-left:14px; font-weight:600; font-size:13.5px; line-height:1.45}
+.lsit .rz{color:var(--loss); font-weight:800; font-size:12px; letter-spacing:.04em}
 .board-bar{display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; margin:0 0 10px; font-size:13px; color:var(--soft)}
 .board-bar .bar-item{display:flex; align-items:center; gap:6px}
 .bar-sel{font-family:inherit; font-size:13px; padding:6px 8px; border:1px solid var(--rule); border-radius:7px; background:var(--panel); color:var(--ink)}
@@ -359,7 +371,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div>
-      <h1>Prop Bet Cheat Sheet <span class="ver" id="verTag">v2.66</span></h1>
+      <h1>Prop Bet Cheat Sheet <span class="ver" id="verTag">v2.67</span></h1>
       <div class="date">Board for <input type="date" id="slate"></div>
       <div class="built">Build 22 Sep 2026</div>
     </div>
@@ -403,9 +415,9 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
     </select>
     <select id="apiType" title="Bet type">
       <option value="props">Player props</option>
-      <option value="moneyline">Moneylines (NFL)</option>
-      <option value="spread">Spreads (NFL)</option>
-      <option value="total">Totals (NFL)</option>
+      <option value="moneyline">Moneylines</option>
+      <option value="spread">Spreads / puck line / run line</option>
+      <option value="total">Game totals</option>
     </select>
     <select id="apiPages" title="How many props to pull per sport. Each 20 props is 1 API call (50 a day).">
       <option value="2">40 props (2 calls)</option>
@@ -688,10 +700,11 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="view" id="v-money">
 <div class="panel">
   <h2>Moneylines</h2>
-  <p class="hint">Pulled straight from BettingPros' own odds API (not a paste) — real games, real books, their own cover-probability/EV numbers per line. NFL only for now; other sports need their moneyline market_id confirmed first.</p>
+  <p class="hint">Pulled straight from BettingPros' own odds API (not a paste) — real games, real books, their own cover-probability/EV numbers per line. NFL, NBA, NHL, NCAAF, MLB, NCAAB and WNBA (soccer on hold). Each load spends BettingPros calls — non-NFL sports use 1 extra for the game list.</p>
   <div class="row" style="margin-top:0">
     <select id="moneySport" style="font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--rule);border-radius:7px;background:var(--panel);color:var(--ink)">
-      <option value="NFL">NFL</option>
+      <option value="NFL">NFL</option><option value="NBA">NBA</option><option value="NHL">NHL</option>
+      <option value="NCAAF">NCAAF</option><option value="MLB">MLB</option><option value="NCAAB">NCAAB</option><option value="WNBA">WNBA</option>
     </select>
     <button class="ghost" id="loadMoney">Load moneylines</button>
     <span id="moneyStatus" style="font-size:13px;color:var(--soft)"></span>
@@ -813,7 +826,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v2.66';
+const SCREENER_VERSION='v2.67';
 // the header and tab title always show this one number
 document.title='Prop Bet Cheat Sheet '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -2688,6 +2701,33 @@ function propVerdict(S, L, side, proj, state, f, unit){
     return {cls, text:fmt(S)+' so far · room '+fmt(L-S)+' · projection '+fmt(proj), bar};
   }
 }
+/* v2.67: ESPN-style game box — logos, score, who has the ball, down & distance, TV.
+   Everything comes from the same scoreboard call; nothing extra is fetched. */
+function liveGameHead(ev, g){
+  if(!ev) return '<div class="lgame-h"><span>'+esc(g.game||'Game not found on ESPN')+'</span><span class="meta">'+esc(g.sport)+'</span></div>';
+  const st=(ev.status&&ev.status.type)||{}, comp=(ev.competitions&&ev.competitions[0])||{}, sit=comp.situation||{};
+  const comps=compsOf(ev), a=comps.find(c=>c.homeAway==='away'), h=comps.find(c=>c.homeAway==='home');
+  const val=c=>c&&c.score!=null?(typeof c.score==='object'?c.score.value:c.score):'';
+  const live=st.state==='in', post=st.state==='post';
+  const clock = st.state==='pre' ? ((gameStatusOf(ev)||{}).timeCT||'') : (st.shortDetail||'');
+  const tv=[...new Set([].concat(...(comp.broadcasts||[]).map(b=>b.names||[]), ...(comp.geoBroadcasts||[]).map(b=>[(b.media&&b.media.shortName)||''])).filter(Boolean))].slice(0,2).join(' · ');
+  const sa=parseFloat(val(a)), sh=parseFloat(val(h));
+  const row=c=>{ if(!c) return '';
+    const t=c.team||{}, ab=normAbbr(t.abbreviation), has=sit.possession!=null && String(sit.possession)===String(t.id||c.id);
+    const lead=(c===a?sa>sh:sh>sa), dim=post&&!lead&&sa!==sh;
+    return '<div class="lteam'+(dim?' dim':'')+'">'+(t.logo?'<img src="'+esc(t.logo)+'" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'">':'<span class="nologo"></span>')+
+      '<b>'+esc(ab)+'</b>'+(live&&has?'<span class="ball" title="has the ball">🏈</span>':'')+'<span class="lscore">'+(st.state==='pre'?'':esc(val(c)))+'</span></div>'; };
+  let side='';
+  if(live && (g.sport==='NFL'||g.sport==='NCAAF') && (sit.shortDownDistanceText||sit.downDistanceText)){
+    side=esc(sit.shortDownDistanceText||sit.downDistanceText)+(sit.possessionText?'<br>'+esc(sit.possessionText):'')+(sit.isRedZone?'<br><span class="rz">RED ZONE</span>':'');
+  } else if(live && g.sport==='MLB' && sit.outs!=null){
+    const bases=['onFirst','onSecond','onThird'].map((k,i)=>sit[k]?['1st','2nd','3rd'][i]:null).filter(Boolean);
+    side=(sit.balls!=null?esc(sit.balls+'-'+sit.strikes)+' · ':'')+esc(sit.outs+' out'+(sit.outs==1?'':'s'))+'<br>'+(bases.length?'on '+esc(bases.join(', ')):'bases empty');
+  }
+  return '<div class="lgame-h lbox">'+
+    '<div class="lbox-top"><span class="clock'+(live?' live':'')+'">'+(live?'LIVE · ':'')+esc(clock)+'</span>'+(tv?'<span class="tv">📺 '+esc(tv)+'</span>':'')+'<span class="meta">'+esc(g.sport)+'</span></div>'+
+    '<div class="lbox-main"><div class="lteams">'+row(a)+row(h)+'</div>'+(side?'<div class="lsit">'+side+'</div>':'')+'</div></div>';
+}
 let liveBusy=false;
 async function renderLive(force){
   const body=document.getElementById('liveBody'); if(!body||liveBusy) return;
@@ -2726,11 +2766,7 @@ async function renderLive(force){
     });
     body.innerHTML=order.map(g=>{
       const ev=g.ev, st=ev&&ev.status&&ev.status.type||{}, comps=compsOf(ev);
-      const a=comps.find(c=>c.homeAway==='away'), h=comps.find(c=>c.homeAway==='home');
-      const sc=c=>c?(normAbbr(c.team&&c.team.abbreviation)+' '+(c.score!=null?(typeof c.score==='object'?c.score.value:c.score):'')):'';
-      const head = ev ? esc(sc(a))+' – '+esc(sc(h)) : esc(g.game||'Game not found on ESPN');
-      const clock = !ev ? '' : st.state==='pre' ? (gameStatusOf(ev)||{}).timeCT||'' : esc(st.shortDetail||'');
-      return '<div class="lgame"><div class="lgame-h"><span>'+head+'</span><span class="clock'+(st.state==='in'?' live':'')+'">'+(st.state==='in'?'LIVE · ':'')+esc(clock)+'</span><span class="meta">'+esc(g.sport)+'</span></div>'+
+      return '<div class="lgame">'+liveGameHead(ev, g)+
         g.bets.map(b=>{
           const v=liveStatus(b, ev, g.box), i=logged.indexOf(b), pay=betPayout(b);
           const bar=v.bar ? '<div class="lbar" title="'+esc(v.bar.S+' of '+v.bar.L)+'"><i style="width:'+Math.min(100,100*v.bar.S/v.bar.max)+'%"></i><s style="left:'+Math.min(100,100*v.bar.L/v.bar.max)+'%"></s></div>' : '';
@@ -3175,7 +3211,8 @@ async function apiGet(path){
     const bud=data&&data._meta&&data._meta.budget;
     if(res.status===429 && bud && bud.next_free_at)   // v2.63: say when the next call frees up
       throw new Error(((data&&data.error)||'API limit reached')+' — next call '+fmtCT(bud.next_free_at)+'. Saved boards still work');
-    throw new Error((data&&data.error)||('Worker returned '+res.status));
+    const sd=data&&data.schedule_debug;   // v2.67: show what BettingPros' game list sent, so it can be fixed
+    throw new Error(((data&&data.error)||('Worker returned '+res.status))+(sd?' [game list: '+JSON.stringify(sd).slice(0,400)+']':''));
   }
   return data;
 }
@@ -3210,7 +3247,8 @@ function showBudget(b){
 async function refreshBudget(){
   try{ const res=await fetch(API_BASE+'/budget',{headers:apiHeaders()}); if(res.ok) showBudget(await res.json()); }catch(e){}
 }
-/* NFL moneylines/spreads/totals from the Worker's /v3/offers routes -> board rows.
+const GAMELINE_SPORTS=new Set(['NFL','NBA','NHL','NCAAF','MLB','NCAAB','WNBA']);   // v2.67
+/* Moneylines/spreads/totals from the Worker's /v3/offers routes -> board rows.
    One row per team (per line for spreads): the best current price among your books. */
 function gameRowsToInternal(data, kind, sport){
   const games=new Map((data.games||[]).map(g=>[String(g.event_id),g]));
@@ -3343,11 +3381,13 @@ async function loadApi(fresh){
       if(rows.length) msg+= nMkt===rows.length ? ' · EV model: market' : nMkt ? ' · EV model: market on '+nMkt+', proj. on the rest' : ' · EV model: proj.';
     } else {
       const typeName={moneyline:'moneylines',spread:'spreads',total:'totals'}[type];
-      if(sport!=='NFL') throw new Error(typeName[0].toUpperCase()+typeName.slice(1)+' are only confirmed for NFL so far');
-      data=await apiGet('/'+type+'?sport=NFL'+booksParam+(fresh?'&fresh=1':''));
-      rows=gameRowsToInternal(data, type, 'NFL');
-      msg = rows.length ? 'Loaded '+rows.length+' NFL '+typeName+' (best price per side across your books)'
-                        : (data.note || '0 NFL '+type+' lines right now');
+      // v2.67: every sport with game-line IDs (soccer on hold: 3-way moneyline, many leagues)
+      if(!GAMELINE_SPORTS.has(sport)) throw new Error(typeName[0].toUpperCase()+typeName.slice(1)+' aren\'t set up for '+sport+' yet (soccer is on hold)');
+      data=await apiGet('/'+type+'?sport='+encodeURIComponent(sport)+booksParam+(fresh?'&fresh=1':''));
+      rows=gameRowsToInternal(data, type, sport);
+      msg = rows.length ? 'Loaded '+rows.length+' '+sport+' '+typeName+' (best price per side across your books)'
+                        : (data.note || '0 '+sport+' '+type+' lines right now');
+      if(!rows.length && data.schedule_debug) console.log('[schedule]', data.schedule_debug);
     }
 
     const meta=data._meta||{};
