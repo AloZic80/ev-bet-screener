@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Prop Bet Cheat Sheet v2.58</title>
+<title>Prop Bet Cheat Sheet v2.59</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -295,7 +295,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 <div class="head">
   <div class="head-row">
     <div>
-      <h1>Prop Bet Cheat Sheet <span class="ver" id="verTag">v2.58</span></h1>
+      <h1>Prop Bet Cheat Sheet <span class="ver" id="verTag">v2.59</span></h1>
       <div class="date">Board for <input type="date" id="slate"></div>
       <div class="built">Build 22 Sep 2026</div>
     </div>
@@ -716,7 +716,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 
 </div>
 <script>
-const SCREENER_VERSION='v2.58';
+const SCREENER_VERSION='v2.59';
 // the header and tab title always show this one number
 document.title='Prop Bet Cheat Sheet '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -1370,8 +1370,12 @@ function openBetEditor(tr, r){
   document.querySelectorAll('#tbody tr.editor').forEach(e=>e.remove());
   const books=[r.book].concat(BET_BOOKS.filter(b=>b.toLowerCase()!==(r.book||'').toLowerCase())).filter(Boolean);
   const ed=document.createElement('tr'); ed.className='editor';
+  // v2.59: the line can be changed (Under 38.5 on another app instead of 39.5)
+  const lineM=String(r.market||'').match(/^([+-]?[\d.]+)\s+(.*)$/);
+  const oldLine=lineM?parseFloat(lineM[1]):null, signed=lineM?/^[+-]/.test(lineM[1]):false;
   ed.innerHTML='<td colspan="12"><div class="editor-row">'+
     '<b>'+esc(r.name)+' — '+esc(betNowOf(r))+'</b>'+
+    (lineM?'<label title="Change it if you took a different number somewhere else">Line <input class="eb-line" type="number" step="0.5" value="'+esc(lineM[1].replace(/^\+/,''))+'" style="width:70px"></label>':'')+
     '<label>Book <select class="eb-book">'+books.map(b=>'<option>'+esc(b)+'</option>').join('')+'</select></label>'+
     '<label title="What the app shows: American odds, or a % price">Enter as <select class="eb-mode"><option value="odds">odds</option><option value="pct">%</option></select></label>'+
     '<span class="eb-plain" style="display:contents">'+
@@ -1382,6 +1386,7 @@ function openBetEditor(tr, r){
       '<label>@ <input class="eb-pct" type="number" step="0.1" placeholder="62" style="width:60px">%</label>'+
       '<label>To win $ <input class="eb-win" type="number" step="0.01" placeholder="3.93" title="What the app says you get back — total payout or profit, either works when the @ % is filled in"></label>'+
       '<span class="pm-calc eb-calc"></span></span>'+
+    '<span class="eb-check"></span>'+
     '<button class="log sm eb-save">Save bet</button> <button class="log sm undo eb-cancel">Cancel</button>'+
     '<span class="meta eb-msg"></span></div></td>';
   tr.after(ed);
@@ -1416,7 +1421,62 @@ function openBetEditor(tr, r){
     out.textContent = pr ? '= '+fmtOdds(Math.round(americanOf(pr.prob)))+(pr.allIn?' (all-in · To win read as '+pr.read+')':' (from the @ %)') : '';
   }
   ['.eb-cost','.eb-pct','.eb-win'].forEach(c=>ed.querySelector(c).addEventListener('input',calcPm));
-  bookSel.addEventListener('change',bookDefault); modeSel.addEventListener('change',syncMode); bookDefault();
+  /* v2.59: is it still worth it? Re-checked as you type and again on Save. Same line → the
+     model's own cover %. Different line → a rough shift for NFL/college game totals and spreads
+     (about 2.5% / 3% per point); for anything else the model can't price the new number. */
+  const lineIn=ed.querySelector('.eb-line');
+  const newLine=()=>{ if(!lineIn) return oldLine; const v=parseFloat(lineIn.value); return isNaN(v)?oldLine:v; };
+  const lineChanged=()=>oldLine!=null && Math.abs(newLine()-oldLine)>1e-9;
+  // + means the new number is better for this bet
+  const lineGain=()=>{
+    if(!lineChanged()) return 0;
+    const d=newLine()-oldLine;
+    if(r.kind==='spread') return d;                 // more points for your team is better
+    if(r.side==='U') return d;                      // Under: a higher number is better
+    if(r.side==='O') return -d;                     // Over: a lower number is better
+    return null;
+  };
+  const perPoint=()=>/^(NFL|NCAAF)$/.test(r.sport||'') ? (r.kind==='total'?0.025:(r.kind==='spread'?0.03:null)) : null;
+  const priceNow=()=>{
+    const cfg=cfgRead(), book=bookSel.value;
+    if(pmMode()){ const pr=pmPrice(); if(!pr) return null; return {prob:pr.prob, fee:pr.allIn?0:feeRate(book,pr.prob,cfg.fees)}; }
+    const o=ed.querySelector('.eb-odds').value.trim().replace(/^(\d)/,'+$1'); const prob=toProb(o);
+    return prob===null?null:{prob, fee:feeRate(book,prob,cfg.fees)};
+  };
+  function valueCheck(){
+    const cfg=cfgRead(), pr=priceNow();
+    if(!pr) return null;
+    const clamp=x=>Math.min(0.98,Math.max(0.02,x));
+    let fairAt=r.fairProb, mktAt=r.mktProb, rough=false;
+    const gain=lineGain();
+    if(gain){
+      const k=perPoint();
+      if(k!=null && gain!==null){ fairAt=fairAt!=null?clamp(fairAt+gain*k):null; mktAt=mktAt!=null?clamp(mktAt+gain*k):null; rough=true; }
+      else {
+        // can't price the new number — only flag the clear case: worse number AND no better price
+        if(gain!==null && gain<0 && pr.prob>=r.offeredProb-1e-9)
+          return {level:'bad', fairAt:null, msg:'Not worth it: a worse line ('+newLine()+' vs '+oldLine+') at no better price'};
+        return {level:'warn', fairAt:null, msg:'Different line — the model only priced '+oldLine+', so this one can\'t be checked'};
+      }
+    }
+    if(fairAt==null) return null;
+    const net=((fairAt/pr.prob-1)-pr.fee)/(1+pr.fee);
+    const mktNet=mktAt!=null?((mktAt/pr.prob-1)-pr.fee)/(1+pr.fee):null;
+    const sign=x=>(x>=0?'+':'')+pct(x);
+    const tail=(rough?' (rough, new line)':'')+(r.net!=null?' · board said '+sign(r.net):'');
+    if(net<=0) return {level:'bad', fairAt, net, msg:'Not worth it: '+sign(net)+' EV at this price'+tail};
+    if(net<cfg.eMin) return {level:'warn', fairAt, net, msg:'Thin: '+sign(net)+' EV, under your '+pct(cfg.eMin)+' floor'+tail};
+    if(mktNet!=null && mktNet<=0) return {level:'warn', fairAt, net, msg:sign(net)+' EV, but below the market price ('+sign(mktNet)+')'+tail};
+    return {level:'ok', fairAt, net, msg:'Worth it: '+sign(net)+' EV'+tail};
+  }
+  const saveBtnEl=ed.querySelector('.eb-save');
+  function showCheck(){
+    const v=valueCheck(), el=ed.querySelector('.eb-check');
+    saveBtnEl.dataset.ok='0';
+    el.innerHTML = v ? '<span class="tag '+({bad:'t-out',warn:'t-warn',ok:'t-live'}[v.level])+'">'+esc(v.msg)+'</span>' : '';
+  }
+  ed.querySelectorAll('input,select').forEach(x=>{ x.addEventListener('input',showCheck); x.addEventListener('change',showCheck); });
+  bookSel.addEventListener('change',bookDefault); modeSel.addEventListener('change',syncMode); bookDefault(); showCheck();
   ed.querySelector('.eb-cancel').addEventListener('click',()=>ed.remove());
   const saveBtn=ed.querySelector('.eb-save');
   saveBtn.addEventListener('click',()=>{
@@ -1436,10 +1496,25 @@ function openBetEditor(tr, r){
       fee=feeRate(book, prob, cfg.fees);
     }
     if(!(stake>0)){ ed.querySelector('.eb-msg').textContent=pmMode()?'Enter the Cost you paid (above $0)':'Enter a stake above $0'; return; }
+    // v2.59: not worth it → say so, and only log it on a second press
+    const v=valueCheck();
+    if(v && v.level==='bad' && saveBtn.dataset.ok!=='1'){
+      saveBtn.dataset.ok='1';
+      ed.querySelector('.eb-msg').textContent=v.msg+' — press Save bet again to log it anyway.';
+      return;
+    }
     saveBtn.disabled=true;
-    const gross=r.fairProb!=null ? r.fairProb/prob-1 : null;
+    const fairUse = lineChanged() ? (v?v.fairAt:null) : r.fairProb;
+    const gross=fairUse!=null ? fairUse/prob-1 : null;
     const net=gross==null?null:(gross-fee)/(1+fee);
-    addToLog(Object.assign({}, r, {book, offeredRaw:odds, offeredProb:prob, gross, net, stake, fee}));
+    const extra={book, offeredRaw:odds, offeredProb:prob, gross, net, stake, fee};
+    if(lineChanged()){
+      const nl=newLine(), txt=(signed&&nl>0?'+':'')+nl;
+      extra.market=txt+' '+lineM[2];
+      extra.lineAdj={from:r.market, to:extra.market, estFair:fairUse!=null?+fairUse.toFixed(4):null};
+    }
+    addToLog(Object.assign({}, r, extra));
+    if(extra.lineAdj){ const L=logged[logged.length-1]; L.lineAdj=extra.lineAdj; saveLog(); }
     ed.remove();
     renderLog(); renderPerf(); refresh();
   });
@@ -1586,6 +1661,41 @@ function gameStatusOf(ev){
   const timeCT=wd+' '+md+' '+tm+' CT';
   return {state:st.state, detail:st.shortDetail||'', timeCT, eventId:ev.id, startISO:isNaN(dt)?null:dt.toISOString()};
 }
+/* v2.59: game lines (moneyline / spread / total) graded from the final score */
+const GL_KINDS=/^(moneyline|spread|total)$/;
+function teamsOf(s){ const m=String(s||'').match(/\b([A-Z]{2,4})\s*(?:@|-|vs\.?)\s*([A-Z]{2,4})\b/); return m?[normAbbr(m[1]),normAbbr(m[2])]:null; }
+function compsOf(ev){ return (ev&&ev.competitions&&ev.competitions[0]&&ev.competitions[0].competitors)||[]; }
+function findGameAny(events, ...labels){
+  if(!events) return null;
+  for(const lab of labels){
+    const t=teamsOf(lab); if(!t) continue;
+    const ev=events.find(e=>{ const ab=compsOf(e).map(c=>normAbbr(c.team&&c.team.abbreviation)); return ab.length===2 && ab.includes(t[0]) && ab.includes(t[1]); });
+    if(ev) return ev;
+  }
+  return null;
+}
+function finalScores(ev){
+  const out={};
+  compsOf(ev).forEach(c=>{ const v=typeof c.score==='object'&&c.score?c.score.value:c.score; const n=parseFloat(v); if(!isNaN(n)) out[normAbbr(c.team&&c.team.abbreviation)]=n; });
+  return out;
+}
+function glTeam(b){ const m=String(b.apiKey||'').match(/^\d+-(?:moneyline|spread)-([A-Za-z]{2,4})-/); return m?normAbbr(m[1]):(b.team?normAbbr(b.team):null); }
+function gradeGameLine(b, ev){
+  const sc=finalScores(ev), ab=Object.keys(sc); if(ab.length!==2) return null;
+  const lm=String(b.market||'').match(/^([+-]?[\d.]+)/), line=lm?parseFloat(lm[1]):null;
+  if(b.kind==='total'){
+    if(line==null) return null;
+    const tot=sc[ab[0]]+sc[ab[1]], side=b.side||sideOf(b);
+    if(tot===line) return {push:true, val:tot};
+    return {won: side==='U' ? tot<line : tot>line, val:tot};
+  }
+  const t=glTeam(b); if(!t || sc[t]==null) return null;
+  const opp=ab.find(a=>a!==t);
+  if(b.kind==='spread' && line==null) return null;
+  const margin=sc[t]-sc[opp]+(b.kind==='spread'?line:0);
+  if(margin===0) return {push:true, val:sc[t]+'-'+sc[opp]};
+  return {won:margin>0, val:sc[t]+'-'+sc[opp]};
+}
 async function attachGameInfo(rows){
   const sports=[...new Set(rows.map(r=>r.sport).filter(s=>ESPN_MAP[s]))];
   await Promise.all(sports.map(fetchScoreboard));
@@ -1594,6 +1704,7 @@ async function attachGameInfo(rows){
     // tried as a fallback — pasted rows never set matchupAlt, so this is a no-op for them.
     let ev=findGame(scoreboardCache[r.sport], r.matchup||r.game);
     if(!ev && r.matchupAlt) ev=findGame(scoreboardCache[r.sport], r.matchupAlt);
+    if(!ev && GL_KINDS.test(r.kind||'')) ev=findGameAny(scoreboardCache[r.sport], r.game, r.name, r.matchup);   // v2.59
     r.gameInfo = gameStatusOf(ev);
   });
 }
@@ -1697,7 +1808,12 @@ async function attachAutoGrades(rows){
   }
   let changed=false;
   finals.forEach(r=>{
-    const g = gradeRow(r, boxes[r.sport+':'+r.gameInfo.eventId]);
+    let g;
+    if(GL_KINDS.test(r.kind||'')){   // v2.59: game lines grade from the final score
+      const ev=(scoreboardCache[r.sport]||[]).find(e=>String(e.id)===String(r.gameInfo.eventId));
+      g = ev ? gradeGameLine(r, ev) : null;
+      if(g && g.push){ r.autoGrade='push'; return; }
+    } else g = gradeRow(r, boxes[r.sport+':'+r.gameInfo.eventId]);
     r.autoGrade = g===null ? '?' : (g.won?'win':'loss');
     if(g!==null){
       const key=[document.getElementById('slate').value, r.sport, r.name, r.market, r.offeredRaw].join('|');
@@ -1873,6 +1989,7 @@ function resultBadge(b){
   if(b.result===undefined) return '<span class="meta">—</span>';
   if(b.result==='?') return '<span class="tag t-warn" title="Couldn\'t find that stat automatically">?</span>';
   if(b.result==='pending') return '<span class="tag t-live">pending</span>';
+  if(b.result==='push') return '<span class="tag t-warn" title="Landed exactly on the line — stake back">PUSH</span>';
   return b.result==='win' ? '<span class="tag" style="background:var(--live-bg);color:var(--live)">WIN</span>'
                            : '<span class="tag t-out">LOSS</span>';
 }
@@ -2869,10 +2986,13 @@ document.getElementById('checkResults').addEventListener('click', async ()=>{
   await Promise.all(sports.map(fetchScoreboard));
   for(const b of logged){
     if(b.sold) continue;   // a cashed-out bet keeps its sale result, never a W/L
-    const ev=findGame(scoreboardCache[b.sport], b.game);
+    const gl=GL_KINDS.test(b.kind||'');
+    let ev=findGame(scoreboardCache[b.sport], b.game);
+    if(!ev && gl) ev=findGameAny(scoreboardCache[b.sport], b.game, b.name);   // v2.59: "NO-PIT" style games
     const gi=gameStatusOf(ev);
     if(!gi){ continue; }
     if(gi.state!=='post'){ b.result='pending'; continue; }
+    if(gl){ const g=gradeGameLine(b, ev); b.result = g===null ? '?' : g.push ? 'push' : (g.won?'win':'loss'); continue; }
     const box=await fetchBoxscore(b.sport, gi.eventId);
     const g=gradeBet(b, box);
     b.result = g===null ? '?' : (g.won?'win':'loss');
