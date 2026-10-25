@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Prop Bet Cheat Sheet v2.54</title>
+<title>Prop Bet Cheat Sheet v2.55</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -294,7 +294,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 <div class="head">
   <div class="head-row">
     <div>
-      <h1>Prop Bet Cheat Sheet <span class="ver" id="verTag">v2.54</span></h1>
+      <h1>Prop Bet Cheat Sheet <span class="ver" id="verTag">v2.55</span></h1>
       <div class="date">Board for <input type="date" id="slate"></div>
       <div class="built">Build 22 Sep 2026</div>
     </div>
@@ -711,7 +711,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 
 </div>
 <script>
-const SCREENER_VERSION='v2.54';
+const SCREENER_VERSION='v2.55';
 // the header and tab title always show this one number
 document.title='Prop Bet Cheat Sheet '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -938,7 +938,7 @@ function audit(rows,cfg){
   const gameCount={};
   rows.forEach(r=>{ gameCount[r.game]=(gameCount[r.game]||0)+1; });
   rows.forEach((r,idx)=>{
-    r.idx=idx; r.flags=[]; delete r.riskCand; delete r.risk; delete r.prior; delete r.corr; delete r.contracts; delete r.gameInPlay; delete r.gameWeighted; delete r.samePlayer; delete r.capTrimmed;
+    r.idx=idx; r.flags=[]; delete r.riskCand; delete r.risk; delete r.glConflict; delete r.glBest; delete r.prior; delete r.corr; delete r.contracts; delete r.gameInPlay; delete r.gameWeighted; delete r.samePlayer; delete r.capTrimmed;
     if(r.offeredProb===null||r.fairProb===null){
       r.flags.push(['out','odds unreadable']); r.gross=null; r.net=null; r.pass=false; r.stake=0; return;
     }
@@ -1079,6 +1079,42 @@ function audit(rows,cfg){
       if(r.pass && r.mktProb!=null && r.blendNet!=null && r.blendNet<=0) r.flags.push(['warn','no edge once blended with the market — no stake']);
     }
   });
+  // v2.55: game lines on the same game — moneyline/spread on either team are one bet "axis",
+  // the total (Over/Under) is another. Two bets on one axis either cancel (opposite sides,
+  // e.g. PIT −3.5 + NO +2.5 both lose on a 3-point PIT win) or double up the same outcome.
+  // So: one bet per game per axis. Already have one logged → the rest skip. Several on the
+  // board → the best (edge after blending with the market, then stars) keeps its stake.
+  {
+    const GL=/^(moneyline|spread|total)$/;
+    const axis=k=>k==='total'?'total':'side';
+    const slateNow=document.getElementById('slate').value;
+    const groups={};
+    rows.forEach(r=>{
+      if(!GL.test(r.kind||'') || r.prior || !r.game) return;
+      const ax=axis(r.kind);
+      const held=logged.find(L=>!L.sold && L.date===slateNow && L.game===r.game && GL.test(L.kind||'') && axis(L.kind)===ax);
+      if(held){
+        r.glConflict={held:true, label:held.name+' '+(held.betnow||held.market||'')};
+        if(r.stake>0){ r.stake=0; delete r.contracts; }
+        r.flags.push(['corr','you already bet '+r.glConflict.label+' on this game — one '+(ax==='total'?'total':'side')+' bet per game']);
+        return;
+      }
+      if(r.stake>0) (groups[r.game+'|'+ax]=groups[r.game+'|'+ax]||[]).push(r);
+    });
+    const score=r=>(r.blendNet!=null?r.blendNet:(r.net!=null?r.net:-1));
+    Object.values(groups).forEach(g=>{
+      if(g.length<2) return;
+      g.sort((a,b)=>(score(b)-score(a)) || ((b.stars||0)-(a.stars||0)));
+      const best=g[0], bestLabel=best.name+' '+betNowOf(best);
+      best.glBest=g.length;
+      best.flags.push(['live','best of '+g.length+' bets on this game — take this one']);
+      g.slice(1).forEach(r=>{
+        r.glConflict={held:false, label:bestLabel};
+        r.stake=0; delete r.contracts;
+        r.flags.push(['corr','same game as '+bestLabel+' — that one is better, pick one']);
+      });
+    });
+  }
   // v2.52: risk bets — keep the N closest-to-market below-market outliers (minus ones already logged today)
   const riskN=Math.max(0, Math.floor(parseFloat(document.getElementById('swRiskN').value)||0));
   const slate=document.getElementById('slate').value;
@@ -1297,8 +1333,9 @@ function loadSweet(){ try{ const o=JSON.parse(localStorage.getItem(SWEET_KEY)||'
    Logs the bet with the book/odds/stake you actually got — same player and
    market, but the book and price can differ from what the board showed. */
 const BET_BOOKS=['DraftKings','FanDuel','BetMGM','Caesars','Fanatics','bet365','Hard Rock','BetRivers',
-  'Novig','Kalshi','Polymarket','Polymarket US','ProphetX','Fliff','theScore Bet'];
-const PM_BOOK=/polymarket|kalshi/i;   // prediction markets: enter Cost / @% / To win instead of odds
+  'Novig','Kalshi','Polymarket','Polymarket US','ProphetX','DraftKings Predictions','Underdog Predict','Crypto.com','Fliff','theScore Bet'];
+// v2.55: apps that show a % instead of odds — enter Cost / @ % / To win (any book can switch modes)
+const PM_BOOK=/polymarket|kalshi|novig|prophet|predict|crypto\.com/i;
 function openBetEditor(tr, r){
   const next=tr.nextElementSibling;
   if(next && next.classList.contains('editor')){ next.remove(); return; }
@@ -1308,35 +1345,50 @@ function openBetEditor(tr, r){
   ed.innerHTML='<td colspan="12"><div class="editor-row">'+
     '<b>'+esc(r.name)+' — '+esc(betNowOf(r))+'</b>'+
     '<label>Book <select class="eb-book">'+books.map(b=>'<option>'+esc(b)+'</option>').join('')+'</select></label>'+
+    '<label title="What the app shows: American odds, or a % price">Enter as <select class="eb-mode"><option value="odds">odds</option><option value="pct">%</option></select></label>'+
     '<span class="eb-plain" style="display:contents">'+
       '<label>Odds you got <input class="eb-odds" type="text" value="'+esc(r.offeredRaw)+'"></label>'+
       '<label>Stake $ <input class="eb-stake" type="number" step="0.25" value="'+(r.stake?r.stake.toFixed(2):'')+'"></label></span>'+
     '<span class="pm-fields eb-pm">'+
       '<label>Cost $ <input class="eb-cost" type="number" step="0.01" placeholder="2.50"></label>'+
       '<label>@ <input class="eb-pct" type="number" step="0.1" placeholder="62" style="width:60px">%</label>'+
-      '<label>To win $ <input class="eb-win" type="number" step="0.01" placeholder="3.93" title="Total payout shown by the app"></label>'+
+      '<label>To win $ <input class="eb-win" type="number" step="0.01" placeholder="3.93" title="What the app says you get back — total payout or profit, either works when the @ % is filled in"></label>'+
       '<span class="pm-calc eb-calc"></span></span>'+
     '<button class="log sm eb-save">Save bet</button> <button class="log sm undo eb-cancel">Cancel</button>'+
     '<span class="meta eb-msg"></span></div></td>';
   tr.after(ed);
   const bookSel=ed.querySelector('.eb-book'), plain=ed.querySelector('.eb-plain'), pm=ed.querySelector('.eb-pm');
-  const pmMode=()=>PM_BOOK.test(bookSel.value);
+  const modeSel=ed.querySelector('.eb-mode');
+  const pmMode=()=>modeSel.value==='pct';
   const syncMode=()=>{ plain.style.display=pmMode()?'none':'contents'; pm.style.display=pmMode()?'inline-flex':'none'; calcPm(); };
-  // Prediction markets: the real price is cost ÷ total payout (it already includes
-  // fees and slippage). Falls back to the @ % price if "To win" is blank.
+  // v2.55: picking a book sets the usual mode for it; you can still switch
+  const bookDefault=()=>{ modeSel.value=PM_BOOK.test(bookSel.value)?'pct':'odds'; syncMode(); };
+  // %-priced apps: the real price is cost ÷ total payout (it already includes fees
+  // and slippage). "To win" can be the total payout OR the profit — the @ % tells
+  // which one it is (payout ≈ cost ÷ %). Falls back to the @ % if "To win" is blank.
   const pmPrice=()=>{
     const cost=parseFloat(ed.querySelector('.eb-cost').value), win=parseFloat(ed.querySelector('.eb-win').value),
           at=parseFloat(ed.querySelector('.eb-pct').value);
-    if(cost>0 && win>cost) return {prob:cost/win, allIn:true, cost};
-    if(at>0 && at<100) return {prob:at/100, allIn:false, cost:cost>0?cost:0};
+    const pctOk=at>0 && at<100;
+    if(cost>0 && win>0){
+      let payout, read;
+      if(pctOk){
+        const exp=cost/(at/100);
+        if(Math.abs(win-exp) <= Math.abs((win+cost)-exp)){ payout=win; read='total payout'; }
+        else { payout=win+cost; read='profit'; }
+      } else if(win>cost){ payout=win; read='total payout (add the @ % to double-check)'; }
+      else { payout=win+cost; read='profit'; }
+      if(payout>cost) return {prob:cost/payout, allIn:true, cost, read};
+    }
+    if(pctOk) return {prob:at/100, allIn:false, cost:cost>0?cost:0};
     return null;
   };
   function calcPm(){
     const out=ed.querySelector('.eb-calc'); const pr=pmMode()?pmPrice():null;
-    out.textContent = pr ? '= '+fmtOdds(Math.round(americanOf(pr.prob)))+(pr.allIn?' (all-in)':'') : '';
+    out.textContent = pr ? '= '+fmtOdds(Math.round(americanOf(pr.prob)))+(pr.allIn?' (all-in · To win read as '+pr.read+')':' (from the @ %)') : '';
   }
   ['.eb-cost','.eb-pct','.eb-win'].forEach(c=>ed.querySelector(c).addEventListener('input',calcPm));
-  bookSel.addEventListener('change',syncMode); syncMode();
+  bookSel.addEventListener('change',bookDefault); modeSel.addEventListener('change',syncMode); bookDefault();
   ed.querySelector('.eb-cancel').addEventListener('click',()=>ed.remove());
   const saveBtn=ed.querySelector('.eb-save');
   saveBtn.addEventListener('click',()=>{
@@ -1389,7 +1441,9 @@ function decisionHtml(r,cfg){
   const has=re=>r.flags.some(f=>re.test(f[1]));
   if(r.prior) return d('dec-done', r.prior.sold?'SOLD':'ALREADY BET', r.prior.sold?'cashed out':($(r.prior.stake||0)+' on '+(r.prior.book||'?')));
   if(!r.pass) return d('dec-skip','SKIP', (r.flags.find(f=>f[0]==='out')||[,''])[1]);
+  if(r.glConflict) return d('dec-skip','SKIP', r.glConflict.held ? 'you already bet '+esc(r.glConflict.label) : 'pick '+esc(r.glConflict.label)+' instead');
   if(r.stake>0){
+    if(r.glBest) return d('dec-bet','BET '+$(r.stake),'best of '+r.glBest+' on this game');
     if(r.risk) return d('dec-lim','RISK '+$(r.stake),'outlier, below market — small on purpose');
     if(r.outlier) return d('dec-lim','OUTLIER '+$(r.stake),'capped at the minimum');
     if(r.capTrimmed) return d('dec-lim','LIMITED '+$(r.stake),'game cap');
