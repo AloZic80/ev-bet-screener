@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v2.75</title>
+<title>0xBeta Screener v2.77</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -424,7 +424,10 @@ table.lbs-t tr.me td{background:var(--accent-bg); font-weight:700}
 /* v2.73 Today ribbon */
 .todaybar{display:flex; flex-wrap:wrap; align-items:center; gap:4px 0; margin-top:10px; background:var(--panel); border:1px solid var(--rule); border-radius:12px; padding:6px 6px; font-size:12px; cursor:pointer; white-space:nowrap}
 .todaybar:empty{display:none}
-.tb-k{font-size:10px; font-weight:800; letter-spacing:.08em; color:var(--soft); padding:0 6px 0 4px}
+.tb-k{font-size:10px; font-weight:800; letter-spacing:.08em; color:var(--soft); padding:0 8px 0 4px; display:flex; flex-direction:column; align-items:center; gap:1px}
+.tb-k .tb-tot{font-size:14px; letter-spacing:0; color:var(--ink)}
+.tb-k .tb-net{font-size:13px; letter-spacing:0}
+.tb-k .tb-n{font-size:10.5px; font-weight:500; letter-spacing:0}
 .tb-b{display:flex; align-items:center; gap:5px; padding:2px 8px; border-left:1px solid var(--rule); white-space:nowrap}
 .tb-t{display:flex; flex-direction:column; gap:1px; padding:2px 8px; border-left:1px solid var(--rule); white-space:nowrap}
 .tb-t.dim{opacity:.45}
@@ -433,6 +436,8 @@ table.lbs-t tr.me td{background:var(--accent-bg); font-weight:700}
 .tb-l1{display:flex; align-items:center; gap:5px; font-size:12.5px}
 .tb-l1 img.blogo{height:18px; width:auto; max-width:60px}
 .tb-l2{font-size:11.5px; color:var(--soft)}
+.tb-ride{color:var(--warn); font-weight:700}
+.tb-l2 .tb-up,.tb-l2 .tb-down{font-weight:700}
 .tb-b.dim{opacity:.45}
 .tb-b img.blogo{height:18px; width:auto; max-width:60px}
 .tb-b .nm{font-weight:700}
@@ -441,7 +446,7 @@ table.lbs-t tr.me td{background:var(--accent-bg); font-weight:700}
 .tb-up{color:var(--gain); font-weight:700} .tb-down{color:var(--loss); font-weight:700}
 .pl-form{display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end}
 .pl-form .field{max-width:150px} .pl-form .field.wide{max-width:420px; flex:1 1 260px}
-@media (max-width:900px){ .tb-b{border-left:0; padding:2px 8px} .tb-b.all{margin-left:0; width:100%} .tb-t{border-left:0; width:50%; box-sizing:border-box; padding:4px 6px; white-space:normal} .tb-t .tb-sep{display:block; height:0; overflow:hidden} .tb-l2{font-size:11px} .tb-t.all{width:100%; margin-left:0} .tb-k{width:100%} }
+@media (max-width:900px){ .tb-b{border-left:0; padding:2px 8px} .tb-b.all{margin-left:0; width:100%} .tb-t{border-left:0; width:50%; box-sizing:border-box; padding:4px 6px; white-space:normal} .tb-t .tb-sep{display:block; height:0; overflow:hidden} .tb-l2{font-size:11px} .tb-t.all{width:100%; margin-left:0} .tb-k{width:100%; flex-direction:row; align-items:baseline; gap:8px} }
 /* v2.71 compact top */
 .head{padding:18px 0 0}
 .head-row{display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:12px 20px}
@@ -561,7 +566,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v2.75</span></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v2.77</span></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1038,7 +1043,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v2.75';
+const SCREENER_VERSION='v2.77';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -3596,7 +3601,7 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
   });
   const usd=x=>'$'+Math.abs(x).toFixed(2);
   const z=x=>Math.abs(x)<0.005, up=x=>z(x)?'<span class="open">$0.00</span>':'<span class="tb-up">+'+usd(x)+'</span>', dn=x=>z(x)?'<span class="open">$0.00</span>':'<span class="tb-down">−'+usd(x)+'</span>';
-  const line2=x=>up(x.won)+' won · '+dn(x.lost)+' lost<span class="tb-sep"> · </span>'+(x.open?'⏳ '+usd(x.riding)+' → '+up(x.toWin):'nothing open');
+  const line2=x=>'<div class="tb-l2"><span class="tb-up" title="won">'+usd(x.won)+'</span> <span class="open">vs</span> <span class="tb-down" title="lost">'+usd(x.lost)+'</span></div><div class="tb-l2">'+(x.open?x.open+' bet'+(x.open===1?'':'s')+' · <span class="tb-ride" title="on the line">'+usd(x.riding)+'</span> → <span class="tb-up" title="potential win">'+usd(x.toWin)+'</span>':'<span class="open">nothing pending</span>')+'</div>';
   const order=RIBBON_BOOKS.concat(Object.keys(by).filter(k=>!RIBBON_BOOKS.includes(k)).sort());
   const tot=blank('All');
   const tile=k=>{ const x=by[k]; if(!x && !RIBBON_BOOKS.includes(k)) return '';
@@ -3605,13 +3610,13 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
     if(!x) return '<div class="tb-t dim" title="'+esc(k)+': no bets today"><div class="tb-l1">'+head+'<span class="open">no bets</span></div></div>';
     Object.keys(tot).forEach(f=>{ if(typeof tot[f]==='number') tot[f]+=x[f]; });
     const rec=(x.w+x.l+x.p)?' <span class="open">'+x.w+'–'+x.l+(x.p?'–'+x.p:'')+'</span>':'';
-    return '<div class="tb-t" title="'+esc(k+': '+x.n+' bet'+(x.n===1?'':'s')+' today · '+x.open+' open')+'"><div class="tb-l1">'+head+'<b>'+usd(x.bet)+'</b> <span class="open">bet</span>'+rec+'</div><div class="tb-l2">'+line2(x)+'</div></div>';
+    return '<div class="tb-t" title="'+esc(k+': '+x.n+' bet'+(x.n===1?'':'s')+' today · '+x.open+' open')+'"><div class="tb-l1">'+head+'<b>'+usd(x.bet)+'</b> <span class="open">· '+x.n+' bet'+(x.n===1?'':'s')+'</span>'+rec+'</div>'+line2(x)+'</div>';
   };
   const tiles=order.map(tile).join('');
   const now=tot.won-tot.lost, best=now+tot.toWin, worst=now-tot.riding;
   const sgn=v=>v>=0?up(v):dn(-v);
-  el.innerHTML='<span class="tb-k">TODAY</span>'+tiles+
-    '<div class="tb-t all"><div class="tb-l1"><b>All '+usd(tot.bet)+'</b> <span class="open">bet</span> · now '+sgn(now)+'</div><div class="tb-l2">'+line2(tot)+'</div>'+(tot.open?'<div class="tb-l2" title="best = every open bet wins · worst = every open bet loses">best '+sgn(best)+' · worst '+sgn(worst)+'</div>':'')+'</div>';
+  el.innerHTML='<span class="tb-k">TODAY<b class="tb-tot">'+usd(tot.bet)+'</b><span class="tb-n">'+tot.n+' bet'+(tot.n===1?'':'s')+'</span><span class="tb-net" title="won minus lost so far">'+sgn(now)+'</span></span>'+tiles+
+    '<div class="tb-t all"><div class="tb-l1"><b>All</b></div>'+line2(tot)+(tot.open?'<div class="tb-l2" title="best = every open bet wins · worst = every open bet loses">best '+sgn(best)+' · worst '+sgn(worst)+'</div>':'')+'</div>';
 }
 /* v2.73: grade finished games in the background (ESPN, no BettingPros calls) */
 let agBusy=false; const sbStamp={};
