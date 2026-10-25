@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v2.73</title>
+<title>0xBeta Screener v2.75</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -330,6 +330,7 @@ table.days tfoot td{border-top:2px solid var(--rule); font-weight:600}
 .lgame-h .clock{font-weight:600; color:var(--soft)} .lgame-h .clock.live{color:var(--neon)}
 .lbet{display:grid; grid-template-columns:minmax(180px,1.3fr) minmax(220px,2fr) minmax(200px,1.2fr); gap:6px 14px; padding:10px 14px; border-top:1px solid var(--rule); align-items:center}
 .lbet .who b{display:block} .lbet .meta{font-size:12px}
+.lbet .who .lbl{display:block; font-size:13px; font-weight:600}
 .lstat{display:flex; flex-direction:column; gap:4px}
 .lbar{height:6px; border-radius:4px; background:var(--rule); position:relative; overflow:hidden}
 .lbar i{position:absolute; left:0; top:0; bottom:0; border-radius:4px; background:var(--accent)}
@@ -425,6 +426,13 @@ table.lbs-t tr.me td{background:var(--accent-bg); font-weight:700}
 .todaybar:empty{display:none}
 .tb-k{font-size:10px; font-weight:800; letter-spacing:.08em; color:var(--soft); padding:0 6px 0 4px}
 .tb-b{display:flex; align-items:center; gap:5px; padding:2px 8px; border-left:1px solid var(--rule); white-space:nowrap}
+.tb-t{display:flex; flex-direction:column; gap:1px; padding:2px 8px; border-left:1px solid var(--rule); white-space:nowrap}
+.tb-t.dim{opacity:.45}
+.tb-t.all{margin-left:auto; flex-shrink:1; min-width:0}
+.tb-t.all .tb-sep{display:block; height:0; overflow:hidden}
+.tb-l1{display:flex; align-items:center; gap:5px; font-size:12.5px}
+.tb-l1 img.blogo{height:18px; width:auto; max-width:60px}
+.tb-l2{font-size:11.5px; color:var(--soft)}
 .tb-b.dim{opacity:.45}
 .tb-b img.blogo{height:18px; width:auto; max-width:60px}
 .tb-b .nm{font-weight:700}
@@ -433,7 +441,7 @@ table.lbs-t tr.me td{background:var(--accent-bg); font-weight:700}
 .tb-up{color:var(--gain); font-weight:700} .tb-down{color:var(--loss); font-weight:700}
 .pl-form{display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end}
 .pl-form .field{max-width:150px} .pl-form .field.wide{max-width:420px; flex:1 1 260px}
-@media (max-width:900px){ .tb-b{border-left:0; padding:2px 8px} .tb-b.all{margin-left:0; width:100%} }
+@media (max-width:900px){ .tb-b{border-left:0; padding:2px 8px} .tb-b.all{margin-left:0; width:100%} .tb-t{border-left:0; width:50%; box-sizing:border-box; padding:4px 6px; white-space:normal} .tb-t .tb-sep{display:block; height:0; overflow:hidden} .tb-l2{font-size:11px} .tb-t.all{width:100%; margin-left:0} .tb-k{width:100%} }
 /* v2.71 compact top */
 .head{padding:18px 0 0}
 .head-row{display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:12px 20px}
@@ -553,7 +561,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v2.73</span></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v2.75</span></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1030,7 +1038,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v2.73';
+const SCREENER_VERSION='v2.75';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -3119,13 +3127,33 @@ function propVerdict(S, L, side, proj, state, f, unit){
   }
 }
 /* v2.68: bar with the money side in green and the losing side in red; line marker labeled underneath */
-function liveBarHtml(v){
+/* v2.74: the bet in words — "Under 49.5 Receiving Yards", "Over 55.5 Total Points", "ATL +3.5 Spread" */
+function totalUnit(sport){ return sport==='MLB'?'Runs':(sport==='NHL'||sport==='MLS')?'Goals':'Points'; }
+function betLabel(b){
+  const mk=String(b.market||'').match(/^([+-]?[\d.]+)\s+(.*)$/), line=mk?mk[1]:'', name=mk?mk[2]:String(b.market||'');
+  const side=b.side||sideOf(b)||'', word=side==='U'?'Under':side==='O'?'Over':'';
+  if(b.kind==='total') return (word?word+' ':'')+line+' Total '+totalUnit(b.sport);
+  if(b.kind==='spread') return (glTeam(b)||b.name)+' '+line+' Spread';
+  if(b.kind==='moneyline') return (glTeam(b)||b.name)+' Moneyline';
+  return ((word?word+' ':'')+(line?line+' ':'')+name).trim();
+}
+function unitShort(b){
+  if(b.kind==='total') return totalUnit(b.sport).toLowerCase();
+  const m=String(b.market||'').replace(/^[+-]?[\d.]+\s+/,'').toLowerCase();
+  const map=[[/receiving yards|rec yds/,'rec yds'],[/rushing \+? ?receiving|rush.*rec/,'rush+rec yds'],[/rushing yards|rush yds/,'rush yds'],[/passing yards|pass yds/,'pass yds'],
+    [/receptions|\brecs?\b/,'catches'],[/passing attempts|pass att/,'pass att'],[/completions|pass cmp/,'completions'],[/carries|rush att/,'carries'],[/touchdown|\btds?\b/,'TD'],
+    [/points rebounds assists|pts.*reb.*ast/,'PRA'],[/points/,'pts'],[/rebounds/,'reb'],[/assists/,'ast'],[/threes|3-pointers|3pt/,'3s'],
+    [/strikeouts/,'Ks'],[/hits allowed/,'hits allowed'],[/total bases/,'bases'],[/outs/,'outs'],[/hits/,'hits'],[/runs/,'runs'],[/shots/,'shots'],[/saves/,'saves'],[/goals/,'goals']];
+  for(const [re,u] of map) if(re.test(m)) return u;
+  return m.length<=14?m:'';
+}
+function liveBarHtml(v, unit){
   const b=v&&v.bar; if(!b) return '';
   const fmt=x=>(Math.round(x*10)/10), pct=x=>Math.min(100,Math.max(0,100*x/b.max)), clampL=x=>Math.min(93,Math.max(7,x));
   const lp=pct(b.L), sp=pct(b.S), U=b.side==='U';
   const zones=U ? '<i class="zg" style="left:0;width:'+lp+'%"></i><i class="zr" style="left:'+lp+'%;right:0"></i>'
                 : '<i class="zr" style="left:0;width:'+lp+'%"></i><i class="zg" style="left:'+lp+'%;right:0"></i>';
-  const tag=U ? 'stay under '+fmt(b.L) : 'needs '+(Math.floor(b.L)+1)+'+';
+  const tag=(U ? 'stay under '+fmt(b.L) : 'needs '+(Math.floor(b.L)+1)+'+')+(unit?' '+unit:'');
   const hasProj=b.proj!=null && !v.done, pp=hasProj?pct(b.proj):null;
   return '<div class="lbar2" title="'+esc(fmt(b.S)+' now · line '+fmt(b.L))+'">'+zones+'<i class="fill" style="width:'+sp+'%"></i>'+
     (hasProj?'<i class="proj" style="left:'+pp+'%"></i>':'')+'<i class="ln" style="left:'+lp+'%"></i></div>'+
@@ -3374,9 +3402,10 @@ function liveProbHtml(g){
   const pc=P.pc;
   if(pc){
     const parts=[], lv=o=>o&&o.live, ml=pc.moneyline, ps=pc.pointSpread, tt=pc.total;
-    if(ml && lv(ml.away) && lv(ml.home) && ml.away.live.odds && ml.home.live.odds) parts.push(aAb+' '+ml.away.live.odds+' / '+hAb+' '+ml.home.live.odds);
-    if(ps && lv(ps.away) && ps.away.live.line) parts.push(aAb+' '+ps.away.live.line+(ps.away.live.odds?' ('+ps.away.live.odds+')':''));
-    if(tt && lv(tt.over) && tt.over.live.line) parts.push('o/u '+String(tt.over.live.line).replace(/^[ou]/i,'')+(tt.over.live.odds?' (o '+tt.over.live.odds+')':''));
+    const ok=x=>x!=null && x!=='' && !/^off$/i.test(String(x).trim());   // v2.74: "OFF" = DraftKings paused live betting
+    if(ml && lv(ml.away) && lv(ml.home) && ok(ml.away.live.odds) && ok(ml.home.live.odds)) parts.push(aAb+' '+ml.away.live.odds+' / '+hAb+' '+ml.home.live.odds);
+    if(ps && lv(ps.away) && ok(ps.away.live.line)) parts.push(aAb+' '+ps.away.live.line+(ok(ps.away.live.odds)?' ('+ps.away.live.odds+')':''));
+    if(tt && lv(tt.over) && ok(tt.over.live.line)) parts.push('o/u '+String(tt.over.live.line).replace(/^[ou]/i,'')+(ok(tt.over.live.odds)?' (o '+tt.over.live.odds+')':''));
     if(parts.length) out+=row(esc((pc.provider&&pc.provider.name)||'Book')+' live', parts.map(x=>'<span>'+esc(x)+'</span>').join(''));
   }
   return out?'<div class="lprob">'+out+'</div>':'';
@@ -3471,8 +3500,8 @@ async function renderLive(force){
       return '<div class="lgame" data-key="'+esc(key)+'">'+liveGameHead(ev, g)+liveProbHtml(g)+(ev&&liveOpen.has(key)?liveBoxScoreHtml(g):'')+
         g.bets.map(b=>{
           const v=liveStatus(b, ev, g.box), i=logged.indexOf(b), pay=betPayout(b), ep=espnBetProb(b, g), bid=esc(String(b.id||('i'+i)));
-          return '<div class="lbet"><div class="who"><b>'+esc(b.name)+'</b><span class="meta">'+esc(b.betnow||b.market)+' · '+esc(bookLabel(b.book))+' · $'+(+b.stake||0).toFixed(2)+'</span></div>'+
-            '<div class="lstat"><span class="lst '+v.cls+'">'+esc(v.text)+'</span>'+liveBarHtml(v)+(ep?'<span class="lespn">'+esc(ep.label)+': <b>'+(ep.p*100).toFixed(1)+'%</b></span>':'')+'</div>'+
+          return '<div class="lbet"><div class="who"><b>'+esc(b.name)+'</b><span class="lbl">'+esc(betLabel(b))+'</span><span class="meta">'+esc(fmtOdds(b.odds))+' · '+esc(bookLabel(b.book))+' · $'+(+b.stake||0).toFixed(2)+'</span></div>'+
+            '<div class="lstat"><span class="lst '+v.cls+'">'+esc(v.text)+'</span>'+liveBarHtml(v, unitShort(b))+(ep?'<span class="lespn">'+esc(ep.label)+': <b>'+(ep.p*100).toFixed(1)+'%</b></span>':'')+'</div>'+
             '<div class="lcash">'+(pay?'<span class="meta">pays $'+pay.toFixed(2)+'</span>':'')+(v.done?'<span class="meta">· decided — nothing to cash out</span>':
               '<label>Cash-out $ <input type="number" step="0.01" min="0" class="lco" data-i="'+i+'" data-id="'+bid+'" data-espn="'+(ep&&ep.same?ep.p:'')+'" placeholder="offer"></label><span class="meta lco-out"></span>'+
               '<button class="log sm lco-sell" data-i="'+i+'" disabled>Sold at this</button>')+'</div></div>';
@@ -3547,34 +3576,42 @@ function ribbonBook(book){
   if(/draftkings|^dk /.test(b)){ if(dkGrouped() || !/predict|pick ?6/.test(b)) return 'DraftKings'; return /predict/.test(b)?'DK Predictions':'DK Pick 6'; }
   return 'Other';
 }
-function renderTodayBar(){
+function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding → to win
   const el=document.getElementById('todayBar'); if(!el) return;
   const today=ctDay(Date.now()), by={};
-  const at=k=>by[k]||(by[k]={book:k,n:0,in:0,profit:0,settled:0,w:0,l:0,p:0,open:0,riding:0,pays:0});
+  const blank=k=>({book:k,n:0,bet:0,won:0,lost:0,w:0,l:0,p:0,open:0,riding:0,toWin:0});
+  const at=k=>by[k]||(by[k]=blank(k));
   logged.forEach(b=>{
     if(gameDayOf(b)!==today) return;
     const x=at(ribbonBook(b.book)), st=+b.stake||0, pr=betProfit(b);
-    x.n++; x.in+=st;
-    if(pr!=null){ x.settled++; x.profit+=pr; if(b.sold){} else if(b.result==='win') x.w++; else if(b.result==='loss') x.l++; else if(b.result==='push') x.p++; }
-    else { x.open++; x.riding+=st;
-      if(b.kind==='parlay') x.pays+=(+(b.parlay&&b.parlay.pays&&b.parlay.pays.all)||0);
-      else { const q=toProb(b.odds), f=+b.fee||0; if(q) x.pays+=st*(1/q - f)/(1+f); } }
+    x.n++; x.bet+=st;
+    if(pr!=null){
+      if(pr>0) x.won+=pr; else if(pr<0) x.lost+=-pr;
+      if(!b.sold){ if(b.result==='win') x.w++; else if(b.result==='loss') x.l++; else if(b.result==='push') x.p++; }
+    } else {
+      x.open++; x.riding+=st;
+      if(b.kind==='parlay') x.toWin+=Math.max(0,(+(b.parlay&&b.parlay.pays&&b.parlay.pays.all)||0)-st);
+      else { const q=toProb(b.odds), f=+b.fee||0; if(q) x.toWin+=st*((1/q)-1-f)/(1+f); }
+    }
   });
+  const usd=x=>'$'+Math.abs(x).toFixed(2);
+  const z=x=>Math.abs(x)<0.005, up=x=>z(x)?'<span class="open">$0.00</span>':'<span class="tb-up">+'+usd(x)+'</span>', dn=x=>z(x)?'<span class="open">$0.00</span>':'<span class="tb-down">−'+usd(x)+'</span>';
+  const line2=x=>up(x.won)+' won · '+dn(x.lost)+' lost<span class="tb-sep"> · </span>'+(x.open?'⏳ '+usd(x.riding)+' → '+up(x.toWin):'nothing open');
   const order=RIBBON_BOOKS.concat(Object.keys(by).filter(k=>!RIBBON_BOOKS.includes(k)).sort());
-  const tot={in:0,profit:0,settled:0,open:0,riding:0,pays:0,n:0,w:0,l:0,p:0};
-  const pl=x=>'<span class="'+(x>=0?'tb-up':'tb-down')+'">'+money(x,true)+'</span>';
-  const seg=k=>{ const x=by[k]; if(!x && !RIBBON_BOOKS.includes(k)) return '';
+  const tot=blank('All');
+  const tile=k=>{ const x=by[k]; if(!x && !RIBBON_BOOKS.includes(k)) return '';
     const logo=bookLogo(k==='DK Pick 6'?'draftkings pick 6':k==='DK Predictions'?'draftkings predictions':k);
-    const head=(logo?'<img class="blogo" src="'+logo+'" alt="'+esc(k)+'" title="'+esc(k)+'">':'')+'<span class="nm">'+esc(k)+'</span>';
-    if(!x) return '<span class="tb-b dim">'+head+'<span class="open">—</span></span>';
-    Object.keys(tot).forEach(f=>{ tot[f]+=x[f]||0; });
-    const rec=(x.w+x.l+x.p)?' ('+x.w+'–'+x.l+(x.p?'–'+x.p:'')+')':'';
-    return '<span class="tb-b" title="'+esc(k+': '+x.n+' bet'+(x.n===1?'':'s')+' · '+money(x.riding)+' riding on '+x.open+' open, could pay '+money(x.pays))+'">'+head+
-      '<span title="staked today">'+money(x.in)+'</span>'+(x.settled?'· '+pl(x.profit)+rec:'')+(x.open?'<span class="open">· '+x.open+' open</span>':'')+'</span>';
+    const head=logo?'<img class="blogo" src="'+logo+'" alt="'+esc(k)+'">':'<span class="nm">'+esc(k)+'</span>';
+    if(!x) return '<div class="tb-t dim" title="'+esc(k)+': no bets today"><div class="tb-l1">'+head+'<span class="open">no bets</span></div></div>';
+    Object.keys(tot).forEach(f=>{ if(typeof tot[f]==='number') tot[f]+=x[f]; });
+    const rec=(x.w+x.l+x.p)?' <span class="open">'+x.w+'–'+x.l+(x.p?'–'+x.p:'')+'</span>':'';
+    return '<div class="tb-t" title="'+esc(k+': '+x.n+' bet'+(x.n===1?'':'s')+' today · '+x.open+' open')+'"><div class="tb-l1">'+head+'<b>'+usd(x.bet)+'</b> <span class="open">bet</span>'+rec+'</div><div class="tb-l2">'+line2(x)+'</div></div>';
   };
-  const segs=order.map(seg).join('');
-  el.innerHTML='<span class="tb-k">TODAY</span>'+segs+
-    '<span class="tb-b all" title="'+esc(money(tot.riding)+' riding on '+tot.open+' open bets; if they all win they pay back '+money(tot.pays))+'">All '+money(tot.in)+(tot.settled?' · '+pl(tot.profit):'')+(tot.open?' · <span class="open">'+tot.open+' open → '+money(tot.pays)+'</span>':'')+'</span>';
+  const tiles=order.map(tile).join('');
+  const now=tot.won-tot.lost, best=now+tot.toWin, worst=now-tot.riding;
+  const sgn=v=>v>=0?up(v):dn(-v);
+  el.innerHTML='<span class="tb-k">TODAY</span>'+tiles+
+    '<div class="tb-t all"><div class="tb-l1"><b>All '+usd(tot.bet)+'</b> <span class="open">bet</span> · now '+sgn(now)+'</div><div class="tb-l2">'+line2(tot)+'</div>'+(tot.open?'<div class="tb-l2" title="best = every open bet wins · worst = every open bet loses">best '+sgn(best)+' · worst '+sgn(worst)+'</div>':'')+'</div>';
 }
 /* v2.73: grade finished games in the background (ESPN, no BettingPros calls) */
 let agBusy=false; const sbStamp={};
