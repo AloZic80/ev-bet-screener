@@ -488,6 +488,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
     <label>Odds <input type="number" id="swOMin" value="-150" step="10"> to <input type="number" id="swOMax" value="150" step="10"></label>
     <label style="display:flex;align-items:center;gap:6px;cursor:pointer" title="When the market's no-vig price is known, the offered price has to beat it"><input type="checkbox" id="swMkt" checked style="width:15px;height:15px;accent-color:var(--accent)"> Must beat market price</label>
     <label title="Treated as the model disagreeing with the market, not an edge">Outlier: EV over <input type="number" id="swOutlier" value="15" step="1">% or model <input type="number" id="swGap" value="8" step="1"> pts over market</label>
+    <label title="An outlier that's also below the market price is skipped — except for a few small 'risk bets' a day, the closest ones to the market. 0 turns them off.">Risk bets: up to <input type="number" id="swRiskN" value="2" min="0" step="1"> a day at the minimum, if no worse than <input type="number" id="swRiskGap" value="3" min="0" step="0.5">% below market</label>
     <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="swOnly" style="width:15px;height:15px;accent-color:var(--accent)"> Only show sweet spot</label>
   </div>
 
@@ -704,7 +705,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 
 </div>
 <script>
-const SCREENER_VERSION='v2.51';
+const SCREENER_VERSION='v2.52';
 const DEVIG_METHOD='multiplicative v1';
 /* ============ odds math ============ */
 function toProb(o){
@@ -928,7 +929,7 @@ function audit(rows,cfg){
   const gameCount={};
   rows.forEach(r=>{ gameCount[r.game]=(gameCount[r.game]||0)+1; });
   rows.forEach((r,idx)=>{
-    r.idx=idx; r.flags=[]; delete r.prior; delete r.corr; delete r.contracts; delete r.gameInPlay; delete r.gameWeighted; delete r.samePlayer; delete r.capTrimmed;
+    r.idx=idx; r.flags=[]; delete r.riskCand; delete r.risk; delete r.prior; delete r.corr; delete r.contracts; delete r.gameInPlay; delete r.gameWeighted; delete r.samePlayer; delete r.capTrimmed;
     if(r.offeredProb===null||r.fairProb===null){
       r.flags.push(['out','odds unreadable']); r.gross=null; r.net=null; r.pass=false; r.stake=0; return;
     }
@@ -1026,6 +1027,13 @@ function audit(rows,cfg){
       // v2.50: the smallest bet is a "don't bet below", never a "bet at least" —
       // a small Kelly stake is never pushed UP to it. Outliers get at most the minimum.
       if(r.outlier) s = Math.min(s, cfg.sMin);
+      // v2.52: an outlier that's ALSO below the market price is a skip — except a few small "risk bets"
+      // a day (picked after the loop), and only when it's close to the market
+      if(r.outlier && r.mktNet!=null && r.mktNet<=0){
+        const riskGap=(parseFloat(document.getElementById('swRiskGap').value)||0)/100;
+        if(r.mktNet < -riskGap-1e-9){ s=0; r.flags.push(['warn','model outlier and '+pct(-r.mktNet)+' below market — skip']); }
+        else r.riskCand = true;
+      }
       // v2.50: game cap — one bet per player, correlated bets count more, $10 is hard
       if(r.samePlayer && !r.prior){ s=0; r.flags.push(['warn','already have a bet on this player — one per player']); }
       else if(s>0 && r.gameInPlay){
@@ -1062,6 +1070,19 @@ function audit(rows,cfg){
       if(r.pass && r.mktProb!=null && r.blendNet!=null && r.blendNet<=0) r.flags.push(['warn','no edge once blended with the market — no stake']);
     }
   });
+  // v2.52: risk bets — keep the N closest-to-market below-market outliers (minus ones already logged today)
+  const riskN=Math.max(0, Math.floor(parseFloat(document.getElementById('swRiskN').value)||0));
+  const slate=document.getElementById('slate').value;
+  const usedToday=logged.filter(L=>L.date===slate && L.snap && L.snap.risk).length;
+  let slots=Math.max(0, riskN-usedToday);
+  rows.filter(r=>r.riskCand && r.stake>0 && !r.prior)
+      .sort((a,b)=>(b.mktNet-a.mktNet) || ((b.stars||0)-(a.stars||0)))
+      .forEach(r=>{
+        if(slots>0){ slots--; r.risk=true;
+          r.flags.push(['warn','risk bet — model outlier, '+pct(-r.mktNet)+' below market; small on purpose']); }
+        else { r.stake=0; delete r.contracts;
+          r.flags.push(['warn','risk-bet limit reached ('+riskN+' a day'+(usedToday?', '+usedToday+' already logged':'')+') — skip']); }
+      });
   return rows;
 }
 
@@ -1240,7 +1261,7 @@ function render(rows,cfg){
 }
 
 /* ============ sweet spot (v2.46) ============ */
-const SW_IDS=['swStars','swNetMin','swNetMax','swOMin','swOMax','swOutlier','swGap'];
+const SW_IDS=['swStars','swNetMin','swNetMax','swOMin','swOMax','swOutlier','swGap','swRiskN','swRiskGap'];
 const SW_CHECKS=['swOnly','swMkt'];
 const SWEET_KEY='mbev.sweet2';   // v2.48 defaults: new key so the old (outlier-prone) settings don't come back
 function swCfg(){
@@ -1360,11 +1381,14 @@ function decisionHtml(r,cfg){
   if(r.prior) return d('dec-done', r.prior.sold?'SOLD':'ALREADY BET', r.prior.sold?'cashed out':($(r.prior.stake||0)+' on '+(r.prior.book||'?')));
   if(!r.pass) return d('dec-skip','SKIP', (r.flags.find(f=>f[0]==='out')||[,''])[1]);
   if(r.stake>0){
+    if(r.risk) return d('dec-lim','RISK '+$(r.stake),'outlier, below market — small on purpose');
     if(r.outlier) return d('dec-lim','OUTLIER '+$(r.stake),'capped at the minimum');
     if(r.capTrimmed) return d('dec-lim','LIMITED '+$(r.stake),'game cap');
     if(r.mktNet!=null && r.mktNet<=0) return d('dec-lim','BET '+$(r.stake),'below market price');
     return d('dec-bet','BET '+$(r.stake));
   }
+  if(has(/risk-bet limit/)) return d('dec-skip','SKIP','risk-bet limit reached');
+  if(has(/outlier and .* below market — skip/)) return d('dec-skip','SKIP','outlier, too far below market');
   if(has(/one per player/)) return d('dec-skip','SKIP','already on this player');
   if(has(/game cap/)) return d('dec-lim','LIMITED','game cap full');
   if(has(/minimum — skip/)) return d('dec-skip','SKIP','below the minimum');
@@ -1716,7 +1740,7 @@ function addToLog(r){
       logitGap:r.logitGap!=null?+r.logitGap.toFixed(4):null, stars:r.stars!=null?r.stars:null, evModel:r.evModel||null,
       consensus:{bet_side:r.consOdds!=null?r.consOdds:null, other_side:r.consOtherOdds!=null?r.consOtherOdds:null},
       fee:r.fee!=null?+r.fee.toFixed(5):null, fees:Object.assign({},cfgRead().fees),
-      outlier:!!r.outlier, sizedAt:r.blendProb!=null?+r.blendProb.toFixed(4):null }
+      outlier:!!r.outlier, risk:!!r.risk, sizedAt:r.blendProb!=null?+r.blendProb.toFixed(4):null }
   });
   saveLog();
 }
