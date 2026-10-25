@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Prop Bet Cheat Sheet v2.56</title>
+<title>Prop Bet Cheat Sheet v2.57</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -294,7 +294,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 <div class="head">
   <div class="head-row">
     <div>
-      <h1>Prop Bet Cheat Sheet <span class="ver" id="verTag">v2.56</span></h1>
+      <h1>Prop Bet Cheat Sheet <span class="ver" id="verTag">v2.57</span></h1>
       <div class="date">Board for <input type="date" id="slate"></div>
       <div class="built">Build 22 Sep 2026</div>
     </div>
@@ -715,7 +715,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 
 </div>
 <script>
-const SCREENER_VERSION='v2.56';
+const SCREENER_VERSION='v2.57';
 // the header and tab title always show this one number
 document.title='Prop Bet Cheat Sheet '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -1111,17 +1111,21 @@ function audit(rows,cfg){
       }
       if(r.stake>0) (groups[r.game+'|'+ax]=groups[r.game+'|'+ax]||[]).push(r);
     });
-    const score=r=>(r.blendNet!=null?r.blendNet:(r.net!=null?r.net:-1));
+    // v2.57: ranked by the +EV you see on the board, then the market-blended edge, then stars
+    const ev=r=>(r.net!=null?r.net:-1), bl=r=>(r.blendNet!=null?r.blendNet:-1);
+    const evTxt=r=>(r.net!=null?(r.net>=0?'+':'')+pct(r.net):'—');
     Object.values(groups).forEach(g=>{
       if(g.length<2) return;
-      g.sort((a,b)=>(score(b)-score(a)) || ((b.stars||0)-(a.stars||0)));
-      const best=g[0], bestLabel=best.name+' '+betNowOf(best);
-      best.glBest=g.length;
-      best.flags.push(['live','best of '+g.length+' bets on this game — take this one']);
+      g.sort((a,b)=>(ev(b)-ev(a)) || (bl(b)-bl(a)) || ((b.stars||0)-(a.stars||0)));
+      const best=g[0];
+      // name the other bet; leave the game out when both rows are the same game total
+      const lab=(r,ref)=>(r.name!==ref.name?r.name+' ':'')+betNowOf(r);
+      best.glBest=g.slice(1).map(r=>lab(r,best));
+      best.flags.push(['live','best bet on this game — '+best.glBest.join(', ')+(best.glBest.length>1?' are':' is')+' skipped']);
       g.slice(1).forEach(r=>{
-        r.glConflict={held:false, label:bestLabel};
+        r.glConflict={held:false, label:lab(best,r), mine:evTxt(r), theirs:evTxt(best), bestIdx:best.idx};
         r.stake=0; delete r.contracts;
-        r.flags.push(['corr','same game as '+bestLabel+' — that one is better, pick one']);
+        r.flags.push(['corr',lab(best,r)+' is the better bet on this game ('+evTxt(best)+' vs '+evTxt(r)+') — skip this one']);
       });
     });
   }
@@ -1216,6 +1220,19 @@ function render(rows,cfg){
     if(sortBy==='sport') return (a.sport||'').localeCompare(b.sport||'');
     return qualityScore(b)-qualityScore(a);
   });
+  // v2.57: a skipped game line sits right under the bet it lost to
+  {
+    const byIdx=new Map(shown.map(r=>[r.idx,r]));
+    const kids=new Map();
+    shown.forEach(r=>{ if(r.glConflict && !r.glConflict.held && byIdx.has(r.glConflict.bestIdx)){
+      (kids.get(r.glConflict.bestIdx)||kids.set(r.glConflict.bestIdx,[]).get(r.glConflict.bestIdx)).push(r); } });
+    if(kids.size){
+      const moved=new Set([].concat(...kids.values()));
+      const out=[];
+      shown.forEach(r=>{ if(moved.has(r)) return; out.push(r); (kids.get(r.idx)||[]).forEach(k=>out.push(k)); });
+      shown=out;
+    }
+  }
 
   lastShown=shown;
   const rb=document.getElementById('refreshApi'); if(rb) rb.disabled=!lastRows.some(x=>String(x.src||'').startsWith('api:'));
@@ -1458,9 +1475,10 @@ function decisionHtml(r,cfg){
   if(r.prior) return d('dec-done', r.prior.sold?'SOLD':'ALREADY BET', r.prior.sold?'cashed out':($(r.prior.stake||0)+' on '+(r.prior.book||'?')));
   if(!r.pass) return d('dec-skip','SKIP', (r.flags.find(f=>f[0]==='out')||[,''])[1]);
   if(r.moved) return d('dec-done','ALREADY BET', esc(r.moved.betnow||r.moved.market)+' — line moved');
-  if(r.glConflict) return d('dec-skip','SKIP', r.glConflict.held ? 'you already bet '+esc(r.glConflict.label) : 'pick '+esc(r.glConflict.label)+' instead');
+  if(r.glConflict) return d('dec-skip','SKIP', r.glConflict.held ? 'you already bet '+esc(r.glConflict.label)
+    : esc(r.glConflict.label)+' is the better bet ('+r.glConflict.theirs+' vs '+r.glConflict.mine+')');
   if(r.stake>0){
-    if(r.glBest) return d('dec-bet','BET '+$(r.stake),'best of '+r.glBest+' on this game');
+    if(r.glBest) return d('dec-bet','BET '+$(r.stake),'best bet, '+esc(r.glBest.join(', '))+(r.glBest.length>1?' are':' is')+' skipped');
     if(r.risk) return d('dec-lim','RISK '+$(r.stake),'outlier, below market — small on purpose');
     if(r.outlier) return d('dec-lim','OUTLIER '+$(r.stake),'capped at the minimum');
     if(r.capTrimmed) return d('dec-lim','LIMITED '+$(r.stake),'game cap');
