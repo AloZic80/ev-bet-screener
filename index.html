@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Prop Bet Cheat Sheet v2.55</title>
+<title>Prop Bet Cheat Sheet v2.56</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -294,7 +294,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 <div class="head">
   <div class="head-row">
     <div>
-      <h1>Prop Bet Cheat Sheet <span class="ver" id="verTag">v2.55</span></h1>
+      <h1>Prop Bet Cheat Sheet <span class="ver" id="verTag">v2.56</span></h1>
       <div class="date">Board for <input type="date" id="slate"></div>
       <div class="built">Build 22 Sep 2026</div>
     </div>
@@ -659,6 +659,10 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
     <button class="ghost" id="checkResults">Check results</button>
     <button class="ghost" id="grabClose" title="Best 5–15 minutes before the game starts. Uses 1 API call per game.">Grab closing lines</button>
     <span id="closeStatus" style="font-size:13px;color:var(--soft)"></span>
+    <button class="ghost" id="backupLog" title="Downloads every bet, sold mark, parlay mark and graded pick as one file">Back up bet log</button>
+    <button class="ghost" id="restoreLog" title="Loads a backup file and adds what's missing — nothing is replaced or duplicated">Restore bet log</button>
+    <input type="file" id="restoreFile" accept=".json,application/json" style="display:none">
+    <span id="backupStatus" style="font-size:13px;color:var(--soft)"></span>
     <button class="ghost" id="wipe">Delete every logged bet</button>
   </div>
   <textarea id="csvOut" style="display:none; margin-top:12px; min-height:120px" spellcheck="false" readonly></textarea>
@@ -711,7 +715,7 @@ input.close-in{width:88px; font-family:inherit; font-size:14px; padding:7px 9px;
 
 </div>
 <script>
-const SCREENER_VERSION='v2.55';
+const SCREENER_VERSION='v2.56';
 // the header and tab title always show this one number
 document.title='Prop Bet Cheat Sheet '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -938,7 +942,7 @@ function audit(rows,cfg){
   const gameCount={};
   rows.forEach(r=>{ gameCount[r.game]=(gameCount[r.game]||0)+1; });
   rows.forEach((r,idx)=>{
-    r.idx=idx; r.flags=[]; delete r.riskCand; delete r.risk; delete r.glConflict; delete r.glBest; delete r.prior; delete r.corr; delete r.contracts; delete r.gameInPlay; delete r.gameWeighted; delete r.samePlayer; delete r.capTrimmed;
+    r.idx=idx; r.flags=[]; delete r.moved; delete r.riskCand; delete r.risk; delete r.glConflict; delete r.glBest; delete r.prior; delete r.corr; delete r.contracts; delete r.gameInPlay; delete r.gameWeighted; delete r.samePlayer; delete r.capTrimmed;
     if(r.offeredProb===null||r.fairProb===null){
       r.flags.push(['out','odds unreadable']); r.gross=null; r.net=null; r.pass=false; r.stake=0; return;
     }
@@ -974,9 +978,13 @@ function audit(rows,cfg){
 
     /* Already in the log? Say so before you place it, and say whether the price
        you got was better. A lower implied probability is the better price. */
-    const prior = logged.find(L=>matchKeyOf(L)===matchKey(r));
+    const prior = logged.find(L=>onBoard(L) && coreKey(L.name,L.market,sideOf(L))===coreKey(r.name,r.market,r.side));
     // v2.51: you already hold the OTHER side of this exact prop
-    const otherSide = !prior && r.side && logged.find(L=>propKeyOf(L)===propKey(r) && sideOf(L) && sideOf(L)!==r.side);
+    const otherSide = !prior && r.side && logged.find(L=>onBoard(L) && coreKey(L.name,L.market)===coreKey(r.name,r.market) && sideOf(L) && sideOf(L)!==r.side);
+    // v2.56: same bet, but the line has moved since you took it (43.5 → 44.5)
+    const moved = !prior && logged.find(L=>onBoard(L) && !L.sold && String(L.name||'').toLowerCase()===String(r.name||'').toLowerCase() &&
+      (L.kind||'')===(r.kind||'') && marketStem(L.market)===marketStem(r.market) && (sideOf(L)||'')===(r.side||'') && L.market!==r.market);
+    if(moved){ r.moved=moved; r.flags.push(['dupe','ALREADY BET at '+(moved.betnow||moved.market)+' — the line moved since']); }
     if(otherSide) r.flags.push(['warn','you bet the '+(sideOf(otherSide)==='O'?'Over':'Under')+' on this — this is the other side']);
     if(prior){
       r.prior = prior;
@@ -994,7 +1002,7 @@ function audit(rows,cfg){
     } else {
       /* Not the same bet, but the same game — you already have exposure there. */
       const slate = document.getElementById('slate').value;
-      const same = logged.filter(L=>!L.sold && L.game && r.game && L.game===r.game && L.date===slate);
+      const same = logged.filter(L=>!L.sold && L.game && r.game && L.game===r.game && onBoard(L));
       if(same.length){
         r.corr = same.length;
         const inPlay = same.reduce((t,b)=>t+(b.stake||0),0);
@@ -1079,6 +1087,8 @@ function audit(rows,cfg){
       if(r.pass && r.mktProb!=null && r.blendNet!=null && r.blendNet<=0) r.flags.push(['warn','no edge once blended with the market — no stake']);
     }
   });
+  // v2.56: a bet you already hold at another line gets no new stake
+  rows.forEach(r=>{ if(r.moved && r.stake>0){ r.stake=0; delete r.contracts; } });
   // v2.55: game lines on the same game — moneyline/spread on either team are one bet "axis",
   // the total (Over/Under) is another. Two bets on one axis either cancel (opposite sides,
   // e.g. PIT −3.5 + NO +2.5 both lose on a 3-point PIT win) or double up the same outcome.
@@ -1092,7 +1102,7 @@ function audit(rows,cfg){
     rows.forEach(r=>{
       if(!GL.test(r.kind||'') || r.prior || !r.game) return;
       const ax=axis(r.kind);
-      const held=logged.find(L=>!L.sold && L.date===slateNow && L.game===r.game && GL.test(L.kind||'') && axis(L.kind)===ax);
+      const held=logged.find(L=>!L.sold && onBoard(L) && L.game===r.game && GL.test(L.kind||'') && axis(L.kind)===ax);
       if(held){
         r.glConflict={held:true, label:held.name+' '+(held.betnow||held.market||'')};
         if(r.stake>0){ r.stake=0; delete r.contracts; }
@@ -1420,10 +1430,16 @@ function openBetEditor(tr, r){
 let parlays={};
 function loadParlays(){ try{ parlays=JSON.parse(localStorage.getItem('mbev.parlay')||'{}'); }catch(e){ parlays={}; } }
 function saveParlays(){ try{ localStorage.setItem('mbev.parlay',JSON.stringify(parlays)); }catch(e){} }
-function inParlay(r){ return !!parlays[matchKey(r)]; }
+// v2.56: a parlay mark also survives midnight (matched by bet, within 36 hours of marking)
+function parlayKeyOf(r){
+  if(parlays[matchKey(r)]) return matchKey(r);
+  const tail='|'+coreKey(r.name,r.market,r.side);
+  return Object.keys(parlays).find(k=>k.endsWith(tail) && Date.now()-(parlays[k].at||0)<36*3600e3) || null;
+}
+function inParlay(r){ return !!parlayKeyOf(r); }
 function toggleParlay(r){
-  const k=matchKey(r);
-  if(parlays[k]) delete parlays[k]; else parlays[k]={name:r.name, market:r.market, at:Date.now()};
+  const k=parlayKeyOf(r);
+  if(k) delete parlays[k]; else parlays[matchKey(r)]={name:r.name, market:r.market, at:Date.now()};
   saveParlays(); refresh();
 }
 
@@ -1441,6 +1457,7 @@ function decisionHtml(r,cfg){
   const has=re=>r.flags.some(f=>re.test(f[1]));
   if(r.prior) return d('dec-done', r.prior.sold?'SOLD':'ALREADY BET', r.prior.sold?'cashed out':($(r.prior.stake||0)+' on '+(r.prior.book||'?')));
   if(!r.pass) return d('dec-skip','SKIP', (r.flags.find(f=>f[0]==='out')||[,''])[1]);
+  if(r.moved) return d('dec-done','ALREADY BET', esc(r.moved.betnow||r.moved.market)+' — line moved');
   if(r.glConflict) return d('dec-skip','SKIP', r.glConflict.held ? 'you already bet '+esc(r.glConflict.label) : 'pick '+esc(r.glConflict.label)+' instead');
   if(r.stake>0){
     if(r.glBest) return d('dec-bet','BET '+$(r.stake),'best of '+r.glBest+' on this game');
@@ -1780,6 +1797,22 @@ async function checkMarketOdds(){
 function sideOf(b){ return b.side || ((String(b.betnow||'').match(/^([OU])\s/)||[])[1]) || ''; }
 function matchKey(r){ return [document.getElementById('slate').value,r.name,r.market,r.side||''].join('|').toLowerCase(); }
 function matchKeyOf(b){ return [b.date,b.name,b.market,sideOf(b)].join('|').toLowerCase(); }
+/* v2.56: a logged bet belongs to its GAME, not to the board date. It counts on the board
+   (ALREADY BET, same-game limits, one-per-game) while it's on this board's date OR its game
+   isn't over yet — so a bet logged at 11:50 PM still shows after midnight. */
+function betStillOpen(b){
+  if(b.sold) return false;
+  if(b.result==='win'||b.result==='loss'||b.result==='push') return false;
+  if(b.start){ const t=Date.parse(b.start); if(!isNaN(t)) return Date.now() < t+10*3600e3; }
+  // no kickoff saved: allow the day after it was logged
+  const slate=document.getElementById('slate').value;
+  if(!b.date||!slate) return false;
+  const d=(Date.parse(slate)-Date.parse(b.date))/86400e3;
+  return d>=0 && d<=1;
+}
+function onBoard(b){ return b.date===document.getElementById('slate').value || betStillOpen(b); }
+function coreKey(name,market,side){ return [name,market,side||''].join('|').toLowerCase(); }
+function marketStem(m){ return String(m||'').replace(/^[+-]?[\d.]+\s+/,'').toLowerCase(); }
 function propKey(r){ return [document.getElementById('slate').value,r.name,r.market].join('|').toLowerCase(); }
 function propKeyOf(b){ return [b.date,b.name,b.market].join('|').toLowerCase(); }
 function betKey(r){ return [document.getElementById('slate').value,r.name,r.market,r.book,r.offeredRaw].join('|'); }
@@ -2697,6 +2730,35 @@ document.getElementById('books').addEventListener('input',()=>{ refresh(); save(
 ['mOdds','mFair','mOpp','mBook'].forEach(id=>
   document.getElementById(id).addEventListener('input',manual));
 
+/* v2.56: bet log backup / restore — the log lives only in this browser */
+function betIdentity(b){ return b.id || [b.date,b.name,b.market,sideOf(b),b.book,b.odds,b.stake].join('|').toLowerCase(); }
+document.getElementById('backupLog').addEventListener('click',()=>{
+  const payload={kind:'mbev-betlog', v:1, savedAt:new Date().toISOString(), screener:SCREENER_VERSION,
+    log:logged, parlays, gradeHistory};
+  const blob=new Blob([JSON.stringify(payload,null,1)],{type:'application/json'});
+  const d=new Date(), p=n=>String(n).padStart(2,'0');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='betlog-'+d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+'.json';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  document.getElementById('backupStatus').textContent='Backed up '+logged.length+' bets.';
+});
+document.getElementById('restoreLog').addEventListener('click',()=>document.getElementById('restoreFile').click());
+document.getElementById('restoreFile').addEventListener('change',async e=>{
+  const f=e.target.files[0]; if(!f) return; e.target.value='';
+  const st=document.getElementById('backupStatus');
+  try{
+    const p=JSON.parse(await f.text());
+    if(!p || p.kind!=='mbev-betlog' || !Array.isArray(p.log)){ st.textContent='That file is not a bet log backup.'; return; }
+    const have=new Set(logged.map(betIdentity));
+    let added=0, skipped=0;
+    p.log.forEach(b=>{ if(!b||!b.name) return; const k=betIdentity(b); if(have.has(k)){ skipped++; return; } have.add(k); logged.push(b); added++; });
+    let pAdded=0; Object.entries(p.parlays||{}).forEach(([k,v])=>{ if(!parlays[k]){ parlays[k]=v; pAdded++; } });
+    let gAdded=0; Object.entries(p.gradeHistory||{}).forEach(([k,v])=>{ if(!gradeHistory[k]){ gradeHistory[k]=v; gAdded++; } });
+    saveLog(); saveParlays(); saveGradeHistory(); renderLog(); renderPerf(); refresh();
+    st.textContent='Restored '+added+' bet'+(added===1?'':'s')+(skipped?' ('+skipped+' already here)':'')+
+      (pAdded?', '+pAdded+' parlay mark'+(pAdded===1?'':'s'):'')+(gAdded?', '+gAdded+' graded pick'+(gAdded===1?'':'s'):'')+'.';
+  }catch(err){ st.textContent='Could not read that file: '+err.message; }
+});
 document.getElementById('csvBtn').addEventListener('click',()=>{
   const ta=document.getElementById('csvOut');
   const head=['date','bet','sport','market','book','odds','fair','gross','net','stake','closing','clv'];
