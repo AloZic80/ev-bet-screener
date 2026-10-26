@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v2.80</title>
+<title>0xBeta Screener v2.81</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -587,7 +587,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v2.80</span></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v2.81</span></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1084,7 +1084,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v2.80';
+const SCREENER_VERSION='v2.81';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -3699,10 +3699,19 @@ async function autoGradeLog(){
   if(agBusy || logBusy>0) return; agBusy=true; logBusy++;
   try{
     const cutoff=ctDay(Date.now()-4*86400e3), today=ctDay(Date.now());
-    const open=logged.filter(b=>!b.sold && b.kind!=='parlay' && b.result!=='win' && b.result!=='loss' && b.result!=='push' && ESPN_MAP[b.sport] &&
-      ((gameDayOf(b)>=cutoff && gameDayOf(b)<=today) || (b.date>=cutoff && b.date<=today)));
+    const recent=b=>ESPN_MAP[b.sport] && b.kind!=='parlay' && ((gameDayOf(b)>=cutoff && gameDayOf(b)<=today) || (b.date>=cutoff && b.date<=today));
+    const settled=b=>b.sold || b.result==='win' || b.result==='loss' || b.result==='push';
+    // v2.81: bets already settled but saved without a start time — only fix their day, don't re-grade
+    const undated=logged.filter(b=>recent(b) && settled(b) && !b.start && !b.noStart);
+    const open=logged.filter(b=>recent(b) && !settled(b));
     if(!open.length) return;
     let changed=0;
+    for(const b of undated){
+      const gi=gameStatusOf(await findBetGame(b));
+      if(gi && gi.startISO){ b.start=gi.startISO; changed++;
+        if(!teamsOf(b.game)){ const a=gi.teams.find(t=>t.ha==='away'), h=gi.teams.find(t=>t.ha==='home'); if(a&&h) b.game=a.abbr+' @ '+h.abbr; } }
+      else { b.noStart=1; changed++; }   // not on ESPN — don't look again
+    }
     for(const b of open){
       const ev=await findBetGame(b);
       const gi=gameStatusOf(ev); if(!gi) continue;
