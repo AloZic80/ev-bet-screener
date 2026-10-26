@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v2.92</title>
+<title>0xBeta Screener v2.93</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -357,6 +357,10 @@ table.days tfoot td{border-top:2px solid var(--rule); font-weight:600}
 .eb-live .over{color:var(--out); font-weight:800} .eb-live .under{color:var(--live); font-weight:800}
 .jail{display:block; margin-top:2px; font-size:10.5px; font-weight:800; white-space:nowrap} .jail.free{color:var(--live)} .jail.in{color:var(--out)}
 img.blogo.go,.book.go{cursor:pointer} img.blogo.go:hover{outline:2px solid var(--accent); border-radius:6px}
+.from-books{border:1px solid var(--warn); background:var(--warn-bg); border-radius:10px; padding:10px 12px; margin:0 0 10px; font-size:13px}
+.from-books table{width:100%; margin-top:6px} .from-books td{padding:4px 6px; vertical-align:middle}
+.fill-diff{display:block; margin-top:2px; font-size:11px; color:var(--warn); font-weight:700}
+.fills-at{font-size:11px; color:var(--dim)}
 .tab-n{display:inline-block; min-width:18px; padding:0 5px; margin-left:3px; border-radius:9px; background:var(--live-bg); color:var(--live); font-size:11px; font-weight:800; text-align:center}
 .tab-n:empty{display:none}
 .psrc-note{margin:-4px 0 10px; font-size:13px; color:var(--soft)}
@@ -640,7 +644,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v2.92</span></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v2.93</span></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -852,6 +856,17 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 </div>
 
 <div class="view" id="v-settings">
+<details class="panel fold" id="myBooksPanel">
+  <summary><h2>Your exchange bets <span class="sub">Kalshi · Polymarket US · Novig — read-only</span></h2></summary>
+  <p class="hint">Every minute the page reads your fills (never places, changes or cancels anything). A fill that matches a bet you saved is linked (✓, or ⚠ with Fix if the price or cost differs). A fill that matches a row on the board is saved for you (tag <b>auto</b>). Anything else waits in <b>From your books</b> above the Log.</p>
+  <div class="row" style="margin-top:0;gap:10px;flex-wrap:wrap;align-items:center">
+    <button class="ghost" id="fillsNow">Check my books now</button>
+    <button class="ghost" id="fillsTest">Test my books (raw)</button>
+    <button class="ghost" id="fillsReset" title="Forget which fills were already seen; the next check re-reads the last 3 days. Bets you already have stay linked, nothing doubles.">Re-read last 3 days</button>
+    <span class="meta" id="fillsMsg"></span>
+  </div>
+  <pre id="fillsRaw" style="display:none;max-height:320px;overflow:auto;font-size:11px;white-space:pre-wrap;background:var(--bg2,#0001);padding:8px;border-radius:8px"></pre>
+</details>
 <div class="panel" style="padding-top:12px;padding-bottom:12px">
   <label class="bar-check"><input type="checkbox" id="dkGroup" checked> Today ribbon: count DK Predictions and DraftKings Pick 6 under DraftKings</label>
 </div>
@@ -1087,6 +1102,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 <div class="panel">
   <h2>Log</h2>
+  <div id="fromBooks" class="from-books" style="display:none"></div>
   <div class="log-filter" id="logFilter" style="display:none"></div>
   <div class="scroll"><table>
     <thead><tr>
@@ -1152,7 +1168,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v2.92';
+const SCREENER_VERSION='v2.93';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -3069,7 +3085,7 @@ function renderLog(){
     }
     tr.innerHTML=
       '<td class="meta" style="white-space:nowrap">'+esc(b.date)+playedHtml(b)+'</td>'+
-      '<td><div class="pick">'+esc(b.name)+'</div><div class="meta" style="color:var(--ink)" title="'+esc(b.betnow||'')+'">'+esc(betLabel(b))+' <span class="meta">'+esc(fmtOdds(b.odds))+'</span></div>'+srcTagHtml(b)+liveChipHtml(b)+
+      '<td><div class="pick">'+esc(b.name)+'</div><div class="meta" style="color:var(--ink)" title="'+esc(b.betnow||'')+'">'+esc(betLabel(b))+' <span class="meta">'+esc(fmtOdds(b.odds))+'</span></div>'+srcTagHtml(b)+liveChipHtml(b)+fillDiffHtml(b,i)+
       '<div class="meta">'+(bookLogo(b.book)?logoTag(b.book,'sm')+' ':'')+'<span class="book">'+esc(bookLabel(b.book))+'</span></div></td>'+
       '<td><span class="sport s-'+esc(b.sport)+'">'+esc(b.sport)+'</span></td>'+
       '<td class="num">'+esc(fmtOdds(b.odds))+'</td>'+
@@ -3858,7 +3874,7 @@ async function espnRefreshNow(btn){   // v2.85: manual ESPN refresh — scores, 
     Object.keys(scoreboardCache).forEach(k=>delete scoreboardCache[k]);
     Object.keys(sbDayCache).forEach(k=>delete sbDayCache[k]);
     try{ await renderStrip(true); }catch(e){}
-    await autoGradeLog(); refreshLivePrices(true);
+    await autoGradeLog(); refreshLivePrices(true); syncFills(true);
     try{ const lb=document.getElementById('liveRefresh'); if(lb && document.getElementById('v-live').classList.contains('on')) lb.click(); }catch(e){}
     espnAt=Date.now();
   } finally { espnBusy=false; renderTodayBar(); }
@@ -3953,7 +3969,9 @@ async function findBetGame(b){
 }
 function srcTagHtml(b){   // v2.86: where the bet came from
   const m={api:['API','from an API load'], paste:['paste','from a pasted Cheat Sheet'], mev:['paste · sharp','from a pasted Market EV page'], manual:['by hand','from + Add a bet']};
-  const t=b.manual?m.manual:m[b.srcType]; if(!t) return '';
+  let t=b.manual?m.manual:m[b.srcType];
+  if(b.autoFrom) t=['auto · '+({kalshi:'Kalshi',poly:'Polymarket',novig:'Novig'}[b.autoFrom]||b.autoFrom), 'automatically from your '+b.autoFrom+' fill'+(t?' (board row: '+t[1]+')':'')];
+  if(!t) return '';
   return '<span class="src-tag" title="Saved '+t[1]+'">'+t[0]+'</span>'; }
 function playedHtml(b){   // v2.84: "plays" before kickoff, "in progress" until graded, "played" once settled
   if(!b.start || isNaN(Date.parse(b.start))) return '';
@@ -5590,6 +5608,153 @@ async function shopExchanges(){
   finally{ btn.disabled=false; }
 }
 document.getElementById('shopBtn') && document.getElementById('shopBtn').addEventListener('click', shopExchanges);
+
+/* ============ v2.93: your real bets from Kalshi / Polymarket US / Novig fills (read-only) ============ */
+var fillSeen={}, fillPending=[], fillAt=0, fillBusy=false;
+try{ fillSeen=JSON.parse(localStorage.getItem('mbev.fillSeen')||'{}'); fillPending=JSON.parse(localStorage.getItem('mbev.fillPending')||'[]'); }catch(e){}
+function saveFills(){ try{ localStorage.setItem('mbev.fillSeen',JSON.stringify(fillSeen)); localStorage.setItem('mbev.fillPending',JSON.stringify(fillPending)); }catch(e){} }
+const FILL_NAME={kalshi:'Kalshi', poly:'Polymarket US', novig:'Novig'};
+function quoteMatchesFill(q, f){
+  if(!q || !q.ok || q.src!==f.book) return false;
+  if(f.book==='novig') return q.ref===f.ref && (!q.outcome || q.outcome===f.outcome);
+  if(f.book==='kalshi') return q.ref===f.ref && ((f.side==='no')===/^NO · /.test(q.title||''));
+  return q.ref===f.ref;   // Polymarket: market slug (side not in the fill)
+}
+function betForFill(f){
+  return logged.find(b=>{ if(b.sold || LIVE_BOOK(b.book)!==f.book) return false;
+    if((b.fills||[]).includes(f.id)) return true;
+    const d=liveDesc(b); return d && quoteMatchesFill(liveQuotes[d.id], f); });
+}
+function rowQuoteFor(r,f){
+  const q1=r._shopQ&&r._shopQ[FILL_NAME[f.book]]; if(quoteMatchesFill(q1,f)) return q1;
+  const q2=liveQuotes['shop:'+r.idx+':'+f.book]; if(quoteMatchesFill(q2,f)) return q2;
+  return null;
+}
+function rowForFill(f){   // Polymarket fills carry no side: when Over and Under both match, take the price closest to the fill
+  let best=null, gap=9;
+  lastRows.forEach(r=>{ if(r.prior) return; const q=rowQuoteFor(r,f); if(!q) return;
+    const g=f.price!=null&&q.price!=null?Math.abs(q.price-f.price):1; if(g<gap){ gap=g; best=r; } });
+  return best;
+}
+var huntDone={};
+async function huntForFills(list){   // price the board rows on just the books that have unmatched fills, then match again
+  const books=[...new Set(list.map(f=>f.book))].filter(b=>!huntDone[b+':'+lastRows.length]); if(!books.length || !lastRows.length) return false;
+  const jobs=[];
+  lastRows.filter(r=>r.fairProb!=null && !r.prior && !r.hiddenDup).forEach(r=>books.forEach(bk=>{
+    if(r._shopQ && r._shopQ[FILL_NAME[bk]]) return;
+    const d=liveDesc(Object.assign(rowAsBet(r),{book:FILL_NAME[bk], id:'shop:'+r.idx+':'+bk})); if(d) jobs.push([r,FILL_NAME[bk],d]); }));
+  books.forEach(b=>huntDone[b+':'+lastRows.length]=1);
+  for(let i=0;i<jobs.length && i<96;i+=8){
+    const chunk=jobs.slice(i,i+8);
+    try{ const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(chunk.map(x=>x[2]))), {headers:apiHeaders()}); if(!res.ok) break;
+      const R=((await res.json())||{}).results||{};
+      chunk.forEach(([r,n,d])=>{ const q=R[d.id]; if(q&&q.ok){ liveQuotes[d.id]=q; (r._shopQ=r._shopQ||{})[n]=q; } }); }catch(e){ break; }
+  }
+  return true;
+}
+function fillDiffHtml(b,i){
+  if(!b.fillDiff) return (b.fills&&b.fills.length)?'<span class="fills-at" title="Matched to your '+esc(bookLabel(b.book))+' fill">✓ matches '+esc(bookLabel(b.book))+'</span>':'';
+  const d=b.fillDiff;
+  return '<span class="fill-diff">⚠ '+esc(bookLabel(b.book))+' says '+(d.price*100).toFixed(1)+'% ('+esc(fmtOdds(Math.round(americanOf(d.price))))+') · $'+d.stake.toFixed(2)+
+    ' <button class="ghost sm fill-fix" data-i="'+i+'">Fix</button> <button class="ghost sm fill-keep" data-i="'+i+'">Keep mine</button></span>';
+}
+async function syncFills(force){
+  if(fillBusy || (!force && Date.now()-fillAt<55000)) return; fillBusy=true;
+  try{
+    let since=0; try{ since=+localStorage.getItem('mbev.fillSince')||0; }catch(e){}
+    since=since? since-3600e3 : Date.now()-3*86400e3;
+    const res=await fetch(API_BASE+'/mine/fills?since='+since, {headers:apiHeaders()});
+    if(!res.ok) return;
+    const j=await res.json(); fillAt=Date.now();
+    let maxTs=since, changed=false;
+    const err=j.errors||{}; window._fillErrors=err;
+    (j.fills||[]).slice().reverse().forEach(f=>{   // oldest first
+      if(f.ts>maxTs) maxTs=f.ts;
+      const key=f.book+':'+f.id; if(fillSeen[key]) return;
+      if(f.action==='sell'){   // Kalshi sells: mark the matching bet sold when the whole position is out
+        const b=betForFill(Object.assign({},f,{action:'buy'}));
+        if(b && !b.sold){ b.soldFills=(b.soldFills||0)+(+f.qty||0); b.soldCash=+(((b.soldCash||0)+(+f.price||0)*(+f.qty||0))).toFixed(2);
+          const bought=(b.fillQty||0); if(bought && b.soldFills>=bought-1e-9){ b.sold={price:b.soldCash, at:new Date(f.ts||Date.now()).toISOString(), auto:true}; } changed=true; fillSeen[key]='sold'; return; }
+        fillPending.push(f); fillSeen[key]='pending'; changed=true; return;
+      }
+      const stake=+((+f.cost||0)+(+f.fee||0)).toFixed(2);
+      const b=betForFill(f);
+      if(b && (b.fills||[]).includes(f.id)){ fillSeen[key]='linked'; return; }   // already linked (re-read)
+      if(b){   // you saved it already — link, and flag differences
+        b.fills=(b.fills||[]).concat(f.id); b.fillQty=(b.fillQty||0)+(+f.qty||0); b.fillCost=+(((b.fillCost||0)+stake)).toFixed(2);
+        const avg=b.fillQty?((b.fillCost-(+f.fee||0))/b.fillQty):f.price, mine=toProb(b.odds);
+        if(mine==null || Math.abs((f.price||avg)-mine)>0.006 || Math.abs(b.fillCost-(+b.stake||0))>0.06) b.fillDiff={price:f.price||avg, stake:b.fillCost, fee:+f.fee||0, at:f.ts};
+        else delete b.fillDiff;
+        fillSeen[key]='linked'; changed=true; return;
+      }
+      const r=rowForFill(f);
+      if(r && f.price>0){ autoAddFromRow(r,f); fillSeen[key]='added'; changed=true; return; }
+      fillPending.push(f); fillSeen[key]='pending'; changed=true;
+    });
+    try{ localStorage.setItem('mbev.fillSince', String(maxTs)); }catch(e){}
+    const waiting=fillPending.filter(f=>f.action!=='sell');
+    if(waiting.length && await huntForFills(waiting)){
+      fillPending=fillPending.filter(f=>{ if(f.action==='sell') return true;
+        const b=betForFill(f); if(b){ b.fills=(b.fills||[]).concat(f.id); b.fillQty=(b.fillQty||0)+(+f.qty||0); b.fillCost=+(((b.fillCost||0)+(+f.cost||0)+(+f.fee||0))).toFixed(2); fillSeen[f.book+':'+f.id]='linked'; changed=true; return false; }
+        const r=rowForFill(f); if(!r || !(f.price>0)) return true;
+        autoAddFromRow(r,f); fillSeen[f.book+':'+f.id]='added'; changed=true; return false; });
+    }
+    if(changed){ saveFills(); saveLog(); renderLog(); renderPerf(); refresh(); }
+    renderFromBooks();
+  }catch(e){} finally{ fillBusy=false; }
+}
+function autoAddFromRow(r,f){   // a bet on your board — log it for you, at the price and cost the book filled
+  const book=FILL_NAME[f.book], prob=f.price, stake=+((+f.cost||0)+(+f.fee||0)).toFixed(2);
+  const fee=f.fee!=null&&f.cost?(+f.fee)/(+f.cost):feeRate(book,prob,cfgRead().fees);
+  const gross=r.fairProb!=null?r.fairProb/prob-1:null;
+  addToLog(Object.assign({}, r, {book, offeredRaw:fmtOdds(Math.round(americanOf(prob))), offeredProb:prob, stake, fee, gross, net:gross==null?null:(gross-fee)/(1+fee), said:saidOf(r)}));
+  const L=logged[logged.length-1]; L.autoFrom=f.book; L.fills=[f.id]; L.fillQty=+f.qty||0; L.fillCost=stake;
+  saveLog();
+}
+function renderFromBooks(){
+  const el=document.getElementById('fromBooks'); if(!el) return;
+  const err=window._fillErrors||{}, errTxt=Object.entries(err).map(([k,v])=>esc((FILL_NAME[k]||k)+': '+v)).join(' · ');
+  if(!fillPending.length && !errTxt){ el.style.display='none'; el.innerHTML=''; return; }
+  el.style.display='block';
+  el.innerHTML='<b>From your books</b> — '+(fillPending.length?fillPending.length+' fill'+(fillPending.length===1?'':'s')+' not matched to a bet on your board or log.':'all matched.')+
+    (errTxt?' <span class="meta">('+errTxt+')</span>':'')+
+    (fillPending.length?'<table>'+fillPending.map((f,i)=>'<tr><td>'+(bookLogo(FILL_NAME[f.book])?logoTag(FILL_NAME[f.book],'sm'):esc(FILL_NAME[f.book]))+'</td><td>'+esc(f.title||((f.book==='novig'?'Novig market ':'')+String(f.ref||'').slice(0,8)))+(f.side?' <b>'+esc(f.side.toUpperCase())+'</b>':'')+(f.action==='sell'?' <b>(sold)</b>':'')+'</td>'+
+      '<td class="num">'+(f.price!=null?(f.price*100).toFixed(1)+'%':'—')+'</td><td class="num">'+(f.qty!=null?f.qty+' ct':'')+'</td><td class="num">$'+(+(f.cost||0)+(+f.fee||0)).toFixed(2)+'</td>'+
+      '<td class="meta">'+(f.ts?new Date(f.ts).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}):'')+'</td>'+
+      '<td style="white-space:nowrap">'+(f.action==='sell'?'':'<button class="log sm fb-add" data-i="'+i+'">Add</button> ')+'<button class="ghost sm fb-ign" data-i="'+i+'">Ignore</button></td></tr>').join('')+'</table>':'');
+}
+document.addEventListener('click',e=>{
+  const fx=e.target.closest('.fill-fix'), kp=e.target.closest('.fill-keep'), ad=e.target.closest('.fb-add'), ig=e.target.closest('.fb-ign');
+  if(fx||kp){ const b=logged[+(fx||kp).dataset.i]; if(!b||!b.fillDiff) return;
+    if(fx){ const d=b.fillDiff; (b.edits=b.edits||[]).push({at:new Date().toISOString(), before:{book:b.book, odds:b.odds, stake:b.stake, market:b.market}, why:'matched to the book\'s fill'});
+      b.odds=fmtOdds(Math.round(americanOf(d.price))); b.stake=+d.stake.toFixed(2); if(d.fee&&d.stake) b.fee=d.fee/Math.max(0.01,d.stake-d.fee);
+      b.betnow=betNowOf({market:b.market, side:b.side||sideOf(b)||'', offeredRaw:b.odds}); }
+    delete b.fillDiff; saveLog(); renderLog(); renderPerf(); refresh(); return; }
+  if(ig){ fillPending.splice(+ig.dataset.i,1); saveFills(); renderFromBooks(); return; }
+  if(ad){ const f=fillPending[+ad.dataset.i]; if(!f) return; fillPending.splice(+ad.dataset.i,1); saveFills(); renderFromBooks();
+    // open + Add a bet with the book, price and stake already in
+    const t=document.querySelector('.tab[data-view="v-board"][data-src="api"]')||document.querySelector('.tab[data-view="v-board"]'); if(t) t.click();
+    const P=document.getElementById('addBetPanel'); if(P){ P.open=true; P.dispatchEvent(new Event('toggle')); P.scrollIntoView({behavior:'smooth',block:'start'}); }
+    setTimeout(()=>{ const h=document.getElementById('abHost'); if(!h) return; const bs=h.querySelector('.eb-book'); if(bs){ bs.value=FILL_NAME[f.book]; bs.dispatchEvent(new Event('change')); }
+      const ms=h.querySelector('.eb-mode'); if(ms){ ms.value='pct'; ms.dispatchEvent(new Event('change')); }
+      const c=h.querySelector('.eb-cost'), pc=h.querySelector('.eb-pct'); if(c) c.value=(+(f.cost||0)+(+f.fee||0)).toFixed(2); if(pc&&f.price) pc.value=(f.price*100).toFixed(1);
+      [c,pc].forEach(x=>x&&x.dispatchEvent(new Event('input')));
+      const m=document.getElementById('abMsg'); if(m) m.innerHTML='From your '+esc(FILL_NAME[f.book])+' fill: <b>'+esc(f.title||f.ref||'')+'</b> — fill in the player, stat and line, then Save bet.'; }, 700);
+  }
+});
+setInterval(()=>{ if(document.visibilityState==='visible') syncFills(false); }, 20000);
+(function(){
+  const m=()=>document.getElementById('fillsMsg');
+  const now=document.getElementById('fillsNow'), test=document.getElementById('fillsTest'), rst=document.getElementById('fillsReset'); if(!now) return;
+  now.onclick=async()=>{ m().textContent='checking…'; await syncFills(true); const e=window._fillErrors||{};
+    m().textContent=fillAt?('checked '+new Date(fillAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+(Object.keys(e).length?' · '+Object.entries(e).map(([k,v])=>(FILL_NAME[k]||k)+': '+v).join(' · '):' · all 3 books answered')+(fillPending.length?' · '+fillPending.length+' waiting in From your books':'')):'could not reach the Worker (deployed? passphrase set?)'; };
+  test.onclick=async()=>{ const pre=document.getElementById('fillsRaw'); m().textContent='asking the books…';
+    try{ const res=await fetch(API_BASE+'/mine/selftest',{headers:apiHeaders()}); const t=await res.text(); pre.style.display='block';
+      pre.textContent=res.ok?JSON.stringify(JSON.parse(t),null,1):('HTTP '+res.status+' '+t.slice(0,300)); m().textContent=res.ok?'raw sample below — send it to Claude to check the field names':'failed'; }
+    catch(e){ m().textContent='could not reach the Worker'; } };
+  rst.onclick=()=>{ fillSeen={}; fillPending=[]; huntDone={}; try{ localStorage.removeItem('mbev.fillSince'); }catch(e){} saveFills(); renderFromBooks(); now.click(); };
+})();
+setTimeout(()=>syncFills(true), 2500);
 setTimeout(()=>{ renderTodayBar(); autoGradeLog(); },50);
 // v2.71: Paste ▸ / Passphrase ▸ links on the load line
 document.getElementById('pasteLink').addEventListener('click',()=>{ const t=document.querySelector('.tab[data-view="v-board"]'); if(t) t.click(); const pp=document.getElementById('pastePanel'); if(pp){ pp.open=true; pp.scrollIntoView({behavior:'smooth', block:'start'}); } });
@@ -5612,7 +5777,7 @@ document.querySelector('.tab[data-view="v-live"]').addEventListener('click',()=>
 document.addEventListener('click',e=>{ if(e.target.closest('#logFilterOff')){ logDayFilter=null; renderLog(); } });
 document.getElementById('ssRef').addEventListener('click',async e=>{   // v2.87: manual refresh for the scores strip
   const b=e.currentTarget; if(b.disabled) return; b.disabled=true; b.classList.add('spin');
-  try{ ssBusy=false; await renderStrip(true); await autoGradeLog(); renderTodayBar(); refreshLivePrices(true); } finally { b.disabled=false; b.classList.remove('spin'); }
+  try{ ssBusy=false; await renderStrip(true); await autoGradeLog(); renderTodayBar(); refreshLivePrices(true); syncFills(true); } finally { b.disabled=false; b.classList.remove('spin'); }
 });
 (function(){ const sel=document.getElementById('liveEvery');   // v2.68: Off / 15 / 30 / 60 s, default 15
   let v='15'; try{ const s=localStorage.getItem('mbev.liveEvery'); if(['0','15','30','60'].includes(s)) v=s; }catch(e){}
