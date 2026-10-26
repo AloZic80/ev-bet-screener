@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v2.88</title>
+<title>0xBeta Screener v2.92</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -349,6 +349,14 @@ table.days tfoot td{border-top:2px solid var(--rule); font-weight:600}
 .lv-chip{display:inline-block; margin-top:3px; font-size:11.5px; font-weight:700; padding:1px 7px; border-radius:6px; border:1px solid var(--rule); color:var(--soft); white-space:nowrap}
 .lv-chip.up{color:var(--live); border-color:var(--live)} .lv-chip.dn{color:var(--out); border-color:var(--out)} .lv-chip.na{font-weight:500}
 .log-filter{display:flex; align-items:center; gap:10px; margin:0 0 8px; font-size:13px}
+.cut-sum{position:relative} .cut-sum>summary{list-style:none; cursor:pointer} .cut-sum>summary::-webkit-details-marker{display:none}
+.cut-list{position:absolute; z-index:20; top:110%; left:0; min-width:260px; background:var(--panel); border:1px solid var(--rule); border-radius:10px; padding:8px 12px; font-size:12.5px; color:var(--soft); box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.cut-list div{padding:2px 0}
+.shop-was{display:block; font-size:10.5px; color:var(--live)} .shop-was.worse{color:var(--out)}
+.max-pay{display:block; font-size:10.5px; color:var(--soft)}
+.eb-live .over{color:var(--out); font-weight:800} .eb-live .under{color:var(--live); font-weight:800}
+.jail{display:block; margin-top:2px; font-size:10.5px; font-weight:800; white-space:nowrap} .jail.free{color:var(--live)} .jail.in{color:var(--out)}
+img.blogo.go,.book.go{cursor:pointer} img.blogo.go:hover{outline:2px solid var(--accent); border-radius:6px}
 .tab-n{display:inline-block; min-width:18px; padding:0 5px; margin-left:3px; border-radius:9px; background:var(--live-bg); color:var(--live); font-size:11px; font-weight:800; text-align:center}
 .tab-n:empty{display:none}
 .psrc-note{margin:-4px 0 10px; font-size:13px; color:var(--soft)}
@@ -632,7 +640,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v2.88</span></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v2.92</span></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -783,6 +791,8 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
     <input type="text" id="filterPlayer" class="bar-search" placeholder="Search player or team…" aria-label="Search player or team">
     <label class="bar-check"><input type="checkbox" id="swOnly"> Only sweet spot</label>
     <label class="bar-check"><input type="checkbox" id="showRejects"> Show rejected</label>
+    <label class="bar-check"><input type="checkbox" id="onlyMyGames"> Only games I already bet</label>
+    <button type="button" class="ghost sm" id="shopBtn" title="La Contadora re-checks every bet on this board — passing and skipped — at live Kalshi, Polymarket US and Novig prices (no BettingPros calls). Fair value stays from your last Pull.">🦑 Send the Sentinels</button><span class="meta" id="shopMsg"></span>
     <label class="bar-check"><input type="checkbox" id="notesAll"> Show all notes</label>
     <label class="bar-check" title="Bets to place show as cards above the table (uncheck for table rows)"><input type="checkbox" id="cardsOn" checked> Cards</label>
   </div>
@@ -1101,7 +1111,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <!-- ======================= PERFORMANCE ======================= -->
 <div class="view" id="v-perf">
 <div class="panel" id="calPanel">
-  <h2>Results by day <span class="sub">by the day the game is played · settled bets only</span></h2>
+  <h2>Results by day <span class="sub">by the day the game is played · money on the line counts as gone</span></h2>
   <div class="cal-top"><div><div class="meta" id="calSub">this month</div><div class="cal-big" id="calToday"></div></div>
     <div><div class="meta">Month</div><div class="cal-big" id="calMonthTot"></div></div>
     <div class="cal-seg"><button type="button" data-v="chart">Chart</button><button type="button" data-v="cal" class="on">Calendar</button></div></div>
@@ -1142,7 +1152,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v2.88';
+const SCREENER_VERSION='v2.92';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -1943,7 +1953,7 @@ function render(rows,cfg){
     cells.sport='<td><span class="sport s-'+esc(r.sport)+'">'+esc(r.sport)+'</span></td>';
     cells.market='<td style="text-align:center">'+mktCell+'</td>';
     cells.odds='<td style="text-align:center"><div class="odds-stack">'+(bookLogo(r.book)?logoTag(r.book):'<span class="meta">'+esc(bookLabel(r.book)||'book?')+'</span>')+
-        '<span>'+esc(fmtOdds(r.offeredRaw))+'</span></div></td>';
+        '<span>'+esc(fmtOdds(r.offeredRaw))+'</span>'+shopTagHtml(r)+maxTagHtml(r)+'</div></td>';
     cells.cover='<td class="num">'+(r.fairProb==null?'—':'<span class="cover">'+pct(r.fairProb)+'</span>'+
         '<div class="meta">fair '+esc(fmtOdds(r.fairRaw))+'</div>'+
         (r.mktProb!=null?'<div class="meta" title="'+(r.mktSharp?'Market benchmark: BettingPros Market EV fair price, from the sharpest books':'Market benchmark: BettingPros consensus odds (mostly retail books), both sides devigged')+(r.logitGap!=null?' · logit gap '+(r.logitGap>=0?'+':'')+r.logitGap.toFixed(2):'')+'">mkt '+pct(r.mktProb)+(r.mktSharp?' <b>sharp</b>':'')+'</div>':''))+'</td>';
@@ -2008,14 +2018,14 @@ function render(rows,cfg){
   const alertBar=document.getElementById('alerts');
   let bits=[];
   if(dupes) bits.push('<span class="alert dupe">'+dupes+' already bet</span>');
-  if(corrs) bits.push('<span class="alert corr">'+corrs+' pick'+(corrs===1?' is':'s are')+' in games you already bet'+
-    '<button class="alert-btn" id="corrToggle">'+(filterCorrOnly?'show all':'show those')+'</button></span>');
+  // v2.89: "N picks in games you already bet" moved to a checkbox by the board filters; rows still say "same game as …"
+  { const cb=document.getElementById('onlyMyGames'); if(cb){ cb.checked=filterCorrOnly; const lab=cb.closest('label'); if(lab) lab.title=corrs+' pick'+(corrs===1?'':'s')+' in games you already bet'; } }
   alertBar.innerHTML=bits.join('');
-  const ct=document.getElementById('corrToggle'); if(ct) ct.addEventListener('click',()=>{ filterCorrOnly=!filterCorrOnly; refresh(); });
+
   alertBar.style.display = bits.length?'flex':'none';
   let note = rows.length===0 ? 'nothing loaded yet'
-    : passing.length===0 ? 'of '+rows.length+' bets clear every screen. A board with nothing on it is a result.'
-    : 'of '+rows.length+' bets clear every screen';
+    : passing.length===0 ? 'pass · of '+rows.length+' — a board with nothing on it is a result'
+    : 'pass · of '+rows.length;
   if(rows.dupes>0) note += ' · '+rows.dupes+' repeats dropped';
   document.getElementById('countNote').textContent=note;
 
@@ -2023,8 +2033,8 @@ function render(rows,cfg){
   rows.filter(r=>!r.pass).forEach(r=>r.flags.filter(f=>f[0]==='out').forEach(f=>{
     reasons[f[1].replace(/sum to [\d.]+%/,'sum wrong')]=(reasons[f[1].replace(/sum to [\d.]+%/,'sum wrong')]||0)+1;
   }));
-  document.getElementById('cuts').innerHTML=Object.entries(reasons).sort((a,b)=>b[1]-a[1])
-    .map(([k,v])=>'<span class="cut"><b>'+v+'</b> '+esc(k)+'</span>').join('');
+  { const list=Object.entries(reasons).sort((a,b)=>b[1]-a[1]), nSkip=rows.length-passing.length;   // v2.89: one chip, reasons on hover/tap
+    document.getElementById('cuts').innerHTML = nSkip>0 ? '<details class="cut-sum"><summary class="cut"><b>'+nSkip+'</b> skipped ▸</summary><div class="cut-list">'+list.map(([k,v])=>'<div><b>'+v+'</b> '+esc(k)+'</div>').join('')+'</div></details>' : ''; }
 
   empty.style.display = shown.length?'none':'block';
   if(rows.length&&!shown.length) empty.textContent='Every bet failed a screen. Switch on the rejects to see why each one died.';
@@ -2066,7 +2076,7 @@ function placeCardHtml(r,cfg,o){
       '<div class="pc-mkt"><div class="pc-mt">'+esc((line?line+' ':'')+mname)+'</div>'+(cons?'<div class="pc-mo">'+esc(cons)+'</div>':'')+'</div>'+
       '<div class="pc-game">'+game+'</div></div>'+
     '<div class="pc-stats">'+
-      pcCell('Our pick','<div class="pc-big">'+esc(pick)+'</div><span class="pc-chip">'+esc(betNowOf(r))+' '+book+'</span>')+
+      pcCell('Our pick','<div class="pc-big">'+esc(pick)+'</div><span class="pc-chip">'+esc(betNowOf(r))+' '+book+'</span>'+shopTagHtml(r)+maxTagHtml(r))+
       pcCell('Consensus','<div class="pc-big">'+esc(line||'—')+'</div><span class="pc-s">'+esc(cons||'—')+(r.mktProb!=null?' · mkt '+pct(r.mktProb):'')+'</span>')+
       pcCell('Projection','<div class="pc-big">'+(r.projValue!=null?(Math.round(r.projValue*10)/10):'—')+'</div><span class="pc-s">'+esc(mname)+'</span>')+
       pcCell('EV after fees','<div class="pc-big '+(r.net>0?'up':'down')+'">'+ev+'</div><span class="pc-s">'+(r.fairProb!=null?pct(r.fairProb)+' cover':'')+(bp?' · '+bp:'')+'</span>')+
@@ -2294,26 +2304,44 @@ function openBetEditor(tr, r, opt){
   bookSel.addEventListener('change',bookDefault); modeSel.addEventListener('change',syncMode); bookDefault(); showCheck();
   // v2.88: live exchange price for this bet on Kalshi / Polymarket / Novig — EV re-checked at that price
   { const liveEl=document.createElement('span'); liveEl.className='meta eb-live'; ed.querySelector('.eb-rec').after(liveEl);
-    let tok=0;
+    let tok=0, lastQ=null, pctTyped=false;
+    const pctIn=ed.querySelector('.eb-pct');
+    pctIn.addEventListener('input',e=>{ if(e.isTrusted) pctTyped=true; paint(); });
+    const paint=()=>{
+      if(!lastQ) return;
+      const {book,q,others}=lastQ, cfg=cfgRead(), fair=r.fairProb;
+      const mx=fair!=null?maxPriceFor(fair, book, cfg.eMin):null;
+      const typed=parseFloat(pctIn.value), cur=pmMode()&&typed>0&&typed<100?typed/100:(q&&q.ok?q.price:null);
+      let h='';
+      if(q && q.ok){ const f=feeRate(book,q.price,cfg.fees), net=fair!=null?((fair/q.price-1)-f)/(1+f):null;
+        h+='<b>'+esc(bookLabel(book))+' now '+(q.price*100).toFixed(1)+'%</b> ('+esc(fmtOdds(Math.round(americanOf(q.price))))+')'+
+          (net!=null?' · EV <b class="'+(net>=cfg.eMin?'tb-up':net>0?'':'tb-down')+'">'+(net>=0?'+':'')+(net*100).toFixed(1)+'%</b>':''); }
+      else if(q) h+='live: '+esc(String(q.note||'no match').replace(/^(Kalshi|Polymarket|Novig): /,''));
+      if(mx!=null) h+=' · <b>pay up to '+(mx*100).toFixed(1)+'% max</b>'+(cur!=null?(cur<=mx+1e-9?' <span class="under">✓ '+(cur*100).toFixed(1)+'% is OK</span>':' <span class="over">✗ '+(cur*100).toFixed(1)+'% is too high — skip</span>'):'');
+      else if(fair==null) h+=' · no cover % — can\'t say if it passes';
+      if(others && others.length) h+='<br>🦑 best odds: '+others.map(o=>esc(bookLabel(o.book))+' '+esc(fmtOdds(Math.round(americanOf(o.p))))+' ('+(o.p*100).toFixed(1)+'%)').join(' · ');
+      liveEl.innerHTML=h;
+    };
     const runLive=async()=>{
-      const book=bookSel.value, src=LIVE_BOOK(book); liveEl.textContent='';
-      if(!src || opt.edit) return;
-      const d=liveDesc({id:'ed'+(++tok), book, sport:r.sport, kind:r.kind, market:r.market, side:r.side, name:r.name, team:r.team, apiKey:r.apiKey,
-        game:r.game, matchup:r.matchup, start:(r.gameInfo&&r.gameInfo.startISO)||r.start||null});
-      if(!d){ liveEl.textContent='live: game teams unknown'; return; }
-      const my=d.id, myTok=tok; liveEl.textContent='checking live price…';
+      const book=bookSel.value, src=LIVE_BOOK(book); liveEl.textContent=''; lastQ=null;
+      if(opt.edit) return;
+      const base={sport:r.sport, kind:r.kind, market:r.market, side:r.side, name:r.name, team:r.team, apiKey:r.apiKey, game:r.game, matchup:r.matchup, start:(r.gameInfo&&r.gameInfo.startISO)||r.start||null};
+      const myTok=++tok;
+      const descs=['Kalshi','Polymarket US','Novig'].map(n=>liveDesc(Object.assign({},base,{book:n, id:'ed'+myTok+':'+LIVE_BOOK(n)}))).filter(Boolean);
+      if(!descs.length){ if(src) liveEl.textContent='live: game teams unknown'; return; }
+      liveEl.textContent='🦑 Sentinels checking…';
       try{
-        const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify([d])), {headers:apiHeaders()});
-        const j=await res.json(), q=j&&j.results&&j.results[my];
-        if(myTok!==tok){ return; } if(!q){ liveEl.textContent=''; return; }
-        if(!q.ok){ liveEl.textContent='live: '+String(q.note||'no match').replace(/^(Kalshi|Polymarket|Novig): /,''); return; }
-        const cfg=cfgRead(), f=feeRate(book,q.price,cfg.fees), fair=r.fairProb;
-        const net=fair!=null?((fair/q.price-1)-f)/(1+f):null;
-        liveEl.innerHTML='<b>'+esc(bookLabel(book))+' now '+esc(fmtOdds(Math.round(americanOf(q.price))))+'</b> ('+(q.price*100).toFixed(1)+'¢)'+
-          (net!=null?' · EV at that price <b class="'+(net>=cfg.eMin?'tb-up':net>0?'':'tb-down')+'">'+(net>=0?'+':'')+(net*100).toFixed(1)+'%</b>':'');
+        const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(descs)), {headers:apiHeaders()});
+        const j=await res.json(), R=(j&&j.results)||{}; if(myTok!==tok) return;
+        const own=src?R['ed'+myTok+':'+src]:null;
+        const others=descs.map(d=>({d,q:R[d.id]})).filter(x=>x.q&&x.q.ok).map(x=>({book:BOOK_NAME[x.d.book], p:x.q.price})).sort((a,b)=>a.p-b.p);
+        lastQ={book, q:own||null, others: r.fairProb==null||!src ? others : others.filter(o=>LIVE_BOOK(o.book)!==src)};
+        if(own && own.ok){ liveQuotes['ed:'+src]=own;
+          if(pmMode() && !pctTyped){ pctIn.value=(own.price*100).toFixed(1); pctIn.dispatchEvent(new Event('input')); } }
+        paint();
       }catch(e){ liveEl.textContent='live price unavailable'; }
     };
-    bookSel.addEventListener('change',runLive); runLive(); }
+    bookSel.addEventListener('change',()=>{ pctTyped=false; runLive(); }); runLive(); }
   ed.querySelector('.eb-cancel').addEventListener('click',()=>ed.remove());
   const saveBtn=ed.querySelector('.eb-save');
   saveBtn.addEventListener('click',()=>{
@@ -3127,12 +3155,24 @@ function dayStats(){
     d.bets++; d.staked+=(+b.stake||0);
     if(b.sold) d.sold++;
     else if(b.result==='win') d.w++; else if(b.result==='loss') d.l++; else if(b.result==='push') d.p++; else d.pend++;
-    const pr=betProfit(b); if(pr!=null){ d.profit+=pr; d.settled++; }
+    const hv=heldValue(b); d.profit+=hv.v; if(hv.open){ d.risk=(d.risk||0)+hv.d; } else d.settled++;
     const s=b.snap&&b.snap.said;
     if(!s) d.unknown++; else if(s.onList) d.on++; else d.against++;
   });
   removedBets.forEach(b=>{ if(!(b.lost>0)) return; const d=at(gameDayOf(b)); d.cancelled++; d.cancelLost+=b.lost; d.profit-=b.lost; d.settled++; });
   return days;
+}
+/* v2.89 (Alonzo's rule): money on the line counts as gone.
+   settled → its profit; game started, not settled → −stake;
+   not started → −(what you'd lose getting out now): from the live bid on Kalshi / Polymarket / Novig, else −stake.
+   Cancelled with a loss → −that loss (removedBets). */
+function heldValue(b){
+  const pr=betProfit(b); if(pr!=null) return {v:pr, open:false, d:0};
+  const st=+b.stake||0, t=Date.parse(b.start);
+  if(!isNaN(t) && Date.now()>=t) return {v:-st, open:true, d:st, why:'started'};
+  try{ const ds=(typeof liveDesc==='function')?liveDesc(b):null, q=ds&&liveQuotes?liveQuotes[ds.id]:null, my=toProb(b.odds);
+    if(q && q.ok && q.bid!=null && my>0){ const out=st*(q.bid/my), d=Math.max(0, st-out); return {v:-d, open:true, d:+d.toFixed(2), why:'exit'}; } }catch(e){}
+  return {v:-st, open:true, d:st, why:'no live price'};
 }
 function money(x,signed){ return (x<0?'−':(signed&&x>0?'+':''))+'$'+Math.abs(x).toFixed(2); }
 function dayLabel(day){
@@ -3146,7 +3186,7 @@ function dayCells(d,goal,bank){
     '<td class="num">'+(d.staked?money(d.staked):'—')+(d.staked&&bank?'<div class="meta">'+(100*d.staked/bank).toFixed(1)+'% of bankroll</div>':'')+'</td>'+
     '<td class="num">'+wlp+(d.sold?'<div class="meta">'+d.sold+' sold</div>':'')+(d.cancelled?'<div class="meta">'+d.cancelled+' cancelled</div>':'')+'</td>'+
     '<td class="num">'+(d.pend||'—')+'</td>'+
-    '<td class="num">'+(d.settled?'<b class="'+(d.profit>=0?'pl-up':'pl-down')+'">'+money(d.profit,true)+'</b>':'—')+'</td>'+
+    '<td class="num">'+((d.settled||d.risk)?'<b class="'+(d.profit>=0?'pl-up':'pl-down')+'">'+money(d.profit,true)+'</b>'+(d.risk?'<div class="meta">incl. −'+money(d.risk)+' on the line</div>':''):'—')+'</td>'+
     '<td class="num">'+(!d.bets ? '—'
       : (d.on||d.against) ? d.on+' on'+(d.against?' · <span class="pl-down">'+d.against+' against</span>':'')+(d.unknown?'<div class="meta">'+d.unknown+' not tagged</div>':'')
       : '<span class="meta">not tagged</span>')+'</td>';
@@ -3176,7 +3216,7 @@ function renderTodayLine(){
   const parts=["Today's games: <b>"+d.bets+(goal>0?' / '+goal:'')+'</b> bets', money(d.staked)+(cfg.dayMax>0?' of '+money(cfg.dayMax)+' max':' staked')+(cfg.bank?' ('+(100*d.staked/cfg.bank).toFixed(1)+'% of bankroll)':'')];
   if(d.w+d.l+d.p) parts.push(d.w+'–'+d.l+'–'+d.p);
   if(d.pend) parts.push(d.pend+' pending');
-  if(d.settled) parts.push('<b class="'+(d.profit>=0?'pl-up':'pl-down')+'">'+money(d.profit,true)+'</b>');
+  if(d.settled||d.risk) parts.push('<b class="'+(d.profit>=0?'pl-up':'pl-down')+'">'+money(d.profit,true)+'</b>'+(d.risk?' <span class="meta">(on the line counted as gone)</span>':''));
   if(d.against) parts.push('<span class="pl-down">'+d.against+' against the screener</span>');
   el.innerHTML=parts.join(' · ');
 }
@@ -3826,12 +3866,12 @@ async function espnRefreshNow(btn){   // v2.85: manual ESPN refresh — scores, 
 function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding → to win
   const el=document.getElementById('todayBar'); if(!el) return;
   const today=ctDay(Date.now()), by={};
-  const blank=k=>({book:k,n:0,bet:0,won:0,lost:0,w:0,l:0,p:0,open:0,riding:0,toWin:0});
+  const blank=k=>({book:k,n:0,bet:0,won:0,lost:0,w:0,l:0,p:0,open:0,riding:0,toWin:0,net:0,ded:0,cancel:0});
   const at=k=>by[k]||(by[k]=blank(k));
   logged.forEach(b=>{
     if(gameDayOf(b)!==today) return;
-    const x=at(ribbonBook(b.book)), st=+b.stake||0, pr=betProfit(b);
-    x.n++; x.bet+=st;
+    const x=at(ribbonBook(b.book)), st=+b.stake||0, pr=betProfit(b), hv=heldValue(b);
+    x.n++; x.bet+=st; x.net+=hv.v; x.ded+=hv.d;
     if(pr!=null){
       if(pr>0) x.won+=pr; else if(pr<0) x.lost+=-pr;
       if(!b.sold){ if(b.result==='win') x.w++; else if(b.result==='loss') x.l++; else if(b.result==='push') x.p++; }
@@ -3841,9 +3881,11 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
       else { const q=toProb(b.odds), f=+b.fee||0; if(q) x.toWin+=st*((1/q)-1-f)/(1+f); }
     }
   });
+  removedBets.forEach(b=>{ if(!(b.lost>0) || gameDayOf(b)!==today) return; const x=at(ribbonBook(b.book)); x.lost+=b.lost; x.net-=b.lost; x.cancel+=b.lost; });
   const usd=x=>'$'+Math.abs(x).toFixed(2);
   const z=x=>Math.abs(x)<0.005, up=x=>z(x)?'<span class="open">$0.00</span>':'<span class="tb-up">+'+usd(x)+'</span>', dn=x=>z(x)?'<span class="open">$0.00</span>':'<span class="tb-down">−'+usd(x)+'</span>';
-  const line2=x=>'<div class="tb-l2"><span class="tb-up" title="won">'+usd(x.won)+'</span> <span class="open">vs</span> <span class="tb-down" title="lost">'+usd(x.lost)+'</span></div><div class="tb-l2">'+(x.open?x.open+' bet'+(x.open===1?'':'s')+' · <span class="tb-ride" title="on the line">'+usd(x.riding)+'</span> → <span class="tb-up" title="profit if they all win">+'+usd(x.toWin)+'</span>':(Math.abs(x.won-x.lost)<0.005?'<span class="open">even</span>':'<span class="tb-pill '+(x.won>x.lost?'good':'bad')+'" title="won − lost, all settled"><small>'+(x.won>x.lost?'PROFIT':'LOSS')+'</small> '+(x.won>x.lost?'+':'−')+usd(x.won-x.lost)+'</span>'))+'</div>';
+  const line2=x=>'<div class="tb-l2"><span class="tb-up" title="won">'+usd(x.won)+'</span> <span class="open">vs</span> <span class="tb-down" title="lost">'+usd(x.lost)+'</span></div><div class="tb-l2">'+(x.open?x.open+' bet'+(x.open===1?'':'s')+' · <span class="tb-ride" title="on the line">'+usd(x.riding)+'</span> → <span class="tb-up" title="profit if they all win">+'+usd(x.toWin)+'</span></div><div class="tb-l2">':'')+
+    (Math.abs(x.net)<0.005?'<span class="open">even</span>':'<span class="tb-pill '+(x.net>0?'good':'bad')+'" title="won − lost − what\'s on the line'+(x.open?' (started games: the whole stake; not started: what you\'d lose getting out now, or the whole stake without a live price)':'')+'"><small>'+(x.net>0?'PROFIT':'LOSS')+'</small> '+(x.net>0?'+':'−')+usd(x.net)+'</span>')+'</div>';
   const order=RIBBON_BOOKS.concat(Object.keys(by).filter(k=>!RIBBON_BOOKS.includes(k)).sort());
   const tot=blank('All');
   const tile=k=>{ const x=by[k]; if(!x && !RIBBON_BOOKS.includes(k)) return '';
@@ -3852,13 +3894,13 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
     if(!x) return '<div class="tb-t dim" title="'+esc(k)+': no bets today"><div class="tb-l1">'+head+'<span class="open">no bets</span></div></div>';
     Object.keys(tot).forEach(f=>{ if(typeof tot[f]==='number') tot[f]+=x[f]; });
     const rec=(x.w+x.l+x.p)?' <span class="open">'+x.w+'–'+x.l+(x.p?'–'+x.p:'')+'</span>':'';
-    return '<div class="tb-t" title="'+esc(k+': '+x.n+' bet'+(x.n===1?'':'s')+' today · '+x.open+' open')+'"><div class="tb-l1">'+head+'<b>'+usd(x.bet)+'</b> <span class="open">· '+x.n+' bet'+(x.n===1?'':'s')+'</span>'+rec+'</div>'+line2(x)+'</div>';
+    return '<div class="tb-t" title="'+esc(k+': '+x.n+' bet'+(x.n===1?'':'s')+' today · '+x.open+' open')+'"><div class="tb-l1">'+head+(x.n?'<b>'+usd(x.bet)+'</b> <span class="open">· '+x.n+' bet'+(x.n===1?'':'s')+'</span>':'<span class="open">cancelled only</span>')+rec+'</div>'+line2(x)+'</div>';
   };
   const tiles=order.map(tile).join('');
-  const now=tot.won-tot.lost, best=now+tot.toWin, worst=now-tot.riding;
+  const now=tot.net, best=now+tot.ded+tot.toWin, worst=now-(tot.riding-tot.ded);
   const sgn=v=>v>=0?up(v):dn(-v);
-  el.innerHTML='<span class="tb-k"><span>TODAY <button class="tb-espn" type="button" title="Refresh scores and results from ESPN now (no BettingPros calls)'+(espnAt?' — last '+new Date(espnAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+'">⟳</button></span><b class="tb-tot">'+usd(tot.bet)+'</b><span class="tb-n">'+tot.n+' bet'+(tot.n===1?'':'s')+'</span>'+(Math.abs(now)<0.005?'<span class="tb-pill even" title="nothing settled yet, or even">$0.00</span>':'<span class="tb-pill '+(now>0?'good':'bad')+'" title="won minus lost so far">'+(now>0?'+':'−')+usd(now)+'</span>')+'</span>'+tiles+
-    '<div class="tb-t all"><div class="tb-l1"><b>All</b></div>'+line2(tot)+(tot.open?'<div class="tb-l2" title="best = every open bet wins · worst = every open bet loses">best '+sgn(best)+' · worst '+sgn(worst)+'</div>':'')+'</div>';
+  el.innerHTML='<span class="tb-k"><span>TODAY <button class="tb-espn" type="button" title="Refresh scores and results from ESPN now (no BettingPros calls)'+(espnAt?' — last '+new Date(espnAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+'">⟳</button></span><b class="tb-tot">'+usd(tot.bet)+'</b><span class="tb-n">'+tot.n+' bet'+(tot.n===1?'':'s')+'</span>'+(Math.abs(now)<0.005?'<span class="tb-pill even" title="even">$0.00</span>':'<span class="tb-pill '+(now>0?'good':'bad')+'" title="won − lost − money on the line">'+(now>0?'+':'−')+usd(now)+'</span>')+'</span>'+tiles+
+    '<div class="tb-t all"><div class="tb-l1"><b>All</b></div>'+line2(tot)+(tot.open?'<div class="tb-l2" title="best = every open bet wins · worst = every open bet loses (money on the line is already counted as gone)">best '+sgn(best)+' · worst '+sgn(worst)+'</div>':'')+'</div>';
 }
 /* v2.73: grade finished games in the background (ESPN, no BettingPros calls) */
 let agBusy=false; const sbStamp={};
@@ -4279,6 +4321,7 @@ document.querySelectorAll('#boardHead th.sortable').forEach(th=>th.addEventListe
 }));
 document.getElementById('filterSport').addEventListener('change', (e)=>{ filterSport=e.target.value; rerenderWithFilters(); });
 document.getElementById('showRejects').addEventListener('change', (e)=>{ showRejects=e.target.checked; rerenderWithFilters(); });
+document.getElementById('onlyMyGames').addEventListener('change', e=>{ filterCorrOnly=e.target.checked; refresh(); });
 
 // Event listeners for advanced filters
 document.getElementById('filterPlayer').addEventListener('input', (e)=>{ filterPlayer=e.target.value; rerenderWithFilters(); });
@@ -5326,8 +5369,9 @@ function calDays(book){
   const days={};
   logged.forEach(b=>{ const d=gameDayOf(b); if(!d) return; if(book!=='All' && ribbonBook(b.book)!==book) return;
     const x=days[d]||(days[d]={n:0,settled:0,profit:0,staked:0,w:0,l:0,p:0,open:0}); x.n++; x.staked+=+b.stake||0;
-    const pr=betProfit(b); if(pr==null){ x.open++; return; } x.settled++; x.profit+=pr;
+    const hv=heldValue(b); x.profit+=hv.v; if(hv.open){ x.open++; return; } x.settled++;
     if(!b.sold){ if(b.result==='win') x.w++; else if(b.result==='loss') x.l++; else if(b.result==='push') x.p++; } });
+  removedBets.forEach(b=>{ if(!(b.lost>0)) return; if(book!=='All' && ribbonBook(b.book)!==book) return; const d=gameDayOf(b); const x=days[d]||(days[d]={n:0,settled:0,profit:0,staked:0,w:0,l:0,p:0,open:0}); x.profit-=b.lost; x.settled++; });
   return days;
 }
 function renderCal(){
@@ -5339,16 +5383,16 @@ function renderCal(){
   const [Y,M]=calMonth.split('-').map(Number), first=new Date(Date.UTC(Y,M-1,1)), nd=new Date(Date.UTC(Y,M,0)).getUTCDate();
   document.getElementById('calTitle').textContent=first.toLocaleDateString('en-US',{month:'long',year:'numeric',timeZone:'UTC'});
   const inMonth=Object.keys(days).filter(d=>d.slice(0,7)===calMonth).sort();
-  const tot=inMonth.reduce((a,d)=>{ const x=days[d]; a.p+=x.profit; a.n+=x.n; a.st+=x.staked; a.w+=x.w; a.l+=x.l; a.pu+=x.p; if(x.settled){ if(x.profit>0.005)a.up++; else if(x.profit<-0.005)a.dn++; } a.best=Math.max(a.best,x.settled?x.profit:-Infinity); a.worst=Math.min(a.worst,x.settled?x.profit:Infinity); return a; },{p:0,n:0,st:0,w:0,l:0,pu:0,up:0,dn:0,best:-Infinity,worst:Infinity});
+  const tot=inMonth.reduce((a,d)=>{ const x=days[d]; a.p+=x.profit; a.n+=x.n; a.st+=x.staked; a.w+=x.w; a.l+=x.l; a.pu+=x.p; if(x.settled){ if(x.profit>0.005)a.up++; else if(x.profit<-0.005)a.dn++; } a.best=Math.max(a.best,(x.settled||x.open)?x.profit:-Infinity); a.worst=Math.min(a.worst,(x.settled||x.open)?x.profit:Infinity); return a; },{p:0,n:0,st:0,w:0,l:0,pu:0,up:0,dn:0,best:-Infinity,worst:Infinity});
   const td=days[today];
-  const tEl=document.getElementById('calToday'); tEl.className='cal-big '+(td&&td.profit>0.005?'up':td&&td.profit<-0.005?'dn':''); tEl.innerHTML=(td&&td.settled?usd(td.profit):'$0.00')+' <span class="meta">today</span>';
+  const tEl=document.getElementById('calToday'); tEl.className='cal-big '+(td&&td.profit>0.005?'up':td&&td.profit<-0.005?'dn':''); tEl.innerHTML=(td&&(td.settled||td.open)?usd(td.profit):'$0.00')+' <span class="meta">today</span>';
   const mEl=document.getElementById('calMonthTot'); mEl.className='cal-big '+(tot.p>0.005?'up':tot.p<-0.005?'dn':''); mEl.textContent=usd(tot.p);
   document.getElementById('calSub').textContent=(calBook==='All'?'all books':calBook);
   document.getElementById('calFoot').innerHTML='<span>Days: <b>'+tot.up+' up · '+tot.dn+' down</b></span><span>Bets: <b>'+tot.n+'</b> · W–L'+(tot.pu?'–P':'')+' <b>'+tot.w+'–'+tot.l+(tot.pu?'–'+tot.pu:'')+'</b></span><span>Staked <b>$'+tot.st.toFixed(2)+'</b></span>'+
     (isFinite(tot.best)?'<span>Best day <b style="color:var(--live)">'+usd(tot.best)+'</b> · worst <b style="color:var(--out)">'+usd(tot.worst)+'</b></span>':'');
   document.querySelectorAll('.cal-seg button').forEach(b=>b.classList.toggle('on',b.dataset.v===calView));
   if(calView==='chart'){
-    let run=0; const pts=[]; for(let d=1; d<=nd; d++){ const k=calMonth+'-'+String(d).padStart(2,'0'); const x=days[k]; const v=x&&x.settled?x.profit:0; run+=v; pts.push({d,v,run,has:!!(x&&x.settled),fut:k>today}); }
+    let run=0; const pts=[]; for(let d=1; d<=nd; d++){ const k=calMonth+'-'+String(d).padStart(2,'0'); const x=days[k]; const has=!!(x&&(x.settled||x.open)); const v=has?x.profit:0; run+=v; pts.push({d,v,run,has,fut:k>today}); }
     const W=700,H=220,pad=34, maxA=Math.max(1,...pts.map(p=>Math.abs(p.run)),...pts.map(p=>Math.abs(p.v)));
     const X=d=>pad+(d-1)*(W-pad-10)/(nd-1), Yv=v=>H/2-v/maxA*(H/2-18);
     const bars=pts.filter(p=>p.has).map(p=>'<rect x="'+(X(p.d)-5)+'" y="'+Math.min(Yv(p.v),H/2)+'" width="10" height="'+Math.abs(Yv(p.v)-H/2)+'" rx="2" fill="'+(p.v>=0?'var(--live)':'var(--out)')+'" opacity=".45"/>').join('');
@@ -5368,8 +5412,7 @@ function renderCal(){
     const k=calMonth+'-'+String(d).padStart(2,'0'), x=days[k];
     let cls='cal-c', t='', v='--', n='';
     if(x){ cls+=' has';
-      if(x.settled){ v=usd(x.profit); if(x.profit>0.005){cls+=' w';t='W';} else if(x.profit<-0.005){cls+=' l';t='L';} }
-      else v='⏳';
+      if(x.settled||x.open){ v=usd(x.profit)+(x.open?' ⏳':''); if(x.profit>0.005){cls+=' w';t='W';} else if(x.profit<-0.005){cls+=' l';t='L';} }
       n=x.n+' bet'+(x.n===1?'':'s')+(x.open&&x.settled?' · '+x.open+' open':x.open&&!x.settled?' pending':''); }
     if(k===today) cls+=' today'; if(k>today) cls+=' fut';
     h+='<div class="'+cls+'" data-day="'+k+'" title="'+(x?esc(x.n+' bets · $'+x.staked.toFixed(2)+' staked'+(x.settled?' · '+x.w+'–'+x.l:'')):'')+'"><span class="d">'+d+'</span><span class="t">'+t+'</span><div class="v">'+v+'</div><div class="n">'+n+'</div></div>';
@@ -5410,8 +5453,8 @@ async function refreshLivePrices(force){
   if(!force && Date.now()-liveAt<55000) return;
   liveBusy2=true;
   try{
-    for(let i=0;i<list.length;i+=30){
-      const chunk=list.slice(i,i+30);
+    for(let i=0;i<list.length;i+=8){
+      const chunk=list.slice(i,i+8);
       const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(chunk.map(x=>x[1]))), {headers:apiHeaders()});
       if(!res.ok) break;
       const data=await res.json(); const R=(data&&data.results)||{};
@@ -5440,6 +5483,113 @@ function liveChipHtml(b){
 }
 setInterval(()=>{ if(document.visibilityState==='visible') refreshLivePrices(false); }, 15000);
 setTimeout(()=>refreshLivePrices(true), 1500);
+
+/* ============ v2.90: open the bet on the book (click its logo) · line shopping across exchanges ============ */
+const BOOK_NAME={kalshi:'Kalshi', poly:'Polymarket US', novig:'Novig'};
+const BOOK_HOME={kalshi:'https://kalshi.com/', poly:'https://polymarket.us/', novig:'https://novig.com/', dk:'https://sportsbook.draftkings.com/'};
+const isPhone=()=>/iPhone|iPad|iPod|Android/i.test(navigator.userAgent||'');
+function bookUrl(src, q, amount){
+  if(!q || !q.ok) return BOOK_HOME[src]||null;
+  if(src==='novig' && q.outcome){
+    if(isPhone()) return 'novigapp://events/'+encodeURIComponent(q.outcome)+'/novig';
+    return 'https://novig.com/events/'+encodeURIComponent(q.outcome)+'/novig'+(amount>0?'/'+(+amount).toFixed(2):'');
+  }
+  return q.url || BOOK_HOME[src] || null;
+}
+async function quoteFor(obj, bookName){
+  const d=liveDesc(Object.assign({}, obj, {book:bookName, id:'q:'+(obj.id||obj.key||obj.idx)+':'+bookName})); if(!d) return null;
+  const old=liveQuotes[d.id]; if(old && Date.now()-Date.parse(old.at||0)<60000) return old;
+  const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify([d])), {headers:apiHeaders()});
+  const j=await res.json(); const q=j&&j.results&&j.results[d.id]; if(q) liveQuotes[d.id]=q; return q||null;
+}
+/* v2.92: the most you can pay and still clear the EV floor after that book's fee (net EV falls as the price rises) */
+function maxPriceFor(fair, book, eMin){
+  if(!(fair>0 && fair<1)) return null;
+  const cfg=cfgRead(), netAt=p=>{ const f=feeRate(book,p,cfg.fees); return ((fair/p-1)-f)/(1+f); };
+  let lo=0.01, hi=0.99; if(netAt(lo)<eMin) return null;
+  for(let i=0;i<40;i++){ const m=(lo+hi)/2; if(netAt(m)>=eMin) lo=m; else hi=m; }
+  return lo;
+}
+function maxTagHtml(r){
+  if(r.fairProb==null) return '';
+  const cfg=cfgRead(), mx=maxPriceFor(r.fairProb, r.book, cfg.eMin); if(mx==null) return '';
+  const pctBook=PM_BOOK.test(r.book||'');
+  return '<span class="meta max-pay" title="The most you can pay at '+esc(bookLabel(r.book))+' and still clear your '+pct(cfg.eMin)+' EV floor after its fee">max '+(pctBook?(mx*100).toFixed(1)+'%':esc(fmtOdds(Math.round(americanOf(mx)))))+'</span>';
+}
+function shopTagHtml(r){
+  let h='';
+  if(r.shop) h+='<span class="meta shop-was '+(r.offeredProb<r.shop.orig.offeredProb?'':'worse')+'" title="'+esc(r.shop.same?'Live '+bookLabel(r.book)+' price now (was '+fmtOdds(r.shop.orig.offeredRaw)+' at the Pull)':'Line shopping: '+bookLabel(r.book)+' beats '+bookLabel(r.shop.orig.book)+' after fees')+'">'+(r.shop.same?'live · was ':'was '+esc(bookLabel(r.shop.orig.book))+' ')+esc(fmtOdds(r.shop.orig.offeredRaw))+'</span>';
+  if(r.freed) h+='<span class="jail free" title="Skipped at the Pull price, passes every screen at the live price">🔓 out of Skipping Jail</span>';
+  if(r.jailed) h+='<span class="jail in" title="Passed at the Pull price, fails at the live price">🔒 Skipping Jail</span>';
+  return h;
+}
+function rowAsBet(r){ return {id:'row'+r.idx, idx:r.idx, book:r.book, sport:r.sport, kind:r.kind, market:r.market, side:r.side, name:r.name, team:r.team, apiKey:r.apiKey,
+  game:r.game, matchup:r.matchup, start:(r.gameInfo&&r.gameInfo.startISO)||null, odds:r.offeredRaw, stake:r.stake}; }
+document.addEventListener('click', async e=>{
+  const img=e.target.closest('img.blogo, .book'); if(!img) return;
+  const host=img.closest('tr, .pcard'); if(!host) return;
+  let obj=null;
+  const kb=host.querySelector('button.kill[data-i]'); if(kb) obj=logged[+kb.dataset.i];
+  if(!obj){ const bb=host.querySelector('[data-idx]'); if(bb){ const r=lastRows.find(x=>x.idx===+bb.dataset.idx); if(r) obj=rowAsBet(r); } }
+  if(!obj) return;
+  const src=LIVE_BOOK(obj.book) || (/draftkings/i.test(obj.book||'')?'dk':null); if(!src) return;
+  e.preventDefault(); e.stopPropagation();
+  const w=window.open('about:blank','_blank');   // open now (pop-up blockers), point it once we know where
+  let url=BOOK_HOME[src];
+  try{ if(src!=='dk'){ const q=await quoteFor(obj, obj.book); url=bookUrl(src, q, +obj.stake||0) || url; } }catch(_){}
+  if(w) w.location.href=url; else location.href=url;
+}, true);
+// mark clickable logos
+const _markGo=()=>document.querySelectorAll('#logBody img.blogo, #tbody img.blogo, #placeCards img.blogo, #liveBody img.blogo').forEach(i=>{ if(/kalshi|polymarket|novig|draftkings/i.test(i.alt||'')){ i.classList.add('go'); i.title=(i.alt||'')+' — open this bet'; } });
+new MutationObserver(()=>_markGo()).observe(document.body,{childList:true,subtree:true});
+
+/* v2.91: La Contadora's live check — every not-started row with a fair value (passing OR skipped) gets live
+   Kalshi / Polymarket / Novig prices, including its own book when that's an exchange. The best price after fees
+   becomes the row's price (better or worse), the board re-screens it, and rows that cross over are tagged:
+   🔓 out of Skipping Jail · 🔒 sent to Skipping Jail. Fair value (cover %, consensus) stays from the last Pull. */
+const isPlace=r=>!!(r.pass && r.stake>0 && !r.prior && !r.removed && !r.moved && !r.glConflict);
+async function shopExchanges(){
+  const btn=document.getElementById('shopBtn'), msg=document.getElementById('shopMsg'); if(!btn) return;
+  const cfg=cfgRead(), have=cfg.books&&cfg.books.length?cfg.books:null;
+  const exch=['Kalshi','Polymarket US','Novig'].filter(n=>!have || have.some(b=>n.toLowerCase().includes(b)||b.includes(n.split(' ')[0].toLowerCase())));
+  const started=r=>r.gameInfo&&(r.gameInfo.state==='in'||r.gameInfo.state==='post');
+  const rows=lastRows.filter(r=>r.fairProb!=null && !r.prior && !started(r) && !r.hiddenDup && (boardSrc==='paste'?isPasteRow(r):!isPasteRow(r)));
+  const jobs=[]; rows.forEach(r=>{ exch.forEach(n=>{ const d=liveDesc(Object.assign(rowAsBet(r),{book:n, id:'shop:'+r.idx+':'+LIVE_BOOK(n)})); if(d) jobs.push([r,n,d]); }); });
+  if(!jobs.length){ msg.textContent='🦑 nothing for the Sentinels to hunt'; return; }
+  btn.disabled=true; let matched=0;
+  const before=new Map(rows.map(r=>[r, isPlace(r)]));
+  try{
+    rows.forEach(r=>{ delete r._shopQ; delete r.freed; delete r.jailed; });
+    for(let i=0;i<jobs.length;i+=8){
+      const chunk=jobs.slice(i,i+8); msg.textContent='🦑 Sentinels hunting… '+Math.min(i+8,jobs.length)+' / '+jobs.length;
+      const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(chunk.map(x=>x[2]))), {headers:apiHeaders()});
+      if(!res.ok){ msg.textContent='exchange check failed ('+res.status+')'; break; }
+      const R=((await res.json())||{}).results||{};
+      chunk.forEach(([r,n,d])=>{ const q=R[d.id]; if(!q||!q.ok) return; matched++; liveQuotes[d.id]=q; (r._shopQ=r._shopQ||{})[n]=q; });
+    }
+    let repriced=0;
+    rows.forEach(r=>{
+      const orig=r.shop?r.shop.orig:{book:r.book, offeredRaw:r.offeredRaw, offeredProb:r.offeredProb};
+      const netAt=(book,p)=>{ const f=feeRate(book,p,cfg.fees); return ((r.fairProb/p-1)-f)/(1+f); };
+      const Q=r._shopQ||{}, own=Object.keys(Q).find(n=>LIVE_BOOK(n)===LIVE_BOOK(orig.book));
+      // baseline: the row's own book — its live price when it's an exchange, else the Pull's price (DraftKings etc.)
+      let best = own ? {book:orig.book, p:Q[own].price, net:netAt(orig.book,Q[own].price), live:true}
+                     : {book:orig.book, p:orig.offeredProb, net:netAt(orig.book,orig.offeredProb), live:false};
+      Object.entries(Q).forEach(([n,q])=>{ if(n===own) return; const nt=netAt(n,q.price); if(nt>best.net+0.003) best={book:n,p:q.price,net:nt,live:true}; });
+      const changed = best.book!==orig.book || Math.abs(best.p-orig.offeredProb)>1e-6;
+      if(changed){ repriced++; r.shop={orig, live:best.live, same:best.book===orig.book, at:new Date().toISOString()};
+        r.book=best.book; r.offeredProb=best.p; r.offeredRaw=fmtOdds(Math.round(americanOf(best.p))); }
+      else if(r.shop){ r.book=orig.book; r.offeredProb=orig.offeredProb; r.offeredRaw=orig.offeredRaw; delete r.shop; }
+    });
+    refresh();   // the board re-screens every row at its new price (fees, floor, odds range, market check, caps, daily max)
+    let freed=0, jailed=0;
+    rows.forEach(r=>{ const was=before.get(r), now=isPlace(r); if(!was && now){ r.freed=true; freed++; } else if(was && !now){ r.jailed=true; jailed++; } });
+    refresh();
+    msg.innerHTML='🦑 Sentinels are back: <b>'+matched+'</b> live prices · <b>'+repriced+'</b> repriced'+(freed?' · <b style="color:var(--live)">🔓 '+freed+' out of Skipping Jail</b>':'')+(jailed?' · <b style="color:var(--out)">🔒 '+jailed+' sent to Skipping Jail</b>':'')+' · '+new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  }catch(e){ msg.textContent='🦑 the Sentinels got lost (exchange check failed)'; }
+  finally{ btn.disabled=false; }
+}
+document.getElementById('shopBtn') && document.getElementById('shopBtn').addEventListener('click', shopExchanges);
 setTimeout(()=>{ renderTodayBar(); autoGradeLog(); },50);
 // v2.71: Paste ▸ / Passphrase ▸ links on the load line
 document.getElementById('pasteLink').addEventListener('click',()=>{ const t=document.querySelector('.tab[data-view="v-board"]'); if(t) t.click(); const pp=document.getElementById('pastePanel'); if(pp){ pp.open=true; pp.scrollIntoView({behavior:'smooth', block:'start'}); } });
