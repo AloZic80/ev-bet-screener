@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v2.93</title>
+<title>0xBeta Screener v2.94</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -357,6 +357,25 @@ table.days tfoot td{border-top:2px solid var(--rule); font-weight:600}
 .eb-live .over{color:var(--out); font-weight:800} .eb-live .under{color:var(--live); font-weight:800}
 .jail{display:block; margin-top:2px; font-size:10.5px; font-weight:800; white-space:nowrap} .jail.free{color:var(--live)} .jail.in{color:var(--out)}
 img.blogo.go,.book.go{cursor:pointer} img.blogo.go:hover{outline:2px solid var(--accent); border-radius:6px}
+.ab-host .eb-rec{display:none}
+.ab-verdict table.ab-x{display:block; overflow-x:auto; max-width:100%}
+.ab-modebar{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:10px 0 2px}
+.ab-seg{display:inline-flex; border:1px solid var(--rule); border-radius:999px; overflow:hidden}
+.ab-seg button{border:0; background:transparent; color:var(--soft); font:inherit; font-size:13px; font-weight:600; padding:7px 14px; cursor:pointer}
+.ab-seg button.on{background:var(--accent); color:#fff}
+.ab-grid input::placeholder{opacity:.38; font-style:italic}
+.ab-verdict .ab-alt{margin:6px 0; padding:8px 10px; border-radius:8px; background:var(--live-bg,#E7F7EE); font-weight:700}
+:root[data-theme="dark"] .ab-verdict .ab-alt{background:#123A28}
+.ab-verdict table.ab-x{margin:6px 0 2px; border-collapse:collapse; font-size:12.5px}
+.ab-verdict table.ab-x td{padding:2px 10px 2px 0}
+.ab-verdict .ok-t{color:var(--live); font-weight:700} .ab-verdict .no-t{color:var(--out)}
+.ab-ladder{margin:8px 0 4px; border-collapse:collapse; font-size:13.5px}
+.ab-ladder td{padding:4px 14px 4px 0; vertical-align:middle} .ab-ladder td.num{font-variant-numeric:tabular-nums}
+.ab-btns{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px}
+.my-posts{border-color:var(--accent); background:var(--panel-2)}
+.my-posts .post{padding:6px 0; border-top:1px solid var(--rule)} .my-posts .post:first-of-type{border-top:0}
+.my-posts .rung{display:inline-block; margin:3px 10px 0 0; font-size:12.5px}
+.my-posts .warnline{color:var(--warn); font-weight:700; font-size:12.5px}
 .from-books{border:1px solid var(--warn); background:var(--warn-bg); border-radius:10px; padding:10px 12px; margin:0 0 10px; font-size:13px}
 .from-books table{width:100%; margin-top:6px} .from-books td{padding:4px 6px; vertical-align:middle}
 .fill-diff{display:block; margin-top:2px; font-size:11px; color:var(--warn); font-weight:700}
@@ -644,7 +663,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v2.93</span></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v2.94</span></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -718,19 +737,24 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="view on" id="v-board">
 
 <details class="panel fold" id="addBetPanel">
-  <summary><h2>+ Add a bet <span class="sub">one you found in the BettingPros app — no API calls; checked, saved, graded by ESPN</span></h2></summary>
+  <summary><h2>+ Add a bet <span class="sub">take a price or post your own — it tells you BET or SKIP and how much, then ESPN grades it</span></h2></summary>
   <div class="ab-grid">
     <div class="field"><label for="abSport">Sport</label><select id="abSport"><option>NFL</option><option>NCAAF</option><option>NBA</option><option>WNBA</option><option>NCAAB</option><option>MLB</option><option>NHL</option></select></div>
     <div class="field"><label for="abType">Type</label><select id="abType"><option value="prop">Player prop</option><option value="spread">Spread</option><option value="total">Game total</option><option value="moneyline">Moneyline</option></select></div>
     <div class="field ab-wide"><label for="abGame">Game <span class="meta">(ESPN)</span></label><select id="abGame"><option value="">loading…</option></select></div>
     <div class="field ab-prop"><label for="abPlayer">Player</label><input id="abPlayer" type="text" placeholder="as the app shows it" autocomplete="off"></div>
     <div class="field ab-team"><label for="abTeam">Team</label><select id="abTeam"></select></div>
-    <div class="field ab-prop"><label for="abStat">Stat</label><input id="abStat" type="text" list="abStats" placeholder="Passing Yards" autocomplete="off"><datalist id="abStats"></datalist></div>
+    <div class="field ab-prop"><label for="abStat">Stat</label><input id="abStat" type="text" list="abStats" placeholder="e.g. Passing Yards" autocomplete="off"><datalist id="abStats"></datalist></div>
     <div class="field ab-ou"><label for="abPick">Pick</label><select id="abPick"><option value="O">Over</option><option value="U">Under</option></select></div>
-    <div class="field ab-line"><label for="abLine">Line</label><input id="abLine" type="number" step="0.5" placeholder="249.5"></div>
+    <div class="field ab-line"><label for="abLine">Line</label><input id="abLine" type="number" step="0.5" placeholder="e.g. 249.5"></div>
     <div class="field"><label for="abProj">Projection <span class="meta">(optional)</span></label><input id="abProj" type="number" step="0.1"></div>
     <div class="field"><label for="abCover">Cover probability % <span class="meta">(optional)</span></label><input id="abCover" type="number" step="0.1" min="1" max="99"></div>
-    <div class="field"><label for="abCons">Consensus odds <span class="meta">(optional)</span></label><input id="abCons" type="text" placeholder="-122"></div>
+    <div class="field"><label for="abCons">Consensus odds <span class="meta">(optional)</span></label><input id="abCons" type="text" placeholder="e.g. -122"></div>
+  </div>
+  <div class="ab-modebar">
+    <div class="ab-seg" id="abMode"><button type="button" data-m="take" class="on" title="You found a price — should you take it, and for how much?">Take a price</button><button type="button" data-m="make" title="Post your own price on Novig, Kalshi or Polymarket US and let someone take it">📌 Make my own</button></div>
+    <button type="button" class="act" id="abAsk" title="Look this bet up on Kalshi, Polymarket US and Novig (Worker, not BettingPros calls)">🔎 What should I bet?</button>
+    <span class="meta" id="abAskMsg"></span>
   </div>
   <div id="abHost" class="ab-host"></div>
   <div id="abVerdict" class="ab-verdict"></div>
@@ -865,6 +889,13 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
     <button class="ghost" id="fillsReset" title="Forget which fills were already seen; the next check re-reads the last 3 days. Bets you already have stay linked, nothing doubles.">Re-read last 3 days</button>
     <span class="meta" id="fillsMsg"></span>
   </div>
+  <div class="row" style="gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px">
+    <span class="meta"><b>Posting (maker) fee</b>, as a % coefficient like Kalshi's 7 (fee = c·p·(1−p) per contract):</span>
+    <label class="meta">Kalshi <input id="mkKalshi" type="number" step="0.05" min="0" style="width:64px"></label>
+    <label class="meta">Polymarket US <input id="mkPoly" type="number" step="0.05" min="0" style="width:64px"></label>
+    <label class="meta">Novig <input id="mkNovig" type="number" step="0.05" min="0" style="width:64px"></label>
+  </div>
+  <p class="hint" style="margin-top:4px">Defaults: Novig 0 and Polymarket US 0 (their fee pages say makers pay nothing); Kalshi 1.75 = 25% of its 7 taker coefficient, which some Kalshi series charge makers (most charge 0 — set 0 if yours do).</p>
   <pre id="fillsRaw" style="display:none;max-height:320px;overflow:auto;font-size:11px;white-space:pre-wrap;background:var(--bg2,#0001);padding:8px;border-radius:8px"></pre>
 </details>
 <div class="panel" style="padding-top:12px;padding-bottom:12px">
@@ -1103,6 +1134,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="panel">
   <h2>Log</h2>
   <div id="fromBooks" class="from-books" style="display:none"></div>
+  <div id="myPosts" class="from-books my-posts" style="display:none"></div>
   <div class="log-filter" id="logFilter" style="display:none"></div>
   <div class="scroll"><table>
     <thead><tr>
@@ -1168,7 +1200,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v2.93';
+const SCREENER_VERSION='v2.94';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -3970,6 +4002,7 @@ async function findBetGame(b){
 function srcTagHtml(b){   // v2.86: where the bet came from
   const m={api:['API','from an API load'], paste:['paste','from a pasted Cheat Sheet'], mev:['paste · sharp','from a pasted Market EV page'], manual:['by hand','from + Add a bet']};
   let t=b.manual?m.manual:m[b.srcType];
+  if(b.made) return '<span class="src-tag" title="Your posted price — someone took it">made'+(b.rung?' · rung '+b.rung:'')+' · '+esc(({kalshi:'Kalshi',poly:'Polymarket',novig:'Novig'}[b.autoFrom]||bookLabel(b.book)))+'</span>';
   if(b.autoFrom) t=['auto · '+({kalshi:'Kalshi',poly:'Polymarket',novig:'Novig'}[b.autoFrom]||b.autoFrom), 'automatically from your '+b.autoFrom+' fill'+(t?' (board row: '+t[1]+')':'')];
   if(!t) return '';
   return '<span class="src-tag" title="Saved '+t[1]+'">'+t[0]+'</span>'; }
@@ -5297,40 +5330,7 @@ function abPrice(){   // the price typed in the editor below (same reading as Sa
   const o=q('.eb-odds').value.trim().replace(/^(\d)/,'+$1'), p=toProb(o);
   return p==null?null:{prob:p, fee:feeRate(book,p,cfg.fees), book, stake:parseFloat(q('.eb-stake').value)||0, odds:o};
 }
-function abUpdate(){
-  if(!abR) return;
-  const f=abRowFields(); Object.assign(abR, f);
-  const cfg=cfgRead(), pr=abPrice(), out=$ab('abVerdict'), L=[];
-  const sg=x=>(x>=0?'+':'−')+Math.abs(x*100).toFixed(1)+'%';
-  const outCut=(parseFloat($ab('swOutlier').value)||15)/100, gapCut=(parseFloat($ab('swGap').value)||8)/100;
-  let net=null, mktNet=null, level='none', head='Fill in the bet';
-  if(pr && f.fairProb!=null){ net=((f.fairProb/pr.prob-1)-pr.fee)/(1+pr.fee); if(f.mktProb!=null) mktNet=((f.mktProb/pr.prob-1)-pr.fee)/(1+pr.fee); }
-  const gap=f.fairProb!=null&&f.mktProb!=null?f.fairProb-f.mktProb:null;
-  abR.outlier=(net!=null&&net>outCut)||(gap!=null&&gap>gapCut);
-  abR.mktNet=mktNet; abR.net=null;
-  // outlier limit, same count as the board
-  const slate=$ab('slate').value, v=parseFloat(($ab('swOutN')||{}).value), outN=isNaN(v)?5:Math.max(0,Math.floor(v));
-  const usedOut=logged.filter(x=>x.date===slate && x.snap && x.snap.outlier && !x.snap.risk).length;
-  abR.flags = abR.outlier && usedOut>=outN ? [['warn','outlier limit reached ('+outN+' a day)']] : [];
-  if(f._missing) head='Missing: '+f._missing;
-  else if(!pr) head='Enter your odds below';
-  else if(net==null){ level='none'; head='UNCHECKED — no cover %'; }
-  else if(net<=0){ level='bad'; head='FAILS · '+sg(net)+' net'; }
-  else if(net<cfg.eMin){ level='warn'; head='THIN · '+sg(net)+' net (under your '+pct(cfg.eMin)+' floor)'; }
-  else if(abR.outlier){ level='warn'; head='OUTLIER · '+sg(net)+' net — stake held to the minimum'; }
-  else if(mktNet!=null && mktNet<=0){ level='warn'; head='PASSES · '+sg(net)+' net, but below the market'; }
-  else { level='ok'; head='PASSES · '+sg(net)+' net'; }
-  if(f.projValue!=null && f._line!=null && f.kind==='prop'){ const d=f.projValue-f._line; L.push('Projection '+f.projValue+' vs line '+f._line+' ('+(d>=0?'+':'')+(Math.round(d*10)/10)+')'); }
-  if(pr && f.fairProb!=null) L.push('Cover '+pct(f.fairProb)+' vs your price at '+pct(pr.prob)+(pr.fee?' · '+esc(bookLabel(pr.book))+' fee '+(pr.fee*100).toFixed(1)+'%':'')+' → '+sg(net)+' net');
-  if(gap!=null) L.push('Market check: consensus '+esc(f.consOdds)+' = '+pct(f.mktProb)+', model '+(gap>=0?'+':'−')+Math.abs(gap*100).toFixed(1)+' pts '+(gap>=0?'above':'below')+' it'+(gap>gapCut?' — too far, outlier':'')+(mktNet!=null?' · vs market '+sg(mktNet):''));
-  if(pr){ const am=Math.round(americanOf(pr.prob)), inR=am>=cfg.oMin&&am<=cfg.oMax;
-    L.push('Odds '+fmtOdds(am)+(inR?' in range':' <b>outside your '+fmtOdds(cfg.oMin)+' to '+fmtOdds(cfg.oMax)+' range</b>')); }
-  const today=ctDay(Date.now()), usedDay=logged.filter(b=>!b.sold && gameDayOf(b)===today && poolOf(b)==='proj').reduce((t,b)=>t+(+b.stake||0),0);
-  L.push('Today $'+usedDay.toFixed(2)+' of $'+cfg.dayMax.toFixed(2)+' daily max'+(usedDay>=cfg.dayMax-1e-9?' — <b>reached</b>':'')+' · outliers '+usedOut+' of '+outN);
-  if(f.gameInfo && f.gameInfo.state==='in') L.push('<b>Game already started</b> — live price, live risk');
-  out.className='ab-verdict '+level;
-  out.innerHTML='<div class="ab-h">'+esc(head)+'</div>'+L.map(x=>'<div>'+x+'</div>').join('');
-}
+function abUpdate(){ abUpdate94(); }
 function abOpenEditor(){
   const host=$ab('abHost'); host.innerHTML='';
   let last=''; try{ last=localStorage.getItem('mbev.abBook')||''; }catch(e){}
@@ -5339,11 +5339,14 @@ function abOpenEditor(){
   openBetEditor(host, abR, {});
   Object.assign(abR, abRowFields());
   abLogLen=logged.length;
+  abCostTyped=false; abLastAuto=null;
+  host.querySelectorAll('.eb-cost,.eb-stake,.eb-win').forEach(x=>x.addEventListener('input',e=>{ if(e.isTrusted) abCostTyped=true; }));
   const ed=host.querySelector('.editor');
   const save=ed.querySelector('.eb-save');
   save.addEventListener('click',e=>{   // runs before the editor's own save
     const f=abRowFields(); Object.assign(abR,f);
-    if(f._missing){ e.stopImmediatePropagation(); ed.querySelector('.eb-msg').textContent='Missing: '+f._missing; return; }
+    if(f._missing){ e.stopImmediatePropagation(); ed.querySelector('.eb-msg').textContent='Add the '+f._missing+' first — ESPN needs it to grade the bet'; return; }
+    if(abModeV==='make'){ e.stopImmediatePropagation(); ed.querySelector('.eb-msg').textContent='Make mode: use 📌 Save ladder below — the bet logs itself when someone takes your price'; return; }
     try{ localStorage.setItem('mbev.abBook', ed.querySelector('.eb-book').value); }catch(_){}
   }, true);
   abUpdate();
@@ -5687,6 +5690,8 @@ async function syncFills(force){
         else delete b.fillDiff;
         fillSeen[key]='linked'; changed=true; return;
       }
+      const P=postForFill(f);
+      if(P && f.price>0){ autoAddFromPost(P,f); fillSeen[key]='added'; changed=true; return; }
       const r=rowForFill(f);
       if(r && f.price>0){ autoAddFromRow(r,f); fillSeen[key]='added'; changed=true; return; }
       fillPending.push(f); fillSeen[key]='pending'; changed=true;
@@ -5700,7 +5705,7 @@ async function syncFills(force){
         autoAddFromRow(r,f); fillSeen[f.book+':'+f.id]='added'; changed=true; return false; });
     }
     if(changed){ saveFills(); saveLog(); renderLog(); renderPerf(); refresh(); }
-    renderFromBooks();
+    renderFromBooks(); syncOrders();
   }catch(e){} finally{ fillBusy=false; }
 }
 function autoAddFromRow(r,f){   // a bet on your board — log it for you, at the price and cost the book filled
@@ -5742,6 +5747,310 @@ document.addEventListener('click',e=>{
       const m=document.getElementById('abMsg'); if(m) m.innerHTML='From your '+esc(FILL_NAME[f.book])+' fill: <b>'+esc(f.title||f.ref||'')+'</b> — fill in the player, stat and line, then Save bet.'; }, 700);
   }
 });
+/* ============ v2.94: + Add a bet says BET $x or SKIP — Take a price, or 📌 Make your own (a ladder of posted prices) ============ */
+var abModeV='take', abX=null, abCostTyped=false, abLastAuto=null, abAskTimer=null, posts=[], myOrders=null, ordersAt=0, postQuotes={};
+try{ abModeV=localStorage.getItem('mbev.abMode')==='make'?'make':'take'; posts=JSON.parse(localStorage.getItem('mbev.posts')||'[]')||[]; }catch(e){}
+function savePosts(){ try{ localStorage.setItem('mbev.posts', JSON.stringify(posts)); }catch(e){} }
+const MK_DEF={kalshi:1.75, poly:0, novig:0};
+function makerCoefs(){ let m={}; try{ m=JSON.parse(localStorage.getItem('mbev.makerFees')||'{}')||{}; }catch(e){} const o={}; Object.keys(MK_DEF).forEach(k=>o[k]=(k in m && m[k]!=='' && !isNaN(+m[k]))?+m[k]:MK_DEF[k]); return o; }
+function makerFee(book,p){ const s=LIVE_BOOK(book); return s ? (makerCoefs()[s]/100)*(1-p) : feeRate(book,p,cfgRead().fees); }
+function netAtP(fair,p,fee){ return ((fair/p-1)-fee)/(1+fee); }
+function priceForNet(fair, feeFn, target){
+  if(!(fair>0 && fair<1)) return null; let lo=0.01, hi=0.99;
+  if(netAtP(fair,lo,feeFn(lo))<target) return null;
+  for(let i=0;i<40;i++){ const m=(lo+hi)/2; if(netAtP(fair,m,feeFn(m))>=target) lo=m; else hi=m; }
+  return lo;
+}
+const P94=p=>(p*100).toFixed(1)+'% ('+fmtOdds(Math.round(americanOf(p)))+')';
+const SG94=x=>(x>=0?'+':'−')+Math.abs(x*100).toFixed(1)+'%';
+function abKey(f){ return [f.sport,f.kind,f.game,f.name,f.market,f.side,f.team].join('|').toLowerCase(); }
+function abSideTxt(f, opp){
+  if(f.kind==='prop'||f.kind==='total'){ const sd=opp?(f.side==='O'?'U':'O'):f.side; return (sd==='O'?'Over':'Under')+' '+(f._line!=null?f._line:'')+(f.kind==='prop'?' '+String(f.market||'').replace(/^[+-]?[\d.]+\s*/,''):' total'); }
+  if(f.kind==='moneyline'){ if(!opp) return (f.team||'?')+' to win'; const t=teamsOf(f.game); return t&&f.team?((normAbbr(f.team)===t[0]?t[1]:t[0])+' to win'):'the other team'; }
+  if(f.kind==='spread') return opp?'the other side of the spread':(f.team||'?')+' '+(f._line!=null?(f._line>0?'+':'')+f._line:'');
+  return '';
+}
+function abBoardRow(f){
+  const nm=String(f.name||'').toLowerCase().trim(), mk=String(f.market||'').toLowerCase().replace(/\s+/g,' ').trim(); if(!nm||!mk) return null;
+  return (lastRows||[]).find(r=>r.fairProb!=null && !r.prior && String(r.name||'').toLowerCase().trim()===nm &&
+    String(r.market||'').toLowerCase().replace(/\s+/g,' ').trim()===mk && (f.kind==='spread'||f.kind==='moneyline'||(r.side||sideOf(r)||'')===(f.side||'')))||null;
+}
+// the size, by the same rules as the board: Kelly on the market blend, max per bet, outlier = minimum, daily max, game cap, minimum
+function abStake(o){
+  const cfg=cfgRead(), net=netAtP(o.fair,o.p,o.fee), notes=[];
+  if(!(net>=cfg.eMin)) return {s:0, net, why: net<=0 ? 'no edge — you\'d lose '+Math.abs(net*100).toFixed(1)+'% on average' : SG94(net)+' net is under your '+pct(cfg.eMin)+' floor'};
+  const am=Math.round(americanOf(o.p)); if(am<cfg.oMin||am>cfg.oMax) return {s:0, net, why:'odds '+fmtOdds(am)+' are outside your '+fmtOdds(cfg.oMin)+' to '+fmtOdds(cfg.oMax)+' range'};
+  if(o.mkt!=null && o.outlier && netAtP(o.mkt,o.p,o.fee)<=0) return {s:0, net, why:'model outlier and the price doesn\'t beat the market'};
+  if(o.outlier && o.outLimit) return {s:0, net, why:'outlier limit reached for today'};
+  const blend=o.mkt!=null ? o.mkt+cfg.mWeight*(o.fair-o.mkt) : o.fair, bNet=netAtP(blend,o.p,o.fee), b=1/o.p-1;
+  const sizeOn=o.mkt!=null ? bNet*cfg.shrink : net*cfg.shrink;
+  if(!(sizeOn>0)) return {s:0, net, why:'no edge once blended with the market'};
+  let s=Math.min(cfg.sMax, cfg.bank*cfg.kelly*sizeOn/b);
+  if(o.outlier){ s=Math.min(s,cfg.sMin); notes.push('outlier — held to the minimum'); }
+  const today=ctDay(Date.now()), used=logged.filter(x=>!x.sold && gameDayOf(x)===today && poolOf(x)==='proj').reduce((t,x)=>t+(+x.stake||0),0);
+  const room=cfg.dayMax-used; if(s>room){ s=Math.max(0,room); notes.push('trimmed to your daily max ($'+used.toFixed(2)+' of $'+cfg.dayMax.toFixed(2)+' used)'); }
+  if(o.game){ const inG=logged.filter(x=>!x.sold && x.game===o.game && !(x.result==='win'||x.result==='loss'||x.result==='push')).reduce((t,x)=>t+(+x.stake||0),0);
+    const gr=cfg.gameCap-inG; if(s>gr){ s=Math.max(0,gr); notes.push('game cap: $'+inG.toFixed(2)+' already on '+o.game); } }
+  let n=null;
+  if(LIVE_BOOK(o.book)==='kalshi'){ n=Math.floor(s/(o.p*(1+o.fee))+1e-9); s=n*o.p*(1+o.fee); }
+  else if(LIVE_BOOK(o.book)) n=Math.floor(s/o.p+1e-9);
+  s=Math.floor(s*100+1e-6)/100;
+  if(s<cfg.sMin-1e-9) return {s:0, net, why:(notes.length?notes[notes.length-1]+' — leaves $'+s.toFixed(2)+', under your $'+cfg.sMin.toFixed(2)+' minimum':s<0.5&&o.mkt!=null?'edge too thin once blended with the market':'Kelly says $'+s.toFixed(2)+', under your $'+cfg.sMin.toFixed(2)+' minimum'), notes};
+  return {s, net, n, notes, pctBank:cfg.bank>0?s/cfg.bank:null};
+}
+// fair value: your cover % → the same bet on your board → the exchanges' middle price
+function abFair(f){
+  const X=abX&&abX.key===abKey(f)?abX:null;
+  let fair=f.fairProb, mkt=f.mktProb, src='your cover %', ex=false;
+  if(fair==null){ const r=abBoardRow(f); if(r){ fair=r.fairProb; if(mkt==null && r.mktProb!=null) mkt=r.mktProb; src='your board ('+esc(r.book||'')+' row)'; } }
+  if(fair==null && X && X.mid!=null){ fair=X.mid; src='the exchanges\' middle price ('+esc(X.from||'exchanges')+')'; ex=true; }
+  let mktSrc=f.mktProb!=null?'consensus':(mkt!=null?'your board':null);
+  if(mkt==null && !ex && X && X.mid!=null){ mkt=X.mid; mktSrc='exchanges\' middle'; }
+  return {fair, mkt, src, ex, X, mktSrc};
+}
+async function abAsk(manual){
+  const f=abRowFields(), msg=$ab('abAskMsg');
+  if(!f.game){ if(manual) msg.textContent='pick the game first'; return; }
+  if(f.kind==='prop' && (!f.name||f._line==null||!String(f.market).replace(/^[+-]?[\d.]+\s*/,''))){ if(manual) msg.textContent='add the player, stat and line'; return; }
+  const key=abKey(f); if(!manual && abX && abX.key===key && Date.now()-abX.at<60000) return;
+  const base={sport:f.sport, kind:f.kind, market:f.market, side:f.side, name:f.name, team:f.team, game:f.game, matchup:f.game, start:(f.gameInfo&&f.gameInfo.startISO)||null};
+  let opp=null;
+  if(f.kind==='prop'||f.kind==='total') opp=Object.assign({},base,{side:f.side==='O'?'U':'O'});
+  else if(f.kind==='moneyline'){ const t=teamsOf(f.game); if(t&&f.team){ const o=normAbbr(f.team)===t[0]?t[1]:t[0]; opp=Object.assign({},base,{team:o,name:o}); } }
+  const descs=[];
+  ['Kalshi','Polymarket US','Novig'].forEach(n=>{ const sr=LIVE_BOOK(n);
+    const d=liveDesc(Object.assign({},base,{book:n,id:'ask:'+sr+':me'})); if(d) descs.push(d);
+    if(opp){ const d2=liveDesc(Object.assign({},opp,{book:n,id:'ask:'+sr+':op'})); if(d2) descs.push(d2); } });
+  if(!descs.length){ if(manual) msg.textContent='can\'t look this up — check the game, player, stat and line'; return; }
+  msg.textContent='🦑 asking Kalshi, Polymarket US and Novig…';
+  try{
+    const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(descs)),{headers:apiHeaders()});
+    if(!res.ok){ msg.textContent='exchange check failed ('+res.status+')'; return; }
+    const R=((await res.json())||{}).results||{}, me=[], op=[], notes=[];
+    descs.forEach(d=>{ const q=R[d.id], sr=d.id.split(':')[1], mine=d.id.endsWith(':me');
+      if(q&&q.ok){ (mine?me:op).push({src:sr, book:BOOK_NAME[sr], q}); liveQuotes[d.id]=q; }
+      else if(q&&mine) notes.push(BOOK_NAME[sr]+': '+String(q.note||'no match').replace(/^(Kalshi|Polymarket|Novig): /,'')); });
+    const mids=[], from=new Set();
+    me.forEach(x=>{ if(x.q.bid>0){ mids.push((x.q.price+x.q.bid)/2); from.add(x.book); } });
+    op.forEach(x=>{ if(x.q.bid>0){ mids.push(1-(x.q.price+x.q.bid)/2); from.add(x.book); } });
+    if(abKey(abRowFields())!==key) return;   // the form changed while we waited
+    abX={key, at:Date.now(), me, op, mid:mids.length?mids.reduce((a,b)=>a+b,0)/mids.length:null, from:[...from].join(' + '), notes};
+    const got=[...new Set(me.concat(op).map(x=>x.book))];
+    msg.textContent=got.length ? 'prices from '+got.join(', ')+' · '+new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) : 'no exchange has this bet'+(notes.length?' ('+notes.join(' · ')+')':'');
+    abUpdate94();
+  }catch(e){ msg.textContent='could not reach the Worker'; }
+}
+function abScheduleAsk(){ clearTimeout(abAskTimer); abAskTimer=setTimeout(()=>abAsk(false), 1200); }
+function abUpdate94(){
+  if(!abR) return;
+  const f=abRowFields(); Object.assign(abR, f);
+  const cfg=cfgRead(), out=$ab('abVerdict'), L=[];
+  const outCut=(parseFloat($ab('swOutlier').value)||15)/100, gapCut=(parseFloat($ab('swGap').value)||8)/100;
+  const FA=abFair(f), fair=FA.fair, mkt=FA.mkt, X=FA.X;
+  abR.fairProb=fair; abR.mktProb=mkt; abR.fairRaw=fair!=null?fmtOdds(Math.round(americanOf(fair))):null;
+  abR.blendProb=fair!=null&&mkt!=null?mkt+cfg.mWeight*(fair-mkt):fair;
+  abR.evModel=fair==null?null:FA.ex?'exchange':f.fairProb!=null?'projection':'board';
+  const slate=$ab('slate').value, v=parseFloat(($ab('swOutN')||{}).value), outN=isNaN(v)?5:Math.max(0,Math.floor(v));
+  const usedOut=logged.filter(x=>x.date===slate && x.snap && x.snap.outlier && !x.snap.risk).length;
+  const gap=fair!=null&&mkt!=null?fair-mkt:null;
+  const isOut=net=>!FA.ex && ((net!=null&&net>outCut)||(gap!=null&&gap>gapCut));
+  const me=abSideTxt(f,false), opTxt=abSideTxt(f,true), hasOpp=f.kind!=='spread';
+  const bookSel=$ab('abHost').querySelector('.eb-book'), book=bookSel?bookSel.value:'';
+  let level='none', head='', top=[];
+  // ---- modes
+  document.querySelectorAll('#abMode button').forEach(b=>b.classList.toggle('on', b.dataset.m===abModeV));
+  if(fair==null){
+    level='none'; head='❔ Can\'t judge it yet';
+    top.push('I need a fair price to compare against: type a <b>cover %</b>, load a board that has this bet, or press <b>🔎 What should I bet?</b> so the exchanges can price it.');
+    if(X && X.notes.length) top.push('<span class="meta">'+esc(X.notes.join(' · '))+'</span>');
+  } else if(abModeV==='make'){
+    const r=abMakeLadder(f, fair, mkt, book, X, isOut, usedOut>=outN);
+    level=r.level; head=r.head; top=r.lines;
+  } else {
+    const pr=abPrice(), cand=[];
+    if(pr) cand.push({side:'me', book:pr.book, p:pr.prob, fee:pr.fee, typed:true});
+    if(X){ X.me.forEach(x=>cand.push({side:'me', book:x.book, p:x.q.price, fee:feeRate(x.book,x.q.price,cfg.fees), q:x.q, src:x.src}));
+           if(hasOpp) X.op.forEach(x=>cand.push({side:'op', book:x.book, p:x.q.price, fee:feeRate(x.book,x.q.price,cfg.fees), q:x.q, src:x.src})); }
+    cand.forEach(c=>{ const fs=c.side==='me'?fair:1-fair, ms=mkt==null?null:(c.side==='me'?mkt:1-mkt);
+      c.net=netAtP(fs,c.p,c.fee); c.out=c.side==='me'&&isOut(c.net);
+      c.st=abStake({fair:fs, mkt:ms, p:c.p, fee:c.fee, book:c.book, outlier:c.out, outLimit:usedOut>=outN, game:f.game}); });
+    const typed=cand.find(c=>c.typed), best=cand.filter(c=>c.st.s>0).sort((a,b)=>b.net-a.net)[0]||null;
+    const lbl=c=>(c.side==='me'?me:opTxt)+' at '+esc(bookLabel(c.book))+' '+P94(c.p);
+    const mx=typed?maxPriceFor(fair, typed.book, cfg.eMin):null;
+    if(typed && typed.st.s>0){
+      level='ok'; head='🟢 BET $'+typed.st.s.toFixed(2)+' — '+SG94(typed.net)+' net';
+      top.push('<b>'+lbl(typed)+'</b>'+(typed.st.n?' · '+typed.st.n+' contracts':'')+(typed.st.pctBank!=null?' · '+(typed.st.pctBank*100).toFixed(1)+'% of your $'+cfg.bank.toFixed(0)+' bankroll':''));
+      if(mx!=null) top.push('Pay up to '+P94(mx)+' — above that it stops clearing your '+pct(cfg.eMin)+' floor');
+      (typed.st.notes||[]).filter(n=>!/contracts/.test(n)).forEach(n=>top.push('<span class="meta">'+esc(n)+'</span>'));
+      if(best && best!==typed && best.net>typed.net+0.01) top.push('<div class="ab-alt">🦑 Better: BET $'+best.st.s.toFixed(2)+' — '+lbl(best)+' → '+SG94(best.net)+' net</div>');
+    } else if(typed){
+      level='bad'; head='🔴 SKIP — '+esc(typed.st.why||'no edge');
+      top.push(lbl(typed)+' vs fair '+P94(typed.side==='me'?fair:1-fair)+' → '+SG94(typed.net)+' net after fee');
+      if(mx!=null) top.push('It becomes a bet at <b>'+P94(mx)+' or better</b>'+(LIVE_BOOK(typed.book)?' — or post it there yourself: switch to <b>📌 Make my own</b>':''));
+      if(best) top.push('<div class="ab-alt">✅ Instead: BET $'+best.st.s.toFixed(2)+' — '+lbl(best)+' → '+SG94(best.net)+' net</div>');
+      else if(hasOpp){ const omx=maxPriceFor(1-fair, typed.book, cfg.eMin); if(omx!=null && omx>0.02) top.push('The <b>'+esc(opTxt)+'</b> would be a bet at '+esc(bookLabel(typed.book))+' at '+P94(omx)+' or better'); }
+    } else if(best){
+      level='ok'; head='🟢 BET $'+best.st.s.toFixed(2)+' — '+SG94(best.net)+' net';
+      top.push('<b>'+lbl(best)+'</b>'+(best.st.n?' · '+best.st.n+' contracts':'')+(best.st.pctBank!=null?' · '+(best.st.pctBank*100).toFixed(1)+'% of your bankroll':''));
+      top.push('<span class="meta">Pick '+esc(bookLabel(best.book))+' below and the price fills in.</span>');
+    } else if(cand.length){
+      level='bad'; head='🔴 SKIP — nothing on the exchanges clears your floor';
+      const bm=cand.slice().sort((a,b)=>b.net-a.net)[0]; top.push('Closest: '+lbl(bm)+' → '+SG94(bm.net)+' net');
+      const mxx=maxPriceFor(fair, bm.book, cfg.eMin); if(mxx!=null) top.push('Wait for '+P94(mxx)+' or better — or post that price yourself (📌 Make my own)');
+    } else { level='none'; head='Enter your price below'; top.push('Or press <b>🔎 What should I bet?</b> to check all three exchanges.'); }
+    // all exchange prices, both sides
+    const ex=cand.filter(c=>!c.typed);
+    if(ex.length) top.push('<table class="ab-x">'+ex.map(c=>'<tr><td>'+esc(bookLabel(c.book))+'</td><td>'+esc(c.side==='me'?me:opTxt)+'</td><td class="num">'+P94(c.p)+'</td><td class="'+(c.st.s>0?'ok-t':'no-t')+'">'+SG94(c.net)+(c.st.s>0?' ✓ $'+c.st.s.toFixed(2):'')+'</td><td class="meta">'+(c.st.s>0?'':esc(c.st.why||''))+'</td></tr>').join('')+'</table>');
+    // the Cost box fills itself with the recommended amount until you type one
+    const rec=typed&&typed.st.s>0?typed.st.s:null, h=$ab('abHost');
+    if(rec!=null && !abCostTyped && h){ const cost=h.querySelector('.eb-mode')&&h.querySelector('.eb-mode').value==='pct'?h.querySelector('.eb-cost'):h.querySelector('.eb-stake');
+      if(cost && abLastAuto!==rec && Math.abs((parseFloat(cost.value)||0)-rec)>0.009){ abLastAuto=rec; cost.value=rec.toFixed(2); setTimeout(()=>{ cost.dispatchEvent(new Event('input',{bubbles:true})); cost.dispatchEvent(new Event('change',{bubbles:true})); },0); } }
+    abR.outlier=!!(typed&&typed.out);
+  }
+  // ---- the working, same lines as before
+  if(fair!=null) L.push('Fair '+P94(fair)+' from '+FA.src);
+  if(f.projValue!=null && f._line!=null && f.kind==='prop'){ const d=f.projValue-f._line; L.push('Projection '+f.projValue+' vs line '+f._line+' ('+(d>=0?'+':'')+(Math.round(d*10)/10)+')'); }
+  if(gap!=null) L.push('Market check ('+esc(FA.mktSrc||'market')+'): '+pct(mkt)+', fair is '+(gap>=0?'+':'−')+Math.abs(gap*100).toFixed(1)+' pts '+(gap>=0?'above':'below')+' it'+(gap>gapCut?' — <b>too far: outlier</b>, stake held to the minimum':''));
+  const today=ctDay(Date.now()), usedDay=logged.filter(b=>!b.sold && gameDayOf(b)===today && poolOf(b)==='proj').reduce((t,b)=>t+(+b.stake||0),0);
+  L.push('Today $'+usedDay.toFixed(2)+' of $'+cfg.dayMax.toFixed(2)+' daily max'+(usedDay>=cfg.dayMax-1e-9?' — <b>reached</b>':'')+' · outliers '+usedOut+' of '+outN);
+  if(f.gameInfo && f.gameInfo.state==='in') L.push('<b>Game already started</b> — live price, live risk');
+  if(f._missing) L.push('<b>Add the '+esc(f._missing)+' to save</b> — ESPN needs it to grade the bet');
+  abR.flags = abR.outlier && usedOut>=outN ? [['warn','outlier limit reached ('+outN+' a day)']] : [];
+  out.className='ab-verdict '+level;
+  out.innerHTML='<div class="ab-h">'+head+'</div>'+top.map(x=>/^<(div|table)/.test(x)?x:'<div>'+x+'</div>').join('')+'<div class="meta" style="margin-top:6px">'+L.join('<br>')+'</div>';
+}
+// ---- 📌 Make my own: a ladder of posted prices, best edge first
+function abMakeLadder(f, fair, mkt, book, X, isOut, outLimit){
+  const cfg=cfgRead(), src=LIVE_BOOK(book), lines=[];
+  if(!src) return {level:'none', head:'📌 Pick Novig, Kalshi or Polymarket US as the book', lines:['Posting your own price only works on the exchanges — there you bet against another person, not the house.']};
+  const feeFn=p=>makerFee(book,p), mx=priceForNet(fair, feeFn, cfg.eMin);
+  if(mx==null) return {level:'bad', head:'🔴 SKIP — no price clears your floor', lines:['Fair '+P94(fair)+' is too low to post anything with a '+pct(cfg.eMin)+' edge.']};
+  const now=X?X.me.find(x=>x.src===src):null, ask=now?now.q.price:null, topBid=now&&now.q.bid>0?now.q.bid:null;
+  const swc=swCfg();
+  let rungs=[cfg.eMin+0.06, cfg.eMin+0.03, cfg.eMin].map(t=>{ const p0=priceForNet(fair,feeFn,t); if(p0==null) return null; const p=Math.floor(p0*100+1e-9)/100; return p>0.01?p:null; })
+    .filter((p,i,a)=>p!=null && a.indexOf(p)===i);
+  const inRange=p=>{ const am=Math.round(americanOf(p)); return am>=cfg.oMin && am<=cfg.oMax; };
+  rungs=rungs.filter(inRange);
+  let takeNote='';
+  if(ask!=null && rungs.some(p=>p>=ask-1e-9)){
+    const tf=feeRate(book,ask,cfg.fees), ts=abStake({fair, mkt, p:ask, fee:tf, book, outlier:isOut(netAtP(fair,ask,tf)), outLimit, game:f.game});
+    takeNote = ts.s>0 ? '🟢 '+esc(bookLabel(book))+' already sells it at '+P94(ask)+' → '+SG94(ts.net)+' net, $'+ts.s.toFixed(2)+'. <b>Taking beats posting</b> — switch to Take a price.'
+                      : esc(bookLabel(book))+' sells it at '+P94(ask)+' right now — a post at or above that would just fill instantly, so those rungs are dropped.';
+    rungs=rungs.filter(p=>p<ask-1e-9); }
+  if(!rungs.length) return {level:takeNote?'ok':'bad', head:takeNote?'🟢 TAKE it — don\'t post':'🔴 SKIP — no rung fits your odds range', lines:[takeNote||('Breakeven after your floor is '+P94(mx)+', outside your '+fmtOdds(cfg.oMin)+' to '+fmtOdds(cfg.oMax)+' range.')]};
+  const mid=rungs[Math.min(1,rungs.length-1)];
+  const st=abStake({fair, mkt, p:mid, fee:feeFn(mid), book, outlier:isOut(netAtP(fair,mid,feeFn(mid))), outLimit, game:f.game});
+  if(!(st.s>0)){ const ln=takeNote?[takeNote]:[];
+    if(mkt!=null && /blended/.test(st.why||'')) ln.push('The market has it at '+pct(mkt)+'. Posting at '+P94(mid)+' is above what the market pays — it only gets taken when someone knows more than the market. Lower your cover % or wait for the market to move.');
+    return {level:'bad', head:'🔴 SKIP posting — '+esc(st.why||'no stake'), lines:ln}; }
+  let use=rungs.slice(); const nMax=Math.max(1,Math.floor(st.s/cfg.sMin+1e-9)*2);   // each rung at least half your minimum
+  if(use.length>nMax) use=use.length===3&&nMax===2?[use[0],use[1]]:[mid];
+  const W=[0.3,0.35,0.35].slice(0,use.length), ws=W.reduce((a,b)=>a+b,0);
+  let left=st.s; const R=use.map((p,i)=>{ let sk=i===use.length-1?left:Math.floor(st.s*W[i]/ws*100)/100; left=+(left-sk).toFixed(2);
+    const fee=feeFn(p), qty=Math.floor(sk/(p*(1+fee))+1e-9), net=netAtP(fair,p,fee), am=Math.round(americanOf(p));
+    const sweet=net*100>=swc.netMin && net*100<=swc.netMax && am>=swc.oMin && am<=swc.oMax;
+    return {k:i+1, p, stake:+sk.toFixed(2), qty, net, sweet}; });
+  abMakeLadder.last={f, fair, mkt, book, src, rungs:R, total:st.s, q:now?now.q:null, max:mx};
+  lines.push('<table class="ab-ladder">'+R.map(r=>'<tr><td><b>Rung '+r.k+'</b></td><td class="num"><b>'+P94(r.p)+'</b></td><td class="num">$'+r.stake.toFixed(2)+(r.qty?' · '+r.qty+' ct':'')+'</td><td class="ok-t">'+SG94(r.net)+' net if taken</td><td>'+(r.sweet?'<span class="sweet">🎯 SWEET SPOT</span>':'')+'</td><td class="meta">'+(r.k===1?'best edge, slowest to fill':r.k===R.length&&R.length>1?'closest to breakeven, fills fastest':'')+'</td></tr>').join('')+'</table>');
+  lines.push('Never post above <b>'+P94(mx)+'</b> — that\'s breakeven at your '+pct(cfg.eMin)+' floor'+(makerCoefs()[src]?'':' · no posting fee at '+esc(bookLabel(book))));
+  if(ask!=null) lines.push(esc(bookLabel(book))+' now: sells at '+P94(ask)+(topBid!=null?' · top post '+P94(topBid)+(R[0].p>topBid+1e-9?' — your rung 1 would be first in line':' — your rungs wait behind '+P94(topBid)):''));
+  else lines.push('<span class="meta">No live price from '+esc(bookLabel(book))+' for this bet'+(X?'':' — press 🔎 to check')+'. Fills still log if the post is saved with a matched market.</span>');
+  if(takeNote) lines.push('<div class="ab-alt">'+takeNote+'</div>');
+  (st.notes||[]).filter(n=>!/contracts/.test(n)).forEach(n=>lines.push('<span class="meta">'+esc(n)+'</span>'));
+  lines.push('<span class="meta">The whole ladder counts as one bet toward your daily max. Nothing is placed by the screener — post the rungs yourself.</span>');
+  const url=bookUrl(src, now?now.q:null, 0);
+  lines.push('<div class="ab-btns"><button type="button" class="log sm" id="abSavePost">📌 Save ladder</button>'+(url?'<a class="ghost sm" style="text-decoration:none;padding:5px 10px;border:1px solid var(--rule);border-radius:8px" href="'+esc(url)+'" target="_blank" rel="noopener">Open '+esc(bookLabel(book))+'</a>':'')+'</div>');
+  return {level:'ok', head:'📌 POST '+esc(abSideTxt(f,false))+' — $'+st.s.toFixed(2)+' across '+R.length+' rung'+(R.length===1?'':'s'), lines};
+}
+function abSavePost(){
+  const Lk=abMakeLadder.last; if(!Lk) return; const f=Lk.f;
+  if(f._missing){ $ab('abMsg').textContent='Add the '+f._missing+' first — ESPN needs it to grade the bet'; return; }
+  const q=Lk.q;
+  posts.push({id:'p'+Date.now().toString(36), at:new Date().toISOString(), date:$ab('slate').value, sport:f.sport, kind:f.kind, name:f.name, market:f.market, side:f.side, team:f.team, game:f.game,
+    start:(f.gameInfo&&f.gameInfo.startISO)||null, book:Lk.book, src:Lk.src, fair:Lk.fair, mkt:Lk.mkt, proj:f.projValue, max:Lk.max, total:Lk.total,
+    rungs:Lk.rungs.map(r=>({k:r.k, p:r.p, stake:r.stake, qty:r.qty})), ref:q?q.ref:null, outcome:q?q.outcome||null:null, title:q?q.title||null:null, filled:[]});
+  savePosts(); renderPosts();
+  $ab('abMsg').innerHTML='<b>Ladder saved:</b> '+esc(f.name)+' — '+esc(abSideTxt(f,false))+' on '+esc(bookLabel(Lk.book))+'. Post the rungs in the app; each one that gets taken logs itself (tag <b>made</b>).'+(q?'':' <b>No market matched on '+esc(bookLabel(Lk.book))+'</b> — fills will land in From your books instead.');
+}
+// fills from your posts
+function postForFill(f){
+  return posts.find(P=>P.src===f.book && P.ref && P.ref===f.ref && (f.book!=='novig'||!P.outcome||P.outcome===f.outcome) &&
+    (f.book!=='kalshi'||((f.side==='no')===/^NO · /.test(P.title||''))))||null;
+}
+function autoAddFromPost(P,f){
+  const book=BOOK_NAME[f.book], prob=f.price, stake=+((+f.cost||0)+(+f.fee||0)).toFixed(2);
+  const fee=f.fee!=null&&f.cost?(+f.fee)/(+f.cost):makerFee(book,prob), gross=P.fair/prob-1;
+  const rung=(P.rungs||[]).slice().sort((a,b)=>Math.abs(a.p-prob)-Math.abs(b.p-prob))[0];
+  const r={name:P.name, sport:P.sport, market:P.market, side:P.side, team:P.team, game:P.game, matchup:P.game, kind:P.kind, book, offeredRaw:fmtOdds(Math.round(americanOf(prob))), offeredProb:prob,
+    fairProb:P.fair, fairRaw:fmtOdds(Math.round(americanOf(P.fair))), mktProb:P.mkt, stake, fee, gross, net:(gross-fee)/(1+fee), gameInfo:{startISO:P.start}, src:'manual', pass:true,
+    said:{decision:'MADE', stake, onList:false}};
+  addToLog(r);
+  const L=logged[logged.length-1]; L.autoFrom=f.book; L.made=true; L.rung=rung&&Math.abs(rung.p-prob)<0.011?rung.k:null; L.fills=[f.id]; L.fillQty=+f.qty||0; L.fillCost=stake;
+  L.manual=true; L.srcType='manual'; L.start=P.start||L.start; if(P.proj!=null) L.proj=P.proj; L.postId=P.id;
+  (P.filled=P.filled||[]).push({p:prob, qty:+f.qty||0, id:f.id}); savePosts(); saveLog();
+}
+// your open orders (read-only) → which rungs are still resting, and which to pull
+async function syncOrders(force){
+  const live=posts.filter(P=>!P.start || Date.parse(P.start)+6*3600e3>Date.now());
+  if(live.length!==posts.length){ posts=live; savePosts(); }
+  if(!posts.length){ renderPosts(); return; }
+  if(!force && Date.now()-ordersAt<55000){ renderPosts(); return; }
+  ordersAt=Date.now();
+  try{ const res=await fetch(API_BASE+'/mine/orders',{headers:apiHeaders()}); if(res.ok){ myOrders=await res.json(); } }catch(e){}
+  try{   // the market now, for each post
+    const descs=posts.slice(0,8).map(P=>liveDesc({id:'post:'+P.id, book:BOOK_NAME[P.src], sport:P.sport, kind:P.kind, market:P.market, side:P.side, name:P.name, team:P.team, game:P.game, matchup:P.game, start:P.start})).filter(Boolean);
+    if(descs.length){ const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(descs)),{headers:apiHeaders()});
+      if(res.ok){ const R=((await res.json())||{}).results||{}; descs.forEach(d=>{ const q=R[d.id]; if(q&&q.ok){ postQuotes[d.id.slice(5)]=q; const P=posts.find(x=>x.id===d.id.slice(5)); if(P&&!P.ref){ P.ref=q.ref; P.outcome=q.outcome||null; P.title=q.title||null; savePosts(); } } }); } }
+  }catch(e){}
+  renderPosts();
+}
+function renderPosts(){
+  const el=document.getElementById('myPosts'); if(!el) return;
+  if(!posts.length){ el.style.display='none'; el.innerHTML=''; return; }
+  const cfg=cfgRead(), O=(myOrders&&myOrders.orders)||[], used=new Set();
+  const html=posts.map(P=>{
+    const q=postQuotes[P.id], mid=q&&q.bid>0?(q.price+q.bid)/2:null;
+    const row=abBoardRow({name:P.name, market:P.market, side:P.side, kind:P.kind}), fairNow=row?row.fairProb:P.fair;
+    const mine=O.filter(o=>o.book===P.src && P.ref && o.ref===P.ref && (P.src!=='novig'||!P.outcome||o.outcome===P.outcome) && (P.src!=='kalshi'||o.side==null||((o.side==='no')===/^NO · /.test(P.title||''))));
+    const warns=[];
+    const rs=(P.rungs||[]).map(r=>{
+      const fl=(P.filled||[]).filter(x=>Math.abs(x.p-r.p)<0.011), o=mine.find(x=>!used.has(x.id) && x.price!=null && Math.abs(x.price-r.p)<0.006);
+      if(o) used.add(o.id);
+      const fee=makerFee(BOOK_NAME[P.src],r.p);
+      let st=fl.length?'<span class="ok-t">✓ taken'+(fl.reduce((t,x)=>t+(x.qty||0),0)?' ('+fl.reduce((t,x)=>t+(x.qty||0),0)+' ct)':'')+'</span>':o?'resting'+(o.qty!=null?' · '+o.qty+' ct left':''):(myOrders?'<span class="meta">not posted</span>':'');
+      if(o || !fl.length){
+        const verb=o?'pull rung '+r.k:'don\'t post rung '+r.k+' yet';
+        if(fairNow!=null && netAtP(fairNow,r.p,fee)<cfg.eMin) warns.push('⚠ '+verb+' — your fair moved to '+pct(fairNow)+', '+P94(r.p)+' no longer clears your floor');
+        else if(o && mid!=null && netAtP(mid,r.p,fee)<0) warns.push('⚠ '+verb+' — '+bookLabel(BOOK_NAME[P.src])+'\'s middle is '+pct(mid)+'; '+P94(r.p)+' is above it (whoever takes that likely knows more)');
+      }
+      return '<span class="rung"><b>R'+r.k+'</b> '+P94(r.p)+' · $'+r.stake.toFixed(2)+' — '+st+'</span>';
+    }).join('');
+    const nTaken=(P.filled||[]).length;
+    return '<div class="post"><b>'+esc(P.name)+'</b> — '+esc(abSideTxt({kind:P.kind, side:P.side, market:P.market, team:P.team, game:P.game, _line:parseFloat(P.market)},false))+' · '+esc(bookLabel(BOOK_NAME[P.src]))+
+      ' · fair '+pct(P.fair)+(mid!=null?' · market now '+pct(mid):'')+' <button class="ghost sm post-x" data-id="'+esc(P.id)+'" title="Forget this ladder (doesn\'t touch your orders)">✕</button><br>'+rs+
+      (warns.length?'<div class="warnline">'+warns.map(esc).join('<br>')+'</div>':'')+(nTaken>1?'<div class="meta">'+nTaken+' rungs taken — if they went fast, check the news before re-posting.</div>':'')+'</div>';
+  }).join('');
+  const other=O.filter(o=>!used.has(o.id)).length, err=myOrders&&myOrders.errors?Object.entries(myOrders.errors).map(([k,v])=>(BOOK_NAME[k]||k)+': '+v).join(' · '):'';
+  el.style.display='block';
+  el.innerHTML='<b>📌 Your posts</b> <span class="meta">'+(myOrders?'open orders read '+new Date(ordersAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'open orders not read yet (deploy the Worker)')+(other?' · '+other+' other open order'+(other===1?'':'s'):'')+(err?' · '+esc(err):'')+'</span>'+html;
+}
+document.addEventListener('click',e=>{
+  const x=e.target.closest('.post-x'); if(x){ posts=posts.filter(P=>P.id!==x.dataset.id); savePosts(); renderPosts(); return; }
+  if(e.target.closest('#abSavePost')){ abSavePost(); return; }
+  const m=e.target.closest('#abMode button'); if(m){ abModeV=m.dataset.m; try{ localStorage.setItem('mbev.abMode',abModeV); }catch(_){} abUpdate94(); return; }
+  if(e.target.closest('#abAsk')){ abAsk(true); return; }
+});
+(function(){
+  const P=document.getElementById('addBetPanel'); if(!P) return;
+  P.addEventListener('input',e=>{ if(!e.target.closest('.editor')) abScheduleAsk(); });
+  P.addEventListener('change',e=>{ if(!e.target.closest('.editor')) abScheduleAsk(); else if(e.target.classList.contains('eb-book')) setTimeout(abUpdate94,0); });
+  // maker fee settings
+  const ids={kalshi:'mkKalshi', poly:'mkPoly', novig:'mkNovig'}, cur=makerCoefs();
+  Object.entries(ids).forEach(([k,id])=>{ const el=document.getElementById(id); if(!el) return; el.value=cur[k];
+    el.addEventListener('change',()=>{ const o={}; Object.entries(ids).forEach(([k2,id2])=>{ const v=document.getElementById(id2).value; o[k2]=v===''?MK_DEF[k2]:+v; }); try{ localStorage.setItem('mbev.makerFees',JSON.stringify(o)); }catch(_){} if(abR) abUpdate94(); renderPosts(); }); });
+  setTimeout(()=>{ renderPosts(); syncOrders(true); }, 3000);
+})();
+
 setInterval(()=>{ if(document.visibilityState==='visible') syncFills(false); }, 20000);
 (function(){
   const m=()=>document.getElementById('fillsMsg');
