@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v2.83</title>
+<title>0xBeta Screener v2.84</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -587,7 +587,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v2.83</span></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v2.84</span></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1084,7 +1084,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v2.83';
+const SCREENER_VERSION='v2.84';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -3711,11 +3711,14 @@ async function findBetGame(b){
   }
   return null;
 }
-function playedHtml(b){
+function playedHtml(b){   // v2.84: "plays" before kickoff, "in progress" until graded, "played" once settled
   if(!b.start || isNaN(Date.parse(b.start))) return '';
-  const d=gameDayOf(b), t=new Date(Date.parse(b.start));
-  const lab=t.toLocaleDateString('en-US',{timeZone:'America/Chicago',weekday:'short',month:'numeric',day:'numeric'});
-  return '<div style="font-size:11.5px;'+(d!==b.date?'color:var(--warn)':'')+'" title="day the game is played">played '+esc(lab)+'</div>';
+  const t=Date.parse(b.start), d=gameDayOf(b), opt={timeZone:'America/Chicago'};
+  const day=new Date(t).toLocaleDateString('en-US',{...opt,weekday:'short',month:'numeric',day:'numeric'});
+  const tm=new Date(t).toLocaleTimeString('en-US',{...opt,hour:'numeric',minute:'2-digit'});
+  const done=b.sold || b.result==='win' || b.result==='loss' || b.result==='push';
+  const txt = Date.now()<t ? 'plays '+day+' · '+tm : done ? 'played '+day : 'in progress · '+day;
+  return '<div style="font-size:11.5px;'+(d!==b.date?'color:var(--warn)':'')+'" title="game day">'+esc(txt)+'</div>';
 }
 async function autoGradeLog(){
   if(agBusy || logBusy>0) return; agBusy=true; logBusy++;
