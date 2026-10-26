@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v2.84</title>
+<title>0xBeta Screener v2.85</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -452,6 +452,8 @@ table.lbs-t tr.me td{background:var(--accent-bg); font-weight:700}
 .ab-verdict.none .ab-h{color:var(--soft)}
 #addBetPanel summary h2{white-space:nowrap}
 @media (max-width:900px){ #addBetPanel summary .sub{display:none} .ab-grid{grid-template-columns:repeat(2,minmax(0,1fr))} .ab-grid .ab-wide{grid-column:1/-1} }
+.tb-espn{margin-left:4px; padding:0 6px; height:20px; line-height:18px; border-radius:6px; border:1px solid var(--rule); background:transparent; color:var(--accent); font-size:12px; cursor:pointer}
+.tb-espn:hover{border-color:var(--accent)} .tb-espn.spin{animation:tbspin .8s linear infinite} @keyframes tbspin{to{transform:rotate(360deg)}}
 .tb-pill{display:inline-flex; align-items:center; gap:5px; margin-top:2px; padding:2px 10px; border-radius:999px; font-size:14px; font-weight:800; letter-spacing:0}
 .tb-pill small{font-size:9.5px; font-weight:800; letter-spacing:.08em; opacity:.85}
 .tb-pill.good{color:var(--live); background:var(--live-bg); border:1.5px solid var(--live)}
@@ -587,7 +589,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v2.84</span></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v2.85</span></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1084,7 +1086,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v2.84';
+const SCREENER_VERSION='v2.85';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -2500,10 +2502,12 @@ async function attachGameInfo(rows){
 }
 /* Boxscore fetch + best-effort stat extraction, used for auto-grading logged bets */
 const boxscoreCache={};
-async function fetchBoxscore(sport,eventId){
+function boxDone(bx){ const st=bx&&bx.header&&bx.header.competitions&&bx.header.competitions[0]&&bx.header.competitions[0].status;
+  return !!(st && st.type && (st.type.completed || st.type.state==='post')); }
+async function fetchBoxscore(sport,eventId,needFinal){
   const path=ESPN_MAP[sport]; if(!path||!eventId) return null;
   const ck=sport+':'+eventId;
-  if(boxscoreCache[ck]) return boxscoreCache[ck];
+  if(boxscoreCache[ck] && !(needFinal && !boxDone(boxscoreCache[ck]))) return boxscoreCache[ck];   // v2.85: grading never uses a mid-game copy
   try{
     const res=await fetch('https://site.api.espn.com/apis/site/v2/sports/'+path+'/summary?event='+eventId);
     boxscoreCache[ck]=await res.json();
@@ -2683,7 +2687,7 @@ async function attachAutoGrades(rows){
   finals.forEach(r=>need.set(r.sport+':'+r.gameInfo.eventId, {sport:r.sport, eventId:r.gameInfo.eventId}));
   const boxes={};
   for(const {sport,eventId} of need.values()){
-    boxes[sport+':'+eventId] = await fetchBoxscore(sport, eventId);
+    boxes[sport+':'+eventId] = await fetchBoxscore(sport, eventId, true);
   }
   let changed=false;
   finals.forEach(r=>{
@@ -3625,6 +3629,18 @@ function ribbonBook(book){
   if(/draftkings|^dk /.test(b)){ if(dkGrouped() || !/predict|pick ?6/.test(b)) return 'DraftKings'; return /predict/.test(b)?'DK Predictions':'DK Pick 6'; }
   return 'Other';
 }
+let espnAt=0, espnBusy=false;
+async function espnRefreshNow(btn){   // v2.85: manual ESPN refresh — scores, grades, ribbon, Live
+  if(espnBusy) return; espnBusy=true; if(btn){ btn.classList.add('spin'); btn.disabled=true; }
+  try{
+    Object.keys(scoreboardCache).forEach(k=>delete scoreboardCache[k]);
+    Object.keys(sbDayCache).forEach(k=>delete sbDayCache[k]);
+    try{ await renderStrip(true); }catch(e){}
+    await autoGradeLog();
+    try{ const lb=document.getElementById('liveRefresh'); if(lb && document.getElementById('v-live').classList.contains('on')) lb.click(); }catch(e){}
+    espnAt=Date.now();
+  } finally { espnBusy=false; renderTodayBar(); }
+}
 function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding → to win
   const el=document.getElementById('todayBar'); if(!el) return;
   const today=ctDay(Date.now()), by={};
@@ -3659,7 +3675,7 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
   const tiles=order.map(tile).join('');
   const now=tot.won-tot.lost, best=now+tot.toWin, worst=now-tot.riding;
   const sgn=v=>v>=0?up(v):dn(-v);
-  el.innerHTML='<span class="tb-k">TODAY<b class="tb-tot">'+usd(tot.bet)+'</b><span class="tb-n">'+tot.n+' bet'+(tot.n===1?'':'s')+'</span>'+(Math.abs(now)<0.005?'<span class="tb-pill even" title="nothing settled yet, or even">$0.00</span>':'<span class="tb-pill '+(now>0?'good':'bad')+'" title="won minus lost so far">'+(now>0?'+':'−')+usd(now)+'</span>')+'</span>'+tiles+
+  el.innerHTML='<span class="tb-k"><span>TODAY <button class="tb-espn" type="button" title="Refresh scores and results from ESPN now (no BettingPros calls)'+(espnAt?' — last '+new Date(espnAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+'">⟳</button></span><b class="tb-tot">'+usd(tot.bet)+'</b><span class="tb-n">'+tot.n+' bet'+(tot.n===1?'':'s')+'</span>'+(Math.abs(now)<0.005?'<span class="tb-pill even" title="nothing settled yet, or even">$0.00</span>':'<span class="tb-pill '+(now>0?'good':'bad')+'" title="won minus lost so far">'+(now>0?'+':'−')+usd(now)+'</span>')+'</span>'+tiles+
     '<div class="tb-t all"><div class="tb-l1"><b>All</b></div>'+line2(tot)+(tot.open?'<div class="tb-l2" title="best = every open bet wins · worst = every open bet loses">best '+sgn(best)+' · worst '+sgn(worst)+'</div>':'')+'</div>';
 }
 /* v2.73: grade finished games in the background (ESPN, no BettingPros calls) */
@@ -3695,7 +3711,7 @@ async function findBetGame(b){
   const today=ctDay(Date.now()), gl=GL_KINDS.test(b.kind||'');
   let days;
   if(b.start && !isNaN(Date.parse(b.start))) days=[gameDayOf(b)];
-  else { const from=gameDayOf(b)||today; days=[from, dayPlus(from,1), dayPlus(from,2), today].filter((d,i,a)=>d<=today && a.indexOf(d)===i).sort(); }
+  else { const from=gameDayOf(b)||today; days=[from, dayPlus(from,1), dayPlus(from,2), today].filter((d,i,a)=>a.indexOf(d)===i).sort(); }   // v2.85: upcoming days too (Monday night)
   for(const d of days){   // 1) by the teams saved with the bet
     const evs=(await fetchScoreboardDay(b.sport, d)).filter(ev=>evOkFor(b,ev));
     const ev=findGame(evs,b.game)||findGameAny(evs,b.game,b.matchup)||(gl?findGameAny(evs,b.name):null);
@@ -3705,7 +3721,7 @@ async function findBetGame(b){
   for(const d of days){   // 2) no teams saved: the finished game whose box score has this player
     const evs=(await fetchScoreboardDay(b.sport, d)).filter(ev=>{ const g=gameStatusOf(ev); return g && g.state==='post' && evOkFor(b,ev); });
     for(const ev of evs){
-      const box=await fetchBoxscore(b.sport, ev.id);
+      const box=await fetchBoxscore(b.sport, ev.id, true);
       if(statForMarket(box, b.name, b.market, b.sport)!==null) return ev;
     }
   }
@@ -3734,6 +3750,9 @@ async function autoGradeLog(){
     logged.forEach(b=>{ if(!recent(b) || b.fix83 || !b.start) return; b.fix83=1;
       const t=Date.parse(b.start), at=Date.parse(b.snap&&b.snap.at);   // only a real save time
       if(!isNaN(t) && !isNaN(at) && t<at-4*3600e3 && ctDay(t)<ctDay(at)){ delete b.start; delete b.noStart; if(!b.sold && b.autoRes!==false) delete b.result; changed++; } });
+    // v2.85: graded, but its game hasn't started yet → that grade came from the wrong game
+    logged.forEach(b=>{ if(b.sold || !b.start || !(b.result==='win'||b.result==='loss'||b.result==='push')) return;
+      const t=Date.parse(b.start); if(!isNaN(t) && t>Date.now()){ delete b.result; changed++; } });
     const open=logged.filter(b=>recent(b) && !settled(b));
     if(!open.length && !undated.length){ if(changed){ saveLog(); renderLog(); renderPerf(); refresh(); } return; }
     for(const b of undated){
@@ -3749,7 +3768,7 @@ async function autoGradeLog(){
       if(gi.startISO && b.start!==gi.startISO){ b.start=gi.startISO; changed++; }
       if(!teamsOf(b.game)){ const a=gi.teams.find(t=>t.ha==='away'), h=gi.teams.find(t=>t.ha==='home'); if(a&&h){ b.game=a.abbr+' @ '+h.abbr; changed++; } }
       if(gi.state!=='post') continue;
-      const g = GL_KINDS.test(b.kind||'') ? gradeGameLine(b,ev) : gradeBet(b, await fetchBoxscore(b.sport, gi.eventId));
+      const g = GL_KINDS.test(b.kind||'') ? gradeGameLine(b,ev) : gradeBet(b, await fetchBoxscore(b.sport, gi.eventId, true));
       if(!g){ if(b.result!=='?'){ b.result='?'; changed++; } continue; }
       b.result = g.push?'push':(g.won?'win':'loss'); changed++;
     }
@@ -4738,7 +4757,7 @@ async function checkResultsRun(){
     if(!gi){ continue; }
     if(gi.state!=='post'){ b.result='pending'; continue; }
     if(gl){ const g=gradeGameLine(b, ev); b.result = g===null ? '?' : g.push ? 'push' : (g.won?'win':'loss'); continue; }
-    const box=await fetchBoxscore(b.sport, gi.eventId);
+    const box=await fetchBoxscore(b.sport, gi.eventId, true);
     const g=gradeBet(b, box);
     b.result = g===null ? '?' : (g.won?'win':'loss');
   }
@@ -4932,7 +4951,7 @@ document.querySelectorAll('#modeBar button').forEach(b=>b.addEventListener('clic
 // v2.66 Live tab
 document.getElementById('liveRefresh').addEventListener('click',()=>renderLive(true));
 // v2.73: Today ribbon → Bet log; parlay form; DraftKings grouping
-document.getElementById('todayBar').addEventListener('click',()=>{ const t=document.querySelector('.tab[data-view="v-log"]'); if(t) t.click(); });
+document.getElementById('todayBar').addEventListener('click',e=>{ const eb=e.target.closest('.tb-espn'); if(eb){ e.stopPropagation(); espnRefreshNow(eb); return; } const t=document.querySelector('.tab[data-view="v-log"]'); if(t) t.click(); });
 (function(){ const d=document.getElementById('plDay'); if(d) d.value=ctDay(Date.now()); })();
 document.getElementById('plAdd').addEventListener('click',()=>{
   const v=id=>parseFloat(document.getElementById(id).value), msg=document.getElementById('plMsg');
