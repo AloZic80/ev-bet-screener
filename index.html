@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v2.78</title>
+<title>0xBeta Screener v2.80</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -436,6 +436,27 @@ table.lbs-t tr.me td{background:var(--accent-bg); font-weight:700}
 .tb-l1{display:flex; align-items:center; gap:5px; font-size:12.5px}
 .tb-l1 img.blogo{height:18px; width:auto; max-width:60px}
 .tb-l2{font-size:11.5px; color:var(--soft)}
+.ab-grid{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px 12px}
+.ab-grid .field{display:flex; flex-direction:column; gap:4px; min-width:0}
+.ab-grid .field label{font-size:12.5px; color:var(--soft)}
+.ab-grid select,.ab-grid input{width:100%; box-sizing:border-box}
+.ab-host{margin-top:12px}
+.ab-host .editor{border:1px solid var(--rule); border-radius:10px; padding:10px 12px; background:var(--panel-2)}
+.ab-host .editor-row>b:first-child,.ab-host .eb-cancel,.ab-host .eb-check{display:none}
+.ab-verdict{margin-top:12px; padding:12px 16px; border-left:4px solid var(--accent); border-radius:10px; background:var(--panel-2); font-size:13.5px; line-height:1.55}
+.ab-verdict:empty{display:none}
+.ab-verdict .ab-h{font-size:22px; font-weight:800; margin-bottom:2px}
+.ab-verdict.ok{border-left-color:var(--live)} .ab-verdict.ok .ab-h{color:var(--live)}
+.ab-verdict.warn{border-left-color:var(--warn)} .ab-verdict.warn .ab-h{color:var(--warn)}
+.ab-verdict.bad{border-left-color:var(--out)} .ab-verdict.bad .ab-h{color:var(--out)}
+.ab-verdict.none .ab-h{color:var(--soft)}
+#addBetPanel summary h2{white-space:nowrap}
+@media (max-width:900px){ #addBetPanel summary .sub{display:none} .ab-grid{grid-template-columns:repeat(2,minmax(0,1fr))} .ab-grid .ab-wide{grid-column:1/-1} }
+.tb-pill{display:inline-flex; align-items:center; gap:5px; margin-top:2px; padding:2px 10px; border-radius:999px; font-size:14px; font-weight:800; letter-spacing:0}
+.tb-pill small{font-size:9.5px; font-weight:800; letter-spacing:.08em; opacity:.85}
+.tb-pill.good{color:var(--live); background:var(--live-bg); border:1.5px solid var(--live)}
+.tb-pill.even{color:var(--soft); border:1.5px solid var(--rule)}
+.tb-pill.bad{color:var(--out); background:var(--out-bg); border:1.5px solid var(--out)}
 .tb-ride{color:var(--warn); font-weight:700}
 .tb-l2 .tb-up,.tb-l2 .tb-down{font-weight:700}
 .tb-b.dim{opacity:.45}
@@ -566,7 +587,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v2.78</span></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v2.80</span></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -638,6 +659,26 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <!-- ======================= BOARD ======================= -->
 <div class="view on" id="v-board">
 
+<details class="panel fold" id="addBetPanel">
+  <summary><h2>+ Add a bet <span class="sub">one you found in the BettingPros app — no API calls; checked, saved, graded by ESPN</span></h2></summary>
+  <div class="ab-grid">
+    <div class="field"><label for="abSport">Sport</label><select id="abSport"><option>NFL</option><option>NCAAF</option><option>NBA</option><option>WNBA</option><option>NCAAB</option><option>MLB</option><option>NHL</option></select></div>
+    <div class="field"><label for="abType">Type</label><select id="abType"><option value="prop">Player prop</option><option value="spread">Spread</option><option value="total">Game total</option><option value="moneyline">Moneyline</option></select></div>
+    <div class="field ab-wide"><label for="abGame">Game <span class="meta">(ESPN)</span></label><select id="abGame"><option value="">loading…</option></select></div>
+    <div class="field ab-prop"><label for="abPlayer">Player</label><input id="abPlayer" type="text" placeholder="as the app shows it" autocomplete="off"></div>
+    <div class="field ab-team"><label for="abTeam">Team</label><select id="abTeam"></select></div>
+    <div class="field ab-prop"><label for="abStat">Stat</label><input id="abStat" type="text" list="abStats" placeholder="Passing Yards" autocomplete="off"><datalist id="abStats"></datalist></div>
+    <div class="field ab-ou"><label for="abPick">Pick</label><select id="abPick"><option value="O">Over</option><option value="U">Under</option></select></div>
+    <div class="field ab-line"><label for="abLine">Line</label><input id="abLine" type="number" step="0.5" placeholder="249.5"></div>
+    <div class="field"><label for="abProj">Projection <span class="meta">(optional)</span></label><input id="abProj" type="number" step="0.1"></div>
+    <div class="field"><label for="abCover">Cover probability % <span class="meta">(optional)</span></label><input id="abCover" type="number" step="0.1" min="1" max="99"></div>
+    <div class="field"><label for="abCons">Consensus odds <span class="meta">(optional)</span></label><input id="abCons" type="text" placeholder="-122"></div>
+  </div>
+  <div id="abHost" class="ab-host"></div>
+  <div id="abVerdict" class="ab-verdict"></div>
+  <p class="hint" style="margin:8px 0 0">Copy what the app shows. <b>Cover %</b> decides PASS/FAIL (same as the board); <b>consensus</b> is the market check; <b>projection</b> is saved for reference. Left blank, the bet saves as <b>unchecked</b> and the next Load fills them in if BettingPros has the same player, stat and line. Pick the game from the list so ESPN can grade it.</p>
+  <div class="meta" id="abMsg" style="margin-top:6px"></div>
+</details>
 <details class="panel fold" id="pastePanel">
   <summary><h2>Paste a board <span class="sub">from the BettingPros site — doesn't use the API</span></h2></summary>
   <p class="hint">On the BettingPros Prop Bet Cheat Sheet, select everything (Cmd+A) and copy. The book names have to come through or the fees can't be charged, so grab the whole page rather than just the rows.</p>
@@ -719,7 +760,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
   <div class="empty" id="emptyMsg">Paste a board and run it. Rejected bets stay hidden unless you switch them on.</div>
 </div>
 
-<div class="panel">
+<div class="panel" style="display:none">   <!-- v2.79: replaced by + Add a bet -->
   <h2>Check one bet</h2>
   <p class="hint">For a single pick from anywhere. Enter the other side's fair value too if you can get it — that is what exposes a bad devig.</p>
   <div class="grid">
@@ -1043,7 +1084,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v2.78';
+const SCREENER_VERSION='v2.80';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -1458,6 +1499,7 @@ function audit(rows,cfg){
     if(otherSide) r.flags.push(['warn','you bet the '+(sideOf(otherSide)==='O'?'Over':'Under')+' on this — this is the other side']);
     if(prior){
       r.prior = prior;
+      if(prior.manual && prior.net==null && r.fairProb!=null) fillManualFromRow(prior, r);   // v2.79
       const had = toProb(prior.odds);
       let verdict = '';
       if(had!==null){
@@ -2047,7 +2089,7 @@ function rowFromBet(L){   // v2.71: a saved bet, shaped like a board row, for th
 }
 function openBetEditor(tr, r, opt){
   opt=opt||{};
-  const isCard=tr.classList.contains('pcard');   // v2.69: the card holds its own editor
+  const isCard=tr.classList.contains('pcard')||tr.classList.contains('ab-host');   // v2.79: + Add a bet hosts one too   // v2.69: the card holds its own editor
   const open=isCard ? tr.querySelector('.editor') : (tr.nextElementSibling && tr.nextElementSibling.classList.contains('editor') ? tr.nextElementSibling : null);
   if(open){ open.remove(); return; }
   document.querySelectorAll('tr.editor, #placeCards .editor').forEach(e=>e.remove());
@@ -3601,7 +3643,7 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
   });
   const usd=x=>'$'+Math.abs(x).toFixed(2);
   const z=x=>Math.abs(x)<0.005, up=x=>z(x)?'<span class="open">$0.00</span>':'<span class="tb-up">+'+usd(x)+'</span>', dn=x=>z(x)?'<span class="open">$0.00</span>':'<span class="tb-down">−'+usd(x)+'</span>';
-  const line2=x=>'<div class="tb-l2"><span class="tb-up" title="won">'+usd(x.won)+'</span> <span class="open">vs</span> <span class="tb-down" title="lost">'+usd(x.lost)+'</span></div><div class="tb-l2">'+(x.open?x.open+' bet'+(x.open===1?'':'s')+' · <span class="tb-ride" title="on the line">'+usd(x.riding)+'</span> → <span class="tb-up" title="potential win">'+usd(x.toWin)+'</span>':(Math.abs(x.won-x.lost)<0.005?'<span class="open">even</span>':'<span class="'+(x.won>x.lost?'tb-up':'tb-down')+'" style="font-weight:700" title="profit (won − lost)">'+(x.won>x.lost?'+':'−')+usd(x.won-x.lost)+'</span>'))+'</div>';
+  const line2=x=>'<div class="tb-l2"><span class="tb-up" title="won">'+usd(x.won)+'</span> <span class="open">vs</span> <span class="tb-down" title="lost">'+usd(x.lost)+'</span></div><div class="tb-l2">'+(x.open?x.open+' bet'+(x.open===1?'':'s')+' · <span class="tb-ride" title="on the line">'+usd(x.riding)+'</span> → <span class="tb-up" title="potential win">'+usd(x.toWin)+'</span>':(Math.abs(x.won-x.lost)<0.005?'<span class="open">even</span>':'<span class="tb-pill '+(x.won>x.lost?'good':'bad')+'" title="won − lost, all settled"><small>'+(x.won>x.lost?'PROFIT':'LOSS')+'</small> '+(x.won>x.lost?'+':'−')+usd(x.won-x.lost)+'</span>'))+'</div>';
   const order=RIBBON_BOOKS.concat(Object.keys(by).filter(k=>!RIBBON_BOOKS.includes(k)).sort());
   const tot=blank('All');
   const tile=k=>{ const x=by[k]; if(!x && !RIBBON_BOOKS.includes(k)) return '';
@@ -3615,26 +3657,61 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
   const tiles=order.map(tile).join('');
   const now=tot.won-tot.lost, best=now+tot.toWin, worst=now-tot.riding;
   const sgn=v=>v>=0?up(v):dn(-v);
-  el.innerHTML='<span class="tb-k">TODAY<b class="tb-tot">'+usd(tot.bet)+'</b><span class="tb-n">'+tot.n+' bet'+(tot.n===1?'':'s')+'</span><span class="tb-net" title="won minus lost so far">'+sgn(now)+'</span></span>'+tiles+
+  el.innerHTML='<span class="tb-k">TODAY<b class="tb-tot">'+usd(tot.bet)+'</b><span class="tb-n">'+tot.n+' bet'+(tot.n===1?'':'s')+'</span>'+(Math.abs(now)<0.005?'<span class="tb-pill even" title="nothing settled yet, or even">$0.00</span>':'<span class="tb-pill '+(now>0?'good':'bad')+'" title="won minus lost so far">'+(now>0?'+':'−')+usd(now)+'</span>')+'</span>'+tiles+
     '<div class="tb-t all"><div class="tb-l1"><b>All</b></div>'+line2(tot)+(tot.open?'<div class="tb-l2" title="best = every open bet wins · worst = every open bet loses">best '+sgn(best)+' · worst '+sgn(worst)+'</div>':'')+'</div>';
 }
 /* v2.73: grade finished games in the background (ESPN, no BettingPros calls) */
 let agBusy=false; const sbStamp={};
+/* v2.80: ESPN scoreboard for one calendar day (any sport) — so a bet is found on the day its game
+   was really played, even when it was saved under another date or without a start time. */
+const sbDayCache={};
+async function fetchScoreboardDay(sport, day){   // day = 'YYYY-MM-DD' (CT)
+  const path=ESPN_MAP[sport]; if(!path) return [];
+  const k=sport+'|'+day, hit=sbDayCache[k];
+  if(hit && (day<ctDay(Date.now()) || Date.now()-hit.at<240000)) return hit.evs;
+  let evs=[];
+  try{ const res=await fetch('https://site.api.espn.com/apis/site/v2/sports/'+path+'/scoreboard?dates='+day.replace(/-/g,'')+'&limit=300'+(sport==='NCAAF'?'&groups=80':''));
+       evs=(await res.json()).events||[]; }catch(e){ evs=hit?hit.evs:[]; }
+  sbDayCache[k]={at:Date.now(), evs};
+  return evs;
+}
+function dayPlus(day, n){ const d=new Date(day+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
+async function findBetGame(b){
+  const today=ctDay(Date.now()), gl=GL_KINDS.test(b.kind||'');
+  const base=[gameDayOf(b), b.date].filter(Boolean);
+  const days=[...new Set([].concat(...base.map(d=>[d, dayPlus(d,1), dayPlus(d,2), dayPlus(d,-1)])).concat([today]))].filter(d=>d<=today).sort();
+  for(const d of days){   // 1) by the teams saved with the bet
+    const evs=await fetchScoreboardDay(b.sport, d);
+    const ev=findGame(evs,b.game)||findGameAny(evs,b.game,b.matchup)||(gl?findGameAny(evs,b.name):null);
+    if(ev) return ev;
+  }
+  if(gl || !b.name) return null;
+  for(const d of days){   // 2) no teams saved: the finished game whose box score has this player
+    const evs=(await fetchScoreboardDay(b.sport, d)).filter(ev=>{ const g=gameStatusOf(ev); return g && g.state==='post'; });
+    for(const ev of evs){
+      const box=await fetchBoxscore(b.sport, ev.id);
+      if(statForMarket(box, b.name, b.market, b.sport)!==null) return ev;
+    }
+  }
+  return null;
+}
 async function autoGradeLog(){
   if(agBusy || logBusy>0) return; agBusy=true; logBusy++;
   try{
-    const cutoff=ctDay(Date.now()-3*86400e3), today=ctDay(Date.now());
-    const open=logged.filter(b=>!b.sold && b.kind!=='parlay' && b.result!=='win' && b.result!=='loss' && b.result!=='push' && ESPN_MAP[b.sport] && gameDayOf(b)>=cutoff && gameDayOf(b)<=today);
+    const cutoff=ctDay(Date.now()-4*86400e3), today=ctDay(Date.now());
+    const open=logged.filter(b=>!b.sold && b.kind!=='parlay' && b.result!=='win' && b.result!=='loss' && b.result!=='push' && ESPN_MAP[b.sport] &&
+      ((gameDayOf(b)>=cutoff && gameDayOf(b)<=today) || (b.date>=cutoff && b.date<=today)));
     if(!open.length) return;
-    const sports=[...new Set(open.map(b=>b.sport))];
-    await Promise.all(sports.map(sp=>{ if(!scoreboardCache[sp] || Date.now()-(sbStamp[sp]||0)>240000){ delete scoreboardCache[sp]; sbStamp[sp]=Date.now(); } return fetchScoreboard(sp); }));
     let changed=0;
     for(const b of open){
-      const evs=scoreboardCache[b.sport]||[], gl=GL_KINDS.test(b.kind||'');
-      const ev=findGame(evs,b.game)||(gl?findGameAny(evs,b.game,b.name):null)||findGameAny(evs,b.game,b.name,b.matchup);
-      const gi=gameStatusOf(ev); if(!gi || gi.state!=='post') continue;
-      const g = gl ? gradeGameLine(b,ev) : gradeBet(b, await fetchBoxscore(b.sport, gi.eventId));
-      if(!g) continue;
+      const ev=await findBetGame(b);
+      const gi=gameStatusOf(ev); if(!gi) continue;
+      // v2.80: keep the real start time and teams, so the bet counts on the day the game is played
+      if(gi.startISO && b.start!==gi.startISO){ b.start=gi.startISO; changed++; }
+      if(!teamsOf(b.game)){ const a=gi.teams.find(t=>t.ha==='away'), h=gi.teams.find(t=>t.ha==='home'); if(a&&h){ b.game=a.abbr+' @ '+h.abbr; changed++; } }
+      if(gi.state!=='post') continue;
+      const g = GL_KINDS.test(b.kind||'') ? gradeGameLine(b,ev) : gradeBet(b, await fetchBoxscore(b.sport, gi.eventId));
+      if(!g){ if(b.result!=='?'){ b.result='?'; changed++; } continue; }
       b.result = g.push?'push':(g.won?'win':'loss'); changed++;
     }
     if(changed){ saveLog(); renderLog(); renderPerf(); refresh(); }
@@ -4836,6 +4913,161 @@ document.getElementById('plAdd').addEventListener('click',()=>{
 });
 (function(){ const cb=document.getElementById('dkGroup'); if(!cb) return; cb.checked=dkGrouped();
   cb.addEventListener('change',()=>{ try{ localStorage.setItem('mbev.dkGroup',cb.checked?'1':'0'); }catch(e){} renderTodayBar(); }); })();
+
+/* ============ v2.79: + Add a bet — a bet found in the BettingPros app, no API calls ============ */
+const AB_STATS={
+  NFL:['Passing Yards','Passing Attempts','Passing Completions','Passing Touchdowns','Interceptions','Rushing Yards','Rushing Attempts','Receiving Yards','Receptions','Rushing Receiving Yards','Anytime Touchdown','Longest Reception','Longest Rush'],
+  NBA:['Points','Rebounds','Assists','Points Rebounds Assists','Points Rebounds','Points Assists','Rebounds Assists','Three Pointers Made','Steals','Blocks','Turnovers'],
+  MLB:['Strikeouts','Hits','Runs','RBIs','H+R+RBI','Earned Runs','Pitching Outs'],
+  NHL:['Points','Goals','Assists','Shots on Goal','Saves']
+};
+AB_STATS.NCAAF=AB_STATS.NFL; AB_STATS.WNBA=AB_STATS.NBA; AB_STATS.NCAAB=AB_STATS.NBA;
+let abEvents=[], abR=null, abLogLen=0;
+const $ab=id=>document.getElementById(id);
+function abGameSel(){ const id=$ab('abGame').value; return abEvents.find(e=>String(e.id)===id)||null; }
+function abTeams(ev){ const c=compsOf(ev), a=c.find(x=>x.homeAway==='away'), h=c.find(x=>x.homeAway==='home');
+  return a&&h ? {away:normAbbr(a.team&&a.team.abbreviation), home:normAbbr(h.team&&h.team.abbreviation)} : null; }
+async function abLoadGames(){
+  const sp=$ab('abSport').value, sel=$ab('abGame');
+  sel.innerHTML='<option value="">loading…</option>';
+  $ab('abStats').innerHTML=(AB_STATS[sp]||[]).map(x=>'<option value="'+esc(x)+'">').join('');
+  let evs=[]; try{ evs=await fetchScoreboard(sp); }catch(e){}
+  if($ab('abSport').value!==sp) return;
+  abEvents=(evs||[]).filter(ev=>{ const g=gameStatusOf(ev); return g && g.state!=='post'; })
+    .sort((a,b)=>Date.parse(a.date)-Date.parse(b.date));
+  sel.innerHTML = abEvents.length ? abEvents.map(ev=>{ const t=abTeams(ev), g=gameStatusOf(ev);
+      const when=g.state==='in' ? 'LIVE '+g.detail : g.timeCT.replace(/\s\d\d\/\d\d\/\d\d/,'');
+      return '<option value="'+esc(String(ev.id))+'">'+esc(t?t.away+' @ '+t.home:ev.shortName||ev.name)+' · '+esc(when)+'</option>'; }).join('')
+    : '<option value="">no upcoming '+esc(sp)+' games on ESPN</option>';
+  abFields();
+}
+function abFields(){
+  const ty=$ab('abType').value, ev=abGameSel(), t=ev?abTeams(ev):null;
+  document.querySelectorAll('#addBetPanel .ab-prop').forEach(e=>e.style.display=ty==='prop'?'':'none');
+  document.querySelectorAll('#addBetPanel .ab-team').forEach(e=>e.style.display=(ty==='spread'||ty==='moneyline')?'':'none');
+  document.querySelectorAll('#addBetPanel .ab-ou').forEach(e=>e.style.display=(ty==='prop'||ty==='total')?'':'none');
+  document.querySelectorAll('#addBetPanel .ab-line').forEach(e=>e.style.display=ty==='moneyline'?'none':'');
+  const ts=$ab('abTeam'), keep=ts.value;
+  ts.innerHTML=t?['away','home'].map(k=>'<option value="'+t[k]+'">'+t[k]+(k==='home'?' (home)':'')+'</option>').join(''):'';
+  if(keep && t && (keep===t.away||keep===t.home)) ts.value=keep;
+  $ab('abLine').placeholder = ty==='spread'?'-3.5':ty==='total'?'47.5':'249.5';
+  abUpdate();
+}
+function abRowFields(){
+  const sp=$ab('abSport').value, ty=$ab('abType').value, ev=abGameSel(), t=ev?abTeams(ev):null, gi=ev?gameStatusOf(ev):null;
+  const game=t?t.away+' @ '+t.home:'', lnRaw=$ab('abLine').value.trim(), ln=lnRaw===''?null:parseFloat(lnRaw);
+  const stat=$ab('abStat').value.trim(), side=$ab('abPick').value, team=$ab('abTeam').value||null;
+  let name='', market='', sd='', missing='';
+  if(ty==='prop'){ name=$ab('abPlayer').value.trim(); market=(ln!=null?ln+' ':'')+stat; sd=side;
+    missing=!name?'player':!stat?'stat':ln==null?'line':''; }
+  else if(ty==='total'){ name=game; market=(ln!=null?ln:'?')+' Total'; sd=side; missing=ln==null?'line':''; }
+  else if(ty==='spread'){ name=team||''; market=(ln!=null?(ln>0?'+':'')+ln:'?')+' Spread'; missing=!team?'team':ln==null?'line':''; }
+  else { name=team||''; market='Moneyline'; missing=!team?'team':''; }
+  if(!ev) missing=missing||'game';
+  const cov=parseFloat($ab('abCover').value), fair=cov>0&&cov<100?cov/100:null;
+  const consRaw=$ab('abCons').value.trim().replace(/^(\d)/,'+$1'), cons=consRaw?toProb(consRaw):null;
+  const pj=parseFloat($ab('abProj').value);
+  const cfg=cfgRead(), w=cfg.mWeight;
+  return { name, market, side:sd, kind:ty, sport:sp, game, matchup:game, team:(ty==='spread'||ty==='moneyline')?team:null,
+    fairProb:fair, fairRaw:fair!=null?fmtOdds(Math.round(americanOf(fair))):null, mktProb:cons, consOdds:cons!=null?consRaw:null,
+    blendProb: fair!=null&&cons!=null ? cons+w*(fair-cons) : fair, projValue:isNaN(pj)?null:pj,
+    gameInfo:gi, src:'manual', evModel:fair!=null?'projection':null, net:null, stake:0, idx:-1, pass:true, flags:[],
+    _missing:missing, _line:ln };
+}
+function abPrice(){   // the price typed in the editor below (same reading as Save bet)
+  const h=$ab('abHost'); if(!h.querySelector('.editor')) return null;
+  const q=c=>h.querySelector(c), cfg=cfgRead(), book=q('.eb-book').value;
+  if(q('.eb-mode').value==='pct'){
+    const cost=parseFloat(q('.eb-cost').value), win=parseFloat(q('.eb-win').value), at=parseFloat(q('.eb-pct').value), ok=at>0&&at<100;
+    if(cost>0&&win>0){ let payout=win; if(ok){ const exp=cost/(at/100); if(Math.abs((win+cost)-exp)<Math.abs(win-exp)) payout=win+cost; } else if(win<=cost) payout=win+cost;
+      if(payout>cost) return {prob:cost/payout, fee:0, book, stake:cost}; }
+    return ok?{prob:at/100, fee:feeRate(book,at/100,cfg.fees), book, stake:cost>0?cost:0}:null;
+  }
+  const o=q('.eb-odds').value.trim().replace(/^(\d)/,'+$1'), p=toProb(o);
+  return p==null?null:{prob:p, fee:feeRate(book,p,cfg.fees), book, stake:parseFloat(q('.eb-stake').value)||0, odds:o};
+}
+function abUpdate(){
+  if(!abR) return;
+  const f=abRowFields(); Object.assign(abR, f);
+  const cfg=cfgRead(), pr=abPrice(), out=$ab('abVerdict'), L=[];
+  const sg=x=>(x>=0?'+':'−')+Math.abs(x*100).toFixed(1)+'%';
+  const outCut=(parseFloat($ab('swOutlier').value)||15)/100, gapCut=(parseFloat($ab('swGap').value)||8)/100;
+  let net=null, mktNet=null, level='none', head='Fill in the bet';
+  if(pr && f.fairProb!=null){ net=((f.fairProb/pr.prob-1)-pr.fee)/(1+pr.fee); if(f.mktProb!=null) mktNet=((f.mktProb/pr.prob-1)-pr.fee)/(1+pr.fee); }
+  const gap=f.fairProb!=null&&f.mktProb!=null?f.fairProb-f.mktProb:null;
+  abR.outlier=(net!=null&&net>outCut)||(gap!=null&&gap>gapCut);
+  abR.mktNet=mktNet; abR.net=null;
+  // outlier limit, same count as the board
+  const slate=$ab('slate').value, v=parseFloat(($ab('swOutN')||{}).value), outN=isNaN(v)?5:Math.max(0,Math.floor(v));
+  const usedOut=logged.filter(x=>x.date===slate && x.snap && x.snap.outlier && !x.snap.risk).length;
+  abR.flags = abR.outlier && usedOut>=outN ? [['warn','outlier limit reached ('+outN+' a day)']] : [];
+  if(f._missing) head='Missing: '+f._missing;
+  else if(!pr) head='Enter your odds below';
+  else if(net==null){ level='none'; head='UNCHECKED — no cover %'; }
+  else if(net<=0){ level='bad'; head='FAILS · '+sg(net)+' net'; }
+  else if(net<cfg.eMin){ level='warn'; head='THIN · '+sg(net)+' net (under your '+pct(cfg.eMin)+' floor)'; }
+  else if(abR.outlier){ level='warn'; head='OUTLIER · '+sg(net)+' net — stake held to the minimum'; }
+  else if(mktNet!=null && mktNet<=0){ level='warn'; head='PASSES · '+sg(net)+' net, but below the market'; }
+  else { level='ok'; head='PASSES · '+sg(net)+' net'; }
+  if(f.projValue!=null && f._line!=null && f.kind==='prop'){ const d=f.projValue-f._line; L.push('Projection '+f.projValue+' vs line '+f._line+' ('+(d>=0?'+':'')+(Math.round(d*10)/10)+')'); }
+  if(pr && f.fairProb!=null) L.push('Cover '+pct(f.fairProb)+' vs your price at '+pct(pr.prob)+(pr.fee?' · '+esc(bookLabel(pr.book))+' fee '+(pr.fee*100).toFixed(1)+'%':'')+' → '+sg(net)+' net');
+  if(gap!=null) L.push('Market check: consensus '+esc(f.consOdds)+' = '+pct(f.mktProb)+', model '+(gap>=0?'+':'−')+Math.abs(gap*100).toFixed(1)+' pts '+(gap>=0?'above':'below')+' it'+(gap>gapCut?' — too far, outlier':'')+(mktNet!=null?' · vs market '+sg(mktNet):''));
+  if(pr){ const am=Math.round(americanOf(pr.prob)), inR=am>=cfg.oMin&&am<=cfg.oMax;
+    L.push('Odds '+fmtOdds(am)+(inR?' in range':' <b>outside your '+fmtOdds(cfg.oMin)+' to '+fmtOdds(cfg.oMax)+' range</b>')); }
+  const today=ctDay(Date.now()), usedDay=logged.filter(b=>!b.sold && gameDayOf(b)===today && poolOf(b)==='proj').reduce((t,b)=>t+(+b.stake||0),0);
+  L.push('Today $'+usedDay.toFixed(2)+' of $'+cfg.dayMax.toFixed(2)+' daily max'+(usedDay>=cfg.dayMax-1e-9?' — <b>reached</b>':'')+' · outliers '+usedOut+' of '+outN);
+  if(f.gameInfo && f.gameInfo.state==='in') L.push('<b>Game already started</b> — live price, live risk');
+  out.className='ab-verdict '+level;
+  out.innerHTML='<div class="ab-h">'+esc(head)+'</div>'+L.map(x=>'<div>'+x+'</div>').join('');
+}
+function abOpenEditor(){
+  const host=$ab('abHost'); host.innerHTML='';
+  let last=''; try{ last=localStorage.getItem('mbev.abBook')||''; }catch(e){}
+  abR=Object.assign(abRowFields(), {book:last, offeredRaw:'', offeredProb:null});
+  abR.market='';   // no Line box in the editor: the line lives in the form above
+  openBetEditor(host, abR, {});
+  Object.assign(abR, abRowFields());
+  abLogLen=logged.length;
+  const ed=host.querySelector('.editor');
+  const save=ed.querySelector('.eb-save');
+  save.addEventListener('click',e=>{   // runs before the editor's own save
+    const f=abRowFields(); Object.assign(abR,f);
+    if(f._missing){ e.stopImmediatePropagation(); ed.querySelector('.eb-msg').textContent='Missing: '+f._missing; return; }
+    try{ localStorage.setItem('mbev.abBook', ed.querySelector('.eb-book').value); }catch(_){}
+  }, true);
+  abUpdate();
+}
+function fillManualFromRow(L, r){   // next Load: an unchecked manual bet picks up the board's numbers
+  const p=toProb(L.odds); if(p==null) return;
+  const f=+L.fee||0, g=r.fairProb/p-1;
+  L.fair=r.fairRaw; L.gross=g; L.net=(g-f)/(1+f);
+  if(r.mktProb!=null) L.mkt=r.mktProb;
+  if(!L.apiKey && r.apiKey) L.apiKey=r.apiKey;
+  if(L.snap){ L.snap.model=r.fairProb; if(r.mktProb!=null) L.snap.market=r.mktProb; L.snap.filledFrom='load'; }
+  saveLog();
+}
+(function(){
+  if(!$ab('addBetPanel')) return;
+  $ab('abSport').addEventListener('change',abLoadGames);
+  $ab('abType').addEventListener('change',abFields);
+  $ab('abGame').addEventListener('change',abFields);
+  $ab('addBetPanel').addEventListener('input',e=>{ if(!e.target.closest('.editor')) { abUpdate(); const s=$ab('abHost').querySelector('.eb-stake'); if(s) s.dispatchEvent(new Event('change')); } else setTimeout(()=>{ abUpdate(); const s=$ab('abHost').querySelector('.eb-stake'); if(s && e.target!==s) s.dispatchEvent(new Event('change')); },0); });
+  $ab('addBetPanel').addEventListener('change',e=>{ if(e.target.closest('.editor')) setTimeout(abUpdate,0); });
+  let loaded=false;
+  $ab('addBetPanel').addEventListener('toggle',()=>{ if($ab('addBetPanel').open && !loaded){ loaded=true; abLoadGames().then(()=>{ if(!$ab('abHost').querySelector('.editor')) abOpenEditor(); }); } });
+  new MutationObserver(()=>{
+    if(!$ab('addBetPanel').open || $ab('abHost').querySelector('.editor')) return;
+    if(logged.length>abLogLen){   // saved
+      const L=logged[logged.length-1];
+      L.manual=true; L.srcType='manual';
+      if(abR){ if(abR.projValue!=null) L.proj=abR.projValue; if(abR.team) L.team=abR.team; if(L.snap) L.snap.outlier=!!abR.outlier; }
+      saveLog(); renderLog();
+      $ab('abMsg').innerHTML='<b>Saved:</b> '+esc(L.name)+' — '+esc(betLabel(L))+' · $'+(+L.stake||0).toFixed(2)+' on '+esc(bookLabel(L.book))+(L.net==null?' · <span class="meta">unchecked until the next Load</span>':'');
+      ['abPlayer','abLine','abProj','abCover','abCons'].forEach(id=>$ab(id).value='');
+    }
+    abOpenEditor();
+  }).observe($ab('abHost'),{childList:true});
+})();
 setTimeout(()=>{ renderTodayBar(); autoGradeLog(); },50);
 // v2.71: Paste ▸ / Passphrase ▸ links on the load line
 document.getElementById('pasteLink').addEventListener('click',()=>{ const t=document.querySelector('.tab[data-view="v-board"]'); if(t) t.click(); const pp=document.getElementById('pastePanel'); if(pp){ pp.open=true; pp.scrollIntoView({behavior:'smooth', block:'start'}); } });
