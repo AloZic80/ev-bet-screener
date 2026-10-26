@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v2.81</title>
+<title>0xBeta Screener v2.82</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -587,7 +587,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v2.81</span></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v2.82</span></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1084,7 +1084,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v2.81';
+const SCREENER_VERSION='v2.82';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -2946,7 +2946,7 @@ function renderLog(){
       tb.appendChild(tr); return;
     }
     tr.innerHTML=
-      '<td class="meta" style="white-space:nowrap">'+esc(b.date)+'</td>'+
+      '<td class="meta" style="white-space:nowrap">'+esc(b.date)+playedHtml(b)+'</td>'+
       '<td><div class="pick">'+esc(b.name)+'</div><div class="meta">'+esc(b.betnow||b.market)+'</div>'+
       '<div class="meta">'+(bookLogo(b.book)?logoTag(b.book,'sm')+' ':'')+'<span class="book">'+esc(bookLabel(b.book))+'</span></div></td>'+
       '<td><span class="sport s-'+esc(b.sport)+'">'+esc(b.sport)+'</span></td>'+
@@ -3676,24 +3676,44 @@ async function fetchScoreboardDay(sport, day){   // day = 'YYYY-MM-DD' (CT)
   return evs;
 }
 function dayPlus(day, n){ const d=new Date(day+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
+function loggedAtOf(b){   // when the bet was saved (ms)
+  const t=Date.parse(b.snap&&b.snap.at); if(!isNaN(t)) return t;
+  const m=String(b.id||'').match(/^b(\d{12,})/); if(m) return +m[1];
+  return b.date ? Date.parse(b.date+'T00:00:00-05:00') : NaN;
+}
+/* v2.82: a game can only be this bet's if it started no more than 4 hours before you saved the bet
+   (live bets are fine; yesterday's game between the same teams, or yesterday's box score for the
+   same player, is not). With a saved start time, only that game day is searched. */
+function evOkFor(b, ev){
+  const t=Date.parse(ev&&ev.date), at=loggedAtOf(b);
+  if(isNaN(t) || isNaN(at)) return true;
+  return t >= at-4*3600e3;
+}
 async function findBetGame(b){
   const today=ctDay(Date.now()), gl=GL_KINDS.test(b.kind||'');
-  const base=[gameDayOf(b), b.date].filter(Boolean);
-  const days=[...new Set([].concat(...base.map(d=>[d, dayPlus(d,1), dayPlus(d,2), dayPlus(d,-1)])).concat([today]))].filter(d=>d<=today).sort();
+  let days;
+  if(b.start && !isNaN(Date.parse(b.start))) days=[gameDayOf(b)];
+  else { const from=b.date||today; days=[from, dayPlus(from,1), dayPlus(from,2), today].filter((d,i,a)=>d<=today && a.indexOf(d)===i).sort(); }
   for(const d of days){   // 1) by the teams saved with the bet
-    const evs=await fetchScoreboardDay(b.sport, d);
+    const evs=(await fetchScoreboardDay(b.sport, d)).filter(ev=>evOkFor(b,ev));
     const ev=findGame(evs,b.game)||findGameAny(evs,b.game,b.matchup)||(gl?findGameAny(evs,b.name):null);
     if(ev) return ev;
   }
-  if(gl || !b.name) return null;
+  if(gl || !b.name || teamsOf(b.game)) return null;   // teams known but no match: don't guess by player
   for(const d of days){   // 2) no teams saved: the finished game whose box score has this player
-    const evs=(await fetchScoreboardDay(b.sport, d)).filter(ev=>{ const g=gameStatusOf(ev); return g && g.state==='post'; });
+    const evs=(await fetchScoreboardDay(b.sport, d)).filter(ev=>{ const g=gameStatusOf(ev); return g && g.state==='post' && evOkFor(b,ev); });
     for(const ev of evs){
       const box=await fetchBoxscore(b.sport, ev.id);
       if(statForMarket(box, b.name, b.market, b.sport)!==null) return ev;
     }
   }
   return null;
+}
+function playedHtml(b){
+  if(!b.start || isNaN(Date.parse(b.start))) return '';
+  const d=gameDayOf(b), t=new Date(Date.parse(b.start));
+  const lab=t.toLocaleDateString('en-US',{timeZone:'America/Chicago',weekday:'short',month:'numeric',day:'numeric'});
+  return '<div style="font-size:11.5px;'+(d!==b.date?'color:var(--warn)':'')+'" title="day the game is played">played '+esc(lab)+'</div>';
 }
 async function autoGradeLog(){
   if(agBusy || logBusy>0) return; agBusy=true; logBusy++;
@@ -3702,10 +3722,14 @@ async function autoGradeLog(){
     const recent=b=>ESPN_MAP[b.sport] && b.kind!=='parlay' && ((gameDayOf(b)>=cutoff && gameDayOf(b)<=today) || (b.date>=cutoff && b.date<=today));
     const settled=b=>b.sold || b.result==='win' || b.result==='loss' || b.result==='push';
     // v2.81: bets already settled but saved without a start time — only fix their day, don't re-grade
-    const undated=logged.filter(b=>recent(b) && settled(b) && !b.start && !b.noStart);
-    const open=logged.filter(b=>recent(b) && !settled(b));
-    if(!open.length) return;
     let changed=0;
+    const undated=logged.filter(b=>recent(b) && settled(b) && !b.start && !b.noStart);
+    // v2.82: undo matches to a game that started more than 4 h before the bet was saved (v2.80–2.81 bug)
+    logged.forEach(b=>{ if(!recent(b) || b.fix82 || !b.start) return; b.fix82=1;
+      const t=Date.parse(b.start), at=loggedAtOf(b);
+      if(!isNaN(t) && !isNaN(at) && t<at-4*3600e3 && b.date && ctDay(t)<b.date){ delete b.start; delete b.noStart; if(!b.sold && b.autoRes!==false) delete b.result; changed++; } });
+    const open=logged.filter(b=>recent(b) && !settled(b));
+    if(!open.length && !undated.length){ if(changed){ saveLog(); renderLog(); renderPerf(); refresh(); } return; }
     for(const b of undated){
       const gi=gameStatusOf(await findBetGame(b));
       if(gi && gi.startISO){ b.start=gi.startISO; changed++;
