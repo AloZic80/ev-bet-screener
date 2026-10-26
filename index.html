@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v2.87</title>
+<title>0xBeta Screener v2.88</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -324,6 +324,31 @@ table.days tfoot td{border-top:2px solid var(--rule); font-weight:600}
 .ss-ctl{display:flex; align-items:center; gap:6px; margin-bottom:4px}
 .ss-ref{font:inherit; font-size:13px; padding:1px 8px; border:1px solid var(--rule); border-radius:999px; background:transparent; color:var(--accent); cursor:pointer}
 .ss-ref.spin{animation:tbspin .8s linear infinite} .ss-at{font-size:10.5px; color:var(--dim); white-space:nowrap}
+.cal-top{display:flex; align-items:flex-end; gap:22px; flex-wrap:wrap; margin-bottom:10px}
+.cal-big{font-size:22px; font-weight:800} .cal-big.up{color:var(--live)} .cal-big.dn{color:var(--out)}
+.cal-seg{margin-left:auto; display:flex; background:var(--panel-2); border:1px solid var(--rule); border-radius:10px; padding:3px}
+.cal-seg button{font:inherit; font-size:13px; font-weight:700; border:0; background:transparent; color:var(--soft); padding:6px 16px; border-radius:8px; cursor:pointer}
+.cal-seg button.on{background:var(--accent); color:#fff}
+.cal-chips{display:flex; gap:6px; flex-wrap:wrap; margin:0 0 10px}
+.cal-chips button{font:inherit; font-size:12px; padding:3px 10px; border:1px solid var(--rule); border-radius:999px; background:transparent; color:var(--soft); cursor:pointer}
+.cal-chips button.on{border-color:var(--accent); color:var(--ink); font-weight:700}
+.cal-nav{display:flex; align-items:center; justify-content:space-between; margin:4px 0 8px}
+.cal-nav button{font:inherit; font-size:18px; border:0; background:transparent; color:var(--accent); cursor:pointer; padding:0 10px}
+.cal-g{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:6px}
+.cal-dow{font-size:11px; color:var(--dim); text-align:center; font-weight:700}
+.cal-c{min-height:70px; border-radius:11px; background:var(--panel-2); border:1px solid var(--rule); padding:6px 8px; box-sizing:border-box; position:relative; cursor:default}
+.cal-c.has{cursor:pointer} .cal-c.blank{background:transparent; border-color:transparent}
+.cal-c .d{font-size:12px; font-weight:700} .cal-c .t{position:absolute; right:8px; top:6px; font-size:11px; font-weight:800}
+.cal-c .v{text-align:center; font-weight:800; font-size:14.5px; margin-top:6px} .cal-c .n{text-align:center; font-size:10.5px; color:var(--soft)}
+.cal-c.w{background:var(--live-bg); border-color:transparent} .cal-c.w .t,.cal-c.w .v{color:var(--live)}
+.cal-c.l{background:var(--out-bg); border-color:transparent} .cal-c.l .t,.cal-c.l .v{color:var(--out)}
+.cal-c.today{outline:2px solid var(--accent)} .cal-c.fut{opacity:.55}
+.cal-foot{display:flex; gap:18px; flex-wrap:wrap; margin-top:12px; font-size:13px; color:var(--soft)} .cal-foot b{color:var(--ink)}
+.cal-svg{display:block; width:100%; height:auto}
+@media (max-width:640px){ .cal-c{min-height:56px; padding:4px 5px} .cal-c .v{font-size:12px} .cal-c .n{display:none} .cal-seg{margin-left:0} }
+.lv-chip{display:inline-block; margin-top:3px; font-size:11.5px; font-weight:700; padding:1px 7px; border-radius:6px; border:1px solid var(--rule); color:var(--soft); white-space:nowrap}
+.lv-chip.up{color:var(--live); border-color:var(--live)} .lv-chip.dn{color:var(--out); border-color:var(--out)} .lv-chip.na{font-weight:500}
+.log-filter{display:flex; align-items:center; gap:10px; margin:0 0 8px; font-size:13px}
 .tab-n{display:inline-block; min-width:18px; padding:0 5px; margin-left:3px; border-radius:9px; background:var(--live-bg); color:var(--live); font-size:11px; font-weight:800; text-align:center}
 .tab-n:empty{display:none}
 .psrc-note{margin:-4px 0 10px; font-size:13px; color:var(--soft)}
@@ -607,7 +632,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v2.87</span></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v2.88</span></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1052,6 +1077,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 <div class="panel">
   <h2>Log</h2>
+  <div class="log-filter" id="logFilter" style="display:none"></div>
   <div class="scroll"><table>
     <thead><tr>
       <th>Date</th><th>Bet</th><th>Sport</th><th class="num">Your price</th><th class="num">Fair then</th>
@@ -1074,6 +1100,16 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 <!-- ======================= PERFORMANCE ======================= -->
 <div class="view" id="v-perf">
+<div class="panel" id="calPanel">
+  <h2>Results by day <span class="sub">by the day the game is played · settled bets only</span></h2>
+  <div class="cal-top"><div><div class="meta" id="calSub">this month</div><div class="cal-big" id="calToday"></div></div>
+    <div><div class="meta">Month</div><div class="cal-big" id="calMonthTot"></div></div>
+    <div class="cal-seg"><button type="button" data-v="chart">Chart</button><button type="button" data-v="cal" class="on">Calendar</button></div></div>
+  <div class="cal-chips" id="calChips"></div>
+  <div class="cal-nav"><button type="button" id="calPrev">‹</button><b id="calTitle"></b><button type="button" id="calNext">›</button></div>
+  <div id="rbdBody"></div>
+  <div class="cal-foot" id="calFoot"></div>
+</div>
 <div class="stats" id="statCards"></div>
 <div class="panel">
   <h2>Is the model honest?</h2>
@@ -1106,7 +1142,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v2.87';
+const SCREENER_VERSION='v2.88';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -2256,6 +2292,28 @@ function openBetEditor(tr, r, opt){
   }
   ed.querySelectorAll('input,select').forEach(x=>{ x.addEventListener('input',showCheck); x.addEventListener('change',showCheck); });
   bookSel.addEventListener('change',bookDefault); modeSel.addEventListener('change',syncMode); bookDefault(); showCheck();
+  // v2.88: live exchange price for this bet on Kalshi / Polymarket / Novig — EV re-checked at that price
+  { const liveEl=document.createElement('span'); liveEl.className='meta eb-live'; ed.querySelector('.eb-rec').after(liveEl);
+    let tok=0;
+    const runLive=async()=>{
+      const book=bookSel.value, src=LIVE_BOOK(book); liveEl.textContent='';
+      if(!src || opt.edit) return;
+      const d=liveDesc({id:'ed'+(++tok), book, sport:r.sport, kind:r.kind, market:r.market, side:r.side, name:r.name, team:r.team, apiKey:r.apiKey,
+        game:r.game, matchup:r.matchup, start:(r.gameInfo&&r.gameInfo.startISO)||r.start||null});
+      if(!d){ liveEl.textContent='live: game teams unknown'; return; }
+      const my=d.id, myTok=tok; liveEl.textContent='checking live price…';
+      try{
+        const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify([d])), {headers:apiHeaders()});
+        const j=await res.json(), q=j&&j.results&&j.results[my];
+        if(myTok!==tok){ return; } if(!q){ liveEl.textContent=''; return; }
+        if(!q.ok){ liveEl.textContent='live: '+String(q.note||'no match').replace(/^(Kalshi|Polymarket|Novig): /,''); return; }
+        const cfg=cfgRead(), f=feeRate(book,q.price,cfg.fees), fair=r.fairProb;
+        const net=fair!=null?((fair/q.price-1)-f)/(1+f):null;
+        liveEl.innerHTML='<b>'+esc(bookLabel(book))+' now '+esc(fmtOdds(Math.round(americanOf(q.price))))+'</b> ('+(q.price*100).toFixed(1)+'¢)'+
+          (net!=null?' · EV at that price <b class="'+(net>=cfg.eMin?'tb-up':net>0?'':'tb-down')+'">'+(net>=0?'+':'')+(net*100).toFixed(1)+'%</b>':'');
+      }catch(e){ liveEl.textContent='live price unavailable'; }
+    };
+    bookSel.addEventListener('change',runLive); runLive(); }
   ed.querySelector('.eb-cancel').addEventListener('click',()=>ed.remove());
   const saveBtn=ed.querySelector('.eb-save');
   saveBtn.addEventListener('click',()=>{
@@ -2958,7 +3016,10 @@ function resultBadge(b){
 function renderLog(){
   const tb=document.getElementById('logBody'), empty=document.getElementById('logEmpty');
   tb.innerHTML='';
+  { const lf=document.getElementById('logFilter'); if(lf){ lf.style.display=logDayFilter?'flex':'none';
+    if(logDayFilter) lf.innerHTML='<span>Showing bets played <b>'+esc(new Date(logDayFilter+'T12:00:00Z').toLocaleDateString('en-US',{weekday:'short',month:'numeric',day:'numeric',timeZone:'UTC'}))+'</b></span><button type="button" class="ghost sm" id="logFilterOff">show all</button>'; } }
   logged.forEach((b,i)=>{
+    if(logDayFilter && gameDayOf(b)!==logDayFilter) return;   // v2.88: from the calendar
     const c=clv(b);
     const tr=document.createElement('tr');
     if(b.kind==='parlay'){   // v2.73
@@ -2980,7 +3041,7 @@ function renderLog(){
     }
     tr.innerHTML=
       '<td class="meta" style="white-space:nowrap">'+esc(b.date)+playedHtml(b)+'</td>'+
-      '<td><div class="pick">'+esc(b.name)+'</div><div class="meta" style="color:var(--ink)" title="'+esc(b.betnow||'')+'">'+esc(betLabel(b))+' <span class="meta">'+esc(fmtOdds(b.odds))+'</span></div>'+srcTagHtml(b)+
+      '<td><div class="pick">'+esc(b.name)+'</div><div class="meta" style="color:var(--ink)" title="'+esc(b.betnow||'')+'">'+esc(betLabel(b))+' <span class="meta">'+esc(fmtOdds(b.odds))+'</span></div>'+srcTagHtml(b)+liveChipHtml(b)+
       '<div class="meta">'+(bookLogo(b.book)?logoTag(b.book,'sm')+' ':'')+'<span class="book">'+esc(bookLabel(b.book))+'</span></div></td>'+
       '<td><span class="sport s-'+esc(b.sport)+'">'+esc(b.sport)+'</span></td>'+
       '<td class="num">'+esc(fmtOdds(b.odds))+'</td>'+
@@ -2991,6 +3052,7 @@ function renderLog(){
       '<td class="num"><input class="close-in" data-i="'+i+'" value="'+esc(b.closing)+'" placeholder="e.g. +105" title="Closing price for the same side at the same line">'+
         (b.closingSnap&&b.closingSnap.price ? '<div class="meta">market no-vig · '+new Date(b.closingSnap.at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</div>'
          : b.closingSnap&&b.closingSnap.note ? '<div class="meta">'+esc(b.closingSnap.note)+'</div>'
+         : b.closing && /^live:/.test(b.closingSource||'') ? '<div class="meta">'+esc({'live:kalshi':'Kalshi','live:poly':'Polymarket','live:novig':'Novig'}[b.closingSource]||'exchange')+' at kickoff</div>'
          : b.closing ? '<div class="meta">typed by you</div>' : '')+'</td>'+
       '<td class="num">'+(c===null?'—':'<span class="net '+(c>0?'up':'down')+'" style="font-size:17px">'+pct(c)+'</span>')+'</td>'+
       '<td style="white-space:nowrap">'+(b.edits&&b.edits.length?'<span class="meta" title="'+esc(b.edits.map(e=>new Date(e.at).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'})+': was '+(e.before.odds||'')+' $'+(+e.before.stake||0).toFixed(2)+' '+(e.before.book||'')).join('\n'))+'">edited</span> ':'')+
@@ -3671,7 +3733,7 @@ async function renderLive(force){
         '<div class="lg-bets">YOUR BETS ON '+esc(nm)+' · '+g.bets.length+' · $'+tot.toFixed(2)+'</div>'+
         g.bets.map(b=>{
           const v=liveStatus(b, ev, g.box), i=logged.indexOf(b), pay=betPayout(b), ep=espnBetProb(b, g), bid=esc(String(b.id||('i'+i)));
-          return '<div class="lbet"><div class="who"><b>'+esc(b.name)+'</b><span class="lbl">'+esc(betLabel(b))+'</span><span class="meta">'+esc(fmtOdds(b.odds))+' · '+esc(bookLabel(b.book))+' · $'+(+b.stake||0).toFixed(2)+'</span></div>'+
+          return '<div class="lbet"><div class="who"><b>'+esc(b.name)+'</b><span class="lbl">'+esc(betLabel(b))+'</span><span class="meta">'+esc(fmtOdds(b.odds))+' · '+esc(bookLabel(b.book))+' · $'+(+b.stake||0).toFixed(2)+'</span>'+liveChipHtml(b)+'</div>'+
             '<div class="lstat"><span class="lst '+v.cls+'">'+esc(v.text)+'</span>'+liveBarHtml(v, unitShort(b))+(ep?'<span class="lespn">'+esc(ep.label)+': <b>'+(ep.p*100).toFixed(1)+'%</b></span>':'')+'</div>'+
             '<div class="lcash">'+(pay?'<span class="meta">pays $'+pay.toFixed(2)+'</span>':'')+(v.done?'<span class="meta">· decided — nothing to cash out</span>':
               '<label>Cash-out $ <input type="number" step="0.01" min="0" class="lco" data-i="'+i+'" data-id="'+bid+'" data-espn="'+(ep&&ep.same?ep.p:'')+'" placeholder="offer"></label><span class="meta lco-out"></span>'+
@@ -3756,7 +3818,7 @@ async function espnRefreshNow(btn){   // v2.85: manual ESPN refresh — scores, 
     Object.keys(scoreboardCache).forEach(k=>delete scoreboardCache[k]);
     Object.keys(sbDayCache).forEach(k=>delete sbDayCache[k]);
     try{ await renderStrip(true); }catch(e){}
-    await autoGradeLog();
+    await autoGradeLog(); refreshLivePrices(true);
     try{ const lb=document.getElementById('liveRefresh'); if(lb && document.getElementById('v-live').classList.contains('on')) lb.click(); }catch(e){}
     espnAt=Date.now();
   } finally { espnBusy=false; renderTodayBar(); }
@@ -3956,7 +4018,7 @@ function renderCalibration(){
 }
 
 /* ============ performance ============ */
-function renderPerf(){
+function renderPerf(){ try{ renderCal(); }catch(e){}
   renderCalibration();
   const withClose=logged.filter(b=>clv(b)!==null);
   const cards=document.getElementById('statCards');
@@ -5256,6 +5318,128 @@ function fillManualFromRow(L, r){   // next Load: an unchecked manual bet picks 
     abOpenEditor();
   }).observe($ab('abHost'),{childList:true});
 })();
+
+/* ============ v2.88: results calendar (Performance tab) ============ */
+var calMonth=ctDay(Date.now()).slice(0,7), calView='cal', calBook='All';
+try{ calView=localStorage.getItem('mbev.calView')||'cal'; }catch(e){}
+function calDays(book){
+  const days={};
+  logged.forEach(b=>{ const d=gameDayOf(b); if(!d) return; if(book!=='All' && ribbonBook(b.book)!==book) return;
+    const x=days[d]||(days[d]={n:0,settled:0,profit:0,staked:0,w:0,l:0,p:0,open:0}); x.n++; x.staked+=+b.stake||0;
+    const pr=betProfit(b); if(pr==null){ x.open++; return; } x.settled++; x.profit+=pr;
+    if(!b.sold){ if(b.result==='win') x.w++; else if(b.result==='loss') x.l++; else if(b.result==='push') x.p++; } });
+  return days;
+}
+function renderCal(){
+  const body=document.getElementById('rbdBody'); if(!body || !calMonth) return;
+  const usd=v=>(v>0?'+':v<0?'−':'')+'$'+Math.abs(v).toFixed(2);
+  const books=['All'].concat(RIBBON_BOOKS).concat([...new Set(logged.map(b=>ribbonBook(b.book)))].filter(k=>k && !RIBBON_BOOKS.includes(k)));
+  document.getElementById('calChips').innerHTML=books.map(k=>'<button type="button" data-b="'+esc(k)+'" class="'+(k===calBook?'on':'')+'">'+esc(k==='All'?'All books':k)+'</button>').join('');
+  const days=calDays(calBook), today=ctDay(Date.now());
+  const [Y,M]=calMonth.split('-').map(Number), first=new Date(Date.UTC(Y,M-1,1)), nd=new Date(Date.UTC(Y,M,0)).getUTCDate();
+  document.getElementById('calTitle').textContent=first.toLocaleDateString('en-US',{month:'long',year:'numeric',timeZone:'UTC'});
+  const inMonth=Object.keys(days).filter(d=>d.slice(0,7)===calMonth).sort();
+  const tot=inMonth.reduce((a,d)=>{ const x=days[d]; a.p+=x.profit; a.n+=x.n; a.st+=x.staked; a.w+=x.w; a.l+=x.l; a.pu+=x.p; if(x.settled){ if(x.profit>0.005)a.up++; else if(x.profit<-0.005)a.dn++; } a.best=Math.max(a.best,x.settled?x.profit:-Infinity); a.worst=Math.min(a.worst,x.settled?x.profit:Infinity); return a; },{p:0,n:0,st:0,w:0,l:0,pu:0,up:0,dn:0,best:-Infinity,worst:Infinity});
+  const td=days[today];
+  const tEl=document.getElementById('calToday'); tEl.className='cal-big '+(td&&td.profit>0.005?'up':td&&td.profit<-0.005?'dn':''); tEl.innerHTML=(td&&td.settled?usd(td.profit):'$0.00')+' <span class="meta">today</span>';
+  const mEl=document.getElementById('calMonthTot'); mEl.className='cal-big '+(tot.p>0.005?'up':tot.p<-0.005?'dn':''); mEl.textContent=usd(tot.p);
+  document.getElementById('calSub').textContent=(calBook==='All'?'all books':calBook);
+  document.getElementById('calFoot').innerHTML='<span>Days: <b>'+tot.up+' up · '+tot.dn+' down</b></span><span>Bets: <b>'+tot.n+'</b> · W–L'+(tot.pu?'–P':'')+' <b>'+tot.w+'–'+tot.l+(tot.pu?'–'+tot.pu:'')+'</b></span><span>Staked <b>$'+tot.st.toFixed(2)+'</b></span>'+
+    (isFinite(tot.best)?'<span>Best day <b style="color:var(--live)">'+usd(tot.best)+'</b> · worst <b style="color:var(--out)">'+usd(tot.worst)+'</b></span>':'');
+  document.querySelectorAll('.cal-seg button').forEach(b=>b.classList.toggle('on',b.dataset.v===calView));
+  if(calView==='chart'){
+    let run=0; const pts=[]; for(let d=1; d<=nd; d++){ const k=calMonth+'-'+String(d).padStart(2,'0'); const x=days[k]; const v=x&&x.settled?x.profit:0; run+=v; pts.push({d,v,run,has:!!(x&&x.settled),fut:k>today}); }
+    const W=700,H=220,pad=34, maxA=Math.max(1,...pts.map(p=>Math.abs(p.run)),...pts.map(p=>Math.abs(p.v)));
+    const X=d=>pad+(d-1)*(W-pad-10)/(nd-1), Yv=v=>H/2-v/maxA*(H/2-18);
+    const bars=pts.filter(p=>p.has).map(p=>'<rect x="'+(X(p.d)-5)+'" y="'+Math.min(Yv(p.v),H/2)+'" width="10" height="'+Math.abs(Yv(p.v)-H/2)+'" rx="2" fill="'+(p.v>=0?'var(--live)':'var(--out)')+'" opacity=".45"/>').join('');
+    const line=pts.filter(p=>!p.fut).map((p,i)=>(i?'L':'M')+X(p.d).toFixed(1)+' '+Yv(p.run).toFixed(1)).join(' ');
+    const last=pts.filter(p=>!p.fut).pop();
+    body.innerHTML='<svg class="cal-svg" viewBox="0 0 '+W+' '+H+'"><line x1="'+pad+'" x2="'+(W-10)+'" y1="'+H/2+'" y2="'+H/2+'" stroke="var(--rule)"/>'+
+      '<text x="4" y="'+(H/2+4)+'" font-size="11" fill="var(--dim)">$0</text><text x="4" y="22" font-size="11" fill="var(--dim)">+$'+maxA.toFixed(0)+'</text><text x="4" y="'+(H-10)+'" font-size="11" fill="var(--dim)">−$'+maxA.toFixed(0)+'</text>'+
+      bars+'<path d="'+line+'" fill="none" stroke="var(--accent)" stroke-width="2.4"/>'+(last?'<circle cx="'+X(last.d)+'" cy="'+Yv(last.run)+'" r="4" fill="var(--accent)"/>':'')+
+      [1,8,15,22,nd].map(d=>'<text x="'+X(d)+'" y="'+(H-2)+'" font-size="10.5" text-anchor="middle" fill="var(--dim)">'+d+'</text>').join('')+'</svg>'+
+      '<div class="meta" style="margin-top:4px">Line = running profit for the month · bars = each day</div>';
+    return;
+  }
+  const dows=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let h='<div class="cal-g">'+dows.map(d=>'<div class="cal-dow">'+d+'</div>').join('');
+  for(let i=0;i<first.getUTCDay();i++) h+='<div class="cal-c blank"></div>';
+  for(let d=1; d<=nd; d++){
+    const k=calMonth+'-'+String(d).padStart(2,'0'), x=days[k];
+    let cls='cal-c', t='', v='--', n='';
+    if(x){ cls+=' has';
+      if(x.settled){ v=usd(x.profit); if(x.profit>0.005){cls+=' w';t='W';} else if(x.profit<-0.005){cls+=' l';t='L';} }
+      else v='⏳';
+      n=x.n+' bet'+(x.n===1?'':'s')+(x.open&&x.settled?' · '+x.open+' open':x.open&&!x.settled?' pending':''); }
+    if(k===today) cls+=' today'; if(k>today) cls+=' fut';
+    h+='<div class="'+cls+'" data-day="'+k+'" title="'+(x?esc(x.n+' bets · $'+x.staked.toFixed(2)+' staked'+(x.settled?' · '+x.w+'–'+x.l:'')):'')+'"><span class="d">'+d+'</span><span class="t">'+t+'</span><div class="v">'+v+'</div><div class="n">'+n+'</div></div>';
+  }
+  body.innerHTML=h+'</div>';
+}
+var logDayFilter=null;
+(function(){
+  const P=document.getElementById('calPanel'); if(!P) return;
+  P.addEventListener('click',e=>{
+    const sb=e.target.closest('.cal-seg button'); if(sb){ calView=sb.dataset.v; try{ localStorage.setItem('mbev.calView',calView); }catch(_){} renderCal(); return; }
+    const cb=e.target.closest('.cal-chips button'); if(cb){ calBook=cb.dataset.b; renderCal(); return; }
+    if(e.target.closest('#calPrev')||e.target.closest('#calNext')){ const [y,m]=calMonth.split('-').map(Number), d=new Date(Date.UTC(y,m-1+(e.target.closest('#calPrev')?-1:1),1)); calMonth=d.toISOString().slice(0,7); renderCal(); return; }
+    const c=e.target.closest('.cal-c.has'); if(c){ logDayFilter=c.dataset.day; renderLog(); const t=document.querySelector('.tab[data-view="v-log"]'); if(t) t.click(); }
+  });
+  const pt=document.querySelector('.tab[data-view="v-perf"]'); if(pt) pt.addEventListener('click',renderCal);
+  setTimeout(renderCal,60);
+})();
+
+/* ============ v2.88: live exchange prices (Kalshi · Polymarket US · Novig) via the Worker ============ */
+function LIVE_BOOK(bk){ const k=String(bk||'').toLowerCase(); return /kalshi/.test(k)?'kalshi':/polymarket/.test(k)?'poly':/novig/.test(k)?'novig':null; }
+var liveQuotes={}, liveAt=0, liveBusy2=false;
+function liveDesc(b){
+  const src=LIVE_BOOK(b.book); if(!src || b.kind==='parlay') return null;
+  const mk=String(b.market||'').match(/^([+-]?[\d.]+)\s+(.*)$/), line=mk?parseFloat(mk[1]):null, stat=mk?mk[2]:String(b.market||'');
+  const t=teamsOf(b.game)||teamsOf(b.matchup)||teamsOf(b.name); if(!t) return null;
+  const kind=GL_KINDS.test(b.kind||'')?b.kind:'prop';
+  return { id:String(b.id||b.key), book:src, sport:b.sport, kind, name:b.name, stat, line, side:(b.side||sideOf(b)||''), team:kind==='spread'||kind==='moneyline'?(glTeam(b)||normAbbr(b.team||b.name)):null,
+    away:t[0], home:t[1], start:b.start||null };
+}
+function liveTargets(){
+  const now=Date.now();
+  return logged.filter(b=>!b.sold && b.kind!=='parlay' && !(b.result==='win'||b.result==='loss'||b.result==='push') && LIVE_BOOK(b.book) &&
+    (()=>{ const t=Date.parse(b.start); return isNaN(t) ? gameDayOf(b)>=ctDay(now) : t > now-5*3600e3 && t < now+72*3600e3; })());
+}
+async function refreshLivePrices(force){
+  if(liveBusy2) return; const list=liveTargets().map(b=>[b,liveDesc(b)]).filter(x=>x[1]); if(!list.length) return;
+  if(!force && Date.now()-liveAt<55000) return;
+  liveBusy2=true;
+  try{
+    for(let i=0;i<list.length;i+=30){
+      const chunk=list.slice(i,i+30);
+      const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(chunk.map(x=>x[1]))), {headers:apiHeaders()});
+      if(!res.ok) break;
+      const data=await res.json(); const R=(data&&data.results)||{};
+      chunk.forEach(([b,d])=>{ const r=R[d.id]; if(!r) return; liveQuotes[d.id]=r;
+        if(r.ok){ const t=Date.parse(b.start);
+          b.liveLast={p:r.price, at:r.at||new Date().toISOString(), src:r.src};
+          if(!isNaN(t) && Date.now()<t && t-Date.now()<45*60e3) b.closeLive={p:r.price, at:r.at||new Date().toISOString(), src:r.src};   // last price before kickoff
+        } });
+    }
+    liveAt=Date.now();
+    // kickoff passed → the last pre-game exchange price becomes the closing line (unless you typed one)
+    let changed=false;
+    logged.forEach(b=>{ const t=Date.parse(b.start); if(b.closeLive && !b.closing && !isNaN(t) && Date.now()>=t){ b.closing=fmtOdds(Math.round(americanOf(b.closeLive.p))); b.closingSource='live:'+b.closeLive.src; changed=true; } });
+    if(changed || true) saveLog();
+    renderLog(); if(document.getElementById('v-live').classList.contains('on')) renderLive(false);
+  }catch(e){} finally{ liveBusy2=false; }
+}
+function liveChipHtml(b){
+  const d=liveDesc(b); if(!d) return '';
+  const r=(liveQuotes||{})[d.id]; if(!r) return '';
+  if(!r.ok) return '<span class="lv-chip na" title="'+esc(r.note||'')+'">live: '+esc(String(r.note||'no match').replace(/^(Kalshi|Polymarket|Novig): /,'').slice(0,60))+'</span>';
+  const mine=toProb(b.odds), now=r.price, am=fmtOdds(Math.round(americanOf(now)));
+  const better=mine!=null && now>mine+0.002, worse=mine!=null && now<mine-0.002;   // costs more now → you got the better price
+  const name={kalshi:'Kalshi',poly:'Polymarket',novig:'Novig'}[r.src]||'';
+  return '<span class="lv-chip '+(better?'up':worse?'dn':'')+'" title="'+esc(name+' now: '+(r.title||'')+' · '+(now*100).toFixed(1)+'¢'+(r.bid!=null?' (bid '+(r.bid*100).toFixed(1)+'¢)':'')+' · updated '+new Date(r.at||Date.now()).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'}))+'">now '+esc(am)+' · you '+esc(fmtOdds(b.odds))+(better?' ▲':worse?' ▼':'')+'</span>';
+}
+setInterval(()=>{ if(document.visibilityState==='visible') refreshLivePrices(false); }, 15000);
+setTimeout(()=>refreshLivePrices(true), 1500);
 setTimeout(()=>{ renderTodayBar(); autoGradeLog(); },50);
 // v2.71: Paste ▸ / Passphrase ▸ links on the load line
 document.getElementById('pasteLink').addEventListener('click',()=>{ const t=document.querySelector('.tab[data-view="v-board"]'); if(t) t.click(); const pp=document.getElementById('pastePanel'); if(pp){ pp.open=true; pp.scrollIntoView({behavior:'smooth', block:'start'}); } });
@@ -5275,9 +5459,10 @@ setTimeout(()=>{
     if(Date.now()-ssLastRun >= (box&&box.dataset.live ? sec*1000 : 300000)-300) renderStrip(true); }, 1000);
 },0);
 document.querySelector('.tab[data-view="v-live"]').addEventListener('click',()=>renderLive(true));
+document.addEventListener('click',e=>{ if(e.target.closest('#logFilterOff')){ logDayFilter=null; renderLog(); } });
 document.getElementById('ssRef').addEventListener('click',async e=>{   // v2.87: manual refresh for the scores strip
   const b=e.currentTarget; if(b.disabled) return; b.disabled=true; b.classList.add('spin');
-  try{ ssBusy=false; await renderStrip(true); await autoGradeLog(); renderTodayBar(); } finally { b.disabled=false; b.classList.remove('spin'); }
+  try{ ssBusy=false; await renderStrip(true); await autoGradeLog(); renderTodayBar(); refreshLivePrices(true); } finally { b.disabled=false; b.classList.remove('spin'); }
 });
 (function(){ const sel=document.getElementById('liveEvery');   // v2.68: Off / 15 / 30 / 60 s, default 15
   let v='15'; try{ const s=localStorage.getItem('mbev.liveEvery'); if(['0','15','30','60'].includes(s)) v=s; }catch(e){}
