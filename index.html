@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v2.85</title>
+<title>0xBeta Screener v2.87</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -319,13 +319,31 @@ table.days tfoot td{border-top:2px solid var(--rule); font-weight:600}
 .goalbar{height:4px; width:64px; margin:4px 0 0 auto; border-radius:3px; background:var(--rule)}
 .goalbar i{display:block; height:100%; border-radius:3px; background:var(--accent)}
 .goalbar i.hit{background:var(--live)}
+.src-tag{display:inline-block; margin-top:2px; padding:0 6px; border:1px solid var(--rule); border-radius:6px; font-size:10.5px; font-weight:700; letter-spacing:.03em; color:var(--soft)}
+.ss-sel{flex-direction:column; align-items:flex-start; justify-content:center}
+.ss-ctl{display:flex; align-items:center; gap:6px; margin-bottom:4px}
+.ss-ref{font:inherit; font-size:13px; padding:1px 8px; border:1px solid var(--rule); border-radius:999px; background:transparent; color:var(--accent); cursor:pointer}
+.ss-ref.spin{animation:tbspin .8s linear infinite} .ss-at{font-size:10.5px; color:var(--dim); white-space:nowrap}
+.tab-n{display:inline-block; min-width:18px; padding:0 5px; margin-left:3px; border-radius:9px; background:var(--live-bg); color:var(--live); font-size:11px; font-weight:800; text-align:center}
+.tab-n:empty{display:none}
+.psrc-note{margin:-4px 0 10px; font-size:13px; color:var(--soft)}
 .modes{display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:0 0 10px}
 .modes button{font:inherit; font-size:13px; font-weight:600; padding:6px 12px; border-radius:999px; border:1px solid var(--rule); background:var(--panel); color:var(--soft); cursor:pointer}
 .modes button.on{border-color:var(--jetta); background:var(--jetta); color:#fff}
 .modes .contadora{font-size:12.5px; color:var(--soft); margin-left:6px}
 .modes .contadora b{color:var(--ink)}
 /* v2.66 Live tab */
-.lgame{border:1px solid var(--rule); border-radius:10px; margin:0 0 12px; overflow:hidden}
+.lgame{border:1.5px solid var(--rule); border-left:6px solid var(--soft); border-radius:12px; margin:0 0 26px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.lgame.st-in{border-left-color:var(--neon)} .lgame.st-pre{border-left-color:var(--accent)} .lgame.st-post{border-left-color:var(--dim)}
+.lgame .lbet{border-top:1px solid var(--rule)}
+.lg-bets{padding:6px 14px; font-size:11px; font-weight:800; letter-spacing:.08em; color:var(--soft); background:var(--panel-2); border-top:1px solid var(--rule)}
+.lg-end{padding:6px 14px; font-size:11.5px; color:var(--dim); background:var(--panel-2); border-top:1px solid var(--rule); text-align:right}
+.lg-ref{font:inherit; font-size:13px; padding:2px 9px; border:1px solid var(--rule); border-radius:999px; background:var(--panel); color:var(--accent); cursor:pointer}
+.lbox-top>.meta+.lg-ref{margin-left:auto} .lbs-tog+.lg-ref{margin-left:6px}
+.lg-ref.spin{animation:tbspin .8s linear infinite}
+.live-bar{position:sticky; top:0; z-index:5; background:var(--panel); padding:8px 0; border-bottom:1px solid var(--rule)}
+.bb-court{display:block; width:100%; height:auto}
+.bb-banner{text-align:center; font-weight:800; letter-spacing:.08em; font-size:15px; margin:0 0 2px}
 .lgame-h{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:baseline; padding:10px 14px; background:var(--panel-2); font-weight:700}
 .lgame-h .clock{font-weight:600; color:var(--soft)} .lgame-h .clock.live{color:var(--neon)}
 .lbet{display:grid; grid-template-columns:minmax(180px,1.3fr) minmax(220px,2fr) minmax(200px,1.2fr); gap:6px 14px; padding:10px 14px; border-top:1px solid var(--rule); align-items:center}
@@ -589,7 +607,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v2.85</span></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v2.87</span></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -644,7 +662,8 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 </div>
 
 <div class="tabs">
-  <button class="tab on" data-view="v-board">Board</button>
+  <button class="tab on" data-view="v-board" data-src="api">Board</button>
+  <button class="tab" data-view="v-board" data-src="paste">Pasted <span class="tab-n" id="pasteTabN"></span></button>
   <button class="tab" data-view="v-money">Moneylines</button>
   <button class="tab" data-view="v-log">Bet log</button>
   <button class="tab" data-view="v-perf">Performance</button>
@@ -654,7 +673,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 <!-- v2.71: ESPN score strip (free — no BettingPros calls) -->
 <div class="scorestrip" id="scoreStrip">
-  <div class="ss-sel"><select id="ssSport" title="Scores for…"><option>NFL</option><option>NCAAF</option><option>NBA</option><option>NCAAB</option><option>WNBA</option><option>NHL</option><option>MLB</option></select></div>
+  <div class="ss-sel"><div class="ss-ctl"><button type="button" class="ss-ref" id="ssRef" title="Refresh scores from ESPN now (no BettingPros calls)">⟳</button><span class="ss-at" id="ssAt"></span></div><select id="ssSport" title="Scores for…"><option>NFL</option><option>NCAAF</option><option>NBA</option><option>NCAAB</option><option>WNBA</option><option>NHL</option><option>MLB</option></select></div>
   <div class="ss-games" id="ssGames"><div class="ss-empty">Loading scores…</div></div>
 </div>
 
@@ -707,7 +726,8 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 </details>
 
 <div class="panel board-panel">
-  <h2>The board</h2>
+  <h2 id="boardTitle">The board</h2>
+  <div class="psrc-note" id="pasteNote" style="display:none"></div>
   <div class="modes" id="modeBar" role="group" aria-label="Betting mode">
     <button type="button" data-mode="safe">🛡️ Safe</button><button type="button" data-mode="lucky">🍀 Feeling Lucky</button><button type="button" data-mode="clair">🔮 Clairvoyant</button>
     <span class="contadora" id="contadora"></span>
@@ -786,8 +806,8 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="view" id="v-live">
 <div class="panel">
   <h2>Live <span class="sub">your open bets, with ESPN's live scores and stats — uses no BettingPros API calls</span></h2>
-  <div class="row" style="margin-top:0;align-items:center;gap:12px;flex-wrap:wrap">
-    <button class="ghost" id="liveRefresh">Refresh</button>
+  <div class="row live-bar" style="margin-top:0;align-items:center;gap:12px;flex-wrap:wrap">
+    <button class="ghost" id="liveRefresh">⟳ Refresh</button>
     <label class="bar-check" title="Only while this tab is open and showing — ESPN only, no BettingPros calls">Auto-refresh <select id="liveEvery"><option value="0">Off</option><option value="15">every 15 s</option><option value="30">every 30 s</option><option value="60">every 60 s</option></select></label>
     <span class="meta" id="liveStamp"></span>
   </div>
@@ -1086,7 +1106,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v2.85';
+const SCREENER_VERSION='v2.87';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -1731,8 +1751,17 @@ function render(rows,cfg){
   const passing=rows.filter(r=>r.pass);
   let shown=showRejects?rows.slice():passing.slice();
   const isStarted=r=>r.gameInfo && (r.gameInfo.state==='in'||r.gameInfo.state==='post');
-  if(cfg.hideStarted) shown=shown.filter(r=>!isStarted(r));
-  if(filterSport) shown=shown.filter(r=>r.sport===filterSport);
+  // v2.86: two boards from one audit — ALREADY BET, one-per-player, game caps and the daily max are shared
+  const pv=boardSrc==='paste';
+  shown=shown.filter(r=>pv?isPasteRow(r):!isPasteRow(r));
+  { const n=passing.filter(isPasteRow).length, el=document.getElementById('pasteTabN'); if(el) el.textContent=n?n:'';
+    const t=document.getElementById('boardTitle'); if(t) t.textContent=pv?'Pasted board':'The board';
+    const pn=document.getElementById('pasteNote');
+    if(pn){ pn.style.display=pv?'block':'none';
+      if(pv) pn.innerHTML=rows.some(isPasteRow) ? 'From your paste'+(pasteAt?' at '+new Date(pasteAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+' · '+n+' pass every screen · checked against everything you have bet (already bet, same player, game caps, daily max) · <b>no API calls</b>'
+        : 'Nothing pasted yet. Open <b>Paste a board</b> on the Board tab, paste the BettingPros page and press Run board.'; } }
+  if(!pv && cfg.hideStarted) shown=shown.filter(r=>!isStarted(r));   // pasted board shows everything that passed
+  if(!pv && filterSport) shown=shown.filter(r=>r.sport===filterSport);
   shown=shown.filter(r=>!r.hiddenDup);   // v2.64: same bet from the API and the Market EV page — show one
   shown=shown.filter(passesSearch);
   // v2.62: Settings-tab filters hide rows — say so above the table
@@ -1747,9 +1776,9 @@ function render(rows,cfg){
       document.getElementById('chipClear').addEventListener('click', clearSettingsFilters);
     } else { el.style.display='none'; el.innerHTML=''; }
   }
-  if(filterCorrOnly) shown=shown.filter(r=>r.corr||r.prior);
+  if(!pv && filterCorrOnly) shown=shown.filter(r=>r.corr||r.prior);
   const swc=swCfg();
-  if(swc.only) shown=shown.filter(r=>isSweet(r,swc));
+  if(!pv && swc.only) shown=shown.filter(r=>isSweet(r,swc));
   // v2.62: three groups — bets to place, bets you already have, then everything to skip.
   // Your sort (or a column-header click) applies inside each group.
   const grpOf=x=> x.prior ? 1 : isStarted(x) ? 3 : (x.pass && x.stake>0 && !x.removed) ? 0 : 2;
@@ -2831,7 +2860,7 @@ function betStillOpen(b){
   const d=(Date.parse(slate)-Date.parse(b.date))/86400e3;
   return d>=0 && d<=1;
 }
-function onBoard(b){ return b.date===document.getElementById('slate').value || betStillOpen(b); }
+function onBoard(b){ const sl=document.getElementById('slate').value; return b.date===sl || gameDayOf(b)===sl || betStillOpen(b); }   // v2.86: game day too
 /* v2.61: bets you removed / cancelled — kept for the record (and any money lost cancelling) */
 let removedBets=[];
 function loadRemoved(){ try{ removedBets=JSON.parse(localStorage.getItem('mbev.removed')||'[]'); }catch(e){ removedBets=[]; } }
@@ -2951,7 +2980,7 @@ function renderLog(){
     }
     tr.innerHTML=
       '<td class="meta" style="white-space:nowrap">'+esc(b.date)+playedHtml(b)+'</td>'+
-      '<td><div class="pick">'+esc(b.name)+'</div><div class="meta" style="color:var(--ink)" title="'+esc(b.betnow||'')+'">'+esc(betLabel(b))+' <span class="meta">'+esc(fmtOdds(b.odds))+'</span></div>'+
+      '<td><div class="pick">'+esc(b.name)+'</div><div class="meta" style="color:var(--ink)" title="'+esc(b.betnow||'')+'">'+esc(betLabel(b))+' <span class="meta">'+esc(fmtOdds(b.odds))+'</span></div>'+srcTagHtml(b)+
       '<div class="meta">'+(bookLogo(b.book)?logoTag(b.book,'sm')+' ':'')+'<span class="book">'+esc(bookLabel(b.book))+'</span></div></td>'+
       '<td><span class="sport s-'+esc(b.sport)+'">'+esc(b.sport)+'</span></td>'+
       '<td class="num">'+esc(fmtOdds(b.odds))+'</td>'+
@@ -3243,7 +3272,7 @@ function liveGameHead(ev, g){
   if(g.sport==='MLB' && field) side='';   // the diamond shows the count, outs and runners
   const tog=st.state!=='pre' ? '<button class="lbs-tog" data-key="'+esc(key)+'">Box score '+(liveOpen.has(key)?'▾':'▸')+'</button>' : '';
   return '<div class="lgame-h lbox">'+
-    '<div class="lbox-top"><span class="clock'+(live?' live':'')+'">'+(live?'LIVE · ':'')+esc(clock)+'</span>'+(tv?'<span class="tv">📺 '+esc(tv)+'</span>':'')+'<span class="meta">'+esc(g.sport)+'</span>'+tog+'</div>'+
+    '<div class="lbox-top"><span class="clock'+(live?' live':'')+'">'+(live?'LIVE · ':'')+esc(clock)+'</span>'+(tv?'<span class="tv">📺 '+esc(tv)+'</span>':'')+'<span class="meta">'+esc(g.sport)+'</span>'+tog+'<button class="lg-ref" title="Refresh from ESPN now">⟳</button></div>'+
     '<div class="lbox-main"><div class="lteams">'+row(a)+row(h)+'</div>'+(side?'<div class="lsit">'+side+'</div>':'')+field+'</div></div>';
 }
 /* ============ v2.68: field strip, diamond, ESPN probabilities, box score ============
@@ -3371,11 +3400,96 @@ function mlbDiamondHtml(sit){
   const who=[nm(sit.batter)&&'AB: '+nm(sit.batter), nm(sit.pitcher)&&'P: '+nm(sit.pitcher)].filter(Boolean).join(' · ');
   return '<div class="lmlb">'+svg+'<div><div class="lmlb-count">'+(count?'<b>'+esc(count)+'</b> · ':'')+'<span>'+dots+'</span>'+outs+' out'+(outs==1?'':'s')+'</div>'+(who?'<div class="meta">'+esc(who)+'</div>':'')+'</div></div>';
 }
+/* v2.87: basketball court, ESPN-style — crowd band, court slab, tan lanes with hash marks,
+   restricted arc, half-dashed free-throw circle, 3D stanchions with backboard, rim and net */
+function bbCourtHtml(ev, g, sit, lp){
+  const comps=compsOf(ev), A=comps.find(c=>c.homeAway==='away'), H=comps.find(c=>c.homeAway==='home');
+  if(!A||!H) return '';
+  const tA=A.team||{}, tH=H.team||{}, aAb=normAbbr(tA.abbreviation), hAb=normAbbr(tH.abbreviation);
+  const col=t=>{ const c=String(t.color||'').replace('#',''); return /^[0-9a-f]{6}$/i.test(c)?'#'+c:'#5d76a9'; };
+  const cA=col(tA), cH=col(tH), logo=teamLogo(g.sport,tH.abbreviation,tH.logo);
+  const W=640, Ht=318, top=140, bot=292, farL=86, farR=554, nearL=18, nearR=622;
+  const P=(x,y)=>{ const f=y/50, L=farL+(nearL-farL)*f, R=farR+(nearR-farR)*f; return [+(L+(x/94)*(R-L)).toFixed(1), +(top+(bot-top)*f).toFixed(1)]; };
+  const pl=pts=>pts.map(p=>P(p[0],p[1]).join(',')).join(' ');
+  const arc=(cx,cy,r,a0,a1,n)=>{ const o=[]; for(let i=0;i<=n;i++){ const a=a0+(a1-a0)*i/n; o.push([cx+r*Math.cos(a), cy+r*Math.sin(a)]); } return o; };
+  const ln='#8a7a63', lw='1.3';
+  const L_=(pts,extra)=>'<polyline points="'+pl(pts)+'" fill="none" stroke="'+ln+'" stroke-width="'+lw+'"'+(extra||'')+'/>';
+  // crowd band
+  let crowd='';
+  const shades=['#c9cdd3','#bfc4cb','#b3b9c1','#d3d6db','#aab0b9'];
+  for(let r=0;r<4;r++) for(let i=0;i<46;i++){ if((i+r*7)%9===0) continue;
+    const x=8+i*13.6+(r%2)*6.8, y=66+r*14; crowd+='<circle cx="'+x.toFixed(1)+'" cy="'+y+'" r="5.2" fill="'+shades[(i*7+r*3)%5]+'"/>'; }
+  const band='<rect x="0" y="0" width="'+W+'" height="'+Ht+'" fill="#dfe2e6"/>'+crowd+
+    '<path d="M0 132 Q0 112 44 112 L'+(W-44)+' 112 Q'+W+' 112 '+W+' 132 L'+W+' '+Ht+' L0 '+Ht+' Z" fill="#f6f7f8"/>';
+  // court slab
+  const [n0x,n0y]=P(0,50), [n1x]=P(94,50);
+  const slab='<polygon points="'+n0x+','+n0y+' '+n1x+','+n0y+' '+n1x+','+(n0y+9)+' '+n0x+','+(n0y+9)+'" fill="#9c8a72"/>';
+  const floor='<polygon points="'+pl([[0,0],[94,0],[94,50],[0,50]])+'" fill="url(#bbw)" stroke="'+ln+'" stroke-width="1.6"/>';
+  // one half (side 0 = left basket at x=0)
+  const half=side=>{
+    const X=x=>side?94-x:x, out=[];
+    // lane (darker wood) 19 ft deep, 16 ft wide
+    out.push('<polygon points="'+pl([[X(0),17],[X(19),17],[X(19),33],[X(0),33]])+'" fill="#000" fill-opacity=".09" stroke="'+ln+'" stroke-width="'+lw+'"/>');
+    // lane hash marks
+    [7,8,11,14].forEach(d=>{ out.push(L_([[X(d),17],[X(d),16.2]])); out.push(L_([[X(d),33],[X(d),33.8]])); });
+    // free-throw circle: solid outside the lane, dashed inside
+    const fx=X(19);
+    out.push(L_(arc(fx,25,6, side?Math.PI/2:-Math.PI/2, side?Math.PI*1.5:Math.PI/2, 30)));
+    out.push(L_(arc(fx,25,6, side?-Math.PI/2:Math.PI/2, side?Math.PI/2:Math.PI*1.5, 30),' stroke-dasharray="4 3"'));
+    // restricted area (4 ft) and basket
+    const bx=X(5.25);
+    out.push(L_(arc(bx,25,4, side?Math.PI/2:-Math.PI/2, side?Math.PI*1.5:Math.PI/2, 24)));
+    // three-point line
+    const ang=Math.asin(22/23.75), xc=5.25+23.75*Math.cos(ang);
+    const a3=arc(bx,25,23.75, side?Math.PI+ang:-ang, side?Math.PI-ang:ang, 48);
+    out.push(L_([[X(0),3],[X(xc),3]].concat(side?a3.reverse().reverse():a3).concat([[X(xc),47],[X(0),47]])));
+    // coaching-box ticks on both sidelines
+    out.push(L_([[X(28),0],[X(28),3]])); out.push(L_([[X(28),50],[X(28),47]]));
+    return out.join(''); };
+  // center court
+  const [cx,cy]=P(47,25), ry=P(47,31)[1]-cy, rx=ry*2.25;
+  const center='<line x1="'+P(47,0)[0]+'" y1="'+P(47,0)[1]+'" x2="'+P(47,50)[0]+'" y2="'+P(47,50)[1]+'" stroke="'+ln+'" stroke-width="'+lw+'"/>'+
+    '<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+rx+'" ry="'+ry+'" fill="#fff" fill-opacity=".85" stroke="'+cH+'" stroke-width="2.4"/>'+
+    '<text x="'+cx+'" y="'+(cy+5)+'" text-anchor="middle" font-size="15" font-weight="800" fill="'+cH+'"'+(logo?' style="visibility:hidden"':'')+'>'+esc(hAb)+'</text>'+
+    (logo?'<image href="'+esc(logo)+'" x="'+(cx-rx*.8)+'" y="'+(cy-ry*.8)+'" width="'+(rx*1.6)+'" height="'+(ry*1.6)+'" preserveAspectRatio="xMidYMid meet" onerror="this.previousSibling.style.visibility=\'visible\';this.remove()"/>':'');
+  // stanchion + backboard + rim + net (upright, ESPN look)
+  const hoop=side=>{
+    const s=side?-1:1, [bx0,by]=P(side?94:0,25), [rx0,ry0]=P(side?94-5.25:5.25,25);
+    const baseX=bx0-s*30, rimY=ry0-56;
+    const g=[];
+    // base: front + side faces
+    g.push('<polygon points="'+[[baseX-s*12,by+22],[baseX+s*12,by+22],[baseX+s*12,by-30],[baseX-s*4,by-40],[baseX-s*12,by-34]].map(p=>p.join(',')).join(' ')+'" fill="#2f5c99"/>');
+    g.push('<polygon points="'+[[baseX+s*12,by+22],[baseX+s*20,by+12],[baseX+s*20,by-26],[baseX+s*12,by-30]].map(p=>p.join(',')).join(' ')+'" fill="#3d72b8"/>');
+    g.push('<polygon points="'+[[baseX-s*12,by-34],[baseX-s*4,by-40],[baseX+s*12,by-30],[baseX+s*20,by-26],[baseX+s*4,by-20]].map(p=>p.join(',')).join(' ')+'" fill="#4a82c8"/>');
+    // arm
+    g.push('<polygon points="'+[[baseX-s*2,by-36],[rx0-s*16,rimY+2],[rx0-s*16,rimY+8],[baseX+s*6,by-28]].map(p=>p.join(',')).join(' ')+'" fill="#d9dde3" stroke="#aeb4bd" stroke-width=".8"/>');
+    // backboard (edge + face)
+    const bbX=rx0-s*14;
+    g.push('<polygon points="'+[[bbX,rimY-38],[bbX+s*4,rimY-41],[bbX+s*4,rimY+9],[bbX,rimY+12]].map(p=>p.join(',')).join(' ')+'" fill="#f5f6f8" stroke="#b9bfc8" stroke-width="1"/>');
+    g.push('<polygon points="'+[[bbX-s*5,rimY-36],[bbX,rimY-38],[bbX,rimY+12],[bbX-s*5,rimY+13]].map(p=>p.join(',')).join(' ')+'" fill="#c9ced6"/>');
+    // rim + net
+    g.push('<ellipse cx="'+(rx0+s*1)+'" cy="'+rimY+'" rx="11" ry="4" fill="none" stroke="#e5531c" stroke-width="2.6"/>');
+    let net=''; for(let i=0;i<=6;i++){ const x=rx0+s*1-10+i*20/6, x2=rx0+s*1-6+i*12/6; net+='M'+x.toFixed(1)+' '+(rimY+1.5)+' L'+x2.toFixed(1)+' '+(rimY+15)+' '; }
+    net+='M'+(rx0+s*1-8.5)+' '+(rimY+6)+' L'+(rx0+s*1+8.5)+' '+(rimY+6)+' M'+(rx0+s*1-7)+' '+(rimY+11)+' L'+(rx0+s*1+7)+' '+(rimY+11);
+    g.push('<path d="'+net+'" fill="none" stroke="#ffffff" stroke-width="1" stroke-opacity=".95"/>');
+    g.push('<path d="'+net+'" fill="none" stroke="#9aa1ab" stroke-width=".4" stroke-opacity=".9"/>');
+    return '<g>'+g.join('')+'</g>'; };
+  const txt=String((lp&&lp.text)||'')+' '+String((lp&&lp.type&&lp.type.text)||'');
+  const clk=String((ev.status&&ev.status.type&&ev.status.type.shortDetail)||'').toUpperCase();
+  const banner=/timeout/i.test(txt)?'TIMEOUT':/halftime|end of (the )?2nd/i.test(txt)?'HALFTIME':/end of/i.test(txt)?'END OF PERIOD':'';
+  const tag=(x,ab,c,anchor)=>'<text x="'+x+'" y="'+(top-8)+'" font-size="12" font-weight="800" fill="'+c+'" text-anchor="'+anchor+'">'+esc(ab)+'</text>';
+  return '<svg class="bb-court" viewBox="0 0 '+W+' '+Ht+'" role="img" aria-label="'+esc(aAb+' at '+hAb)+' court" style="border-radius:10px">'+
+    '<defs><linearGradient id="bbw" x1="0" x2="1"><stop offset="0" stop-color="#ddc9a6"/><stop offset=".5" stop-color="#d2bd9a"/><stop offset="1" stop-color="#ddc9a6"/></linearGradient></defs>'+
+    band+'<rect x="0" y="0" width="'+W+'" height="52" fill="#eef0f2"/><rect x="0" y="4" width="'+W+'" height="3" fill="#b9bec6"/><rect x="0" y="50" width="'+W+'" height="3" fill="#b9bec6"/>'+
+    '<text x="'+(W/2)+'" y="'+(banner?41:37)+'" text-anchor="middle" font-size="'+(banner?32:20)+'" font-weight="900" letter-spacing="1" fill="#111" font-family="Arial Narrow,Arial,sans-serif">'+esc(banner||clk)+'</text>'+
+    slab+floor+half(0)+half(1)+center+tag(P(4,0)[0],aAb,cA,'start')+tag(P(90,0)[0],hAb,cH,'end')+hoop(0)+hoop(1)+'</svg>';
+}
 function liveFieldHtml(ev, g){
   const st=(ev.status&&ev.status.type)||{}; if(st.state!=='in') return '';
   const comp=(ev.competitions&&ev.competitions[0])||{}, sit=comp.situation||{}, lp=sit.lastPlay||{};
   const lt=String(lp.text||'').trim(), last=lt?'<div class="lf-last" title="'+esc(lt)+'"><b>Last play:</b> '+esc(lt)+'</div>':'';
   if(g.sport==='MLB') return (sit.outs!=null||sit.balls!=null||sit.onFirst!=null) ? '<div class="lfield">'+mlbDiamondHtml(sit)+last+'</div>' : (last?'<div class="lfield">'+last+'</div>':'');
+  if(/^(NBA|WNBA|NCAAB)$/.test(g.sport)) return '<div class="lfield">'+bbCourtHtml(ev, g, sit, lp)+last+'</div>';   // v2.86
   if(g.sport!=='NFL' && g.sport!=='NCAAF') return last?'<div class="lfield">'+last+'</div>':'';
   const comps=compsOf(ev), A=comps.find(c=>c.homeAway==='away'), H=comps.find(c=>c.homeAway==='home');
   if(!A||!H) return last?'<div class="lfield">'+last+'</div>':'';
@@ -3550,7 +3664,11 @@ async function renderLive(force){
     body.querySelectorAll('input.lco').forEach(inp=>{ if(inp.value!=='') keepVals[inp.dataset.id]=inp.value; if(document.activeElement===inp) focusId=inp.dataset.id; });
     body.innerHTML=order.map(g=>{
       const ev=g.ev, key=ev?g.sport+':'+ev.id:'';
-      return '<div class="lgame" data-key="'+esc(key)+'">'+liveGameHead(ev, g)+liveProbHtml(g)+(ev&&liveOpen.has(key)?liveBoxScoreHtml(g):'')+
+      const st=(ev&&ev.status&&ev.status.type&&ev.status.type.state)||'pre', tms=ev?gameStatusOf(ev).teams:[];
+      const nm=tms.length?((tms.find(t=>t.ha==='away')||{}).abbr+' @ '+(tms.find(t=>t.ha==='home')||{}).abbr):(g.game||'');
+      const tot=g.bets.reduce((t,b)=>t+(+b.stake||0),0);
+      return '<div class="lgame st-'+st+'" data-key="'+esc(key)+'">'+liveGameHead(ev, g)+liveProbHtml(g)+(ev&&liveOpen.has(key)?liveBoxScoreHtml(g):'')+
+        '<div class="lg-bets">YOUR BETS ON '+esc(nm)+' · '+g.bets.length+' · $'+tot.toFixed(2)+'</div>'+
         g.bets.map(b=>{
           const v=liveStatus(b, ev, g.box), i=logged.indexOf(b), pay=betPayout(b), ep=espnBetProb(b, g), bid=esc(String(b.id||('i'+i)));
           return '<div class="lbet"><div class="who"><b>'+esc(b.name)+'</b><span class="lbl">'+esc(betLabel(b))+'</span><span class="meta">'+esc(fmtOdds(b.odds))+' · '+esc(bookLabel(b.book))+' · $'+(+b.stake||0).toFixed(2)+'</span></div>'+
@@ -3558,8 +3676,9 @@ async function renderLive(force){
             '<div class="lcash">'+(pay?'<span class="meta">pays $'+pay.toFixed(2)+'</span>':'')+(v.done?'<span class="meta">· decided — nothing to cash out</span>':
               '<label>Cash-out $ <input type="number" step="0.01" min="0" class="lco" data-i="'+i+'" data-id="'+bid+'" data-espn="'+(ep&&ep.same?ep.p:'')+'" placeholder="offer"></label><span class="meta lco-out"></span>'+
               '<button class="log sm lco-sell" data-i="'+i+'" disabled>Sold at this</button>')+'</div></div>';
-        }).join('')+'</div>';
+        }).join('')+'<div class="lg-end">end of '+esc(nm)+'</div></div>';
     }).join('');
+    body.querySelectorAll('.lg-ref').forEach(btn=>btn.addEventListener('click',()=>{ btn.classList.add('spin'); renderLive(true); }));
     body.querySelectorAll('.lbs-tog').forEach(btn=>btn.addEventListener('click',()=>{ const k=btn.dataset.key; if(liveOpen.has(k)) liveOpen.delete(k); else liveOpen.add(k); renderLive(false); }));
     body.querySelectorAll('.lbs-all').forEach(btn=>btn.addEventListener('click',()=>{ const k=btn.dataset.key; if(liveAll.has(k)) liveAll.delete(k); else liveAll.add(k); renderLive(false); }));
     body.querySelectorAll('input.lco').forEach(inp=>inp.addEventListener('input',()=>{
@@ -3603,6 +3722,7 @@ function ssTile(ev, sport, mine){
 async function renderStrip(force){
   const box=document.getElementById('ssGames'), sel=document.getElementById('ssSport'); if(!box||!sel||ssBusy) return;
   ssBusy=true; ssLastRun=Date.now();
+  { const at=document.getElementById('ssAt'); if(at) at.textContent='updated '+new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'}); }
   try{
     const sport=sel.value; if(force) delete scoreboardCache[sport];
     const evs=(await fetchScoreboard(sport))||[], today=ctDay(Date.now()), stOf=ev=>(ev.status&&ev.status.type&&ev.status.type.state)||'pre';
@@ -3727,6 +3847,10 @@ async function findBetGame(b){
   }
   return null;
 }
+function srcTagHtml(b){   // v2.86: where the bet came from
+  const m={api:['API','from an API load'], paste:['paste','from a pasted Cheat Sheet'], mev:['paste · sharp','from a pasted Market EV page'], manual:['by hand','from + Add a bet']};
+  const t=b.manual?m.manual:m[b.srcType]; if(!t) return '';
+  return '<span class="src-tag" title="Saved '+t[1]+'">'+t[0]+'</span>'; }
 function playedHtml(b){   // v2.84: "plays" before kickoff, "in progress" until graded, "played" once settled
   if(!b.start || isNaN(Date.parse(b.start))) return '';
   const t=Date.parse(b.start), d=gameDayOf(b), opt={timeZone:'America/Chicago'};
@@ -3920,6 +4044,8 @@ function manual(){
 let lastRows=[];
 let lastShown=[];
 let filterCorrOnly=false;
+let boardSrc='api', pasteAt=0;
+const isPasteRow=r=>String(r.src||'').startsWith('paste');
 function refresh(){ const c=cfgRead(); render(audit(lastRows,c),c); }
 async function run(){
   const c=cfgRead();
@@ -3927,7 +4053,9 @@ async function run(){
   const isMev=looksLikeMarketEV(text);                          // v2.64: the Market Based EV page
   const pasted=isMev?parseMarketEV(text):parse(text);
   mergeRows(isMev?'paste:mev':'paste', pasted);
+  pasteAt=Date.now(); if(pasted.length) boardSrc='paste';
   render(audit(lastRows,c),c); save(); autoSaveBoard();
+  if(pasted.length) showBoardSrc('paste');
   const d=document.getElementById('diag'), L=parse.lastLines||[];
   const passed=pasted.filter(r=>r.pass).length;
   if(!L.length){ d.innerHTML=''; return; }
@@ -4383,7 +4511,7 @@ async function loadApi(fresh){
     if(unmatchedBooks.length) msg+=' (Not recognized for the API filter: '+unmatchedBooks.join(', ')+')';
     status.textContent=msg;
 
-    mergeRows('api:'+sport+':'+type, rows);
+    mergeRows('api:'+sport+':'+type, rows); if(boardSrc!=='api') showBoardSrc('api');
     document.getElementById('savedNote').textContent='';
     const c=cfgRead(); render(audit(lastRows,c),c); save(); autoSaveBoard();
     if(lastRows.length){
@@ -4612,7 +4740,9 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
   t.classList.add('on'); document.getElementById(t.dataset.view).classList.add('on');
+  if(t.dataset.src && t.dataset.src!==boardSrc){ boardSrc=t.dataset.src; refresh(); }   // v2.86: Board (API) vs Pasted
 }));
+function showBoardSrc(src){ const t=document.querySelector('.tab[data-src="'+src+'"]'); if(t) t.click(); }
 const NUMS=['oMin','oMax','eMin','eMax','devig','bank','kelly','shrink','sMin','sMax','mWeight','gameCapPct','dayGoal','dayMaxPct','dayMaxMevPct',
             'fKalshi','fProphet','fPoly','fNovig','fFliff','fBook'];
 NUMS.forEach(id=>document.getElementById(id).addEventListener('input',()=>{ refresh(); manual(); save(); renderDays(); }));
@@ -5145,6 +5275,10 @@ setTimeout(()=>{
     if(Date.now()-ssLastRun >= (box&&box.dataset.live ? sec*1000 : 300000)-300) renderStrip(true); }, 1000);
 },0);
 document.querySelector('.tab[data-view="v-live"]').addEventListener('click',()=>renderLive(true));
+document.getElementById('ssRef').addEventListener('click',async e=>{   // v2.87: manual refresh for the scores strip
+  const b=e.currentTarget; if(b.disabled) return; b.disabled=true; b.classList.add('spin');
+  try{ ssBusy=false; await renderStrip(true); await autoGradeLog(); renderTodayBar(); } finally { b.disabled=false; b.classList.remove('spin'); }
+});
 (function(){ const sel=document.getElementById('liveEvery');   // v2.68: Off / 15 / 30 / 60 s, default 15
   let v='15'; try{ const s=localStorage.getItem('mbev.liveEvery'); if(['0','15','30','60'].includes(s)) v=s; }catch(e){}
   sel.value=v;
