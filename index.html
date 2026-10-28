@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v2.95</title>
+<title>0xBeta Screener v2.96</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -663,7 +663,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v2.95</span></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v2.96</span></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1201,7 +1201,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v2.95';
+const SCREENER_VERSION='v2.96';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -2802,20 +2802,24 @@ function statForMarket(box, playerName, market, sport){
   if(sport==='NBA' || sport==='WNBA' || sport==='NCAAB') return hoopsStat(box, playerName, market);
   const m=(market||'').toUpperCase();
   const rules = {
-    MLB:[[/\bK\b|STRIKEOUTS/,['K']],[/\bER\b/,['ER']],[/H\s*\+\s*R\s*\+\s*RBI/,['H','R','RBI']],
-      [/\bH\b|HITS/,['H']],[/\bR\b|RUNS/,['R']],[/\bRBI\b/,['RBI']],[/OUTS/,['IP']]],
+    MLB:[[/\bK\b|STRIKEOUTS/,['K']],[/EARNED|\bER\b/,['ER']],[/WALK|\bBB\b/,['BB']],[/H\s*\+\s*R\s*\+\s*RBI|HITS\s*\+\s*RUNS/,['H','R','RBI']],
+      [/HOME RUN|\bHR\b/,['HR']],[/\bRBI/,['RBI']],[/\bH\b|HITS/,['H']],[/\bR\b|RUNS/,['R']],[/OUTS/,['IP']]],
     NFL:[[/PASS.*YDS/,['YDS']],[/RUSH.*YDS/,['YDS']],[/REC.*YDS/,['YDS']],[/\bREC\b|RECEPTIONS/,['REC']],
       [/PASS.*TD/,['TD']],[/RUSH.*TD/,['TD']],[/REC.*TD/,['TD']],[/INT/,['INT']]],
     NCAAF:'NFL', WNBA:[[/\bPTS\b|POINTS/,['PTS']],[/\bREB\b|REBOUNDS/,['REB']],[/\bAST\b|ASSISTS/,['AST']],
       [/\bSTL\b/,['STL']],[/\bBLK\b/,['BLK']],[/3PT|THREE/,['3PT']]],
     MLS:[[/GOAL/,['G']],[/ASSIST/,['A']],[/SHOTS ON/,['SOG']],[/SHOTS/,['SH']]],
-    NHL:[], // not verified against ESPN's NHL boxscore labels yet: no auto W/L rather than a wrong one
+    NHL:[[/POWER\s*PLAY/,null],[/BLOCK/,['BS']],[/SAVE/,['SV']],[/GOALS?\s*AGAINST/,['GA']],[/POINT/,['G','A']],[/ASSIST/,['A']],[/GOAL/,['G']],[/HITS/,['HT']],[/SHOT|\bSOG\b/,['S']]],   // v2.96: checked against ESPN box scores (shots = "S")
     NCAAB:'NBA'
   };
   let r = rules[sport]; if(r==='NFL') r=rules.NFL;
   if(r==='NBA') r=rules.WNBA;
   if(!r) r = rules.WNBA; // NBA reuses WNBA label set
-  for(const [re,labels] of r) if(re.test(m)) return findAthleteStat(box, playerName, labels);
+  for(const [re,labels] of r) if(re.test(m)){
+    if(!labels) return null;
+    if(sport==='MLB' && labels[0]==='IP'){ const ip=findAthleteStat(box, playerName, ['IP']); if(ip==null) return null; const w=Math.floor(ip+1e-9); return w*3+Math.round((ip-w)*10); }   // 5.2 IP = 17 outs
+    return findAthleteStat(box, playerName, labels);
+  }
   return null;
 }
 function gradeBet(b, box){
@@ -3092,6 +3096,7 @@ function clv(b){
   if(mine===null||close===null) return null;
   return close/mine - 1;   /* your price better than the close when positive */
 }
+function resultSrcHtml(b){ return b.resultSrc ? '<div class="meta">by '+esc(b.resultSrc)+'</div>' : ''; }
 function resultBadge(b){
   if(b.sold){ const pl=b.sold.price-(b.stake||0);
     return '<span class="tag t-sold">SOLD $'+Number(b.sold.price).toFixed(2)+'</span><div class="meta">'+(pl>=0?'+':'−')+'$'+Math.abs(pl).toFixed(2)+' · excluded from calibration</div>'; }
@@ -3137,7 +3142,7 @@ function renderLog(){
       '<td class="num">'+esc(fmtOdds(b.fair))+'</td>'+
       '<td class="num">'+(b.net!=null?pct(b.net):'—')+'</td>'+
       '<td class="num"><input class="stake-in" type="number" step="0.01" min="0" data-i="'+i+'" value="'+(b.stake||0).toFixed(2)+'" style="width:60px"></td>'+
-      '<td class="num">'+resultBadge(b)+'</td>'+
+      '<td class="num">'+resultBadge(b)+resultSrcHtml(b)+'</td>'+
       '<td class="num"><input class="close-in" data-i="'+i+'" value="'+esc(b.closing)+'" placeholder="e.g. +105" title="Closing price for the same side at the same line">'+
         (b.closingSnap&&b.closingSnap.price ? '<div class="meta">market no-vig · '+new Date(b.closingSnap.at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</div>'
          : b.closingSnap&&b.closingSnap.note ? '<div class="meta">'+esc(b.closingSnap.note)+'</div>'
@@ -4025,7 +4030,7 @@ function playedHtml(b){   // v2.84: "plays" before kickoff, "in progress" until 
   const day=new Date(t).toLocaleDateString('en-US',{...opt,weekday:'short',month:'numeric',day:'numeric'});
   const tm=new Date(t).toLocaleTimeString('en-US',{...opt,hour:'numeric',minute:'2-digit'});
   const done=b.sold || b.result==='win' || b.result==='loss' || b.result==='push';
-  const txt = Date.now()<t ? 'plays '+day+' · '+tm : done ? 'played '+day : 'in progress · '+day;
+  const txt = Date.now()<t ? 'plays '+day+' · '+tm : done ? 'played '+day : b.result==='?' ? 'final · can\'t auto-grade · '+day : 'in progress · '+day;
   return '<div style="font-size:11.5px;'+(d!==b.date?'color:var(--warn)':'')+'" title="game day">'+esc(txt)+'</div>';
 }
 async function autoGradeLog(){
@@ -5681,7 +5686,8 @@ function autoAddFromRow(r,f){   // a bet on your board — log it for you, at th
   const fee=f.fee!=null&&f.cost?(+f.fee)/(+f.cost):feeRate(book,prob,cfgRead().fees);
   const gross=r.fairProb!=null?r.fairProb/prob-1:null;
   addToLog(Object.assign({}, r, {book, offeredRaw:fmtOdds(Math.round(americanOf(prob))), offeredProb:prob, stake, fee, gross, net:gross==null?null:(gross-fee)/(1+fee), said:saidOf(r)}));
-  const L=logged[logged.length-1]; L.autoFrom=f.book; L.fills=[f.id]; L.fillQty=+f.qty||0; L.fillCost=stake;
+  const L=logged[logged.length-1]; L.autoFrom=f.book; L.fills=[f.id]; L.fillQty=+f.qty||0; L.fillCost=stake; noteFillRef(L,f);
+  if(f.soldFor!=null) L.sold={price:+f.soldFor.toFixed(2), at:new Date(f.soldAt||Date.now()).toISOString(), auto:true};
   saveLog();
 }
 document.addEventListener('click',e=>{
@@ -5705,13 +5711,14 @@ const STAT_FAM=[
   [/points\s*(\+|&|and)?\s*rebounds\s*(\+|&|and)?\s*assists|pts\s*\+?\s*reb\s*\+?\s*ast|\bpra\b/i,'pra'],
   [/points\s*(\+|&|and)?\s*rebounds|pts\s*\+?\s*reb\b/i,'pr'],[/points\s*(\+|&|and)?\s*assists|pts\s*\+?\s*ast\b/i,'pa'],
   [/rebounds\s*(\+|&|and)?\s*assists|reb\s*\+?\s*ast\b/i,'ra'],[/three|3\s*-?\s*(pt|point)|3pm/i,'threes'],
-  [/rebound|\breb\b/i,'reb'],[/steal/i,'stl'],[/block/i,'blk'],[/turnover/i,'tov'],
+  [/rebound|\breb\b/i,'reb'],[/steal/i,'stl'],[/blocked shot/i,'blkshots'],[/block/i,'blk'],[/turnover/i,'tov'],
   [/hits\s*(\+|&|and)?\s*runs\s*(\+|&|and)?\s*rbi/i,'hrr'],[/hits allowed/i,'hitsallowed'],[/earned run/i,'er'],[/total bases/i,'tb'],
-  [/home run|\bhrs?\b/i,'hr'],[/strikeout|\bks?\b/i,'k'],[/\brbis?\b|runs batted/i,'rbi'],[/stolen base/i,'sb'],[/walk/i,'bb'],[/outs recorded|pitching outs/i,'outs'],
-  [/\bhits?\b/i,'hits'],[/\bruns?\b/i,'runs'],
-  [/shots on goal|\bsog\b/i,'sog'],[/save/i,'saves'],[/goal/i,'goals'],
+  [/home run|\bhrs?\b/i,'hr'],[/strikeout|\bks?\b/i,'k'],[/\brbis?\b|runs batted/i,'rbi'],[/stolen base/i,'sb'],[/walk/i,'bb'],[/outs recorded|pitching outs|\bouts\b/i,'outs'],
+  [/power\s*play\s*point/i,'ppp'],[/shots on goal|\bsog\b|\bshots?\b/i,'sog'],[/save/i,'saves'],
+  [/\bhits?\b/i,'hits'],[/\bruns?\b/i,'runs'],[/goal/i,'goals'],
   [/assist|\bast\b/i,'ast'],[/point|\bpts\b/i,'pts'],
 ];
+function famWithout(text, name){ let t=' '+String(text||'')+' '; String(name||'').split(/\s+/).filter(w=>w.length>1).forEach(w=>{ t=t.replace(new RegExp('\\b'+w.replace(/[^A-Za-z0-9]/g,'.')+'\\b','ig'),' '); }); return statFam(t); }
 function statFam(t){ const s=String(t||''); const r=STAT_FAM.find(x=>x[0].test(s)); return r?r[1]:s.toLowerCase().replace(/[^a-z]/g,''); }
 const nrm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]/g,' ').replace(/\b(jr|sr|ii|iii|iv)\b/g,'').replace(/\s+/g,' ').trim();
 function sameName(a,b){ const x=nrm(a), y=nrm(b); if(!x||!y) return false; if(x===y) return true;
@@ -5733,7 +5740,7 @@ function betMatches(fb, x, strictSport){
     if(fb.player){ if(!sameName(fb.player, x.name)) return false; }
     else if(fb.desc){ if(!(' '+nrm(fb.desc)+' ').includes(' '+nrm(x.name)+' ')) return false; }
     else return false;
-    if(statFam(fb.statText)!==statFam(statOfMarket(x.market))) return false;
+    if((fb.player?statFam(fb.statText):famWithout(fb.desc||fb.statText, x.name))!==statFam(statOfMarket(x.market))) return false;
     if(fb.line==null || ln==null || Math.abs(fb.line-ln)>0.01) return false;
     return !fb.side || fb.side===sd;
   }
@@ -5746,7 +5753,7 @@ function betMatches(fb, x, strictSport){
 }
 function fillLabel(f){
   const b=f.bet||{}; let t='';
-  if(b.kind==='prop') t=(b.player||'')+(b.player?' · ':'')+(b.side?(b.side==='O'?'Over ':'Under '):'')+(b.line!=null?b.line+' ':'')+(b.player?(b.statText||''):(b.desc||b.statText||''));
+  if(b.kind==='prop') t = b.player ? b.player+' · '+(b.side?(b.side==='O'?'Over ':'Under '):'')+(b.line!=null?b.line+' ':'')+(b.statText||'') : (b.desc||b.statText||'')+' · '+(b.side?(b.side==='O'?'Over ':'Under '):'')+(b.line!=null?b.line:'');
   else if(b.kind==='total') t=(b.side==='U'?'Under ':'Over ')+b.line+' total';
   else if(b.kind==='moneyline') t=(b.team||b.teamName||'?')+' to win';
   else if(b.kind==='spread') t=(b.team||b.teamName||'?')+' '+(b.line>0?'+':'')+b.line;
@@ -5777,7 +5784,9 @@ function postForFill(f){
   const old=postForFillRef(f); if(old) return old;
   return f.bet ? posts.find(P=>P.src===f.book && betMatches(f.bet,{kind:P.kind, sport:P.sport, name:P.name, market:P.market, side:P.side, team:P.team, game:P.game, start:P.start}))||null : null;
 }
+function noteFillRef(b,f){ b.fillBook=f.book; b.fillRef=f.ref||b.fillRef||null; b.fillSide=f.side||b.fillSide||null; b.fillOutcome=f.outcome||b.fillOutcome||null; }
 function linkFill(b,f){   // you saved it already — link, and flag differences
+  noteFillRef(b,f);
   const stake=+((+f.cost||0)+(+f.fee||0)).toFixed(2);
   const ids=[f.id].concat(f.ids||[]);
   const had=(b.fills||[]).filter(id=>ids.includes(id));
@@ -5801,9 +5810,20 @@ async function syncFills(force){
     let changed=false;
     window._fillErrors=j.errors||{};
     fillPending=fillPending.filter(p=>!(j.fills||[]).some(f=>f.book===p.book && f.id===p.id));   // refreshed below
+    // v2.96: on Novig a sale is a buy of the other outcome in the same market — holding both sides of N contracts pays exactly $N
+    const sales=[];
+    { const open={};
+      (j.fills||[]).filter(f=>f.book==='novig' && f.action==='buy' && f.ref && f.outcome).sort((a,b)=>(a.ts||0)-(b.ts||0)).forEach(f=>{
+        const pos=(open[f.ref]=open[f.ref]||[]); let left=+f.qty||0;
+        for(const p of pos){ if(left<=1e-9) break; if(p.f.outcome===f.outcome || p.left<=1e-9) continue;
+          const q=Math.min(p.left,left), share=q/(+f.qty||q); p.left-=q; left-=q;
+          p.f.soldFor=(p.f.soldFor||0)+q-((+f.cost||0)+(+f.fee||0))*share; p.f.soldAt=f.ts; p.f.soldQty=(p.f.soldQty||0)+q; f.isSale=true; }
+        if(left>1e-9) pos.push({f, left}); });
+      (j.fills||[]).forEach(f=>{ if(f.isSale) sales.push(f); }); }
     (j.fills||[]).slice().reverse().forEach(f=>{   // oldest first
       const key=f.book+':'+f.id, seen=fillSeen[key];
       if(seen && seen.s==='ignored') return;
+      if(f.isSale){ fillSeen[key]={s:'sale',q:+f.qty||0}; return; }   // handled with the bet it closes
       if(seen && seen.s!=='pending' && Math.abs((seen.q||0)-(+f.qty||0))<1e-6) return;   // nothing new on this order
       if(f.action==='sell'){   // a sell that covers the whole position marks the bet sold
         const b=betForFill(Object.assign({},f,{action:'buy'}));
@@ -5820,6 +5840,19 @@ async function syncFills(force){
       if(r && f.price>0){ autoAddFromRow(r,f); fillSeen[key]={s:'added',q:+f.qty||0}; changed=true; return; }
       fillPending.push(f); fillSeen[key]={s:'pending',q:+f.qty||0};
     });
+    // a Novig sale closes the bet it offsets: whole position → SOLD with the cash back
+    (j.fills||[]).forEach(f=>{ if(f.soldFor==null) return;
+      const b=linkedTo(f), full=(f.soldQty||0)>=(+f.qty||0)-1e-6;
+      if(b && full && !b.sold){ b.sold={price:+f.soldFor.toFixed(2), at:new Date(f.soldAt||Date.now()).toISOString(), auto:true}; changed=true; }
+      const pf=fillPending.find(p=>p.book===f.book && p.id===f.id); if(pf){ pf.soldFor=f.soldFor; pf.soldAt=f.soldAt; pf.soldQty=f.soldQty; } });
+    // v2.96: the book's own result wins over ESPN grading
+    (j.settlements||[]).forEach(st=>{
+      logged.filter(b=>b.fillBook===st.book && b.fillRef && b.fillRef===st.ref && !b.sold).forEach(b=>{
+        let res=null;
+        if(st.book==='kalshi'){ const r=String(st.result||''); res = r==='void'||r==='scalar' ? 'push' : (r==='yes'||r==='no') ? (r===(b.fillSide||'yes')?'win':'loss') : null; }
+        else if(st.book==='poly' && st.amount!=null) res = st.amount>0 ? 'win' : 'loss';
+        if(res && (b.result!==res || b.resultSrc!==BOOK_NAME[st.book])){ b.result=res; b.resultSrc=BOOK_NAME[st.book]; changed=true; } }); });
+    window._settlements=j.settlements||[];
     const waiting=fillPending.filter(f=>f.action!=='sell' && !f.bet);
     if(waiting.length && await huntForFills(waiting)){
       fillPending=fillPending.filter(f=>{ if(f.action==='sell') return true;
@@ -5841,7 +5874,7 @@ function renderFromBooks(){
     (errTxt?' <span class="meta">('+errTxt+')</span>':'')+
     (fillPending.length?' <button class="ghost sm fb-copy" title="Copy this list">Copy</button><table>'+fillPending.map((f,i)=>{ const L=fillLabel(f);
       return '<tr><td>'+(bookLogo(FILL_NAME[f.book])?logoTag(FILL_NAME[f.book],'sm'):esc(FILL_NAME[f.book]))+'</td>'+
-      '<td><b>'+esc(L.bet)+'</b>'+(f.action==='sell'?' <b>(sold)</b>':'')+'<div class="meta">'+esc([L.game,L.when].filter(Boolean).join(' · '))+'</div></td>'+
+      '<td><b>'+esc(L.bet)+'</b>'+(f.action==='sell'?' <b>(sold)</b>':'')+(f.soldFor!=null?' <span class="tag t-sold">SOLD $'+f.soldFor.toFixed(2)+' ('+(f.soldFor-((+f.cost||0)+(+f.fee||0))>=0?'+':'−')+'$'+Math.abs(f.soldFor-((+f.cost||0)+(+f.fee||0))).toFixed(2)+')</span>':'')+'<div class="meta">'+esc([L.game,L.when].filter(Boolean).join(' · '))+'</div></td>'+
       '<td class="num">'+(f.price!=null?(f.price*100).toFixed(1)+'%<div class="meta">'+esc(fmtOdds(Math.round(americanOf(f.price))))+'</div>':'—')+'</td>'+
       '<td class="num">$'+(+(f.cost||0)+(+f.fee||0)).toFixed(2)+(f.qty!=null?'<div class="meta">'+f.qty+' ct</div>':'')+'</td>'+
       '<td class="meta">bet '+(f.ts?new Date(f.ts).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}):'')+'</td>'+
@@ -6119,7 +6152,7 @@ function autoAddFromPost(P,f){
     said:{decision:'MADE', stake, onList:false}};
   addToLog(r);
   const L=logged[logged.length-1]; L.autoFrom=f.book; L.made=true; L.rung=rung&&Math.abs(rung.p-prob)<0.011?rung.k:null; L.fills=[f.id]; L.fillQty=+f.qty||0; L.fillCost=stake;
-  L.manual=true; L.srcType='manual'; L.start=P.start||L.start; if(P.proj!=null) L.proj=P.proj; L.postId=P.id;
+  L.manual=true; L.srcType='manual'; L.start=P.start||L.start; if(P.proj!=null) L.proj=P.proj; L.postId=P.id; noteFillRef(L,f);
   (P.filled=P.filled||[]).push({p:prob, qty:+f.qty||0, id:f.id}); savePosts(); saveLog();
 }
 // your open orders (read-only) → which rungs are still resting, and which to pull
@@ -6185,6 +6218,14 @@ document.addEventListener('click',e=>{
 })();
 
 setInterval(()=>{ if(document.visibilityState==='visible') syncFills(false); }, 20000);
+/* v2.96: exchange "closing prices" for MLB/NHL props and NBA combo stats could come from a different market
+   at the same line (e.g. Hits + Runs + RBIs instead of Hits). Those closes are cleared; new ones check the stat. */
+(function(){ let n=0;
+  logged.forEach(b=>{ if(b.fix96) return; b.fix96=1;
+    if(!(b.closing && /^live:/.test(b.closingSource||'')) || (b.kind && b.kind!=='prop')) return;
+    const sp=String(b.sport||'').toUpperCase(), fam=statFam(statOfMarket(b.market));
+    if(!/^(NFL|NCAAF|NBA|WNBA|NCAAB)$/.test(sp) || ['pr','pa','ra'].includes(fam)){ b.closing=''; b.closingSource=null; delete b.closeLive; n++; } });
+  if(n){ saveLog(); setTimeout(()=>{ renderLog(); renderPerf(); },0); } })();
 (function(){
   const m=()=>document.getElementById('fillsMsg');
   const now=document.getElementById('fillsNow'), test=document.getElementById('fillsTest'), rst=document.getElementById('fillsReset'); if(!now) return;
