@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v2.96</title>
+<title>0xBeta Screener v2.97</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -663,7 +663,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v2.96</span></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v2.97</span></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1201,7 +1201,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v2.96';
+const SCREENER_VERSION='v2.97';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -1725,6 +1725,10 @@ function audit(rows,cfg){
       if(r.pass && r.mktProb!=null && r.blendNet!=null && r.blendNet<=0) r.flags.push(['warn','no edge once blended with the market — no stake']);
     }
   });
+  // v2.97: only bets you can place right now get money
+  rows.forEach(r=>{ if(r.prior) return; const st=liveState(r); if(st==='open') return;
+    if(r.stake>0){ r.stake=0; delete r.contracts; }
+    if(!r.flags.some(f=>f[1]===liveWhy(r))) r.flags.push([st==='unconfirmed'?'warn':'out', liveWhy(r)]); });
   // v2.56: a bet you already hold at another line gets no new stake
   rows.forEach(r=>{ if(r.moved && r.stake>0){ r.stake=0; delete r.contracts; } });
   // v2.61: say it once — drop the notes that repeat "you already have this bet"
@@ -1845,7 +1849,7 @@ function render(rows,cfg){
   tb.innerHTML='';
   const passing=rows.filter(r=>r.pass);
   let shown=showRejects?rows.slice():passing.slice();
-  const isStarted=r=>r.gameInfo && (r.gameInfo.state==='in'||r.gameInfo.state==='post');
+  const isStarted=r=>{ const s=liveState(r); return s==='started'||s==='closed'; };
   // v2.86: two boards from one audit — ALREADY BET, one-per-player, game caps and the daily max are shared
   const pv=boardSrc==='paste';
   shown=shown.filter(r=>pv?isPasteRow(r):!isPasteRow(r));
@@ -1876,7 +1880,7 @@ function render(rows,cfg){
   if(!pv && swc.only) shown=shown.filter(r=>isSweet(r,swc));
   // v2.62: three groups — bets to place, bets you already have, then everything to skip.
   // Your sort (or a column-header click) applies inside each group.
-  const grpOf=x=> x.prior ? 1 : isStarted(x) ? 3 : (x.pass && x.stake>0 && !x.removed) ? 0 : 2;
+  const grpOf=x=> x.prior ? 1 : isStarted(x) ? 3 : liveState(x)==='unconfirmed' ? 4 : (x.pass && x.stake>0 && !x.removed) ? 0 : 2;
   shown.sort((a,b)=>{
     const ga=grpOf(a), gb=grpOf(b);
     if(ga!==gb) return ga-gb;
@@ -1942,8 +1946,8 @@ function render(rows,cfg){
   lastShown=shown;
   renderTodayLine();
   const rb=document.getElementById('refreshApi'); if(rb) rb.disabled=!lastRows.some(x=>String(x.src||'').startsWith('api:'));
-  const GROUP_NAMES=['Place these','Already bet','Skip','Started or over'];
-  const groupCount=[0,0,0,0]; shown.forEach(r=>groupCount[grpOf(r)]++);
+  const GROUP_NAMES=['Place these','Already bet','Skip','Started, over or closed — can\'t bet','Can\'t confirm — check the app'];
+  const groupCount=[0,0,0,0,0]; shown.forEach(r=>groupCount[grpOf(r)]++);
   let lastGroup=-1;
   const cardsOn=boardCardsOn(), cardsHtml=[];   // v2.69
   shown.forEach(r=>{
@@ -1957,7 +1961,7 @@ function render(rows,cfg){
     const tr=document.createElement('tr');
     const started = r.gameInfo && (r.gameInfo.state==='in'||r.gameInfo.state==='post');
     // v2.61: anything you shouldn't place is greyed out (still readable on hover / with notes open)
-    const isSkip = !r.prior && (!(r.stake>0) || r.removed || started);   // v2.62: a game that already started can't be placed
+    const isSkip = !r.prior && (!(r.stake>0) || r.removed || started || liveState(r)!=='open');   // v2.62: a game that already started can't be placed
     tr.className = (r.pass?'':'out ') + (r.prior?'dupe':(r.corr?'corr':'')) + (started?' gameover':'') + (isSkip?' skiprow':'');
     const gTag = !r.gameInfo ? '<span class="tag t-warn" title="ESPN didn\'t list this game in the next 4 days">game time not found</span>'
       : r.gameInfo.state==='post' ? '<span class="tag t-out">Final — '+esc(r.gameInfo.detail||'game over')+'</span>'
@@ -2104,10 +2108,10 @@ function placeCardHtml(r,cfg,o){
   const LG=t=>t?teamLogo(r.sport,t.abbr,t.logo):'';
   const tl=t=>LG(t)?'<img class="pc-tlogo" src="'+esc(LG(t))+'" alt="" loading="lazy">':'';
   const team=(t,right)=>t?'<div class="pc-tm'+(right?' r':'')+'">'+(right?'':tl(t))+'<div><b>'+esc(t.name||t.abbr)+'</b>'+(t.rec?'<span>'+esc(t.rec)+'</span>':'')+'</div>'+(right?tl(t):'')+'</div>':'';
-  const when=giWhen(gi);
+  const when=giWhen(gi) ? '🕒 '+giWhen(gi) : '⚠ game time not found';
   const gameTxt=away&&home ? away.abbr+' @ '+home.abbr : (r.game||r.matchup||'');
   const game=away&&home ? team(away)+'<div class="pc-when"><b>'+esc(when)+'</b>'+(gi.tv?'<span class="pc-tv">'+esc(gi.tv)+'</span>':'')+'</div>'+team(home,true)
-                         : (when?'<div class="pc-when"><b>'+esc(when)+'</b></div>':'');
+                         : '<div class="pc-when"><b>'+esc(when)+'</b></div>';
   const myLogo=mine?LG(mine):(myAb?teamLogo(r.sport,myAb,''):'');
   const FP={NFL:'nfl',NBA:'nba',MLB:'mlb',NHL:'nhl'}[r.sport];
   const tcol=mine?ezColor({color:mine.color, alternateColor:mine.alt}):'#3B4656';
@@ -2666,13 +2670,46 @@ async function attachGameInfo(rows){
   // v2.95: games on later days (tomorrow's NBA, next week's NCAAF) — ESPN by date, today + 4 days
   const miss=rows.filter(r=>!r.gameInfo && ESPN_MAP[r.sport]);
   if(miss.length){
-    const today=ctDay(Date.now()), days=[0,1,2,3,4].map(n=>dayPlus(today,n));
+    const today=ctDay(Date.now()), days=[-3,-2,-1,0,1,2,3,4].map(n=>dayPlus(today,n));   // v2.97: back 3 days too (old games must be found to be moved out)
     const bySport=[...new Set(miss.map(r=>r.sport))];
     const evs={}; await Promise.all(bySport.map(async sp=>{ evs[sp]=[].concat(...await Promise.all(days.map(d=>fetchScoreboardDay(sp,d)))); }));
     miss.forEach(r=>{ const E=evs[r.sport]||[];
       let ev=findGame(E, r.matchup||r.game); if(!ev && r.matchupAlt) ev=findGame(E, r.matchupAlt);
       if(!ev) ev=findGameAny(E, r.game, r.matchup, r.name);
       if(ev) r.gameInfo=gameStatusOf(ev); });
+  }
+  try{ await checkExchangeOpen(rows); }catch(e){}
+}
+/* v2.97: "Place these" = bets you can place RIGHT NOW: game confirmed not started, and (on an exchange) the market open with a seller */
+function liveState(r){
+  const gi=r.gameInfo, t=gi&&gi.startISO?Date.parse(gi.startISO):NaN;
+  if(gi && (gi.state==='in'||gi.state==='post')) return 'started';
+  if(!isNaN(t) && t<=Date.now()) return 'started';
+  if(r.exClosed) return 'closed';
+  if(isNaN(t)){ const slate=(document.getElementById('slate')||{}).value||''; return slate && slate<ctDay(Date.now()) ? 'started' : 'unconfirmed'; }
+  return 'open';
+}
+function liveWhy(r){
+  const st=liveState(r), gi=r.gameInfo||{};
+  if(st==='started') return gi.state==='post' ? 'game over — can\'t bet' : gi.state==='in' ? 'game started — can\'t bet pre-game' : gi.startISO ? 'started '+giWhen(gi)+' — can\'t bet' : 'old board — game not found, can\'t bet';
+  if(st==='closed') return r.exClosed;
+  if(st==='unconfirmed') return 'game not found on ESPN — check the app before betting';
+  return '';
+}
+var exCheckAt={};
+async function checkExchangeOpen(rows){
+  const now=Date.now();
+  const list=rows.filter(r=>r.pass && !r.prior && LIVE_BOOK(r.book) && liveState(r)!=='started' && (now-(exCheckAt[r.idx+':'+r.book+':'+r.market]||0))>90000);
+  const jobs=list.map(r=>[r, liveDesc(Object.assign(rowAsBet(r),{id:'open:'+r.idx}))]).filter(x=>x[1]);
+  for(let i=0;i<jobs.length;i+=8){
+    const chunk=jobs.slice(i,i+8);
+    let R={}; try{ const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(chunk.map(x=>x[1]))),{headers:apiHeaders()}); if(!res.ok) break; R=((await res.json())||{}).results||{}; }catch(e){ break; }
+    chunk.forEach(([r,d])=>{ const q=R[d.id]; exCheckAt[r.idx+':'+r.book+':'+r.market]=Date.now(); if(!q) return;
+      if(q.ok){ delete r.exClosed; r.exOpen={p:q.price, at:Date.now()}; liveQuotes[d.id]=q; return; }
+      const note=String(q.note||'');
+      // closed only when the book answered about THIS market; unmapped stats / lookup errors leave it open
+      if(/no offer to buy|no market at your line|not listed|lists .* not your/i.test(note)) r.exClosed=note.replace(/^(Kalshi|Polymarket|Novig):\s*/,bookLabel(r.book)+': ');
+      else delete r.exClosed; });
   }
 }
 function giWhen(gi){ if(!gi) return ''; return gi.startISO ? whenCT(gi.startISO) : (gi.timeCT||''); }
