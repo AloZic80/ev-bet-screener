@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v2.94</title>
+<title>0xBeta Screener v2.95</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -663,7 +663,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v2.94</span></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v2.95</span></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -886,7 +886,8 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
   <div class="row" style="margin-top:0;gap:10px;flex-wrap:wrap;align-items:center">
     <button class="ghost" id="fillsNow">Check my books now</button>
     <button class="ghost" id="fillsTest">Test my books (raw)</button>
-    <button class="ghost" id="fillsReset" title="Forget which fills were already seen; the next check re-reads the last 3 days. Bets you already have stay linked, nothing doubles.">Re-read last 3 days</button>
+    <button class="ghost" id="fillsCopy" style="display:none">📋 Copy</button>
+    <button class="ghost" id="fillsReset" title="Forget which fills were already seen; the next check re-reads the last 14 days. Bets you already have stay linked, nothing doubles.">Re-read last 14 days</button>
     <span class="meta" id="fillsMsg"></span>
   </div>
   <div class="row" style="gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px">
@@ -1200,7 +1201,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v2.94';
+const SCREENER_VERSION='v2.95';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -1958,10 +1959,10 @@ function render(rows,cfg){
     // v2.61: anything you shouldn't place is greyed out (still readable on hover / with notes open)
     const isSkip = !r.prior && (!(r.stake>0) || r.removed || started);   // v2.62: a game that already started can't be placed
     tr.className = (r.pass?'':'out ') + (r.prior?'dupe':(r.corr?'corr':'')) + (started?' gameover':'') + (isSkip?' skiprow':'');
-    const gTag = !r.gameInfo ? ''
+    const gTag = !r.gameInfo ? '<span class="tag t-warn" title="ESPN didn\'t list this game in the next 4 days">game time not found</span>'
       : r.gameInfo.state==='post' ? '<span class="tag t-out">Final — '+esc(r.gameInfo.detail||'game over')+'</span>'
-      : r.gameInfo.state==='in'   ? '<span class="tag t-warn">Live — started '+esc(r.gameInfo.timeCT)+'</span>'
-      : '<span class="tag t-live">Starts '+esc(r.gameInfo.timeCT)+'</span>';
+      : r.gameInfo.state==='in'   ? '<span class="tag t-warn">Live — started '+esc(giWhen(r.gameInfo))+'</span>'
+      : '<span class="tag t-live">🕒 '+esc(giWhen(r.gameInfo))+'</span>';
     const oaTag = r.oddsApi===undefined ? '' : r.oddsApi===null
       ? '<span class="tag t-warn">Market: not found</span>'
       : '<span class="tag t-live">Market: '+esc(fmtOdds(String(r.oddsApi.price)))+' ('+esc(r.oddsApi.book)+')</span>';
@@ -1980,8 +1981,8 @@ function render(rows,cfg){
     if(cardsOn && g===0){ cardsHtml.push(placeCardHtml(r,cfg,{tags,nTags,worst,nKey,nOpen,sweet:isSweet(r,swc)})); return; }   // v2.69
     const kick = !r.gameInfo ? ''
       : r.gameInfo.state==='post' ? '<div class="kick final">Final — '+esc(r.gameInfo.detail||'game over')+'</div>'
-      : r.gameInfo.state==='in'   ? '<div class="kick live">LIVE · started '+esc(r.gameInfo.timeCT)+'</div>'
-      : '<div class="kick">'+esc(r.gameInfo.timeCT||'')+'</div>';
+      : r.gameInfo.state==='in'   ? '<div class="kick live">LIVE · started '+esc(giWhen(r.gameInfo))+'</div>'
+      : '<div class="kick">🕒 '+esc(giWhen(r.gameInfo))+'</div>';
     const mk=(r.market||'').match(/^([+-]?[\d.]+)\s+(.*)$/);
     const mktCell = mk
       ? '<div class="mkt-line">'+esc(mk[1])+'</div><div class="mkt-sub">'+esc(mk[2])+'</div>'
@@ -2103,7 +2104,7 @@ function placeCardHtml(r,cfg,o){
   const LG=t=>t?teamLogo(r.sport,t.abbr,t.logo):'';
   const tl=t=>LG(t)?'<img class="pc-tlogo" src="'+esc(LG(t))+'" alt="" loading="lazy">':'';
   const team=(t,right)=>t?'<div class="pc-tm'+(right?' r':'')+'">'+(right?'':tl(t))+'<div><b>'+esc(t.name||t.abbr)+'</b>'+(t.rec?'<span>'+esc(t.rec)+'</span>':'')+'</div>'+(right?tl(t):'')+'</div>':'';
-  const when=gi.startISO ? new Date(gi.startISO).toLocaleString('en-US',{timeZone:'America/Chicago',weekday:'short',hour:'numeric',minute:'2-digit'}) : (gi.timeCT||'');
+  const when=giWhen(gi);
   const gameTxt=away&&home ? away.abbr+' @ '+home.abbr : (r.game||r.matchup||'');
   const game=away&&home ? team(away)+'<div class="pc-when"><b>'+esc(when)+'</b>'+(gi.tv?'<span class="pc-tv">'+esc(gi.tv)+'</span>':'')+'</div>'+team(home,true)
                          : (when?'<div class="pc-when"><b>'+esc(when)+'</b></div>':'');
@@ -2660,9 +2661,21 @@ async function attachGameInfo(rows){
     let ev=findGame(scoreboardCache[r.sport], r.matchup||r.game);
     if(!ev && r.matchupAlt) ev=findGame(scoreboardCache[r.sport], r.matchupAlt);
     if(!ev && GL_KINDS.test(r.kind||'')) ev=findGameAny(scoreboardCache[r.sport], r.game, r.name, r.matchup);   // v2.59
-    r.gameInfo = gameStatusOf(ev);
+    if(ev || !r.gameInfo) r.gameInfo = gameStatusOf(ev);
   });
+  // v2.95: games on later days (tomorrow's NBA, next week's NCAAF) — ESPN by date, today + 4 days
+  const miss=rows.filter(r=>!r.gameInfo && ESPN_MAP[r.sport]);
+  if(miss.length){
+    const today=ctDay(Date.now()), days=[0,1,2,3,4].map(n=>dayPlus(today,n));
+    const bySport=[...new Set(miss.map(r=>r.sport))];
+    const evs={}; await Promise.all(bySport.map(async sp=>{ evs[sp]=[].concat(...await Promise.all(days.map(d=>fetchScoreboardDay(sp,d)))); }));
+    miss.forEach(r=>{ const E=evs[r.sport]||[];
+      let ev=findGame(E, r.matchup||r.game); if(!ev && r.matchupAlt) ev=findGame(E, r.matchupAlt);
+      if(!ev) ev=findGameAny(E, r.game, r.matchup, r.name);
+      if(ev) r.gameInfo=gameStatusOf(ev); });
+  }
 }
+function giWhen(gi){ if(!gi) return ''; return gi.startISO ? whenCT(gi.startISO) : (gi.timeCT||''); }
 /* Boxscore fetch + best-effort stat extraction, used for auto-grading logged bets */
 const boxscoreCache={};
 function boxDone(bx){ const st=bx&&bx.header&&bx.header.competitions&&bx.header.competitions[0]&&bx.header.competitions[0].status;
@@ -4553,7 +4566,7 @@ function gameRowsToInternal(data, kind, sport){
         apiKey: x.event_id+'-total-'+x.side+'-'+x.line,
       };
       const kick=x.kickoff||(g&&g.kickoff);
-      if(kick){ const d=new Date(kick); if(!isNaN(d)) row.gameInfo={state:'pre', timeCT:d.toLocaleString('en-US',{timeZone:'America/Chicago',weekday:'short',month:'2-digit',day:'2-digit',year:'2-digit',hour:'numeric',minute:'2-digit'})+' CT'}; }
+      if(kick){ const d=new Date(kick); if(!isNaN(d)) row.gameInfo={state:'pre', startISO:d.toISOString(), timeCT:d.toLocaleString('en-US',{timeZone:'America/Chicago',weekday:'short',month:'2-digit',day:'2-digit',year:'2-digit',hour:'numeric',minute:'2-digit'})+' CT'}; }
       return row;
     }
     const row={
@@ -4568,7 +4581,7 @@ function gameRowsToInternal(data, kind, sport){
       apiKey: x.event_id+'-'+kind+'-'+x.team+'-'+ln,
     };
     const kick=x.kickoff||(g&&g.kickoff);
-    if(kick){ const d=new Date(kick); if(!isNaN(d)) row.gameInfo={state:'pre', timeCT:d.toLocaleString('en-US',{timeZone:'America/Chicago',weekday:'short',month:'2-digit',day:'2-digit',year:'2-digit',hour:'numeric',minute:'2-digit'})+' CT'}; }
+    if(kick){ const d=new Date(kick); if(!isNaN(d)) row.gameInfo={state:'pre', startISO:d.toISOString(), timeCT:d.toLocaleString('en-US',{timeZone:'America/Chicago',weekday:'short',month:'2-digit',day:'2-digit',year:'2-digit',hour:'numeric',minute:'2-digit'})+' CT'}; }
     return row;
   });
 }
@@ -5276,6 +5289,8 @@ async function abLoadGames(){
   sel.innerHTML='<option value="">loading…</option>';
   $ab('abStats').innerHTML=(AB_STATS[sp]||[]).map(x=>'<option value="'+esc(x)+'">').join('');
   let evs=[]; try{ evs=await fetchScoreboard(sp); }catch(e){}
+  try{ const today=ctDay(Date.now()), more=await Promise.all([0,1,2,3].map(n=>fetchScoreboardDay(sp, dayPlus(today,n))));   // v2.95: the next few days too
+       const seen=new Set((evs||[]).map(e=>String(e.id))); evs=(evs||[]).concat([].concat(...more).filter(e=>!seen.has(String(e.id)) && seen.add(String(e.id)))); }catch(e){}
   if($ab('abSport').value!==sp) return;
   abEvents=(evs||[]).filter(ev=>{ const g=gameStatusOf(ev); return g && g.state!=='post'; })
     .sort((a,b)=>Date.parse(a.date)-Date.parse(b.date));
@@ -5621,9 +5636,9 @@ function quoteMatchesFill(q, f){
   if(!q || !q.ok || q.src!==f.book) return false;
   if(f.book==='novig') return q.ref===f.ref && (!q.outcome || q.outcome===f.outcome);
   if(f.book==='kalshi') return q.ref===f.ref && ((f.side==='no')===/^NO · /.test(q.title||''));
-  return q.ref===f.ref;   // Polymarket: market slug (side not in the fill)
+  return q.ref===f.ref && (!f.side || (f.side==='no')===/^NO · /.test(q.title||''));   // Polymarket: slug + side (v2.95)
 }
-function betForFill(f){
+function betForFillRef(f){
   return logged.find(b=>{ if(b.sold || LIVE_BOOK(b.book)!==f.book) return false;
     if((b.fills||[]).includes(f.id)) return true;
     const d=liveDesc(b); return d && quoteMatchesFill(liveQuotes[d.id], f); });
@@ -5633,7 +5648,7 @@ function rowQuoteFor(r,f){
   const q2=liveQuotes['shop:'+r.idx+':'+f.book]; if(quoteMatchesFill(q2,f)) return q2;
   return null;
 }
-function rowForFill(f){   // Polymarket fills carry no side: when Over and Under both match, take the price closest to the fill
+function rowForFillRef(f){   // Polymarket fills carry no side: when Over and Under both match, take the price closest to the fill
   let best=null, gap=9;
   lastRows.forEach(r=>{ if(r.prior) return; const q=rowQuoteFor(r,f); if(!q) return;
     const g=f.price!=null&&q.price!=null?Math.abs(q.price-f.price):1; if(g<gap){ gap=g; best=r; } });
@@ -5661,53 +5676,6 @@ function fillDiffHtml(b,i){
   return '<span class="fill-diff">⚠ '+esc(bookLabel(b.book))+' says '+(d.price*100).toFixed(1)+'% ('+esc(fmtOdds(Math.round(americanOf(d.price))))+') · $'+d.stake.toFixed(2)+
     ' <button class="ghost sm fill-fix" data-i="'+i+'">Fix</button> <button class="ghost sm fill-keep" data-i="'+i+'">Keep mine</button></span>';
 }
-async function syncFills(force){
-  if(fillBusy || (!force && Date.now()-fillAt<55000)) return; fillBusy=true;
-  try{
-    let since=0; try{ since=+localStorage.getItem('mbev.fillSince')||0; }catch(e){}
-    since=since? since-3600e3 : Date.now()-3*86400e3;
-    const res=await fetch(API_BASE+'/mine/fills?since='+since, {headers:apiHeaders()});
-    if(!res.ok) return;
-    const j=await res.json(); fillAt=Date.now();
-    let maxTs=since, changed=false;
-    const err=j.errors||{}; window._fillErrors=err;
-    (j.fills||[]).slice().reverse().forEach(f=>{   // oldest first
-      if(f.ts>maxTs) maxTs=f.ts;
-      const key=f.book+':'+f.id; if(fillSeen[key]) return;
-      if(f.action==='sell'){   // Kalshi sells: mark the matching bet sold when the whole position is out
-        const b=betForFill(Object.assign({},f,{action:'buy'}));
-        if(b && !b.sold){ b.soldFills=(b.soldFills||0)+(+f.qty||0); b.soldCash=+(((b.soldCash||0)+(+f.price||0)*(+f.qty||0))).toFixed(2);
-          const bought=(b.fillQty||0); if(bought && b.soldFills>=bought-1e-9){ b.sold={price:b.soldCash, at:new Date(f.ts||Date.now()).toISOString(), auto:true}; } changed=true; fillSeen[key]='sold'; return; }
-        fillPending.push(f); fillSeen[key]='pending'; changed=true; return;
-      }
-      const stake=+((+f.cost||0)+(+f.fee||0)).toFixed(2);
-      const b=betForFill(f);
-      if(b && (b.fills||[]).includes(f.id)){ fillSeen[key]='linked'; return; }   // already linked (re-read)
-      if(b){   // you saved it already — link, and flag differences
-        b.fills=(b.fills||[]).concat(f.id); b.fillQty=(b.fillQty||0)+(+f.qty||0); b.fillCost=+(((b.fillCost||0)+stake)).toFixed(2);
-        const avg=b.fillQty?((b.fillCost-(+f.fee||0))/b.fillQty):f.price, mine=toProb(b.odds);
-        if(mine==null || Math.abs((f.price||avg)-mine)>0.006 || Math.abs(b.fillCost-(+b.stake||0))>0.06) b.fillDiff={price:f.price||avg, stake:b.fillCost, fee:+f.fee||0, at:f.ts};
-        else delete b.fillDiff;
-        fillSeen[key]='linked'; changed=true; return;
-      }
-      const P=postForFill(f);
-      if(P && f.price>0){ autoAddFromPost(P,f); fillSeen[key]='added'; changed=true; return; }
-      const r=rowForFill(f);
-      if(r && f.price>0){ autoAddFromRow(r,f); fillSeen[key]='added'; changed=true; return; }
-      fillPending.push(f); fillSeen[key]='pending'; changed=true;
-    });
-    try{ localStorage.setItem('mbev.fillSince', String(maxTs)); }catch(e){}
-    const waiting=fillPending.filter(f=>f.action!=='sell');
-    if(waiting.length && await huntForFills(waiting)){
-      fillPending=fillPending.filter(f=>{ if(f.action==='sell') return true;
-        const b=betForFill(f); if(b){ b.fills=(b.fills||[]).concat(f.id); b.fillQty=(b.fillQty||0)+(+f.qty||0); b.fillCost=+(((b.fillCost||0)+(+f.cost||0)+(+f.fee||0))).toFixed(2); fillSeen[f.book+':'+f.id]='linked'; changed=true; return false; }
-        const r=rowForFill(f); if(!r || !(f.price>0)) return true;
-        autoAddFromRow(r,f); fillSeen[f.book+':'+f.id]='added'; changed=true; return false; });
-    }
-    if(changed){ saveFills(); saveLog(); renderLog(); renderPerf(); refresh(); }
-    renderFromBooks(); syncOrders();
-  }catch(e){} finally{ fillBusy=false; }
-}
 function autoAddFromRow(r,f){   // a bet on your board — log it for you, at the price and cost the book filled
   const book=FILL_NAME[f.book], prob=f.price, stake=+((+f.cost||0)+(+f.fee||0)).toFixed(2);
   const fee=f.fee!=null&&f.cost?(+f.fee)/(+f.cost):feeRate(book,prob,cfgRead().fees);
@@ -5716,18 +5684,6 @@ function autoAddFromRow(r,f){   // a bet on your board — log it for you, at th
   const L=logged[logged.length-1]; L.autoFrom=f.book; L.fills=[f.id]; L.fillQty=+f.qty||0; L.fillCost=stake;
   saveLog();
 }
-function renderFromBooks(){
-  const el=document.getElementById('fromBooks'); if(!el) return;
-  const err=window._fillErrors||{}, errTxt=Object.entries(err).map(([k,v])=>esc((FILL_NAME[k]||k)+': '+v)).join(' · ');
-  if(!fillPending.length && !errTxt){ el.style.display='none'; el.innerHTML=''; return; }
-  el.style.display='block';
-  el.innerHTML='<b>From your books</b> — '+(fillPending.length?fillPending.length+' fill'+(fillPending.length===1?'':'s')+' not matched to a bet on your board or log.':'all matched.')+
-    (errTxt?' <span class="meta">('+errTxt+')</span>':'')+
-    (fillPending.length?'<table>'+fillPending.map((f,i)=>'<tr><td>'+(bookLogo(FILL_NAME[f.book])?logoTag(FILL_NAME[f.book],'sm'):esc(FILL_NAME[f.book]))+'</td><td>'+esc(f.title||((f.book==='novig'?'Novig market ':'')+String(f.ref||'').slice(0,8)))+(f.side?' <b>'+esc(f.side.toUpperCase())+'</b>':'')+(f.action==='sell'?' <b>(sold)</b>':'')+'</td>'+
-      '<td class="num">'+(f.price!=null?(f.price*100).toFixed(1)+'%':'—')+'</td><td class="num">'+(f.qty!=null?f.qty+' ct':'')+'</td><td class="num">$'+(+(f.cost||0)+(+f.fee||0)).toFixed(2)+'</td>'+
-      '<td class="meta">'+(f.ts?new Date(f.ts).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}):'')+'</td>'+
-      '<td style="white-space:nowrap">'+(f.action==='sell'?'':'<button class="log sm fb-add" data-i="'+i+'">Add</button> ')+'<button class="ghost sm fb-ign" data-i="'+i+'">Ignore</button></td></tr>').join('')+'</table>':'');
-}
 document.addEventListener('click',e=>{
   const fx=e.target.closest('.fill-fix'), kp=e.target.closest('.fill-keep'), ad=e.target.closest('.fb-add'), ig=e.target.closest('.fb-ign');
   if(fx||kp){ const b=logged[+(fx||kp).dataset.i]; if(!b||!b.fillDiff) return;
@@ -5735,18 +5691,195 @@ document.addEventListener('click',e=>{
       b.odds=fmtOdds(Math.round(americanOf(d.price))); b.stake=+d.stake.toFixed(2); if(d.fee&&d.stake) b.fee=d.fee/Math.max(0.01,d.stake-d.fee);
       b.betnow=betNowOf({market:b.market, side:b.side||sideOf(b)||'', offeredRaw:b.odds}); }
     delete b.fillDiff; saveLog(); renderLog(); renderPerf(); refresh(); return; }
-  if(ig){ fillPending.splice(+ig.dataset.i,1); saveFills(); renderFromBooks(); return; }
-  if(ad){ const f=fillPending[+ad.dataset.i]; if(!f) return; fillPending.splice(+ad.dataset.i,1); saveFills(); renderFromBooks();
-    // open + Add a bet with the book, price and stake already in
-    const t=document.querySelector('.tab[data-view="v-board"][data-src="api"]')||document.querySelector('.tab[data-view="v-board"]'); if(t) t.click();
-    const P=document.getElementById('addBetPanel'); if(P){ P.open=true; P.dispatchEvent(new Event('toggle')); P.scrollIntoView({behavior:'smooth',block:'start'}); }
-    setTimeout(()=>{ const h=document.getElementById('abHost'); if(!h) return; const bs=h.querySelector('.eb-book'); if(bs){ bs.value=FILL_NAME[f.book]; bs.dispatchEvent(new Event('change')); }
-      const ms=h.querySelector('.eb-mode'); if(ms){ ms.value='pct'; ms.dispatchEvent(new Event('change')); }
-      const c=h.querySelector('.eb-cost'), pc=h.querySelector('.eb-pct'); if(c) c.value=(+(f.cost||0)+(+f.fee||0)).toFixed(2); if(pc&&f.price) pc.value=(f.price*100).toFixed(1);
-      [c,pc].forEach(x=>x&&x.dispatchEvent(new Event('input')));
-      const m=document.getElementById('abMsg'); if(m) m.innerHTML='From your '+esc(FILL_NAME[f.book])+' fill: <b>'+esc(f.title||f.ref||'')+'</b> — fill in the player, stat and line, then Save bet.'; }, 700);
-  }
+  if(ig){ const f=fillPending[+ig.dataset.i]; if(f) fillSeen[f.book+':'+f.id]={s:'ignored',q:+f.qty||0}; fillPending.splice(+ig.dataset.i,1); saveFills(); renderFromBooks(); return; }
+  if(ad){ const f=fillPending[+ad.dataset.i]; if(!f) return; fillPending.splice(+ad.dataset.i,1); saveFills(); renderFromBooks(); addFromFill(f); return; }
+  const cp=e.target.closest('.fb-copy'); if(cp){ copyText(fillPending.map(f=>{ const L=fillLabel(f); return [FILL_NAME[f.book], L.bet, L.game, L.when, f.price!=null?(f.price*100).toFixed(1)+'%':'', '$'+(+(f.cost||0)+(+f.fee||0)).toFixed(2)].filter(Boolean).join(' · '); }).join('\n'), cp); return; }
 });
+/* ============ v2.95: fills say what the bet IS — match by player · stat · line · side · game ============ */
+const STAT_FAM=[
+  [/longest/i,'long'],[/rush\w*\s*(\+|&|and)?\s*rec|scrimmage/i,'rushrec'],[/pass\w*\s*(\+|&|and)?\s*rush/i,'passrush'],
+  [/pass\w*\s*(yd|yard)/i,'passyds'],[/pass\w*\s*att/i,'passatt'],[/complet|pass\w*\s*cmp/i,'passcmp'],[/pass\w*\s*(td|touchdown)/i,'passtd'],
+  [/intercep|\bints?\b/i,'int'],[/(rush|rsh)\w*\s*(yd|yard)/i,'rushyds'],[/(rush|rsh)\w*\s*att|carries/i,'rushatt'],
+  [/rec\w*\s*(yd|yard)/i,'recyds'],[/reception|\brecs?\b/i,'rec'],[/anytime|touchdown|\btds?\b/i,'td'],
+  [/sack/i,'sacks'],[/tackle/i,'tackles'],[/field goal|\bfg/i,'fg'],[/kicking/i,'kickpts'],
+  [/points\s*(\+|&|and)?\s*rebounds\s*(\+|&|and)?\s*assists|pts\s*\+?\s*reb\s*\+?\s*ast|\bpra\b/i,'pra'],
+  [/points\s*(\+|&|and)?\s*rebounds|pts\s*\+?\s*reb\b/i,'pr'],[/points\s*(\+|&|and)?\s*assists|pts\s*\+?\s*ast\b/i,'pa'],
+  [/rebounds\s*(\+|&|and)?\s*assists|reb\s*\+?\s*ast\b/i,'ra'],[/three|3\s*-?\s*(pt|point)|3pm/i,'threes'],
+  [/rebound|\breb\b/i,'reb'],[/steal/i,'stl'],[/block/i,'blk'],[/turnover/i,'tov'],
+  [/hits\s*(\+|&|and)?\s*runs\s*(\+|&|and)?\s*rbi/i,'hrr'],[/hits allowed/i,'hitsallowed'],[/earned run/i,'er'],[/total bases/i,'tb'],
+  [/home run|\bhrs?\b/i,'hr'],[/strikeout|\bks?\b/i,'k'],[/\brbis?\b|runs batted/i,'rbi'],[/stolen base/i,'sb'],[/walk/i,'bb'],[/outs recorded|pitching outs/i,'outs'],
+  [/\bhits?\b/i,'hits'],[/\bruns?\b/i,'runs'],
+  [/shots on goal|\bsog\b/i,'sog'],[/save/i,'saves'],[/goal/i,'goals'],
+  [/assist|\bast\b/i,'ast'],[/point|\bpts\b/i,'pts'],
+];
+function statFam(t){ const s=String(t||''); const r=STAT_FAM.find(x=>x[0].test(s)); return r?r[1]:s.toLowerCase().replace(/[^a-z]/g,''); }
+const nrm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]/g,' ').replace(/\b(jr|sr|ii|iii|iv)\b/g,'').replace(/\s+/g,' ').trim();
+function sameName(a,b){ const x=nrm(a), y=nrm(b); if(!x||!y) return false; if(x===y) return true;
+  const xs=x.split(' '), ys=y.split(' '); return xs[xs.length-1]===ys[ys.length-1] && xs[0][0]===ys[0][0]; }
+function lineOfMarket(m){ const x=String(m||'').match(/^([+-]?[\d.]+)/); return x?parseFloat(x[1]):null; }
+function statOfMarket(m){ return String(m||'').replace(/^[+-]?[\d.]+\s*/,''); }
+function startOf(x){ return x.start || (x.gameInfo&&x.gameInfo.startISO) || null; }
+function betMatches(fb, x, strictSport){
+  if(!fb || !x) return false;
+  const kind=x.kind||'prop'; if((fb.kind||'prop')!==kind && !(fb.kind==='prop' && !x.kind)) return false;
+  if(fb.sport && x.sport && strictSport!==false && String(fb.sport).toUpperCase()!==String(x.sport).toUpperCase() && !/NCAA/.test(fb.sport+x.sport)) return false;
+  const a=Date.parse(fb.start), b=Date.parse(startOf(x)); if(!isNaN(a) && !isNaN(b) && Math.abs(a-b)>36*3600e3) return false;
+  const ln=lineOfMarket(x.market), sd=x.side||sideOf(x)||'';
+  const teamsOk=()=>{ const t=teamsOf(x.game||x.matchup||''); if(!t) return true;
+    if(fb.away&&fb.home){ const s=[normAbbr(fb.away),normAbbr(fb.home)]; return s.includes(t[0]) && s.includes(t[1]); }
+    if(fb.teamsCode){ const c=String(fb.teamsCode).toUpperCase(); return c.includes(t[0].slice(0,2)) || c.includes(t[1].slice(0,2)); }
+    return true; };
+  if(kind==='prop'){
+    if(fb.player){ if(!sameName(fb.player, x.name)) return false; }
+    else if(fb.desc){ if(!(' '+nrm(fb.desc)+' ').includes(' '+nrm(x.name)+' ')) return false; }
+    else return false;
+    if(statFam(fb.statText)!==statFam(statOfMarket(x.market))) return false;
+    if(fb.line==null || ln==null || Math.abs(fb.line-ln)>0.01) return false;
+    return !fb.side || fb.side===sd;
+  }
+  if(kind==='total') return fb.line!=null && ln!=null && Math.abs(fb.line-ln)<0.01 && (!fb.side||fb.side===sd) && teamsOk();
+  const tm=glTeam(x)||normAbbr(x.team||x.name);
+  const teamOk = fb.team ? normAbbr(fb.team)===tm : fb.teamName ? nrm(fb.teamName).includes(nrm(x.team||x.name)) || nrm(x.name).includes(nrm(fb.teamName)) : false;
+  if(!teamOk || !teamsOk()) return false;
+  if(kind==='spread') return fb.line!=null && ln!=null && Math.abs(fb.line-ln)<0.01;
+  return true;
+}
+function fillLabel(f){
+  const b=f.bet||{}; let t='';
+  if(b.kind==='prop') t=(b.player||'')+(b.player?' · ':'')+(b.side?(b.side==='O'?'Over ':'Under '):'')+(b.line!=null?b.line+' ':'')+(b.player?(b.statText||''):(b.desc||b.statText||''));
+  else if(b.kind==='total') t=(b.side==='U'?'Under ':'Over ')+b.line+' total';
+  else if(b.kind==='moneyline') t=(b.team||b.teamName||'?')+' to win';
+  else if(b.kind==='spread') t=(b.team||b.teamName||'?')+' '+(b.line>0?'+':'')+b.line;
+  if(!t.trim()) t=f.title||(f.book==='novig'?'Novig market '+String(f.ref||'').slice(0,8):String(f.ref||''));
+  const g=b.away&&b.home?b.away+' @ '+b.home:(b.teamsCode||'');
+  return {bet:t.trim(), game:g, when:b.start?whenCT(b.start):''};
+}
+function whenCT(iso){
+  const t=Date.parse(iso); if(isNaN(t)) return '';
+  const d=ctDay(t), today=ctDay(Date.now()), tm=new Date(t).toLocaleTimeString('en-US',{timeZone:'America/Chicago',hour:'numeric',minute:'2-digit'});
+  const lbl = d===today?'Today' : d===dayPlus(today,1)?'Tomorrow' : d===dayPlus(today,-1)?'Yesterday' : new Date(t).toLocaleDateString('en-US',{timeZone:'America/Chicago',weekday:'short',month:'numeric',day:'numeric'});
+  return lbl+' '+tm+' CT';
+}
+function linkedTo(f){ const ids=[f.id].concat(f.ids||[]); return logged.find(b=>(b.fills||[]).some(id=>ids.includes(id)))||null; }
+function betForFill(f){
+  const L=linkedTo(f); if(L) return L;
+  const old=betForFillRef(f); if(old) return old;
+  const mine=logged.filter(b=>!b.sold && LIVE_BOOK(b.book)===f.book && betMatches(f.bet,b));
+  return mine.find(b=>!(b.fills&&b.fills.length)) || mine[0] || null;
+}
+function rowForFill(f){
+  const old=rowForFillRef(f); if(old) return old;
+  if(!f.bet) return null;
+  const rows=(lastRows||[]).filter(r=>!r.prior && r.fairProb!=null && betMatches(f.bet,r));
+  return rows.find(r=>LIVE_BOOK(r.book)===f.book) || rows[0] || null;
+}
+function postForFill(f){
+  const old=postForFillRef(f); if(old) return old;
+  return f.bet ? posts.find(P=>P.src===f.book && betMatches(f.bet,{kind:P.kind, sport:P.sport, name:P.name, market:P.market, side:P.side, team:P.team, game:P.game, start:P.start}))||null : null;
+}
+function linkFill(b,f){   // you saved it already — link, and flag differences
+  const stake=+((+f.cost||0)+(+f.fee||0)).toFixed(2);
+  const ids=[f.id].concat(f.ids||[]);
+  const had=(b.fills||[]).filter(id=>ids.includes(id));
+  b.fills=(b.fills||[]).filter(id=>!ids.includes(id)).concat(f.id);
+  if(had.length){ b.fillQty=+f.qty||0; b.fillCost=stake; }   // re-read of the same order: replace, don't add
+  else { b.fillQty=(b.fillQty||0)+(+f.qty||0); b.fillCost=+(((b.fillCost||0)+stake)).toFixed(2); }
+  if(b.autoFrom){ b.stake=b.fillCost; if(f.price) b.odds=fmtOdds(Math.round(americanOf(f.price))); delete b.fillDiff; return; }
+  const mine=toProb(b.odds), px=f.price;
+  if(mine==null || (px && Math.abs(px-mine)>0.006) || Math.abs(b.fillCost-(+b.stake||0))>0.06) b.fillDiff={price:px||mine, stake:b.fillCost, fee:+f.fee||0, at:f.ts};
+  else delete b.fillDiff;
+}
+async function syncFills(force){
+  if(fillBusy || (!force && Date.now()-fillAt<55000)) return; fillBusy=true;
+  try{
+    // v2.95: one bet per order (partial fills merged), so always read the whole window
+    let days=3; try{ if(localStorage.getItem('mbev.fillWide')==='1'){ days=14; localStorage.removeItem('mbev.fillWide'); } }catch(e){}
+    try{ if(localStorage.getItem('mbev.fillV')!=='95'){ fillPending=[]; fillSeen={}; localStorage.setItem('mbev.fillV','95'); } }catch(e){}
+    const res=await fetch(API_BASE+'/mine/fills?since='+(Date.now()-days*86400e3), {headers:apiHeaders()});
+    if(!res.ok) return;
+    const j=await res.json(); fillAt=Date.now();
+    let changed=false;
+    window._fillErrors=j.errors||{};
+    fillPending=fillPending.filter(p=>!(j.fills||[]).some(f=>f.book===p.book && f.id===p.id));   // refreshed below
+    (j.fills||[]).slice().reverse().forEach(f=>{   // oldest first
+      const key=f.book+':'+f.id, seen=fillSeen[key];
+      if(seen && seen.s==='ignored') return;
+      if(seen && seen.s!=='pending' && Math.abs((seen.q||0)-(+f.qty||0))<1e-6) return;   // nothing new on this order
+      if(f.action==='sell'){   // a sell that covers the whole position marks the bet sold
+        const b=betForFill(Object.assign({},f,{action:'buy'}));
+        if(b && !b.sold){ b.soldFills=+f.qty||0; b.soldCash=+((+f.price||0)*(+f.qty||0)).toFixed(2);
+          const bought=(b.fillQty||0); if(bought && b.soldFills>=bought-1e-9){ b.sold={price:b.soldCash, at:new Date(f.ts||Date.now()).toISOString(), auto:true}; }
+          changed=true; fillSeen[key]={s:'sold',q:+f.qty||0}; return; }
+        fillPending.push(f); fillSeen[key]={s:'pending',q:+f.qty||0}; return;
+      }
+      const b=betForFill(f);
+      if(b){ linkFill(b,f); fillSeen[key]={s:'linked',q:+f.qty||0}; changed=true; return; }
+      const P=postForFill(f);
+      if(P && f.price>0){ autoAddFromPost(P,f); fillSeen[key]={s:'added',q:+f.qty||0}; changed=true; return; }
+      const r=rowForFill(f);
+      if(r && f.price>0){ autoAddFromRow(r,f); fillSeen[key]={s:'added',q:+f.qty||0}; changed=true; return; }
+      fillPending.push(f); fillSeen[key]={s:'pending',q:+f.qty||0};
+    });
+    const waiting=fillPending.filter(f=>f.action!=='sell' && !f.bet);
+    if(waiting.length && await huntForFills(waiting)){
+      fillPending=fillPending.filter(f=>{ if(f.action==='sell') return true;
+        const b=betForFill(f); if(b){ linkFill(b,f); fillSeen[f.book+':'+f.id]={s:'linked',q:+f.qty||0}; changed=true; return false; }
+        const r=rowForFill(f); if(!r || !(f.price>0)) return true;
+        autoAddFromRow(r,f); fillSeen[f.book+':'+f.id]={s:'added',q:+f.qty||0}; changed=true; return false; });
+    }
+    saveFills();
+    if(changed){ saveLog(); renderLog(); renderPerf(); refresh(); }
+    renderFromBooks(); syncOrders();
+  }catch(e){ console.warn('syncFills', e); } finally{ fillBusy=false; }
+}
+function renderFromBooks(){
+  const el=document.getElementById('fromBooks'); if(!el) return;
+  const err=window._fillErrors||{}, errTxt=Object.entries(err).map(([k,v])=>esc((FILL_NAME[k]||k)+': '+v)).join(' · ');
+  if(!fillPending.length && !errTxt){ el.style.display='none'; el.innerHTML=''; return; }
+  el.style.display='block';
+  el.innerHTML='<b>From your books</b> — '+(fillPending.length?fillPending.length+' bet'+(fillPending.length===1?'':'s')+' not matched to your log or board.':'all matched.')+
+    (errTxt?' <span class="meta">('+errTxt+')</span>':'')+
+    (fillPending.length?' <button class="ghost sm fb-copy" title="Copy this list">Copy</button><table>'+fillPending.map((f,i)=>{ const L=fillLabel(f);
+      return '<tr><td>'+(bookLogo(FILL_NAME[f.book])?logoTag(FILL_NAME[f.book],'sm'):esc(FILL_NAME[f.book]))+'</td>'+
+      '<td><b>'+esc(L.bet)+'</b>'+(f.action==='sell'?' <b>(sold)</b>':'')+'<div class="meta">'+esc([L.game,L.when].filter(Boolean).join(' · '))+'</div></td>'+
+      '<td class="num">'+(f.price!=null?(f.price*100).toFixed(1)+'%<div class="meta">'+esc(fmtOdds(Math.round(americanOf(f.price))))+'</div>':'—')+'</td>'+
+      '<td class="num">$'+(+(f.cost||0)+(+f.fee||0)).toFixed(2)+(f.qty!=null?'<div class="meta">'+f.qty+' ct</div>':'')+'</td>'+
+      '<td class="meta">bet '+(f.ts?new Date(f.ts).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}):'')+'</td>'+
+      '<td style="white-space:nowrap">'+(f.action==='sell'?'':'<button class="log sm fb-add" data-i="'+i+'">Add</button> ')+'<button class="ghost sm fb-ign" data-i="'+i+'">Ignore</button></td></tr>'; }).join('')+'</table>':'');
+}
+async function copyText(t, btn){
+  let ok=false; try{ await navigator.clipboard.writeText(t); ok=true; }catch(e){
+    try{ const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); ok=document.execCommand('copy'); ta.remove(); }catch(_){} }
+  if(btn){ const o=btn.textContent; btn.textContent=ok?'Copied ✓':'Copy failed'; setTimeout(()=>btn.textContent=o,1500); }
+}
+async function addFromFill(f){
+  const b=f.bet||{}, P=$ab('addBetPanel'); if(!P) return;
+  const t=document.querySelector('.tab[data-view="v-board"][data-src="api"]')||document.querySelector('.tab[data-view="v-board"]'); if(t) t.click();
+  P.open=true; P.dispatchEvent(new Event('toggle'));
+  const sp=String(b.sport||'').toUpperCase(); if(sp && [...$ab('abSport').options].some(o=>o.value===sp||o.text===sp)){ $ab('abSport').value=sp; }
+  try{ await abLoadGames(); }catch(e){}
+  const ty=b.kind==='prop'||b.kind==='total'||b.kind==='spread'||b.kind==='moneyline'?b.kind:'prop'; $ab('abType').value=ty; try{ abFields(); }catch(e){}
+  const want=b.away&&b.home?[normAbbr(b.away),normAbbr(b.home)]:null, code=String(b.teamsCode||'').toUpperCase(), st=Date.parse(b.start);
+  const ev=(abEvents||[]).find(e=>{ const tt=abTeams(e); if(!tt) return false; const a=normAbbr(tt.away), h=normAbbr(tt.home);
+    if(want) return want.includes(a)&&want.includes(h);
+    if(code) return code.includes(a.slice(0,2))&&code.includes(h.slice(0,2));
+    return !isNaN(st) && Math.abs(Date.parse(e.date)-st)<3600e3; });
+  if(ev){ $ab('abGame').value=String(ev.id); try{ abFields(); }catch(e){} }
+  const gameMiss=!ev;
+  if(ty==='prop'){ $ab('abPlayer').value=b.player||''; $ab('abStat').value=b.statText?b.statText.replace(/\b\w/g,c=>c.toUpperCase()):''; }
+  if(b.side) $ab('abPick').value=b.side;
+  if(b.line!=null) $ab('abLine').value=b.line;
+  if(b.team){ const tsel=$ab('abTeam'); const o=[...tsel.options].find(x=>normAbbr(x.value)===normAbbr(b.team)); if(o) tsel.value=o.value; }
+  P.scrollIntoView({behavior:'smooth',block:'start'});
+  setTimeout(()=>{ const h=$ab('abHost'); if(!h) return; const bs=h.querySelector('.eb-book'); if(bs){ bs.value=FILL_NAME[f.book]; bs.dispatchEvent(new Event('change')); }
+    const ms=h.querySelector('.eb-mode'); if(ms){ ms.value='pct'; ms.dispatchEvent(new Event('change')); }
+    const c=h.querySelector('.eb-cost'), pc=h.querySelector('.eb-pct'); abCostTyped=true;
+    if(c) c.value=(+(f.cost||0)+(+f.fee||0)).toFixed(2); if(pc&&f.price) pc.value=(f.price*100).toFixed(1);
+    [c,pc].forEach(x=>x&&x.dispatchEvent(new Event('input',{bubbles:true})));
+    const m=$ab('abMsg'); if(m) m.innerHTML='From your '+esc(FILL_NAME[f.book])+' bet: <b>'+esc(fillLabel(f).bet)+'</b> — '+(gameMiss?'<b>pick the game</b>, ':'')+'check the fields, add a cover % if you have one, then Save bet.';
+    abUpdate94(); }, 700);
+}
+
 /* ============ v2.94: + Add a bet says BET $x or SKIP — Take a price, or 📌 Make your own (a ladder of posted prices) ============ */
 var abModeV='take', abX=null, abCostTyped=false, abLastAuto=null, abAskTimer=null, posts=[], myOrders=null, ordersAt=0, postQuotes={};
 try{ abModeV=localStorage.getItem('mbev.abMode')==='make'?'make':'take'; posts=JSON.parse(localStorage.getItem('mbev.posts')||'[]')||[]; }catch(e){}
@@ -5973,7 +6106,7 @@ function abSavePost(){
   $ab('abMsg').innerHTML='<b>Ladder saved:</b> '+esc(f.name)+' — '+esc(abSideTxt(f,false))+' on '+esc(bookLabel(Lk.book))+'. Post the rungs in the app; each one that gets taken logs itself (tag <b>made</b>).'+(q?'':' <b>No market matched on '+esc(bookLabel(Lk.book))+'</b> — fills will land in From your books instead.');
 }
 // fills from your posts
-function postForFill(f){
+function postForFillRef(f){
   return posts.find(P=>P.src===f.book && P.ref && P.ref===f.ref && (f.book!=='novig'||!P.outcome||P.outcome===f.outcome) &&
     (f.book!=='kalshi'||((f.side==='no')===/^NO · /.test(P.title||''))))||null;
 }
@@ -6059,9 +6192,11 @@ setInterval(()=>{ if(document.visibilityState==='visible') syncFills(false); }, 
     m().textContent=fillAt?('checked '+new Date(fillAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+(Object.keys(e).length?' · '+Object.entries(e).map(([k,v])=>(FILL_NAME[k]||k)+': '+v).join(' · '):' · all 3 books answered')+(fillPending.length?' · '+fillPending.length+' waiting in From your books':'')):'could not reach the Worker (deployed? passphrase set?)'; };
   test.onclick=async()=>{ const pre=document.getElementById('fillsRaw'); m().textContent='asking the books…';
     try{ const res=await fetch(API_BASE+'/mine/selftest',{headers:apiHeaders()}); const t=await res.text(); pre.style.display='block';
-      pre.textContent=res.ok?JSON.stringify(JSON.parse(t),null,1):('HTTP '+res.status+' '+t.slice(0,300)); m().textContent=res.ok?'raw sample below — send it to Claude to check the field names':'failed'; }
+      pre.textContent=res.ok?JSON.stringify(JSON.parse(t),null,1):('HTTP '+res.status+' '+t.slice(0,300)); m().textContent=res.ok?'raw sample below — press Copy and paste it to Claude':'failed';
+      const cb=document.getElementById('fillsCopy'); if(cb) cb.style.display=''; }
     catch(e){ m().textContent='could not reach the Worker'; } };
-  rst.onclick=()=>{ fillSeen={}; fillPending=[]; huntDone={}; try{ localStorage.removeItem('mbev.fillSince'); }catch(e){} saveFills(); renderFromBooks(); now.click(); };
+  rst.onclick=()=>{ fillSeen={}; fillPending=[]; huntDone={}; try{ localStorage.setItem('mbev.fillWide','1'); }catch(e){} saveFills(); renderFromBooks(); now.click(); };
+  const cpy=document.getElementById('fillsCopy'); if(cpy) cpy.onclick=()=>copyText(document.getElementById('fillsRaw').textContent||'', cpy);
 })();
 setTimeout(()=>syncFills(true), 2500);
 setTimeout(()=>{ renderTodayBar(); autoGradeLog(); },50);
