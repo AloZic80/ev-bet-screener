@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.01</title>
+<title>0xBeta Screener v3.03</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -383,6 +383,7 @@ img.blogo.go,.book.go{cursor:pointer} img.blogo.go:hover{outline:2px solid var(-
 .par-steps{display:flex; flex-wrap:wrap; gap:6px 16px; align-items:baseline; font-size:13.5px}
 .par-btns{display:flex; gap:8px; flex-wrap:wrap; margin-top:6px}
 .par-btn{text-decoration:none; display:inline-flex; align-items:center; background:var(--accent); color:#fff !important; padding:6px 12px; border-radius:8px; font-weight:600; font-size:13px}
+.par-tbl{border-collapse:collapse; font-size:13.5px; margin:4px 0} .par-tbl th{font-size:11px; color:var(--soft); text-align:left; padding:3px 12px 3px 0; text-transform:uppercase; letter-spacing:.04em} .par-tbl td{padding:4px 12px 4px 0}
 .par-make{font-weight:800; color:var(--warn)}
 .par-takenow{margin:8px 0; font-size:13px}
 .par-stay summary{cursor:pointer; color:var(--soft); font-size:13px; margin:6px 0}
@@ -391,6 +392,9 @@ img.blogo.go,.book.go{cursor:pointer} img.blogo.go:hover{outline:2px solid var(-
 .mb-tbl th{font-size:11px; color:var(--soft); text-transform:uppercase; letter-spacing:.04em}
 .from-books{border:1px solid var(--warn); background:var(--warn-bg); border-radius:10px; padding:10px 12px; margin:0 0 10px; font-size:13px}
 .from-books table{width:100%; margin-top:6px} .from-books td{padding:4px 6px; vertical-align:middle}
+.from-books .fb-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch}   /* v3.03: phone — the table scrolls inside the box */
+@media (max-width:560px){ .from-books td.fb-ts{display:none} .from-books td{padding:4px 3px} .from-books td.fb-act{white-space:normal!important; width:64px}
+  .from-books td.fb-act button{display:block; width:100%; margin:3px 0; padding:6px 4px; font-size:12px} }
 .fill-diff{display:block; margin-top:2px; font-size:11px; color:var(--warn); font-weight:700}
 .fills-at{font-size:11px; color:var(--dim)}
 .tab-n{display:inline-block; min-width:18px; padding:0 5px; margin-left:3px; border-radius:9px; background:var(--live-bg); color:var(--live); font-size:11px; font-weight:800; text-align:center}
@@ -668,6 +672,15 @@ tr.skiprow td>*{opacity:.42; transition:opacity .15s}
 tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 .btn-reset{font-family:inherit; font-size:13px; font-weight:600; cursor:pointer; padding:8px 16px; border-radius:6px; background:var(--live-bg); color:var(--live); border:1px solid var(--live); transition:all 0.2s}
 .btn-reset:hover{background:var(--live); color:white}
+/* v3.03: big Copy buttons on long outputs · ☁ sync */
+.copy-bar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:8px 0}
+.copy-big{font:inherit; font-size:15px; font-weight:800; letter-spacing:.01em; padding:10px 18px; border-radius:10px; border:2px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.copy-big:hover{filter:brightness(1.07)} .copy-big:active{transform:translateY(1px)}
+.copy-big.done{background:var(--live); border-color:var(--live)}
+.sync-chip{font:inherit; font-size:11.5px; font-weight:700; letter-spacing:.02em; border:1px solid var(--rule); background:var(--panel); color:var(--soft); border-radius:999px; padding:2px 9px; margin-left:8px; cursor:pointer; vertical-align:middle; white-space:nowrap}
+.sync-chip.ok{color:var(--live); border-color:var(--live)} .sync-chip.err{color:var(--warn); border-color:var(--warn)}
+.sync-status{font-size:13.5px; margin:10px 0 0} .sync-status.ok b{color:var(--live)} .sync-status.err{color:var(--warn); font-weight:600}
+#syncPanel code{font-size:12px; background:var(--rail); padding:1px 5px; border-radius:4px}
 </style>
 </head>
 <body>
@@ -676,7 +689,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.01</span></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.03</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -882,9 +895,9 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <!-- v2.66: live scores for your open bets (ESPN, no BettingPros calls) -->
 <div class="view" id="v-parole">
 <div class="panel">
-  <h2>🔓 Parole <span class="sub">La Contadora sets the conditions (your Make price) — it's only a bet once someone posts bond by taking it</span></h2>
+  <h2>🔓 Parole <span class="sub">🎣 fishing: you're the Maker — post La Contadora's bait price on Novig and see who bites. Only a bet once someone takes it.</span></h2>
   <div class="row" style="margin-top:0;gap:10px;align-items:center;flex-wrap:wrap"><button class="act" id="parScan">🔎 Check prices</button><span class="meta" id="parMsg"></span></div>
-  <p class="hint" style="margin:6px 0 10px">Only Jail reasons a price can fix get parole (below your floor or minimum, odds range, priced under the market). One-per-player, game caps, the daily max and started games stay in Jail. The screener never places anything.</p>
+  <p class="hint" style="margin:6px 0 10px">Only Jail reasons a price can fix get parole: below your floor or minimum, odds range, and outliers / risk-bet limit (the bait must then beat the market, at your minimum stake). One-per-player, game caps, the daily max, the outlier limit and started games stay in Jail. The screener never places anything.</p>
   <div id="parList"></div>
 </div>
 </div>
@@ -902,24 +915,39 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 </div>
 
 <div class="view" id="v-settings">
+<details class="panel fold" id="syncPanel" open>
+  <summary><h2>☁ Your bets on every device <span class="sub">phone, other PCs — locked with your own sync password</span></h2></summary>
+  <p class="hint">One copy of your bet log lives in your Cloudflare store. Any device with the screener passphrase <b>and</b> this password sees the same bets, baits and settings. Changes upload a few seconds after you make them; other devices pick them up when they open or come back to the page, and once a minute while it's open — Wi-Fi or cellular.</p>
+  <div class="row" style="gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px">
+    <input type="password" id="syncPw" placeholder="sync password" autocomplete="off" style="max-width:220px;padding:8px 10px;font-size:14px">
+    <button class="act" id="syncOn">Turn on</button>
+    <button class="ghost" id="syncNowBtn" disabled>⟳ Sync now</button>
+    <button class="ghost" id="syncOff" disabled>Turn off here</button>
+  </div>
+  <div class="sync-status" id="syncStatus">Off on this device.</div>
+  <p class="hint" style="margin-top:8px"><b>Synced:</b> bet log, removed bets, parlay marks, Parole baits, which book fills are matched, your settings (bankroll, La Contadora's rules, fees) and the last board you loaded with its grading history. <b>Stays on each device:</b> the screener passphrase, this password, theme, team logos.</p>
+  <p class="hint" style="margin-top:4px"><b>First time:</b> on the Mac run <code>cd ~/prop-bet-api</code>, then <code>npx wrangler secret put SYNC_KEY</code> (type the password you picked — it never goes in chat or code), then <code>npx wrangler deploy</code>. Turn it on here on the PC first (its log becomes the cloud copy), then on the phone. Lost a device? Run the secret command again with a new password.</p>
+  <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px"><button class="ghost sm" id="syncBak">Cloud backups…</button><span class="meta" id="syncBakList"></span></div>
+</details>
 <details class="panel fold" id="myBooksPanel">
   <summary><h2>Your exchange bets <span class="sub">Kalshi · Polymarket US · Novig — read-only</span></h2></summary>
   <p class="hint">Every minute the page reads your fills (never places, changes or cancels anything). A fill that matches a bet you saved is linked (✓, or ⚠ with Fix if the price or cost differs). A fill that matches a row on the board is saved for you (tag <b>auto</b>). Anything else waits in <b>From your books</b> above the Log.</p>
   <div class="row" style="margin-top:0;gap:10px;flex-wrap:wrap;align-items:center">
     <button class="ghost" id="fillsNow">Check my books now</button>
     <button class="ghost" id="fillsTest">Test my books (raw)</button>
-    <button class="ghost" id="fillsCopy" style="display:none">📋 Copy</button>
     <button class="ghost" id="fillsReset" title="Forget which fills were already seen; the next check re-reads the last 14 days. Bets you already have stay linked, nothing doubles.">Re-read last 14 days</button>
     <span class="meta" id="fillsMsg"></span>
   </div>
+  <div class="copy-bar" id="fillsCopyTop" style="display:none"><button type="button" class="copy-big" data-copy-from="fillsRaw">📋 Copy all for Claude</button><span class="meta" id="fillsSize"></span></div>
+  <pre id="fillsRaw" style="display:none;max-height:320px;overflow:auto;font-size:11px;white-space:pre-wrap;background:var(--bg2,#0001);padding:8px;border-radius:8px"></pre>
+  <div class="copy-bar" id="fillsCopyBot" style="display:none"><button type="button" class="copy-big" data-copy-from="fillsRaw">📋 Copy all for Claude</button></div>
   <div class="row" style="gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px">
     <span class="meta"><b>Posting (maker) fee</b>, as a % coefficient like Kalshi's 7 (fee = c·p·(1−p) per contract):</span>
     <label class="meta">Kalshi <input id="mkKalshi" type="number" step="0.05" min="0" style="width:64px"></label>
     <label class="meta">Polymarket US <input id="mkPoly" type="number" step="0.05" min="0" style="width:64px"></label>
     <label class="meta">Novig <input id="mkNovig" type="number" step="0.05" min="0" style="width:64px"></label>
   </div>
-  <p class="hint" style="margin-top:4px">Defaults: Novig 0 and Polymarket US 0 (their fee pages say makers pay nothing); Kalshi 1.75 = 25% of its 7 taker coefficient, which some Kalshi series charge makers (most charge 0 — set 0 if yours do).</p>
-  <pre id="fillsRaw" style="display:none;max-height:320px;overflow:auto;font-size:11px;white-space:pre-wrap;background:var(--bg2,#0001);padding:8px;border-radius:8px"></pre>
+  <p class="hint" style="margin-top:4px">Defaults: Novig 0 (makers pay nothing before the game) and Polymarket US 0 (it actually pays makers a small rebate, 1.25% × p × (1 − p) — left out to stay on the safe side); Kalshi 1.75 = 25% of its 7 taker coefficient, which some Kalshi series charge makers (most charge 0 — set 0 if yours do).</p>
 </details>
 <div class="panel" style="padding-top:12px;padding-bottom:12px">
   <label class="bar-check"><input type="checkbox" id="dkGroup" checked> Today ribbon: count DK Predictions and DraftKings Pick 6 under DraftKings</label>
@@ -961,12 +989,12 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
     <div class="grid" style="margin-top:12px">
       <div class="field"><label for="fKalshi">Kalshi % of price</label><input id="fKalshi" type="number" value="7" step="0.5"></div>
       <div class="field"><label for="fProphet">ProphetX % of stake</label><input id="fProphet" type="number" value="1" step="0.25"></div>
-      <div class="field"><label for="fPoly">Polymarket % of stake</label><input id="fPoly" type="number" value="0" step="0.25"></div>
-      <div class="field"><label for="fNovig">Novig % of stake</label><input id="fNovig" type="number" value="0" step="0.25"></div>
+      <div class="field"><label for="fPoly">Polymarket US % of price</label><input id="fPoly" type="number" value="6.95" step="0.05"></div>
+      <div class="field"><label for="fNovig" title="Novig charges nothing before the game. Once it's live, takers pay 6% × price × (1 − price) per contract — the screener adds that itself for live bets.">Novig % of stake (extra)</label><input id="fNovig" type="number" value="0" step="0.25"></div>
       <div class="field"><label for="fFliff">Fliff % of stake</label><input id="fFliff" type="number" value="0" step="0.25"></div>
       <div class="field"><label for="fBook">Licensed books % of stake</label><input id="fBook" type="number" value="0" step="0.25"></div>
     </div>
-    <p class="hint" style="margin:12px 0 0">Kalshi runs on a curve rather than a flat rate: <strong>7% × price × (1 − price)</strong> per contract, which is <strong>7% × (1 − price)</strong> of what you put up. A short favorite costs about 2.3%, an even-money bet 3.5%, a +400 longshot 5.6%. The fee is charged on top of the contract cost, so net EV is <strong>(gross − fee) ÷ (1 + fee)</strong>. Kalshi also rounds each order's fee up to the next cent; the board includes that when it counts whole contracts.</p>
+    <p class="hint" style="margin:12px 0 0">Kalshi runs on a curve rather than a flat rate: <strong>7% × price × (1 − price)</strong> per contract, which is <strong>7% × (1 − price)</strong> of what you put up. A short favorite costs about 2.3%, an even-money bet 3.5%, a +400 longshot 5.6%. The fee is charged on top of the contract cost, so net EV is <strong>(gross − fee) ÷ (1 + fee)</strong>. Kalshi also rounds each order's fee up to the next cent; the board includes that when it counts whole contracts.<br><b>Polymarket US</b> uses the same curve at <strong>6.95%</strong> (since Sep 17, 2026 — your Oct 25 Kenneth Walker fill paid $0.16 on 9.28 shares at 49¢, which is 6.95%). <b>Novig</b> is free before the game; once it's live, takers pay <strong>6% × price × (1 − price)</strong> (from Novig's own market data) — added automatically for live bets in + Add a bet and the bet editor.</p>
   </details>
 </details>
 
@@ -1224,7 +1252,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v3.01';
+const SCREENER_VERSION='v3.03';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -1251,12 +1279,12 @@ function americanOf(p){
   return p>=.5 ? -Math.round(p/(1-p)*100) : Math.round((1-p)/p*100);
 }
 function pct(x,d){ return (x*100).toFixed(d===undefined?1:d)+'%'; }
-function feeRate(bookRaw, prob, cfg){
+function feeRate(bookRaw, prob, cfg, live){   // v3.03: Polymarket US on Kalshi's curve (6.95%); Novig's 6% curve only once the game is live
   const b=(bookRaw||'').toLowerCase();
   if(b.includes('kalshi')) return (cfg.kalshi/100)*(1-prob);
   if(b.includes('prophet')) return cfg.prophet/100;
-  if(b.includes('polymarket')) return cfg.poly/100;
-  if(b.includes('novig')) return cfg.novig/100;
+  if(b.includes('polymarket')) return (cfg.poly/100)*(1-prob);
+  if(b.includes('novig')) return cfg.novig/100 + (live ? 0.06*(1-prob) : 0);
   if(b.includes('fliff')) return cfg.fliff/100;
   return cfg.book/100;
 }
@@ -2223,7 +2251,7 @@ function isSweet(r,c){
          !isNaN(odds) && odds>=c.oMin && odds<=c.oMax;
 }
 function saveSweet(){ try{ const o={}; SW_IDS.forEach(k=>o[k]=document.getElementById(k).value);
-  SW_CHECKS.forEach(k=>o[k]=document.getElementById(k).checked); localStorage.setItem(SWEET_KEY,JSON.stringify(o)); }catch(e){} }
+  SW_CHECKS.forEach(k=>o[k]=document.getElementById(k).checked); localStorage.setItem(SWEET_KEY,JSON.stringify(o)); }catch(e){} syncTouched(); }
 function loadSweet(){ try{ const o=JSON.parse(localStorage.getItem(SWEET_KEY)||'null'); if(!o) return;
   SW_IDS.forEach(k=>{ if(o[k]!==undefined) document.getElementById(k).value=o[k]; });
   SW_CHECKS.forEach(k=>{ if(o[k]!==undefined) document.getElementById(k).checked=!!o[k]; }); }catch(e){} }
@@ -2262,7 +2290,7 @@ function openBetEditor(tr, r, opt){
     '<span class="pm-fields eb-pm">'+
       '<label>Cost $ <input class="eb-cost" type="number" step="0.01" placeholder="2.50"></label>'+
       '<label>@ <input class="eb-pct" type="number" step="0.1" placeholder="62" style="width:60px">%</label>'+
-      '<label>To win $ <input class="eb-win" type="number" step="0.01" placeholder="3.93" title="What the app says you get back — total payout or profit, either works when the @ % is filled in"></label>'+
+      '<label title="What you get back if it wins (cost + profit). Change it and the @ % follows; change the @ % and this follows — they always agree. A number below the cost is read as profit.">To win $ <input class="eb-win" type="number" step="0.01" placeholder="3.93"></label>'+
       '<span class="pm-calc eb-calc"></span></span>'+
     '<span class="eb-check"></span><span class="meta eb-rec"></span>'+
     '<button class="log sm eb-save">'+(opt.edit?'Save changes':'Save bet')+'</button> <button class="log sm undo eb-cancel">Cancel</button>'+
@@ -2282,28 +2310,38 @@ function openBetEditor(tr, r, opt){
   // %-priced apps: the real price is cost ÷ total payout (it already includes fees
   // and slippage). "To win" can be the total payout OR the profit — the @ % tells
   // which one it is (payout ≈ cost ÷ %). Falls back to the @ % if "To win" is blank.
+  // v3.03: the price is whichever you typed last — the @ % or To win — and the other box follows it, so they never
+  // disagree (Garland: "To win 3" next to 49.5% used to turn the price into +200 / +95% EV without showing it).
+  ed.dataset.pmsrc='pct';
+  const liveG=()=>!!(r.gameInfo && r.gameInfo.state==='in');
   const pmPrice=()=>{
     const cost=parseFloat(ed.querySelector('.eb-cost').value), win=parseFloat(ed.querySelector('.eb-win').value),
           at=parseFloat(ed.querySelector('.eb-pct').value);
     const pctOk=at>0 && at<100;
-    if(cost>0 && win>0){
-      let payout, read;
-      if(pctOk){
-        const exp=cost/(at/100);
-        if(Math.abs(win-exp) <= Math.abs((win+cost)-exp)){ payout=win; read='total payout'; }
-        else { payout=win+cost; read='profit'; }
-      } else if(win>cost){ payout=win; read='total payout (add the @ % to double-check)'; }
-      else { payout=win+cost; read='profit'; }
+    if(ed.dataset.pmsrc==='win' && cost>0 && win>0){
+      const payout=win>cost?win:win+cost, read=win>cost?'total payout':'profit';
       if(payout>cost) return {prob:cost/payout, allIn:true, cost, read};
     }
     if(pctOk) return {prob:at/100, allIn:false, cost:cost>0?cost:0};
     return null;
   };
+  ed._pmPrice=pmPrice;
   function calcPm(){
     const out=ed.querySelector('.eb-calc'); const pr=pmMode()?pmPrice():null;
-    out.textContent = pr ? '= '+fmtOdds(Math.round(americanOf(pr.prob)))+(pr.allIn?' (all-in · To win read as '+pr.read+')':' (from the @ %)') : '';
+    out.textContent = pr ? '= '+fmtOdds(Math.round(americanOf(pr.prob)))+(pr.allIn?' (from To win, all-in'+(pr.read==='profit'?' — read as profit':'')+')':' (from the @ %)') : '';
   }
-  ['.eb-cost','.eb-pct','.eb-win'].forEach(c=>ed.querySelector(c).addEventListener('input',calcPm));
+  const pmSync=src=>{
+    const cI=ed.querySelector('.eb-cost'), pI=ed.querySelector('.eb-pct'), wI=ed.querySelector('.eb-win');
+    if(src) ed.dataset.pmsrc=src;
+    const cost=parseFloat(cI.value), at=parseFloat(pI.value), win=parseFloat(wI.value);
+    if(ed.dataset.pmsrc==='win'){ if(cost>0 && win>0){ const pay=win>cost?win:win+cost; if(pay>cost) pI.value=(cost/pay*100).toFixed(1); } }
+    else if(cost>0 && at>0 && at<100){ const p=at/100, f=feeRate(bookSel.value, p, cfgRead().fees, liveG()); wI.value=(Math.floor(cost/(p*(1+f))*100+1e-6)/100).toFixed(2); }
+    calcPm();
+  };
+  ed.querySelector('.eb-cost').addEventListener('input',()=>pmSync(null));
+  ed.querySelector('.eb-pct').addEventListener('input',()=>pmSync('pct'));
+  ed.querySelector('.eb-win').addEventListener('input',()=>pmSync('win'));
+  bookSel.addEventListener('change',()=>pmSync(null));
   /* v2.59: is it still worth it? Re-checked as you type and again on Save. Same line → the
      model's own cover %. Different line → a rough shift for NFL/college game totals and spreads
      (about 2.5% / 3% per point); for anything else the model can't price the new number. */
@@ -2322,9 +2360,9 @@ function openBetEditor(tr, r, opt){
   const perPoint=()=>/^(NFL|NCAAF)$/.test(r.sport||'') ? (r.kind==='total'?0.025:(r.kind==='spread'?0.03:null)) : null;
   const priceNow=()=>{
     const cfg=cfgRead(), book=bookSel.value;
-    if(pmMode()){ const pr=pmPrice(); if(!pr) return null; return {prob:pr.prob, fee:pr.allIn?0:feeRate(book,pr.prob,cfg.fees)}; }
+    if(pmMode()){ const pr=pmPrice(); if(!pr) return null; return {prob:pr.prob, fee:pr.allIn?0:feeRate(book,pr.prob,cfg.fees,liveG())}; }
     const o=ed.querySelector('.eb-odds').value.trim().replace(/^(\d)/,'+$1'); const prob=toProb(o);
-    return prob===null?null:{prob, fee:feeRate(book,prob,cfg.fees)};
+    return prob===null?null:{prob, fee:feeRate(book,prob,cfg.fees,liveG())};
   };
   function valueCheck(){
     const cfg=cfgRead(), pr=priceNow();
@@ -2377,7 +2415,7 @@ function openBetEditor(tr, r, opt){
     if(re) re.textContent = rs==null ? '' : 'recommended at this price: $'+rs.toFixed(2);
   }
   ed.querySelectorAll('input,select').forEach(x=>{ x.addEventListener('input',showCheck); x.addEventListener('change',showCheck); });
-  bookSel.addEventListener('change',bookDefault); modeSel.addEventListener('change',syncMode); bookDefault(); showCheck();
+  bookSel.addEventListener('change',bookDefault); modeSel.addEventListener('change',syncMode); bookDefault(); pmSync(null); showCheck();
   // v2.88: live exchange price for this bet on Kalshi / Polymarket / Novig — EV re-checked at that price
   { const liveEl=document.createElement('span'); liveEl.className='meta eb-live'; ed.querySelector('.eb-rec').after(liveEl);
     let tok=0, lastQ=null, pctTyped=false;
@@ -2409,11 +2447,11 @@ function openBetEditor(tr, r, opt){
       try{
         const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(descs)), {headers:apiHeaders()});
         const j=await res.json(), R=(j&&j.results)||{}; if(myTok!==tok) return;
-        let own=src?R['ed'+myTok+':'+src]:null; if(own&&own.ok&&suspectQ(own,r.fairProb,toProb(r.offeredRaw))) own={ok:false,note:'price looks like a different market — ignored'};
-        const others=descs.map(d=>({d,q:R[d.id]})).filter(x=>x.q&&x.q.ok&&!suspectQ(x.q,r.fairProb,toProb(r.offeredRaw))).map(x=>({book:BOOK_NAME[x.d.book], p:x.q.price})).sort((a,b)=>a.p-b.p);
+        let own=src?R['ed'+myTok+':'+src]:null; if(own&&own.ok&&suspectQ(own,r.fairProb,toProb(r.offeredRaw),r.mktProb)) own={ok:false,note:'price looks like a different market — ignored'};
+        const others=descs.map(d=>({d,q:R[d.id]})).filter(x=>x.q&&x.q.ok&&!suspectQ(x.q,r.fairProb,toProb(r.offeredRaw),r.mktProb)).map(x=>({book:BOOK_NAME[x.d.book], p:x.q.price})).sort((a,b)=>a.p-b.p);
         lastQ={book, q:own||null, others: r.fairProb==null||!src ? others : others.filter(o=>LIVE_BOOK(o.book)!==src)};
         if(own && own.ok){ liveQuotes['ed:'+src]=own;
-          if(pmMode() && !pctTyped){ pctIn.value=(own.price*100).toFixed(1); pctIn.dispatchEvent(new Event('input')); } }
+          if(pmMode() && !pctTyped && ed.dataset.pmsrc!=='win'){ pctIn.value=(own.price*100).toFixed(1); pctIn.dispatchEvent(new Event('input')); } }
         paint();
       }catch(e){ liveEl.textContent='live price unavailable'; }
     };
@@ -2428,13 +2466,13 @@ function openBetEditor(tr, r, opt){
       const pr=pmPrice();
       if(!pr){ ed.querySelector('.eb-msg').textContent='Enter Cost and To win (or the @ %)'; return; }
       prob=pr.prob; odds=fmtOdds(Math.round(americanOf(prob))); stake=pr.cost;
-      fee = pr.allIn ? 0 : feeRate(book, prob, cfg.fees);   // all-in price already paid the fee
+      fee = pr.allIn ? 0 : feeRate(book, prob, cfg.fees, liveG());   // all-in price already paid the fee
     } else {
       odds=ed.querySelector('.eb-odds').value.trim().replace(/^(\d)/,'+$1');
       prob=toProb(odds);
       if(prob===null){ ed.querySelector('.eb-msg').textContent='Odds not readable — use e.g. -110 or +120'; return; }
       stake=parseFloat(ed.querySelector('.eb-stake').value)||0;
-      fee=feeRate(book, prob, cfg.fees);
+      fee=feeRate(book, prob, cfg.fees, liveG());
     }
     if(!(stake>0)){ ed.querySelector('.eb-msg').textContent=pmMode()?'Enter the Cost you paid (above $0)':'Enter a stake above $0'; return; }
     // v2.71: La Contadora — past today's outlier / risk-bet limit: one line, then it's your call
@@ -2487,7 +2525,7 @@ function openBetEditor(tr, r, opt){
 /* ============ parlay marks (v2.47) ============ */
 let parlays={};
 function loadParlays(){ try{ parlays=JSON.parse(localStorage.getItem('mbev.parlay')||'{}'); }catch(e){ parlays={}; } }
-function saveParlays(){ try{ localStorage.setItem('mbev.parlay',JSON.stringify(parlays)); }catch(e){} }
+function saveParlays(){ try{ localStorage.setItem('mbev.parlay',JSON.stringify(parlays)); }catch(e){} syncTouched(); }
 // v2.56: a parlay mark also survives midnight (matched by bet, within 36 hours of marking)
 function parlayKeyOf(r){
   if(parlays[matchKey(r)]) return matchKey(r);
@@ -2728,7 +2766,7 @@ async function checkExchangeOpen(rows){
     const chunk=jobs.slice(i,i+8);
     let R={}; try{ const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(chunk.map(x=>x[1]))),{headers:apiHeaders()}); if(!res.ok) break; R=((await res.json())||{}).results||{}; }catch(e){ break; }
     chunk.forEach(([r,d])=>{ const q=R[d.id]; exCheckAt[r.idx+':'+r.book+':'+r.market]=Date.now(); if(!q) return;
-      if(q.ok){ delete r.exClosed; if(suspectQ(q,r.fairProb,r.offeredProb)) return; r.exOpen={p:q.price, at:Date.now()}; liveQuotes[d.id]=q; return; }
+      if(q.ok){ delete r.exClosed; if(suspectQ(q,r.fairProb,r.offeredProb,r.mktProb)) return; r.exOpen={p:q.price, at:Date.now()}; liveQuotes[d.id]=q; return; }
       const note=String(q.note||'');
       // closed only when the book answered about THIS market; unmapped stats / lookup errors leave it open
       if(/no offer to buy|no market at your line|not listed|lists .* not your/i.test(note)) r.exClosed=note.replace(/^(Kalshi|Polymarket|Novig):\s*/,bookLabel(r.book)+': ');
@@ -2909,7 +2947,7 @@ function gradeRow(r, box){
    Persisted across sessions so the sort keeps learning instead of trusting the
    raw stated EV forever. */
 function loadGradeHistory(){ try{ return JSON.parse(localStorage.getItem('mbev.gradehistory')||'{}'); }catch(e){ return {}; } }
-function saveGradeHistory(){ try{ localStorage.setItem('mbev.gradehistory', JSON.stringify(gradeHistory)); }catch(e){} }
+function saveGradeHistory(){ try{ localStorage.setItem('mbev.gradehistory', JSON.stringify(gradeHistory)); }catch(e){} if(SY && SY.on && !SY.applying) syncSoon(8000); }
 let gradeHistory = loadGradeHistory();
 function bucketOf(gross){ return Math.floor(((gross||0)*100)/5)*5; }   // 5-point EV buckets
 const MIN_BUCKET_SAMPLE = 8;
@@ -3075,7 +3113,7 @@ function onBoard(b){ const sl=document.getElementById('slate').value; return b.d
 /* v2.61: bets you removed / cancelled — kept for the record (and any money lost cancelling) */
 let removedBets=[];
 function loadRemoved(){ try{ removedBets=JSON.parse(localStorage.getItem('mbev.removed')||'[]'); }catch(e){ removedBets=[]; } }
-function saveRemoved(){ try{ localStorage.setItem('mbev.removed',JSON.stringify(removedBets)); }catch(e){} }
+function saveRemoved(){ try{ localStorage.setItem('mbev.removed',JSON.stringify(removedBets)); }catch(e){} syncTouched(); }
 loadRemoved();
 function lineOnly(b){ return String(b.betnow||b.market||'').replace(/\s+[+-]\d+$/,''); }
 function removeBet(bet, lost){
@@ -3111,7 +3149,7 @@ function propKey(r){ return [document.getElementById('slate').value,r.name,r.mar
 function propKeyOf(b){ return [b.date,b.name,b.market].join('|').toLowerCase(); }
 function betKey(r){ return [document.getElementById('slate').value,r.name,r.market,r.book,r.offeredRaw].join('|'); }
 function loadLog(){ try{ logged=JSON.parse(localStorage.getItem('mbev.log')||'[]'); }catch(e){ logged=[]; } }
-function saveLog(){ try{ localStorage.setItem('mbev.log',JSON.stringify(logged)); }catch(e){} if(typeof renderTodayBar==='function') setTimeout(renderTodayBar,0); }
+function saveLog(){ try{ localStorage.setItem('mbev.log',JSON.stringify(logged)); }catch(e){} if(typeof renderTodayBar==='function') setTimeout(renderTodayBar,0); syncTouched(); }
 /* v2.63: what the screener said about a row, in one word — saved with every bet you log.
    "On the list" = the screener had a stake on it (BET / RISK / OUTLIER / LIMITED) and the game hadn't started. */
 function saidOf(r){
@@ -4080,7 +4118,7 @@ async function findBetGame(b){
 function srcTagHtml(b){   // v2.86: where the bet came from
   const m={api:['API','from an API load'], paste:['paste','from a pasted Cheat Sheet'], mev:['paste · sharp','from a pasted Market EV page'], manual:['by hand','from + Add a bet']};
   let t=b.manual?m.manual:m[b.srcType];
-  if(b.made) return '<span class="src-tag" title="Your posted price — someone took it">'+(b.parole?'🔓 parole':'made')+(b.rung?' · rung '+b.rung:'')+' · '+esc(({kalshi:'Kalshi',poly:'Polymarket',novig:'Novig'}[b.autoFrom]||bookLabel(b.book)))+'</span>';
+  if(b.made) return '<span class="src-tag" title="Your posted price — someone took it">'+(b.parole?'🐟 catch':'made')+(b.rung?' · rung '+b.rung:'')+' · '+esc(({kalshi:'Kalshi',poly:'Polymarket',novig:'Novig'}[b.autoFrom]||bookLabel(b.book)))+'</span>';
   if(b.autoFrom) t=['auto · '+({kalshi:'Kalshi',poly:'Polymarket',novig:'Novig'}[b.autoFrom]||b.autoFrom), 'automatically from your '+b.autoFrom+' fill'+(t?' (board row: '+t[1]+')':'')];
   if(!t) return '';
   return '<span class="src-tag" title="Saved '+t[1]+'">'+t[0]+'</span>'; }
@@ -4660,7 +4698,7 @@ const KEEP_FIELDS=['mktSharp','mktConsensus','name','game','side','matchup','mat
   'offeredProb','fairProb','screenerEV','apiKey','stars','l15Hit','l15N','seasonHit','seasonN','evModel','consensusEdge','mktProb','team','consOdds','consOtherOdds','gameInfo','src','projValue','pos','pid','jersey'];
 function slimRow(r){ const o={}; KEEP_FIELDS.forEach(k=>{ if(r[k]!==undefined) o[k]=r[k]; }); return o; }
 function boardPayload(){ return {v:1, savedAt:new Date().toISOString(), slate:document.getElementById('slate').value, rows:lastRows.map(slimRow)}; }
-function autoSaveBoard(){ try{ localStorage.setItem(BOARD_KEY, JSON.stringify(boardPayload())); }catch(e){} }
+function autoSaveBoard(){ try{ localStorage.setItem(BOARD_KEY, JSON.stringify(boardPayload())); }catch(e){} if(SY && SY.on && !SY.applying) syncSoon(8000); }
 function fmtSaved(iso){ const d=new Date(iso); return isNaN(d)?'':d.toLocaleString('en-US',{weekday:'short',hour:'numeric',minute:'2-digit'}); }
 function useBoard(payload, label){
   if(!payload || !Array.isArray(payload.rows)) return false;
@@ -5034,7 +5072,7 @@ document.getElementById('csvBtn').addEventListener('click',()=>{
 });
 document.getElementById('wipe').addEventListener('click',()=>{
   if(!logged.length) return;
-  if(confirm('Delete all '+logged.length+' logged bets? This cannot be undone.')){
+  if(confirm('Delete all '+logged.length+' logged bets? This cannot be undone.'+(SY&&SY.on?' ☁ Sync is on: they are deleted on your other devices too.':''))){
     logged=[]; saveLog(); renderLog(); renderPerf(); refresh();
   }
 });
@@ -5249,9 +5287,10 @@ function save(){
     const o={};
     KEYS.forEach(k=>o[k]=document.getElementById(k).value);
     CHECKS.forEach(k=>o[k]=document.getElementById(k).checked);
-    o.cfgVer=2.53;
+    o.cfgVer=3.03;
     localStorage.setItem('mbev.cfg',JSON.stringify(o));
   }catch(e){}
+  syncTouched();
 }
 function loadCfg(){
   try{
@@ -5263,9 +5302,11 @@ function loadCfg(){
       const old={bank:500, sMin:2.5, sMax:5, gameCap:10};
       Object.keys(old).forEach(k=>{ if(o[k]===undefined || parseFloat(o[k])===old[k]) delete o[k]; });
     }
+    // v3.03: Polymarket US is a curve now (% of price, like Kalshi) — 0 (the old default) becomes 6.95
+    if(!(o.cfgVer>=3.03) && (o.fPoly===undefined || o.fPoly==='' || parseFloat(o.fPoly)===0)) o.fPoly='6.95';
     KEYS.forEach(k=>{ if(o[k]!==undefined) document.getElementById(k).value=o[k]; });
     CHECKS.forEach(k=>{ if(o[k]!==undefined) document.getElementById(k).checked=o[k]; });
-    if(!(o.cfgVer>=2.53)) save();
+    if(!(o.cfgVer>=3.03)) save();
   }catch(e){}
 }
 /* theme — explicit choice, remembered per browser */
@@ -5400,15 +5441,13 @@ function abRowFields(){
 }
 function abPrice(){   // the price typed in the editor below (same reading as Save bet)
   const h=$ab('abHost'); if(!h.querySelector('.editor')) return null;
-  const q=c=>h.querySelector(c), cfg=cfgRead(), book=q('.eb-book').value;
-  if(q('.eb-mode').value==='pct'){
-    const cost=parseFloat(q('.eb-cost').value), win=parseFloat(q('.eb-win').value), at=parseFloat(q('.eb-pct').value), ok=at>0&&at<100;
-    if(cost>0&&win>0){ let payout=win; if(ok){ const exp=cost/(at/100); if(Math.abs((win+cost)-exp)<Math.abs(win-exp)) payout=win+cost; } else if(win<=cost) payout=win+cost;
-      if(payout>cost) return {prob:cost/payout, fee:0, book, stake:cost}; }
-    return ok?{prob:at/100, fee:feeRate(book,at/100,cfg.fees), book, stake:cost>0?cost:0}:null;
+  const q=c=>h.querySelector(c), cfg=cfgRead(), book=q('.eb-book').value, live=!!(abR&&abR.gameInfo&&abR.gameInfo.state==='in');
+  if(q('.eb-mode').value==='pct'){   // v3.03: the editor's own reading — whichever of @ % / To win you typed last
+    const ed=h.querySelector('.editor'), pr=ed&&ed._pmPrice?ed._pmPrice():null; if(!pr) return null;
+    return pr.allIn ? {prob:pr.prob, fee:0, book, stake:pr.cost} : {prob:pr.prob, fee:feeRate(book,pr.prob,cfg.fees,live), book, stake:pr.cost>0?pr.cost:0};
   }
   const o=q('.eb-odds').value.trim().replace(/^(\d)/,'+$1'), p=toProb(o);
-  return p==null?null:{prob:p, fee:feeRate(book,p,cfg.fees), book, stake:parseFloat(q('.eb-stake').value)||0, odds:o};
+  return p==null?null:{prob:p, fee:feeRate(book,p,cfg.fees,live), book, stake:parseFloat(q('.eb-stake').value)||0, odds:o};
 }
 function abUpdate(){ abUpdate94(); }
 function abOpenEditor(){
@@ -5536,11 +5575,11 @@ var logDayFilter=null;
 /* ============ v2.88: live exchange prices (Kalshi · Polymarket US · Novig) via the Worker ============ */
 /* v3.00: an exchange price that implies a huge edge, or sits far from the bet's own price, is almost always a DIFFERENT market
    (e.g. Necas "1+ Powerplay Points" 34.5% matched to "Over 0.5 Points" 65.7%). Never use it to take, post, close or shop. */
-function suspectQ(q, fair, own){
+function suspectQ(q, fair, own, mkt){   // v3.02: judged against the MARKET (a real outlier like Flagg 71% model vs 53% price is not "wrong market")
   if(!q || !(q.price>0)) return false;
-  const cut=Math.max(0.15,(parseFloat((document.getElementById('swOutlier')||{}).value)||15)/100);
-  if(fair!=null && fair/q.price-1>cut) return true;
-  if(own!=null && Math.abs(q.price-own)>0.20) return true;
+  if(mkt!=null) return Math.abs(q.price-mkt)>0.15;          // the market is the best yardstick for "same bet?"
+  if(own!=null && Math.abs(q.price-own)>0.20) return true;   // far from the bet's own book price
+  if(own==null && fair!=null && fair/q.price-1>0.5) return true;
   return false;
 }
 function LIVE_BOOK(bk){ const k=String(bk||'').toLowerCase(); return /kalshi/.test(k)?'kalshi':/polymarket/.test(k)?'poly':/novig/.test(k)?'novig':null; }
@@ -5569,7 +5608,7 @@ async function refreshLivePrices(force){
       if(!res.ok) break;
       const data=await res.json(); const R=(data&&data.results)||{};
       chunk.forEach(([b,d])=>{ const r=R[d.id]; if(!r) return; liveQuotes[d.id]=r;
-        if(r.ok && suspectQ(r,null,toProb(b.odds))){ r.ok=false; r.note=(BOOK_NAME[r.src]||'exchange')+': price looks like a different market — ignored'; liveQuotes[d.id]=r; return; }
+        if(r.ok && suspectQ(r,null,toProb(b.odds),b.mkt!=null?b.mkt:null)){ r.ok=false; r.note=(BOOK_NAME[r.src]||'exchange')+': price looks like a different market — ignored'; liveQuotes[d.id]=r; return; }
         if(r.ok){ const t=Date.parse(b.start);
           b.liveLast={p:r.price, at:r.at||new Date().toISOString(), src:r.src};
           if(!isNaN(t) && Date.now()<t && t-Date.now()<45*60e3) b.closeLive={p:r.price, at:r.at||new Date().toISOString(), src:r.src};   // last price before kickoff
@@ -5676,7 +5715,7 @@ async function shopExchanges(){
       const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(chunk.map(x=>x[2]))), {headers:apiHeaders()});
       if(!res.ok){ msg.textContent='exchange check failed ('+res.status+')'; break; }
       const R=((await res.json())||{}).results||{};
-      chunk.forEach(([r,n,d])=>{ const q=R[d.id]; if(!q||!q.ok) return; if(suspectQ(q,r.fairProb,r.offeredProb)){ (r._suspect=r._suspect||{})[n]=q; return; } matched++; liveQuotes[d.id]=q; (r._shopQ=r._shopQ||{})[n]=q; });
+      chunk.forEach(([r,n,d])=>{ const q=R[d.id]; if(!q||!q.ok) return; if(suspectQ(q,r.fairProb,r.offeredProb,r.mktProb)){ (r._suspect=r._suspect||{})[n]=q; return; } matched++; liveQuotes[d.id]=q; (r._shopQ=r._shopQ||{})[n]=q; });
     }
     let repriced=0;
     rows.forEach(r=>{
@@ -5705,7 +5744,7 @@ document.getElementById('shopBtn') && document.getElementById('shopBtn').addEven
 /* ============ v2.93: your real bets from Kalshi / Polymarket US / Novig fills (read-only) ============ */
 var fillSeen={}, fillPending=[], fillAt=0, fillBusy=false;
 try{ fillSeen=JSON.parse(localStorage.getItem('mbev.fillSeen')||'{}'); fillPending=JSON.parse(localStorage.getItem('mbev.fillPending')||'[]'); }catch(e){}
-function saveFills(){ try{ localStorage.setItem('mbev.fillSeen',JSON.stringify(fillSeen)); localStorage.setItem('mbev.fillPending',JSON.stringify(fillPending)); }catch(e){} }
+function saveFills(){ try{ localStorage.setItem('mbev.fillSeen',JSON.stringify(fillSeen)); localStorage.setItem('mbev.fillPending',JSON.stringify(fillPending)); }catch(e){} syncTouched(); }
 const FILL_NAME={kalshi:'Kalshi', poly:'Polymarket US', novig:'Novig'};
 function quoteMatchesFill(q, f){
   if(!q || !q.ok || q.src!==f.book) return false;
@@ -5772,7 +5811,7 @@ document.addEventListener('click',e=>{
     delete b.fillDiff; saveLog(); renderLog(); renderPerf(); refresh(); return; }
   if(ig){ const f=fillPending[+ig.dataset.i]; if(f) fillSeen[f.book+':'+f.id]={s:'ignored',q:+f.qty||0}; fillPending.splice(+ig.dataset.i,1); saveFills(); renderFromBooks(); return; }
   if(ad){ const f=fillPending[+ad.dataset.i]; if(!f) return; fillPending.splice(+ad.dataset.i,1); saveFills(); renderFromBooks(); addFromFill(f); return; }
-  const cp=e.target.closest('.fb-copy'); if(cp){ copyText(fillPending.map(f=>{ const L=fillLabel(f); return [FILL_NAME[f.book], L.bet, L.game, L.when, f.price!=null?(f.price*100).toFixed(1)+'%':'', '$'+(+(f.cost||0)+(+f.fee||0)).toFixed(2)].filter(Boolean).join(' · '); }).join('\n'), cp); return; }
+  const cp=e.target.closest('.fb-copy'); if(cp){ copyText(fromBooksText(), cp); return; }
 });
 /* ============ v2.95: fills say what the bet IS — match by player · stat · line · side · game ============ */
 const STAT_FAM=[
@@ -5802,7 +5841,9 @@ function normFillBet(f){   // Novig: "<Player> <line> <STAT_TYPE>" → player + 
   if(m && !/@|\bvs\.?\b|\bat\b/i.test(m[1])){ b.kind='prop'; b.player=m[1].trim(); b.statText=us_(m[3]).trim(); if(b.line==null) b.line=parseFloat(m[2]); }
   return f;
 }
-function statFam(t){ const s=us_(t); const r=STAT_FAM.find(x=>x[0].test(s)); return r?r[1]:s.toLowerCase().replace(/[^a-z]/g,''); }
+function comboFam(s){ const P=/\bpoints?\b|\bpts\b/i.test(s), R=/\brebounds?\b|\breb\b/i.test(s), A=/\bassists?\b|\bast\b/i.test(s);   // v3.02: any word order
+  return P&&R&&A?'pra':P&&R?'pr':P&&A?'pa':R&&A?'ra':null; }
+function statFam(t){ const s=us_(t); const c0=comboFam(s); if(c0) return c0; const r=STAT_FAM.find(x=>x[0].test(s)); return r?r[1]:s.toLowerCase().replace(/[^a-z]/g,''); }
 const nrm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]/g,' ').replace(/\b(jr|sr|ii|iii|iv)\b/g,'').replace(/\s+/g,' ').trim();
 function sameName(a,b){ const x=nrm(a), y=nrm(b); if(!x||!y) return false; if(x===y) return true;
   const xs=x.split(' '), ys=y.split(' '); return xs[xs.length-1]===ys[ys.length-1] && xs[0][0]===ys[0][0]; }
@@ -5931,13 +5972,20 @@ async function syncFills(force){
       const b=linkedTo(f), full=(f.soldQty||0)>=(+f.qty||0)-1e-6;
       if(b && full && !b.sold){ b.sold={price:+f.soldFor.toFixed(2), at:new Date(f.soldAt||Date.now()).toISOString(), auto:true}; changed=true; }
       const pf=fillPending.find(p=>p.book===f.book && p.id===f.id); if(pf){ pf.soldFor=f.soldFor; pf.soldAt=f.soldAt; pf.soldQty=f.soldQty; } });
-    // v2.96: the book's own result wins over ESPN grading
+    // v2.96 / v3.03: the book's own result wins over ESPN grading (Polymarket: the position's realized profit)
     (j.settlements||[]).forEach(st=>{
-      logged.filter(b=>b.fillBook===st.book && b.fillRef && b.fillRef===st.ref && !b.sold).forEach(b=>{
+      let bets=logged.filter(b=>b.fillBook===st.book && b.fillRef && b.fillRef===st.ref && !b.sold);
+      if(!bets.length && st.bet){   // a bet saved before its fill was read: match it by what it is (player · stat · line · side · game)
+        const c=logged.filter(b=>!b.sold && !b.fillRef && LIVE_BOOK(b.book)===st.book && b.result!=='win' && b.result!=='loss' && betMatches(st.bet,b));
+        if(c.length===1){ bets=c; noteFillRef(c[0],{book:st.book, ref:st.ref, side:st.side||null}); changed=true; } }
+      bets.forEach(b=>{
         let res=null;
-        if(st.book==='kalshi'){ const r=String(st.result||''); res = r==='void'||r==='scalar' ? 'push' : (r==='yes'||r==='no') ? (r===(b.fillSide||'yes')?'win':'loss') : null; }
-        else if(st.book==='poly' && st.amount!=null) res = st.amount>0 ? 'win' : 'loss';
-        if(res && (b.result!==res || b.resultSrc!==BOOK_NAME[st.book])){ b.result=res; b.resultSrc=BOOK_NAME[st.book]; changed=true; } }); });
+        if(st.book==='kalshi'){ const r=String(st.result||''); res = r==='void'||r==='scalar' ? 'push' : (r==='yes'||r==='no') ? (r===(b.fillSide||st.side||'yes')?'win':'loss') : null; }
+        else if(st.book==='poly'){
+          if(st.side && b.fillSide && st.side!==b.fillSide) return;   // another position in that market
+          const o=st.outcome||(st.amount!=null?(st.amount>0?'win':'loss'):null);
+          res = o==='win'?'win' : o==='loss'?'loss' : o==='void'?'push' : null; }
+        if(res && (b.result!==res || b.resultSrc!==BOOK_NAME[st.book])){ b.result=res; b.resultSrc=BOOK_NAME[st.book]; if(st.payout!=null) b.bookPaid=+(+st.payout).toFixed(2); changed=true; } }); });
     window._settlements=j.settlements||[]; window._fills=j.fills||[];
     const waiting=fillPending.filter(f=>f.action!=='sell' && !f.bet);
     if(waiting.length && await huntForFills(waiting)){
@@ -5958,14 +6006,26 @@ function renderFromBooks(){
   el.style.display='block';
   el.innerHTML='<b>From your books</b> — '+(fillPending.length?fillPending.length+' bet'+(fillPending.length===1?'':'s')+' not matched to your log or board.':'all matched.')+
     (errTxt?' <span class="meta">('+errTxt+')</span>':'')+
-    (fillPending.length?' <button class="ghost sm fb-copy" title="Copy this list">Copy</button><table>'+fillPending.map((f,i)=>{ const L=fillLabel(f);
+    (fillPending.length?'<div class="copy-bar"><button type="button" class="copy-big" data-copy-fn="fromBooksText">📋 Copy this list</button></div><div class="fb-wrap"><table>'+fillPending.map((f,i)=>{ const L=fillLabel(f);
       return '<tr><td>'+(bookLogo(FILL_NAME[f.book])?logoTag(FILL_NAME[f.book],'sm'):esc(FILL_NAME[f.book]))+'</td>'+
       '<td><b>'+esc(L.bet)+'</b>'+(f.action==='sell'?' <b>(sold)</b>':'')+(f.soldFor!=null?' <span class="tag t-sold">SOLD $'+r2(f.soldFor).toFixed(2)+' ('+(r2(f.soldFor)-r2((+f.cost||0)+(+f.fee||0))>=0?'+':'−')+'$'+Math.abs(r2(f.soldFor)-r2((+f.cost||0)+(+f.fee||0))).toFixed(2)+')</span>':'')+'<div class="meta">'+esc([L.game,L.when].filter(Boolean).join(' · '))+'</div></td>'+
       '<td class="num">'+(f.price!=null?(f.price*100).toFixed(1)+'%<div class="meta">'+esc(fmtOdds(Math.round(americanOf(f.price))))+'</div>':'—')+'</td>'+
       '<td class="num">$'+(+(f.cost||0)+(+f.fee||0)).toFixed(2)+(f.qty!=null?'<div class="meta">'+f.qty+' ct</div>':'')+'</td>'+
-      '<td class="meta">bet '+(f.ts?new Date(f.ts).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}):'')+'</td>'+
-      '<td style="white-space:nowrap">'+(f.action==='sell'?'':'<button class="log sm fb-add" data-i="'+i+'">Add</button> ')+'<button class="ghost sm fb-ign" data-i="'+i+'">Ignore</button></td></tr>'; }).join('')+'</table>':'');
+      '<td class="meta fb-ts">bet '+(f.ts?new Date(f.ts).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}):'')+'</td>'+
+      '<td class="fb-act" style="white-space:nowrap">'+(f.action==='sell'?'':'<button class="log sm fb-add" data-i="'+i+'">Add</button> ')+'<button class="ghost sm fb-ign" data-i="'+i+'">Ignore</button></td></tr>'; }).join('')+'</table></div>'+(fillPending.length>=6?'<div class="copy-bar"><button type="button" class="copy-big" data-copy-fn="fromBooksText">📋 Copy this list</button></div>':''):'');
 }
+function fromBooksText(){ return 'From your books — '+fillPending.length+' not matched\n'+fillPending.map(f=>{ const L=fillLabel(f); return [FILL_NAME[f.book], L.bet, L.game, L.when, f.price!=null?(f.price*100).toFixed(1)+'%':'', '$'+(+(f.cost||0)+(+f.fee||0)).toFixed(2), f.ts?new Date(f.ts).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}):'', f.book+':'+f.id].filter(Boolean).join(' · '); }).join('\n'); }
+// v3.03: the big highlighted Copy — top and bottom of long outputs (data-copy-from = an element id, data-copy-fn = a text builder)
+async function copyBig(btn){
+  const id=btn.dataset.copyFrom, fn=btn.dataset.copyFn; let t='';
+  try{ if(id){ const el=document.getElementById(id); t=el?(el.tagName==='TEXTAREA'?el.value:el.textContent):''; } else if(fn && typeof window[fn]==='function') t=window[fn](); }catch(e){}
+  let ok=false; try{ await navigator.clipboard.writeText(t); ok=true; }catch(e){
+    try{ const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); ok=document.execCommand('copy'); ta.remove(); }catch(_){} }
+  const twins=[...document.querySelectorAll('.copy-big')].filter(b=>b.dataset.copyFrom===btn.dataset.copyFrom && b.dataset.copyFn===btn.dataset.copyFn);
+  twins.forEach(b=>{ if(!b.dataset.label) b.dataset.label=b.textContent; b.classList.toggle('done', ok); b.textContent=ok?'✓ Copied ('+Math.max(1,Math.round(t.length/1024))+' KB) — paste it to Claude':'Copy failed — select the text and copy it'; });
+  setTimeout(()=>twins.forEach(b=>{ b.textContent=b.dataset.label; b.classList.remove('done'); }), 2500);
+}
+document.addEventListener('click', e=>{ const b=e.target.closest('.copy-big'); if(b){ e.preventDefault(); copyBig(b); } });
 async function copyText(t, btn){
   let ok=false; try{ await navigator.clipboard.writeText(t); ok=true; }catch(e){
     try{ const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); ok=document.execCommand('copy'); ta.remove(); }catch(_){} }
@@ -6002,7 +6062,7 @@ async function addFromFill(f){
 /* ============ v2.94: + Add a bet says BET $x or SKIP — Take a price, or 📌 Make your own (a ladder of posted prices) ============ */
 var abModeV='take', abX=null, abCostTyped=false, abLastAuto=null, abAskTimer=null, posts=[], myOrders=null, ordersAt=0, postQuotes={};
 try{ abModeV=localStorage.getItem('mbev.abMode')==='make'?'make':'take'; posts=JSON.parse(localStorage.getItem('mbev.posts')||'[]')||[]; }catch(e){}
-function savePosts(){ try{ localStorage.setItem('mbev.posts', JSON.stringify(posts)); }catch(e){} }
+function savePosts(){ try{ localStorage.setItem('mbev.posts', JSON.stringify(posts)); }catch(e){} syncTouched(); }
 const MK_DEF={kalshi:1.75, poly:0, novig:0};
 function makerCoefs(){ let m={}; try{ m=JSON.parse(localStorage.getItem('mbev.makerFees')||'{}')||{}; }catch(e){} const o={}; Object.keys(MK_DEF).forEach(k=>o[k]=(k in m && m[k]!=='' && !isNaN(+m[k]))?+m[k]:MK_DEF[k]); return o; }
 function makerFee(book,p){ const s=LIVE_BOOK(book); return s ? (makerCoefs()[s]/100)*(1-p) : feeRate(book,p,cfgRead().fees); }
@@ -6121,8 +6181,8 @@ function abUpdate94(){
   } else {
     const pr=abPrice(), cand=[];
     if(pr) cand.push({side:'me', book:pr.book, p:pr.prob, fee:pr.fee, typed:true});
-    if(X){ X.me.forEach(x=>{ if(!suspectQ(x.q,fair,pr?pr.prob:null)) cand.push({side:'me', book:x.book, p:x.q.price, fee:feeRate(x.book,x.q.price,cfg.fees), q:x.q, src:x.src}); });
-           if(hasOpp) X.op.forEach(x=>{ if(!suspectQ(x.q,fair==null?null:1-fair,null)) cand.push({side:'op', book:x.book, p:x.q.price, fee:feeRate(x.book,x.q.price,cfg.fees), q:x.q, src:x.src}); }); }
+    if(X){ X.me.forEach(x=>{ if(!suspectQ(x.q,fair,pr?pr.prob:null,mkt)) cand.push({side:'me', book:x.book, p:x.q.price, fee:feeRate(x.book,x.q.price,cfg.fees), q:x.q, src:x.src}); });
+           if(hasOpp) X.op.forEach(x=>{ if(!suspectQ(x.q,fair==null?null:1-fair,null,mkt==null?null:1-mkt)) cand.push({side:'op', book:x.book, p:x.q.price, fee:feeRate(x.book,x.q.price,cfg.fees), q:x.q, src:x.src}); }); }
     cand.forEach(c=>{ const fs=c.side==='me'?fair:1-fair, ms=mkt==null?null:(c.side==='me'?mkt:1-mkt);
       c.net=netAtP(fs,c.p,c.fee); c.out=c.side==='me'&&isOut(c.net);
       c.st=abStake({fair:fs, mkt:ms, p:c.p, fee:c.fee, book:c.book, outlier:c.out, outLimit:usedOut>=outN, game:f.game}); });
@@ -6271,11 +6331,11 @@ function renderPosts(){
       const fee=makerFee(BOOK_NAME[P.src],r.p);
       const gotQ=fl.reduce((t,x)=>t+(x.qty||0),0), wantQ=+r.qty||0, started=P.start && Date.parse(P.start)<=Date.now();
       let st;
-      if(gotQ>0 && (!wantQ || gotQ>=wantQ-0.01)) st='<span class="ok-t">💵 bond posted — out on parole</span>';
-      else if(gotQ>0) st='<span class="ok-t">½ partial bond</span> <span class="meta">('+(+gotQ.toFixed(2))+' of '+wantQ+' ct)</span>'+(o?' · rest awaiting':'');
-      else if(started) st='<span class="meta">🔒 back to Jail — nobody took it</span>';
-      else if(o) st='📝 posted, awaiting bond'+(o.qty!=null?' <span class="meta">('+o.qty+' ct)</span>':'');
-      else st=myOrders?'<span class="meta">⚖️ conditions set — not posted yet</span>':'<span class="meta">⚖️ conditions set</span>';
+      if(gotQ>0 && (!wantQ || gotQ>=wantQ-0.01)) st='<span class="ok-t">🐟 catch — someone took it</span>';
+      else if(gotQ>0) st='<span class="ok-t">½ nibble</span> <span class="meta">('+(+gotQ.toFixed(2))+' of '+wantQ+' ct)</span>'+(o?' · rest still on the line':'');
+      else if(started) st='<span class="meta">🌊 got away — nobody bit before tip-off</span>';
+      else if(o) st='🪝 on the line'+(o.qty!=null?' <span class="meta">('+o.qty+' ct)</span>':'');
+      else st=myOrders?'<span class="meta">🎣 bait saved — not posted yet</span>':'<span class="meta">🎣 bait saved</span>';
       if(!started && !(gotQ>=wantQ-0.01 && gotQ>0)){ onHold+= o ? (o.qty!=null&&o.price? o.qty*o.price : r.stake) : 0; }
       if(o || !fl.length){
         const verb=o?'⚠ conditions changed — pull rung '+r.k+' in the app':'don\'t post rung '+r.k+' yet';
@@ -6287,12 +6347,12 @@ function renderPosts(){
     const nTaken=(P.filled||[]).length;
     return '<div class="post"><b>'+esc(P.name)+'</b> — '+esc(abSideTxt({kind:P.kind, side:P.side, market:P.market, team:P.team, game:P.game, _line:parseFloat(P.market)},false))+' · '+esc(bookLabel(BOOK_NAME[P.src]))+
       ' · fair '+pct(P.fair)+(mid!=null?' · market now '+pct(mid):'')+' <button class="ghost sm post-x" data-id="'+esc(P.id)+'" title="Forget this ladder (doesn\'t touch your orders)">✕</button><br>'+rs+
-      (warns.length?'<div class="warnline">'+warns.map(esc).join('<br>')+'</div>':'')+(nTaken>1?'<div class="meta">'+nTaken+' rungs taken — if they went fast, check the news before re-posting.</div>':'')+(P.parole?'<div class="meta">🔓 parole: only a bet once someone posts bond (takes your price) — until then nothing is at risk.</div>':'')+'</div>';
+      (warns.length?'<div class="warnline">'+warns.map(esc).join('<br>')+'</div>':'')+(nTaken>1?'<div class="meta">'+nTaken+' rungs taken — if they went fast, check the news before re-posting.</div>':'')+(P.parole?'<div class="meta">🎣 only a bet once someone bites (takes your price) — until then nothing is at risk.</div>':'')+'</div>';
   }).join('');
   const other=O.filter(o=>!used.has(o.id)).length, err=myOrders&&myOrders.errors?Object.entries(myOrders.errors).map(([k,v])=>(BOOK_NAME[k]||k)+': '+v).join(' · '):'';
   el.style.display='block';
   window._onHold=onHold;
-  el.innerHTML='<b>📌 Your posts</b>'+(onHold>0?' <span class="tag t-warn" title="Posted, not yet accepted — counted against your daily max so you can\'t over-post">on hold $'+onHold.toFixed(2)+'</span>':'')+' <span class="meta">'+(myOrders?'open orders read '+new Date(ordersAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'open orders not read yet (deploy the Worker)')+(other?' · '+other+' other open order'+(other===1?'':'s'):'')+(err?' · '+esc(err):'')+'</span>'+html;
+  el.innerHTML='<b>📌 Your posts</b>'+(onHold>0?' <span class="tag t-warn" title="On the line, not taken yet — counted against your daily max so you can\'t over-post">🪝 on the line $'+onHold.toFixed(2)+'</span>':'')+' <span class="meta">'+(myOrders?'open orders read '+new Date(ordersAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'open orders not read yet (deploy the Worker)')+(other?' · '+other+' other open order'+(other===1?'':'s'):'')+(err?' · '+esc(err):'')+'</span>'+html;
 }
 document.addEventListener('click',e=>{
   const x=e.target.closest('.post-x'); if(x){ posts=posts.filter(P=>P.id!==x.dataset.id); savePosts(); renderPosts(); return; }
@@ -6307,7 +6367,7 @@ document.addEventListener('click',e=>{
   // maker fee settings
   const ids={kalshi:'mkKalshi', poly:'mkPoly', novig:'mkNovig'}, cur=makerCoefs();
   Object.entries(ids).forEach(([k,id])=>{ const el=document.getElementById(id); if(!el) return; el.value=cur[k];
-    el.addEventListener('change',()=>{ const o={}; Object.entries(ids).forEach(([k2,id2])=>{ const v=document.getElementById(id2).value; o[k2]=v===''?MK_DEF[k2]:+v; }); try{ localStorage.setItem('mbev.makerFees',JSON.stringify(o)); }catch(_){} if(abR) abUpdate94(); renderPosts(); }); });
+    el.addEventListener('change',()=>{ const o={}; Object.entries(ids).forEach(([k2,id2])=>{ const v=document.getElementById(id2).value; o[k2]=v===''?MK_DEF[k2]:+v; }); try{ localStorage.setItem('mbev.makerFees',JSON.stringify(o)); }catch(_){} syncTouched(); if(abR) abUpdate94(); renderPosts(); }); });
   setTimeout(()=>{ renderPosts(); syncOrders(true); }, 3000);
 })();
 
@@ -6346,7 +6406,9 @@ function renderMyBooks(){
   const rows=F.slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).map(f=>{
     const b=linkedTo(f), L=fillLabel(f), cost=r2((+f.cost||0)+(+f.fee||0));
     let st='open', paid=null;
+    const S=(window._settlements||[]).find(s=>s.book===f.book && s.ref===f.ref && s.outcome && (!s.side || !f.side || s.side===f.side));   // v3.03: what the book itself settled
     if(f.soldFor!=null || (b&&b.sold)){ st='SOLD'; paid=r2(f.soldFor!=null?f.soldFor:b.sold.price); }
+    else if(S){ st=S.outcome==='void'?'PUSH':S.outcome.toUpperCase(); paid = S.outcome==='win' ? r2(+f.qty||0) : S.outcome==='loss' ? 0 : cost; }
     else if(b && (b.result==='win'||b.result==='loss'||b.result==='push')){ st=b.result.toUpperCase(); paid = b.result==='win' ? r2(+f.qty||0) : b.result==='push' ? cost : 0; }
     const t=(tot[f.book]=tot[f.book]||{n:0,staked:0,back:0,settled:0,open:0}); t.n++; t.staked+=cost; if(paid!=null){ t.back+=paid; t.settled+=cost; } else t.open+=cost;
     const cls=st==='WIN'?'tb-up':st==='LOSS'?'tb-down':'';
@@ -6363,9 +6425,14 @@ function renderMyBooks(){
     const logPl=logged.filter(b=>b.fillBook===k).reduce((s,b)=>{ const v=heldValue(b); return s+(v&&!v.open?v.v:0); },0);
     return '<span class="mb-sum">'+(bookLogo(FILL_NAME[k])?logoTag(FILL_NAME[k],'sm'):'')+' <b>'+esc(FILL_NAME[k])+'</b> '+t.n+' bets · staked $'+t.staked.toFixed(2)+(t.open?' · open $'+t.open.toFixed(2):'')+
       ' · settled <b class="'+(pl>=0?'tb-up':'tb-down')+'">'+(pl>=0?'+':'−')+'$'+Math.abs(pl).toFixed(2)+'</b> <span class="meta">(log says '+(logPl>=0?'+':'−')+'$'+Math.abs(logPl).toFixed(2)+')</span></span>'; }).join('');
-  el.innerHTML='<div class="mb-sums">'+sum+'</div><div style="overflow-x:auto"><table class="mb-tbl"><thead><tr><th></th><th>Bet (as the book reports it)</th><th>Placed</th><th>Price</th><th>Cost</th><th>Status</th><th>Paid / back</th><th>Your log</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
-    '<p class="hint" style="margin-top:6px">Wins pay $1 per contract. Results come from your log (book result first, ESPN otherwise). Last 3 days — Settings → Re-read reads 14.</p>';
+  const cbar='<div class="copy-bar"><button type="button" class="copy-big" data-copy-fn="myBooksText">📋 Copy My books</button></div>';
+  el.innerHTML='<div class="mb-sums">'+sum+'</div>'+cbar+'<div style="overflow-x:auto"><table class="mb-tbl"><thead><tr><th></th><th>Bet (as the book reports it)</th><th>Placed</th><th>Price</th><th>Cost</th><th>Status</th><th>Paid / back</th><th>Your log</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    (F.length>=6?cbar:'')+'<p class="hint" style="margin-top:6px">Wins pay $1 per contract. Results: the book\'s own settlement first (Kalshi, Polymarket US), then your log (ESPN). Last 3 days — Settings → Re-read reads 14.</p>';
 }
+function myBooksText(){ const el=document.getElementById('myBooksBody'); if(!el) return '';
+  const sums=[...el.querySelectorAll('.mb-sum')].map(x=>x.textContent.replace(/\s+/g,' ').trim()).join('\n');
+  const rows=[...el.querySelectorAll('.mb-tbl tbody tr')].map(tr=>[...tr.children].map(td=>{ const img=td.querySelector('img'); return (img&&img.alt?img.alt+' ':'')+td.textContent.replace(/\s+/g,' ').trim(); }).filter(Boolean).join(' · ')).join('\n');
+  return 'My books ('+new Date().toLocaleString('en-US')+')\n'+sums+'\n\n'+rows; }
 // ---- 🔓 Parole: Jail bets that YOUR posted price would fix (Make on Novig). You place it; this only says what to type.
 var parAt=0, parBusy=false;
 const PAROLE_NO=/one per player|already have|game cap|daily max|long shot|parlay|can't bet|game not found/i;
@@ -6388,32 +6455,38 @@ async function paroleScan(force){
     parAt=Date.now();
   }finally{ parBusy=false; renderParole(); }
 }
-function paroleOf(r){
+function paroleOf(r){   // v3.02: 🎣 bait — you are the Maker; whoever takes your price is the Taker
   const cfg=cfgRead(), par=r._par||{};
   const outCut=(parseFloat((document.getElementById('swOutlier')||{}).value)||15)/100, gapCut=(parseFloat((document.getElementById('swGap')||{}).value)||8)/100;
   const fair=r.fairProb, mkt=r.mktProb, gap=mkt!=null?fair-mkt:null, isOut=net=>(net!=null&&net>outCut)||(gap!=null&&gap>gapCut);
   const slate=(document.getElementById('slate')||{}).value, v=parseFloat((document.getElementById('swOutN')||{}).value), outN=isNaN(v)?5:Math.max(0,Math.floor(v));
   const outLimit=logged.filter(x=>x.date===slate && x.snap && x.snap.outlier && !x.snap.risk).length>=outN;
-  // where to post: Novig if it lists this bet (even with nobody selling yet), else the row's own exchange
+  // where to fish: Novig if it lists this bet (even with nobody selling yet), else the row's own exchange
   const pick=['novig',LIVE_BOOK(r.book)].filter(Boolean).find(s=>{ const q=par[s]; return q && (q.ok || q.outcome || q.ref); });
   if(!pick) return {why:'no exchange lists this bet'};
-  const q=par[pick], book=BOOK_NAME[pick], feeFn=p=>makerFee(book,p), mx=priceForNet(fair,feeFn,cfg.eMin);
-  if(q.ok && suspectQ(q,fair,r.offeredProb)) return {why:'⚠ '+(pick==='novig'?'Novig':bookLabel(book))+' price ('+(q.price*100).toFixed(1)+'%) looks like a different market'+(q.title?' — "'+q.title+'"':'')+' — check it in the app'};
-  if(mx==null) return {why:'no price clears your floor'};
+  const q=par[pick], book=BOOK_NAME[pick], feeFn=p=>makerFee(book,p);
+  if(q.ok && suspectQ(q,fair,r.offeredProb,mkt)) return {why:'⚠ '+(pick==='novig'?'Novig':bookLabel(book))+' price ('+(q.price*100).toFixed(1)+'%) looks like a different market'+(q.title?' — "'+q.title+'"':'')+' — check it in the app'};
   const ask=q.ok?q.price:null, topBid=q.bid>0?q.bid:null;
   if(ask!=null){ const tf=feeRate(book,ask,cfg.fees), ts=abStake({fair,mkt,p:ask,fee:tf,book,outlier:isOut(netAtP(fair,ask,tf)),outLimit,game:r.game});
     if(ts.s>0) return {take:true, book, src:pick, q, price:ask, stake:ts.s, net:ts.net}; }
+  // La Contadora's conditions: clear your floor against the model, and — when the model is an outlier — beat the market too
+  const capFair=priceForNet(fair,feeFn,cfg.eMin);
+  if(capFair==null) return {why:'no price clears your floor'};
+  const capMkt=mkt!=null?priceForNet(mkt,feeFn,0.0005):null;
+  const outlierMode=gap!=null && gap>gapCut;
+  let cap=capFair; if(outlierMode && capMkt!=null) cap=Math.min(cap,capMkt);
+  const top=Math.floor(cap*200+1e-9)/200;   // Novig prices move in half points
   const swc=swCfg(), inRange=p=>{ const am=Math.round(americanOf(p)); return am>=cfg.oMin && am<=cfg.oMax; };
-  let rungs=[cfg.eMin+0.06,cfg.eMin+0.03,cfg.eMin].map(t=>{ const p0=priceForNet(fair,feeFn,t); return p0==null?null:Math.floor(p0*100+1e-9)/100; })
-    .filter((p,i,a)=>p!=null && p>0.01 && a.indexOf(p)===i && inRange(p) && (ask==null || p<ask-1e-9));
-  if(!rungs.length) return {why:'no rung fits your odds range'};
-  const mid=rungs[Math.min(1,rungs.length-1)], st=abStake({fair,mkt,p:mid,fee:feeFn(mid),book,outlier:isOut(netAtP(fair,mid,feeFn(mid))),outLimit,game:r.game});
-  if(!(st.s>0)) return {why:st.why||'no stake'};
-  let use=rungs.slice(); const nMax=Math.max(1,Math.floor(st.s/(cfg.sMin/2)+1e-9)); if(use.length>nMax) use=use.length===3&&nMax===2?[use[0],use[1]]:[mid];
-  const W=[0.3,0.35,0.35].slice(0,use.length), ws=W.reduce((a,b)=>a+b,0); let left=st.s;
-  const R=use.map((p,i)=>{ const sk=i===use.length-1?r2(left):Math.floor(st.s*W[i]/ws*100)/100; left=r2(left-sk); const fee=feeFn(p), net=netAtP(fair,p,fee), am=Math.round(americanOf(p));
-    return {k:i+1, p, stake:sk, payout:Math.floor(sk/p*100+1e-6)/100, net, sweet:net*100>=swc.netMin && net*100<=swc.netMax && am>=swc.oMin && am<=swc.oMax}; });
-  return {book, src:pick, q, rungs:R, total:st.s, max:mx, ask, topBid, notes:st.notes||[]};
+  let prices=[top, top-0.005, top-0.015].map(p=>Math.round(p*1000)/1000).filter((p,i,a)=>p>0.01 && a.indexOf(p)===i && inRange(p) && (ask==null || p<ask-1e-9));
+  const R=[];
+  prices.forEach(p=>{ const fee=feeFn(p), net=netAtP(fair,p,fee), mNet=mkt!=null?netAtP(mkt,p,fee):null, out=isOut(net);
+    if(out && mNet!=null && mNet<=0) return;   // an outlier must beat the market
+    const st=abStake({fair,mkt,p,fee,book,outlier:out,outLimit,game:r.game}); if(!(st.s>0)) { R.why=R.why||st.why; return; }
+    const am=Math.round(americanOf(p)), d=ask!=null?ask-p:null;
+    const chance = d==null ? 'first offer on that side' : d<=0.015+1e-9 ? 'best' : d<=0.03+1e-9 ? 'good' : d<=0.06+1e-9 ? 'lower' : 'unlikely';
+    R.push({k:R.length+1, p, stake:st.s, payout:Math.floor(st.s/p*100+1e-6)/100, net, mNet, outlier:out, chance, sweet:net*100>=swc.netMin && net*100<=swc.netMax && am>=swc.oMin && am<=swc.oMax}); });
+  if(!R.length) return {why:R.why||(outlierMode?'outlier: no price both beats the market and fits your odds range':'no bait price fits your odds range')};
+  return {book, src:pick, q, rungs:R, total:R.reduce((t,g)=>t+g.stake,0), max:cap, capFair, capMkt, outlierMode, ask, topBid};
 }
 function jailWhy(r){ const f=(r.flags||[]).find(x=>x[0]==='out'||x[0]==='warn'); return f?f[1]:(r.pass?'below the minimum':'didn\'t pass'); }
 function renderParole(){
@@ -6423,26 +6496,25 @@ function renderParole(){
   const out=[], stay=[], takeNow=[];
   C.forEach(r=>{ if(!r._par){ stay.push([r,'not checked yet']); return; } const P=paroleOf(r); if(P.why) stay.push([r,P.why]); else if(P.take) takeNow.push([r,P]); else out.push([r,P]); });
   setParoleN(out.length);
-  if(msg && parAt) msg.textContent=out.length+' can get out on parole · '+stay.length+' stay in Jail · checked '+new Date(parAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  if(msg && parAt) msg.textContent='🎣 '+out.length+' worth fishing for · '+stay.length+' stay in Jail · checked '+new Date(parAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
   el.innerHTML=out.map(([r,P])=>{
     const gi=r.gameInfo||{}, side=r.side||sideOf(r)||'', mk=r.market||'', sideTxt=(side==='O'?'Over ':side==='U'?'Under ':'')+mk;
-    const head='<div class="par-h"><b>'+esc(r.name)+'</b> · '+esc(sideTxt)+' · <span class="meta">'+esc(r.game||'')+' · 🕒 '+esc(giWhen(gi))+'</span></div>'+
-      '<div class="meta">Jailed: '+esc(jailWhy(r))+' ('+esc(bookLabel(r.book))+' '+esc(r.offeredRaw||'')+') · fair '+pct(r.fairProb)+(r.mktProb!=null?' · market '+pct(r.mktProb):'')+'</div>';
-    const pre=P.src==='novig'?'Novig':bookLabel(P.book);
-    const slips=P.rungs.map(g=>{ const url=bookUrl(P.src,P.q,g.stake);
-      return '<div class="par-slip"><div class="par-steps">'+
-        '<span><b>⚖️ Condition '+g.k+'</b>'+(g.sweet?' <span class="sweet">🎯</span>':'')+'</span>'+
-        '<span>① open slip — side <b>'+esc(sideTxt)+'</b></span><span class="par-make">② tap <b>MAKE</b> (not Take)</span><span>③ price <b>'+(g.p*100).toFixed(1)+'%</b> <span class="meta">('+esc(fmtOdds(Math.round(americanOf(g.p))))+')</span></span>'+
-        '<span>④ $ <b>'+g.stake.toFixed(2)+'</b></span><span>⑤ payout should read <b>$'+g.payout.toFixed(2)+'</b></span>'+
-        '<span class="ok-t">'+SG94(g.net)+' if someone posts bond</span></div>'+
-        '<div class="meta">'+(P.ask!=null?esc(pre)+' sells at '+(P.ask*100).toFixed(1)+'% — you post '+(g.p*100).toFixed(1)+'% and wait. If the slip shows '+(P.ask*100).toFixed(1)+'%, you\'re still on Take.':'Nobody is selling this side right now — your price would be the first offer.')+'</div>'+
-        '<div class="par-btns">'+(url?'<a class="log sm par-btn" href="'+esc(url)+'" target="_blank" rel="noopener">Open slip ($ filled)</a>':'')+
-        '<button type="button" class="ghost sm par-copy" data-copy="'+(g.p*100).toFixed(1)+'">📋 Copy '+(g.p*100).toFixed(1)+'</button></div></div>'; }).join('');
+    const pre=P.src==='novig'?'Novig':bookLabel(P.book), first=P.rungs[0], url=bookUrl(P.src,P.q,first.stake);
+    const head='<div class="par-h">🔓 <b>'+esc(r.name)+'</b> · '+esc(sideTxt)+' · <span class="meta">'+esc(r.game||'')+' · 🕒 '+esc(giWhen(gi))+'</span></div>'+
+      '<div class="meta">Cover <b>'+pct(r.fairProb)+'</b> (model)'+(r.mktProb!=null?' · market <b>'+pct(r.mktProb)+'</b>':'')+' · '+esc(pre)+' '+(P.ask!=null?'sells at '+P94(P.ask):'has nobody selling this side')+' · jailed: '+esc(jailWhy(r))+'</div>'+
+      '<div class="meta" style="margin:3px 0 6px">Condition: '+(P.outlierMode?'<b>beat the market</b> → bait at <b>'+(Math.floor(P.max*1000)/10).toFixed(1)+'% or less</b> · outlier → minimum stake':'clear your '+pct(cfgRead().eMin)+' floor → bait at <b>'+(Math.floor(P.max*1000)/10).toFixed(1)+'% or less</b>')+'. You\'re the Maker; whoever takes your price is the Taker.</div>';
+    const rows=P.rungs.map(g=>'<tr><td><b>🎣 '+(g.p*100).toFixed(1)+'%</b>'+(g.sweet?' <span class="sweet">🎯</span>':'')+'</td><td>'+esc(fmtOdds(Math.round(americanOf(g.p))))+'</td>'+
+      '<td class="ok-t">'+SG94(g.net)+'</td><td class="'+(g.mNet!=null&&g.mNet>0?'ok-t':'meta')+'">'+(g.mNet!=null?SG94(g.mNet):'—')+'</td>'+
+      '<td>$'+g.stake.toFixed(2)+'</td><td>$'+g.payout.toFixed(2)+'</td><td class="meta">'+esc(g.chance)+'</td>'+
+      '<td><button type="button" class="ghost sm par-copy" data-copy="'+(g.p*100).toFixed(1)+'">📋 '+(g.p*100).toFixed(1)+'</button></td></tr>').join('');
     return '<div class="par-card">'+head+
-      '<div class="meta" style="margin:4px 0">La Contadora\'s conditions: out on parole only if someone takes your price — never post above <b>'+P94(P.max)+'</b> (breakeven at your floor)'+(P.topBid!=null?' · best Make on the book now '+P94(P.topBid):'')+'</div>'+
-      slips+'<div class="par-btns"><button type="button" class="ghost sm par-save" data-i="'+r.idx+'">📌 Save ladder (tracks fills)</button></div></div>';
-  }).join('') + (takeNow.length?'<div class="par-takenow">🟢 '+takeNow.length+' Jail bet'+(takeNow.length===1?' is':'s are')+' already cheap enough to take now ('+takeNow.map(([r])=>esc(r.name)).join(', ')+') — no parole needed: <b>🦑 Send the Sentinels</b> on the Board.</div>':'') + (stay.length?'<details class="par-stay"><summary>'+stay.length+' stay in Jail</summary>'+stay.map(([r,w])=>'<div class="meta">'+esc(r.name)+' · '+esc(r.market||'')+' — '+esc(w)+'</div>').join('')+'</details>':'')
-    + '<p class="hint">Novig\'s slip link fills in the side and the $ only — it opens on <b>Take</b>. Always: ① Open slip → ② tap <b>MAKE</b> → ③ paste the price → ④ check the $ → ⑤ check the payout → you press the button. It\'s only a bet once someone posts bond (takes your price); at tip-off Novig cancels what\'s left and it\'s back to Jail, nothing lost.</p>';
+      '<table class="par-tbl"><thead><tr><th>Bait (Make price)</th><th>Odds</th><th>Proj. EV</th><th>vs market</th><th>$</th><th>Payout</th><th>Chance of a bite</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>'+
+      '<div class="par-steps" style="margin-top:6px"><span>① <b>Open slip</b> (side + $ filled)</span><span class="par-make">② tap <b>MAKE</b> (not Take)</span><span>③ paste the bait %</span><span>④ check the $</span><span>⑤ check the payout → you press the button</span></div>'+
+      '<div class="par-btns">'+(url?'<a class="log sm par-btn" href="'+esc(url)+'" target="_blank" rel="noopener">Open slip ($'+first.stake.toFixed(2)+' filled)</a>':'')+
+      '<button type="button" class="ghost sm par-save" data-i="'+r.idx+'">📌 Save bait (tracks the catch)</button></div>'+
+      '<div class="meta">'+(P.ask!=null?'If the slip shows '+(P.ask*100).toFixed(1)+'%, you\'re still on Take.':'Your price would be the first offer on that side.')+'</div></div>';
+  }).join('') + (takeNow.length?'<div class="par-takenow">🟢 '+takeNow.length+' Jail bet'+(takeNow.length===1?' is':'s are')+' already cheap enough to take now ('+takeNow.map(([r])=>esc(r.name)).join(', ')+') — no fishing needed: <b>🦑 Send the Sentinels</b> on the Board.</div>':'') + (stay.length?'<details class="par-stay"><summary>'+stay.length+' stay in Jail</summary>'+stay.map(([r,w])=>'<div class="meta">'+esc(r.name)+' · '+esc(r.market||'')+' — '+esc(w)+'</div>').join('')+'</details>':'')
+    + '<p class="hint">Novig\'s link fills in the side and the $ only and opens on <b>Take</b>: ① Open slip → ② tap <b>MAKE</b> → ③ paste the bait → ④ check the $ → ⑤ check the payout → you press the button. 🪝 It waits on the line until someone bites. 🐟 A catch logs itself. 🌊 At tip-off Novig cancels what\'s left — nothing lost.</p>';
 }
 function setParoleN(n){ const t=document.getElementById('paroleTabN'); if(t) t.textContent=n?n:''; }
 document.addEventListener('click',e=>{
@@ -6473,11 +6545,11 @@ setInterval(()=>{ if(document.visibilityState==='visible') syncFills(false); }, 
     m().textContent=fillAt?('checked '+new Date(fillAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+(Object.keys(e).length?' · '+Object.entries(e).map(([k,v])=>(FILL_NAME[k]||k)+': '+v).join(' · '):' · all 3 books answered')+(fillPending.length?' · '+fillPending.length+' waiting in From your books':'')):'could not reach the Worker (deployed? passphrase set?)'; };
   test.onclick=async()=>{ const pre=document.getElementById('fillsRaw'); m().textContent='asking the books…';
     try{ const res=await fetch(API_BASE+'/mine/selftest',{headers:apiHeaders()}); const t=await res.text(); pre.style.display='block';
-      pre.textContent=res.ok?JSON.stringify(JSON.parse(t),null,1):('HTTP '+res.status+' '+t.slice(0,300)); m().textContent=res.ok?'raw sample below — press Copy and paste it to Claude':'failed';
-      const cb=document.getElementById('fillsCopy'); if(cb) cb.style.display=''; }
+      pre.textContent=res.ok?JSON.stringify(JSON.parse(t),null,1):('HTTP '+res.status+' '+t.slice(0,300)); m().textContent=res.ok?'raw sample below — press 📋 Copy and paste it to Claude':'failed';
+      ['fillsCopyTop','fillsCopyBot'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='flex'; });
+      const sz=document.getElementById('fillsSize'); if(sz) sz.textContent=Math.max(1,Math.round(pre.textContent.length/1024))+' KB'; }
     catch(e){ m().textContent='could not reach the Worker'; } };
   rst.onclick=()=>{ fillSeen={}; fillPending=[]; huntDone={}; try{ localStorage.setItem('mbev.fillWide','1'); }catch(e){} saveFills(); renderFromBooks(); now.click(); };
-  const cpy=document.getElementById('fillsCopy'); if(cpy) cpy.onclick=()=>copyText(document.getElementById('fillsRaw').textContent||'', cpy);
 })();
 setTimeout(()=>syncFills(true), 2500);
 setTimeout(()=>{ renderTodayBar(); autoGradeLog(); },50);
@@ -6514,6 +6586,372 @@ paintModes();
 (function(){ const cb=document.getElementById('notesAll'); cb.checked=notesAll;
   cb.addEventListener('change',()=>{ notesAll=cb.checked; openNotes.clear(); saveNotesAll(); refresh(); }); })();
 restoreBoard(); refreshBudget();
+/*SYNC-CORE-START*/
+/* v3.03 sync core — pure functions (tested on their own). Records are merged three ways: what this device has, what the
+   cloud has, and the version both last agreed on ("base", kept as one short hash per field). A field changed on only
+   one side keeps that change; a field changed on both sides goes to the newer record. */
+function syncHashStr(s){ let h1=0xdeadbeef, h2=0x41c6ce57; s=String(s);
+  for(let i=0;i<s.length;i++){ const ch=s.charCodeAt(i); h1=Math.imul(h1^ch,2654435761); h2=Math.imul(h2^ch,1597334677); }
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909); h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
+  return (h2>>>0).toString(36)+(h1>>>0).toString(36); }
+function syncH32(s){ let h=0x811c9dc5; s=String(s); for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return (h>>>0).toString(36); }
+function syncQuick(v){ try{ return syncHashStr(JSON.stringify(v)); }catch(e){ return '?'; } }
+function syncIsObj(v){ return v!==null && typeof v==='object' && !Array.isArray(v); }
+function syncFields(v){   // {field: short hash}; a non-object is one field ''
+  if(!syncIsObj(v)) return {'':syncH32(JSON.stringify(v===undefined?null:v))};
+  const o={}; Object.keys(v).forEach(k=>{ if(v[k]!==undefined) o[k]=syncH32(JSON.stringify(v[k])); }); return o; }
+function syncFieldsStr(v){ const f=syncFields(v); return Object.keys(f).sort().map(k=>k+'='+f[k]).join(','); }
+function syncFieldsParse(s){ const o={}; String(s||'').split(',').forEach(p=>{ if(!p) return; const i=p.lastIndexOf('='); o[p.slice(0,i)]=p.slice(i+1); }); return o; }
+function syncRec(v){ return syncHashStr(syncFieldsStr(v)); }   // same record → same hash, whatever order its fields are in
+function syncMerge3(l, r, base, lm, rm){
+  if(!syncIsObj(l) || !syncIsObj(r)){ const a=syncFields(l)[''], b=syncFields(r)[''], c=base['']; if(a===b || b===c) return l; if(a===c) return r; return rm>lm?r:l; }
+  const lf=syncFields(l), rf=syncFields(r), out={}, keys=new Set(Object.keys(l).concat(Object.keys(r), Object.keys(base)));
+  keys.forEach(k=>{ const a=lf[k], b=rf[k], c=base[k];
+    const pick = a===b ? 'l' : a===c ? 'r' : b===c ? 'l' : (rm>lm ? 'r' : 'l');
+    const src = pick==='l' ? l : r;
+    if(Object.prototype.hasOwnProperty.call(src,k) && src[k]!==undefined) out[k]=src[k]; });
+  return out; }
+// local: [[id, value]] · rc: cloud {id:{v,m}} · rd: cloud tombstones {id:time} · st: this device's {S stamps, T tombstones, B bases, H quick hashes}
+function syncMergeColl(local, rc, rd, st, join){
+  rc=rc||{}; rd=rd||{}; const out=[], have=new Set(), n={took:0, merged:0, onlyHere:0, gone:0, added:0, same:0}; let changed=false, push=false;
+  local.forEach(([id,l])=>{ have.add(id);
+    const r=rc[id], lm=+st.S[id]||0;
+    if(r && r.v!==undefined){
+      const rm=+r.m||0, lh=syncRec(l), rh=syncRec(r.v);
+      if(lh===rh){ out.push([id,l]); st.S[id]=Math.max(lm,rm); n.same++; return; }
+      const bs=!join && st.B[id] ? syncFieldsParse(st.B[id].f) : null;
+      let v;
+      if(bs){ v=syncMerge3(l, r.v, bs, lm, rm); }
+      else v = (rm>lm || (join && rm>=lm)) ? r.v : l;
+      const vh=syncRec(v);
+      out.push([id,v]);
+      if(vh!==lh){ changed=true; st.H[id]=syncQuick(v); if(vh===rh) n.took++; else n.merged++; }
+      if(vh!==rh) push=true;
+      st.S[id]=Math.max(lm,rm);
+    } else {
+      const del=+rd[id]||0;
+      if(del && del>=lm){ changed=true; delete st.H[id]; delete st.S[id]; delete st.B[id]; st.T[id]=Math.max(+st.T[id]||0, del); n.gone++; }
+      else { out.push([id,l]); push=true; n.onlyHere++; }
+    }
+  });
+  Object.keys(rc).forEach(id=>{ if(have.has(id)) return; const r=rc[id]; if(!r || r.v===undefined) return;
+    const rm=+r.m||0, del=+st.T[id]||0;
+    if(del && del>=rm){ push=true; return; }   // deleted here after its last change elsewhere
+    out.push([id,r.v]); st.S[id]=rm; st.H[id]=syncQuick(r.v); delete st.T[id]; changed=true; n.added++; });
+  Object.keys(rd).forEach(id=>{ if(!have.has(id) && !(+st.T[id]>=+rd[id])) st.T[id]=+rd[id]; });   // keep the cloud's tombstones
+  return {out, changed, push, n}; }
+// what this device changed since it last looked: new stamps, and tombstones for what disappeared
+function syncDetectColl(list, st, now){
+  let n=0; const seen=new Set();
+  list.forEach(([id,v])=>{ seen.add(id); const h=syncQuick(v); if(st.H[id]!==h){ st.H[id]=h; st.S[id]=now; delete st.T[id]; n++; } });
+  Object.keys(st.H).forEach(id=>{ if(!seen.has(id)){ delete st.H[id]; delete st.S[id]; st.T[id]=now; n++; } });
+  return n; }
+// after a successful exchange: the version both sides now share becomes the base
+function syncBaseColl(pairs, st){
+  const keep=new Set();
+  pairs.forEach(([id,v])=>{ keep.add(id); const q=syncQuick(v); const b=st.B[id]; if(!b || b.q!==q) st.B[id]={q, f:syncFieldsStr(v)}; });
+  Object.keys(st.B).forEach(id=>{ if(!keep.has(id)) delete st.B[id]; }); }
+/*SYNC-CORE-END*/
+/* ============ v3.03: ☁ your bets on every device ============
+   One copy of your bet log in your Cloudflare account (a Durable Object, "SyncStore" — it always answers with the
+   latest save, so two devices can't overwrite each other), locked with the screener passphrase AND your own sync
+   password (Worker secret SYNC_KEY — this page keeps and sends only a SHA-256 of it). Each record keeps when it last
+   changed; a deletion leaves a tombstone; edits made on two devices are merged field by field (see the sync core above).
+   The Worker never reads the data: it stores what the page sends and refuses a save made from an older copy (409) — the
+   page then merges the newer copy and saves again. The board is separate: rows by source, the newer load wins. */
+var SY=null;
+const SYNC_SETS={cfg:'mbev.cfg', sweet:'mbev.sweet2', maker:'mbev.makerFees'};
+function syncLS(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v); return true; }catch(e){ return v===undefined?null:false; } }
+function syncDev(){ const u=navigator.userAgent||''; return /iPhone/.test(u)?'iPhone':/iPad/.test(u)?'iPad':/Android/.test(u)?'Android':/Macintosh/.test(u)?'Mac':/Windows/.test(u)?'Windows PC':/CrOS/.test(u)?'Chromebook':/Linux/.test(u)?'Linux PC':'browser'; }
+function syncNewMeta(){ return {v:1, rev:0, brev:0, c:{}, s:{}, bsig:'', at:0, dirty:false, joined:false}; }
+function syncMeta(){ let m=null; try{ m=JSON.parse(syncLS('mbev.syncMeta')||'null'); }catch(e){} SY.meta=(m&&m.v===1&&m.c)?m:syncNewMeta(); return SY.meta; }
+function syncMetaSave(){ const M=SY.meta;
+  if(syncLS('mbev.syncMeta', JSON.stringify(M))!==false) return;
+  Object.values(M.c).forEach(st=>{ st.B={}; });   // storage full: drop the merge bases (merges fall back to newer-wins) rather than lose the meta
+  syncLS('mbev.syncMeta', JSON.stringify(M)); }
+function syncSt(c){ const M=SY.meta, st=M.c[c]||(M.c[c]={S:{},T:{},B:{},H:{}}); ['S','T','B','H'].forEach(k=>{ st[k]=st[k]||{}; }); return st; }
+function betSig(b){ return [b.date, nrm(b.name), String(b.market||'').toLowerCase(), b.side||'', LIVE_BOOK(b.book)||String(b.book||'').toLowerCase(), b.odds, (+b.stake||0).toFixed(2)].join('|'); }
+function syncEnsureIds(){ let n=0;   // older bets saved without an id get one built from what they are — the same on every device
+  logged.forEach(b=>{ if(b && !b.id){ b.id='h'+syncHashStr([b.date,b.name,b.market,b.side,b.book,b.odds,b.stake,b.snap&&b.snap.at].join('|')); n++; } });
+  if(n) syncLS('mbev.log', JSON.stringify(logged));
+  return n; }
+// per-device fields that change every minute (the live exchange price) never sync — they'd re-upload the log all day
+const SYNC_VOLATILE=new Set(['liveLast','closeLive']);
+function syncStrip(b){ const o={}; Object.keys(b).forEach(k=>{ if(!SYNC_VOLATILE.has(k) && b[k]!==undefined) o[k]=b[k]; }); return o; }
+function syncPutObjs(arr, pairs){   // keep the same objects (an open editor may be holding one); rewrite only what the merge changed
+  const old=new Map(arr.filter(o=>o&&o.id).map(o=>[o.id,o]));
+  return pairs.map(([id,v])=>{ const o=old.get(id); if(!o) return Object.assign({}, v);
+    if(syncQuick(syncStrip(o))===syncQuick(v)) return o;
+    Object.keys(o).forEach(k=>{ if(!SYNC_VOLATILE.has(k) && !(k in v)) delete o[k]; });
+    Object.keys(v).forEach(k=>{ o[k]=v[k]; });
+    return o; }); }
+function syncColls(){ return {
+  log:    {list:()=>logged.filter(b=>b&&b.id).map(b=>[b.id,syncStrip(b)]), put:p=>{ logged=syncPutObjs(logged,p); }, save:()=>saveLog()},
+  removed:{list:()=>removedBets.filter(Boolean).map(b=>[(b.id||betIdentity(b))+'@'+(b.removedAt||''),b]), put:p=>{ removedBets=p.map(x=>x[1]); }, save:()=>saveRemoved()},
+  posts:  {list:()=>posts.filter(p=>p&&p.id).map(p=>[p.id,p]), put:p=>{ posts=syncPutObjs(posts,p); }, save:()=>savePosts()},
+  parlay: {list:()=>Object.entries(parlays||{}), put:p=>{ parlays=Object.fromEntries(p); }, save:()=>saveParlays()},
+  seen:   {list:()=>Object.entries(fillSeen||{}), put:p=>{ fillSeen=Object.fromEntries(p); }, save:()=>saveFills()} }; }
+// a save anywhere on the page lands here: note what changed, upload a few seconds later
+function syncTouched(){
+  if(!SY || !SY.ready || !SY.on || SY.applying) return;
+  clearTimeout(SY.dt); SY.dt=setTimeout(()=>{ if(SY.busy){ syncTouched(); return; } if(syncDetect()) syncSoon(2500); }, 900); }
+function syncSoon(ms){ if(!SY || !SY.on) return; clearTimeout(SY.st); SY.st=setTimeout(()=>syncNow(), ms||0); }
+function syncDetect(reload){
+  if(!SY || !SY.on) return 0;
+  const M=reload===false?SY.meta:syncMeta(), now=Date.now(); let n=0;
+  syncEnsureIds();
+  Object.entries(syncColls()).forEach(([c,spec])=>{ n+=syncDetectColl(spec.list(), syncSt(c), now); });
+  Object.entries(SYNC_SETS).forEach(([nm,k])=>{ const raw=syncLS(k); if(raw==null) return; const h=syncHashStr(raw), x=M.s[nm]||(M.s[nm]={h:'',m:0}); if(x.h!==h){ x.h=h; x.m=now; n++; } });
+  if(n){ M.dirty=true; syncMetaSave(); }
+  return n; }
+function syncDoc(){
+  const M=SY.meta, cut=Date.now()-120*86400e3;
+  const doc={v:1, app:SCREENER_VERSION, at:new Date().toISOString(), by:SY.dev, nonce:Math.random().toString(36).slice(2,12), coll:{}, del:{}, set:{}};
+  Object.entries(syncColls()).forEach(([c,spec])=>{ const st=syncSt(c), o={}, d={};
+    spec.list().forEach(([id,v])=>{ o[id]={v, m:+st.S[id]||0}; });
+    Object.entries(st.T).forEach(([id,at])=>{ if(+at>cut) d[id]=+at; else delete st.T[id]; });
+    doc.coll[c]=o; doc.del[c]=d; });
+  Object.entries(SYNC_SETS).forEach(([nm,k])=>{ const raw=syncLS(k); if(raw!=null) doc.set[nm]={v:raw, m:+((M.s[nm]||{}).m)||0}; });
+  return doc; }
+function syncBaseFrom(doc){ Object.entries(doc.coll||{}).forEach(([c,o])=>{ syncBaseColl(Object.entries(o).map(([id,x])=>[id,x.v]), syncSt(c)); }); }
+// two bets for one fill (both devices saved the same Novig/Kalshi fill before they synced) → keep one, with every fill on it
+function syncDedupe(){
+  const by=new Map(), drop=new Set();
+  logged.forEach(b=>(b.fills||[]).forEach(f=>{ const o=by.get(f); if(!o){ by.set(f,b); return; } if(o===b || drop.has(o.id) || drop.has(b.id)) return;
+    const keep=(!!o.autoFrom===!!b.autoFrom) ? (String(o.id)<String(b.id)?o:b) : (o.autoFrom?b:o), lose=keep===o?b:o;
+    keep.fills=[...new Set((keep.fills||[]).concat(lose.fills||[]))]; drop.add(lose.id); by.set(f,keep); }));
+  if(drop.size) logged=logged.filter(b=>!drop.has(b.id));
+  return drop.size; }
+function syncMergeAll(R, join){
+  const M=SY.meta, C=syncColls(), RC=R.coll||{}, RD=R.del||{}, stat={fromCloud:0, onlyHere:0, dupes:0, deleted:0, merged:0, same:0, settings:''};
+  const hereN=logged.filter(Boolean).length, cloudN=Object.keys(RC.log||{}).length;   // before anything moves
+  let changed=false, push=false;
+  if(join){   // joining: the cloud copy wins for anything both have; this device's own bets are added unless they're copies
+    Object.keys(C).forEach(c=>{ const st=syncSt(c); Object.keys(st.S).forEach(k=>st.S[k]=0); st.T={}; st.B={}; });
+    Object.values(M.s).forEach(x=>{ x.m=0; });
+    const rl=Object.values(RC.log||{}).map(x=>x&&x.v).filter(Boolean), rf=new Set(rl.flatMap(b=>b.fills||[])), rs=new Set(rl.map(betSig));
+    const gone=new Set(Object.values(RC.removed||{}).map(x=>x&&x.v&&x.v.id).filter(Boolean)), before=logged.length;
+    logged=logged.filter(b=>!b || (RC.log||{})[b.id] || !((b.fills||[]).some(f=>rf.has(f)) || rs.has(betSig(b)) || gone.has(b.id)));
+    stat.dupes=before-logged.length;
+    if(stat.dupes){ const keep=new Set(logged.map(b=>b.id)), st=syncSt('log'); Object.keys(st.H).forEach(id=>{ if(!keep.has(id)){ delete st.H[id]; delete st.S[id]; } }); changed=true; }
+  }
+  Object.entries(C).forEach(([c,spec])=>{
+    const res=syncMergeColl(spec.list(), RC[c], RD[c], syncSt(c), join);
+    if(res.push) push=true;
+    if(c==='log'){ stat.fromCloud=res.n.added+res.n.took; stat.onlyHere=res.n.onlyHere; stat.deleted=res.n.gone; stat.merged=res.n.merged; stat.same=res.n.same; }
+    if(res.changed){ spec.put(res.out); changed=true;
+      const st=syncSt(c); spec.list().forEach(([id,v])=>{ st.H[id]=syncQuick(v); }); }   // what's here now is what the merge made — not a new edit
+  });
+  if(syncDedupe()){ changed=true; push=true; }
+  if(changed) Object.values(C).forEach(spec=>spec.save());
+  const RS=R.set||{}; let setCh=false;
+  Object.entries(SYNC_SETS).forEach(([nm,k])=>{ const r=RS[nm], x=M.s[nm]||(M.s[nm]={h:'',m:0}), raw=syncLS(k);
+    if(r && typeof r.v==='string'){ const rm=+r.m||0;
+      if(r.v===raw){ x.h=syncHashStr(raw); if(rm>x.m) x.m=rm; return; }
+      if(join && raw!=null){   // joining with settings on both sides: the device with more bets is the one you've been using
+        if(hereN>cloudN){ x.h=syncHashStr(raw); x.m=Date.now(); push=true; stat.settings='here'; }
+        else { syncLS(k,r.v); x.h=syncHashStr(r.v); x.m=rm; setCh=true; stat.settings='cloud'; }
+        return; }
+      if(rm>x.m || join){ syncLS(k,r.v); x.h=syncHashStr(r.v); x.m=rm; setCh=true; }
+      else push=true; }
+    else if(raw!=null) push=true; });
+  if(setCh){ syncApplySettings(); changed=true; }
+  return {changed, push, stat}; }
+function syncApplySettings(){
+  try{ loadCfg(); }catch(e){} try{ loadSweet(); }catch(e){}
+  try{ const cur=makerCoefs(); Object.entries({kalshi:'mkKalshi', poly:'mkPoly', novig:'mkNovig'}).forEach(([k,id])=>{ const el=document.getElementById(id); if(el) el.value=cur[k]; }); }catch(e){} }
+function syncRedraw(){
+  try{ const before=fillPending.length; fillPending=fillPending.filter(f=>f.action==='sell' || !linkedTo(f)); if(fillPending.length!==before) saveFills(); }catch(e){}   // fills another device already logged
+  [renderLog, renderPerf, refresh, renderPosts, renderFromBooks, renderMyBooks, renderTodayBar].forEach(f=>{ try{ if(typeof f==='function') f(); }catch(e){ console.warn('sync redraw', e); } }); }
+function syncHeaders(extra){ return Object.assign({}, apiHeaders(), {'x-sync-key':SY.key, 'x-sync-device':SY.dev}, extra||{}); }
+// gzip both ways: the log is mostly repeated words, so it shrinks ~8× — easy on the phone's data plan
+async function syncZip(str){ try{ if(typeof CompressionStream==='undefined') return null; return await new Response(new Blob([str]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer(); }catch(e){ return null; } }
+async function syncUnzip(buf){ return await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).text(); }
+async function syncCall(method, path, body, extra){
+  let res;
+  if(typeof body==='string' && body.length>2048){ const z=await syncZip(body); if(z){ body=z; extra=Object.assign({}, extra||{}, {'Content-Type':'application/octet-stream','x-sync-enc':'gzip'}); } }
+  try{ res=await fetch(API_BASE+path, {method, headers:syncHeaders(extra), body, cache:'no-store'}); }
+  catch(e){ return {ok:false, status:0, err:'can\'t reach the Worker (offline?)'}; }
+  let t=''; try{ t = res.headers.get('x-sync-enc')==='gzip' ? await syncUnzip(await res.arrayBuffer()) : await res.text(); }catch(e){}
+  let j=null; try{ j=t?JSON.parse(t):null; }catch(e){}
+  return {ok:res.ok, status:res.status, j, t, rev:+(res.headers.get('x-sync-rev')||0), nonce:res.headers.get('x-sync-nonce')||''}; }
+function syncErrText(r){
+  if(!r) return 'something went wrong';
+  if(r.err) return r.err;
+  const code=r.j&&r.j.code, msg=r.j&&r.j.error||'';
+  if(r.status===401 && code==='bad_key') return 'wrong sync password';
+  if(r.status===401) return 'screener passphrase missing or wrong (Passphrase ▸ on the load bar)';
+  if(r.status===503 && code==='no_key') return 'the Worker has no sync password yet — on the Mac: cd ~/prop-bet-api, npx wrangler secret put SYNC_KEY, then npx wrangler deploy';
+  if(code==='no_store') return 'the Worker has no sync store yet — on the Mac: cd ~/prop-bet-api, then npx wrangler deploy (wrangler.jsonc needs the SYNC Durable Object)';
+  if(code==='broken') return 'the cloud copy is incomplete — nothing was changed here; send Claude Settings → Test my books';
+  if(code==='store') return 'the cloud store had a hiccup — will retry';
+  if(r.status===404) return 'the Worker is older than v3.03 — on the Mac: cd ~/prop-bet-api, then npx wrangler deploy';
+  if(r.status===507) return 'the cloud store refused the save — will retry';
+  if(r.status===409) return 'another device was saving — will retry';
+  return 'HTTP '+r.status+(msg?' — '+msg:''); }
+async function syncGetDoc(path){   // the doc and the head it belongs to (a safety check: the copy's own nonce must match its head)
+  for(let i=0;i<3;i++){
+    const r=await syncCall('GET', path); if(!r.ok) return r;
+    if(r.j && r.j.empty) return Object.assign(r,{j:null});
+    if(!r.nonce || !r.j || r.j.nonce===r.nonce) return r;
+    await new Promise(z=>setTimeout(z,1200)); }
+  const r=await syncCall('GET', path); if(r.ok) r.stale=true; return r; }
+async function syncNow(opts){
+  opts=opts||{};
+  if(!SY || !SY.on) return false;
+  const joining=!(SY.meta && SY.meta.joined);   // this device's first exchange is always a join (also when it had to wait)
+  if(SY.busy){ syncSoon(3000); return false; }
+  if((typeof logBusy!=='undefined' && logBusy>0) || fillBusy){ syncSoon(4000); return false; }   // an async job is editing the log — in a moment
+  if(!opts.force && !joining && syncUserBusy()){   // you're typing or have a bet editor open: a redraw would close it — wait (3 minutes at most)
+    if(!SY.deferSince) SY.deferSince=Date.now();
+    if(Date.now()-SY.deferSince<180000){ syncSoon(8000); return false; } }
+  SY.deferSince=0;
+  const lock=+(syncLS('mbev.syncLock')||0); if(lock>Date.now() && !joining){ syncSoon(5000); return false; }   // another tab of this browser is syncing
+  SY.busy=true; syncLS('mbev.syncLock', String(Date.now()+30000)); syncShow();
+  let summary=null;
+  try{
+    const M=syncMeta();
+    syncDetect(false);
+    for(let round=0; round<4; round++){
+      const h=await syncCall('GET','/sync/head'); if(!h.ok) throw h;
+      SY.head=h.j||{}; const rev=+((SY.head.doc||{}).rev)||0;
+      let push=M.dirty;
+      if(rev!==M.rev || !M.joined){
+        if(rev>0){
+          const d=await syncGetDoc('/sync'); if(!d.ok) throw d;
+          if(d.j){
+            const join=!M.joined;
+            syncDetect(false);   // anything typed while we waited counts as a change made now
+            SY.applying=true; let res;
+            try{ res=syncMergeAll(d.j, join); } finally{ SY.applying=false; }
+            if(join) summary=res.stat;
+            M.rev=d.stale?-1:(d.rev||rev); M.joined=true;
+            push=res.push;   // after a merge, only what the cloud lacks needs to go up
+            if(res.changed){ if(syncDetect(false)) push=true; syncRedraw(); }   // a copy dropped, a setting rewritten → goes up too
+            if(!push){ syncBaseFrom(d.j); M.dirty=false; }
+          } else { M.rev=0; push=true; M.joined=true; }
+        } else { if(!M.joined) summary={first:true}; M.rev=0; push=true; M.joined=true; }
+      }
+      if(!push) break;
+      const doc=syncDoc(), body=JSON.stringify(doc);
+      const r=await syncCall('PUT','/sync?base='+Math.max(0,M.rev), body, {'Content-Type':'application/json','x-sync-nonce':doc.nonce});
+      if(r.status===409){ M.rev=-1; continue; }   // someone saved first: pull it, merge, try again
+      if(!r.ok) throw r;
+      M.rev=+r.j.head.rev||M.rev; M.dirty=false; syncBaseFrom(doc); SY.lastBytes=body.length; if(SY.head) SY.head.doc=r.j.head;
+      if(summary && summary.first) summary.sent=Object.keys(doc.coll.log||{}).length;
+      break;
+    }
+    await syncBoard();
+    M.at=Date.now(); SY.err=''; syncMetaSave();
+    if(summary){ SY.joinMsg=syncJoinText(summary); clearTimeout(SY.jt); SY.jt=setTimeout(()=>{ SY.joinMsg=''; syncShow(); }, 15*60e3); }
+    return true;
+  }catch(e){ SY.err=syncErrText(e); try{ syncMetaSave(); }catch(_){} return false; }
+  finally{ SY.busy=false; syncLS('mbev.syncLock', null); syncShow(); } }
+function syncUserBusy(){ const a=document.activeElement;
+  return !!(document.querySelector('tr.editor, .pcard .editor') || (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.id!=='syncPw' && document.hasFocus())); }
+function syncJoinText(s){
+  if(s.first) return 'Uploaded '+(s.sent||0)+' bet'+(s.sent===1?'':'s')+' — this device\'s log is now the cloud copy.';
+  return 'Joined: '+s.fromCloud+' bet'+(s.fromCloud===1?'':'s')+' from the cloud'+(s.same?' · '+s.same+' already here':'')+(s.onlyHere?' · '+s.onlyHere+' only on this device, added to every device':'')+(s.dupes?' · '+s.dupes+' duplicate'+(s.dupes===1?'':'s')+' of cloud bets left out':'')+
+    (s.settings==='here'?' · settings: this device\'s (it has more bets) went to every device':s.settings==='cloud'?' · settings: from the cloud copy':'')+'.'; }
+// the board: rows from every device, by source (sport + bet type) — a newer load of the same source replaces the older one
+function syncBoardSig(rows, gradeN){ return syncHashStr(JSON.stringify((rows||[]).map(r=>[r.sport,r.name,r.market,r.side,r.book,r.offeredRaw,r.fairProb,r.mktProb]))+'|'+gradeN); }
+async function syncBoard(){
+  const M=SY.meta, bh=(SY.head||{}).board||{}, brev=+bh.rev||0;
+  if(brev>0 && brev!==M.brev){
+    const d=await syncGetDoc('/sync/board');
+    if(d.ok && d.j && Array.isArray(d.j.rows)){
+      let g=0; Object.entries(d.j.grade||{}).forEach(([k,v])=>{ if(!gradeHistory[k]){ gradeHistory[k]=v; g++; } });
+      SY.applying=true;
+      try{
+        if(g) saveGradeHistory();
+        let mine=null; try{ mine=JSON.parse(syncLS(BOARD_KEY)||'null'); }catch(e){}
+        const myAt=Date.parse((mine&&mine.savedAt)||'')||0, theirAt=Date.parse(d.j.savedAt||'')||0;
+        const local=(lastRows||[]).map(slimRow), theirs=d.j.rows, newer=theirAt>myAt+1000 || !local.length;
+        const first=newer?theirs:local, keep=new Set(first.map(r=>r.src));
+        const rows=first.concat((newer?local:theirs).filter(r=>!keep.has(r.src)));   // e.g. NBA from the PC + NFL from the phone
+        M.bsig=syncBoardSig(theirs, Object.keys(d.j.grade||{}).length);   // what the cloud has — anything else goes up below
+        if(syncBoardSig(rows,0)!==syncBoardSig(local,0)){
+          const p={v:d.j.v||1, savedAt:new Date(Math.max(myAt,theirAt)||Date.now()).toISOString(), slate:(newer?d.j.slate:(mine&&mine.slate))||d.j.slate, rows};
+          syncLS(BOARD_KEY, JSON.stringify(p)); useBoard(p, newer?'Board from your '+(d.j.by||'other device'):'Board + rows from your '+(d.j.by||'other device'));
+        }
+      } finally{ SY.applying=false; }
+      M.brev=d.stale?-1:(d.rev||brev);
+    }
+  }
+  if(!(lastRows||[]).length) return;
+  const sig=syncBoardSig(lastRows, Object.keys(gradeHistory).length);
+  if(sig===M.bsig && M.brev===brev) return;
+  const payload=Object.assign(boardPayload(), {by:SY.dev, grade:gradeHistory, nonce:Math.random().toString(36).slice(2,12)});
+  const r=await syncCall('PUT','/sync/board?base='+Math.max(0,M.brev===-1?brev:M.brev), JSON.stringify(payload), {'Content-Type':'application/json','x-sync-nonce':payload.nonce});
+  if(r.ok){ M.brev=+r.j.head.rev||M.brev; M.bsig=sig; }
+  else if(r.status===409) M.brev=-1;   // someone saved a board first — the next round looks at it
+}
+function syncShow(){
+  const chip=document.getElementById('syncChip'), st=document.getElementById('syncStatus'); if(!SY) return;
+  const M=SY.meta||{}, t=M.at?new Date(M.at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'';
+  if(chip){ chip.className='sync-chip'+(!SY.on?'':SY.err?' err':' ok');
+    chip.textContent=!SY.on?'☁ off':SY.busy?'☁ syncing…':SY.err?'☁ ⚠ not synced':'☁ '+(t||'on');
+    chip.title=!SY.on?'Your bets on every device — off on this device (Settings)':SY.err?'Not synced: '+SY.err:'Synced with your other devices'+(t?' at '+t:''); }
+  if(st){ const hd=(SY.head&&SY.head.doc)||{};
+    st.className='sync-status'+(SY.err?' err':SY.on?' ok':'');
+    st.innerHTML=!SY.on?'Off on this device.':(SY.busy?'Syncing…':SY.err?'⚠ '+esc(SY.err):'<b>On</b> — this '+esc(SY.dev)+(t?' · synced '+esc(t):'')+
+      (hd.rev?' · cloud copy #'+hd.rev+(hd.by?' saved by '+esc(hd.by):'')+(hd.at?' at '+esc(new Date(hd.at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})):'')+(hd.bytes?' · '+Math.max(1,Math.round(hd.bytes/1024))+' KB':''):'')+
+      ' · '+logged.length+' bet'+(logged.length===1?'':'s'))+(SY.joinMsg?'<div class="meta">'+esc(SY.joinMsg)+'</div>':''); }
+  const on=document.getElementById('syncOn'), off=document.getElementById('syncOff'), now=document.getElementById('syncNowBtn');
+  if(on) on.textContent=SY.on?'Change password':'Turn on';
+  if(off) off.disabled=!SY.on; if(now) now.disabled=!SY.on || SY.busy; }
+async function sha256hex(s){ const d=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)); return [...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join(''); }
+async function syncTurnOn(){
+  const inp=document.getElementById('syncPw'), pw=String((inp&&inp.value)||'').trim();
+  if(pw.length<4){ SY.err=''; SY.joinMsg=''; document.getElementById('syncStatus').textContent='Type your sync password (4+ characters) first.'; return; }
+  if(!(window.crypto&&crypto.subtle)){ document.getElementById('syncStatus').textContent='This browser can\'t hash the password here (it needs https).'; return; }
+  const key=await sha256hex('0xbeta-sync:'+pw), was={key:SY.key, on:SY.on};
+  SY.key=key; SY.on=true; SY.err=''; SY.joinMsg='';
+  const h=await syncCall('GET','/sync/head');
+  if(!h.ok){ SY.key=was.key; SY.on=was.on; SY.err=''; const s=document.getElementById('syncStatus'); s.className='sync-status err'; s.textContent='⚠ '+syncErrText(h); syncShow2(); return; }
+  syncLS('mbev.syncKey', key); syncLS('mbev.syncOn','1'); if(inp) inp.value='';
+  if(!was.on){ SY.meta=syncNewMeta(); syncMetaSave(); }   // a fresh start here: the first exchange is a join
+  const st=document.getElementById('syncStatus'); if(st){ st.className='sync-status'; st.textContent='Syncing…'; }
+  for(let i=0; i<60 && ((typeof logBusy!=='undefined' && logBusy>0) || fillBusy || SY.busy); i++) await new Promise(z=>setTimeout(z,250));   // let a running book check finish first
+  await syncNow({force:true});
+  syncShow(); }
+function syncShow2(){ const chip=document.getElementById('syncChip'); if(chip && !SY.on){ chip.className='sync-chip'; chip.textContent='☁ off'; } }
+function syncTurnOff(){
+  if(!SY.on) return;
+  syncLS('mbev.syncOn', null); syncLS('mbev.syncKey', null); syncLS('mbev.syncMeta', null);
+  SY.on=false; SY.key=''; SY.err=''; SY.joinMsg='Turned off here. Your bets stay on this device; the cloud copy and your other devices are not touched.'; SY.meta=syncNewMeta(); syncShow(); }
+async function syncBackups(){
+  const out=document.getElementById('syncBakList'); if(!out) return;
+  if(!SY.on){ out.textContent='Turn sync on first.'; return; }
+  out.textContent='asking…';
+  const r=await syncCall('GET','/sync/backups'); if(!r.ok){ out.textContent=syncErrText(r); return; }
+  const days=(r.j&&r.j.days)||[];
+  out.innerHTML=days.length?'Download: '+days.map(d=>'<button type="button" class="linkbtn sync-bak-day" data-day="'+esc(d)+'">'+esc(d)+'</button>').join(' ')+' <span class="meta">→ then Bet log → Restore</span>':'No daily backups yet — the first one is made the first time you sync on a new day.'; }
+async function syncBackupDay(day){
+  const r=await syncCall('GET','/sync/backup?day='+encodeURIComponent(day)); const out=document.getElementById('syncBakList');
+  if(!r.ok || !r.j){ if(out) out.textContent=syncErrText(r); return; }
+  const C=r.j.coll||{}, vals=o=>Object.values(o||{}).map(x=>x&&x.v).filter(Boolean);
+  const payload={kind:'mbev-betlog', v:1, savedAt:r.j.at||new Date().toISOString(), screener:SCREENER_VERSION, log:vals(C.log), parlays:Object.fromEntries(Object.entries(C.parlay||{}).map(([k,x])=>[k,x&&x.v])), gradeHistory:{}, removed:vals(C.removed), teamLogos:{}};
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(payload,null,1)],{type:'application/json'}));
+  a.download='0xbeta-cloud-backup-'+day+'.json'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); }
+(function syncInit(){
+  SY={on:syncLS('mbev.syncOn')==='1' && !!syncLS('mbev.syncKey'), key:syncLS('mbev.syncKey')||'', dev:syncDev(), meta:null, busy:false, applying:false, ready:false, err:'', head:null, joinMsg:''};
+  syncMeta(); SY.ready=true;
+  const on=document.getElementById('syncOn'), off=document.getElementById('syncOff'), now=document.getElementById('syncNowBtn'), bak=document.getElementById('syncBak'), pw=document.getElementById('syncPw');
+  if(on) on.addEventListener('click', syncTurnOn);
+  if(pw) pw.addEventListener('keydown', e=>{ if(e.key==='Enter') syncTurnOn(); });
+  if(off) off.addEventListener('click', ()=>{ if(confirm('Stop syncing on this device? Your bets stay here; the cloud copy and your other devices are not touched.')) syncTurnOff(); });
+  if(now) now.addEventListener('click', ()=>syncNow({force:true}));
+  if(bak) bak.addEventListener('click', syncBackups);
+  document.addEventListener('click', e=>{ const d=e.target.closest('.sync-bak-day'); if(d) syncBackupDay(d.dataset.day);
+    const c=e.target.closest('#syncChip'); if(c){ const t=document.querySelector('.tab[data-view="v-settings"]'); if(t) t.click(); const p=document.getElementById('syncPanel'); if(p){ p.open=true; p.scrollIntoView({behavior:'smooth', block:'start'}); } } });
+  window.addEventListener('storage', e=>{ if(e.key==='mbev.syncOn' || e.key==='mbev.syncKey'){ SY.on=syncLS('mbev.syncOn')==='1' && !!syncLS('mbev.syncKey'); SY.key=syncLS('mbev.syncKey')||''; syncShow(); } });
+  let lastPoke=0; const poke=()=>{ if(SY.on && document.visibilityState==='visible' && Date.now()-lastPoke>10000){ lastPoke=Date.now(); syncNow(); } };
+  document.addEventListener('visibilitychange', poke); window.addEventListener('focus', poke);
+  setInterval(()=>{ if(SY.on && document.visibilityState==='visible') syncNow(); }, 60000);
+  syncShow();
+  if(SY.on) setTimeout(()=>syncNow(), 1500);
+})();
 </script>
 </body>
 </html>
