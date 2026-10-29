@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v2.98</title>
+<title>0xBeta Screener v2.99</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -383,7 +383,8 @@ img.blogo.go,.book.go{cursor:pointer} img.blogo.go:hover{outline:2px solid var(-
 .par-steps{display:flex; flex-wrap:wrap; gap:6px 16px; align-items:baseline; font-size:13.5px}
 .par-btns{display:flex; gap:8px; flex-wrap:wrap; margin-top:6px}
 .par-btn{text-decoration:none; display:inline-flex; align-items:center; background:var(--accent); color:#fff !important; padding:6px 12px; border-radius:8px; font-weight:600; font-size:13px}
-.par-take{margin-top:6px}
+.par-make{font-weight:800; color:var(--warn)}
+.par-takenow{margin:8px 0; font-size:13px}
 .par-stay summary{cursor:pointer; color:var(--soft); font-size:13px; margin:6px 0}
 .mb-sums{display:flex; flex-wrap:wrap; gap:6px 18px; margin:6px 0 8px; font-size:13px}
 .mb-tbl{width:100%; border-collapse:collapse; font-size:13px} .mb-tbl td,.mb-tbl th{padding:5px 8px; border-top:1px solid var(--rule); text-align:left; vertical-align:top}
@@ -675,7 +676,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v2.98</span></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v2.99</span></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -881,7 +882,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <!-- v2.66: live scores for your open bets (ESPN, no BettingPros calls) -->
 <div class="view" id="v-parole">
 <div class="panel">
-  <h2>🔓 Parole <span class="sub">bets in La Contadora's Jail that a better price would free — you post your own price (Make) on Novig and wait for someone to take it</span></h2>
+  <h2>🔓 Parole <span class="sub">La Contadora sets the conditions (your Make price) — it's only a bet once someone posts bond by taking it</span></h2>
   <div class="row" style="margin-top:0;gap:10px;align-items:center;flex-wrap:wrap"><button class="act" id="parScan">🔎 Check prices</button><span class="meta" id="parMsg"></span></div>
   <p class="hint" style="margin:6px 0 10px">Only Jail reasons a price can fix get parole (below your floor or minimum, odds range, priced under the market). One-per-player, game caps, the daily max and started games stay in Jail. The screener never places anything.</p>
   <div id="parList"></div>
@@ -1223,7 +1224,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v2.98';
+const SCREENER_VERSION='v2.99';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -4079,7 +4080,7 @@ async function findBetGame(b){
 function srcTagHtml(b){   // v2.86: where the bet came from
   const m={api:['API','from an API load'], paste:['paste','from a pasted Cheat Sheet'], mev:['paste · sharp','from a pasted Market EV page'], manual:['by hand','from + Add a bet']};
   let t=b.manual?m.manual:m[b.srcType];
-  if(b.made) return '<span class="src-tag" title="Your posted price — someone took it">made'+(b.rung?' · rung '+b.rung:'')+' · '+esc(({kalshi:'Kalshi',poly:'Polymarket',novig:'Novig'}[b.autoFrom]||bookLabel(b.book)))+'</span>';
+  if(b.made) return '<span class="src-tag" title="Your posted price — someone took it">'+(b.parole?'🔓 parole':'made')+(b.rung?' · rung '+b.rung:'')+' · '+esc(({kalshi:'Kalshi',poly:'Polymarket',novig:'Novig'}[b.autoFrom]||bookLabel(b.book)))+'</span>';
   if(b.autoFrom) t=['auto · '+({kalshi:'Kalshi',poly:'Polymarket',novig:'Novig'}[b.autoFrom]||b.autoFrom), 'automatically from your '+b.autoFrom+' fill'+(t?' (board row: '+t[1]+')':'')];
   if(!t) return '';
   return '<span class="src-tag" title="Saved '+t[1]+'">'+t[0]+'</span>'; }
@@ -6014,7 +6015,7 @@ function abStake(o){
   let s=Math.min(cfg.sMax, cfg.bank*cfg.kelly*sizeOn/b);
   if(o.outlier){ s=Math.min(s,cfg.sMin); notes.push('outlier — held to the minimum'); }
   const today=ctDay(Date.now()), used=logged.filter(x=>!x.sold && gameDayOf(x)===today && poolOf(x)==='proj').reduce((t,x)=>t+(+x.stake||0),0);
-  const room=cfg.dayMax-used; if(s>room){ s=Math.max(0,room); notes.push('trimmed to your daily max ($'+used.toFixed(2)+' of $'+cfg.dayMax.toFixed(2)+' used)'); }
+  const hold=+(window._onHold||0), room=cfg.dayMax-used-hold; if(s>room){ s=Math.max(0,room); notes.push('trimmed to your daily max ($'+used.toFixed(2)+' bet'+(hold?' + $'+hold.toFixed(2)+' posted, awaiting bond':'')+' of $'+cfg.dayMax.toFixed(2)+')'); }
   if(o.game){ const inG=logged.filter(x=>!x.sold && x.game===o.game && !(x.result==='win'||x.result==='loss'||x.result==='push')).reduce((t,x)=>t+(+x.stake||0),0);
     const gr=cfg.gameCap-inG; if(s>gr){ s=Math.max(0,gr); notes.push('game cap: $'+inG.toFixed(2)+' already on '+o.game); } }
   let n=null;
@@ -6212,7 +6213,7 @@ function autoAddFromPost(P,f){
     said:{decision:'MADE', stake, onList:false}};
   addToLog(r);
   const L=logged[logged.length-1]; L.autoFrom=f.book; L.made=true; L.rung=rung&&Math.abs(rung.p-prob)<0.011?rung.k:null; L.fills=[f.id]; L.fillQty=+f.qty||0; L.fillCost=stake;
-  L.manual=true; L.srcType='manual'; L.start=P.start||L.start; if(P.proj!=null) L.proj=P.proj; L.postId=P.id; noteFillRef(L,f);
+  L.manual=true; L.srcType='manual'; L.start=P.start||L.start; if(P.proj!=null) L.proj=P.proj; L.postId=P.id; if(P.parole) L.parole=true; noteFillRef(L,f);
   (P.filled=P.filled||[]).push({p:prob, qty:+f.qty||0, id:f.id}); savePosts(); saveLog();
 }
 // your open orders (read-only) → which rungs are still resting, and which to pull
@@ -6233,32 +6234,40 @@ async function syncOrders(force){
 function renderPosts(){
   const el=document.getElementById('myPosts'); if(!el) return;
   if(!posts.length){ el.style.display='none'; el.innerHTML=''; return; }
-  const cfg=cfgRead(), O=(myOrders&&myOrders.orders)||[], used=new Set();
+  const cfg=cfgRead(), O=(myOrders&&myOrders.orders)||[], used=new Set(); let onHold=0;
   const html=posts.map(P=>{
     const q=postQuotes[P.id], mid=q&&q.bid>0?(q.price+q.bid)/2:null;
     const row=abBoardRow({name:P.name, market:P.market, side:P.side, kind:P.kind}), fairNow=row?row.fairProb:P.fair;
     const mine=O.filter(o=>o.book===P.src && P.ref && o.ref===P.ref && (P.src!=='novig'||!P.outcome||o.outcome===P.outcome) && (P.src!=='kalshi'||o.side==null||((o.side==='no')===/^NO · /.test(P.title||''))));
     const warns=[];
     const rs=(P.rungs||[]).map(r=>{
-      const fl=(P.filled||[]).filter(x=>Math.abs(x.p-r.p)<0.011), o=mine.find(x=>!used.has(x.id) && x.price!=null && Math.abs(x.price-r.p)<0.006);
+      const fl=(P.filled||[]).filter(x=>{ const near=(P.rungs||[]).slice().sort((a,b)=>Math.abs(a.p-x.p)-Math.abs(b.p-x.p))[0]; return near && near.k===r.k; }), o=mine.find(x=>!used.has(x.id) && x.price!=null && Math.abs(x.price-r.p)<0.006);
       if(o) used.add(o.id);
       const fee=makerFee(BOOK_NAME[P.src],r.p);
-      let st=fl.length?'<span class="ok-t">✓ taken'+(fl.reduce((t,x)=>t+(x.qty||0),0)?' ('+fl.reduce((t,x)=>t+(x.qty||0),0)+' ct)':'')+'</span>':o?'resting'+(o.qty!=null?' · '+o.qty+' ct left':''):(myOrders?'<span class="meta">not posted</span>':'');
+      const gotQ=fl.reduce((t,x)=>t+(x.qty||0),0), wantQ=+r.qty||0, started=P.start && Date.parse(P.start)<=Date.now();
+      let st;
+      if(gotQ>0 && (!wantQ || gotQ>=wantQ-0.01)) st='<span class="ok-t">💵 bond posted — out on parole</span>';
+      else if(gotQ>0) st='<span class="ok-t">½ partial bond</span> <span class="meta">('+(+gotQ.toFixed(2))+' of '+wantQ+' ct)</span>'+(o?' · rest awaiting':'');
+      else if(started) st='<span class="meta">🔒 back to Jail — nobody took it</span>';
+      else if(o) st='📝 posted, awaiting bond'+(o.qty!=null?' <span class="meta">('+o.qty+' ct)</span>':'');
+      else st=myOrders?'<span class="meta">⚖️ conditions set — not posted yet</span>':'<span class="meta">⚖️ conditions set</span>';
+      if(!started && !(gotQ>=wantQ-0.01 && gotQ>0)){ onHold+= o ? (o.qty!=null&&o.price? o.qty*o.price : r.stake) : 0; }
       if(o || !fl.length){
-        const verb=o?'pull rung '+r.k:'don\'t post rung '+r.k+' yet';
-        if(fairNow!=null && netAtP(fairNow,r.p,fee)<cfg.eMin) warns.push('⚠ '+verb+' — your fair moved to '+pct(fairNow)+', '+P94(r.p)+' no longer clears your floor');
-        else if(o && mid!=null && netAtP(mid,r.p,fee)<0) warns.push('⚠ '+verb+' — '+bookLabel(BOOK_NAME[P.src])+'\'s middle is '+pct(mid)+'; '+P94(r.p)+' is above it (whoever takes that likely knows more)');
+        const verb=o?'⚠ conditions changed — pull rung '+r.k+' in the app':'don\'t post rung '+r.k+' yet';
+        if(started) {} else if(fairNow!=null && netAtP(fairNow,r.p,fee)<cfg.eMin) warns.push((o?'':'⚠ ')+verb+' — your fair moved to '+pct(fairNow)+', '+P94(r.p)+' no longer clears your floor');
+        else if(o && mid!=null && netAtP(mid,r.p,fee)<0) warns.push(verb+' — '+bookLabel(BOOK_NAME[P.src])+'\'s middle is '+pct(mid)+'; '+P94(r.p)+' is above it (whoever takes that likely knows more)');
       }
       return '<span class="rung"><b>R'+r.k+'</b> '+P94(r.p)+' · $'+r.stake.toFixed(2)+' — '+st+'</span>';
     }).join('');
     const nTaken=(P.filled||[]).length;
     return '<div class="post"><b>'+esc(P.name)+'</b> — '+esc(abSideTxt({kind:P.kind, side:P.side, market:P.market, team:P.team, game:P.game, _line:parseFloat(P.market)},false))+' · '+esc(bookLabel(BOOK_NAME[P.src]))+
       ' · fair '+pct(P.fair)+(mid!=null?' · market now '+pct(mid):'')+' <button class="ghost sm post-x" data-id="'+esc(P.id)+'" title="Forget this ladder (doesn\'t touch your orders)">✕</button><br>'+rs+
-      (warns.length?'<div class="warnline">'+warns.map(esc).join('<br>')+'</div>':'')+(nTaken>1?'<div class="meta">'+nTaken+' rungs taken — if they went fast, check the news before re-posting.</div>':'')+'</div>';
+      (warns.length?'<div class="warnline">'+warns.map(esc).join('<br>')+'</div>':'')+(nTaken>1?'<div class="meta">'+nTaken+' rungs taken — if they went fast, check the news before re-posting.</div>':'')+(P.parole?'<div class="meta">🔓 parole: only a bet once someone posts bond (takes your price) — until then nothing is at risk.</div>':'')+'</div>';
   }).join('');
   const other=O.filter(o=>!used.has(o.id)).length, err=myOrders&&myOrders.errors?Object.entries(myOrders.errors).map(([k,v])=>(BOOK_NAME[k]||k)+': '+v).join(' · '):'';
   el.style.display='block';
-  el.innerHTML='<b>📌 Your posts</b> <span class="meta">'+(myOrders?'open orders read '+new Date(ordersAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'open orders not read yet (deploy the Worker)')+(other?' · '+other+' other open order'+(other===1?'':'s'):'')+(err?' · '+esc(err):'')+'</span>'+html;
+  window._onHold=onHold;
+  el.innerHTML='<b>📌 Your posts</b>'+(onHold>0?' <span class="tag t-warn" title="Posted, not yet accepted — counted against your daily max so you can\'t over-post">on hold $'+onHold.toFixed(2)+'</span>':'')+' <span class="meta">'+(myOrders?'open orders read '+new Date(ordersAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'open orders not read yet (deploy the Worker)')+(other?' · '+other+' other open order'+(other===1?'':'s'):'')+(err?' · '+esc(err):'')+'</span>'+html;
 }
 document.addEventListener('click',e=>{
   const x=e.target.closest('.post-x'); if(x){ posts=posts.filter(P=>P.id!==x.dataset.id); savePosts(); renderPosts(); return; }
@@ -6385,8 +6394,8 @@ function renderParole(){
   const el=document.getElementById('parList'); if(!el) return;
   const C=paroleCandidates(), msg=document.getElementById('parMsg');
   if(!C.length){ el.innerHTML='<p class="hint">Nobody in Jail that a better price could free — load or paste a board first.</p>'; if(msg) msg.textContent=''; setParoleN(0); return; }
-  const out=[], stay=[];
-  C.forEach(r=>{ if(!r._par){ stay.push([r,'not checked yet']); return; } const P=paroleOf(r); if(P.why) stay.push([r,P.why]); else out.push([r,P]); });
+  const out=[], stay=[], takeNow=[];
+  C.forEach(r=>{ if(!r._par){ stay.push([r,'not checked yet']); return; } const P=paroleOf(r); if(P.why) stay.push([r,P.why]); else if(P.take) takeNow.push([r,P]); else out.push([r,P]); });
   setParoleN(out.length);
   if(msg && parAt) msg.textContent=out.length+' can get out on parole · '+stay.length+' stay in Jail · checked '+new Date(parAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
   el.innerHTML=out.map(([r,P])=>{
@@ -6394,22 +6403,20 @@ function renderParole(){
     const head='<div class="par-h"><b>'+esc(r.name)+'</b> · '+esc(sideTxt)+' · <span class="meta">'+esc(r.game||'')+' · 🕒 '+esc(giWhen(gi))+'</span></div>'+
       '<div class="meta">Jailed: '+esc(jailWhy(r))+' ('+esc(bookLabel(r.book))+' '+esc(r.offeredRaw||'')+') · fair '+pct(r.fairProb)+(r.mktProb!=null?' · market '+pct(r.mktProb):'')+'</div>';
     const pre=P.src==='novig'?'Novig':bookLabel(P.book);
-    if(P.take){ const url=bookUrl(P.src,P.q,P.stake);
-      return '<div class="par-card take">'+head+'<div class="par-take">🟢 <b>TAKE it</b> — '+esc(pre)+' sells it at '+P94(P.price)+' → '+SG94(P.net)+' net · $'+P.stake.toFixed(2)+
-        (url?' <a class="ghost sm par-btn" href="'+esc(url)+'" target="_blank" rel="noopener">Open slip ($ filled)</a>':'')+'</div></div>'; }
     const slips=P.rungs.map(g=>{ const url=bookUrl(P.src,P.q,g.stake);
       return '<div class="par-slip"><div class="par-steps">'+
-        '<span><b>Rung '+g.k+'</b>'+(g.sweet?' <span class="sweet">🎯</span>':'')+'</span>'+
-        '<span>1 · side <b>'+esc(sideTxt)+'</b></span><span>2 · <b>Make</b></span><span>3 · price <b>'+(g.p*100).toFixed(1)+'%</b> <span class="meta">('+esc(fmtOdds(Math.round(americanOf(g.p))))+')</span></span>'+
-        '<span>4 · $ <b>'+g.stake.toFixed(2)+'</b></span><span class="meta">payout should read <b>$'+g.payout.toFixed(2)+'</b></span>'+
-        '<span class="ok-t">'+SG94(g.net)+' if taken</span></div>'+
+        '<span><b>⚖️ Condition '+g.k+'</b>'+(g.sweet?' <span class="sweet">🎯</span>':'')+'</span>'+
+        '<span>① open slip — side <b>'+esc(sideTxt)+'</b></span><span class="par-make">② tap <b>MAKE</b> (not Take)</span><span>③ price <b>'+(g.p*100).toFixed(1)+'%</b> <span class="meta">('+esc(fmtOdds(Math.round(americanOf(g.p))))+')</span></span>'+
+        '<span>④ $ <b>'+g.stake.toFixed(2)+'</b></span><span>⑤ payout should read <b>$'+g.payout.toFixed(2)+'</b></span>'+
+        '<span class="ok-t">'+SG94(g.net)+' if someone posts bond</span></div>'+
+        '<div class="meta">'+(P.ask!=null?esc(pre)+' sells at '+(P.ask*100).toFixed(1)+'% — you post '+(g.p*100).toFixed(1)+'% and wait. If the slip shows '+(P.ask*100).toFixed(1)+'%, you\'re still on Take.':'Nobody is selling this side right now — your price would be the first offer.')+'</div>'+
         '<div class="par-btns">'+(url?'<a class="log sm par-btn" href="'+esc(url)+'" target="_blank" rel="noopener">Open slip ($ filled)</a>':'')+
         '<button type="button" class="ghost sm par-copy" data-copy="'+(g.p*100).toFixed(1)+'">📋 Copy '+(g.p*100).toFixed(1)+'</button></div></div>'; }).join('');
     return '<div class="par-card">'+head+
-      '<div class="meta" style="margin:4px 0">'+esc(pre)+' now: '+(P.ask!=null?'sells at '+P94(P.ask):'nobody selling yet')+(P.topBid!=null?' · top post '+P94(P.topBid):'')+' · never post above <b>'+P94(P.max)+'</b> (breakeven at your floor)</div>'+
+      '<div class="meta" style="margin:4px 0">La Contadora\'s conditions: out on parole only if someone takes your price — never post above <b>'+P94(P.max)+'</b> (breakeven at your floor)'+(P.topBid!=null?' · best Make on the book now '+P94(P.topBid):'')+'</div>'+
       slips+'<div class="par-btns"><button type="button" class="ghost sm par-save" data-i="'+r.idx+'">📌 Save ladder (tracks fills)</button></div></div>';
-  }).join('') + (stay.length?'<details class="par-stay"><summary>'+stay.length+' stay in Jail</summary>'+stay.map(([r,w])=>'<div class="meta">'+esc(r.name)+' · '+esc(r.market||'')+' — '+esc(w)+'</div>').join('')+'</details>':'')
-    + '<p class="hint">Novig\'s slip link can fill in the side and the $ — not Make or the price, so: <b>Open slip</b> → tap <b>Make</b> → paste the price → check the payout → you press the button. Novig cancels resting orders when the game goes live.</p>';
+  }).join('') + (takeNow.length?'<div class="par-takenow">🟢 '+takeNow.length+' Jail bet'+(takeNow.length===1?' is':'s are')+' already cheap enough to take now ('+takeNow.map(([r])=>esc(r.name)).join(', ')+') — no parole needed: <b>🦑 Send the Sentinels</b> on the Board.</div>':'') + (stay.length?'<details class="par-stay"><summary>'+stay.length+' stay in Jail</summary>'+stay.map(([r,w])=>'<div class="meta">'+esc(r.name)+' · '+esc(r.market||'')+' — '+esc(w)+'</div>').join('')+'</details>':'')
+    + '<p class="hint">Novig\'s slip link fills in the side and the $ only — it opens on <b>Take</b>. Always: ① Open slip → ② tap <b>MAKE</b> → ③ paste the price → ④ check the $ → ⑤ check the payout → you press the button. It\'s only a bet once someone posts bond (takes your price); at tip-off Novig cancels what\'s left and it\'s back to Jail, nothing lost.</p>';
 }
 function setParoleN(n){ const t=document.getElementById('paroleTabN'); if(t) t.textContent=n?n:''; }
 document.addEventListener('click',e=>{
