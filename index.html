@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.03</title>
+<title>0xBeta Screener v3.04</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -681,6 +681,11 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 .sync-chip.ok{color:var(--live); border-color:var(--live)} .sync-chip.err{color:var(--warn); border-color:var(--warn)}
 .sync-status{font-size:13.5px; margin:10px 0 0} .sync-status.ok b{color:var(--live)} .sync-status.err{color:var(--warn); font-weight:600}
 #syncPanel code{font-size:12px; background:var(--rail); padding:1px 5px; border-radius:4px}
+/* v3.04: what the slip should show, on the card · passphrase check */
+.pp{display:block; margin-top:4px; font-size:12.5px; font-weight:800} .pp.ok{color:var(--live)} .pp.no{color:var(--out)}
+.pp-sub{display:block; font-size:10.5px; color:var(--soft)} .pp-sub b.up{color:var(--live)} .pp-sub b.down{color:var(--out)}
+.pp-open{display:inline-block; margin-top:4px; font-size:11px; font-weight:700; color:var(--accent); cursor:pointer; text-decoration:underline}
+.pass-ok{color:var(--live); font-weight:700} .pass-bad{color:var(--out); font-weight:700}
 </style>
 </head>
 <body>
@@ -689,7 +694,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.03</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.04</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -738,7 +743,9 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
   <div id="apiStatus" class="ll-status"></div>
   <p class="hint" id="apiWeekHint" style="display:none;margin:4px 2px 0">NFL/NCAAF are organized by week. Week auto-fills from ESPN; leave it blank to let BettingPros use the current week.</p>
   <div class="row" id="passBox" style="display:none;margin-top:8px">
-    <input type="password" id="screenerPass" placeholder="passphrase" style="max-width:220px" autocomplete="off">
+    <input type="password" id="screenerPass" placeholder="passphrase" style="max-width:220px" autocomplete="new-password">
+    <button class="act" id="passSave" type="button" style="padding:7px 16px">Save</button>
+    <span class="meta" id="passMsg"></span>
     <span class="hint" style="margin:0">Saved in this browser only. Must match the SCREENER_PASS secret on the Worker.</span>
   </div>
 </div>
@@ -919,7 +926,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
   <summary><h2>☁ Your bets on every device <span class="sub">phone, other PCs — locked with your own sync password</span></h2></summary>
   <p class="hint">One copy of your bet log lives in your Cloudflare store. Any device with the screener passphrase <b>and</b> this password sees the same bets, baits and settings. Changes upload a few seconds after you make them; other devices pick them up when they open or come back to the page, and once a minute while it's open — Wi-Fi or cellular.</p>
   <div class="row" style="gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px">
-    <input type="password" id="syncPw" placeholder="sync password" autocomplete="off" style="max-width:220px;padding:8px 10px;font-size:14px">
+    <input type="password" id="syncPw" placeholder="sync password" autocomplete="new-password" style="max-width:220px;padding:8px 10px;font-size:14px">
     <button class="act" id="syncOn">Turn on</button>
     <button class="ghost" id="syncNowBtn" disabled>⟳ Sync now</button>
     <button class="ghost" id="syncOff" disabled>Turn off here</button>
@@ -1252,7 +1259,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v3.03';
+const SCREENER_VERSION='v3.04';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -2180,7 +2187,7 @@ function placeCardHtml(r,cfg,o){
       '<div class="pc-mkt"><div class="pc-mt">'+esc((line?line+' ':'')+mname)+'</div>'+(cons?'<div class="pc-mo">'+esc(cons)+'</div>':'')+'</div>'+
       '<div class="pc-game">'+game+'</div></div>'+
     '<div class="pc-stats">'+
-      pcCell('Our pick','<div class="pc-big">'+esc(pick)+'</div><span class="pc-chip">'+esc(betNowOf(r))+' '+book+'</span>'+shopTagHtml(r)+maxTagHtml(r))+
+      pcCell('Our pick','<div class="pc-big">'+esc(pick)+'</div><span class="pc-chip">'+esc(betNowOf(r))+' '+book+'</span>'+shopTagHtml(r)+pickPayHtml(r))+
       pcCell('Consensus','<div class="pc-big">'+esc(line||'—')+'</div><span class="pc-s">'+esc(cons||'—')+(r.mktProb!=null?' · mkt '+pct(r.mktProb):'')+'</span>')+
       pcCell('Projection','<div class="pc-big">'+(r.projValue!=null?(Math.round(r.projValue*10)/10):'—')+'</div><span class="pc-s">'+esc(mname)+'</span>')+
       pcCell('EV after fees','<div class="pc-big '+(r.net>0?'up':'down')+'">'+ev+'</div><span class="pc-s">'+(r.fairProb!=null?pct(r.fairProb)+' cover':'')+(bp?' · '+bp:'')+'</span>')+
@@ -4848,6 +4855,20 @@ document.getElementById('clearBoard').addEventListener('click',()=>{
   const inp=document.getElementById('screenerPass');
   try{ inp.value=localStorage.getItem('mbev.pass')||''; }catch(e){}
   inp.addEventListener('change',()=>{ try{ localStorage.setItem('mbev.pass',inp.value.trim()); }catch(e){} refreshBudget(); });
+  // v3.04: Save checks it with the Worker right away — ✓ accepted / ✗ wrong — so you know before you press Load
+  const msg=document.getElementById('passMsg'), btn=document.getElementById('passSave');
+  const check=async()=>{
+    const v=inp.value.trim(); try{ localStorage.setItem('mbev.pass',v); }catch(e){}
+    if(!v){ msg.className='meta pass-bad'; msg.textContent='✗ type the passphrase first'; return; }
+    msg.className='meta'; msg.textContent='checking…';
+    try{ const r=await fetch(API_BASE+'/budget',{headers:{'x-screener-pass':v}, cache:'no-store'});
+      if(r.ok){ msg.className='meta pass-ok'; msg.textContent='✓ accepted — saved in this browser'; }
+      else if(r.status===401){ msg.className='meta pass-bad'; msg.textContent='✗ wrong — the Worker has a different passphrase'; }
+      else { msg.className='meta pass-bad'; msg.textContent='✗ the Worker answered '+r.status; } }
+    catch(e){ msg.className='meta pass-bad'; msg.textContent='✗ can\'t reach the Worker (offline?)'; }
+    refreshBudget(); };
+  btn.addEventListener('click',check);
+  inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); check(); } });
 })();
 
 /* ============ Moneylines tab ============
@@ -5646,6 +5667,21 @@ function bookUrl(src, q, amount){
   }
   return q.url || BOOK_HOME[src] || null;
 }
+// v3.04: book slips open in ONE side window next to the screener (reused: the next slip replaces it) instead of a new
+// tab you have to flip to. On a phone there's no room for windows: a tab, as before.
+function slipWindow(){
+  if(isPhone()) return window.open('about:blank','_blank');
+  const aw=screen.availWidth||1440, ah=screen.availHeight||900, W=Math.max(420,Math.min(560,Math.round(aw*0.32))), H=Math.max(600,ah-40);
+  const L=Math.max(0,(screen.availLeft||0)+aw-W), T=screen.availTop||0;
+  const w=window.open('about:blank','0xbeta-slip','popup=yes,width='+W+',height='+H+',left='+L+',top='+T);
+  try{ if(w) w.focus(); }catch(e){}
+  return w;
+}
+document.addEventListener('click', e=>{   // every book link on the page (Parole "Open slip", + Add a bet, the table's Bet) → the side window
+  const a=e.target.closest('a[href]'); if(!a || isPhone()) return;
+  if(!/^https:\/\/([\w-]+\.)*(novig\.com|kalshi\.com|polymarket\.us|draftkings\.com)\//i.test(a.href)) return;
+  e.preventDefault(); const w=slipWindow(); if(w) w.location.href=a.href; else window.open(a.href,'_blank');
+}, true);
 async function quoteFor(obj, bookName){
   const d=liveDesc(Object.assign({}, obj, {book:bookName, id:'q:'+(obj.id||obj.key||obj.idx)+':'+bookName})); if(!d) return null;
   const old=liveQuotes[d.id]; if(old && Date.now()-Date.parse(old.at||0)<60000) return old;
@@ -5666,6 +5702,21 @@ function maxTagHtml(r){
   const pctBook=PM_BOOK.test(r.book||'');
   return '<span class="meta max-pay" title="The most you can pay at '+esc(bookLabel(r.book))+' and still clear your '+pct(cfg.eMin)+' EV floor after its fee">max '+(pctBook?(mx*100).toFixed(1)+'%':esc(fmtOdds(Math.round(americanOf(mx)))))+'</span>';
 }
+// v3.04: the editor's bottom line, on the card — the price and payout the slip should show for the screener's stake,
+// green ✓ when the price is at or under the most you can pay, red ✗ when it isn't
+function pickPayHtml(r){
+  if(r.fairProb==null || !(r.offeredProb>0 && r.offeredProb<1)) return maxTagHtml(r);
+  const cfg=cfgRead(), p=r.offeredProb, mx=maxPriceFor(r.fairProb, r.book, cfg.eMin), pctBook=PM_BOOK.test(r.book||'');
+  const f=feeRate(r.book,p,cfg.fees), st=+r.stake||0, pay=st>0?Math.floor(st/(p*(1+f))*100+1e-6)/100:null;
+  const show=x=>pctBook?(x*100).toFixed(1)+'%':fmtOdds(Math.round(americanOf(x)));
+  const net=r.net, evTxt=net!=null?'<b class="'+(net>=cfg.eMin?'up':net<0?'down':'')+'">'+(net>=0?'+':'')+(net*100).toFixed(1)+'% EV</b>':'';
+  const src=LIVE_BOOK(r.book) || (/draftkings/i.test(r.book||'')?'dk':null);
+  const open=src?'<span class="pp-open" title="Open this bet on '+esc(bookLabel(r.book))+(st>0?' with $'+st.toFixed(2)+' filled':'')+'">open slip ↗</span>':'';
+  if(mx==null) return '<span class="pp no" title="No price at this book clears your EV floor">✗ no price passes</span>'+open;
+  if(p>mx+1e-9) return '<span class="pp no" title="The price is above the most you can pay — skip it">✗ '+show(p)+' — over '+show(mx)+', skip</span><span class="pp-sub">'+evTxt+'</span>'+open;
+  return '<span class="pp ok" title="What the slip should show: this price, and this payout for $'+st.toFixed(2)+'">✓ '+show(p)+(pay!=null?' → wins $'+pay.toFixed(2):' now')+'</span>'+
+    '<span class="pp-sub">'+evTxt+(evTxt?' · ':'')+'OK up to '+show(mx)+'</span>'+open;
+}
 function shopTagHtml(r){
   let h='';
   if(r.shop) h+='<span class="meta shop-was '+(r.offeredProb<r.shop.orig.offeredProb?'':'worse')+'" title="'+esc(r.shop.same?'Live '+bookLabel(r.book)+' price now (was '+fmtOdds(r.shop.orig.offeredRaw)+' at the Pull)':'Line shopping: '+bookLabel(r.book)+' beats '+bookLabel(r.shop.orig.book)+' after fees')+'">'+(r.shop.same?'live · was ':'was '+esc(bookLabel(r.shop.orig.book))+' ')+esc(fmtOdds(r.shop.orig.offeredRaw))+'</span>';
@@ -5676,7 +5727,7 @@ function shopTagHtml(r){
 function rowAsBet(r){ return {id:'row'+r.idx, idx:r.idx, book:r.book, sport:r.sport, kind:r.kind, market:r.market, side:r.side, name:r.name, team:r.team, apiKey:r.apiKey,
   game:r.game, matchup:r.matchup, start:(r.gameInfo&&r.gameInfo.startISO)||null, odds:r.offeredRaw, stake:r.stake}; }
 document.addEventListener('click', async e=>{
-  const img=e.target.closest('img.blogo, .book'); if(!img) return;
+  const img=e.target.closest('img.blogo, .book, .pp-open'); if(!img) return;
   const host=img.closest('tr, .pcard'); if(!host) return;
   let obj=null;
   const kb=host.querySelector('button.kill[data-i]'); if(kb) obj=logged[+kb.dataset.i];
@@ -5684,7 +5735,7 @@ document.addEventListener('click', async e=>{
   if(!obj) return;
   const src=LIVE_BOOK(obj.book) || (/draftkings/i.test(obj.book||'')?'dk':null); if(!src) return;
   e.preventDefault(); e.stopPropagation();
-  const w=window.open('about:blank','_blank');   // open now (pop-up blockers), point it once we know where
+  const w=slipWindow();   // open now (pop-up blockers), point it once we know where
   let url=BOOK_HOME[src];
   try{ if(src!=='dk'){ const q=await quoteFor(obj, obj.book); url=bookUrl(src, q, +obj.stake||0) || url; } }catch(_){}
   if(w) w.location.href=url; else location.href=url;
