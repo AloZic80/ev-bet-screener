@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v2.99</title>
+<title>0xBeta Screener v3.01</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -676,7 +676,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v2.99</span></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.01</span></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1224,7 +1224,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v2.99';
+const SCREENER_VERSION='v3.01';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -2409,8 +2409,8 @@ function openBetEditor(tr, r, opt){
       try{
         const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(descs)), {headers:apiHeaders()});
         const j=await res.json(), R=(j&&j.results)||{}; if(myTok!==tok) return;
-        const own=src?R['ed'+myTok+':'+src]:null;
-        const others=descs.map(d=>({d,q:R[d.id]})).filter(x=>x.q&&x.q.ok).map(x=>({book:BOOK_NAME[x.d.book], p:x.q.price})).sort((a,b)=>a.p-b.p);
+        let own=src?R['ed'+myTok+':'+src]:null; if(own&&own.ok&&suspectQ(own,r.fairProb,toProb(r.offeredRaw))) own={ok:false,note:'price looks like a different market — ignored'};
+        const others=descs.map(d=>({d,q:R[d.id]})).filter(x=>x.q&&x.q.ok&&!suspectQ(x.q,r.fairProb,toProb(r.offeredRaw))).map(x=>({book:BOOK_NAME[x.d.book], p:x.q.price})).sort((a,b)=>a.p-b.p);
         lastQ={book, q:own||null, others: r.fairProb==null||!src ? others : others.filter(o=>LIVE_BOOK(o.book)!==src)};
         if(own && own.ok){ liveQuotes['ed:'+src]=own;
           if(pmMode() && !pctTyped){ pctIn.value=(own.price*100).toFixed(1); pctIn.dispatchEvent(new Event('input')); } }
@@ -2728,7 +2728,7 @@ async function checkExchangeOpen(rows){
     const chunk=jobs.slice(i,i+8);
     let R={}; try{ const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(chunk.map(x=>x[1]))),{headers:apiHeaders()}); if(!res.ok) break; R=((await res.json())||{}).results||{}; }catch(e){ break; }
     chunk.forEach(([r,d])=>{ const q=R[d.id]; exCheckAt[r.idx+':'+r.book+':'+r.market]=Date.now(); if(!q) return;
-      if(q.ok){ delete r.exClosed; r.exOpen={p:q.price, at:Date.now()}; liveQuotes[d.id]=q; return; }
+      if(q.ok){ delete r.exClosed; if(suspectQ(q,r.fairProb,r.offeredProb)) return; r.exOpen={p:q.price, at:Date.now()}; liveQuotes[d.id]=q; return; }
       const note=String(q.note||'');
       // closed only when the book answered about THIS market; unmapped stats / lookup errors leave it open
       if(/no offer to buy|no market at your line|not listed|lists .* not your/i.test(note)) r.exClosed=note.replace(/^(Kalshi|Polymarket|Novig):\s*/,bookLabel(r.book)+': ');
@@ -5534,6 +5534,15 @@ var logDayFilter=null;
 })();
 
 /* ============ v2.88: live exchange prices (Kalshi · Polymarket US · Novig) via the Worker ============ */
+/* v3.00: an exchange price that implies a huge edge, or sits far from the bet's own price, is almost always a DIFFERENT market
+   (e.g. Necas "1+ Powerplay Points" 34.5% matched to "Over 0.5 Points" 65.7%). Never use it to take, post, close or shop. */
+function suspectQ(q, fair, own){
+  if(!q || !(q.price>0)) return false;
+  const cut=Math.max(0.15,(parseFloat((document.getElementById('swOutlier')||{}).value)||15)/100);
+  if(fair!=null && fair/q.price-1>cut) return true;
+  if(own!=null && Math.abs(q.price-own)>0.20) return true;
+  return false;
+}
 function LIVE_BOOK(bk){ const k=String(bk||'').toLowerCase(); return /kalshi/.test(k)?'kalshi':/polymarket/.test(k)?'poly':/novig/.test(k)?'novig':null; }
 var liveQuotes={}, liveAt=0, liveBusy2=false;
 function liveDesc(b){
@@ -5560,6 +5569,7 @@ async function refreshLivePrices(force){
       if(!res.ok) break;
       const data=await res.json(); const R=(data&&data.results)||{};
       chunk.forEach(([b,d])=>{ const r=R[d.id]; if(!r) return; liveQuotes[d.id]=r;
+        if(r.ok && suspectQ(r,null,toProb(b.odds))){ r.ok=false; r.note=(BOOK_NAME[r.src]||'exchange')+': price looks like a different market — ignored'; liveQuotes[d.id]=r; return; }
         if(r.ok){ const t=Date.parse(b.start);
           b.liveLast={p:r.price, at:r.at||new Date().toISOString(), src:r.src};
           if(!isNaN(t) && Date.now()<t && t-Date.now()<45*60e3) b.closeLive={p:r.price, at:r.at||new Date().toISOString(), src:r.src};   // last price before kickoff
@@ -5666,7 +5676,7 @@ async function shopExchanges(){
       const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(chunk.map(x=>x[2]))), {headers:apiHeaders()});
       if(!res.ok){ msg.textContent='exchange check failed ('+res.status+')'; break; }
       const R=((await res.json())||{}).results||{};
-      chunk.forEach(([r,n,d])=>{ const q=R[d.id]; if(!q||!q.ok) return; matched++; liveQuotes[d.id]=q; (r._shopQ=r._shopQ||{})[n]=q; });
+      chunk.forEach(([r,n,d])=>{ const q=R[d.id]; if(!q||!q.ok) return; if(suspectQ(q,r.fairProb,r.offeredProb)){ (r._suspect=r._suspect||{})[n]=q; return; } matched++; liveQuotes[d.id]=q; (r._shopQ=r._shopQ||{})[n]=q; });
     }
     let repriced=0;
     rows.forEach(r=>{
@@ -5711,6 +5721,9 @@ function betForFillRef(f){
 function rowQuoteFor(r,f){
   const q1=r._shopQ&&r._shopQ[FILL_NAME[f.book]]; if(quoteMatchesFill(q1,f)) return q1;
   const q2=liveQuotes['shop:'+r.idx+':'+f.book]; if(quoteMatchesFill(q2,f)) return q2;
+  // v3.01: the board's open-market check and Parole's price check know the market codes too (even with nobody selling)
+  const more=[LIVE_BOOK(r.book)===f.book?liveQuotes['open:'+r.idx]:null, r._par&&r._par[f.book]];
+  for(const q of more){ if(q && q.ref && quoteMatchesFill(Object.assign({},q,{src:q.src||f.book, ok:true}),f)) return q; }
   return null;
 }
 function rowForFillRef(f){   // Polymarket fills carry no side: when Over and Under both match, take the price closest to the fill
@@ -5721,12 +5734,12 @@ function rowForFillRef(f){   // Polymarket fills carry no side: when Over and Un
 }
 var huntDone={};
 async function huntForFills(list){   // price the board rows on just the books that have unmatched fills, then match again
-  const books=[...new Set(list.map(f=>f.book))].filter(b=>!huntDone[b+':'+lastRows.length]); if(!books.length || !lastRows.length) return false;
+  const fresh=list.filter(f=>!huntDone[f.book+':'+f.id+':'+lastRows.length]), books=[...new Set(fresh.map(f=>f.book))]; if(!books.length || !lastRows.length) return false;   // v3.01: every new fill gets a look
   const jobs=[];
   lastRows.filter(r=>r.fairProb!=null && !r.prior && !r.hiddenDup).forEach(r=>books.forEach(bk=>{
     if(r._shopQ && r._shopQ[FILL_NAME[bk]]) return;
     const d=liveDesc(Object.assign(rowAsBet(r),{book:FILL_NAME[bk], id:'shop:'+r.idx+':'+bk})); if(d) jobs.push([r,FILL_NAME[bk],d]); }));
-  books.forEach(b=>huntDone[b+':'+lastRows.length]=1);
+  fresh.forEach(f=>huntDone[f.book+':'+f.id+':'+lastRows.length]=1);
   for(let i=0;i<jobs.length && i<96;i+=8){
     const chunk=jobs.slice(i,i+8);
     try{ const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(chunk.map(x=>x[2]))), {headers:apiHeaders()}); if(!res.ok) break;
@@ -5778,8 +5791,18 @@ const STAT_FAM=[
   [/\bhits?\b/i,'hits'],[/\bruns?\b/i,'runs'],[/goal/i,'goals'],
   [/assist|\bast\b/i,'ast'],[/point|\bpts\b/i,'pts'],
 ];
-function famWithout(text, name){ let t=' '+String(text||'')+' '; String(name||'').split(/\s+/).filter(w=>w.length>1).forEach(w=>{ t=t.replace(new RegExp('\\b'+w.replace(/[^A-Za-z0-9]/g,'.')+'\\b','ig'),' '); }); return statFam(t); }
-function statFam(t){ const s=String(t||''); const r=STAT_FAM.find(x=>x[0].test(s)); return r?r[1]:s.toLowerCase().replace(/[^a-z]/g,''); }
+function famWithout(text, name){ let t=' '+us_(text)+' '; String(name||'').split(/\s+/).filter(w=>w.length>1).forEach(w=>{ t=t.replace(new RegExp('\\b'+w.replace(/[^A-Za-z0-9]/g,'.')+'\\b','ig'),' '); }); return statFam(t); }
+function us_(t){ return String(t||'').replace(/_/g,' '); }   // v3.01 (function: safe to call before this line runs)
+var QUALS_=[/power\s*-?\s*play|\bppp?\b/i, /\b(1st|2nd|3rd|4th|first|second|third|fourth)\b|period|quarter|half|inning|\b[pq][1-4]\b|\bh[12]\b|\bf5\b/i, /\balt(ernate)?\b/i, /\bshorthanded|\bsh\b/i];
+function qualOK(text, stat){ return QUALS_.every(q=>!q.test(us_(text)) || q.test(us_(stat))); }   // "1st period shots" is not "shots"
+function prettyStat(t){ return us_(t).replace(/\s+/g,' ').trim().toLowerCase().replace(/\b\w/g,c=>c.toUpperCase()); }
+function normFillBet(f){   // Novig: "<Player> <line> <STAT_TYPE>" → player + stat (older Workers sent only the description)
+  const b=f&&f.bet; if(!b || f.book!=='novig' || b.player || !b.desc) return f;
+  const m=String(b.desc).match(/^\s*(.*?[A-Za-z].*?)\s+(\d+(?:\.\d+)?)\s+([A-Za-z][A-Za-z0-9_ +&]*)\s*$/);
+  if(m && !/@|\bvs\.?\b|\bat\b/i.test(m[1])){ b.kind='prop'; b.player=m[1].trim(); b.statText=us_(m[3]).trim(); if(b.line==null) b.line=parseFloat(m[2]); }
+  return f;
+}
+function statFam(t){ const s=us_(t); const r=STAT_FAM.find(x=>x[0].test(s)); return r?r[1]:s.toLowerCase().replace(/[^a-z]/g,''); }
 const nrm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]/g,' ').replace(/\b(jr|sr|ii|iii|iv)\b/g,'').replace(/\s+/g,' ').trim();
 function sameName(a,b){ const x=nrm(a), y=nrm(b); if(!x||!y) return false; if(x===y) return true;
   const xs=x.split(' '), ys=y.split(' '); return xs[xs.length-1]===ys[ys.length-1] && xs[0][0]===ys[0][0]; }
@@ -5800,7 +5823,8 @@ function betMatches(fb, x, strictSport){
     if(fb.player){ if(!sameName(fb.player, x.name)) return false; }
     else if(fb.desc){ if(!(' '+nrm(fb.desc)+' ').includes(' '+nrm(x.name)+' ')) return false; }
     else return false;
-    if((fb.player?statFam(fb.statText):famWithout(fb.desc||fb.statText, x.name))!==statFam(statOfMarket(x.market))) return false;
+    if((fb.player?statFam(fb.statText):famWithout(fb.statText||fb.desc, x.name))!==statFam(statOfMarket(x.market))) return false;
+    if(!qualOK((fb.statText||'')+' '+(fb.desc||''), statOfMarket(x.market))) return false;   // v3.01
     if(fb.line==null || ln==null || Math.abs(fb.line-ln)>0.01) return false;
     return !fb.side || fb.side===sd;
   }
@@ -5813,7 +5837,7 @@ function betMatches(fb, x, strictSport){
 }
 function fillLabel(f){
   const b=f.bet||{}; let t='';
-  if(b.kind==='prop') t = b.player ? b.player+' · '+(b.side?(b.side==='O'?'Over ':'Under '):'')+(b.line!=null?b.line+' ':'')+(b.statText||'') : (b.desc||b.statText||'')+' · '+(b.side?(b.side==='O'?'Over ':'Under '):'')+(b.line!=null?b.line:'');
+  if(b.kind==='prop') t = b.player ? b.player+' · '+(b.side?(b.side==='O'?'Over ':'Under '):'')+(b.line!=null?b.line+' ':'')+prettyStat(b.statText||'') : us_(b.desc||b.statText||'')+' · '+(b.side?(b.side==='O'?'Over ':'Under '):'')+(b.line!=null?b.line:'');
   else if(b.kind==='total') t=(b.side==='U'?'Under ':'Over ')+b.line+' total';
   else if(b.kind==='moneyline') t=(b.team||b.teamName||'?')+' to win';
   else if(b.kind==='spread') t=(b.team||b.teamName||'?')+' '+(b.line>0?'+':'')+b.line;
@@ -5867,6 +5891,7 @@ async function syncFills(force){
     const res=await fetch(API_BASE+'/mine/fills?since='+(Date.now()-days*86400e3), {headers:apiHeaders()});
     if(!res.ok) return;
     const j=await res.json(); fillAt=Date.now();
+    (j.fills||[]).forEach(normFillBet);   // v3.01
     let changed=false;
     window._fillErrors=j.errors||{};
     fillPending=fillPending.filter(p=>!(j.fills||[]).some(f=>f.book===p.book && f.id===p.id));   // refreshed below
@@ -5960,7 +5985,7 @@ async function addFromFill(f){
     return !isNaN(st) && Math.abs(Date.parse(e.date)-st)<3600e3; });
   if(ev){ $ab('abGame').value=String(ev.id); try{ abFields(); }catch(e){} }
   const gameMiss=!ev;
-  if(ty==='prop'){ $ab('abPlayer').value=b.player||''; $ab('abStat').value=b.statText?b.statText.replace(/\b\w/g,c=>c.toUpperCase()):''; }
+  if(ty==='prop'){ $ab('abPlayer').value=b.player||''; $ab('abStat').value=b.statText?prettyStat(b.statText):''; }
   if(b.side) $ab('abPick').value=b.side;
   if(b.line!=null) $ab('abLine').value=b.line;
   if(b.team){ const tsel=$ab('abTeam'); const o=[...tsel.options].find(x=>normAbbr(x.value)===normAbbr(b.team)); if(o) tsel.value=o.value; }
@@ -6096,8 +6121,8 @@ function abUpdate94(){
   } else {
     const pr=abPrice(), cand=[];
     if(pr) cand.push({side:'me', book:pr.book, p:pr.prob, fee:pr.fee, typed:true});
-    if(X){ X.me.forEach(x=>cand.push({side:'me', book:x.book, p:x.q.price, fee:feeRate(x.book,x.q.price,cfg.fees), q:x.q, src:x.src}));
-           if(hasOpp) X.op.forEach(x=>cand.push({side:'op', book:x.book, p:x.q.price, fee:feeRate(x.book,x.q.price,cfg.fees), q:x.q, src:x.src})); }
+    if(X){ X.me.forEach(x=>{ if(!suspectQ(x.q,fair,pr?pr.prob:null)) cand.push({side:'me', book:x.book, p:x.q.price, fee:feeRate(x.book,x.q.price,cfg.fees), q:x.q, src:x.src}); });
+           if(hasOpp) X.op.forEach(x=>{ if(!suspectQ(x.q,fair==null?null:1-fair,null)) cand.push({side:'op', book:x.book, p:x.q.price, fee:feeRate(x.book,x.q.price,cfg.fees), q:x.q, src:x.src}); }); }
     cand.forEach(c=>{ const fs=c.side==='me'?fair:1-fair, ms=mkt==null?null:(c.side==='me'?mkt:1-mkt);
       c.net=netAtP(fs,c.p,c.fee); c.out=c.side==='me'&&isOut(c.net);
       c.st=abStake({fair:fs, mkt:ms, p:c.p, fee:c.fee, book:c.book, outlier:c.out, outLimit:usedOut>=outN, game:f.game}); });
@@ -6373,6 +6398,7 @@ function paroleOf(r){
   const pick=['novig',LIVE_BOOK(r.book)].filter(Boolean).find(s=>{ const q=par[s]; return q && (q.ok || q.outcome || q.ref); });
   if(!pick) return {why:'no exchange lists this bet'};
   const q=par[pick], book=BOOK_NAME[pick], feeFn=p=>makerFee(book,p), mx=priceForNet(fair,feeFn,cfg.eMin);
+  if(q.ok && suspectQ(q,fair,r.offeredProb)) return {why:'⚠ '+(pick==='novig'?'Novig':bookLabel(book))+' price ('+(q.price*100).toFixed(1)+'%) looks like a different market'+(q.title?' — "'+q.title+'"':'')+' — check it in the app'};
   if(mx==null) return {why:'no price clears your floor'};
   const ask=q.ok?q.price:null, topBid=q.bid>0?q.bid:null;
   if(ask!=null){ const tf=feeRate(book,ask,cfg.fees), ts=abStake({fair,mkt,p:ask,fee:tf,book,outlier:isOut(netAtP(fair,ask,tf)),outLimit,game:r.game});
@@ -6386,7 +6412,7 @@ function paroleOf(r){
   let use=rungs.slice(); const nMax=Math.max(1,Math.floor(st.s/(cfg.sMin/2)+1e-9)); if(use.length>nMax) use=use.length===3&&nMax===2?[use[0],use[1]]:[mid];
   const W=[0.3,0.35,0.35].slice(0,use.length), ws=W.reduce((a,b)=>a+b,0); let left=st.s;
   const R=use.map((p,i)=>{ const sk=i===use.length-1?r2(left):Math.floor(st.s*W[i]/ws*100)/100; left=r2(left-sk); const fee=feeFn(p), net=netAtP(fair,p,fee), am=Math.round(americanOf(p));
-    return {k:i+1, p, stake:sk, payout:r2(sk/p), net, sweet:net*100>=swc.netMin && net*100<=swc.netMax && am>=swc.oMin && am<=swc.oMax}; });
+    return {k:i+1, p, stake:sk, payout:Math.floor(sk/p*100+1e-6)/100, net, sweet:net*100>=swc.netMin && net*100<=swc.netMax && am>=swc.oMin && am<=swc.oMax}; });
   return {book, src:pick, q, rungs:R, total:st.s, max:mx, ask, topBid, notes:st.notes||[]};
 }
 function jailWhy(r){ const f=(r.flags||[]).find(x=>x[0]==='out'||x[0]==='warn'); return f?f[1]:(r.pass?'below the minimum':'didn\'t pass'); }
