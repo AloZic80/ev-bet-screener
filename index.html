@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.05</title>
+<title>0xBeta Screener v3.06</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -694,7 +694,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.05</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.06</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -754,11 +754,13 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
   <button class="tab on" data-view="v-board" data-src="api">Board</button>
   <button class="tab" data-view="v-board" data-src="paste">Pasted <span class="tab-n" id="pasteTabN"></span></button>
   <button class="tab" data-view="v-parole" title="Jail bets your own posted price would fix — Make orders on Novig">🔓 Parole <span class="tab-n" id="paroleTabN"></span></button>
+  <button class="tab" data-view="v-add" title="Take a price or post your own — BET or SKIP and how much">+ Add a bet</button>
   <button class="tab" data-view="v-money">Moneylines</button>
   <button class="tab" data-view="v-log">Bet log</button>
   <button class="tab" data-view="v-perf">Performance</button>
   <button class="tab" data-view="v-live">Live</button>
   <button class="tab" data-view="v-settings">Settings</button>
+  <button class="tab" data-view="v-paste" title="Paste a board from the BettingPros site — doesn't use the API">Paste a board</button>
 </div>
 
 <!-- v2.71: ESPN score strip (free — no BettingPros calls) -->
@@ -770,54 +772,6 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <!-- ======================= BOARD ======================= -->
 <div class="view on" id="v-board">
 
-<details class="panel fold" id="addBetPanel">
-  <summary><h2>+ Add a bet <span class="sub">take a price or post your own — it tells you BET or SKIP and how much, then ESPN grades it</span></h2></summary>
-  <div class="ab-grid">
-    <div class="field"><label for="abSport">Sport</label><select id="abSport"><option>NFL</option><option>NCAAF</option><option>NBA</option><option>WNBA</option><option>NCAAB</option><option>MLB</option><option>NHL</option></select></div>
-    <div class="field"><label for="abType">Type</label><select id="abType"><option value="prop">Player prop</option><option value="spread">Spread</option><option value="total">Game total</option><option value="moneyline">Moneyline</option></select></div>
-    <div class="field ab-wide"><label for="abGame">Game <span class="meta">(ESPN)</span></label><select id="abGame"><option value="">loading…</option></select></div>
-    <div class="field ab-prop"><label for="abPlayer">Player</label><input id="abPlayer" type="text" placeholder="as the app shows it" autocomplete="off"></div>
-    <div class="field ab-team"><label for="abTeam">Team</label><select id="abTeam"></select></div>
-    <div class="field ab-prop"><label for="abStat">Stat</label><input id="abStat" type="text" list="abStats" placeholder="e.g. Passing Yards" autocomplete="off"><datalist id="abStats"></datalist></div>
-    <div class="field ab-ou"><label for="abPick">Pick</label><select id="abPick"><option value="O">Over</option><option value="U">Under</option></select></div>
-    <div class="field ab-line"><label for="abLine">Line</label><input id="abLine" type="number" step="0.5" placeholder="e.g. 249.5"></div>
-    <div class="field"><label for="abProj">Projection <span class="meta">(optional)</span></label><input id="abProj" type="number" step="0.1"></div>
-    <div class="field"><label for="abCover">Cover probability % <span class="meta">(optional)</span></label><input id="abCover" type="number" step="0.1" min="1" max="99"></div>
-    <div class="field"><label for="abCons">Consensus odds <span class="meta">(optional)</span></label><input id="abCons" type="text" placeholder="e.g. -122"></div>
-  </div>
-  <div class="ab-modebar">
-    <div class="ab-seg" id="abMode"><button type="button" data-m="take" class="on" title="You found a price — should you take it, and for how much?">Take a price</button><button type="button" data-m="make" title="Post your own price on Novig, Kalshi or Polymarket US and let someone take it">📌 Make my own</button></div>
-    <button type="button" class="act" id="abAsk" title="Look this bet up on Kalshi, Polymarket US and Novig (Worker, not BettingPros calls)">🔎 What should I bet?</button>
-    <span class="meta" id="abAskMsg"></span>
-  </div>
-  <div id="abHost" class="ab-host"></div>
-  <div id="abVerdict" class="ab-verdict"></div>
-  <p class="hint" style="margin:8px 0 0">Copy what the app shows. <b>Cover %</b> decides PASS/FAIL (same as the board); <b>consensus</b> is the market check; <b>projection</b> is saved for reference. Left blank, the bet saves as <b>unchecked</b> and the next Load fills them in if BettingPros has the same player, stat and line. Pick the game from the list so ESPN can grade it.</p>
-  <div class="meta" id="abMsg" style="margin-top:6px"></div>
-</details>
-<details class="panel fold" id="pastePanel">
-  <summary><h2>Paste a board <span class="sub">from the BettingPros site — doesn't use the API</span></h2></summary>
-  <p class="hint">On the BettingPros Prop Bet Cheat Sheet, select everything (Cmd+A) and copy. The book names have to come through or the fees can't be charged, so grab the whole page rather than just the rows.</p>
-  <textarea id="input" placeholder="Paste here…" spellcheck="false"></textarea>
-  <div class="row">
-    <button class="act" id="run">Run board</button>
-    <button class="ghost" id="clear">Clear</button>
-    <button class="ghost" id="demo">Sample</button>
-  </div>
-  <div id="diag" style="margin-top:10px;font-size:13px;color:var(--soft)"></div>
-  <details style="margin-top:13px">
-    <summary>Odds API cross-check (optional, spends credits)</summary>
-    <div class="row" style="margin-top:10px">
-      <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer">
-        <input type="checkbox" id="oddsApiOn" style="width:15px;height:15px;accent-color:var(--accent)"> Enable this tool
-      </label>
-    </div>
-    <div class="row" id="oddsApiControls" style="display:none;margin-top:8px">
-      <input type="password" id="oddsApiKey" placeholder="Odds API key" style="max-width:260px">
-      <button class="ghost" id="checkOddsApi">Check market odds</button>
-    </div>
-    <p class="hint" style="margin-top:8px">MLB and NFL only for now. Manual only — it never fires on its own, so it never spends credits without you clicking. Leave it off most days and switch it on for the one day a week you want it (Saturday or Sunday, your call). Your key stays in this browser only.</p>
-  </details>
 </details>
 
 <div class="panel board-panel">
@@ -876,7 +830,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
     </tr></thead>
     <tbody id="tbody"></tbody>
   </table></div>
-  <div class="empty" id="emptyMsg">Paste a board and run it. Rejected bets stay hidden unless you switch them on.</div>
+  <div class="empty" id="emptyMsg">Load a board (or paste one on the Paste a board tab). Rejected bets stay hidden unless you switch them on.</div>
 </div>
 
 <div class="panel" style="display:none">   <!-- v2.79: replaced by + Add a bet -->
@@ -895,6 +849,60 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
   </div>
   <div class="calcout" id="calcout"></div>
 </div>
+</div>
+
+<!-- v3.06: + Add a bet and Paste a board have their own tabs (moved off the Board, nothing removed) -->
+<div class="view" id="v-add">
+<details class="panel fold" id="addBetPanel" open>
+  <summary><h2>+ Add a bet <span class="sub">take a price or post your own — it tells you BET or SKIP and how much, then ESPN grades it</span></h2></summary>
+  <div class="ab-grid">
+    <div class="field"><label for="abSport">Sport</label><select id="abSport"><option>NFL</option><option>NCAAF</option><option>NBA</option><option>WNBA</option><option>NCAAB</option><option>MLB</option><option>NHL</option></select></div>
+    <div class="field"><label for="abType">Type</label><select id="abType"><option value="prop">Player prop</option><option value="spread">Spread</option><option value="total">Game total</option><option value="moneyline">Moneyline</option></select></div>
+    <div class="field ab-wide"><label for="abGame">Game <span class="meta">(ESPN)</span></label><select id="abGame"><option value="">loading…</option></select></div>
+    <div class="field ab-prop"><label for="abPlayer">Player</label><input id="abPlayer" type="text" placeholder="as the app shows it" autocomplete="off"></div>
+    <div class="field ab-team"><label for="abTeam">Team</label><select id="abTeam"></select></div>
+    <div class="field ab-prop"><label for="abStat">Stat</label><input id="abStat" type="text" list="abStats" placeholder="e.g. Passing Yards" autocomplete="off"><datalist id="abStats"></datalist></div>
+    <div class="field ab-ou"><label for="abPick">Pick</label><select id="abPick"><option value="O">Over</option><option value="U">Under</option></select></div>
+    <div class="field ab-line"><label for="abLine">Line</label><input id="abLine" type="number" step="0.5" placeholder="e.g. 249.5"></div>
+    <div class="field"><label for="abProj">Projection <span class="meta">(optional)</span></label><input id="abProj" type="number" step="0.1"></div>
+    <div class="field"><label for="abCover">Cover probability % <span class="meta">(optional)</span></label><input id="abCover" type="number" step="0.1" min="1" max="99"></div>
+    <div class="field"><label for="abCons">Consensus odds <span class="meta">(optional)</span></label><input id="abCons" type="text" placeholder="e.g. -122"></div>
+  </div>
+  <div class="ab-modebar">
+    <div class="ab-seg" id="abMode"><button type="button" data-m="take" class="on" title="You found a price — should you take it, and for how much?">Take a price</button><button type="button" data-m="make" title="Post your own price on Novig, Kalshi or Polymarket US and let someone take it">📌 Make my own</button></div>
+    <button type="button" class="act" id="abAsk" title="Look this bet up on Kalshi, Polymarket US and Novig (Worker, not BettingPros calls)">🔎 What should I bet?</button>
+    <span class="meta" id="abAskMsg"></span>
+  </div>
+  <div id="abHost" class="ab-host"></div>
+  <div id="abVerdict" class="ab-verdict"></div>
+  <p class="hint" style="margin:8px 0 0">Copy what the app shows. <b>Cover %</b> decides PASS/FAIL (same as the board); <b>consensus</b> is the market check; <b>projection</b> is saved for reference. Left blank, the bet saves as <b>unchecked</b> and the next Load fills them in if BettingPros has the same player, stat and line. Pick the game from the list so ESPN can grade it.</p>
+  <div class="meta" id="abMsg" style="margin-top:6px"></div>
+</details>
+</div>
+<div class="view" id="v-paste">
+<details class="panel fold" id="pastePanel" open>
+  <summary><h2>Paste a board <span class="sub">from the BettingPros site — doesn't use the API</span></h2></summary>
+  <p class="hint">On the BettingPros Prop Bet Cheat Sheet, select everything (Cmd+A) and copy. The book names have to come through or the fees can't be charged, so grab the whole page rather than just the rows.</p>
+  <textarea id="input" placeholder="Paste here…" spellcheck="false"></textarea>
+  <div class="row">
+    <button class="act" id="run">Run board</button>
+    <button class="ghost" id="clear">Clear</button>
+    <button class="ghost" id="demo">Sample</button>
+  </div>
+  <div id="diag" style="margin-top:10px;font-size:13px;color:var(--soft)"></div>
+  <details style="margin-top:13px">
+    <summary>Odds API cross-check (optional, spends credits)</summary>
+    <div class="row" style="margin-top:10px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer">
+        <input type="checkbox" id="oddsApiOn" style="width:15px;height:15px;accent-color:var(--accent)"> Enable this tool
+      </label>
+    </div>
+    <div class="row" id="oddsApiControls" style="display:none;margin-top:8px">
+      <input type="password" id="oddsApiKey" placeholder="Odds API key" style="max-width:260px">
+      <button class="ghost" id="checkOddsApi">Check market odds</button>
+    </div>
+    <p class="hint" style="margin-top:8px">MLB and NFL only for now. Manual only — it never fires on its own, so it never spends credits without you clicking. Leave it off most days and switch it on for the one day a week you want it (Saturday or Sunday, your call). Your key stays in this browser only.</p>
+  </details>
 </div>
 
 <!-- ======================= MONEYLINES ======================= -->
@@ -1259,7 +1267,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v3.05';
+const SCREENER_VERSION='v3.06';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -1916,7 +1924,7 @@ function render(rows,cfg){
     const pn=document.getElementById('pasteNote');
     if(pn){ pn.style.display=pv?'block':'none';
       if(pv) pn.innerHTML=rows.some(isPasteRow) ? 'From your paste'+(pasteAt?' at '+new Date(pasteAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+' · '+n+' pass every screen · checked against everything you have bet (already bet, same player, game caps, daily max) · <b>no API calls</b>'
-        : 'Nothing pasted yet. Open <b>Paste a board</b> on the Board tab, paste the BettingPros page and press Run board.'; } }
+        : 'Nothing pasted yet. Open the <b>Paste a board</b> tab, paste the BettingPros page and press Run board.'; } }
   if(!pv && cfg.hideStarted) shown=shown.filter(r=>!isStarted(r));   // pasted board shows everything that passed
   if(!pv && filterSport) shown=shown.filter(r=>r.sport===filterSport);
   shown=shown.filter(r=>!r.hiddenDup);   // v2.64: same bet from the API and the Market EV page — show one
@@ -5940,6 +5948,7 @@ function fillLabel(f){
   else if(b.kind==='total') t=(b.side==='U'?'Under ':'Over ')+b.line+' total';
   else if(b.kind==='moneyline') t=(b.team||b.teamName||'?')+' to win';
   else if(b.kind==='spread') t=(b.team||b.teamName||'?')+' '+(b.line>0?'+':'')+b.line;
+  else if(b.part) t=us_(b.desc||f.title||'')+(b.teamName?' · '+b.teamName:'');   // v3.06: a half / quarter market — never matched to a full-game bet
   if(!t.trim()) t=f.title||(f.book==='novig'?'Novig market '+String(f.ref||'').slice(0,8):String(f.ref||''));
   const g=b.away&&b.home?b.away+' @ '+b.home:(b.teamsCode||'');
   return {bet:t.trim(), game:g, when:b.start?whenCT(b.start):''};
@@ -6612,7 +6621,7 @@ setInterval(()=>{ if(document.visibilityState==='visible') syncFills(false); }, 
 setTimeout(()=>syncFills(true), 2500);
 setTimeout(()=>{ renderTodayBar(); autoGradeLog(); },50);
 // v2.71: Paste ▸ / Passphrase ▸ links on the load line
-document.getElementById('pasteLink').addEventListener('click',()=>{ const t=document.querySelector('.tab[data-view="v-board"]'); if(t) t.click(); const pp=document.getElementById('pastePanel'); if(pp){ pp.open=true; pp.scrollIntoView({behavior:'smooth', block:'start'}); } });
+document.getElementById('pasteLink').addEventListener('click',()=>{ const t=document.querySelector('.tab[data-view="v-paste"]'); if(t) t.click(); const pp=document.getElementById('pastePanel'); if(pp){ pp.open=true; pp.scrollIntoView({behavior:'smooth', block:'start'}); } });
 document.getElementById('passLink').addEventListener('click',()=>{ const pb=document.getElementById('passBox'); pb.style.display=pb.style.display==='none'?'flex':'none'; });
 // v2.71: score strip — picks the sport you have the most open bets in (or your last pick), refreshes on the
 // Live timer while a game is on, every 5 minutes otherwise
