@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.04</title>
+<title>0xBeta Screener v3.05</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -694,7 +694,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.04</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.05</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1259,7 +1259,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v3.04';
+const SCREENER_VERSION='v3.05';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -5737,7 +5737,14 @@ document.addEventListener('click', async e=>{
   e.preventDefault(); e.stopPropagation();
   const w=slipWindow();   // open now (pop-up blockers), point it once we know where
   let url=BOOK_HOME[src];
-  try{ if(src!=='dk'){ const q=await quoteFor(obj, obj.book); url=bookUrl(src, q, +obj.stake||0) || url; } }catch(_){}
+  try{ if(src!=='dk'){ const q=await quoteFor(obj, obj.book);
+    // v3.05: a book price far from the card's price means the book matched a different bet (a half, the other side of
+    // the spread) — open the book's home page instead of a prefilled slip, and say why on the card
+    const p0=obj.odds!=null?toProb(String(obj.odds).trim().replace(/^(\d)/,'+$1')):null;
+    if(q && q.ok && p0!=null && Math.abs(q.price-p0)>0.15){
+      const note=host.querySelector('.pp-open'); if(note){ note.textContent='⚠ '+(BOOK_NAME[src]||'book')+' slip is '+(q.price*100).toFixed(1)+'%, the card says '+(p0*100).toFixed(1)+'% — not prefilled, check the market'; note.style.color='var(--out)'; }
+      url=BOOK_HOME[src];
+    } else url=bookUrl(src, q, +obj.stake||0) || url; } }catch(_){}
   if(w) w.location.href=url; else location.href=url;
 }, true);
 // mark clickable logos
