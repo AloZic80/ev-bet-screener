@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.06</title>
+<title>0xBeta Screener v3.07</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -686,6 +686,10 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 .pp-sub{display:block; font-size:10.5px; color:var(--soft)} .pp-sub b.up{color:var(--live)} .pp-sub b.down{color:var(--out)}
 .pp-open{display:inline-block; margin-top:4px; font-size:11px; font-weight:700; color:var(--accent); cursor:pointer; text-decoration:underline}
 .pass-ok{color:var(--live); font-weight:700} .pass-bad{color:var(--out); font-weight:700}
+/* v3.07: your Make orders, on the board */
+.mk-wait{display:block; margin-top:4px; font-size:11.5px; font-weight:800; color:var(--warn); letter-spacing:.01em}
+.mk-sub{display:block; font-size:10.5px; color:var(--soft)} .mk-sub.warn{color:var(--out); font-weight:700}
+.makes-bar{margin:0 0 10px; padding:8px 12px; border:1px solid var(--warn); background:var(--warn-bg); border-radius:10px; font-size:13.5px; font-weight:700; cursor:pointer}
 </style>
 </head>
 <body>
@@ -694,7 +698,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.06</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.07</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -814,6 +818,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
   </div>
   <div class="filter-chips" id="filterChips" style="display:none"></div>
   <div class="swipe-hint">Swipe sideways for stars, Bet Now and hit rate →</div>
+  <div id="makesBar" class="makes-bar" style="display:none" title="Your Make orders still waiting for someone to take them — tap to see the first one"></div>
   <div id="placeCards" class="pcards" style="display:none"></div>
   <div class="scroll board"><table>
     <thead><tr id="boardHead">
@@ -1267,7 +1272,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v3.06';
+const SCREENER_VERSION='v3.07';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -2072,7 +2077,7 @@ function render(rows,cfg){
     cells.sport='<td><span class="sport s-'+esc(r.sport)+'">'+esc(r.sport)+'</span></td>';
     cells.market='<td style="text-align:center">'+mktCell+'</td>';
     cells.odds='<td style="text-align:center"><div class="odds-stack">'+(bookLogo(r.book)?logoTag(r.book):'<span class="meta">'+esc(bookLabel(r.book)||'book?')+'</span>')+
-        '<span>'+esc(fmtOdds(r.offeredRaw))+'</span>'+shopTagHtml(r)+maxTagHtml(r)+'</div></td>';
+        '<span>'+esc(fmtOdds(r.offeredRaw))+'</span>'+shopTagHtml(r)+maxTagHtml(r)+'<span class="mk-slot" data-idx="'+r.idx+'">'+makeTagHtml(r)+'</span></div></td>';
     cells.cover='<td class="num">'+(r.fairProb==null?'—':'<span class="cover">'+pct(r.fairProb)+'</span>'+
         '<div class="meta">fair '+esc(fmtOdds(r.fairRaw))+'</div>'+
         (r.mktProb!=null?'<div class="meta" title="'+(r.mktSharp?'Market benchmark: BettingPros Market EV fair price, from the sharpest books':'Market benchmark: BettingPros consensus odds (mostly retail books), both sides devigged')+(r.logitGap!=null?' · logit gap '+(r.logitGap>=0?'+':'')+r.logitGap.toFixed(2):'')+'">mkt '+pct(r.mktProb)+(r.mktSharp?' <b>sharp</b>':'')+'</div>':''))+'</td>';
@@ -2195,7 +2200,7 @@ function placeCardHtml(r,cfg,o){
       '<div class="pc-mkt"><div class="pc-mt">'+esc((line?line+' ':'')+mname)+'</div>'+(cons?'<div class="pc-mo">'+esc(cons)+'</div>':'')+'</div>'+
       '<div class="pc-game">'+game+'</div></div>'+
     '<div class="pc-stats">'+
-      pcCell('Our pick','<div class="pc-big">'+esc(pick)+'</div><span class="pc-chip">'+esc(betNowOf(r))+' '+book+'</span>'+shopTagHtml(r)+pickPayHtml(r))+
+      pcCell('Our pick','<div class="pc-big">'+esc(pick)+'</div><span class="pc-chip">'+esc(betNowOf(r))+' '+book+'</span>'+shopTagHtml(r)+pickPayHtml(r)+'<span class="mk-slot" data-idx="'+r.idx+'">'+makeTagHtml(r)+'</span>')+
       pcCell('Consensus','<div class="pc-big">'+esc(line||'—')+'</div><span class="pc-s">'+esc(cons||'—')+(r.mktProb!=null?' · mkt '+pct(r.mktProb):'')+'</span>')+
       pcCell('Projection','<div class="pc-big">'+(r.projValue!=null?(Math.round(r.projValue*10)/10):'—')+'</div><span class="pc-s">'+esc(mname)+'</span>')+
       pcCell('EV after fees','<div class="pc-big '+(r.net>0?'up':'down')+'">'+ev+'</div><span class="pc-s">'+(r.fairProb!=null?pct(r.fairProb)+' cover':'')+(bp?' · '+bp:'')+'</span>')+
@@ -5725,6 +5730,29 @@ function pickPayHtml(r){
   return '<span class="pp ok" title="What the slip should show: this price, and this payout for $'+st.toFixed(2)+'">✓ '+show(p)+(pay!=null?' → wins $'+pay.toFixed(2):' now')+'</span>'+
     '<span class="pp-sub">'+evTxt+(evTxt?' · ':'')+'OK up to '+show(mx)+'</span>'+open;
 }
+// v3.07: your open Make orders (read-only, from the books) on the row they belong to — WAITING FOR TAKER
+function makesFor(r){
+  const O=(myOrders&&myOrders.orders)||[]; if(!O.length || !r) return [];
+  return O.filter(o=>o.action!=='sell' && o.price!=null && ((o.bet && o.bet.kind!=='other' && betMatches(o.bet, r)) || !!rowQuoteFor(r, o)));
+}
+function makeTagHtml(r){
+  return makesFor(r).map(o=>{
+    const p=+o.price, left=+o.qty||0, got=+o.filled||0, bk=BOOK_NAME[o.book]||o.book;
+    const q=rowQuoteFor(r,o)||(LIVE_BOOK(r.book)===o.book?liveQuotes['open:'+r.idx]:null), top=q&&q.bid>0?+q.bid:null;
+    let h='<span class="mk-wait" title="Your Make order on '+esc(bk)+' rests until someone takes the other side — read-only, nothing here changes it">🪝 WAITING FOR TAKER · '+(p*100).toFixed(1)+'%'+(left>0?' · $'+(p*left).toFixed(2):'')+'</span>';
+    if(got>0) h+='<span class="mk-sub">½ taken: $'+(p*got).toFixed(2)+' of $'+(p*(got+left)).toFixed(2)+' — the rest is still waiting</span>';
+    if(top!=null && top>p+0.0001) h+='<span class="mk-sub warn">top bid now '+(top*100).toFixed(1)+'% — yours waits behind it</span>';
+    else if(top!=null && Math.abs(top-p)<0.0001) h+='<span class="mk-sub">you\'re the top bid on '+esc(bk)+'</span>';
+    return h; }).join('');
+}
+function renderMakes(){
+  document.querySelectorAll('.mk-slot').forEach(el=>{ const r=lastRows.find(x=>x.idx===+el.dataset.idx); const h=r?makeTagHtml(r):''; if(el.innerHTML!==h) el.innerHTML=h; });
+  const bar=document.getElementById('makesBar'); if(!bar) return;
+  const O=((myOrders&&myOrders.orders)||[]).filter(o=>o.action!=='sell'), onBoard=O.filter(o=>lastRows.some(r=>makesFor(r).includes(o))).length;
+  if(!O.length){ bar.style.display='none'; return; }
+  bar.style.display=''; bar.textContent='🪝 '+O.length+' Make'+(O.length===1?'':'s')+' waiting for a taker'+(O.length>onBoard?' · '+(O.length-onBoard)+' not on this board':'')+(onBoard?' — tap to see':'');
+}
+document.addEventListener('click', e=>{ if(!e.target.closest('#makesBar')) return; const t=[...document.querySelectorAll('.mk-slot')].find(x=>x.textContent.trim() && x.offsetParent); if(t) t.scrollIntoView({behavior:'smooth', block:'center'}); });
 function shopTagHtml(r){
   let h='';
   if(r.shop) h+='<span class="meta shop-was '+(r.offeredProb<r.shop.orig.offeredProb?'':'worse')+'" title="'+esc(r.shop.same?'Live '+bookLabel(r.book)+' price now (was '+fmtOdds(r.shop.orig.offeredRaw)+' at the Pull)':'Line shopping: '+bookLabel(r.book)+' beats '+bookLabel(r.shop.orig.book)+' after fees')+'">'+(r.shop.same?'live · was ':'was '+esc(bookLabel(r.shop.orig.book))+' ')+esc(fmtOdds(r.shop.orig.offeredRaw))+'</span>';
@@ -6372,16 +6400,17 @@ function autoAddFromPost(P,f){
 async function syncOrders(force){
   const live=posts.filter(P=>!P.start || Date.parse(P.start)+6*3600e3>Date.now());
   if(live.length!==posts.length){ posts=live; savePosts(); }
-  if(!posts.length){ renderPosts(); return; }
-  if(!force && Date.now()-ordersAt<55000){ renderPosts(); return; }
+  if(!force && Date.now()-ordersAt<55000){ renderPosts(); renderMakes(); return; }
   ordersAt=Date.now();
   try{ const res=await fetch(API_BASE+'/mine/orders',{headers:apiHeaders()}); if(res.ok){ myOrders=await res.json(); } }catch(e){}
+  renderMakes();
+  if(!posts.length){ renderPosts(); return; }
   try{   // the market now, for each post
     const descs=posts.slice(0,8).map(P=>liveDesc({id:'post:'+P.id, book:BOOK_NAME[P.src], sport:P.sport, kind:P.kind, market:P.market, side:P.side, name:P.name, team:P.team, game:P.game, matchup:P.game, start:P.start})).filter(Boolean);
     if(descs.length){ const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(descs)),{headers:apiHeaders()});
       if(res.ok){ const R=((await res.json())||{}).results||{}; descs.forEach(d=>{ const q=R[d.id]; if(q&&q.ok){ postQuotes[d.id.slice(5)]=q; const P=posts.find(x=>x.id===d.id.slice(5)); if(P&&!P.ref){ P.ref=q.ref; P.outcome=q.outcome||null; P.title=q.title||null; savePosts(); } } }); } }
   }catch(e){}
-  renderPosts();
+  renderPosts(); renderMakes();
 }
 function renderPosts(){
   const el=document.getElementById('myPosts'); if(!el) return;
@@ -6638,6 +6667,8 @@ setTimeout(()=>{
     if(Date.now()-ssLastRun >= (box&&box.dataset.live ? sec*1000 : 300000)-300) renderStrip(true); }, 1000);
 },0);
 document.querySelector('.tab[data-view="v-live"]').addEventListener('click',()=>renderLive(true));
+// v3.07: + Add a bet lives on its own tab — opening the tab loads the games and the editor (the panel's own "open" can fire before the page is listening)
+document.querySelector('.tab[data-view="v-add"]').addEventListener('click',()=>{ const p=document.getElementById('addBetPanel'); if(p){ p.open=true; p.dispatchEvent(new Event('toggle')); } });
 document.addEventListener('click',e=>{ if(e.target.closest('#logFilterOff')){ logDayFilter=null; renderLog(); } });
 document.getElementById('ssRef').addEventListener('click',async e=>{   // v2.87: manual refresh for the scores strip
   const b=e.currentTarget; if(b.disabled) return; b.disabled=true; b.classList.add('spin');
