@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.19</title>
+<title>0xBeta Screener v3.20</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -717,7 +717,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.19</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.20</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1309,7 +1309,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 
 </div>
 <script>
-const SCREENER_VERSION='v3.19';
+const SCREENER_VERSION='v3.20';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -4596,7 +4596,16 @@ let lastShown=[];
 let filterCorrOnly=false;
 let boardSrc='api', pasteAt=0;
 const isPasteRow=r=>String(r.src||'').startsWith('paste');
-function refresh(){ const c=cfgRead(); render(audit(lastRows,c),c); }
+/* v3.20: the board holds games played TODAY (Central) or later — nothing from earlier days, in any group (Place these,
+   Skip, Started, Jail). A row with no game time stays only on the day it was loaded. Your Bet log keeps everything. */
+function boardRowCurrent(r, today){
+  const t=Date.parse(r && r.gameInfo && r.gameInfo.startISO);
+  if(!isNaN(t)) return ctDay(t)>=today;
+  const la=Date.parse(r && r.loadedAt);
+  return !isNaN(la) && ctDay(la)===today;
+}
+function pruneBoard(){ const today=ctDay(Date.now()), n=lastRows.length; lastRows=lastRows.filter(r=>boardRowCurrent(r,today)); return n-lastRows.length; }
+function refresh(){ const gone=pruneBoard(); const c=cfgRead(); render(audit(lastRows,c),c); if(gone>0) setTimeout(()=>{ try{ autoSaveBoard(); }catch(e){} },0); }
 async function run(){
   const c=cfgRead();
   const text=document.getElementById('input').value;
@@ -5048,7 +5057,7 @@ function gameRowsToInternal(data, kind, sport){
    NBA doesn't wipe the NFL rows you loaded earlier. */
 const BOARD_KEY='mbev.board';
 const KEEP_FIELDS=['mktSharp','mktConsensus','name','game','side','matchup','matchupAlt','noMatchup','sport','market','kind','book','offeredRaw','fairRaw',
-  'offeredProb','fairProb','screenerEV','apiKey','stars','l15Hit','l15N','seasonHit','seasonN','evModel','consensusEdge','mktProb','team','consOdds','consOtherOdds','gameInfo','src','projValue','pos','pid','jersey'];
+  'offeredProb','fairProb','screenerEV','apiKey','stars','l15Hit','l15N','seasonHit','seasonN','evModel','consensusEdge','mktProb','team','consOdds','consOtherOdds','gameInfo','src','projValue','pos','pid','jersey','loadedAt'];
 function slimRow(r){ const o={}; KEEP_FIELDS.forEach(k=>{ if(r[k]!==undefined) o[k]=r[k]; }); return o; }
 function boardPayload(){ return {v:1, savedAt:new Date().toISOString(), slate:document.getElementById('slate').value, rows:lastRows.map(slimRow)}; }
 function autoSaveBoard(){ try{ localStorage.setItem(BOARD_KEY, JSON.stringify(boardPayload())); }catch(e){} if(SY && SY.on && !SY.applying) syncSoon(8000); }
@@ -5065,7 +5074,7 @@ function restoreBoard(){
   try{ const p=JSON.parse(localStorage.getItem(BOARD_KEY)||'null'); if(p && p.rows && p.rows.length) useBoard(p,'Saved board'); }catch(e){}
 }
 function mergeRows(srcKey, rows){
-  rows.forEach(r=>r.src=srcKey);
+  const now=new Date().toISOString(); rows.forEach(r=>{ r.src=srcKey; r.loadedAt=now; });
   // v2.51: identity without apiKey (pasted rows don't have one) — player, market, side, book, price
   const idOf=r=>[r.sport,r.name,r.market,r.side||'',r.book||'',r.offeredRaw].join('|').toLowerCase();
   const incoming=new Set(rows.map(idOf));
