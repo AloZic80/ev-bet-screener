@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.09</title>
+<title>0xBeta Screener v3.10</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -692,6 +692,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 .mk-sub{display:block; font-size:10.5px; color:var(--soft)} .mk-sub.warn{color:var(--out); font-weight:700}
 .mk-off{font-size:12px; font-weight:600; color:var(--out); margin-top:3px}
 .makes-bar{margin:0 0 10px; padding:8px 12px; border:1px solid var(--warn); background:var(--warn-bg); border-radius:10px; font-size:13.5px; font-weight:700; cursor:pointer}
+button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px solid var(--rule)}   /* v3.10 */
 </style>
 </head>
 <body>
@@ -700,7 +701,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.09</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.10</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1275,7 +1276,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 
 </div>
 <script>
-const SCREENER_VERSION='v3.09';
+const SCREENER_VERSION='v3.10';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -2210,7 +2211,8 @@ function placeCardHtml(r,cfg,o){
       pcCell('EV after fees','<div class="pc-big '+(r.net>0?'up':'down')+'">'+ev+'</div><span class="pc-s">'+(r.fairProb!=null?pct(r.fairProb)+' cover':'')+(bp?' · '+bp:'')+'</span>')+
       pcCell('Rating','<div class="pc-stars">'+(nS==null?'—':'★'.repeat(nS)+'<span>'+'★'.repeat(5-nS)+'</span>')+'</div><span class="pc-s">'+(nS==null?'no rating':nS+'-star')+'</span>')+
       pcCell('Screener', decisionHtml(r,cfg)+'<div class="pc-btns"><button class="log sm bet-btn" data-idx="'+r.idx+'">'+(r.moved?'Add this line too':'I bet this')+'</button>'+
-        '<button class="log sm parlay'+(inParlay(r)?' on':'')+' parlay-btn" data-idx="'+r.idx+'" title="Mark as used in a parlay">'+(inParlay(r)?'In parlay ✓':'Parlay')+'</button></div>')+
+        '<button class="log sm parlay'+(inParlay(r)?' on':'')+' parlay-btn" data-idx="'+r.idx+'" title="Mark as used in a parlay">'+(inParlay(r)?'In parlay ✓':'Parlay')+'</button>'+
+        '<button class="log sm share-btn" data-idx="'+r.idx+'" title="Send this bet to someone — with a link that opens the slip on the book (they pick their own amount). Nothing of yours goes with it.">📤 Share</button></div>')+
     '</div>'+
     (o.nTags?'<div class="pc-foot"><button class="ntog" data-nkey="'+esc(o.nKey)+'" aria-expanded="'+o.nOpen+'" title="Show or hide the notes for this bet"><span class="dot '+o.worst+'"></span>'+(o.nOpen?'▾ ':'▸ ')+o.nTags+' note'+(o.nTags===1?'':'s')+'</button>'+(o.nOpen?'<div class="tags">'+o.tags+'</div>':'')+'</div>':'')+
   '</div>';
@@ -6126,6 +6128,40 @@ async function copyBig(btn){
   setTimeout(()=>twins.forEach(b=>{ b.textContent=b.dataset.label; b.classList.remove('done'); }), 2500);
 }
 document.addEventListener('click', e=>{ const b=e.target.closest('.copy-big'); if(b){ e.preventDefault(); copyBig(b); } });
+/* v3.10: 📤 Share — the bet as a message with a slip link (side + line filled in; they type their own $).
+   Never in it: your passphrase, sync password, stakes, bankroll, log, EV or cover %. */
+async function shareText(r){
+  const mk=String(r.market||'').match(/^([+-]?[\d.]+)\s+(.*)$/), line=mk?mk[1]:'', stat=mk?mk[2]:'';
+  const sd=r.side||sideOf(r)||'', side=sd==='O'?'Over':sd==='U'?'Under':'';
+  const what = r.kind==='prop' ? r.name+' '+side+' '+line+' '+stat
+    : r.kind==='spread' ? r.name+' '+(+line>0?'+':'')+line.replace(/^\+/,'')
+    : r.kind==='moneyline' ? r.name+' to win'
+    : r.kind==='total' ? side+' '+line+' total' : (r.name+' '+(r.market||''));
+  const t=teamsOf(r.game||r.matchup||''), game=t?t[0]+' @ '+t[1]:(r.game||''), when=(r.gameInfo&&r.gameInfo.startISO)?whenCT(r.gameInfo.startISO):'';
+  const em={NBA:'🏀',WNBA:'🏀',NCAAB:'🏀',NFL:'🏈',NCAAF:'🏈',NHL:'🏒',MLB:'⚾'}[String(r.sport||'').toUpperCase()]||'🎯';
+  const cfg=cfgRead(), pctBook=PM_BOOK.test(r.book||''), p=r.offeredProb, mx=r.fairProb!=null?maxPriceFor(r.fairProb, r.book, cfg.eMin):null;
+  const show=x=>pctBook?(x*100).toFixed(1)+'%':fmtOdds(Math.round(americanOf(x)));
+  let link='';
+  const src=LIVE_BOOK(r.book);
+  if(src){ try{ const q=await quoteFor(rowAsBet(r), r.book);
+      if(q && q.ok && p>0 && Math.abs(q.price-p)<=0.15){
+        if(src==='novig' && q.outcome) link='https://novig.com/events/'+encodeURIComponent(q.outcome)+'/novig';
+        else link=q.url||BOOK_HOME[src]||'';
+      } }catch(e){} }
+  const lines=[em+' '+what.replace(/\s+/g,' ').trim()+(game||when?' ('+[game,when].filter(Boolean).join(', ')+')':''),
+    bookLabel(r.book)+': '+(p>0?show(p):fmtOdds(r.offeredRaw))+(mx!=null?' · OK up to '+show(mx):'')];
+  if(link) lines.push('Open the slip: '+link);
+  return lines.join('\n');
+}
+document.addEventListener('click', async e=>{
+  const b=e.target.closest('.share-btn'); if(!b) return; e.preventDefault();
+  const r=lastRows.find(x=>x.idx===+b.dataset.idx); if(!r) return;
+  const o=b.textContent; b.textContent='…'; b.disabled=true;
+  try{ const t=await shareText(r);
+    if(isPhone() && navigator.share){ try{ await navigator.share({text:t}); b.textContent='📤 Sent'; }catch(err){ b.textContent=o; } }
+    else { await copyText(t); b.textContent='✓ Copied — paste it'; }
+  } finally{ b.disabled=false; setTimeout(()=>{ b.textContent=o; },2000); }
+});
 async function copyText(t, btn){
   let ok=false; try{ await navigator.clipboard.writeText(t); ok=true; }catch(e){
     try{ const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); ok=document.execCommand('copy'); ta.remove(); }catch(_){} }
