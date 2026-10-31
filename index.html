@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.12</title>
+<title>0xBeta Screener v3.13</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -706,6 +706,7 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 .sc-verdict.good{border-color:var(--live); background:var(--live-bg)} .sc-verdict.bad{border-color:var(--out); background:var(--out-bg,#fde8e8)}
 .sc-tag{font-size:10.5px; font-weight:800; padding:1px 7px; border-radius:999px; border:1px solid var(--rule); white-space:nowrap}
 .sc-tag.ev{border-color:var(--live); color:var(--live)} .sc-tag.cmp{border-color:var(--warn); color:var(--warn)}
+.dec.dec-same{background:var(--warn-bg); color:var(--warn); border:1.5px solid var(--warn); border-radius:8px; padding:2px 8px; display:inline-block}
 .makes-bar{margin:0 0 10px; padding:8px 12px; border:1px solid var(--warn); background:var(--warn-bg); border-radius:10px; font-size:13.5px; font-weight:700; cursor:pointer}
 button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px solid var(--rule)}   /* v3.10 */
 </style>
@@ -716,7 +717,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.12</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.13</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1308,7 +1309,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 
 </div>
 <script>
-const SCREENER_VERSION='v3.12';
+const SCREENER_VERSION='v3.13';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -1712,13 +1713,24 @@ function audit(rows,cfg){
 
     /* Already in the log? Say so before you place it, and say whether the price
        you got was better. A lower implied probability is the better price. */
-    const prior = logged.find(L=>onBoard(L) && coreKey(L.name,L.market,sideOf(L))===coreKey(r.name,r.market,r.side));
+    // v3.13: game lines also match by game + team code (the log may say "Sacramento State" where the board said "Hornets")
+    const glSame = L => GL_KINDS.test(r.kind||'') && r.kind!=='total' && (L.kind||'')===(r.kind||'') && teamsOf(r.game) && gameKey(L.game)===gameKey(r.game) &&
+      ((L.team && r.team && normAbbr(L.team)===normAbbr(r.team)) || String(L.name||'').toLowerCase()===String(r.name||'').toLowerCase());
+    const prior = logged.find(L=>onBoard(L) && coreKey(L.name,L.market,sideOf(L))===coreKey(r.name,r.market,r.side))
+               || logged.find(L=>onBoard(L) && glSame(L) && L.market===r.market);
     // v2.51: you already hold the OTHER side of this exact prop
     const otherSide = !prior && r.side && logged.find(L=>onBoard(L) && coreKey(L.name,L.market)===coreKey(r.name,r.market) && sideOf(L) && sideOf(L)!==r.side);
     // v2.56: same bet, but the line has moved since you took it (43.5 → 44.5)
     const moved = !prior && logged.find(L=>onBoard(L) && !L.sold && String(L.name||'').toLowerCase()===String(r.name||'').toLowerCase() &&
-      (L.kind||'')===(r.kind||'') && marketStem(L.market)===marketStem(r.market) && (sideOf(L)||'')===(r.side||'') && L.market!==r.market);
-    if(moved){ r.moved=moved; r.flags.push(['dupe','you have '+(moved.betnow||moved.market)+' — a different line of this bet ($'+(moved.stake||0).toFixed(2)+' on '+bookLabel(moved.book||'?')+')']); }
+      (L.kind||'')===(r.kind||'') && marketStem(L.market)===marketStem(r.market) && (sideOf(L)||'')===(r.side||'') && L.market!==r.market)
+      || (!prior && logged.find(L=>onBoard(L) && !L.sold && glSame(L) && L.market!==r.market));
+    if(moved){ r.moved=moved; r.movedCmp=lineCompare(moved, r);
+      r.flags.push(['dupe','Same bet, different line: you have '+heldLabel(moved)+' ($'+(moved.stake||0).toFixed(2)+' on '+bookLabel(moved.book||'?')+') · this one is '+lineOnly({betnow:betNowOf(r)})+(r.movedCmp?' — '+r.movedCmp:'')]); }
+    // v3.13: the OTHER team in a game you already have a side on
+    if(!prior && !moved && GL_KINDS.test(r.kind||'') && r.kind!=='total' && teamsOf(r.game)){
+      const opp=logged.find(L=>onBoard(L) && !L.sold && GL_KINDS.test(L.kind||'') && L.kind!=='total' && gameKey(L.game)===gameKey(r.game) &&
+        L.team && r.team && normAbbr(L.team)!==normAbbr(r.team) && !(L.result==='win'||L.result==='loss'||L.result==='push'));
+      if(opp){ r.otherSideOf=opp; r.flags.push(['warn','⚠ this is the OTHER side of your '+heldLabel(opp)+' — betting both sides usually just pays the fee twice']); } }
     // v2.61: you removed this exact bet
     if(!prior){ const rm=removedBets.filter(R=>onBoard(R) && coreKey(R.name,R.market,sideOf(R))===coreKey(r.name,r.market,r.side)).pop();
       if(rm){ r.removed=rm; r.flags.push(['warn','you removed this bet'+(rm.lost>0?' (lost $'+rm.lost.toFixed(2)+' cancelling)':'')]); } }
@@ -2249,7 +2261,7 @@ function placeCardHtml(r,cfg,o){
       pcCell('Rating','<div class="pc-stars">'+(nS==null?'—':'★'.repeat(nS)+'<span>'+'★'.repeat(5-nS)+'</span>')+'</div><span class="pc-s">'+(nS==null?'no rating':nS+'-star')+'</span>')+
       pcCell('Screener', decisionHtml(r,cfg)+'<div class="pc-btns"><button class="log sm bet-btn" data-idx="'+r.idx+'">'+(r.moved?'Add this line too':'I bet this')+'</button>'+
         '<button class="log sm parlay'+(inParlay(r)?' on':'')+' parlay-btn" data-idx="'+r.idx+'" title="Mark as used in a parlay">'+(inParlay(r)?'In parlay ✓':'Parlay')+'</button>'+
-        '<button class="log sm share-btn" data-idx="'+r.idx+'" title="Send this bet to someone — with a link that opens the slip on the book (they pick their own amount). Nothing of yours goes with it.">📤 Share</button></div>')+
+        '<button class="log sm share-btn" data-idx="'+r.idx+'" title="Send this bet to someone — with the same link the logo opens: the slip with the side, line and the screener stake filled in (they can change it). Your bankroll, EV and log do not go with it.">📤 Share</button></div>')+
     '</div>'+
     (o.nTags?'<div class="pc-foot"><button class="ntog" data-nkey="'+esc(o.nKey)+'" aria-expanded="'+o.nOpen+'" title="Show or hide the notes for this bet"><span class="dot '+o.worst+'"></span>'+(o.nOpen?'▾ ':'▸ ')+o.nTags+' note'+(o.nTags===1?'':'s')+'</button>'+(o.nOpen?'<div class="tags">'+o.tags+'</div>':'')+'</div>':'')+
   '</div>';
@@ -2627,7 +2639,7 @@ function decisionHtml(r,cfg){
   if(!r.pass) return d('dec-skip','SKIP', (r.flags.find(f=>f[0]==='out')||[,''])[1]);
   if(r.removed) return r.moved ? dl('dec-skip','BET REMOVED', ['you still have', esc(lineOnly(r.moved))])
                                 : dl('dec-skip','BET REMOVED', [r.removed.lost>0?'lost $'+r.removed.lost.toFixed(2):'never placed']);
-  if(r.moved) return dl('dec-skip','YOU HAVE '+esc(lineOnly(r.moved)), ['this row is '+esc(lineOnly({betnow:betNowOf(r)}))]);
+  if(r.moved) return dl('dec-skip dec-same','SAME BET', ['you have '+esc(heldLabel(r.moved))+' ($'+(+r.moved.stake||0).toFixed(2)+' '+esc(bookLabel(r.moved.book)||'')+')', 'this one: '+esc(lineOnly({betnow:betNowOf(r)}))+(r.movedCmp?' — '+esc(r.movedCmp):'')]);
   if(r.glConflict) return r.glConflict.held
     ? dl('dec-skip','SKIP', ['already bet', esc(r.glConflict.label)])
     : dl('dec-skip','SKIP', [esc(r.glConflict.label)+' is better', r.glConflict.theirs+' vs '+r.glConflict.mine]);
@@ -3255,6 +3267,16 @@ function askRemove(anchorTr, bet, cols){
   });
 }
 function coreKey(name,market,side){ return [name,market,side||''].join('|').toLowerCase(); }
+// v3.13: is the new line better or worse than the one you hold? (spread: more points is better; Over: lower is better; Under: higher)
+function heldLabel(L){ return L.betnow ? lineOnly(L) : [L.name, sideOf(L)||'', L.market].filter(Boolean).join(' '); }
+function lineCompare(held, row){
+  const n=x=>{ const m=String(x||'').match(/([+-]?\d+(?:\.\d+)?)/); return m?parseFloat(m[1]):null; };
+  const a=n(held.market), b=n(row.market); if(a==null||b==null||a===b) return '';
+  const side=sideOf(row)||'', better = row.kind==='spread' ? b>a : side==='O' ? b<a : side==='U' ? b>a : null;
+  if(better==null) return '';
+  const d=Math.abs(b-a), pts=d===0.5?'half a point':(Number.isInteger(d)?d:d.toFixed(1))+' point'+(d===1?'':'s');
+  return pts+' '+(better?'better':'worse')+(better?'':', and it only adds to what you have on this game');
+}
 function marketStem(m){ return String(m||'').replace(/^[+-]?[\d.]+\s+/,'').toLowerCase(); }
 function propKey(r){ return [document.getElementById('slate').value,r.name,r.market].join('|').toLowerCase(); }
 function propKeyOf(b){ return [b.date,b.name,b.market].join('|').toLowerCase(); }
@@ -6426,14 +6448,16 @@ async function shareText(r){
   const show=x=>pctBook?(x*100).toFixed(1)+'%':fmtOdds(Math.round(americanOf(x)));
   let link='';
   const src=LIVE_BOOK(r.book);
+  const st=+r.stake||0;
   if(src){ try{ const q=await quoteFor(rowAsBet(r), r.book);
-      if(q && q.ok && p>0 && Math.abs(q.price-p)<=SLIP_GUARD){
-        if(src==='novig' && q.outcome) link='https://novig.com/events/'+encodeURIComponent(q.outcome)+'/novig';
+      if(q && q.ok && p>0 && Math.abs(q.price-p)<=SLIP_GUARD){   // v3.13: the same slip the logo opens — side, line AND the $ (web link, so it opens for anyone)
+        if(src==='novig' && q.outcome) link='https://novig.com/events/'+encodeURIComponent(q.outcome)+'/novig'+(st>0?'/'+st.toFixed(2):'');
         else link=q.url||BOOK_HOME[src]||'';
       } }catch(e){} }
-  const lines=[em+' '+what.replace(/\s+/g,' ').trim()+(game||when?' ('+[game,when].filter(Boolean).join(', ')+')':''),
+  else if(/draftkings/i.test(r.book||'')) link=BOOK_HOME.dk;
+  const lines=[what.replace(/\s+/g,' ').trim()+(game||when?' ('+[game,when].filter(Boolean).join(', ')+')':''),
     bookLabel(r.book)+': '+(p>0?show(p):fmtOdds(r.offeredRaw))+(mx!=null?' · OK up to '+show(mx):'')];
-  if(link) lines.push('Open the slip: '+link);
+  if(link) lines.push((src==='novig'&&st>0?'Open the slip ($'+st.toFixed(2)+' filled in — change it if you want): ':'Open the slip: ')+link);
   return lines.join('\n');
 }
 document.addEventListener('click', async e=>{
