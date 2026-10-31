@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.17</title>
+<title>0xBeta Screener v3.18</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -717,7 +717,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.17</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.18</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1309,7 +1309,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 
 </div>
 <script>
-const SCREENER_VERSION='v3.17';
+const SCREENER_VERSION='v3.18';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -2713,7 +2713,9 @@ const SOCCER=new Set(['MLS','EPL','LALIGA','SERIEA','BUNDESLIGA','LIGUE1','UCL',
 function isSoccer(sp){ return SOCCER.has(String(sp||'').toUpperCase()); }
 const SPORT_NAMES={MLS:'MLS',EPL:'Premier League',LALIGA:'La Liga',SERIEA:'Serie A',BUNDESLIGA:'Bundesliga',LIGUE1:'Ligue 1',UCL:'Champions League',UEL:'Europa League',LIGAMX:'Liga MX',SOCCER:'Soccer',UFC:'UFC',GOLF:'Golf',TENNIS:'Tennis'};
 const ABBR_FIX = {WSH:'WAS',JAC:'JAX',LAR:'LA',LVR:'LV',NOS:'NO',SFO:'SF',TBB:'TB',
-  KCC:'KC',GBP:'GB',NEP:'NE',WAS_:'WSH', CHW:'CWS', OAK:'ATH'};
+  KCC:'KC',GBP:'GB',NEP:'NE',WAS_:'WSH', CHW:'CWS', OAK:'ATH',
+  // v3.18: NBA — BettingPros / exchanges vs ESPN (GS @ LAL went ungraded: "GSW" ≠ "GS")
+  GSW:'GS', NOP:'NO', NYK:'NY', SAS:'SA', UTA:'UTAH', PHO:'PHX', BKN:'BKN', BRK:'BKN'};
 function normAbbr(a){ a=(a||'').toUpperCase(); return ABBR_FIX[a]||a; }
 const ESPN_WEEK_BASED = new Set(['NFL','NCAAF']); // games span Thu-Mon, not one calendar day
 const scoreboardCache={};
@@ -2795,7 +2797,7 @@ function finalScores(ev){
   compsOf(ev).forEach(c=>{ const v=typeof c.score==='object'&&c.score?c.score.value:c.score; const n=parseFloat(v); if(!isNaN(n)) out[normAbbr(c.team&&c.team.abbreviation)]=n; });
   return out;
 }
-function glTeam(b){ const m=String(b.apiKey||'').match(/^\d+-(?:moneyline|spread)-([A-Za-z]{2,4})-/); return m?normAbbr(m[1]):(b.team?normAbbr(b.team):null); }
+function glTeam(b){ if(b.team) return normAbbr(b.team); const m=String(b.apiKey||'').match(/^\d+-(?:moneyline|spread)-([A-Za-z]{2,4})-/); return m?normAbbr(m[1]):null; }   // v3.18: the team saved with the bet first
 // v3.12: soccer counts regular time only (90' + stoppage). After extra time / penalties, use the two halves;
 // if ESPN doesn't give the halves, don't guess — leave it ungraded.
 function gameScores(ev, sport){
@@ -4220,7 +4222,8 @@ const sbDayCache={};
 async function fetchScoreboardDay(sport, day){   // day = 'YYYY-MM-DD' (CT)
   const path=ESPN_MAP[sport]; if(!path) return [];
   const k=sport+'|'+day, hit=sbDayCache[k];
-  if(hit && (day<ctDay(Date.now()) || Date.now()-hit.at<240000)) return hit.evs;
+  const allDone=evs=>evs.every(e=>{ const st=(e.status&&e.status.type)||{}; return st.state==='post' || st.completed || /postponed|canceled|cancelled/i.test(st.name||st.description||''); });
+  if(hit && ((day<ctDay(Date.now()) && allDone(hit.evs)) || Date.now()-hit.at<240000)) return hit.evs;   // v3.18: past day kept only when all final
   let evs=[];
   try{ const res=await fetch('https://site.api.espn.com/apis/site/v2/sports/'+path+'/scoreboard?dates='+day.replace(/-/g,'')+'&limit=300'+(sport==='NCAAF'?'&groups=80':''));
        evs=(await res.json()).events||[]; }catch(e){ evs=hit?hit.evs:[]; }
@@ -4251,6 +4254,18 @@ async function findBetGame(b){
     const ev=findGame(evs,b.game)||findGameAny(evs,b.game,b.matchup)||(gl?findGameAny(evs,b.name):null);
     if(ev) return ev;
   }
+  if(gl && !teamsOf(b.game)){   // v3.18: game number ("32749") or nickname only — the team by name, at the saved start time
+    const t0=Date.parse(b.start), nm=b.team||b.name, om=String(b.matchup||'').match(/\bvs\.?\s+(.+)$/), opp=om&&om[1]!=='?'?om[1]:null;
+    for(const d of days){
+      const C=(await fetchScoreboardDay(b.sport, d)).filter(ev=>{ const cs=compsOf(ev); if(cs.length!==2 || !evOkFor(b,ev)) return false;
+        const me=cs.find(c=>teamNameIs(c.team,nm)||teamNameIs(c.team,b.name)); if(!me) return false;
+        if(opp && !cs.some(c=>c!==me && teamNameIs(c.team,opp))) return false;
+        return isNaN(t0) || Math.abs(Date.parse(ev.date)-t0)<4*3600e3; });
+      if(C.length===1){ const me=compsOf(C[0]).find(c=>teamNameIs(c.team,nm)||teamNameIs(c.team,b.name)); if(me) b.team=normAbbr(me.team.abbreviation); return C[0]; }
+      if(C.length>1) return null;   // several teams with that name that day — don't guess
+    }
+    return null;
+  }
   if(gl || !b.name || teamsOf(b.game)) return null;   // teams known but no match: don't guess by player
   for(const d of days){   // 2) no teams saved: the finished game whose box score has this player
     const evs=(await fetchScoreboardDay(b.sport, d)).filter(ev=>{ const g=gameStatusOf(ev); return g && g.state==='post' && evOkFor(b,ev); });
@@ -4269,6 +4284,7 @@ function srcTagHtml(b){   // v2.86: where the bet came from
   if(!t) return '';
   return '<span class="src-tag" title="Saved '+t[1]+'">'+t[0]+'</span>'; }
 function playedHtml(b){   // v2.84: "plays" before kickoff, "in progress" until graded, "played" once settled
+  if(b.wrongGame18 && !b.start) return '<div style="font-size:11.5px;color:var(--warn)" title="This book fill was first attached to '+esc(b.wrongGame18)+', which had already been played">game unknown · the book\'s result will grade it</div>';
   if(!b.start || isNaN(Date.parse(b.start))) return '';
   const t=Date.parse(b.start), d=gameDayOf(b), opt={timeZone:'America/Chicago'};
   const day=new Date(t).toLocaleDateString('en-US',{...opt,weekday:'short',month:'numeric',day:'numeric'});
@@ -4304,10 +4320,17 @@ async function autoGradeLog(){
     }
     for(const b of open){
       const ev=await findBetGame(b);
+      if(!ev && b.fills && b.fills.length && !b.start && teamsOf(b.game) && !b.wrongGame18){   // v3.18: its saved game was already over when the fill came in
+        const at=Date.parse(b.snap&&b.snap.at), E=[].concat(...await Promise.all([-3,-2,-1,0].map(n=>fetchScoreboardDay(b.sport, dayPlus(ctDay(isNaN(at)?Date.now():at),n)))));
+        const old=findGame(E,b.game)||findGameAny(E,b.game);
+        if(old && !isNaN(at) && Date.parse(old.date)<at-5*3600e3){ b.wrongGame18=b.game; b.game=''; changed++; }
+        continue; }
       const gi=gameStatusOf(ev); if(!gi) continue;
       // v2.80: keep the real start time and teams, so the bet counts on the day the game is played
       if(gi.startISO && b.start!==gi.startISO){ b.start=gi.startISO; changed++; }
       if(!teamsOf(b.game)){ const a=gi.teams.find(t=>t.ha==='away'), h=gi.teams.find(t=>t.ha==='home'); if(a&&h){ b.game=a.abbr+' @ '+h.abbr; changed++; } }
+      if(GL_KINDS.test(b.kind||'') && b.kind!=='total' && b.team && !gi.teams.some(t=>t.abbr===normAbbr(b.team))){   // v3.18: e.g. CSUS → SAC
+        const t=gi.teams.find(x=>teamNameIs({abbreviation:x.abbr,name:x.nick,shortDisplayName:x.name,location:x.loc}, b.name)); if(t){ b.team=t.abbr; changed++; } }
       if(gi.state!=='post') continue;
       const g = GL_KINDS.test(b.kind||'') ? gradeGameLine(b,ev) : gradeBet(b, await fetchBoxscore(b.sport, gi.eventId, true));
       if(!g){ if(b.result!=='?'){ b.result='?'; changed++; } continue; }
@@ -6231,9 +6254,17 @@ function rowQuoteFor(r,f){
   for(const q of more){ if(q && q.ref && quoteMatchesFill(Object.assign({},q,{src:q.src||f.book, ok:true}),f)) return q; }
   return null;
 }
+// v3.18: the board row's game must still be on when the fill happened (live bets allowed for 5 h after the start),
+// and when the book says when its game starts, it has to be the same game (within 12 h)
+function rowOkForFill(r,f){
+  const t=Date.parse(r && r.gameInfo && r.gameInfo.startISO), ft=Date.parse(f && f.ts), bs=Date.parse(f && f.bet && f.bet.start);
+  if(!isNaN(t) && !isNaN(ft) && ft>t+5*3600e3) return false;
+  if(!isNaN(t) && !isNaN(bs) && Math.abs(bs-t)>12*3600e3) return false;
+  return true;
+}
 function rowForFillRef(f){   // Polymarket fills carry no side: when Over and Under both match, take the price closest to the fill
   let best=null, gap=9;
-  lastRows.forEach(r=>{ if(r.prior) return; const q=rowQuoteFor(r,f); if(!q) return;
+  lastRows.forEach(r=>{ if(r.prior || !rowOkForFill(r,f)) return; const q=rowQuoteFor(r,f); if(!q) return;
     const g=f.price!=null&&q.price!=null?Math.abs(q.price-f.price):1; if(g<gap){ gap=g; best=r; } });
   return best;
 }
@@ -6369,7 +6400,7 @@ function betForFill(f){
 function rowForFill(f){
   const old=rowForFillRef(f); if(old) return old;
   if(!f.bet) return null;
-  const rows=(lastRows||[]).filter(r=>!r.prior && r.fairProb!=null && betMatches(f.bet,r));
+  const rows=(lastRows||[]).filter(r=>!r.prior && r.fairProb!=null && rowOkForFill(r,f) && betMatches(f.bet,r));
   return rows.find(r=>LIVE_BOOK(r.book)===f.book) || rows[0] || null;
 }
 function postForFill(f){
