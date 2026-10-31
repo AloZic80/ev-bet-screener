@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.11</title>
+<title>0xBeta Screener v3.12</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -716,7 +716,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.11</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.12</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1056,6 +1056,18 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
   <p class="hint" style="margin:12px 0 0"><b>One daily max for everything</b> (v3.11): the API board, the pasted Market EV page and exchange fills all count against the same %, so a big paste can't stack on top of the board. Stakes size off a blend: the market's no-vig price pulled toward BettingPros' number by the model weight (0.35 = mostly market). If there's no market price for a bet, the model number is used with the haircut. Bets on a game you already have money on are trimmed so the game stays under the per-game max.</p>
 </details>
 
+<details class="panel fold" id="sportsPanel" open>
+  <summary><h2>🌎 Sports <span class="sub">your default sport · every league BettingPros has · year-round</span></h2></summary>
+  <div class="pl-form" style="align-items:flex-end">
+    <div class="field"><label for="defSport" title="The sport the BettingPros bar starts on when you open the screener. Auto = the sport whose next game starts soonest.">Default sport</label><select id="defSport"><option value="">Auto — soonest games</option><option value="MLB">MLB</option><option value="NFL">NFL</option><option value="NCAAF">NCAAF</option><option value="NBA">NBA</option><option value="NHL">NHL</option><option value="NCAAB">NCAAB</option><option value="WNBA">WNBA</option><option value="MLS">MLS</option><option value="EPL">EPL</option><option value="LALIGA">LALIGA</option><option value="SERIEA">SERIEA</option><option value="BUNDESLIGA">BUNDESLIGA</option><option value="LIGUE1">LIGUE1</option><option value="UCL">UCL</option><option value="UEL">UEL</option><option value="LIGAMX">LIGAMX</option></select></div>
+    <input type="hidden" id="bpSportsList" value="">
+    <button type="button" class="act" id="bpSportsCheck" title="Asks BettingPros about each league code once (1 call each, up to 12 of your 50). Answers are kept 7 days, so asking again is free.">🔎 Check which sports BettingPros has (≈12 calls, once)</button>
+    <span class="meta" id="bpSportsMsg"></span>
+  </div>
+  <div id="bpSportsOut" style="margin-top:8px"></div>
+  <p class="hint">The sport list is sorted by the next game (ESPN, free): sports playing soonest on top, off-season ones at the bottom marked <i>no games</i>. A load for a sport with no game in the next 24 hours is skipped so it doesn't spend calls (you can still load it anyway). Soccer is graded on regular time (90' + stoppage): extra time and penalties don't count, a draw loses a team's moneyline, and quarter-goal handicaps (±0.25 / ±0.75) are left for you to grade.</p>
+</details>
+
 <details class="panel fold" open>
   <summary><h2>Sweet spot &amp; outliers <span class="sub">what gets the 🎯 badge, what counts as an outlier, risk bets</span></h2></summary>
   <p class="hint">The sweet spot only marks rows. The outlier and risk-bet settings change stakes: an outlier is capped at the minimum, and one that is also below the market is skipped unless it fits the risk-bet allowance.</p>
@@ -1296,7 +1308,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 
 </div>
 <script>
-const SCREENER_VERSION='v3.11';
+const SCREENER_VERSION='v3.12';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -1756,6 +1768,9 @@ function audit(rows,cfg){
     // v2.49: also an outlier when the model sits far above the market's own price
     r.outlier = (r.net!=null && r.net>outCut) || (r.mktProb!=null && r.fairProb!=null && r.fairProb-r.mktProb>gapCut);
     if(r.outlier) r.flags.push(['warn','model outlier — too far from the market to trust, stake capped at the minimum']);
+    // v3.12: no consensus price at all = nothing to check the model against → the minimum, and say so
+    r.noMkt = r.mktProb==null && r.src!=='paste:mev' && r.fairProb!=null;
+    if(r.noMkt) r.flags.push(['warn','⚠ no market check — no consensus price to compare with, held to the minimum']);
 
     // v2.49: size off a blend — the market price pulled toward the model by the model weight
     r.blendProb = r.mktProb!=null && r.fairProb!=null ? r.mktProb + cfg.mWeight*(r.fairProb-r.mktProb) : r.fairProb;
@@ -1771,6 +1786,7 @@ function audit(rows,cfg){
       // v2.50: the smallest bet is a "don't bet below", never a "bet at least" —
       // a small Kelly stake is never pushed UP to it. Outliers get at most the minimum.
       if(r.outlier) s = Math.min(s, cfg.sMin);
+      if(r.noMkt) s = Math.min(s, cfg.sMin);   // v3.12
       // v2.65: long shots are off unless you're in Clairvoyant mode — and then they're small
       if(isLongShot(r)){
         r.longShot=true;
@@ -2662,8 +2678,14 @@ function betNowOf(r){
 const ESPN_MAP = {
   MLB:'baseball/mlb', NFL:'football/nfl', NCAAF:'football/college-football',
   NBA:'basketball/nba', WNBA:'basketball/wnba', MLS:'soccer/usa.1',
-  NHL:'hockey/nhl', NCAAB:'basketball/mens-college-basketball'
+  NHL:'hockey/nhl', NCAAB:'basketball/mens-college-basketball',
+  // v3.12: soccer — ESPN league paths, keyed by the code BettingPros answers to (Settings → 🌎 Sports checks which ones it has)
+  EPL:'soccer/eng.1', LALIGA:'soccer/esp.1', SERIEA:'soccer/ita.1', BUNDESLIGA:'soccer/ger.1', LIGUE1:'soccer/fra.1',
+  UCL:'soccer/uefa.champions', UEL:'soccer/uefa.europa', LIGAMX:'soccer/mex.1'
 };
+const SOCCER=new Set(['MLS','EPL','LALIGA','SERIEA','BUNDESLIGA','LIGUE1','UCL','UEL','LIGAMX','SOCCER']);
+function isSoccer(sp){ return SOCCER.has(String(sp||'').toUpperCase()); }
+const SPORT_NAMES={MLS:'MLS',EPL:'Premier League',LALIGA:'La Liga',SERIEA:'Serie A',BUNDESLIGA:'Bundesliga',LIGUE1:'Ligue 1',UCL:'Champions League',UEL:'Europa League',LIGAMX:'Liga MX',SOCCER:'Soccer',UFC:'UFC',GOLF:'Golf',TENNIS:'Tennis'};
 const ABBR_FIX = {WSH:'WAS',JAC:'JAX',LAR:'LA',LVR:'LV',NOS:'NO',SFO:'SF',TBB:'TB',
   KCC:'KC',GBP:'GB',NEP:'NE',WAS_:'WSH', CHW:'CWS', OAK:'ATH'};
 function normAbbr(a){ a=(a||'').toUpperCase(); return ABBR_FIX[a]||a; }
@@ -2725,7 +2747,7 @@ function gameStatusOf(ev){
   const tm=dt.toLocaleTimeString('en-US',{...opts,hour:'numeric',minute:'2-digit'});
   const timeCT=wd+' '+md+' '+tm+' CT';
   const comp=(ev.competitions&&ev.competitions[0])||{};
-  const teams=compsOf(ev).map(c=>{ const t=c.team||{}; return {ha:c.homeAway, abbr:normAbbr(t.abbreviation), name:t.shortDisplayName||t.name||t.abbreviation||'', logo:t.logo||'', rec:(c.records&&c.records[0]&&c.records[0].summary)||'', color:t.color||'', alt:t.alternateColor||''}; });
+  const teams=compsOf(ev).map(c=>{ const t=c.team||{}; return {ha:c.homeAway, abbr:normAbbr(t.abbreviation), name:t.shortDisplayName||t.name||t.abbreviation||'', loc:t.location||'', nick:t.name||'', logo:t.logo||'', rec:(c.records&&c.records[0]&&c.records[0].summary)||'', color:t.color||'', alt:t.alternateColor||''}; });
   const tv=[...new Set([].concat(...(comp.broadcasts||[]).map(b=>b.names||[])))].slice(0,2).join(' · ');
   return {state:st.state, detail:st.shortDetail||'', timeCT, eventId:ev.id, startISO:isNaN(dt)?null:dt.toISOString(), teams, tv};   // v2.69: teams + tv
 }
@@ -2748,8 +2770,21 @@ function finalScores(ev){
   return out;
 }
 function glTeam(b){ const m=String(b.apiKey||'').match(/^\d+-(?:moneyline|spread)-([A-Za-z]{2,4})-/); return m?normAbbr(m[1]):(b.team?normAbbr(b.team):null); }
+// v3.12: soccer counts regular time only (90' + stoppage). After extra time / penalties, use the two halves;
+// if ESPN doesn't give the halves, don't guess — leave it ungraded.
+function gameScores(ev, sport){
+  if(!isSoccer(sport)) return finalScores(ev);
+  const st=(ev&&ev.status&&ev.status.type)||{}, det=String(st.detail||'')+' '+String(st.shortDetail||'')+' '+String(st.description||'');
+  const extra=/\b(AET|ET|Pens?|SO)\b|extra time|penalt/i.test(det);
+  const out={}; let ok=true;
+  compsOf(ev).forEach(c=>{ const ab=normAbbr(c.team&&c.team.abbreviation), ls=c.linescores||[];
+    if(extra){ if(ls.length>=2) out[ab]=(parseFloat(ls[0].value)||0)+(parseFloat(ls[1].value)||0); else ok=false; }
+    else { const v=typeof c.score==='object'&&c.score?c.score.value:c.score, n=parseFloat(v); if(!isNaN(n)) out[ab]=n; } });
+  return ok?out:{};
+}
 function gradeGameLine(b, ev){
-  const sc=finalScores(ev), ab=Object.keys(sc); if(ab.length!==2) return null;
+  const sc=gameScores(ev, b.sport), ab=Object.keys(sc); if(ab.length!==2) return null;
+  if(isSoccer(b.sport) && b.kind==='moneyline' && /\b(draw|tie)\b/i.test((b.name||'')+' '+(b.team||''))) return {won:sc[ab[0]]===sc[ab[1]], val:sc[ab[0]]+'-'+sc[ab[1]]};
   const lm=String(b.market||'').match(/^([+-]?[\d.]+)/), line=lm?parseFloat(lm[1]):null;
   if(b.kind==='total'){
     if(line==null) return null;
@@ -2760,10 +2795,16 @@ function gradeGameLine(b, ev){
   const t=glTeam(b); if(!t || sc[t]==null) return null;
   const opp=ab.find(a=>a!==t);
   if(b.kind==='spread' && line==null) return null;
+  if(isSoccer(b.sport) && b.kind==='spread' && Math.round(Math.abs(line)*4)%2===1) return null;   // ±0.25 / ±0.75: half the stake on each line — grade by hand
   const margin=sc[t]-sc[opp]+(b.kind==='spread'?line:0);
+  if(margin===0 && isSoccer(b.sport) && b.kind==='moneyline') return {won:false, val:sc[t]+'-'+sc[opp]+' (draw)'};   // 3-way: a draw loses the team bet
   if(margin===0) return {push:true, val:sc[t]+'-'+sc[opp]};
   return {won:margin>0, val:sc[t]+'-'+sc[opp]};
 }
+const COLLEGE_SPORTS=/^(NCAAF|NCAAB|NCAAW|NCAAWB|WNCAAB)$/;
+function normTeamName(x){ return String(x||'').toLowerCase().replace(/\bst\.?$/,'state').replace(/[^a-z0-9]+/g,''); }
+function teamNameIs(t, n){ if(!t||!n) return false; const k=normTeamName(n); if(!k) return false;
+  return [t.abbreviation,t.name,t.shortDisplayName,t.displayName,t.location,t.nickname].some(x=>x && normTeamName(x)===k); }
 async function attachGameInfo(rows){
   const sports=[...new Set(rows.map(r=>r.sport).filter(s=>ESPN_MAP[s]))];
   await Promise.all(sports.map(fetchScoreboard));
@@ -2786,6 +2827,29 @@ async function attachGameInfo(rows){
       if(!ev) ev=findGameAny(E, r.game, r.matchup, r.name);
       if(ev) r.gameInfo=gameStatusOf(ev); });
   }
+  // v3.12: game lines that came with only BettingPros' event number ("32749") or a bare nickname ("Hornets") —
+  // find the ESPN game by team name (+ opponent, + start time), then show the real matchup and logos
+  const lost=rows.filter(r=>GL_KINDS.test(r.kind||'') && r.kind!=='total' && ESPN_MAP[r.sport] && (!r.gameInfo || !teamsOf(r.game)));
+  if(lost.length){
+    const today=ctDay(Date.now()), days=[-1,0,1,2,3].map(n=>dayPlus(today,n)), evs={};
+    await Promise.all([...new Set(lost.map(r=>r.sport))].map(async sp=>{ evs[sp]=[].concat(...await Promise.all(days.map(d=>fetchScoreboardDay(sp,d)))); }));
+    lost.forEach(r=>{
+      const nm=r.team||r.name, om=String(r.matchup||'').match(/\bvs\.?\s+(.+)$/), opp=om&&om[1]!=='?'?om[1]:null;
+      const kick=r.gameInfo&&r.gameInfo.startISO?Date.parse(r.gameInfo.startISO):NaN;
+      const C=(evs[r.sport]||[]).filter(ev=>{ const cs=compsOf(ev); if(cs.length!==2) return false;
+        const me=cs.find(c=>teamNameIs(c.team,nm)); if(!me) return false;
+        if(opp && !cs.some(c=>c!==me && teamNameIs(c.team,opp))) return false;
+        return isNaN(kick) || Math.abs(Date.parse(ev.date)-kick)<4*3600e3; });
+      if(C.length!==1) return;   // none or ambiguous (several "Hornets" that day) — leave it as it was
+      const ev=C[0], cs=compsOf(ev), a=cs.find(c=>c.homeAway==='away'), h=cs.find(c=>c.homeAway==='home'), me=cs.find(c=>teamNameIs(c.team,nm));
+      if(!a||!h||!me) return;
+      r.game=normAbbr(a.team.abbreviation)+' @ '+normAbbr(h.team.abbreviation); r.team=normAbbr(me.team.abbreviation); r.gameInfo=gameStatusOf(ev);
+    });
+  }
+  // v3.12: college teams by school name — "Sacramento State", not "Hornets" (there are several Hornets)
+  rows.forEach(r=>{ if(!COLLEGE_SPORTS.test(r.sport||'') || !GL_KINDS.test(r.kind||'') || r.kind==='total' || !r.gameInfo || !r.gameInfo.teams) return;
+    const t=r.gameInfo.teams.find(x=>(r.team && normAbbr(r.team)===x.abbr) || teamNameIs({abbreviation:x.abbr,name:x.nick,shortDisplayName:x.name,location:x.loc},r.name));
+    if(t && t.loc){ if(!r.team) r.team=t.abbr; r.name=t.loc; } });
   try{ await checkExchangeOpen(rows); }catch(e){}
 }
 /* v2.97: "Place these" = bets you can place RIGHT NOW: game confirmed not started, and (on an exchange) the market open with a seller */
@@ -4739,6 +4803,60 @@ function apiPages(){ const n=parseInt((document.getElementById('apiPages')||{}).
 (function(){ const el=document.getElementById('apiPages');
   try{ const v=localStorage.getItem('mbev.pages'); if(v) el.value=v; }catch(e){}
   el.addEventListener('change',()=>{ try{ localStorage.setItem('mbev.pages',el.value); }catch(e){} toggleApiWeekFields(); }); })();
+/* v3.12: every sport, year-round. BASE + whatever BettingPros answered (Settings → 🌎 Sports), sorted by the next
+   game on ESPN (free): soonest on top, off-season at the bottom. Your default sport (synced) is picked on open. */
+const BASE_SPORTS=['MLB','NFL','NCAAF','NBA','NHL','NCAAB','WNBA','MLS'];
+let sportNext={};   // sport → next pre-game start (ms) · null = none in the next 3 days · undefined = not known (no ESPN map)
+function sportLabel(sp){ return SPORT_NAMES[sp]&&SPORT_NAMES[sp]!==sp ? SPORT_NAMES[sp]+' ('+sp+')' : sp; }
+function allSports(){ const el=document.getElementById('bpSportsList'), extra=String(el?el.value:'').split(',').map(x=>x.trim().toUpperCase()).filter(x=>/^[A-Z0-9_]{2,16}$/.test(x)); return [...new Set(BASE_SPORTS.concat(extra))]; }
+function nextTxt(t){ if(t===null) return 'no games'; if(!t) return ''; const d=ctDay(t), today=ctDay(Date.now());
+  return d===today?'today':d===dayPlus(today,1)?'tomorrow':new Date(t).toLocaleDateString('en-US',{timeZone:'America/Chicago',weekday:'short'}); }
+function paintSportSelects(){
+  const sel=document.getElementById('apiSport'), def=document.getElementById('defSport'); if(!sel) return;
+  const cur=sel.value, L=allSports();
+  const rank=sp=>{ const t=sportNext[sp]; return t ? t : t===null ? 9e15 : 8e15; };
+  const order=L.slice().sort((a,b)=>rank(a)-rank(b) || L.indexOf(a)-L.indexOf(b));
+  const h=order.map(sp=>{ const n=nextTxt(sportNext[sp]); return '<option value="'+sp+'">'+esc(sp)+(n?' · '+n:'')+'</option>'; }).join('');
+  if(sel.innerHTML!==h){ sel.innerHTML=h; sel.value=L.includes(cur)?cur:order[0]; }
+  if(def){ const dv=def.value||savedDefSport(), dh='<option value="">Auto — soonest games</option>'+L.map(sp=>'<option value="'+sp+'">'+esc(sportLabel(sp))+'</option>').join('');
+    if(def.innerHTML!==dh){ def.innerHTML=dh; def.value=dv; if(def.value!==dv){ const o=document.createElement('option'); o.value=dv; o.textContent=dv; def.appendChild(o); def.value=dv; } } }
+}
+let _sportPicked=false;
+function savedDefSport(){ try{ return (JSON.parse(localStorage.getItem('mbev.cfg')||'{}')||{}).defSport||''; }catch(e){ return ''; } }
+function pickStartSport(){
+  if(_sportPicked) return; const sel=document.getElementById('apiSport'), def=document.getElementById('defSport'); if(!sel) return;
+  const d=(def&&def.value)||savedDefSport();
+  if(d){ if(![...sel.options].some(o=>o.value===d)) return; sel.value=d; _sportPicked=true; }
+  else { const known=allSports().filter(sp=>sportNext[sp]); if(!known.length) return; sel.value=known.sort((a,b)=>sportNext[a]-sportNext[b])[0]; _sportPicked=true; }
+  try{ toggleApiWeekFields(); }catch(e){}
+}
+async function scanSportTimes(){
+  const today=ctDay(Date.now()), days=[today, dayPlus(today,1), dayPlus(today,2), dayPlus(today,3)];
+  await Promise.all(allSports().map(async sp=>{ if(!ESPN_MAP[sp]) return;
+    try{ const E=[].concat(...await Promise.all(days.map(d=>fetchScoreboardDay(sp,d))));
+      const T=E.filter(e=>((e.status&&e.status.type&&e.status.type.state)||'pre')==='pre').map(e=>Date.parse(e.date)).filter(t=>!isNaN(t) && t>Date.now()-60e3);
+      sportNext[sp]=T.length?Math.min(...T):null; }catch(e){} }));
+  paintSportSelects(); pickStartSport();
+}
+document.addEventListener('click', e=>{ const b=e.target.closest('#loadAnyway'); if(!b) return; window._loadAnyway=b.dataset.s; loadApi(false); });
+async function checkBpSports(){
+  const msg=document.getElementById('bpSportsMsg'), out=document.getElementById('bpSportsOut'), btn=document.getElementById('bpSportsCheck');
+  btn.disabled=true; msg.textContent='asking BettingPros…';
+  try{ const res=await fetch(API_BASE+'/bp/sports',{headers:apiHeaders()});
+    if(res.status===404){ msg.textContent='The Worker doesn\'t have this check yet — deploy the v3.12 Worker (npx wrangler deploy) and try again.'; return; }
+    if(!res.ok){ msg.textContent='✗ the Worker answered '+res.status; return; }
+    const j=await res.json(), R=Object.values(j.results||{}), ok=R.filter(x=>x.ok).map(x=>x.code);
+    const el=document.getElementById('bpSportsList'), have=new Set(String(el.value||'').split(',').filter(Boolean));
+    ok.forEach(c=>{ if(!BASE_SPORTS.includes(c)) have.add(c); }); el.value=[...have].join(','); save();
+    out.innerHTML='<div class="scroll"><table><thead><tr><th>Code</th><th>League</th><th>BettingPros</th><th class="num">Games today</th><th>ESPN grading</th></tr></thead><tbody>'+
+      R.map(x=>'<tr><td><b>'+esc(x.code)+'</b></td><td>'+esc(SPORT_NAMES[x.code]||'')+'</td><td class="'+(x.ok?'ok-t':'no-t')+'">'+(x.ok?'✓ has it':esc(x.error||('✗ '+(x.http||'')+' '+(x.sample||'')).slice(0,90)))+(x.from_cache?' <span class="meta">(saved answer)</span>':'')+'</td><td class="num">'+(x.events_today!=null?x.events_today:'—')+'</td><td>'+(ESPN_MAP[x.code]?'✓':'<span class="meta">not yet</span>')+'</td></tr>').join('')+'</tbody></table></div>';
+    msg.textContent=ok.length?'✓ '+ok.length+' answered — added to your sport list'+(j.budget?' · calls left today: '+j.budget.left:''):'none answered'+(j.budget?' · calls left today: '+j.budget.left:'');
+    paintSportSelects(); scanSportTimes(); try{ refreshBudget(); }catch(e){}
+  }catch(e){ msg.textContent='✗ can\'t reach the Worker'; }
+  finally{ btn.disabled=false; }
+}
+document.addEventListener('click', e=>{ if(e.target.closest('#bpSportsCheck')) checkBpSports(); });
+document.addEventListener('change', e=>{ if(e.target && (e.target.id==='defSport')){ save(); _sportPicked=false; pickStartSport(); } });
 async function fetchApiSport(sport, date, booksParam, weekParam, evOnly, fresh){
   const dateOrWeek=(WEEK_BASED_SPORTS.includes(sport)&&weekParam)?weekParam:'&date='+encodeURIComponent(date);
   const evParam = evOnly===false ? '&ev_only=0' : '&ev_only=1';
@@ -4871,6 +4989,11 @@ async function loadApi(fresh){
   fresh = fresh===true;
   const btn=document.getElementById('loadApi'), status=document.getElementById('apiStatus');
   const sport=document.getElementById('apiSport').value, type=document.getElementById('apiType').value;
+  // v3.12: 24/7 — no game in the next 24 hours → don't spend calls (ESPN knows; sports ESPN doesn't cover always load)
+  { const nx=sportNext[sport], anyway=window._loadAnyway===sport; window._loadAnyway=null;
+    if(!anyway && (nx===null || (nx && nx-Date.now()>24*3600e3))){
+      status.innerHTML='No '+esc(sportLabel(sport))+' game in the next 24 hours'+(nx?' (next: '+esc(whenCT(new Date(nx).toISOString()))+')':'')+' — not spending BettingPros calls. <button type="button" class="ghost sm" id="loadAnyway" data-s="'+esc(sport)+'">Load anyway</button>';
+      return; } }
   const was=btn.textContent; btn.textContent='Loading…'; btn.disabled=true; status.textContent='';
   try{
     const date=document.getElementById('slate').value;
@@ -5425,7 +5548,7 @@ document.getElementById('demo').addEventListener('click',()=>{
   document.getElementById('input').value=SAMPLE; run();
 });
 
-const KEYS=NUMS.concat(['books']);
+const KEYS=NUMS.concat(['books','defSport','bpSportsList']);   // v3.12: default sport + the leagues BettingPros answered (synced with settings)
 const CHECKS=['cDeriv','cProp','cDfs','cShow','cHideStarted'];
 function save(){
   try{
@@ -5477,6 +5600,7 @@ function loadCfg(){
 SW_IDS.concat(SW_CHECKS).forEach(id=>document.getElementById(id).addEventListener('change',()=>{ saveSweet(); rerenderWithFilters(); }));
 loadSweet(); loadParlays();
 loadCfg(); loadLog(); manual(); render([],cfgRead()); renderLog(); renderPerf();
+try{ paintSportSelects(); pickStartSport(); setTimeout(()=>scanSportTimes(), 800); setInterval(()=>scanSportTimes(), 30*60e3); }catch(e){}   // v3.12
 /* v2.61: keep every open copy of the screener in sync — a stale tab must never write an old list back */
 let logBusy=0;   // v2.62: an async job (closing grab, result check) is editing the log — don't swap it out mid-way
 function syncFromStorage(){
@@ -5493,7 +5617,7 @@ function syncFromStorage(){
 }
 window.addEventListener('storage',e=>{
   if(['mbev.log','mbev.parlay','mbev.removed'].includes(e.key)) syncFromStorage();
-  else if(e.key==='mbev.cfg'){ loadCfg(); refresh(); }
+  else if(e.key==='mbev.cfg'){ loadCfg(); refresh(); try{ paintSportSelects(); }catch(_){} }
 });
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') syncFromStorage(); });
 window.addEventListener('focus',syncFromStorage);
