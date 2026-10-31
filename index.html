@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.18</title>
+<title>0xBeta Screener v3.19</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -717,7 +717,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.18</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.19</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1309,7 +1309,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 
 </div>
 <script>
-const SCREENER_VERSION='v3.18';
+const SCREENER_VERSION='v3.19';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -2905,7 +2905,7 @@ async function checkExchangeOpen(rows){
     const chunk=jobs.slice(i,i+8);
     let R={}; try{ const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(chunk.map(x=>x[1]))),{headers:apiHeaders()}); if(!res.ok) break; R=((await res.json())||{}).results||{}; }catch(e){ break; }
     chunk.forEach(([r,d])=>{ const q=R[d.id]; exCheckAt[r.idx+':'+r.book+':'+r.market]=Date.now(); if(!q) return;
-      if(q.ok){ delete r.exClosed; if(suspectQ(q,r.fairProb,r.offeredProb,r.mktProb)) return; r.exOpen={p:q.price, at:Date.now()}; liveQuotes[d.id]=q; return; }
+      if(q.ok){ delete r.exClosed; if(suspectQ(q,r.fairProb,r.offeredProb,r.mktProb)) return; r.exOpen={p:q.price, at:Date.now()}; liveQuotes[d.id]=q; r._openQ=q; return; }
       const note=String(q.note||'');
       // closed only when the book answered about THIS market; unmapped stats / lookup errors leave it open
       if(/no offer to buy|no market at your line|not listed|lists .* not your/i.test(note)) r.exClosed=note.replace(/^(Kalshi|Polymarket|Novig):\s*/,bookLabel(r.book)+': ');
@@ -6129,7 +6129,7 @@ function makeTagHtml(r){
   const A=pullAlerts();
   return makesFor(r).map(o=>{
     const p=+o.price, left=+o.qty||0, got=+o.filled||0, bk=BOOK_NAME[o.book]||o.book;
-    const q=rowQuoteFor(r,o)||(LIVE_BOOK(r.book)===o.book?liveQuotes['open:'+r.idx]:null), top=q&&q.bid>0?+q.bid:null;
+    const q=rowQuoteFor(r,o)||(LIVE_BOOK(r.book)===o.book?r._openQ:null), top=q&&q.bid>0?+q.bid:null;
     let h='<span class="mk-wait" title="Your Make order on '+esc(bk)+' rests until someone takes the other side — read-only, nothing here changes it">🪝 WAITING FOR TAKER · '+(p*100).toFixed(1)+'%'+(left>0?' · $'+(p*left).toFixed(2):'')+'</span>';
     if(got>0) h+='<span class="mk-sub">½ taken: $'+(p*got).toFixed(2)+' of $'+(p*(got+left)).toFixed(2)+' — the rest is still waiting</span>';
     if(top!=null && top>p+0.0001) h+='<span class="mk-sub warn">top bid now '+(top*100).toFixed(1)+'% — yours waits behind it</span>';
@@ -6248,9 +6248,9 @@ function betForFillRef(f){
 }
 function rowQuoteFor(r,f){
   const q1=r._shopQ&&r._shopQ[FILL_NAME[f.book]]; if(quoteMatchesFill(q1,f)) return q1;
-  const q2=liveQuotes['shop:'+r.idx+':'+f.book]; if(quoteMatchesFill(q2,f)) return q2;
+  // v3.18: only quotes stored ON this row (row numbers are reused after the next board load)
   // v3.01: the board's open-market check and Parole's price check know the market codes too (even with nobody selling)
-  const more=[LIVE_BOOK(r.book)===f.book?liveQuotes['open:'+r.idx]:null, r._par&&r._par[f.book]];
+  const more=[LIVE_BOOK(r.book)===f.book?r._openQ:null, r._par&&r._par[f.book]];
   for(const q of more){ if(q && q.ref && quoteMatchesFill(Object.assign({},q,{src:q.src||f.book, ok:true}),f)) return q; }
   return null;
 }
