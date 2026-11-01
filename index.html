@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.23</title>
+<title>0xBeta Screener v3.25</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -707,6 +707,9 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 .sc-tag{font-size:10.5px; font-weight:800; padding:1px 7px; border-radius:999px; border:1px solid var(--rule); white-space:nowrap}
 .sc-tag.ev{border-color:var(--live); color:var(--live)} .sc-tag.cmp{border-color:var(--warn); color:var(--warn)}
 .dec.dec-same{background:var(--warn-bg); color:var(--warn); border:1.5px solid var(--warn); border-radius:8px; padding:2px 8px; display:inline-block}
+.pred-tag{display:inline-block; font-size:9px; font-weight:800; letter-spacing:.06em; padding:1px 4px; margin-left:3px; border-radius:4px; background:#7c3aed; color:#fff; vertical-align:middle}
+.book-checks{display:flex; flex-wrap:wrap; gap:6px 14px; margin:4px 0 2px}
+.book-checks label{display:inline-flex; align-items:center; gap:5px; font-size:13px; cursor:pointer; white-space:nowrap}
 .src-bar{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:6px 0 4px; font-size:12px}
 .src-bar .k{font-size:10.5px; font-weight:800; letter-spacing:.08em; color:var(--soft); margin-right:2px}
 .src-chip{font:inherit; font-size:12px; font-weight:700; padding:4px 10px; border-radius:999px; border:1px solid var(--rule); background:var(--panel); color:var(--ink); cursor:pointer}
@@ -725,7 +728,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.23</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.25</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1024,7 +1027,9 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
     <div class="field"><label for="devig">Devig tolerance %</label><input id="devig" type="number" value="2" step="0.5"></div>
   </div>
   <div class="field" style="margin-top:13px">
-    <label for="books">Books you can bet, comma separated. Blank means all</label>
+    <label>Books you bet — tick them (nothing ticked and nothing typed = all books)</label>
+    <div id="bookChecks" class="book-checks"></div>
+    <label for="books" class="meta" style="margin-top:6px">Others, or edit by hand (comma separated)</label>
     <input id="books" type="text" value="DraftKings, Polymarket, Novig, Kalshi" spellcheck="false">
   </div>
   <div class="checks">
@@ -1319,7 +1324,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 
 </div>
 <script>
-const SCREENER_VERSION='v3.23';
+const SCREENER_VERSION='v3.25';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -1393,10 +1398,19 @@ function bookLogo(book){
 }
 function logoTag(book,cls){
   const u=bookLogo(book);
-  return u ? '<img class="blogo '+(cls||'')+'" src="'+u+'" alt="'+esc(bookLabel(book))+'" title="'+esc(bookLabel(book))+'">' : '';
+  const pt=isPredBook(book)?'<span class="pred-tag" title="'+esc(bookLabel(book))+' — the prediction app, not the sportsbook">PREDICTS</span>':'';
+  return u ? '<img class="blogo '+(cls||'')+'" src="'+u+'" alt="'+esc(bookLabel(book))+'" title="'+esc(bookLabel(book))+'">'+pt : pt;
 }
 /* v2.63: shorter display names (the saved book name doesn't change) */
 function isFdp(book){ const b=String(book||'').toLowerCase(); return b.includes('fanduel') && b.includes('predict'); }   // v3.11
+/* v3.25: a sportsbook and its prediction app are different books. "FanDuel" in your list never lets a FanDuel Predicts
+   row through, and "FanDuel Predicts" never lets the FanDuel sportsbook through (same for DraftKings). */
+function isPredBook(x){ return /predict/i.test(String(x||'')); }
+function bookIsMine(book, entry){ const b=String(book||'').toLowerCase(), e=String(entry||'').toLowerCase().trim(); if(!e) return false;
+  if(isPredBook(b)!==isPredBook(e)) return false;
+  if(isPredBook(e)){ let brand=e.replace(/\s*predict\w*/,'').trim().split(' ')[0]; brand={fd:'fanduel',dk:'draftkings'}[brand]||brand;   // "FanDuel Predicts" / "FD Predicts" / "DK Predictions"
+    const bb=b.replace(/^fd\b/,'fanduel').replace(/^dk\b/,'draftkings'); return !!brand && bb.includes(brand); }
+  return b.includes(e); }
 function bookLabel(book){ return String(book||'').replace(/^draftkings predictions$/i,'DK Predictions').replace(/^fanduel predicts$/i,'FD Predicts'); }
 const SPORTS=['NCAAF','NCAAB','NCAAMB','NCAAWB','NCAAFB','MLB','NBA','NHL','NFL','WNBA','MLS','SOCCER','MMA','TENNIS','GOLF'];
 const DERIV=/\b(1Q|2Q|3Q|4Q|1H|2H|1ST HALF|2ND HALF|FIRST HALF|SECOND HALF|1ST QUARTER|QUARTER|HALF)\b/i;
@@ -1709,8 +1723,8 @@ function audit(rows,cfg){
     if(cfg.prop&&r.kind==='prop'&&/NCAA/.test(r.sport)) r.flags.push(['out','college player prop']);
     if(cfg.dfs&&DFS.test(r.book)) r.flags.push(['out','DFS pick\u2019em, not a single bet']);
     if(!r.book) r.flags.push(['out','book not captured, fee unknown']);
-    else if(cfg.books.length && !cfg.books.some(b=>r.book.toLowerCase().includes(b)))
-      r.flags.push(['out','not a book you bet']);
+    else if(cfg.books.length && !cfg.books.some(b=>bookIsMine(r.book,b)))
+      r.flags.push(['out', !isPredBook(r.book) && cfg.books.some(b=>isPredBook(b) && bookIsMine(r.book+' predicts',b)) ? 'sportsbook price — you bet '+bookLabel(r.book)+'\'s prediction app, not the sportsbook' : 'not a book you bet']);
 
     if(r.pairSum!==undefined){
       if(Math.abs(r.pairSum-1)>cfg.devig) r.flags.push(['out','both sides sum to '+pct(r.pairSum)+', juice left in']);
@@ -5154,8 +5168,8 @@ const OA_SPORTS={NFL:'americanfootball_nfl',NCAAF:'americanfootball_ncaaf',NBA:'
   BUNDESLIGA:'soccer_germany_bundesliga',LIGUE1:'soccer_france_ligue_one',UCL:'soccer_uefa_champs_league',UEL:'soccer_uefa_europa_league',
   LIGAMX:'soccer_mexico_ligamx',EFLC:'soccer_efl_champ'};
 // SportsGameOdds league IDs — NFL seen in a real answer; the others are their documented names (unverified until loaded)
-const SGO_LEAGUES={NFL:'NFL',NCAAF:'NCAAF',NBA:'NBA',NCAAB:'NCAAB',WNBA:'WNBA',NHL:'NHL',MLB:'MLB',MLS:'MLS',EPL:'EPL',LALIGA:'LA_LIGA',
-  SERIEA:'IT_SERIE_A',BUNDESLIGA:'BUNDESLIGA',LIGUE1:'FR_LIGUE_1',UCL:'UEFA_CHAMPIONS_LEAGUE',LIGAMX:'LIGA_MX'};
+// v3.24: only what the FREE plan opens (checked 10/31/2026: these answered 200; EPL and LA_LIGA said "unavailable at your tier")
+const SGO_LEAGUES={NFL:'NFL',NCAAF:'NCAAF',NBA:'NBA',NCAAB:'NCAAB',NHL:'NHL',MLB:'MLB',MLS:'MLS',UCL:'UEFA_CHAMPIONS_LEAGUE'};
 const SGO_BOOKS={fanduel:'FanDuel',draftkings:'DraftKings',betmgm:'BetMGM',caesars:'Caesars',espnbet:'ESPN Bet',bovada:'Bovada',unibet:'Unibet',
   pointsbet:'PointsBet',williamhill:'William Hill',novig:'Novig',polymarket:'Polymarket',kalshi:'Kalshi',prophetexchange:'ProphetX',pinnacle:'Pinnacle',
   fanatics:'Fanatics',betrivers:'BetRivers',hardrockbet:'Hard Rock',thescorebet:'theScore',fliff:'Fliff'};
@@ -5178,7 +5192,7 @@ function srcLoadForm(id){
 function oaCost(){ const el=document.getElementById('oaCostTxt'); if(!el) return;
   const m=['oaMkH','oaMkS','oaMkT'].filter(i=>(document.getElementById(i)||{}).checked).length, r=(document.getElementById('oaRgX')||{}).checked?2:1;
   el.textContent=m? '≈ '+(m*r)+' credit'+(m*r===1?'':'s')+(oaLeft()?' · '+oaLeft():'') : 'pick at least one'; }
-function myBookOf(label, cfgBooks){ const b=String(label||'').toLowerCase(); return !cfgBooks.length || cfgBooks.some(x=>b.includes(x)); }
+function myBookOf(label, cfgBooks){ return !cfgBooks.length || cfgBooks.some(x=>bookIsMine(label,x)); }
 function startRow(start){ const d=new Date(start); return {state:'pre', startISO:d.toISOString(), timeCT:d.toLocaleString('en-US',{timeZone:'America/Chicago',weekday:'short',month:'2-digit',day:'2-digit',year:'2-digit',hour:'numeric',minute:'2-digit'})+' CT'}; }
 function baseRow(o){ return Object.assign({stars:null,l15Hit:null,l15N:0,seasonHit:null,seasonN:0,evModel:'market',consensusEdge:null,matchupAlt:null,noMatchup:false,screenerEV:null}, o); }
 /* The Odds API v4: [{id, commence_time, home_team, away_team, bookmakers:[{key,title,markets:[{key,outcomes:[{name,price,point}]}]}]}] */
@@ -5236,7 +5250,8 @@ function sgoToRows(data, sport, cfgBooks, want){
       const isGame=['home','away','all'].includes(ent), player=!isGame && P[ent];
       if(isGame ? !want.gl : !want.props) return;
       if(!(per==='game' || (per==='reg' && isSoccer(sport)))){ no('part-game line'); return; }
-      if(!['ml','ml3way','sp','ou'].includes(bt)){ no(bt==='yn'?'yes/no props (no grader yet)':'bet type '+bt); return; }
+      const anyTd = bt==='yn' && o.statID==='touchdowns' && !isGame;   // v3.24: "Any Touchdowns Yes/No" = Anytime TD over/under 0.5 (the grader counts rushing + receiving TDs)
+      if(!['ml','ml3way','sp','ou'].includes(bt) && !anyTd){ no(bt==='yn'?'other yes/no props (no grader yet)':'bet type '+bt); return; }
       if(!isGame && !player){ no('unknown player'); return; }
       if(isGame && ent!=='all' && bt==='ou'){ no('team totals'); return; }
       if(isGame && o.statID && o.statID!=='points'){ no('other game stat'); return; }
@@ -5252,7 +5267,8 @@ function sgoToRows(data, sport, cfgBooks, want){
         mktProb:fp, mktConsensus:fp, gameInfo:startRow(start), apiKey:'sgo-'+ev.eventID+'-'+(o.oddID||[o.statID,ent,per,bt,side].join('-')) });
       if(player){
         const pl=player, tm=pl.teamID===H.teamID?sn(H):pl.teamID===A.teamID?sn(A):null;
-        rows.push(Object.assign(row,{ name:pl.name||((pl.firstName||'')+' '+(pl.lastName||'')).trim(), team:tm, matchup:game, side:side==='under'?'U':'O', market:line+' '+sgoWords(o.statID), kind:'prop' }));
+        rows.push(Object.assign(row,{ name:pl.name||((pl.firstName||'')+' '+(pl.lastName||'')).trim(), team:tm, matchup:game,
+          side: anyTd ? (side==='no'?'U':'O') : (side==='under'?'U':'O'), market: anyTd ? '0.5 Anytime TD' : line+' '+sgoWords(o.statID), kind:'prop' }));
       } else if(bt==='ou') rows.push(Object.assign(row,{ name:ln(A)+' @ '+ln(H), matchup:'Game total', side:side==='under'?'U':'O', market:line+' Total', kind:'total' }));
       else if(side==='draw') rows.push(Object.assign(row,{ name:'Draw', team:ln(H), matchup:ln(H)+' vs '+ln(A), side:'', market:'Moneyline', kind:'moneyline' }));
       else { const me=side==='home'?H:A, op=side==='home'?A:H;
@@ -5433,10 +5449,11 @@ async function loadApi(fresh){
     const date=document.getElementById('slate').value;
     const booksTyped=document.getElementById('books').value.split(',').map(s=>s.trim()).filter(Boolean);
     const bookIds=[...new Set(booksTyped.flatMap(name=>{
+      if(isPredBook(name)) return [];   // v3.25: BettingPros carries FanDuel / DraftKings sportsbooks, not their Predictions apps
       const hit=Object.entries(BOOK_IDS).find(([k])=>name.toLowerCase().includes(k));
       return hit?hit[1]:[];
     }))];
-    const unmatchedBooks=booksTyped.filter(name=>!Object.keys(BOOK_IDS).some(k=>name.toLowerCase().includes(k)));
+    const unmatchedBooks=booksTyped.filter(name=>!isPredBook(name) && !Object.keys(BOOK_IDS).some(k=>name.toLowerCase().includes(k)));
     const booksParam='&bp_books='+encodeURIComponent(bookIds.join(','));
     let rows=[], data, msg;
 
@@ -5721,7 +5738,23 @@ const NUMS=['oMin','oMax','eMin','eMax','devig','bank','kelly','shrink','sMin','
             'fKalshi','fProphet','fPoly','fNovig','fFliff','fBook','fFdp'];
 NUMS.forEach(id=>document.getElementById(id).addEventListener('input',()=>{ refresh(); manual(); save(); renderDays(); }));
 ['fKalshi','fProphet','fPoly','fNovig','fFliff','fBook'].forEach(id=>document.getElementById(id).addEventListener('input',renderMoneylines));
-document.getElementById('books').addEventListener('input',()=>{ refresh(); save(); });
+document.getElementById('books').addEventListener('input',()=>{ refresh(); save(); paintBookChecks(); });
+/* v3.24: books as tick boxes. Ticking adds the name to the box below, unticking takes it out — that box is still
+   what's saved and synced, so typed names (and other devices) keep working. */
+const BOOK_CHOICES=['DraftKings','FanDuel','DraftKings Predictions','FanDuel Predicts','Polymarket','Novig','Kalshi','ProphetX','Bovada',
+  'BetMGM','Caesars','ESPN Bet','Fanatics','BetRivers','theScore','Hard Rock','BetParx','Underdog','PrizePicks','Fliff','Pinnacle'];
+let _bkLast=null;
+function bookList(){ return String(document.getElementById('books').value||'').split(',').map(x=>x.trim()).filter(Boolean); }
+function paintBookChecks(){
+  const el=document.getElementById('bookChecks'), v=document.getElementById('books').value; if(!el || v===_bkLast) return; _bkLast=v;
+  const have=new Set(bookList().map(x=>x.toLowerCase()));
+  el.innerHTML=BOOK_CHOICES.map(b=>'<label'+(isPredBook(b)?' title="The prediction app — separate from the sportsbook"':'')+'><input type="checkbox" class="bk-check" value="'+esc(b)+'"'+(have.has(b.toLowerCase())?' checked':'')+'> '+esc(bookLabel(b))+(isPredBook(b)?' <span class="pred-tag">PREDICTS</span>':'')+'</label>').join('');
+}
+document.addEventListener('change', e=>{ const c=e.target.closest && e.target.closest('.bk-check'); if(!c) return;
+  const b=c.value, low=b.toLowerCase(); let L=bookList().filter(x=>x.toLowerCase()!==low); if(c.checked) L.push(b);
+  const inp=document.getElementById('books'); inp.value=L.join(', '); _bkLast=null; inp.dispatchEvent(new Event('input')); });
+setInterval(paintBookChecks, 1500);   // settings arriving from another device repaint the boxes
+setTimeout(paintBookChecks, 0);
 ['cDeriv','cProp','cDfs','cShow'].forEach(id=>
   document.getElementById(id).addEventListener('change',()=>{ refresh(); save(); }));
 ['mOdds','mFair','mOpp','mBook'].forEach(id=>
