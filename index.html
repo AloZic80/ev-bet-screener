@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.22</title>
+<title>0xBeta Screener v3.23</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -725,7 +725,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.22</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.23</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1319,7 +1319,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 
 </div>
 <script>
-const SCREENER_VERSION='v3.22';
+const SCREENER_VERSION='v3.23';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -2721,7 +2721,7 @@ const ESPN_MAP = {
 };
 const SOCCER=new Set(['MLS','EPL','LALIGA','SERIEA','BUNDESLIGA','LIGUE1','UCL','UEL','LIGAMX','EFLC','SOCCER']);
 function isSoccer(sp){ return SOCCER.has(String(sp||'').toUpperCase()); }
-const SPORT_NAMES={MLS:'MLS',EPL:'Premier League',LALIGA:'La Liga',SERIEA:'Serie A',BUNDESLIGA:'Bundesliga',LIGUE1:'Ligue 1',UCL:'Champions League',UEL:'Europa League',LIGAMX:'Liga MX',EFLC:'EFL Championship',SOCCER:'Soccer',UFC:'UFC',GOLF:'Golf',TENNIS:'Tennis'};
+const SPORT_NAMES={MLS:'MLS',EPL:'Premier League',LALIGA:'La Liga',SERIEA:'Serie A',BUNDESLIGA:'Bundesliga',LIGUE1:'Ligue 1',UCL:'Champions League',UEL:'Europa League',LIGAMX:'Liga MX',EFLC:'EFL Championship',SOCCER:'Soccer (all leagues)',UFC:'UFC',GOLF:'Golf',TENNIS:'Tennis'};
 const ABBR_FIX = {WSH:'WAS',JAC:'JAX',LAR:'LA',LVR:'LV',NOS:'NO',SFO:'SF',TBB:'TB',
   KCC:'KC',GBP:'GB',NEP:'NE',WAS_:'WSH', CHW:'CWS', OAK:'ATH',
   // v3.18: NBA — BettingPros / exchanges vs ESPN (GS @ LAL went ungraded: "GSW" ≠ "GS")
@@ -4264,7 +4264,7 @@ async function findBetGame(b){
     const ev=findGame(evs,b.game)||findGameAny(evs,b.game,b.matchup)||(gl?findGameAny(evs,b.name):null);
     if(ev) return ev;
   }
-  if(gl && !teamsOf(b.game)){   // v3.18: game number ("32749") or nickname only — the team by name, at the saved start time
+  if(gl){   // v3.18: game number ("32749") or nickname only — v3.23: or codes ESPN spells differently (EMICH, MIZZ, TRO) — the team by name, at the saved start time
     const t0=Date.parse(b.start), nm=b.team||b.name, om=String(b.matchup||'').match(/\bvs\.?\s+(.+)$/), opp=om&&om[1]!=='?'?om[1]:null;
     for(const d of days){
       const C=(await fetchScoreboardDay(b.sport, d)).filter(ev=>{ const cs=compsOf(ev); if(cs.length!==2 || !evOkFor(b,ev)) return false;
@@ -4928,7 +4928,7 @@ function apiPages(){ const n=parseInt((document.getElementById('apiPages')||{}).
   el.addEventListener('change',()=>{ try{ localStorage.setItem('mbev.pages',el.value); }catch(e){} toggleApiWeekFields(); }); })();
 /* v3.12: every sport, year-round. BASE + whatever BettingPros answered (Settings → 🌎 Sports), sorted by the next
    game on ESPN (free): soonest on top, off-season at the bottom. Your default sport (synced) is picked on open. */
-const BASE_SPORTS=['MLB','NFL','NCAAF','NBA','NHL','NCAAB','WNBA','MLS'];
+const BASE_SPORTS=['MLB','NFL','NCAAF','NBA','NHL','NCAAB','WNBA','MLS','SOCCER'];   // v3.23: SOCCER = every league on BettingPros (their own site's code)
 let sportNext={};   // sport → next pre-game start (ms) · null = none in the next 3 days · undefined = not known (no ESPN map)
 function sportLabel(sp){ return SPORT_NAMES[sp]&&SPORT_NAMES[sp]!==sp ? SPORT_NAMES[sp]+' ('+sp+')' : sp; }
 function allSports(){ const el=document.getElementById('bpSportsList'), extra=String(el?el.value:'').split(',').map(x=>x.trim().toUpperCase()).filter(x=>/^[A-Z0-9_]{2,16}$/.test(x)); return [...new Set(BASE_SPORTS.concat(extra))]; }
@@ -5017,7 +5017,8 @@ function paintSources(){
   const left=window._bpLeft;
   el.innerHTML='<span class="k">SOURCES</span>'+srcInfo.map(x=>{
     const sb = x.id==='sbapi' && sbLeft();
-    const sub = x.id==='bettingpros' ? (left!=null?left+'/50 today':'') : sb ? sb : x.key ? (x.loads?'on':'key set · test it') : 'add key';
+    const oq = x.id==='oddsapi' && oaLeft();
+    const sub = x.id==='bettingpros' ? (left!=null?left+' left today':'') : sb ? sb : oq ? oq : x.key ? (x.loads?'on':'key set · test it') : 'add key';
     return '<button type="button" class="src-chip '+(x.key?'on':'off')+'" data-src="'+esc(x.id)+'">'+esc(x.name)+(sub?' <small>'+esc(sub)+'</small>':'')+'</button>'; }).join('');
 }
 async function openSource(id){
@@ -5029,6 +5030,9 @@ async function openSource(id){
   if(!x.key){ h+='No key yet. Sign up for the free plan, then on the Mac:<br><code>cd ~/prop-bet-api</code><br><code>npx wrangler secret put '+esc(x.secret)+'</code> (paste the key when it asks — never in chat)<br><code>npx wrangler deploy</code><br>Then come back and press this button again.'; pn.innerHTML=h; return; }
   if(id==='sbapi'){ pn.innerHTML=h+'<button type="button" class="log sm" id="sbLoad">Load +EV picks</button> <button type="button" class="log sm" id="srcTest">Test (1 call)</button> <span class="meta" id="srcMsg"></span>'+
       '<div class="meta">Their picks, re-checked by La Contadora: the vig comes off their average, your fees and caps apply, books you don\'t use go to Skipped. 1 call per load; a reload within 10 minutes is free.</div><div id="srcOut"></div>'; return; }
+  if(id==='oddsapi' || id==='sgo'){ pn.innerHTML=h+srcLoadForm(id);
+    const sel=document.getElementById(id==='oddsapi'?'oaSport':'sgoSport'), cur=(document.getElementById('apiSport')||{}).value;
+    if(sel && [...sel.options].some(o=>o.value===cur)) sel.value=cur; oaCost(); return; }
   if(!x.testable){ h+='Key is set — it already feeds the screener.'; pn.innerHTML=h; return; }
   pn.innerHTML=h+'<button type="button" class="log sm" id="srcTest">Test '+esc(x.name)+' (1 call)</button> <span class="meta" id="srcMsg"></span><div id="srcOut"></div>';
 }
@@ -5042,9 +5046,11 @@ async function testSource(id){
     window._srcLast=j;
   }catch(e){ if(msg) msg.textContent='✗ can\'t reach the Worker'; }
 }
+document.addEventListener('change', e=>{ if(e.target && /^(oaMk|oaRg|oaSport)/.test(e.target.id||'')) oaCost(); });
 document.addEventListener('click', e=>{
   const c=e.target.closest('.src-chip'); if(c){ openSource(c.dataset.src); return; }
   if(e.target.closest('#sbLoad')){ loadSbapi(); return; }
+  const ol=e.target.closest('.oddsLoad'); if(ol){ loadOddsSrc(ol.dataset.src); return; }
   if(e.target.closest('#srcTest')){ const pn=document.getElementById('srcPanel'); testSource(pn.dataset.src); return; }
   if(e.target.closest('#srcCopy')){ copyText(JSON.stringify(window._srcLast||{}, null, 1), e.target.closest('#srcCopy')); }
 });
@@ -5107,7 +5113,7 @@ function sbToRows(data){
       if(o.type!=='OVER'&&o.type!=='UNDER') return no('total side unknown');
       return Object.assign(row,{ name:nm(away)+' @ '+nm(home), matchup:'Game total', matchupAlt:null, noMatchup:false, side:o.type==='UNDER'?'U':'O', market:o.modifier+' Total', kind:'total' });
     }
-    if(o.type==='DRAW') return Object.assign(row,{ name:'Draw', team:'', matchup:nm(away)+' vs '+nm(home)+' (draw)', matchupAlt:null, noMatchup:false, side:'', market:'Moneyline', kind:'moneyline' });
+    if(o.type==='DRAW') return Object.assign(row,{ name:'Draw', team:nm(home), matchup:nm(home)+' vs '+nm(away), matchupAlt:null, noMatchup:false, side:'', market:'Moneyline', kind:'moneyline' });
     if(o.type!=='WIN') return no('side '+o.type);
     const me=ps.find(p=>p.key===o.participantKey)||o.participant||{}, opp=ps.find(p=>p.key!==me.key)||{};
     const ln=(o.modifier>0?'+':'')+o.modifier;
@@ -5137,6 +5143,175 @@ async function loadSbapi(fresh){
     if(lastRows.length) attachGameInfo(lastRows).then(async ()=>{ await attachAutoGrades(lastRows); const c2=cfgRead(); render(audit(lastRows,c2),c2); autoSaveBoard(); });
   }catch(e){ if(msg) msg.textContent='✗ '+e.message; }
   finally{ if(btn) btn.disabled=false; }
+}
+/* ============ v3.23: The Odds API + SportsGameOdds → board rows ============
+   Both are read through the Worker as-is (/src/odds), saved 10 minutes there, and read here. For every bet the
+   fair price is the market's own: The Odds API → every book's price with its cut removed, averaged (Pinnacle's alone
+   when Pinnacle is in the answer); SportsGameOdds → its own no-vig "fair odds". Then the best price on YOUR books is
+   the row, and La Contadora decides like any other row. */
+const OA_SPORTS={NFL:'americanfootball_nfl',NCAAF:'americanfootball_ncaaf',NBA:'basketball_nba',NCAAB:'basketball_ncaab',WNBA:'basketball_wnba',
+  NHL:'icehockey_nhl',MLB:'baseball_mlb',MLS:'soccer_usa_mls',EPL:'soccer_epl',LALIGA:'soccer_spain_la_liga',SERIEA:'soccer_italy_serie_a',
+  BUNDESLIGA:'soccer_germany_bundesliga',LIGUE1:'soccer_france_ligue_one',UCL:'soccer_uefa_champs_league',UEL:'soccer_uefa_europa_league',
+  LIGAMX:'soccer_mexico_ligamx',EFLC:'soccer_efl_champ'};
+// SportsGameOdds league IDs — NFL seen in a real answer; the others are their documented names (unverified until loaded)
+const SGO_LEAGUES={NFL:'NFL',NCAAF:'NCAAF',NBA:'NBA',NCAAB:'NCAAB',WNBA:'WNBA',NHL:'NHL',MLB:'MLB',MLS:'MLS',EPL:'EPL',LALIGA:'LA_LIGA',
+  SERIEA:'IT_SERIE_A',BUNDESLIGA:'BUNDESLIGA',LIGUE1:'FR_LIGUE_1',UCL:'UEFA_CHAMPIONS_LEAGUE',LIGAMX:'LIGA_MX'};
+const SGO_BOOKS={fanduel:'FanDuel',draftkings:'DraftKings',betmgm:'BetMGM',caesars:'Caesars',espnbet:'ESPN Bet',bovada:'Bovada',unibet:'Unibet',
+  pointsbet:'PointsBet',williamhill:'William Hill',novig:'Novig',polymarket:'Polymarket',kalshi:'Kalshi',prophetexchange:'ProphetX',pinnacle:'Pinnacle',
+  fanatics:'Fanatics',betrivers:'BetRivers',hardrockbet:'Hard Rock',thescorebet:'theScore',fliff:'Fliff'};
+function oaLeft(){ try{ const q=JSON.parse(localStorage.getItem('mbev.oaq')||'null'); if(q && q.left!=null) return q.left+' credits left'; }catch(e){} return ''; }
+function srcSportOptions(map){ return Object.keys(map).map(k=>'<option value="'+k+'">'+esc(sportLabel(k))+'</option>').join(''); }
+function srcLoadForm(id){
+  if(id==='oddsapi') return '<div class="loadline" style="margin:6px 0;gap:8px;flex-wrap:wrap;display:flex;align-items:center">'+
+    '<select id="oaSport">'+srcSportOptions(OA_SPORTS)+'</select>'+
+    '<label><input type="checkbox" id="oaMkH" checked> Moneyline</label><label><input type="checkbox" id="oaMkS"> Spreads</label><label><input type="checkbox" id="oaMkT"> Totals</label>'+
+    '<label title="Exchanges (Novig, Kalshi, Polymarket… when The Odds API carries them) — doubles the cost"><input type="checkbox" id="oaRgX"> + exchanges</label>'+
+    '<button type="button" class="log sm oddsLoad" data-src="oddsapi">Load game lines</button> <span class="meta" id="oaCostTxt"></span></div>'+
+    '<span class="meta" id="srcMsg"></span><div class="meta">Game lines only (props cost credits per game). Cost = bet types × regions, only when there are games. A reload within 10 minutes is free.</div><div id="srcOut"></div>';
+  return '<div class="loadline" style="margin:6px 0;gap:8px;flex-wrap:wrap;display:flex;align-items:center">'+
+    '<select id="sgoSport">'+srcSportOptions(SGO_LEAGUES)+'</select>'+
+    '<select id="sgoN"><option value="10">10 games · 1 request</option><option value="20">20 games · 2 requests</option></select>'+
+    '<label><input type="checkbox" id="sgoProps" checked> Player props</label><label><input type="checkbox" id="sgoGl" checked> Game lines</label>'+
+    '<button type="button" class="log sm oddsLoad" data-src="sgo">Load</button></div>'+
+    '<span class="meta" id="srcMsg"></span><div class="meta">Free plan: prices from FanDuel, DraftKings, BetMGM, Caesars, ESPN Bet, Bovada, Unibet, PointsBet, William Hill. Each game counts toward 2,500 a month. A reload within 10 minutes is free.</div><div id="srcOut"></div>';
+}
+function oaCost(){ const el=document.getElementById('oaCostTxt'); if(!el) return;
+  const m=['oaMkH','oaMkS','oaMkT'].filter(i=>(document.getElementById(i)||{}).checked).length, r=(document.getElementById('oaRgX')||{}).checked?2:1;
+  el.textContent=m? '≈ '+(m*r)+' credit'+(m*r===1?'':'s')+(oaLeft()?' · '+oaLeft():'') : 'pick at least one'; }
+function myBookOf(label, cfgBooks){ const b=String(label||'').toLowerCase(); return !cfgBooks.length || cfgBooks.some(x=>b.includes(x)); }
+function startRow(start){ const d=new Date(start); return {state:'pre', startISO:d.toISOString(), timeCT:d.toLocaleString('en-US',{timeZone:'America/Chicago',weekday:'short',month:'2-digit',day:'2-digit',year:'2-digit',hour:'numeric',minute:'2-digit'})+' CT'}; }
+function baseRow(o){ return Object.assign({stars:null,l15Hit:null,l15N:0,seasonHit:null,seasonN:0,evModel:'market',consensusEdge:null,matchupAlt:null,noMatchup:false,screenerEV:null}, o); }
+/* The Odds API v4: [{id, commence_time, home_team, away_team, bookmakers:[{key,title,markets:[{key,outcomes:[{name,price,point}]}]}]}] */
+function oaToRows(data, sport, cfgBooks){
+  const now=Date.now(), skip={}, rows=[], no=w=>{ skip[w]=(skip[w]||0)+1; };
+  (Array.isArray(data)?data:[]).forEach(e=>{
+    const start=Date.parse(e.commence_time); if(!(start>now)){ no('already started'); return; }
+    const home=e.home_team, away=e.away_team, game=away+' @ '+home;
+    ['h2h','spreads','totals'].forEach(mk=>{
+      const fair={}, sharp={}, offers={};   // outcome key → [probs] / pinnacle prob / [{book,price}]
+      (e.bookmakers||[]).forEach(bm=>{
+        const m=(bm.markets||[]).find(x=>x.key===mk); if(!m) return;
+        const O=(m.outcomes||[]).filter(x=>x.price!=null);
+        const keyOf=x=> mk==='h2h' ? x.name : mk==='totals' ? x.name+'|'+x.point : x.name+'|'+x.point;
+        // remove the book's cut within each complete set (h2h: all outcomes; totals: Over+Under at one line; spreads: a team and its mirror line)
+        let sets=[];
+        if(mk==='h2h') sets=[O];
+        else if(mk==='totals'){ const by={}; O.forEach(x=>{ (by[x.point]=by[x.point]||[]).push(x); }); sets=Object.values(by); }
+        else { const used=new Set(); O.forEach(x=>{ if(used.has(x)) return; const y=O.find(z=>z!==x && !used.has(z) && z.name!==x.name && Math.abs((z.point||0)+(x.point||0))<1e-9); if(y){ used.add(x); used.add(y); sets.push([x,y]); } }); }
+        sets.forEach(S=>{ const need=mk==='h2h'?(isSoccer(sport)?3:2):2; if(S.length!==need) return;
+          const P=S.map(x=>toProb(x.price)), sum=P.reduce((t,v)=>t+v,0); if(!(sum>0)) return;
+          S.forEach((x,i)=>{ const k=keyOf(x), p=P[i]/sum; (fair[k]=fair[k]||[]).push(p); if(bm.key==='pinnacle') sharp[k]=p; }); });
+        O.forEach(x=>{ (offers[keyOf(x)]=offers[keyOf(x)]||[]).push({book:bm.title||bm.key, price:x.price, point:x.point, name:x.name}); });
+      });
+      Object.keys(offers).forEach(k=>{
+        const F=fair[k]||[]; const fp=sharp[k]!=null?sharp[k]:(F.length>=3?F.reduce((t,v)=>t+v,0)/F.length:null);
+        if(fp==null){ no('too few books to judge'); return; }
+        const mine=offers[k].filter(x=>myBookOf(x.book,cfgBooks)); if(!mine.length){ no('not on your books'); return; }
+        const best=mine.sort((a,b)=>toProb(a.price)-toProb(b.price))[0];
+        const offeredProb=toProb(best.price);
+        const row=baseRow({ game, sport, book:best.book, offeredRaw:fmtOdds(best.price), offeredProb, fairProb:fp, fairRaw:fmtOdds(americanOf(fp)), mktProb:fp, mktConsensus:fp,
+          mktSharp: sharp[k]!=null, gameInfo:startRow(start), apiKey:'oa-'+e.id+'-'+mk+'-'+k });
+        if(mk==='totals') rows.push(Object.assign(row,{ name:game, matchup:'Game total', side:/^under/i.test(best.name)?'U':'O', market:best.point+' Total', kind:'total' }));
+        else if(/^draw$/i.test(best.name)) rows.push(Object.assign(row,{ name:'Draw', team:home, matchup:home+' vs '+away, side:'', market:'Moneyline', kind:'moneyline' }));
+        else { const opp=best.name===home?away:home;
+          rows.push(Object.assign(row,{ name:best.name, team:best.name, matchup:best.name+' vs '+opp, side:'',
+            market: mk==='spreads' ? ((best.point>0?'+':'')+best.point+' Spread') : 'Moneyline', kind: mk==='spreads'?'spread':'moneyline' })); }
+      });
+    });
+  });
+  return {rows, skip};
+}
+/* SportsGameOdds v2: data[].odds{oddID:{statID,statEntityID,periodID,betTypeID,sideID,fairOdds,fairOverUnder,fairSpread,byBookmaker{book:{odds,overUnder,spread,available}}}}
+   Field names from their docs — the first real load confirms them (anything unreadable is counted, not guessed). */
+function sgoWords(statID){ return String(statID||'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()).replace(/\bTouchdowns\b/,'TDs'); }
+function sgoToRows(data, sport, cfgBooks, want){
+  const now=Date.now(), skip={}, rows=[], no=w=>{ skip[w]=(skip[w]||0)+1; };
+  ((data&&data.data)||[]).forEach(ev=>{
+    const st=ev.status||{}, start=Date.parse(st.startsAt); if(st.started||st.cancelled||!(start>now)){ no('started or cancelled'); return; }
+    const T=ev.teams||{}, H=T.home||{}, A=T.away||{}, sn=t=>String(((t.names||{}).short)||((t.names||{}).medium)||'?').toUpperCase(), ln=t=>((t.names||{}).long)||sn(t);
+    const game=sn(A)+' @ '+sn(H), P=ev.players||{};
+    Object.values(ev.odds||{}).forEach(o=>{
+      if(!o || o.cancelled || o.ended || o.started){ return; }
+      const per=o.periodID, bt=o.betTypeID, side=o.sideID, ent=o.statEntityID;
+      const isGame=['home','away','all'].includes(ent), player=!isGame && P[ent];
+      if(isGame ? !want.gl : !want.props) return;
+      if(!(per==='game' || (per==='reg' && isSoccer(sport)))){ no('part-game line'); return; }
+      if(!['ml','ml3way','sp','ou'].includes(bt)){ no(bt==='yn'?'yes/no props (no grader yet)':'bet type '+bt); return; }
+      if(!isGame && !player){ no('unknown player'); return; }
+      if(isGame && ent!=='all' && bt==='ou'){ no('team totals'); return; }
+      if(isGame && o.statID && o.statID!=='points'){ no('other game stat'); return; }
+      const fp=toProb(o.fairOdds); if(fp==null||!(fp>0&&fp<1)){ no('no fair price'); return; }
+      const line = bt==='ou' ? parseFloat(o.fairOverUnder!=null?o.fairOverUnder:o.bookOverUnder) : bt==='sp' ? parseFloat(o.fairSpread!=null?o.fairSpread:o.bookSpread) : null;
+      if((bt==='ou'||bt==='sp') && isNaN(line)){ no('no line'); return; }
+      const offers=Object.entries(o.byBookmaker||{}).filter(([bk,q])=>q && q.available!==false && q.odds!=null).map(([bk,q])=>({book:SGO_BOOKS[bk]||bk, price:q.odds,
+          line: bt==='ou'?parseFloat(q.overUnder):bt==='sp'?parseFloat(q.spread):null}))
+        .filter(x=>line==null || isNaN(x.line) || Math.abs(x.line-line)<1e-9);
+      const mine=offers.filter(x=>myBookOf(x.book,cfgBooks)); if(!mine.length){ no(offers.length?'not on your books':'no book price'); return; }
+      const best=mine.sort((a,b)=>toProb(a.price)-toProb(b.price))[0], offeredProb=toProb(best.price); if(offeredProb==null){ no('price unreadable'); return; }
+      const row=baseRow({ game, sport, book:best.book, offeredRaw:fmtOdds(typeof best.price==='string'?best.price:Number(best.price)), offeredProb, fairProb:fp, fairRaw:fmtOdds(americanOf(fp)),
+        mktProb:fp, mktConsensus:fp, gameInfo:startRow(start), apiKey:'sgo-'+ev.eventID+'-'+(o.oddID||[o.statID,ent,per,bt,side].join('-')) });
+      if(player){
+        const pl=player, tm=pl.teamID===H.teamID?sn(H):pl.teamID===A.teamID?sn(A):null;
+        rows.push(Object.assign(row,{ name:pl.name||((pl.firstName||'')+' '+(pl.lastName||'')).trim(), team:tm, matchup:game, side:side==='under'?'U':'O', market:line+' '+sgoWords(o.statID), kind:'prop' }));
+      } else if(bt==='ou') rows.push(Object.assign(row,{ name:ln(A)+' @ '+ln(H), matchup:'Game total', side:side==='under'?'U':'O', market:line+' Total', kind:'total' }));
+      else if(side==='draw') rows.push(Object.assign(row,{ name:'Draw', team:ln(H), matchup:ln(H)+' vs '+ln(A), side:'', market:'Moneyline', kind:'moneyline' }));
+      else { const me=side==='home'?H:A, op=side==='home'?A:H;
+        rows.push(Object.assign(row,{ name:ln(me), team:sn(me), matchup:sn(me)+' vs '+sn(op), side:'', market: bt==='sp'?((line>0?'+':'')+line+' Spread'):'Moneyline', kind: bt==='sp'?'spread':'moneyline' })); }
+    });
+  });
+  return {rows, skip, notice:data&&data.notice, next:data&&data.nextCursor, games:((data&&data.data)||[]).length};
+}
+async function srcFetch(q){
+  const res=await fetch(API_BASE+'/src/odds?'+q,{headers:apiHeaders()});
+  if(res.status===401) throw new Error('locked — enter the screener passphrase below the load bar');
+  if(res.status===404) throw new Error('the Worker doesn\'t have this yet — run npx wrangler deploy on the Mac');
+  let quota={}; try{ quota=JSON.parse(res.headers.get('x-src-quota')||'{}'); }catch(e){}
+  const cached=res.headers.get('x-src-cached')==='1';
+  if(!res.ok){ let j={}; try{ j=await res.json(); }catch(e){} throw new Error((j.error||('Worker returned '+res.status))+(j.detail?' — '+String(j.detail).slice(0,160):'')); }
+  return {data:await res.json(), quota, cached};
+}
+function finishSrcLoad(srcKey, rows, skip, extra){
+  mergeRows(srcKey, rows); if(boardSrc!=='api') showBoardSrc('api');
+  document.getElementById('savedNote').textContent='';
+  const c=cfgRead(); render(audit(lastRows,c),c); save(); autoSaveBoard();
+  const placeable=lastRows.filter(r=>r.src===srcKey && r.pass && r.stake>0).length;
+  const sk=Object.entries(skip).sort((a,b)=>b[1]-a[1]).map(([k,v])=>v+' '+k).join(' · ');
+  const msg=document.getElementById('srcMsg'), out=document.getElementById('srcOut');
+  if(msg) msg.textContent='✓ '+rows.length+' bets on the board, '+placeable+' La Contadora would place'+(extra?' · '+extra:'');
+  if(out) out.innerHTML=sk?'<div class="meta">Left out: '+esc(sk)+'</div>':'';
+  paintSources();
+  if(lastRows.length) attachGameInfo(lastRows).then(async ()=>{ await attachAutoGrades(lastRows); const c2=cfgRead(); render(audit(lastRows,c2),c2); autoSaveBoard(); });
+}
+async function loadOddsSrc(id){
+  const msg=document.getElementById('srcMsg'), btns=[...document.querySelectorAll('.oddsLoad')];
+  if(msg) msg.textContent='loading…'; btns.forEach(b=>b.disabled=true);
+  const books=cfgRead().books;
+  try{
+    if(id==='oddsapi'){
+      const sp=document.getElementById('oaSport').value, mk=[['oaMkH','h2h'],['oaMkS','spreads'],['oaMkT','totals']].filter(([i])=>document.getElementById(i).checked).map(x=>x[1]);
+      if(!mk.length) throw new Error('pick at least one bet type');
+      const rg=document.getElementById('oaRgX').checked?'us,us_ex':'us';
+      const {data, quota, cached}=await srcFetch('src=oddsapi&sport='+encodeURIComponent(OA_SPORTS[sp])+'&markets='+mk.join(',')+'&regions='+rg);
+      const left=quota['x-requests-remaining'], used=quota['x-requests-last'];
+      if(!cached && left!=null){ try{ localStorage.setItem('mbev.oaq', JSON.stringify({left:+left, at:Date.now()})); }catch(e){} }
+      const {rows, skip}=oaToRows(data, sp, books);
+      const bk=[...new Set((Array.isArray(data)?data:[]).flatMap(e=>(e.bookmakers||[]).map(b=>b.title||b.key)))];
+      finishSrcLoad('api:oddsapi:'+sp, rows, skip, (cached?'saved answer, no credits':(used!=null?used+' credits':'')+(left!=null?' · '+left+' left':''))+(bk.length?' · books: '+bk.join(', '):''));
+      oaCost();
+    } else {
+      const sp=document.getElementById('sgoSport').value, n=+document.getElementById('sgoN').value;
+      const want={props:document.getElementById('sgoProps').checked, gl:document.getElementById('sgoGl').checked};
+      let all=[], skip={}, notice='', cursor=null, cachedAll=true, games=0;
+      for(let page=0; page<n/10; page++){
+        const {data, cached}=await srcFetch('src=sgo&league='+encodeURIComponent(SGO_LEAGUES[sp])+'&limit=10'+(cursor?'&cursor='+encodeURIComponent(cursor):''));
+        cachedAll=cachedAll&&cached; const r=sgoToRows(data, sp, books, want);
+        all=all.concat(r.rows); games+=r.games; Object.entries(r.skip).forEach(([k,v])=>skip[k]=(skip[k]||0)+v); notice=r.notice||notice; cursor=r.next;
+        if(!cursor) break;
+      }
+      finishSrcLoad('api:sgo:'+sp, all, skip, games+' games'+(cachedAll?' · saved answer, nothing counted':'')+(notice?' · their note: '+notice:''));
+    }
+  }catch(e){ if(msg) msg.textContent='✗ '+e.message; }
+  finally{ btns.forEach(b=>b.disabled=false); }
 }
 async function refreshBudget(){
   try{ const res=await fetch(API_BASE+'/budget',{headers:apiHeaders()}); if(res.ok){ const b=await res.json(); showBudget(b); window._bpLeft=b.left; paintSources(); } }catch(e){}
@@ -5282,7 +5457,7 @@ async function loadApi(fresh){
     } else {
       const typeName={moneyline:'moneylines',spread:'spreads',total:'totals'}[type];
       // v2.67: every sport with game-line IDs (soccer on hold: 3-way moneyline, many leagues)
-      if(!GAMELINE_SPORTS.has(sport)) throw new Error(typeName[0].toUpperCase()+typeName.slice(1)+' aren\'t set up for '+sport+' yet (soccer is on hold)');
+      if(!GAMELINE_SPORTS.has(sport)) throw new Error(sport==='SOCCER' ? 'Soccer game lines from BettingPros come next (one 3-call look at their soccer markets first). For soccer lines now: Sources → Sportsbook API or The Odds API' : typeName[0].toUpperCase()+typeName.slice(1)+' aren\'t set up for '+sport+' yet');
       data=await apiGet('/'+type+'?sport='+encodeURIComponent(sport)+booksParam+(fresh?'&fresh=1':''));
       rows=gameRowsToInternal(data, type, sport);
       msg = rows.length ? 'Loaded '+rows.length+' '+sport+' '+typeName+' (best price per side across your books)'
