@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.27</title>
+<title>0xBeta Screener v3.28</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -730,7 +730,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.27</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.28</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1326,7 +1326,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 
 </div>
 <script>
-const SCREENER_VERSION='v3.27';
+const SCREENER_VERSION='v3.28';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -1669,7 +1669,9 @@ function cfgReadBase(){
 /* v2.64: one bet, two sources. An API row (BettingPros' projection model) that also appears on the
    pasted Market EV page gets BettingPros' sharp fair price as its market check, and only the
    better-priced of the two rows is shown. Different teams' order in "A @ B" doesn't matter. */
-function gameKey(g){ const m=String(g||'').match(/([A-Z]{2,4})\s*(?:@|-|vs\.?)\s*([A-Z]{2,4})/); return m?[normAbbr(m[1]),normAbbr(m[2])].sort().join('-'):String(g||'').toLowerCase(); }
+const _gkMemo=new Map();
+function gameKey(g){ const k=String(g||''); let v=_gkMemo.get(k); if(v===undefined){ v=gameKeyRaw(k); if(_gkMemo.size>20000) _gkMemo.clear(); _gkMemo.set(k,v); } return v; }
+function gameKeyRaw(g){ const m=String(g||'').match(/([A-Z]{2,4})\s*(?:@|-|vs\.?)\s*([A-Z]{2,4})/); return m?[normAbbr(m[1]),normAbbr(m[2])].sort().join('-'):String(g||'').toLowerCase(); }
 function linkSources(rows){
   const mev=new Map();
   rows.forEach(r=>{ delete r.hiddenDup; if(r.src==='paste:mev') mev.set(r.sport+'|'+coreKey(r.name,r.market,r.side), r); });
@@ -1694,7 +1696,8 @@ function isLongShot(x){
   if(/GOAL/.test(m) && /NHL|MLS|SOCCER/.test(x.sport||'')) return true;
   return false;
 }
-function audit(rows,cfg){
+function audit(rows,cfg){ _obMemo=new Map(); try{ return auditCore(rows,cfg); } finally{ _obMemo=null; } }   // v3.28
+function auditCore(rows,cfg){
   linkSources(rows);
   pairUp(rows);
   const gameCount={};
@@ -3274,7 +3277,9 @@ function betStillOpen(b){
   const d=(Date.parse(slate)-Date.parse(b.date))/86400e3;
   return d>=0 && d<=1;
 }
-function onBoard(b){ const sl=document.getElementById('slate').value; return b.date===sl || gameDayOf(b)===sl || betStillOpen(b); }   // v2.86: game day too
+function onBoardRaw(b){ const sl=document.getElementById('slate').value; return b.date===sl || gameDayOf(b)===sl || betStillOpen(b); }   // v2.86: game day too
+let _obMemo=null;   // v3.28: filled only while audit() runs
+function onBoard(b){ if(!_obMemo) return onBoardRaw(b); let v=_obMemo.get(b); if(v===undefined){ v=onBoardRaw(b); _obMemo.set(b,v); } return v; }
 /* v2.61: bets you removed / cancelled — kept for the record (and any money lost cancelling) */
 let removedBets=[];
 function loadRemoved(){ try{ removedBets=JSON.parse(localStorage.getItem('mbev.removed')||'[]'); }catch(e){ removedBets=[]; } }
