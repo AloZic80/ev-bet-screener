@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.33</title>
+<title>0xBeta Screener v3.34</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -730,7 +730,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.33</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.34</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1326,7 +1326,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 
 </div>
 <script>
-const SCREENER_VERSION='v3.33';
+const SCREENER_VERSION='v3.34';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -3091,14 +3091,24 @@ function statForMarket(box, playerName, market, sport){
   }
   return null;
 }
+/* v3.34: read the line and side. "9+ Yes" = at least 9 = Over 8.5; "No" on a "+" line = Under 8.5.
+   Falls back to the saved line when the market text has no number (Novig fills). */
+function lineSide(market, betnow, fallbackLine){
+  const m=String(market||''), bn=String(betnow||'').trim();
+  const pl=m.match(/(\d+(?:\.\d+)?)\s*\+/);
+  let line=null, side;
+  if(pl){ line=parseFloat(pl[1])-0.5; side=/\bNO\b|^U/i.test(bn)?'U':'O'; }
+  else { const x=m.match(/[\d.]+/); if(x) line=parseFloat(x[0]); side=bn.toUpperCase().startsWith('U')?'U':'O'; }
+  if(line===null && fallbackLine!=null && !isNaN(+fallbackLine)){ line=+fallbackLine; side=bn.toUpperCase().startsWith('U')?'U':'O'; }
+  return line===null?null:{line, side};
+}
 function gradeBet(b, box){
   if(!box) return null;
   const val = statForMarket(box, b.name, b.market, b.sport);
   if(val===null) return null;
-  const lineMatch=(b.market||'').match(/([\d.]+)/);
-  const line = lineMatch?parseFloat(lineMatch[1]):null;
-  const side = (b.betnow||'').trim().toUpperCase().startsWith('U') ? 'U' : 'O';
-  if(line===null) return null;
+  const ls=lineSide(b.market, b.betnow, b.line);
+  if(!ls) return null;
+  const line=ls.line, side=ls.side;
   const won = side==='O' ? val>line : val<line;
   return {val, line, side, won};
 }
@@ -6712,8 +6722,8 @@ function qualOK(text, stat){ return QUALS_.every(q=>!q.test(us_(text)) || q.test
 function prettyStat(t){ return us_(t).replace(/\s+/g,' ').trim().toLowerCase().replace(/\b\w/g,c=>c.toUpperCase()); }
 function normFillBet(f){   // Novig: "<Player> <line> <STAT_TYPE>" → player + stat (older Workers sent only the description)
   const b=f&&f.bet; if(!b || f.book!=='novig' || b.player || !b.desc) return f;
-  const m=String(b.desc).match(/^\s*(.*?[A-Za-z].*?)\s+(\d+(?:\.\d+)?)\s+([A-Za-z][A-Za-z0-9_ +&]*)\s*$/);
-  if(m && !/@|\bvs\.?\b|\bat\b/i.test(m[1])){ b.kind='prop'; b.player=m[1].trim(); b.statText=us_(m[3]).trim(); if(b.line==null) b.line=parseFloat(m[2]); }
+  const m=String(b.desc).match(/^\s*(.*?[A-Za-z].*?)\s+(\d+(?:\.\d+)?)(\+?)\s+([A-Za-z][A-Za-z0-9_ +&,]*)\s*$/);   // v3.34: "9+" lines too
+  if(m && !/@|\bvs\.?\b|\bat\b/i.test(m[1])){ b.kind='prop'; b.player=m[1].trim(); b.statText=us_(m[4]).trim(); if(b.line==null) b.line=m[3]?parseFloat(m[2])-0.5:parseFloat(m[2]); }
   return f;
 }
 function comboFam(s){ const P=/\bpoints?\b|\bpts\b/i.test(s), R=/\brebounds?\b|\breb\b/i.test(s), A=/\bassists?\b|\bast\b/i.test(s);   // v3.02: any word order
