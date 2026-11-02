@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.34</title>
+<title>0xBeta Screener v3.35</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -730,7 +730,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.34</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.35</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1326,7 +1326,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 
 </div>
 <script>
-const SCREENER_VERSION='v3.34';
+const SCREENER_VERSION='v3.35';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -3425,7 +3425,7 @@ function renderLog(){
       tb.appendChild(tr); return;
     }
     tr.innerHTML=
-      '<td class="meta" style="white-space:nowrap">'+esc(b.date)+playedHtml(b)+'</td>'+
+      '<td class="meta" style="white-space:nowrap">'+esc(b.date)+'<div class="meta">bet '+esc(betTimeTxt(b))+'</div>'+(b.start?'':'<div class="meta" style="color:var(--warn)">game time unknown</div>')+playedHtml(b)+whyHtml(b)+'</td>'+
       '<td><div class="pick">'+esc(b.name)+'</div><div class="meta" style="color:var(--ink)" title="'+esc(b.betnow||'')+'">'+esc(betLabel(b))+' <span class="meta">'+esc(fmtOdds(b.odds))+'</span></div>'+srcTagHtml(b)+liveChipHtml(b)+fillDiffHtml(b,i)+
       '<div class="meta">'+(bookLogo(b.book)?logoTag(b.book,'sm')+' ':'')+'<span class="book">'+esc(bookLabel(b.book))+'</span></div></td>'+
       '<td><span class="sport s-'+esc(b.sport)+'">'+esc(b.sport)+'</span></td>'+
@@ -4329,6 +4329,10 @@ function srcTagHtml(b){   // v2.86: where the bet came from
   if(b.autoFrom) t=['auto · '+({kalshi:'Kalshi',poly:'Polymarket',novig:'Novig'}[b.autoFrom]||b.autoFrom), 'automatically from your '+b.autoFrom+' fill'+(t?' (board row: '+t[1]+')':'')];
   if(!t) return '';
   return '<span class="src-tag" title="Saved '+t[1]+'">'+t[0]+'</span>'; }
+/* v3.35: when the bet was made (or first saved here), and why a bet is still "?" */
+function betTimeTxt(b){ const t=loggedAtOf(b); return isNaN(t)?'time unknown':new Date(t).toLocaleString('en-US',{timeZone:'America/Chicago',month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}); }
+function whyHtml(b){ if(b.result!=='?' || !b.why) return ''; const w=b.why;
+  return '<div class="meta" style="color:var(--warn)" title="Why the grader could not finish this bet">why ?: '+esc(w.reason)+(w.stat!=null?' · stat read '+w.stat:'')+(w.line?' · line '+w.line.line+' '+w.line.side:'')+(w.market?' · market "'+esc(w.market)+'"':'')+'</div>'; }
 function playedHtml(b){   // v2.84: "plays" before kickoff, "in progress" until graded, "played" once settled
   if(b.wrongGame18 && !b.start) return '<div style="font-size:11.5px;color:var(--warn)" title="This book fill was first attached to '+esc(b.wrongGame18)+', which had already been played">game unknown · the book\'s result will grade it</div>';
   if(!b.start || isNaN(Date.parse(b.start))) return '';
@@ -4336,7 +4340,7 @@ function playedHtml(b){   // v2.84: "plays" before kickoff, "in progress" until 
   const day=new Date(t).toLocaleDateString('en-US',{...opt,weekday:'short',month:'numeric',day:'numeric'});
   const tm=new Date(t).toLocaleTimeString('en-US',{...opt,hour:'numeric',minute:'2-digit'});
   const done=b.sold || b.result==='win' || b.result==='loss' || b.result==='push';
-  const txt = Date.now()<t ? 'plays '+day+' · '+tm : done ? 'played '+day : b.result==='?' ? 'final · can\'t auto-grade · '+day : 'in progress · '+day;
+  const txt = (Date.now()<t ? 'plays ' : done ? 'played ' : b.result==='?' ? 'final · can\'t auto-grade · ' : 'in progress · ')+day+' · '+tm;   // v3.35: game time always
   return '<div style="font-size:11.5px;'+(d!==b.date?'color:var(--warn)':'')+'" title="game day">'+esc(txt)+'</div>';
 }
 async function autoGradeLog(){
@@ -4371,15 +4375,22 @@ async function autoGradeLog(){
         const old=findGame(E,b.game)||findGameAny(E,b.game);
         if(old && !isNaN(at) && Date.parse(old.date)<at-5*3600e3){ b.wrongGame18=b.game; b.game=''; changed++; }
         continue; }
-      const gi=gameStatusOf(ev); if(!gi) continue;
+      const gi=gameStatusOf(ev); if(!gi){ if(!b.why || b.why.reason!=='game not found on ESPN'){ b.why={at:Date.now(), reason:'game not found on ESPN', market:b.market||''}; changed++; } continue; }
       // v2.80: keep the real start time and teams, so the bet counts on the day the game is played
       if(gi.startISO && b.start!==gi.startISO){ b.start=gi.startISO; changed++; }
       if(!teamsOf(b.game)){ const a=gi.teams.find(t=>t.ha==='away'), h=gi.teams.find(t=>t.ha==='home'); if(a&&h){ b.game=a.abbr+' @ '+h.abbr; changed++; } }
       if(GL_KINDS.test(b.kind||'') && b.kind!=='total' && b.team && !gi.teams.some(t=>t.abbr===normAbbr(b.team))){   // v3.18: e.g. CSUS → SAC
         const t=gi.teams.find(x=>teamNameIs({abbreviation:x.abbr,name:x.nick,shortDisplayName:x.name,location:x.loc}, b.name)); if(t){ b.team=t.abbr; changed++; } }
       if(gi.state!=='post') continue;
-      const g = GL_KINDS.test(b.kind||'') ? gradeGameLine(b,ev) : gradeBet(b, await fetchBoxscore(b.sport, gi.eventId, true));
-      if(!g){ if(b.result!=='?'){ b.result='?'; changed++; } continue; }
+      const box = GL_KINDS.test(b.kind||'') ? null : await fetchBoxscore(b.sport, gi.eventId, true);
+      const g = GL_KINDS.test(b.kind||'') ? gradeGameLine(b,ev) : gradeBet(b, box);
+      if(!g){ const sv = box ? statForMarket(box, b.name, b.market, b.sport) : undefined;
+        const why={at:Date.now(), reason: GL_KINDS.test(b.kind||'') ? 'game line not graded' : (!box ? 'ESPN box score did not load' : (sv===null ? 'stat not found in the box score for this player and market' : 'line or side not read from the market text')),
+          stat: sv===undefined ? null : sv, market:b.market||'', line:lineSide(b.market,b.betnow,b.line)};
+        if(!b.why || b.why.reason!==why.reason || b.why.stat!==why.stat){ b.why=why; changed++; }
+        if(b.result!=='?'){ b.result='?'; changed++; }
+        continue; }
+      delete b.why;
       b.result = g.push?'push':(g.won?'win':'loss'); changed++;
     }
     if(changed){ saveLog(); renderLog(); renderPerf(); refresh(); }
