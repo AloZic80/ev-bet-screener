@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.28</title>
+<title>0xBeta Screener v3.29</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -730,7 +730,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.28</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.29</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1326,7 +1326,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 
 </div>
 <script>
-const SCREENER_VERSION='v3.28';
+const SCREENER_VERSION='v3.29';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -2991,7 +2991,8 @@ function nflCatKind(cat){
 }
 const NFL_STAT_RULES=[
   // [market pattern, [[table, label, part of "a/b"]...]]  — first match wins, so combos come first
-  [/FIRST|LAST|2\+|TWO OR MORE/, null],                                   // first / last / 2+ TD scorer: can't tell from a box score
+  [/FIRST|LAST|2\+|TWO OR MORE/, null],
+  [/SACK/, [['defensive','SACKS']]],                                       // v3.29: "Over 0.5 Defense Sacks" — ESPN defensive table, SACKS column
   [/PASS\w*\s*(\+|&|AND)?\s*RUSH\w*\s*(YD|YARD)/, [['passing','YDS'],['rushing','YDS']]],
   [/(RUSH|RSH)\w*\s*(\+|&|AND)?\s*REC/, [['rushing','YDS'],['receiving','YDS']]],
   [/PASS\w*.*(YD|YARD)/, [['passing','YDS']]],
@@ -4242,8 +4243,7 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
   const tiles=order.map(tile).join('');
   const now=tot.net, best=now+tot.ded+tot.toWin, worst=now-(tot.riding-tot.ded);
   const sgn=v=>v>=0?up(v):dn(-v);
-  el.innerHTML='<span class="tb-k"><span>TODAY <button class="tb-espn" type="button" title="Refresh scores and results from ESPN now (no BettingPros calls)'+(espnAt?' — last '+new Date(espnAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+'">⟳</button></span><b class="tb-tot">'+usd(tot.bet)+'</b><span class="tb-n">'+tot.n+' bet'+(tot.n===1?'':'s')+'</span>'+(tot.n?'<span class="tb-st" title="played = has a result · playing = game started, no result yet · to play = game not started">✓ '+tot.played+' played</span><span class="tb-st live">▶ '+tot.playing+' playing</span><span class="tb-st">⏳ '+tot.toPlay+' to play</span>':'')+(Math.abs(now)<0.005?'<span class="tb-pill even" title="even">$0.00</span>':'<span class="tb-pill '+(now>0?'good':'bad')+'" title="Worst-case exposure: assumes every open bet loses (won − lost − money on the line). Hope for the best, expect the worst.">'+(now>0?'+':'−')+usd(now)+'</span>')+'</span>'+tiles+
-    '<div class="tb-t all"><div class="tb-l1"><b>All</b></div>'+line2(tot)+(tot.open?'<div class="tb-l2" title="best = every open bet wins · worst = every open bet loses (money on the line is already counted as gone)">best '+sgn(best)+' · worst '+sgn(worst)+'</div>':'')+'<div class="tb-motto" title="Worst-case exposure: every open bet counts as LOST until it wins">Hope for the best, expect the worst.</div></div>';
+  el.innerHTML='<span class="tb-k"><span>TODAY <button class="tb-espn" type="button" title="Refresh scores and results from ESPN now (no BettingPros calls)'+(espnAt?' — last '+new Date(espnAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+'">⟳</button></span><b class="tb-tot">'+usd(tot.bet)+'</b><span class="tb-n">'+tot.n+' bet'+(tot.n===1?'':'s')+'</span>'+(tot.n?'<span class="tb-st" title="played = has a result · playing = game started, no result yet · to play = game not started">✓ '+tot.played+' played</span><span class="tb-st live">▶ '+tot.playing+' playing</span><span class="tb-st">⏳ '+tot.toPlay+' to play</span>':'')+(Math.abs(now)<0.005?'<span class="tb-pill even" title="even">$0.00</span>':'<span class="tb-pill '+(now>0?'good':'bad')+'" title="Worst-case exposure: assumes every open bet loses (won − lost − money on the line). Hope for the best, expect the worst.">'+(now>0?'+':'−')+usd(now)+'</span>')+'</span>'+'<div class="tb-t all"><div class="tb-l1"><b>All</b></div>'+line2(tot)+(tot.open?'<div class="tb-l2" title="best = every open bet wins · worst = every open bet loses (money on the line is already counted as gone)">best '+sgn(best)+' · worst '+sgn(worst)+'</div>':'')+'<div class="tb-motto" title="Worst-case exposure: every open bet counts as LOST until it wins">Hope for the best, expect the worst.</div></div>'+tiles;
 }
 /* v2.73: grade finished games in the background (ESPN, no BettingPros calls) */
 let agBusy=false; const sbStamp={};
@@ -6122,7 +6122,7 @@ document.getElementById('plAdd').addEventListener('click',()=>{
 
 /* ============ v2.79: + Add a bet — a bet found in the BettingPros app, no API calls ============ */
 const AB_STATS={
-  NFL:['Passing Yards','Passing Attempts','Passing Completions','Passing Touchdowns','Interceptions','Rushing Yards','Rushing Attempts','Receiving Yards','Receptions','Rushing Receiving Yards','Anytime Touchdown','Longest Reception','Longest Rush'],
+  NFL:['Passing Yards','Passing Attempts','Passing Completions','Passing Touchdowns','Interceptions','Rushing Yards','Rushing Attempts','Receiving Yards','Receptions','Defensive Sacks','Rushing Receiving Yards','Anytime Touchdown','Longest Reception','Longest Rush'],
   NBA:['Points','Rebounds','Assists','Points Rebounds Assists','Points Rebounds','Points Assists','Rebounds Assists','Three Pointers Made','Steals','Blocks','Turnovers'],
   MLB:['Strikeouts','Hits','Runs','RBIs','H+R+RBI','Earned Runs','Pitching Outs'],
   NHL:['Points','Goals','Assists','Shots on Goal','Saves']
@@ -6138,15 +6138,15 @@ async function abLoadGames(){
   sel.innerHTML='<option value="">loading…</option>';
   $ab('abStats').innerHTML=(AB_STATS[sp]||[]).map(x=>'<option value="'+esc(x)+'">').join('');
   let evs=[]; try{ evs=await fetchScoreboard(sp); }catch(e){}
-  try{ const today=ctDay(Date.now()), more=await Promise.all([0,1,2,3].map(n=>fetchScoreboardDay(sp, dayPlus(today,n))));   // v2.95: the next few days too
+  try{ const today=ctDay(Date.now()), more=await Promise.all([-3,-2,-1,0,1,2,3].map(n=>fetchScoreboardDay(sp, dayPlus(today,n))));   // v2.95: the next few days too
        const seen=new Set((evs||[]).map(e=>String(e.id))); evs=(evs||[]).concat([].concat(...more).filter(e=>!seen.has(String(e.id)) && seen.add(String(e.id)))); }catch(e){}
   if($ab('abSport').value!==sp) return;
-  abEvents=(evs||[]).filter(ev=>{ const g=gameStatusOf(ev); return g && g.state!=='post'; })
+  abEvents=(evs||[]).filter(ev=>!!gameStatusOf(ev))
     .sort((a,b)=>Date.parse(a.date)-Date.parse(b.date));
   sel.innerHTML = abEvents.length ? abEvents.map(ev=>{ const t=abTeams(ev), g=gameStatusOf(ev);
-      const when=g.state==='in' ? 'LIVE '+g.detail : g.timeCT.replace(/\s\d\d\/\d\d\/\d\d/,'');
+      const when=g.state==='in' ? 'LIVE '+g.detail : g.state==='post' ? 'final · '+g.timeCT.replace(/\s\d\d\/\d\d\/\d\d/,'') : g.timeCT.replace(/\s\d\d\/\d\d\/\d\d/,'');
       return '<option value="'+esc(String(ev.id))+'">'+esc(t?t.away+' @ '+t.home:ev.shortName||ev.name)+' · '+esc(when)+'</option>'; }).join('')
-    : '<option value="">no upcoming '+esc(sp)+' games on ESPN</option>';
+    : '<option value="">no '+esc(sp)+' games on ESPN from 3 days back to 3 ahead</option>';
   abFields();
 }
 function abFields(){
