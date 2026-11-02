@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.37</title>
+<title>0xBeta Screener v3.38</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -730,7 +730,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.37</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.38</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1326,7 +1326,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 
 </div>
 <script>
-const SCREENER_VERSION='v3.37';
+const SCREENER_VERSION='v3.38';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -2376,6 +2376,21 @@ function rowFromBet(L){   // v2.71: a saved bet, shaped like a board row, for th
   return {name:L.name, market:L.market, side:L.side||sideOf(L)||'', book:L.book, offeredRaw:L.odds, offeredProb:toProb(L.odds), stake:+L.stake||0,
     fairProb:fairP, mktProb:L.mkt!=null?L.mkt:null, net:L.net, kind:L.kind, sport:L.sport, idx:-1, flags:[], pass:true, team:L.team, apiKey:L.apiKey};
 }
+/* v3.38: for a bet the grader can't finish (?), you can mark it WIN or LOSS by hand, and the book's bet ID shows here */
+function ebResultHtml(b){
+  const idTxt = b.fillRef
+    ? '<span class="meta">Book bet ID</span> <code class="eb-id" style="font-size:12px;user-select:all">'+esc(b.fillRef)+'</code> <button type="button" class="log sm eb-copy">copy</button>'
+    : '<span class="meta">No book ID: this book has no API link (FanDuel, DraftKings, etc.), so grade it by hand below</span>';
+  const manual = b.gradedBy==='manual';
+  const status = manual ? 'Graded by you: '+(b.result==='win'?'WIN':'LOSS') : (b.result==='?' ? "Can't auto-grade" : '');
+  const can = b.result==='?' || manual;
+  const btns = can
+    ? '<button type="button" class="log sm eb-res" data-res="win">Mark WIN</button> <button type="button" class="log sm eb-res" data-res="loss">Mark LOSS</button>'
+      + (manual ? ' <button type="button" class="log sm undo eb-clear">Clear my result</button>' : '')
+    : '';
+  return '<div class="eb-result" style="width:100%;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px">'
+    + idTxt + (status ? ' <span class="meta">· '+esc(status)+'</span>' : '') + ' ' + btns + '</div>';
+}
 function openBetEditor(tr, r, opt){
   opt=opt||{};
   const isCard=tr.classList.contains('pcard')||tr.classList.contains('ab-host');   // v2.79: + Add a bet hosts one too   // v2.69: the card holds its own editor
@@ -2400,10 +2415,20 @@ function openBetEditor(tr, r, opt){
       '<label>@ <input class="eb-pct" type="number" step="0.1" placeholder="62" style="width:60px">%</label>'+
       '<label title="Type exactly what the slip says (what you get back if it wins: cost + profit; a number below the cost is read as profit). What you type stays — Cost + To win is the real deal, the @ % stays as the listed price.">To win $ <input class="eb-win" type="number" step="0.01" placeholder="3.93"></label>'+
       '<span class="pm-calc eb-calc"></span></span>'+
-    '<span class="eb-check"></span><span class="meta eb-rec"></span>'+
+    (opt.edit?ebResultHtml(opt.edit):'')+'<span class="eb-check"></span><span class="meta eb-rec"></span>'+
     '<button class="log sm eb-save">'+(opt.edit?'Save changes':'Save bet')+'</button> <button class="log sm undo eb-cancel">Cancel</button>'+
     '<span class="meta eb-msg"></span></div>'+(isCard?'':'</td>');
   if(isCard) tr.appendChild(ed); else tr.after(ed);
+  if(opt.edit){ const B=opt.edit;   // v3.38: manual result + copy the book's bet ID
+    ed.querySelectorAll('button.eb-res').forEach(btn=>btn.addEventListener('click',()=>{
+      B.result=btn.dataset.res; B.gradedBy='manual'; B.resultSrc='you'; delete B.why;
+      saveLog(); renderLog(); renderPerf(); renderTodayBar(); refresh(); }));
+    const clr=ed.querySelector('button.eb-clear');
+    if(clr) clr.addEventListener('click',()=>{ delete B.result; delete B.gradedBy; delete B.resultSrc;
+      saveLog(); renderLog(); renderPerf(); renderTodayBar(); refresh(); });
+    const cp=ed.querySelector('button.eb-copy');
+    if(cp) cp.addEventListener('click',async()=>{ try{ await navigator.clipboard.writeText(String(B.fillRef||'')); cp.textContent='copied'; }catch(e){ cp.textContent='select & copy'; } });
+  }
   // v2.71: % mode starts filled in — Cost = the screener's stake (or what you saved), @ % = the price
   { const pr0=r.offeredProb!=null?r.offeredProb:toProb(r.offeredRaw);
     if(r.stake>0) ed.querySelector('.eb-cost').value=(+r.stake).toFixed(2);
@@ -6881,6 +6906,7 @@ async function syncFills(force){
         const c=logged.filter(b=>!b.sold && !b.fillRef && LIVE_BOOK(b.book)===st.book && b.result!=='win' && b.result!=='loss' && betMatches(st.bet,b));
         if(c.length===1){ bets=c; noteFillRef(c[0],{book:st.book, ref:st.ref, side:st.side||null}); changed=true; } }
       bets.forEach(b=>{
+        if(b.gradedBy==='manual') return;   // v3.38: your own result wins
         let res=null;
         if(st.book==='kalshi'){ const r=String(st.result||''); res = r==='void'||r==='scalar' ? 'push' : (r==='yes'||r==='no') ? (r===(b.fillSide||st.side||'yes')?'win':'loss') : null; }
         else if(st.book==='poly'){
