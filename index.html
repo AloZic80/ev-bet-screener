@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.36</title>
+<title>0xBeta Screener v3.37</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -730,7 +730,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.36</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.37</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1326,7 +1326,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 
 </div>
 <script>
-const SCREENER_VERSION='v3.36';
+const SCREENER_VERSION='v3.37';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -3392,7 +3392,7 @@ function resultBadge(b){
   if(b.sold){ const pl=b.sold.price-(b.stake||0);
     return '<span class="tag t-sold">SOLD $'+Number(b.sold.price).toFixed(2)+'</span><div class="meta">'+(pl>=0?'+':'−')+'$'+Math.abs(pl).toFixed(2)+' · excluded from calibration</div>'; }
   if(b.result===undefined) return '<span class="meta">—</span>';
-  if(b.result==='?') return '<span class="tag t-warn" title="Couldn\'t find that stat automatically">?</span>';
+  if(b.result==='?'){ const w=b.why||{}; const tip=(w.reason||"Couldn't find that stat automatically")+(w.stat!=null?' · stat read '+w.stat:'')+(w.market?' · market "'+w.market+'"':''); return '<span class="tag t-warn" title="'+esc(tip)+'">? ⓘ</span>'; }
   if(b.result==='pending') return '<span class="tag t-live">pending</span>';
   if(b.result==='push') return '<span class="tag t-warn" title="Landed exactly on the line — stake back">PUSH</span>';
   return b.result==='win' ? '<span class="tag" style="background:var(--live-bg);color:var(--live)">WIN</span>'
@@ -4331,7 +4331,7 @@ function srcTagHtml(b){   // v2.86: where the bet came from
   return '<span class="src-tag" title="Saved '+t[1]+'">'+t[0]+'</span>'; }
 /* v3.35: when the bet was made (or first saved here), and why a bet is still "?" */
 function betTimeTxt(b){ const t=loggedAtOf(b); return isNaN(t)?'time unknown':new Date(t).toLocaleString('en-US',{timeZone:'America/Chicago',month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}); }
-function whyHtml(b){ if(b.result!=='?' || !b.why) return ''; const w=b.why;
+function whyHtml(b){ return ''; /* v3.37: why text moved to the ? badge tooltip */ const w=b.why;
   return '<div class="meta" style="color:var(--warn)" title="Why the grader could not finish this bet">why ?: '+esc(w.reason)+(w.stat!=null?' · stat read '+w.stat:'')+(w.line?' · line '+w.line.line+' '+w.line.side:'')+(w.market?' · market "'+esc(w.market)+'"':'')+'</div>'; }
 function playedHtml(b){   // v2.84: "plays" before kickoff, "in progress" until graded, "played" once settled
   if(b.wrongGame18 && !b.start) return '<div style="font-size:11.5px;color:var(--warn)" title="This book fill was first attached to '+esc(b.wrongGame18)+', which had already been played">game unknown · the book\'s result will grade it</div>';
