@@ -5086,19 +5086,22 @@ function showBudget(b){
 let srcInfo=null;
 async function loadSources(){
   try{ const r=await fetch(API_BASE+'/src/status',{headers:apiHeaders()}); if(r.ok) srcInfo=(await r.json()).sources||null; }catch(e){}
+  try{ const u=await fetch(API_BASE+'/oddspapi/usage',{headers:apiHeaders()}); window._opUsage=await u.json(); }catch(e){}
   paintSources();
 }
 function paintSources(){
   const el=document.getElementById('srcBar'); if(!el) return;
-  if(!srcInfo){ el.innerHTML=''; return; }
   const left=window._bpLeft;
-  el.innerHTML='<span class="k">SOURCES</span>'+srcInfo.map(x=>{
+  el.innerHTML='<span class="k">SOURCES</span>'+(srcInfo||[]).map(x=>{
     const sb = x.id==='sbapi' && sbLeft();
     const oq = x.id==='oddsapi' && oaLeft();
     const sub = x.id==='bettingpros' ? (left!=null?left+' left today':'') : sb ? sb : oq ? oq : x.key ? (x.loads?'on':'key set · test it') : 'add key';
     return '<button type="button" class="src-chip '+(x.key?'on':'off')+'" data-src="'+esc(x.id)+'">'+esc(x.name)+(sub?' <small>'+esc(sub)+'</small>':'')+'</button>'; }).join('');
+  const ou=window._opUsage; const opSub = ou && ou.limit ? ou.left+' left this month' : 'usage ?';
+  el.insertAdjacentHTML('beforeend','<button type="button" class="src-chip on" data-src="oddspapi">OddsPapi <small>'+esc(opSub)+'</small></button>');
 }
 async function openSource(id){
+  if(id==='oddspapi'){ openOddsPapi(); return; }
   const pn=document.getElementById('srcPanel'), x=(srcInfo||[]).find(s=>s.id===id); if(!pn||!x) return;
   if(pn.style.display!=='none' && pn.dataset.src===id){ pn.style.display='none'; return; }
   pn.dataset.src=id; pn.style.display='block';
@@ -5123,10 +5126,55 @@ async function testSource(id){
     window._srcLast=j;
   }catch(e){ if(msg) msg.textContent='✗ can\'t reach the Worker'; }
 }
+/* v3.40: OddsPapi: NFL game totals, Pinnacle no-vig next to Bovada. One call per game (see the panel). */
+function opEvPct(fair, price){ return (fair && price) ? (fair*price-1)*100 : null; }
+function opUseText(u){ return (u && u.limit) ? (u.used+' of '+u.limit+' used this month · '+u.left+' left · about '+u.per_day+' a day after the reserve') : ('allowance unknown'+(u&&u.error?': '+u.error:'')); }
+async function openOddsPapi(){
+  const pn=document.getElementById('srcPanel'); if(!pn) return;
+  pn.dataset.src='oddspapi'; pn.style.display='block';
+  pn.innerHTML='<b>OddsPapi</b> · NFL game totals: Pinnacle (sharp, no-vig) next to Bovada, with the edge on each side.<br>'+
+    '<span class="meta" id="opUse">checking allowance…</span><br>'+
+    '<select id="opN"><option value="4">next 4 games · 4 calls</option><option value="8">next 8 games · 8 calls</option><option value="16">next 16 games · 16 calls</option></select> '+
+    '<button type="button" class="log sm" id="opLoad">Load NFL totals</button> <span class="meta" id="opMsg"></span>'+
+    '<div class="meta">One call per game. Each game is saved for 15 minutes, so pressing again soon is free.</div><div id="opOut"></div>';
+  const el=document.getElementById('opUse');
+  try{ const r=await fetch(API_BASE+'/oddspapi/usage',{headers:apiHeaders()}); const u=await r.json(); window._opUsage=u; if(el) el.textContent=opUseText(u); }
+  catch(e){ if(el) el.textContent='can\'t reach the Worker'; }
+}
+async function loadOddsPapi(){
+  const msg=document.getElementById('opMsg'), out=document.getElementById('opOut'), n=document.getElementById('opN');
+  if(msg) msg.textContent='loading…';
+  try{
+    const r=await fetch(API_BASE+'/oddspapi/board?limit='+encodeURIComponent(n?n.value:'4'),{headers:apiHeaders()}); const j=await r.json();
+    if(!r.ok||j.error){ if(msg) msg.textContent='✗ '+(j.error||('HTTP '+r.status)); return; }
+    if(msg) msg.textContent='✓ '+j.games.length+' games'+(j.usage&&j.usage.left!=null?' · '+j.usage.left+' left this month':'');
+    const u=document.getElementById('opUse'); if(u&&j.usage){ u.textContent=opUseText(j.usage); window._opUsage=j.usage; }
+    if(out) out.innerHTML=opBoardHtml(j.games||[]);
+  }catch(e){ if(msg) msg.textContent='✗ can\'t reach the Worker'; }
+}
+function opBoardHtml(games){
+  if(!games.length) return '<div class="meta">No upcoming NFL games in OddsPapi.</div>';
+  const rows=games.map(g=>{
+    const lines=Object.keys(g.sharp||{}).sort((a,b)=>Math.abs(g.sharp[a].Over-0.5)-Math.abs(g.sharp[b].Over-0.5));
+    const ln=lines[0];
+    const when=new Date(g.startTime).toLocaleString([], {weekday:'short', hour:'numeric', minute:'2-digit'});
+    const game=esc(g.away)+' @ '+esc(g.home)+'<br><span class="meta">'+esc(when)+'</span>';
+    if(!ln) return '<tr><td>'+game+'</td><td colspan="4" class="meta">no Pinnacle total posted</td></tr>';
+    const f=g.sharp[ln], bv=(g.books['bovada.lv']||{})[ln];
+    const fair='Over '+(f.Over*100).toFixed(1)+'% · Under '+(f.Under*100).toFixed(1)+'%';
+    if(!bv) return '<tr><td>'+game+'</td><td>'+esc(ln)+'</td><td>'+fair+'</td><td colspan="2" class="meta">no Bovada line at '+esc(ln)+'</td></tr>';
+    const evO=opEvPct(f.Over,bv.Over), evU=opEvPct(f.Under,bv.Under);
+    const cell=(p,ev)=>p.toFixed(2)+' <span style="color:'+(ev>=0?'#3ddc84':'#ff6b6b')+'">'+(ev>=0?'+':'')+ev.toFixed(1)+'% EV</span>';
+    return '<tr><td>'+game+'</td><td>'+esc(ln)+'</td><td>'+fair+'</td><td>Over '+cell(bv.Over,evO)+'</td><td>Under '+cell(bv.Under,evU)+'</td></tr>';
+  }).join('');
+  return '<table style="width:100%;font-size:13px;border-collapse:collapse;margin-top:8px"><thead><tr><th align="left">Game</th><th align="left">Line</th><th align="left">Pinnacle no-vig</th><th align="left">Bovada Over</th><th align="left">Bovada Under</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<div class="meta">EV = Pinnacle no-vig win chance × Bovada price − 1. Each game shows the total closest to even.</div>';
+}
 document.addEventListener('change', e=>{ if(e.target && /^(oaMk|oaRg|oaSport)/.test(e.target.id||'')) oaCost(); });
 document.addEventListener('click', e=>{
   const c=e.target.closest('.src-chip'); if(c){ openSource(c.dataset.src); return; }
   if(e.target.closest('#sbLoad')){ loadSbapi(); return; }
+  if(e.target.closest('#opLoad')){ loadOddsPapi(); return; }
   const ol=e.target.closest('.oddsLoad'); if(ol){ loadOddsSrc(ol.dataset.src); return; }
   if(e.target.closest('#srcTest')){ const pn=document.getElementById('srcPanel'); testSource(pn.dataset.src); return; }
   if(e.target.closest('#srcCopy')){ copyText(JSON.stringify(window._srcLast||{}, null, 1), e.target.closest('#srcCopy')); }
