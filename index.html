@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.40</title>
+<title>0xBeta Screener v3.41</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -730,7 +730,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.40</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.41</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1326,7 +1326,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 
 </div>
 <script>
-const SCREENER_VERSION='v3.40';
+const SCREENER_VERSION='v3.41';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -5086,7 +5086,6 @@ function showBudget(b){
 let srcInfo=null;
 async function loadSources(){
   try{ const r=await fetch(API_BASE+'/src/status',{headers:apiHeaders()}); if(r.ok) srcInfo=(await r.json()).sources||null; }catch(e){}
-  try{ const u=await fetch(API_BASE+'/oddspapi/usage',{headers:apiHeaders()}); window._opUsage=await u.json(); }catch(e){}
   paintSources();
 }
 function paintSources(){
@@ -5097,8 +5096,6 @@ function paintSources(){
     const oq = x.id==='oddsapi' && oaLeft();
     const sub = x.id==='bettingpros' ? (left!=null?left+' left today':'') : sb ? sb : oq ? oq : x.key ? (x.loads?'on':'key set · test it') : 'add key';
     return '<button type="button" class="src-chip '+(x.key?'on':'off')+'" data-src="'+esc(x.id)+'">'+esc(x.name)+(sub?' <small>'+esc(sub)+'</small>':'')+'</button>'; }).join('');
-  const ou=window._opUsage; const opSub = ou && ou.limit ? ou.left+' left this month' : 'usage ?';
-  el.insertAdjacentHTML('beforeend','<button type="button" class="src-chip on" data-src="oddspapi">OddsPapi <small>'+esc(opSub)+'</small></button>');
 }
 async function openSource(id){
   if(id==='oddspapi'){ openOddsPapi(); return; }
@@ -5129,27 +5126,39 @@ async function testSource(id){
 /* v3.40: OddsPapi: NFL game totals, Pinnacle no-vig next to Bovada. One call per game (see the panel). */
 function opEvPct(fair, price){ return (fair && price) ? (fair*price-1)*100 : null; }
 function opUseText(u){ return (u && u.limit) ? (u.used+' of '+u.limit+' used this month · '+u.left+' left · about '+u.per_day+' a day after the reserve') : ('allowance unknown'+(u&&u.error?': '+u.error:'')); }
+const OP_SPORT_NAMES={nfl:'NFL',nba:'NBA',mlb:'MLB'};
 async function openOddsPapi(){
   const pn=document.getElementById('srcPanel'); if(!pn) return;
   pn.dataset.src='oddspapi'; pn.style.display='block';
-  pn.innerHTML='<b>OddsPapi</b> · NFL game totals: Pinnacle (sharp, no-vig) next to Bovada, with the edge on each side.<br>'+
-    '<span class="meta" id="opUse">checking allowance…</span><br>'+
+  pn.innerHTML='<b>OddsPapi</b> · game totals: Pinnacle (sharp, no-vig) next to Bovada, with the edge on each side.<br>'+
+    '<div class="meta" id="opUse">checking allowance…</div>'+
+    '<div style="margin-top:6px"><select id="opSport"><option value="nfl">NFL</option><option value="nba">NBA</option><option value="mlb">MLB</option></select> '+
     '<select id="opN"><option value="4">next 4 games · 4 calls</option><option value="8">next 8 games · 8 calls</option><option value="16">next 16 games · 16 calls</option></select> '+
-    '<button type="button" class="log sm" id="opLoad">Load NFL totals</button> <span class="meta" id="opMsg"></span>'+
-    '<div class="meta">One call per game. Each game is saved for 15 minutes, so pressing again soon is free.</div><div id="opOut"></div>';
-  const el=document.getElementById('opUse');
-  try{ const r=await fetch(API_BASE+'/oddspapi/usage',{headers:apiHeaders()}); const u=await r.json(); window._opUsage=u; if(el) el.textContent=opUseText(u); }
-  catch(e){ if(el) el.textContent='can\'t reach the Worker'; }
+    '<button type="button" class="log sm" id="opLoad">Load totals</button> <span class="meta" id="opMsg"></span></div>'+
+    '<div class="meta">One call per game. Each game is saved for 15 minutes, so pressing again soon is free.</div>'+
+    '<div id="opLog"></div><div id="opOut"></div>';
+  await opRefreshUsage();
+}
+async function opRefreshUsage(){
+  const el=document.getElementById('opUse'), lg=document.getElementById('opLog');
+  try{
+    const r=await fetch(API_BASE+'/oddspapi/usage',{headers:apiHeaders()}); const u=await r.json(); window._opUsage=u;
+    if(el) el.textContent=opUseText(u);
+    if(lg && u.log) lg.innerHTML='<details class="meta" style="margin-top:6px"><summary>Calls from this screener, last 14 days (today: '+(u.today_calls||0)+')</summary>'+
+      '<table style="font-size:12px;margin-top:4px">'+u.log.map(d=>'<tr><td style="padding-right:14px">'+esc(d.day)+'</td><td>'+d.calls+'</td></tr>').join('')+'</table>'+
+      '<div class="meta">Counts only calls made through the screener since this Worker version went live. OddsPapi\'s own count above includes every call on the key.</div></details>';
+  }catch(e){ if(el) el.textContent='can\'t reach the Worker'; }
 }
 async function loadOddsPapi(){
-  const msg=document.getElementById('opMsg'), out=document.getElementById('opOut'), n=document.getElementById('opN');
+  const msg=document.getElementById('opMsg'), out=document.getElementById('opOut'), n=document.getElementById('opN'), sp=document.getElementById('opSport');
+  const sport=sp?sp.value:'nfl';
   if(msg) msg.textContent='loading…';
   try{
-    const r=await fetch(API_BASE+'/oddspapi/board?limit='+encodeURIComponent(n?n.value:'4'),{headers:apiHeaders()}); const j=await r.json();
+    const r=await fetch(API_BASE+'/oddspapi/board?sport='+encodeURIComponent(sport)+'&limit='+encodeURIComponent(n?n.value:'4'),{headers:apiHeaders()}); const j=await r.json();
     if(!r.ok||j.error){ if(msg) msg.textContent='✗ '+(j.error||('HTTP '+r.status)); return; }
-    if(msg) msg.textContent='✓ '+j.games.length+' games'+(j.usage&&j.usage.left!=null?' · '+j.usage.left+' left this month':'');
-    const u=document.getElementById('opUse'); if(u&&j.usage){ u.textContent=opUseText(j.usage); window._opUsage=j.usage; }
+    if(msg) msg.textContent='✓ '+j.games.length+' '+(OP_SPORT_NAMES[sport]||sport)+' games';
     if(out) out.innerHTML=opBoardHtml(j.games||[]);
+    await opRefreshUsage();
   }catch(e){ if(msg) msg.textContent='✗ can\'t reach the Worker'; }
 }
 function opBoardHtml(games){
@@ -8019,8 +8028,6 @@ async function opUsageChip(){
     el.title = 'Monthly plan limit. Only "vs Pinnacle" clicks use a call. Reserve kept: '+u.reserve;
   }catch(e){ el.textContent='OddsPapi: offline'; }
 }
-(function(){ const h=document.querySelector('h1'); if(!h||document.getElementById('opChip')) return;
-  const c=document.createElement('span'); c.id='opChip'; c.className='meta'; c.style.cssText='font-size:12px;margin-left:10px;font-weight:400'; c.textContent='OddsPapi …'; h.appendChild(c); opUsageChip(); })();
 document.addEventListener('click', async e=>{
   const btn=e.target.closest && e.target.closest('button.kill.sharp'); if(!btn) return;
   const tr=btn.closest('tr'); const b=logged[parseInt(btn.dataset.i,10)]; if(!b) return;
