@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.38</title>
+<title>0xBeta Screener v3.39</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -730,7 +730,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.38</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.39</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1326,7 +1326,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 
 </div>
 <script>
-const SCREENER_VERSION='v3.38';
+const SCREENER_VERSION='v3.39';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -3466,7 +3466,7 @@ function renderLog(){
          : b.closing ? '<div class="meta">typed by you</div>' : '')+'</td>'+
       '<td class="num">'+(c===null?'—':'<span class="net '+(c>0?'up':'down')+'" style="font-size:17px">'+pct(c)+'</span>')+'</td>'+
       '<td style="white-space:nowrap">'+(b.edits&&b.edits.length?'<span class="meta" title="'+esc(b.edits.map(e=>new Date(e.at).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'})+': was '+(e.before.odds||'')+' $'+(+e.before.stake||0).toFixed(2)+' '+(e.before.book||'')).join('\n'))+'">edited</span> ':'')+
-        '<button class="kill edit" data-i="'+i+'">edit</button> <button class="kill sell" data-i="'+i+'">'+(b.sold?'undo sold':'Mark sold…')+'</button> '+
+        '<button class="kill edit" data-i="'+i+'">edit</button>'+(b.kind==='total'?' <button class="kill sharp" data-i="'+i+'" title="Compare with Pinnacle, the sharp book (OddsPapi, uses 1 of your monthly calls)">vs Pinnacle</button>':'')+' <button class="kill sell" data-i="'+i+'">'+(b.sold?'undo sold':'Mark sold…')+'</button> '+
         ' <button class="kill void" data-i="'+i+'" title="Cancelled by the book: stake back, counts as a push">'+(b.voided?'unvoid':'void')+'</button>'+
         ' <button class="kill copy" data-i="'+i+'" title="Add another ticket with the same details (for a bet you placed twice)">+ ticket</button>'+
         ' <button class="kill" data-i="'+i+'">remove</button></td>';
@@ -7959,6 +7959,46 @@ document.addEventListener('click', e=>{
     t.dupOf=b.id; t.ticketCopy=1;
     ['result','sold','fills','fillQty','fillCost','autoRes','voided','voidedAt','noStart','fix83'].forEach(k=>delete t[k]);
     logged.push(t); saveLog(); renderLog(); renderPerf(); renderTodayBar(); refresh(); }
+});
+/* v3.39: OddsPapi. Usage chip (free call) and "vs Pinnacle" for total bets (uses a monthly call, cached 15 min) */
+const OP_BOOK_SLUG = {bovada:'bovada.lv', novig:'novig.us', kalshi:'kalshi', polymarket:'polymarket', draftkings:'draftkings', fanduel:'fanduel', 'draftkings predictions':'draftkings'};
+function opSlug(book){ const k=String(book||'').toLowerCase().replace(/\s+/g,' ').trim(); return OP_BOOK_SLUG[k] || OP_BOOK_SLUG[k.split(' ')[0]] || null; }
+function opDec(american){ const o=Number(String(american==null?'':american).replace('+','')); if(!o) return null; return o>0 ? 1+o/100 : 1+100/Math.abs(o); }
+async function opUsageChip(){
+  const el=document.getElementById('opChip'); if(!el) return;
+  try{ const res=await fetch(API_BASE+'/oddspapi/usage',{headers:apiHeaders()}); const u=await res.json();
+    el.textContent = u.left==null ? 'OddsPapi: no data' : 'OddsPapi '+u.used+'/'+u.limit+' used · '+u.left+' left · ~'+(u.per_day??'?')+'/day for '+u.days_left+' days';
+    el.title = 'Monthly plan limit. Only "vs Pinnacle" clicks use a call. Reserve kept: '+u.reserve;
+  }catch(e){ el.textContent='OddsPapi: offline'; }
+}
+(function(){ const h=document.querySelector('h1'); if(!h||document.getElementById('opChip')) return;
+  const c=document.createElement('span'); c.id='opChip'; c.className='meta'; c.style.cssText='font-size:12px;margin-left:10px;font-weight:400'; c.textContent='OddsPapi …'; h.appendChild(c); opUsageChip(); })();
+document.addEventListener('click', async e=>{
+  const btn=e.target.closest && e.target.closest('button.kill.sharp'); if(!btn) return;
+  const tr=btn.closest('tr'); const b=logged[parseInt(btn.dataset.i,10)]; if(!b) return;
+  const next=tr.nextElementSibling; if(next && next.classList.contains('sharp-note')){ next.remove(); return; }
+  const t=teamsOf(b.game||b.matchup||''); const day=gameDayOf(b);
+  const lm=String(b.market||'').match(/^([+-]?[\d.]+)\s+/); const line=lm?Number(lm[1]).toFixed(1):null;
+  const side=sideOf(b)==='U'?'Under':sideOf(b)==='O'?'Over':null;
+  const note=document.createElement('tr'); note.className='sharp-note';
+  const box=document.createElement('td'); box.colSpan=11; box.style.cssText='background:var(--panel,#111);padding:8px 12px'; note.appendChild(box); tr.after(note);
+  if(!t||!day||!line||!side){ box.textContent='Need the game teams, the day and a total line to compare.'; return; }
+  box.textContent='Asking OddsPapi for the Pinnacle line…';
+  try{
+    const res=await fetch(API_BASE+'/oddspapi/totals?away='+encodeURIComponent(t[0])+'&home='+encodeURIComponent(t[1])+'&date='+day,{headers:apiHeaders()});
+    const d=await res.json();
+    if(!res.ok || d.error){ box.textContent='OddsPapi: '+(d.error||res.status); return; }
+    const sharp=(d.sharp||{})[line]; const pFair = sharp ? sharp[side] : null;
+    const bet=opDec(b.odds); const mine=bet && pFair ? (pFair*bet-1) : null;
+    const rows=Object.entries(d.books||{}).map(([book,lines])=>{ const q=(lines||{})[line]; const dec=q&&q[side]; if(!dec) return null;
+      const ev=pFair ? (pFair*dec-1) : null;
+      return '<div>'+esc(book)+': '+fmtOdds(Math.round(dec>=2?(dec-1)*100:-100/(dec-1)))+' ('+dec.toFixed(2)+')'+(ev!=null?' · EV '+(ev>=0?'+':'')+(ev*100).toFixed(1)+'%':'')+'</div>'; }).filter(Boolean).join('');
+    box.innerHTML = '<div><b>Pinnacle (sharp, no-vig)</b>: '+side+' '+line+' = '+(pFair!=null?(pFair*100).toFixed(1)+'%':'not quoted')+'</div>'+
+      (mine!=null?'<div>Your bet '+esc(fmtOdds(b.odds))+': EV '+(mine>=0?'+':'')+(mine*100).toFixed(1)+'% vs Pinnacle</div>':'')+
+      '<div style="margin-top:6px">Other books at '+side+' '+line+':</div>'+(rows||'<div class="meta">none quoted at this line</div>')+
+      '<div class="meta" style="margin-top:6px">'+esc(d.away)+' @ '+esc(d.home)+' · OddsPapi quotes from '+new Date(d.fetched).toLocaleTimeString('en-US',{timeZone:'America/Chicago',hour:'numeric',minute:'2-digit'})+(d.from_cache?' (cached)':'')+'</div>';
+    opUsageChip();
+  }catch(err){ box.textContent='OddsPapi request failed: '+err.message; }
 });
 </script>
 </body>
