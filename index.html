@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.48</title>
+<title>0xBeta Screener v3.50</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -730,7 +730,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.48</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.50</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1326,7 +1326,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 
 </div>
 <script>
-const SCREENER_VERSION='v3.48';
+const SCREENER_VERSION='v3.50';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -2614,6 +2614,8 @@ function openBetEditor(tr, r, opt){
     } else {
       stake=parseFloat(ed.querySelector('.eb-stake').value)||0;
       let oddsTxt=ed.querySelector('.eb-odds').value.trim();
+      // v3.49: a decimal price (2.20, 1.75) has a point; the app stores American odds (+120, -133), so convert it
+      if(/^\d+\.\d+$/.test(oddsTxt)){ const d=parseFloat(oddsTxt); if(d>1) oddsTxt = d>=2 ? '+'+Math.round((d-1)*100) : String(-Math.round(100/(d-1))); }
       const winO=parseFloat(ed.querySelector('.eb-win-o').value);
       if(!oddsTxt && stake>0 && winO>0) oddsTxt=fmtOdds(Math.round(americanOf(1/(1+winO/stake))));   // v3.47: odds from stake + to win
       odds=oddsTxt.replace(/^(\d)/,'+$1');
@@ -3399,7 +3401,7 @@ function addToLog(r){
     kind:r.kind, closing:'', srcType: r.src==='paste:mev'?'mev':(String(r.src||'').startsWith('api:')?'api':'paste'),
     // v2.50: what's needed to match/grade it later
     side:r.side||null, team:r.team||null, apiKey:r.apiKey||null,
-    start:(r.gameInfo&&r.gameInfo.startISO)||null,
+    start:(r.gameInfo&&r.gameInfo.startISO)||null, manual:r.src==='manual'||undefined,   // v3.50: typed/added by hand — keep its day
     // v2.50: exact recommendation-time snapshot, for auditing results later
     snap:{ at:new Date().toISOString(), screener:SCREENER_VERSION, devig:DEVIG_METHOD,
       line:(String(r.market||'').match(/^([+-]?[\d.]+)/)||[])[1]||null, book:r.book, price:r.offeredRaw,
@@ -3518,6 +3520,7 @@ function renderLog(){
 function ctDay(ms){ return new Date(ms).toLocaleDateString('en-CA',{timeZone:'America/Chicago'}); }
 function gameDayOf(b){
   if(b.start){ const t=Date.parse(b.start); if(!isNaN(t)) return ctDay(t); }
+  if(b.manual && b.date) return b.date;   // v3.50: a bet you added with a date stays on that date
   // v2.83: no start time — never earlier than the day you saved it (board date may still be yesterday)
   const at=(typeof loggedAtOf==='function')?loggedAtOf(b):NaN, sd=isNaN(at)?'':ctDay(at);
   return (sd && (!b.date || sd>b.date)) ? sd : (b.date || '');
@@ -4388,7 +4391,7 @@ async function autoGradeLog(){
     const undated=logged.filter(b=>recent(b) && settled(b) && !b.start && !b.noStart);
     // v2.82: undo matches to a game that started more than 4 h before the bet was saved (v2.80–2.81 bug)
     // v2.83: also when the board date was still the day before (bet saved today, matched to yesterday's game)
-    logged.forEach(b=>{ if(!recent(b) || b.fix83 || !b.start) return; b.fix83=1;
+    logged.forEach(b=>{ if(!recent(b) || b.fix83 || !b.start) return; b.fix83=1; if(b.manual || b.autoRes===false) return;   // v3.50: never strip a hand-added bet's game day or a manual result
       const t=Date.parse(b.start), at=Date.parse(b.snap&&b.snap.at);   // only a real save time
       if(!isNaN(t) && !isNaN(at) && t<at-4*3600e3 && ctDay(t)<ctDay(at)){ delete b.start; delete b.noStart; if(!b.sold && b.autoRes!==false) delete b.result; changed++; } });
     // v2.85: graded, but its game hasn't started yet → that grade came from the wrong game
