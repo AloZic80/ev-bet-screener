@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.43</title>
+<title>0xBeta Screener v3.44</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -730,7 +730,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.43</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.44</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -1326,7 +1326,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 
 </div>
 <script>
-const SCREENER_VERSION='v3.43';
+const SCREENER_VERSION='v3.44';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -5173,6 +5173,32 @@ async function opRefreshUsage(){
       '<div class="meta">Counts only calls made through the screener since this Worker version went live. OddsPapi\'s own count above includes every call on the key.</div></details>';
   }catch(e){ if(el) el.textContent='can\'t reach the Worker'; }
 }
+/* v3.44: OddsPapi totals → board rows (the same path as Sportsbook API picks). Every Bovada total line that has a
+   Pinnacle no-vig price at the same line becomes a row; La Contadora decides which of them pass. */
+function opToRows(games, lgName){
+  const rows=[], skip={}; const no=w=>{ skip[w]=(skip[w]||0)+1; }; const now=Date.now();
+  for(const g of games){
+    const start=Date.parse(g.startTime||''); if(!(start>now)){ no('already started'); continue; }
+    const bov=(g.books||{})['bovada.lv']||{}, sharp=g.sharp||{}, d=new Date(start);
+    const timeCT=d.toLocaleString('en-US',{timeZone:'America/Chicago',weekday:'short',month:'2-digit',day:'2-digit',year:'2-digit',hour:'numeric',minute:'2-digit'})+' CT';
+    const name=(g.away||'?')+' @ '+(g.home||'?');
+    for(const ln of Object.keys(bov)){
+      const f=sharp[ln]; if(!f){ no('no Pinnacle at '+ln); continue; }
+      for(const side of ['Over','Under']){
+        const price=(bov[ln]||{})[side], fair=f[side];
+        if(!(price>1) || !(fair>0 && fair<1)){ no('no price'); continue; }
+        const offeredProb=1/price;
+        rows.push({ game:name, sport:lgName, book:'Bovada', offeredRaw:fmtOdds(americanOf(offeredProb)), offeredProb,
+          fairProb:fair, fairRaw:fmtOdds(americanOf(fair)), mktProb:fair, mktConsensus:fair,
+          screenerEV:Math.round((fair*price-1)*1000)/10, stars:null, l15Hit:null, l15N:0, seasonHit:null, seasonN:0,
+          evModel:'market', consensusEdge:null, sbHow:'OddsPapi: Pinnacle no-vig at '+ln,
+          gameInfo:{state:'pre', startISO:d.toISOString(), timeCT}, apiKey:'op-'+g.fixtureId+'-'+ln+'-'+side,
+          name, matchup:'Game total', matchupAlt:null, noMatchup:false, side: side==='Under'?'U':'O', market: ln+' Total', kind:'total' });
+      }
+    }
+  }
+  return {rows, skip};
+}
 async function loadOddsPapi(){
   const msg=document.getElementById('opMsg'), out=document.getElementById('opOut'), n=document.getElementById('opN');
   const sport=(document.getElementById('opSport')||{}).value||'', tour=(document.getElementById('opLeague')||{}).value||'';
@@ -5183,6 +5209,14 @@ async function loadOddsPapi(){
     if(!r.ok||j.error){ if(msg) msg.textContent='✗ '+(j.error||('HTTP '+r.status)); return; }
     if(msg) msg.textContent='✓ '+j.games.length+' games';
     if(out) out.innerHTML=opBoardHtml(j.games||[]);
+    const L=document.getElementById('opLeague');
+    const lgName=(L&&L.selectedIndex>=0)?L.options[L.selectedIndex].textContent.split(' (')[0].split(' ·')[0].trim().toUpperCase():'OP';
+    const srcKey='api:oddspapi:'+sport+':'+tour;
+    const {rows}=opToRows(j.games||[], lgName);
+    mergeRows(srcKey, rows); if(boardSrc!=='api') showBoardSrc('api');
+    { const c=cfgRead(); render(audit(lastRows,c),c); save(); autoSaveBoard(); }
+    const placeable=lastRows.filter(r=>r.src===srcKey && r.pass && r.stake>0).length;
+    if(msg) msg.textContent+=' · '+rows.length+' totals on the board, '+placeable+' La Contadora would place';
     await opRefreshUsage();
   }catch(e){ if(msg) msg.textContent='✗ can\'t reach the Worker'; }
 }
