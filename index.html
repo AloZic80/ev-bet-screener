@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.51</title>
+<title>0xBeta Screener v3.52</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -730,7 +730,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.51</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.52</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -899,6 +899,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
     <div class="field"><label for="abSport">Sport</label><select id="abSport"><option>NFL</option><option>NCAAF</option><option>NBA</option><option>WNBA</option><option>NCAAB</option><option>MLB</option><option>NHL</option></select></div>
     <div class="field"><label for="abType">Type</label><select id="abType"><option value="prop">Player prop</option><option value="spread">Spread</option><option value="total">Game total</option><option value="moneyline">Moneyline</option></select></div>
     <div class="field ab-wide"><label for="abGame">Game <span class="meta">(ESPN)</span></label><select id="abGame"><option value="">loading…</option></select><input id="abGameFree" type="text" placeholder="or type it, e.g. TOR @ UTA" style="margin-top:4px" autocomplete="off"></div>
+    <div class="field"><label for="abDate">Game date <span class="meta">(you choose)</span></label><input id="abDate" type="date"></div>
     <div class="field ab-prop"><label for="abPlayer">Player</label><input id="abPlayer" type="text" placeholder="as the app shows it" autocomplete="off"></div>
     <div class="field ab-team"><label for="abTeam">Team</label><select id="abTeam"></select></div>
     <div class="field ab-prop"><label for="abStat">Stat</label><input id="abStat" type="text" list="abStats" placeholder="e.g. Passing Yards" autocomplete="off"><datalist id="abStats"></datalist></div>
@@ -1326,7 +1327,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 
 </div>
 <script>
-const SCREENER_VERSION='v3.51';
+const SCREENER_VERSION='v3.52';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -3396,7 +3397,7 @@ function addToLog(r){
   if(!r) return;
   logged.push({
     id:(self.crypto&&crypto.randomUUID)?crypto.randomUUID():('b'+Date.now()+Math.random().toString(36).slice(2)),
-    key:betKey(r), date:r.gameDay||document.getElementById('slate').value,   // v3.51: a picked game's own day
+    key:betKey(r), date:r.gameDay||document.getElementById('slate').value, dateSet:r.dateSet||undefined,   // v3.52: the date you chose
     name:r.name, sport:r.sport, market:r.market, betnow:betNowOf(r), book:r.book, game:r.game,
     odds:r.offeredRaw, fair:r.fairRaw, gross:r.gross, net:r.net, stake:r.stake, mkt:r.mktProb!=null?r.mktProb:null,
     kind:r.kind, closing:'', srcType: r.src==='paste:mev'?'mev':(String(r.src||'').startsWith('api:')?'api':'paste'),
@@ -3520,6 +3521,7 @@ function renderLog(){
 /* v2.63: bets by GAME day (kickoff in Central time; the board date if no kickoff was saved) */
 function ctDay(ms){ return new Date(ms).toLocaleDateString('en-CA',{timeZone:'America/Chicago'}); }
 function gameDayOf(b){
+  if(b.dateSet && b.date) return b.date;   // v3.52: the date you chose
   if(b.start){ const t=Date.parse(b.start); if(!isNaN(t)) return ctDay(t); }
   if(b.manual && b.date) return b.date;   // v3.50: a bet you added with a date stays on that date
   // v2.83: no start time — never earlier than the day you saved it (board date may still be yesterday)
@@ -6333,6 +6335,7 @@ async function abLoadGames(){
 }
 function abFields(){
   const ty=$ab('abType').value, ev=abGameSel(), t=ev?abTeams(ev):null;
+  if(ev && ev.date && !isNaN(Date.parse(ev.date)) && $ab('abDate')) $ab('abDate').value=ctDay(Date.parse(ev.date));   // v3.52: the picked game's day, editable
   document.querySelectorAll('#addBetPanel .ab-prop').forEach(e=>e.style.display=ty==='prop'?'':'none');
   document.querySelectorAll('#addBetPanel .ab-team').forEach(e=>e.style.display=(ty==='spread'||ty==='moneyline')?'':'none');
   document.querySelectorAll('#addBetPanel .ab-ou').forEach(e=>e.style.display=(ty==='prop'||ty==='total')?'':'none');
@@ -6361,7 +6364,7 @@ function abRowFields(){
   return { name, market, side:sd, kind:ty, sport:sp, game, matchup:game, team:(ty==='spread'||ty==='moneyline')?team:null,
     fairProb:fair, fairRaw:fair!=null?fmtOdds(Math.round(americanOf(fair))):null, mktProb:cons, consOdds:cons!=null?consRaw:null,
     blendProb: fair!=null&&cons!=null ? cons+w*(fair-cons) : fair, projValue:isNaN(pj)?null:pj,
-    gameInfo:gi, gameStart:(ev&&ev.date)||null, gameDay:(ev&&ev.date&&!isNaN(Date.parse(ev.date)))?ctDay(Date.parse(ev.date)):null, src:'manual', evModel:fair!=null?'projection':null, net:null, stake:0, idx:-1, pass:true, flags:[],
+    gameInfo:gi, gameStart:(ev&&ev.date)||null, gameDay:($ab('abDate')&&$ab('abDate').value)||((ev&&ev.date&&!isNaN(Date.parse(ev.date)))?ctDay(Date.parse(ev.date)):null), dateSet:!!($ab('abDate')&&$ab('abDate').value), src:'manual', evModel:fair!=null?'projection':null, net:null, stake:0, idx:-1, pass:true, flags:[],
     _missing:missing, _line:ln };
 }
 function abPrice(){   // the price typed in the editor below (same reading as Save bet)
