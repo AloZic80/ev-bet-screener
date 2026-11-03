@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.45</title>
+<title>0xBeta Screener v3.47</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -730,7 +730,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.45</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.47</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -898,7 +898,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
   <div class="ab-grid">
     <div class="field"><label for="abSport">Sport</label><select id="abSport"><option>NFL</option><option>NCAAF</option><option>NBA</option><option>WNBA</option><option>NCAAB</option><option>MLB</option><option>NHL</option></select></div>
     <div class="field"><label for="abType">Type</label><select id="abType"><option value="prop">Player prop</option><option value="spread">Spread</option><option value="total">Game total</option><option value="moneyline">Moneyline</option></select></div>
-    <div class="field ab-wide"><label for="abGame">Game <span class="meta">(ESPN)</span></label><select id="abGame"><option value="">loading…</option></select></div>
+    <div class="field ab-wide"><label for="abGame">Game <span class="meta">(ESPN)</span></label><select id="abGame"><option value="">loading…</option></select><input id="abGameFree" type="text" placeholder="or type it, e.g. TOR @ UTA" style="margin-top:4px" autocomplete="off"></div>
     <div class="field ab-prop"><label for="abPlayer">Player</label><input id="abPlayer" type="text" placeholder="as the app shows it" autocomplete="off"></div>
     <div class="field ab-team"><label for="abTeam">Team</label><select id="abTeam"></select></div>
     <div class="field ab-prop"><label for="abStat">Stat</label><input id="abStat" type="text" list="abStats" placeholder="e.g. Passing Yards" autocomplete="off"><datalist id="abStats"></datalist></div>
@@ -1326,7 +1326,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 
 </div>
 <script>
-const SCREENER_VERSION='v3.45';
+const SCREENER_VERSION='v3.47';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -2409,7 +2409,8 @@ function openBetEditor(tr, r, opt){
     '<label title="What the app shows: American odds, or a % price">Enter as <select class="eb-mode"><option value="odds">odds</option><option value="pct">%</option></select></label>'+
     '<span class="eb-plain" style="display:contents">'+
       '<label>Odds you got <input class="eb-odds" type="text" value="'+esc(r.offeredRaw)+'"></label>'+
-      '<label>Stake $ <input class="eb-stake" type="number" step="0.25" value="'+(r.stake?r.stake.toFixed(2):'')+'"></label></span>'+
+      '<label>Stake $ <input class="eb-stake" type="number" step="0.25" value="'+(r.stake?r.stake.toFixed(2):'')+'"></label>'+
+      '<label title="Profit you win. Leave Odds blank and this + Stake gives the odds.">To win $ <input class="eb-win-o" type="number" step="0.01" placeholder="optional" style="width:90px"></label></span>'+
     '<span class="pm-fields eb-pm">'+
       '<label>Cost $ <input class="eb-cost" type="number" step="0.01" placeholder="2.50"></label>'+
       '<label>@ <input class="eb-pct" type="number" step="0.1" placeholder="62" style="width:60px">%</label>'+
@@ -2611,9 +2612,13 @@ function openBetEditor(tr, r, opt){
       fee = pr.allIn ? 0 : feeRate(book, prob, cfg.fees, liveG());   // all-in price already paid the fee
       ed._slip = pr.allIn ? {listed:pr.listed!=null?+pr.listed.toFixed(4):null, real:+prob.toFixed(4), win:parseFloat(ed.querySelector('.eb-win').value)||null, read:pr.read} : null;   // v3.17
     } else {
-      odds=ed.querySelector('.eb-odds').value.trim().replace(/^(\d)/,'+$1');
+      stake=parseFloat(ed.querySelector('.eb-stake').value)||0;
+      let oddsTxt=ed.querySelector('.eb-odds').value.trim();
+      const winO=parseFloat(ed.querySelector('.eb-win-o').value);
+      if(!oddsTxt && stake>0 && winO>0) oddsTxt=fmtOdds(Math.round(americanOf(1/(1+winO/stake))));   // v3.47: odds from stake + to win
+      odds=oddsTxt.replace(/^(\d)/,'+$1');
       prob=toProb(odds);
-      if(prob===null){ ed.querySelector('.eb-msg').textContent='Odds not readable — use e.g. -110 or +120'; return; }
+      if(prob===null){ ed.querySelector('.eb-msg').textContent='Type the odds (e.g. -110 or +120), or leave them blank and fill Stake and To win $'; return; }
       stake=parseFloat(ed.querySelector('.eb-stake').value)||0;
       fee=feeRate(book, prob, cfg.fees, liveG());
     }
@@ -6295,7 +6300,7 @@ document.getElementById('plAdd').addEventListener('click',()=>{
 /* ============ v2.79: + Add a bet — a bet found in the BettingPros app, no API calls ============ */
 const AB_STATS={
   NFL:['Passing Yards','Passing Attempts','Passing Completions','Passing Touchdowns','Interceptions','Rushing Yards','Rushing Attempts','Receiving Yards','Receptions','Defensive Sacks','Rushing Receiving Yards','Anytime Touchdown','Longest Reception','Longest Rush'],
-  NBA:['Points','Rebounds','Assists','Points Rebounds Assists','Points Rebounds','Points Assists','Rebounds Assists','Three Pointers Made','Steals','Blocks','Turnovers'],
+  NBA:['Points','Rebounds','Assists','Points Rebounds Assists','Points Rebounds','Points Assists','Rebounds Assists','Three Pointers Made','3 Point Field Goals','Steals','Blocks','Turnovers','Field Goals Made','Free Throws Made','Double Double','Triple Double'],   // v3.46: more stats (the grader reads points, rebounds, assists, steals, blocks, turnovers and 3-pointers; the rest are graded by hand)
   MLB:['Strikeouts','Hits','Runs','RBIs','H+R+RBI','Earned Runs','Pitching Outs'],
   NHL:['Points','Goals','Assists','Shots on Goal','Saves']
 };
@@ -6335,7 +6340,7 @@ function abFields(){
 }
 function abRowFields(){
   const sp=$ab('abSport').value, ty=$ab('abType').value, ev=abGameSel(), t=ev?abTeams(ev):null, gi=ev?gameStatusOf(ev):null;
-  const game=t?t.away+' @ '+t.home:'', lnRaw=$ab('abLine').value.trim(), ln=lnRaw===''?null:parseFloat(lnRaw);
+  const freeGame=($ab('abGameFree')?$ab('abGameFree').value.trim():''); const game=t?t.away+' @ '+t.home:freeGame; const lnRaw=$ab('abLine').value.trim(), ln=lnRaw===''?null:parseFloat(lnRaw);
   const stat=$ab('abStat').value.trim(), side=$ab('abPick').value, team=$ab('abTeam').value||null;
   let name='', market='', sd='', missing='';
   if(ty==='prop'){ name=$ab('abPlayer').value.trim(); market=(ln!=null?ln+' ':'')+stat; sd=side;
@@ -6343,7 +6348,7 @@ function abRowFields(){
   else if(ty==='total'){ name=game; market=(ln!=null?ln:'?')+' Total'; sd=side; missing=ln==null?'line':''; }
   else if(ty==='spread'){ name=team||''; market=(ln!=null?(ln>0?'+':'')+ln:'?')+' Spread'; missing=!team?'team':ln==null?'line':''; }
   else { name=team||''; market='Moneyline'; missing=!team?'team':''; }
-  if(!ev) missing=missing||'game';
+  if(!ev && !freeGame) missing=missing||'game';   // v3.47: a typed game is enough (graded by hand)
   const cov=parseFloat($ab('abCover').value), fair=cov>0&&cov<100?cov/100:null;
   const consRaw=$ab('abCons').value.trim().replace(/^(\d)/,'+$1'), cons=consRaw?toProb(consRaw):null;
   const pj=parseFloat($ab('abProj').value);
