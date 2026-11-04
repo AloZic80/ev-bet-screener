@@ -739,11 +739,42 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 .ab-more summary .meta{font-weight:400; margin-left:6px}
 .ab-more[open] summary{margin-bottom:10px}
 .editor input.eb-odds{min-width:128px}
+/* v3.54: the load bar — controls on one row, status and file links on the next */
+.loadline{padding:10px 14px; gap:8px 10px}
+.loadline::before{content:""; flex-basis:100%; height:0; order:1}
+.loadline .budget,.loadline .ll-links,.loadline .saved-note{order:2}
+.loadline .ll-links{margin-left:4px}
+.loadline .saved-note{margin-left:auto; font-weight:600}
+#apiWeek{width:78px!important}
+#apiWeekHint{display:none!important}   /* now the Week box's tooltip */
+/* v3.54: the Today card — even columns, read left to right */
+.todaybar{display:grid; grid-template-columns:minmax(150px,auto) repeat(auto-fill,minmax(220px,1fr)); padding:0; gap:0; white-space:normal; align-items:stretch}
+.todaybar>.tb-k,.todaybar>.tb-t,.todaybar>.tb-empty{padding:12px 16px; border-left:1px solid var(--rule); margin:0; width:auto}
+.todaybar>:first-child{border-left:0}
+.todaybar .tb-t.all{margin-left:0}
+.todaybar .tb-k{align-items:flex-start; gap:3px; font-size:10.5px}
+.todaybar .tb-k .tb-tot{font-size:20px; font-weight:800; line-height:1.1}
+.todaybar .tb-k .tb-n{font-size:12px; color:var(--soft)}
+.todaybar .tb-k .tb-st{font-size:11.5px}
+.todaybar .tb-k .tb-pill{margin-top:6px}
+.todaybar .tb-l1{font-size:14px; gap:6px} .todaybar .tb-l1 img.blogo{height:20px}
+.todaybar .tb-l2{font-size:12.5px; line-height:1.6}
+.todaybar .tb-pill{margin-top:6px}
+.todaybar .tb-empty{display:flex; align-items:center; border-left:0; padding-left:4px}
 @media (max-width:640px){
   .tabs{position:fixed; left:0; right:0; bottom:0; top:auto; margin:0; padding:0 8px env(safe-area-inset-bottom,0px); gap:2px;
     border-bottom:0; border-top:1px solid var(--rule); background:var(--panel); box-shadow:0 -6px 18px rgba(16,24,40,.08); z-index:60}
   .tab{padding:13px 10px 12px; font-size:14px; margin:0; border-bottom:0; border-top:3px solid transparent}
   .tab.on{border-top-color:var(--accent)}
+  .todaybar{grid-template-columns:1fr 1fr}
+  .todaybar>.tb-k{grid-column:1/-1; flex-direction:row; flex-wrap:wrap; align-items:center; gap:4px 12px; border-bottom:1px solid var(--rule)}
+  .todaybar>.tb-k .tb-pill{margin:0 0 0 auto}
+  .todaybar>.tb-t{border-left:0; border-top:0; padding:10px 14px}
+  .todaybar>.tb-t:not(.all):nth-child(even){border-left:1px solid var(--rule)}
+  .todaybar .tb-l1{flex-wrap:wrap; row-gap:2px} .todaybar .tb-l1>*{white-space:nowrap}
+  .todaybar>.tb-t.all{grid-column:1/-1; border-left:0; border-bottom:1px solid var(--rule)}
+  .todaybar>.tb-empty{grid-column:1/-1; padding:0 14px 12px}
+  .loadline .saved-note{margin-left:0; flex-basis:100%}
   .head h1{font-size:21px; gap:4px 6px} .head h1 .ver{font-size:11px; padding:2px 6px} .head h1 .sync-chip{font-size:11px; padding:2px 7px; margin:0}
   .statbox .sb-rest:has(> .board-cuts:empty):has(> .alerts[style*="none"]){display:none}
   .statbox{justify-self:stretch; padding:6px 12px; border-radius:10px} .statbox .board-score .n{font-size:24px} .statbox .board-score .of{max-width:none}
@@ -789,7 +820,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
     </select>
     <span id="apiWeekFields" style="display:none">
       <input type="number" id="apiSeason" value="2026" title="Season year" style="width:70px">
-      <input type="number" id="apiWeek" placeholder="week" min="0" max="20" title="Week number" style="width:62px">
+      <input type="number" id="apiWeek" placeholder="week" min="0" max="20" title="Week number. Auto-fills from ESPN; leave it blank and BettingPros uses the current week (NFL / NCAAF run Thu–Mon)." style="width:62px">
     </span>
     <button class="act" id="loadApi" title="Reuses the last pull for 30 minutes, so repeat loads cost no API calls">Load</button>
     <button class="ghost" id="refreshApi" disabled title="Skips the 30-minute cache and spends API calls">⟳ Refresh (API)</button>
