@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v3.60</title>
+<title>0xBeta Screener v3.61</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -870,6 +870,11 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 .pk-apps-box{margin:8px 0 2px} .pk-apps-box summary{cursor:pointer; font-size:13px; font-weight:600}
 #pkApps{display:flex; flex-direction:column; gap:8px; margin:10px 0 4px} .pk-apps-g{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; font-size:13px} .pk-apps-g b{min-width:70px}
 .pk-app-seg{flex-wrap:wrap}
+/* v3.61: ready-made slips */
+.pk-slip-bar{display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; margin:4px 0 10px}
+.pk-slip-ns{display:flex; flex-wrap:wrap; gap:6px}
+.pk-slipn{font:inherit; font-size:13px; font-weight:700; padding:6px 13px; border-radius:999px; border:1px solid var(--rule); background:var(--panel); color:var(--ink); cursor:pointer; min-height:32px}
+.pk-slipn.on,:root[data-theme="dark"] .pk-slipn.on{background:#2563EB; border-color:#2563EB; color:#fff}
 /* v3.60: the app picker as separate chips in two groups (was one segmented pill that wrapped into an oval on phones) */
 #pkApp{display:flex; flex-direction:column; gap:8px; flex:1 1 100%}
 .pk-app-g{display:flex; flex-wrap:wrap; gap:6px; align-items:center}
@@ -948,7 +953,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.60</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.61</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1190,6 +1195,8 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
   <p class="hint" id="pkNote"></p>
   <div class="pk-dfs" id="pkDfs"></div>
   <div class="pk-sent" id="pkSent"></div>   <!-- v3.57: the Sentinels' parlay picks -->
+  <h3 class="set-h">Ready-made slips <span class="meta">pick a size; a player can show up in more than one slip</span></h3>   <!-- v3.61 -->
+  <div id="pkSlips"></div>
   <h3 class="set-h">Best entry for each size</h3>
   <div class="pk-cards" id="pkCards"></div>
   <h3 class="set-h">Your entry</h3>
@@ -1593,7 +1600,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v3.60';
+const SCREENER_VERSION='v3.61';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -7083,6 +7090,25 @@ function pkPromoHtml(mine, arr){
         '<label>Chance <input type="number" step="0.1" min="1" max="99" class="pk-disc-p" data-k="'+esc(l.key)+'" value="'+(a.p?(a.p*100).toFixed(1):'')+'" placeholder="'+(l.p*100).toFixed(1)+'">%</label>'+
         (a.p?'<span class="meta">'+(a.est?'estimated from the projection':'your number')+'</span> <button type="button" class="ghost sm pk-disc-x" data-k="'+esc(l.key)+'">no discount</button>':'')+'</div>'; }).join('')+
     (arr ? '<div class="pk-promo-r"><label>Promo boost: all hit pays <input type="number" step="0.5" min="0" class="pk-boost" value="'+(pkState.boost>0?pkState.boost:'')+'" placeholder="'+arr[0]+'">x</label><span class="meta">instead of '+pkX(arr[0])+'</span>'+(pkState.boost>0?' <button type="button" class="ghost sm pk-boost-x">no boost</button>':'')+'</div>' : '')+'</div>'; }
+/* v3.61 (Alonzo: "PrizePicks, a button with 2-Leg, 3-Leg, 4-Leg, and slips already made; mix and match, the same player
+   twice"): for the size you tap, the best slips from the picks you could play, ranked by bankroll growth, each with its
+   stake and a Log button. Inside one slip a player appears once (the apps don't allow more) and one pick per game if that
+   box is ticked; across slips a player can repeat, unless you untick that. Works for pick'em and combo apps alike. */
+function pkSlipsHtml(legs,pays,cfg,app){
+  const sizes=Object.keys(pays).map(Number).sort((a,b)=>a-b); if(!sizes.length) return '';
+  const n=sizes.indexOf(pkState.slipN)>=0 ? pkState.slipN : (sizes.indexOf(4)>=0?4:sizes[0]), priced=pkPriced(app), rep=pkState.slipRepeat!==false;
+  const pool=legs.filter(l=>priced ? l.p*l.mult>1 : (l.p>=pkState.minP && pkPlayable(l))).slice(0,n+7), found=[], cur=[];
+  const pick=start=>{ if(cur.length===n){ const L=cur.slice(), e=pkEntry(L,pkArr(app,pays,L,n),cfg); if(e.ev>0) found.push({L,e}); return; }
+    for(let i=start;i<pool.length;i++){ const l=pool[i]; if(cur.some(c=>nrm(c.name)===nrm(l.name))) continue;
+      if(pkState.oneGame && cur.some(c=>(c.game||c.name)===(l.game||l.name))) continue; cur.push(l); pick(i+1); cur.pop(); } };
+  pick(0); found.sort((a,b)=>b.e.growth-a.e.growth || b.e.ev-a.e.ev);
+  const out=[], used=new Set();
+  for(const f of found){ if(out.length===5) break; if(!rep && f.L.some(l=>used.has(l.key))) continue; out.push(f); f.L.forEach(l=>used.add(l.key)); }
+  out.forEach((f,i)=>{ window._pkCards['s'+i]={legs:f.L, e:f.e}; });
+  return '<div class="pk-slip-bar"><div class="pk-slip-ns" role="group" aria-label="Slip size">'+sizes.map(k=>'<button type="button" class="pk-slipn'+(k===n?' on':'')+'" data-n="'+k+'" aria-pressed="'+(k===n)+'">'+(k===4?'★ ':'')+k+'-Leg</button>').join('')+'</div>'+
+    '<label class="bar-check"><input type="checkbox" id="pkSlipRep"'+(rep?' checked':'')+'> Same player in more than one slip</label></div>'+
+    (out.length ? '<div class="pk-cards">'+out.map((f,i)=>pkCard('Slip '+(i+1)+' · '+n+'-Leg'+(i===0?' · most bankroll growth':''), f.L, f.e, 's'+i, false)).join('')+'</div>'
+      : '<div class="meta">No '+n+'-Leg slip pays with the picks on this board'+(priced?'':' at '+pct(pkState.minP)+' or better')+(pkState.oneGame?', one per game':'')+'. Try another size'+(pkState.oneGame?', or untick One pick per game':'')+'.</div>'); }
 function pkSetRows(rows){ window._pkRows=rows||[]; pkBadge(); const v=document.getElementById('v-parlay'); if(v&&v.classList.contains('on')) renderParlays(); }
 function pkBadge(){ const el=document.getElementById('pkTabN'); if(!el) return; const n=pkLegs(window._pkRows||[]).filter(l=>pkPriced(pkState.app) ? l.p*l.mult>1 : (l.p>=pkState.minP && pkPlayable(l))).length; el.textContent=n?String(n):''; }   // v3.59: combo apps count legs with an edge
 const pkPick=l=>l.label?l.label+' '+(l.price||''):(l.side==='U'?'Under ':'Over ')+l.line+' '+shortStat(l.stat)+(l.price?' '+l.price:'');   // v3.59: a combo leg shows its price
@@ -7136,6 +7162,7 @@ function renderParlays(){
       ? '<div class="pk-card empty"><div class="pk-h"><b>'+n+' picks</b><span class="meta">'+(priced?'odds multiplied':esc(pkPaysTxt(pays[n])))+'</span></div><div class="meta">Not enough picks '+(priced?'with an edge on '+esc(appName):'at '+pct(pkState.minP)+' or better')+(pkState.oneGame?' from different games':'')+'.</div></div>'
       : (window._pkCards['n'+n]={legs:L,e}, pkCard(n+' picks',L,e,'n'+n,n===bestN))).join('');
   { const el=document.getElementById('pkSent'); if(el) el.innerHTML=pkSentHtml(pays,cfg,appName); }   // v3.57
+  { const el=document.getElementById('pkSlips'); if(el) el.innerHTML=pkSlipsHtml(legs,pays,cfg,app); }   // v3.61: ready-made slips
   avFillSoon();
   // your entry
   const mine0=pkState.mine.map(k=>legs.find(l=>l.key===k)).filter(l=>l&&pkPlayable(l)); pkState.mine=mine0.map(l=>l.key);
@@ -7175,6 +7202,7 @@ function pkLog(id,btn){ const c=(window._pkCards||{})[id]; if(!c) return; const 
     const p=e.target.closest('#pkPlay button'); if(p){ pkState.play=p.dataset.v; pkSave(); renderParlays(); return; }
     if(e.target.closest('#pkPayReset')){ if(pkState.pays&&pkState.pays[pkState.app]) delete pkState.pays[pkState.app][pkState.play]; pkSave(); renderParlays(); return; }
     const lg=e.target.closest('.pk-log'); if(lg){ pkLog(lg.dataset.id,lg); return; }
+    const sn=e.target.closest('.pk-slipn'); if(sn){ pkState.slipN=+sn.dataset.n; pkSave(); renderParlays(); return; }   // v3.61
     const bn=e.target.closest('#pkSent .pk-be-i'); if(bn){ pkState.sentN=+bn.dataset.n; pkSave(); renderParlays(); return; }   // v3.59
     const dx=e.target.closest('.pk-disc-x'); if(dx){ delete pkState.adj[dx.dataset.k]; pkSave(); renderParlays(); return; }
     if(e.target.closest('.pk-boost-x')){ pkState.boost=0; pkSave(); renderParlays(); return; }
@@ -7184,6 +7212,7 @@ function pkLog(id,btn){ const c=(window._pkCards||{})[id]; if(!c) return; const 
     if(e.target.closest('#pkDfsGo')){ pkDfsFetch(); return; } });
   box.addEventListener('change',e=>{ const t=e.target;
     if(t.id==='pkOneGame'){ pkState.oneGame=t.checked; pkSave(); renderParlays(); return; }
+    if(t.id==='pkSlipRep'){ pkState.slipRepeat=t.checked; pkSave(); renderParlays(); return; }   // v3.61
     if(t.classList.contains('pk-disc-line')){ const k=t.dataset.k, l=pkLegs(window._pkRows||[]).find(x=>x.key===k); if(!l) return;   // v3.59: a discounted line
       if(t.value===''){ delete pkState.adj[k]; } else { const est=pkDiscP(l,t.value), a=pkState.adj[k]||{}; pkState.adj[k]={line:t.value, p:est!=null?est:a.p, est:est!=null}; }
       pkSave(); renderParlays(); return; }
