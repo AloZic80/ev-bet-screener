@@ -724,6 +724,13 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px solid var(--rule)}   /* v3.10 */
 /* v3.54 polish: tabs always in reach (sticky on desktop, a bottom bar on phones), quieter Today card, Add-a-bet price first */
 .tab[hidden],button.linkbtn[hidden]{display:none!important}
+.wrap{max-width:1180px}   /* centred, with room to breathe on wide screens */
+.set-h{font-size:13px; font-weight:700; margin:14px 0 2px; color:var(--ink)}
+#srcSettings .src-bar{margin-top:2px} #srcSettings .src-bar .k{display:none}
+#passBox input{font:inherit; font-size:14px; padding:8px 12px; border:1px solid var(--rule); border-radius:8px; background:var(--panel); color:var(--ink); min-width:200px}
+.statbox{justify-self:end; max-width:100%}
+.head h1{display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px}
+.head h1 .ver,.head h1 .sync-chip{flex:none}
 .tabs{position:sticky; top:0; z-index:30; background:var(--page)}
 .tb-t.dim{display:none}
 .tb-empty{padding:2px 10px; color:var(--soft); font-size:12.5px; white-space:normal}
@@ -737,6 +744,10 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
     border-bottom:0; border-top:1px solid var(--rule); background:var(--panel); box-shadow:0 -6px 18px rgba(16,24,40,.08); z-index:60}
   .tab{padding:13px 10px 12px; font-size:14px; margin:0; border-bottom:0; border-top:3px solid transparent}
   .tab.on{border-top-color:var(--accent)}
+  .head h1{font-size:21px; gap:4px 6px} .head h1 .ver{font-size:11px; padding:2px 6px} .head h1 .sync-chip{font-size:11px; padding:2px 7px; margin:0}
+  .statbox .sb-rest:has(> .board-cuts:empty):has(> .alerts[style*="none"]){display:none}
+  .statbox{justify-self:stretch; padding:6px 12px; border-radius:10px} .statbox .board-score .n{font-size:24px} .statbox .board-score .of{max-width:none}
+  .board-score{border-bottom:0}
   body{padding-bottom:calc(60px + env(safe-area-inset-bottom,0px))}
 }
 </style>
@@ -758,8 +769,6 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
   </div>
   <div class="todaybar" id="todayBar" title="Today's games, per book — click for the Bet log"></div>
   <div class="pull-bar" id="pullBar" role="alert"></div>
-  <div class="src-bar" id="srcBar" title="Your data sources — each has its own key and allowance"></div>
-  <div class="src-panel" id="srcPanel" style="display:none"></div>
   <div class="loadline loadbar">
     <span class="ll-k">BettingPros</span>
     <select id="apiSport" title="Sport">
@@ -792,18 +801,12 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
       <input type="file" id="openBoardFile" accept=".json,application/json" style="display:none">
       <button class="linkbtn" id="clearBoard" title="Clear the board">Clear</button>
       <button class="linkbtn" id="pasteLink" hidden title="Paste a board from the BettingPros site — doesn't use the API">Paste ▸</button>
-      <button class="linkbtn" id="passLink" title="Screener passphrase">Passphrase ▸</button>
+      <button class="linkbtn" id="passLink" hidden title="Screener passphrase">Passphrase ▸</button>
     </span>
     <span class="saved-note" id="savedNote"></span>
   </div>
   <div id="apiStatus" class="ll-status"></div>
   <p class="hint" id="apiWeekHint" style="display:none;margin:4px 2px 0">NFL/NCAAF are organized by week. Week auto-fills from ESPN; leave it blank to let BettingPros use the current week.</p>
-  <div class="row" id="passBox" style="display:none;margin-top:8px">
-    <input type="password" id="screenerPass" placeholder="passphrase" style="max-width:220px" autocomplete="new-password">
-    <button class="act" id="passSave" type="button" style="padding:7px 16px">Save</button>
-    <span class="meta" id="passMsg"></span>
-    <span class="hint" style="margin:0">Saved in this browser only. Must match the SCREENER_PASS secret on the Worker.</span>
-  </div>
 </div>
 
 <div class="tabs">
@@ -887,7 +890,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
     </tr></thead>
     <tbody id="tbody"></tbody>
   </table></div>
-  <div class="empty" id="emptyMsg">Load a board (or paste one on the Paste a board tab). Rejected bets stay hidden unless you switch them on.</div>
+  <div class="empty" id="emptyMsg">Nothing on the board yet. Pick a sport above and hit <b>Load</b>: the bets worth taking land here, the rest stay hidden unless you switch rejects on.</div>
 </div>
 
 <div class="panel" style="display:none">   <!-- v2.79: replaced by + Add a bet -->
@@ -993,6 +996,18 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 </div>
 
 <div class="view" id="v-settings">
+<details class="panel fold" id="srcSettings" open>   <!-- v3.54: moved here from the header -->
+  <summary><h2>Data sources <span class="sub">API keys, what's left of each allowance, and the screener passphrase</span></h2></summary>
+    <div class="src-bar" id="srcBar" title="Your data sources — each has its own key and allowance"></div>
+    <div class="src-panel" id="srcPanel" style="display:none"></div>
+  <h3 class="set-h">Screener passphrase</h3>
+  <div class="row" id="passBox" style="display:flex;margin-top:4px">
+    <input type="password" id="screenerPass" placeholder="passphrase" style="max-width:220px" autocomplete="new-password">
+    <button class="act" id="passSave" type="button" style="padding:7px 16px">Save</button>
+    <span class="meta" id="passMsg"></span>
+    <span class="hint" style="margin:0">Saved in this browser only. Must match the SCREENER_PASS secret on the Worker.</span>
+  </div>
+</details>
 <details class="panel fold" id="syncPanel" open>
   <summary><h2>☁ Your bets on every device <span class="sub">phone, other PCs — locked with your own sync password</span></h2></summary>
   <p class="hint">One copy of your bet log lives in your Cloudflare store. Any device with the screener passphrase <b>and</b> this password sees the same bets, baits and settings. Changes upload a few seconds after you make them; other devices pick them up when they open or come back to the page, and once a minute while it's open — Wi-Fi or cellular.</p>
@@ -5036,7 +5051,7 @@ async function apiGet(path){
   let data=null; try{ data=await res.json(); }catch(e){}
   if(data && data._meta && data._meta.budget) showBudget(data._meta.budget);
   if(!res.ok){
-    if(res.status===401) throw new Error('locked — enter the screener passphrase below the load bar');
+    if(res.status===401) throw new Error('locked — enter the screener passphrase in Settings → Data sources');
     const bud=data&&data._meta&&data._meta.budget;
     if(res.status===429 && bud && bud.next_free_at)   // v2.63: say when the next call frees up
       throw new Error(((data&&data.error)||'API limit reached')+' — next call '+fmtCT(bud.next_free_at)+'. Saved boards still work');
@@ -5367,7 +5382,7 @@ async function loadSbapi(fresh){
   if(msg) msg.textContent='loading…'; if(btn) btn.disabled=true;
   try{
     const res=await fetch(API_BASE+'/src/sbapi?type=PLUS_EV_AVERAGE'+(fresh?'&fresh=1':''),{headers:apiHeaders()});
-    if(res.status===401) throw new Error('locked — enter the screener passphrase below the load bar');
+    if(res.status===401) throw new Error('locked — enter the screener passphrase in Settings → Data sources');
     if(!res.ok){ let j={}; try{ j=await res.json(); }catch(e){} throw new Error(j.error||('Worker returned '+res.status)); }
     const cached=res.headers.get('x-sb-cached')==='1', left=res.headers.get('x-sb-remaining'), lim=res.headers.get('x-sb-limit'), at=res.headers.get('x-sb-at');
     if(!cached && left){ try{ localStorage.setItem('mbev.sbq', JSON.stringify({left:+left, limit:+lim||150, day:todayCT()})); }catch(e){} }
@@ -5505,7 +5520,7 @@ function sgoToRows(data, sport, cfgBooks, want){
 }
 async function srcFetch(q){
   const res=await fetch(API_BASE+'/src/odds?'+q,{headers:apiHeaders()});
-  if(res.status===401) throw new Error('locked — enter the screener passphrase below the load bar');
+  if(res.status===401) throw new Error('locked — enter the screener passphrase in Settings → Data sources');
   if(res.status===404) throw new Error('the Worker doesn\'t have this yet — run npx wrangler deploy on the Mac');
   let quota={}; try{ quota=JSON.parse(res.headers.get('x-src-quota')||'{}'); }catch(e){}
   const cached=res.headers.get('x-src-cached')==='1';
@@ -7943,7 +7958,7 @@ function syncErrText(r){
   if(r.err) return r.err;
   const code=r.j&&r.j.code, msg=r.j&&r.j.error||'';
   if(r.status===401 && code==='bad_key') return 'wrong sync password';
-  if(r.status===401) return 'screener passphrase missing or wrong (Passphrase ▸ on the load bar)';
+  if(r.status===401) return 'screener passphrase missing or wrong (Settings → Data sources)';
   if(r.status===503 && code==='no_key') return 'the Worker has no sync password yet — on the Mac: cd ~/prop-bet-api, npx wrangler secret put SYNC_KEY, then npx wrangler deploy';
   if(code==='no_store') return 'the Worker has no sync store yet — on the Mac: cd ~/prop-bet-api, then npx wrangler deploy (wrangler.jsonc needs the SYNC Durable Object)';
   if(code==='broken') return 'the cloud copy is incomplete — nothing was changed here; send Claude Settings → Test my books';
