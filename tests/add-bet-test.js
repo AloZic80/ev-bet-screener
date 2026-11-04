@@ -9,7 +9,8 @@ const route=r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/'))
   const b=await chromium.launch(); const ctx=await b.newContext({timezoneId:'America/Chicago', viewport:{width:1280,height:900}}); const p=await ctx.newPage();
   const errs=[]; p.on('pageerror',e=>errs.push(e.message)); await p.route('**/*',route);
   await p.goto('http://app.test/'); await p.waitForTimeout(1000);
-  check('version v3.54', (await p.title())==='0xBeta Screener v3.54' && (await p.textContent('#verTag'))==='v3.54', [await p.title(), await p.textContent('#verTag')]);
+  const ver=await p.evaluate(()=>SCREENER_VERSION);   // the one version number, shown in the tab title and the header
+  check('version is the same everywhere ('+ver+')', /^v\d+\.\d+$/.test(ver) && (await p.title())==='0xBeta Screener '+ver && (await p.textContent('#verTag'))===ver, [await p.title(), await p.textContent('#verTag')]);
   const vis=await p.$$eval('.tab',t=>t.filter(x=>x.offsetParent!==null).map(x=>x.textContent.trim()));
   check('Pasted and Paste a board hidden, Board shown', !vis.some(x=>/^Pasted|Paste a board/.test(x)) && vis.includes('Board'), vis);
   check('Paste ▸ link hidden', await p.$eval('#pasteLink',e=>e.offsetParent===null), true);
