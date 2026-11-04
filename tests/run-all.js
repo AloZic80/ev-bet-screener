@@ -15,7 +15,7 @@ const runs = [
   ['Player photos: FantasyPros by ID, ESPN by exact name, no guesses', 'photos-test.js', []],
   ['Sources on the main page; every sport (league menu, typed key, 3-way, unknown leagues)', 'sources-test.js', []],
   ['The Sentinels send parlay picks (not good alone, good in 2 to 6 picks) to the Parlays tab', 'sentinels-parlay-test.js', []],
-  ['🌍 Leagues: which leagues have games, from what the sources say; one tap loads the odds', 'leagues-test.js', []],
+  ['🌍 Leagues: which leagues have games, from what the sources say; one tap loads the odds', 'leagues-test.js', []],  ['Parlays for every app: pick’em and combos, size buttons, discounts and boosts', 'parlay-apps-test.js', []],
 ];
 const run = (file, args) => spawnSync(process.execPath, [path.join(__dirname, file), ...args], { encoding: 'utf8', timeout: 300000 });
 const last = r => ((r.stdout || '') + (r.stderr || '')).trim().split('\n').pop();
