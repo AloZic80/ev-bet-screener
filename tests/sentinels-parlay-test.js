@@ -44,6 +44,9 @@ const BOARD=[
   check('the break-even of each size is shown, 4 starred', be.length===5 && /★ 4 picks 56\.2%/.test(be.join('|')) && /2 picks 57\.7%/.test(be[0]) && /6 picks 54\.7%/.test(be[4]), be);
   const card=await p.evaluate(()=>{ const c=document.querySelector('#pkSent .pk-card'); return c?{title:c.querySelector('.pk-h b').textContent, best:!!c.querySelector('.pk-best'), ev:c.querySelector('.pk-ev').textContent, legs:[...c.querySelectorAll('.pk-legs li')].length}:null; });
   check('a ready 4-pick from these, starred, priced, with its stake to log (not called best: that is the cards below)', card && card.title==='★ The Sentinels’ 4 picks' && card.legs===4 && /^\+/.test(card.ev) && !card.best, card);
+  const why=await p.evaluate(()=>{ const n=document.querySelector('#pkSent .pk-sent-why'), cards=[...document.querySelectorAll('#pkSent .pk-card .pk-h b')].map(b=>b.textContent); return {why:n?n.textContent:'', cards}; });
+  const more=/grows your bankroll more/.test(why.why);
+  check('4 picks is labelled your target; a size that grows the bankroll more is shown next to it, not hidden', /4 picks is your target/.test(why.why) && (more ? why.cards.length===2 && why.cards[0]==='★ The Sentinels’ 4 picks' && /^The Sentinels’ [2356] picks$/.test(why.cards[1]) : why.cards.length===1), why);
   await p.click('#pkSent .pk-sent-add[data-k="top leg|points"]'); await p.waitForTimeout(300);
   const mine=await p.evaluate(()=>({mine:pkState.mine, btn:document.querySelector('#pkSent .pk-sent-add[data-k="top leg|points"]').textContent}));
   check('+ Add puts it in Your entry', mine.mine.includes('top leg|points') && /In your entry/.test(mine.btn), mine);

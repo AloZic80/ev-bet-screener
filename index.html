@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v3.57</title>
+<title>0xBeta Screener v3.58</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -862,6 +862,19 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
   .board-score{border-bottom:0}
   body{padding-bottom:calc(60px + env(safe-area-inset-bottom,0px))}
 }
+/* v3.58: 🌍 Leagues tab */
+.lg-bar{gap:10px; align-items:center; margin-top:0}
+.lg-group{margin:16px 0 6px; font-size:12.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--soft)}
+.lg-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px}
+.lg-row{display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1.7fr) auto; align-items:center; gap:6px 14px; border:1px solid var(--rule); border-radius:10px; padding:9px 12px; background:var(--panel)}
+.lg-who{min-width:0; overflow-wrap:anywhere} .lg-who b{font-size:15px}
+.lg-src{display:flex; flex-wrap:wrap; gap:5px}
+.lg-b{font-size:12px; padding:2px 9px; border-radius:999px; border:1px solid var(--rule); color:var(--soft); background:var(--panel-2); white-space:nowrap}
+.lg-b.on{border-color:var(--live); color:var(--gain); background:var(--live-bg)}
+.lg-act{display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end} .lg-act button.log.sm{margin-top:0}
+.lg-off{margin-top:14px} .lg-off summary{cursor:pointer; font-size:13.5px; font-weight:600} .lg-off .lg-list{margin-top:8px}
+.lg-names{font-size:13px; color:var(--soft); margin-top:6px; line-height:1.7}
+@media (max-width:640px){ .lg-row{grid-template-columns:minmax(0,1fr) auto} .lg-src{grid-column:1/-1; order:3} }
 /* v3.57: a picture on every row (board, Parlays, Bet log): the player over the team logo, or the team's logo */
 .c-who{display:flex; gap:9px; align-items:flex-start} .c-who>div{min-width:0}
 .av{position:relative; flex:none; width:34px; height:34px; border-radius:9px; overflow:hidden; background:#3B4656; display:inline-grid; place-items:center}
@@ -920,7 +933,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.57</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.58</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -976,6 +989,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="tabs" role="tablist" aria-label="Sections">
   <button class="tab on" role="tab" aria-selected="true" data-view="v-board" data-src="api">Board</button>
   <button class="tab" role="tab" aria-selected="false" data-view="v-board" data-src="paste" hidden>Pasted <span class="tab-n" id="pasteTabN"></span></button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-leagues" title="Every league your sources have games for in the next 3 days">🌍 Leagues <span class="tab-n" id="lgTabN"></span></button>
   <button class="tab" role="tab" aria-selected="false" data-view="v-parlay" title="PrizePicks and DraftKings Pick6 entries built from the board">Parlays <span class="tab-n" id="pkTabN"></span></button>
   <button class="tab" role="tab" aria-selected="false" data-view="v-parole" title="Jail bets your own posted price would fix — Make orders on Novig">🔓 Parole <span class="tab-n" id="paroleTabN"></span></button>
   <button class="tab" role="tab" aria-selected="false" data-view="v-add" title="Take a price or post your own — BET or SKIP and how much">+ Add a bet</button>
@@ -1139,6 +1153,14 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <!-- ======================= MONEYLINES ======================= -->
 <!-- v2.61: settings moved off the Board -->
 <!-- v2.66: live scores for your open bets (ESPN, no BettingPros calls) -->
+<div class="view" id="v-leagues">   <!-- v3.58: every league, and which ones have games now, from what the sources say -->
+<div class="panel" id="lgPanel">
+  <h2>🌍 Leagues <span class="sub">which leagues have games in the next 3 days, from what your sources say. One tap loads the odds</span></h2>
+  <div class="row lg-bar"><button type="button" class="ghost" id="lgScan">⟳ Check again</button><span class="meta" id="lgMsg" role="status"></span></div>
+  <div id="lgBody"></div>
+  <p class="hint">Checking is free: ESPN's schedules, and The Odds API's own league and game lists once your Worker passes them through. <b>Load odds</b> uses The Odds API credits (about 1 per bet type, only when the league has games). <b>BettingPros board</b> uses your BettingPros calls. A league with no free schedule is listed as not checked: it may still have games, so Load odds finds out.</p>
+</div>
+</div>
 <div class="view" id="v-parlay">   <!-- v3.54: PrizePicks and DraftKings Pick6 entries -->
 <div class="panel" id="pkPanel">
   <h2>Parlays <span class="sub">PrizePicks and DraftKings Pick6 pay a fixed multiple, so the sportsbook price doesn't matter: only how likely each pick is to hit</span></h2>
@@ -1555,7 +1577,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v3.57';
+const SCREENER_VERSION='v3.58';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3899,7 +3921,14 @@ function logDayHtml(day, d, open, nLook){
 }
 function lookChip(){ const n=logged.filter(b=>lookOutWhy(b)).length;   // v3.57: on the Today card too (the Bet log tab can be off screen on a phone)
   return n ? '<button type="button" class="tb-look" title="Bets not graded yet, automatically or by you">⚠ '+n+' to check</button>' : ''; }
-function overAfterH(b){ const s=String(b.sport||'').toUpperCase(); return s==='GOLF' ? 100 : /MMA|UFC|BOX/.test(s) ? 8 : 5; }   // hours after the start when the game is surely over
+function overAfterH(b){ const s=String(b.sport||'').toUpperCase(); let g=''; try{ g=SPORT_GROUP[s]||''; }catch(e){}   // hours after the start when the game is surely over
+  if(s==='GOLF') return 100;                                  // four rounds
+  if(s==='TESTCRICKET') return 130;                           // v3.58: a Test lasts up to five days
+  if(s==='ODI') return 11;                                    // v3.58: a one-day match runs about 8 hours, more with rain
+  if(g==='Fighting' || /MMA|UFC|BOX/.test(s)) return 8;       // the main event comes hours after the card starts
+  if(g==='Tennis' || /^(ATP|WTA)/.test(s)) return 7;          // v3.58: five-set matches, rain and late starts
+  if(/^(MLB|KBO|NPB)$/.test(s)) return 7;                     // v3.58: rain delays
+  return 5; }
 function lookOutWhy(b){
   if(b.sold || b.voided || b.result==='win' || b.result==='loss' || b.result==='push') return '';
   const today=ctDay(Date.now()), day=gameDayOf(b)||b.date||'';
@@ -5802,7 +5831,9 @@ MORE_LEAGUES.forEach(([c,,,,k])=>{ if(k && !OA_SPORTS[c]) OA_SPORTS[c]=k; });   
 /* v3.57: a key you type (any league on The Odds API, e.g. a tennis tournament) gets a code of its own, from the key */
 function oaCodeOf(key){ const k=String(key||'').toLowerCase().trim(); const hit=Object.keys(OA_SPORTS).find(c=>OA_SPORTS[c]===k); if(hit) return hit;
   const c=k.replace(/^(soccer|basketball|baseball|icehockey|americanfootball|tennis|mma|boxing|cricket|rugbyunion|rugbyleague|aussierules|golf|lacrosse|handball|volleyball|darts|snooker|esports)_/,'').toUpperCase().replace(/[^A-Z0-9]+/g,'_').slice(0,20)||'OTHER';
-  OA_SPORTS[c]=k; if(!SPORT_NAMES[c]) SPORT_NAMES[c]=k; if(/^soccer_/.test(k)) SOCCER.add(c); return c; }
+  OA_SPORTS[c]=k; if(!SPORT_NAMES[c]) SPORT_NAMES[c]=k; if(/^soccer_/.test(k)) SOCCER.add(c);
+  if(!SPORT_GROUP[c]) SPORT_GROUP[c]=({soccer:'Soccer',tennis:'Tennis',basketball:'Basketball',baseball:'Baseball',icehockey:'Hockey',americanfootball:'Football',mma:'Fighting',boxing:'Fighting',cricket:'Cricket',rugbyunion:'Rugby',rugbyleague:'Rugby',aussierules:'Aussie rules'})[k.split('_')[0]]||'Other';   // v3.58
+  return c; }
 // SportsGameOdds league IDs — NFL seen in a real answer; the others are their documented names (unverified until loaded)
 // v3.24: only what the FREE plan opens (checked 10/31/2026: these answered 200; EPL and LA_LIGA said "unavailable at your tier")
 const SGO_LEAGUES={NFL:'NFL',NCAAF:'NCAAF',NBA:'NBA',NCAAB:'NCAAB',NHL:'NHL',MLB:'MLB',MLS:'MLS',UCL:'UEFA_CHAMPIONS_LEAGUE'};
@@ -5976,6 +6007,79 @@ async function loadOddsSrc(id){
   }catch(e){ if(msg) msg.textContent='✗ '+e.message; }
   finally{ btns.forEach(b=>b.disabled=false); }
 }
+/* ============ v3.58: 🌍 Leagues — every league, and which ones have games right now ============
+   (Alonzo: "a TAB, dynamic: our APIs tell it there's a bet there, like La Liga".) The list is every league the app knows:
+   The Odds API's own list when the Worker passes it through (free, so new leagues show up by themselves), else the
+   built-in list, plus every ESPN path and BettingPros code. The check is what the sources say: ESPN's schedule (free),
+   The Odds API's game list (free, once the Worker has the route), the Sportsbook API's last load. Saved 30 minutes. */
+const LG={at:0, rows:{}, busy:false, oa:null, oaNote:'', evNote:''};
+try{ const c=JSON.parse(localStorage.getItem('mbev.lgScan')||'null'); if(c && c.at){ LG.at=c.at; LG.rows=c.rows||{}; LG.oa=c.oa||null; } }catch(e){}
+const LG_GROUP={'American Football':'Football','Ice Hockey':'Hockey','Mixed Martial Arts':'Fighting','Boxing':'Fighting','Rugby League':'Rugby','Rugby Union':'Rugby','Aussie Rules':'Aussie rules'};
+const LG_ORDER=['Football','Basketball','Baseball','Hockey','Soccer','Fighting','Tennis','Aussie rules','Rugby','Cricket','Golf','Other'];
+function lgLeagues(){ const m=new Map(), add=(code,name,group,key)=>{ if(code && !m.has(code)) m.set(code,{code, name:name||SPORT_NAMES[code]||code, group:group||SPORT_GROUP[code]||(SOCCER.has(code)?'Soccer':'Other'), key:key||OA_SPORTS[code]||''}); };
+  (LG.oa||[]).forEach(s=>{ const c=oaCodeOf(s.key); if(s.title && SPORT_NAMES[c]===s.key) SPORT_NAMES[c]=s.title; if(LG_GROUP[s.group]||s.group) SPORT_GROUP[c]=SPORT_GROUP[c]||LG_GROUP[s.group]||s.group; add(c, SPORT_NAMES[c]||s.title, SPORT_GROUP[c], s.key); });
+  Object.keys(OA_SPORTS).forEach(c=>add(c)); Object.keys(ESPN_MAP).forEach(c=>add(c)); try{ allSports().forEach(c=>add(c)); }catch(e){}
+  return [...m.values()]; }
+async function lgScan(){
+  if(LG.busy) return; LG.busy=true; lgPaint();
+  const msg=document.getElementById('lgMsg'), now=Date.now(), rows={};
+  try{
+    try{ const {data}=await srcFetch('src=oddsapi_sports'); const A=Array.isArray(data)?data:((data&&data.data)||[]);   // free: every league The Odds API has in season
+      LG.oa=A.filter(x=>x && x.key && x.active!==false && !/_winner$/.test(x.key)).map(x=>({key:x.key, title:x.title, group:x.group})); LG.oaNote=LG.oa.length+' leagues listed by The Odds API'; }
+    catch(e){ LG.oaNote=/have this yet/.test(e.message) ? 'league list: built in until the Worker passes The Odds API list through' : 'The Odds API list: '+e.message; }
+    const L=lgLeagues(), today=ctDay(now), days=[0,1,2].map(n=>dayPlus(today,n));
+    const E=L.filter(l=>ESPN_MAP[l.code]); let i=0;
+    const espn=async()=>{ while(i<E.length){ const l=E[i++]; try{ const ev=[].concat(...await Promise.all(days.map(d=>fetchScoreboardDay(l.code,d))));
+        const T=ev.filter(x=>((x.status&&x.status.type&&x.status.type.state)||'pre')==='pre').map(x=>Date.parse(x.date)).filter(t=>t>now-60e3).sort((a,b)=>a-b);
+        rows[l.code]=Object.assign(rows[l.code]||{}, {espn:T.length, next:T[0]||null}); }catch(e){} } };
+    if(msg) msg.textContent='checking ESPN… ('+E.length+' leagues)';
+    await Promise.all([0,1,2,3,4,5].map(espn));
+    const K=L.filter(l=>l.key); let j=0, evOK=true; LG.evNote='';
+    const oa=async()=>{ while(evOK && j<K.length){ const l=K[j++]; try{ const {data}=await srcFetch('src=oddsapi_events&sport='+encodeURIComponent(l.key)); const A=Array.isArray(data)?data:((data&&data.events)||[]);
+        const T=A.map(x=>Date.parse(x.commence_time)).filter(t=>t>now-60e3 && t<now+3*864e5).sort((a,b)=>a-b), r=rows[l.code]=Object.assign(rows[l.code]||{}, {oa:T.length});
+        if(T.length && !(r.next && r.next<=T[0])) r.next=T[0]; }
+      catch(e){ if(/have this yet|locked/.test(e.message)){ evOK=false; LG.evNote=/locked/.test(e.message)?'The Odds API: locked, check the passphrase':'The Odds API game list: after the Worker update'; } } } };
+    if(msg) msg.textContent='checking The Odds API…';
+    await Promise.all([0,1,2,3].map(oa));
+    LG.rows=rows; LG.at=Date.now(); try{ localStorage.setItem('mbev.lgScan',JSON.stringify({at:LG.at, rows, oa:LG.oa})); }catch(e){}
+  } finally { LG.busy=false; lgPaint(); } }
+function lgPaint(){
+  const el=document.getElementById('lgBody'), msg=document.getElementById('lgMsg'), btn=document.getElementById('lgScan'), tab=document.getElementById('lgTabN'); if(!el) return;
+  if(btn) btn.disabled=LG.busy;
+  const sb={}; lastRows.filter(r=>r.src==='api:sbapi:ev').forEach(r=>{ sb[r.sport]=(sb[r.sport]||0)+1; });
+  let bp=new Set(); try{ bp=new Set(allSports()); }catch(e){}
+  const L=lgLeagues().map(l=>Object.assign(l,{x:LG.rows[l.code]||null, sb:sb[l.code]||0, bp:bp.has(l.code)}));
+  const has=l=>(l.x&&((l.x.espn||0)+(l.x.oa||0)))+l.sb>0, checked=l=>!!(l.x && (l.x.espn!=null || l.x.oa!=null));
+  const on=L.filter(has).sort((a,b)=>((a.x&&a.x.next)||9e15)-((b.x&&b.x.next)||9e15)), none=L.filter(l=>!has(l) && checked(l)), unk=L.filter(l=>!has(l) && !checked(l));
+  if(tab) tab.textContent=LG.at&&on.length?String(on.length):'';
+  if(msg && !LG.busy) msg.textContent=LG.at ? on.length+' with games · checked '+new Date(LG.at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+(LG.oaNote?' · '+LG.oaNote:'')+(LG.evNote?' · '+LG.evNote:'') : 'not checked yet';
+  const pl=(n,w)=>n+' '+w+(n===1?'':'s');
+  const row=l=>'<li class="lg-row"><div class="lg-who"><b>'+esc(l.name)+'</b> <span class="meta">'+esc(l.code)+'</span>'+(l.x&&l.x.next?'<div class="meta">next '+esc(fmtCT(new Date(l.x.next).toISOString()))+'</div>':'')+'</div>'+
+    '<div class="lg-src">'+(l.x&&l.x.espn?'<span class="lg-b on">ESPN: '+pl(l.x.espn,'game')+'</span>':'')+(l.x&&l.x.oa?'<span class="lg-b on">The Odds API: '+pl(l.x.oa,'game')+'</span>':'')+
+      (l.sb?'<span class="lg-b on">Sportsbook API: '+pl(l.sb,'pick')+'</span>':'')+(l.bp?'<span class="lg-b">BettingPros</span>':'')+(ESPN_MAP[l.code]?'':'<span class="lg-b" title="ESPN has no schedule for this league here: you set the result from Look out">graded by you</span>')+'</div>'+
+    '<div class="lg-act">'+(l.key?'<button type="button" class="log sm lg-load" data-code="'+esc(l.code)+'" title="The Odds API: about 1 credit per bet type, only when it has games">Load odds</button>':'')+
+      (l.bp?'<button type="button" class="log sm undo lg-bp" data-code="'+esc(l.code)+'" title="Uses your BettingPros calls (a load within 30 minutes is free)">BettingPros board</button>':'')+'</div></li>';
+  const groups=list=>{ const G={}; list.forEach(l=>{ (G[l.group]=G[l.group]||[]).push(l); });
+    return Object.keys(G).sort((a,b)=>(LG_ORDER.indexOf(a)+1||99)-(LG_ORDER.indexOf(b)+1||99)).map(g=>'<h3 class="lg-group">'+esc(g)+' <span class="meta">'+G[g].length+'</span></h3><ul class="lg-list">'+G[g].map(row).join('')+'</ul>').join(''); };
+  el.innerHTML = (!LG.at && !LG.busy ? '<div class="meta">Press Check again to ask your sources.</div>' : '')+
+    (on.length ? groups(on) : (LG.at?'<div class="meta">No league has games in the next 3 days, from what the sources said.</div>':''))+
+    (unk.length ? '<details class="lg-off"><summary>Not checked: no free schedule for these yet ('+unk.length+')</summary><ul class="lg-list">'+unk.map(row).join('')+'</ul></details>' : '')+
+    (none.length ? '<details class="lg-off"><summary>No games in the next 3 days ('+none.length+')</summary><div class="lg-names">'+none.map(l=>esc(l.name)).join(' · ')+'</div></details>' : ''); }
+document.addEventListener('click',e=>{
+  if(e.target.closest('#lgScan')){ lgScan(); return; }
+  const ld=e.target.closest('.lg-load');
+  if(ld){ const code=ld.dataset.code, key=OA_SPORTS[code]; if(!key) return;
+    const pn=document.getElementById('srcPanel'); if(!(pn && pn.style.display==='block' && pn.dataset.src==='oddsapi')) openSource('oddsapi');
+    const sel=document.getElementById('oaSport'), typed=document.getElementById('oaKey'); if(!sel) return;
+    if([...sel.options].some(o=>o.value===code)){ sel.value=code; if(typed) typed.value=''; } else if(typed) typed.value=key;
+    const t=document.querySelector('.tab[data-view="v-board"][data-src="api"]'); if(t) t.click();
+    loadOddsSrc('oddsapi'); setTimeout(()=>{ const m=document.getElementById('srcPanel'); if(m) m.scrollIntoView({block:'center'}); },60); return; }
+  const bb=e.target.closest('.lg-bp');
+  if(bb){ const sel=document.getElementById('apiSport'); if(sel && [...sel.options].some(o=>o.value===bb.dataset.code)){ sel.value=bb.dataset.code; sel.dispatchEvent(new Event('change')); }
+    const t=document.querySelector('.tab[data-view="v-board"][data-src="api"]'); if(t) t.click(); const go=document.getElementById('loadApi'); if(go) go.click(); return; }
+});
+{ const t=document.querySelector('.tab[data-view="v-leagues"]'); if(t) t.addEventListener('click',()=>setTimeout(()=>{ if(Date.now()-LG.at>30*60e3) lgScan(); else lgPaint(); },0)); }
+setTimeout(()=>{ try{ lgPaint(); }catch(e){} },0);
 async function refreshBudget(){
   try{ const res=await fetch(API_BASE+'/budget',{headers:apiHeaders()}); if(res.ok){ const b=await res.json(); showBudget(b); window._bpLeft=b.left; paintSources(); } }catch(e){}
   if(!srcInfo) loadSources();
@@ -6901,8 +7005,11 @@ function pkSentHtml(pays,cfg,appName){
   const be=pkSentBE(), sizes=Object.keys(be).map(Number).sort((a,b)=>a-b), S=pkSentLegs(), play=pkState.play==='flex'?'Flex':'Power';
   const when=pkSentAt?'checked at live prices, '+new Date(pkSentAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'at the board’s prices';
   const opts=sizes.map(n=>{ const L=pkSentPick(S,n); return L?{n,L,e:pkEntry(L,pays[n],cfg)}:null; }).filter(o=>o && o.e.ev>0);
-  const best=opts.find(o=>o.n===4) || opts.sort((a,b)=>b.e.growth-a.e.growth)[0];   // 4 picks when it pays, else the best for the bankroll
-  if(best) window._pkCards.sent={legs:best.L, e:best.e};
+  const byGrowth=opts.slice().sort((a,b)=>b.e.growth-a.e.growth)[0], best=opts.find(o=>o.n===4) || byGrowth;   // 4 picks when it pays (your target), else the best for the bankroll
+  const shown=best ? (byGrowth && byGrowth.n!==best.n ? [best,byGrowth] : [best]) : [];   // v3.58: a size that grows the bankroll more is shown next to it, never hidden
+  shown.forEach((o,i)=>{ window._pkCards[i?'sent2':'sent']={legs:o.L, e:o.e}; });
+  const why=!best ? '' : best.n===4 ? (shown.length>1 ? '★ 4 picks is your target. With these picks, '+byGrowth.n+' picks grows your bankroll more: both are here.' : '★ 4 picks is your target, and with these picks it also grows your bankroll most.')
+                                    : '4 picks does not pay with these picks. '+best.n+' picks grows your bankroll most.';
   return '<div class="pk-sent-h"><b>🦑 Not good alone, good in a parlay</b><span class="meta">'+esc(when)+'</span><button type="button" class="ghost sm" id="pkSentGo">🦑 Send the Sentinels</button></div>'+
     '<div class="pk-be" role="list" aria-label="The chance every pick needs to break even, '+esc(appName+' '+play)+'">'+sizes.map(n=>'<span role="listitem" class="pk-be-i'+(n===4?' star':'')+'">'+(n===4?'★ ':'')+n+' picks <b>'+(be[n]!=null?pct(be[n]):'n/a')+'</b></span>').join('')+'</div>'+
     (S.length ? '<ul class="pk-sent-list">'+S.slice(0,12).map(l=>{ const on=pkState.mine.indexOf(l.key)>=0;
@@ -6912,7 +7019,8 @@ function pkSentHtml(pays,cfg,appName){
           '<button type="button" class="log sm pk-sent-add'+(on?' on':'')+'" data-k="'+esc(l.key)+'" aria-pressed="'+on+'">'+(on?'✓ In your entry':'+ Add')+'</button></li>'; }).join('')+'</ul>'+
         (S.length>12?'<div class="meta">and '+(S.length-12)+' more in Picks below</div>':'')
       : '<div class="meta">Nothing right now: no pick that misses as a single bet clears a '+esc(appName)+' break-even.'+(pkSentAt?'':' Send the Sentinels to re-check at live prices.')+'</div>')+
-    (best ? pkCard((best.n===4?'★ ':'')+'The Sentinels’ '+best.n+' picks', best.L, best.e, 'sent', false) : (S.length?'<div class="meta">Not enough of these from different games for an entry that pays yet.</div>':'')); }
+    (best ? '<div class="meta pk-sent-why">'+esc(why)+'</div><div class="pk-cards">'+shown.map((o,i)=>pkCard((o.n===4?'★ ':'')+'The Sentinels’ '+o.n+' picks', o.L, o.e, i?'sent2':'sent', false)).join('')+'</div>'
+          : (S.length?'<div class="meta">Not enough of these from different games for an entry that pays yet.</div>':'')); }
 function pkSetRows(rows){ window._pkRows=rows||[]; pkBadge(); const v=document.getElementById('v-parlay'); if(v&&v.classList.contains('on')) renderParlays(); }
 function pkBadge(){ const el=document.getElementById('pkTabN'); if(!el) return; const n=pkLegs(window._pkRows||[]).filter(l=>l.p>=pkState.minP && pkPlayable(l)).length; el.textContent=n?String(n):''; }
 const pkPick=l=>(l.side==='U'?'Under ':'Over ')+l.line+' '+shortStat(l.stat);
