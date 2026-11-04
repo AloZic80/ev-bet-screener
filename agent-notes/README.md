@@ -20,6 +20,6 @@ All of these are in GitHub, so the Project's agent, ChatGPT and Augi can read th
 | CC-2026-11-03-09 | `reply-to-11_2026-11-03_v1.md` | v3.58 live; reply to the Project's 2026-11-03-11 | v1 |
 | CC-2026-11-03-10 | `chatgpt-addendum_2026-11-03_v1.md` | Two more questions for ChatGPT (v3.58) | v1 |
 | CC-2026-11-04-01 | `pending-for-alonzo_2026-11-04_v1.md` | Alonzo's checklist | v1 |
-| CC-2026-11-04-02 | `for-augi_2026-11-04_v1.md` | How Augi can run the same setup with ChatGPT and GitHub | v1 |
+| CC-2026-11-04-02 | `for-augi_2026-11-04_v2.md` | How Augi builds his own setup (own keys) with ChatGPT, GitHub and a Cloudflare Worker | **v2** (replaces v1) |
 
 Next Ref from Claude Code: **CC-2026-11-04-03**.
