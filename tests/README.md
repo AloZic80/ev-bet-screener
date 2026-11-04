@@ -36,6 +36,7 @@ Every test uses fixed or relative dates, so the results don't depend on the day 
 | `towin-edit-pct-test.js` | % mode (Cost + To win) saves the slip's real profit; editing a saved bet keeps, replaces or drops To win correctly. |
 | `add-bet-test.js` | Bets that already happened (Result: won / lost / push), typed games and teams, American / decimal / % odds, To win on a fee book, Mark PUSH, results surviving a reload, hidden paste tabs, score strip, phone tab bar. |
 | `layout-test.js` | Layout toggle: Phone on a computer opens `phone.html` (360 / 390 / 430 frame), Desktop on a phone shows the 1280px layout, Auto, and the way back. |
+| `pick6-lines-test.js` | Parlays > Get Pick6 lines against a stub Worker answering like the step-2 routes (`src=oddsapi_events`, `src=oddsapi_props`, The Odds API's JSON unchanged): one props call per game found, 4 stats, credits shown; a board row at the app's own line gets the ✓; a different line or a pick the app doesn't offer stays out of entries; a Worker without the routes gives a plain message. |
 | `parlay-test.js` | Parlays tab. The math, checked against independent code: Power break-evens equal payout^(-1/n), Flex break-evens are worth exactly 0, 40 random entries match brute force over all 2^n outcomes, Kelly matches a fine search and the textbook formula. Then the tab on a sample board: PrizePicks lines first, one pick per game, best entries, your own entry, logging to the Bet log, Flex, editing payouts, Pick6. |
 
 ## Reports (not pass/fail)

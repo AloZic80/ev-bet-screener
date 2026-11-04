@@ -52,6 +52,10 @@
 - Payout defaults are in `PK_DEFAULT`; the owner's edits are saved per device in `mbev.pk`. Pick6 defaults are a copy of
   PrizePicks Power until the owner enters Pick6's own.
 - "Best for your bankroll" is the entry with the most log growth at its suggested stake, not the biggest return.
+- **Get Pick6 lines** (and PrizePicks) calls the Worker's `/src/odds?src=oddsapi_events` and `src=oddsapi_props` (The Odds API,
+  region `us_dfs`, JSON passed through unchanged; see `agent-notes/`). Only the games of the best NFL/NBA picks, at most 6 per press,
+  4 stats each. A board row at the app's own line is `own`; a different line (`diff`) or a pick the app doesn't offer (`none`) is
+  kept out of entries; games not looked up stay `unknown` ("check line").
 
 ## Testing
 `tests/README.md` has the details. Before pushing:
