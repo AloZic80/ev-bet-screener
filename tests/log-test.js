@@ -91,6 +91,9 @@ const BOARD=[
   const ph=await p.evaluate(()=>{ const b=document.querySelector('#logBody .log-day-btn'), r=b.getBoundingClientRect(), t=document.querySelector('.tab[data-view="v-log"]'), n=document.getElementById('logTabN');
     return {btnLeft:r.left, btnRight:r.right, w:innerWidth, overflow:document.documentElement.scrollWidth>innerWidth+1, tabN:n.textContent, tabNvisible:n.getBoundingClientRect().width>0 && t.getBoundingClientRect().bottom<=innerHeight+1}; });
   check('phone: the day row is on screen, the page does not scroll sideways, the count shows in the tab bar', ph.btnLeft>=0 && ph.btnLeft<ph.w && !ph.overflow && ph.tabNvisible, ph);
+  const hrs=await p.evaluate(()=>({nfl:overAfterH({sport:'NFL'}), mlb:overAfterH({sport:'MLB'}), test:overAfterH({sport:'TESTCRICKET'}), odi:overAfterH({sport:'ODI'}), mma:overAfterH({sport:'MMA'}),
+    golf:overAfterH({sport:'GOLF'}), tennis:overAfterH({sport:'ATP_PARIS_MASTERS'}), testLook:lookOutWhy({sport:'TESTCRICKET', kind:'moneyline', start:new Date(Date.now()-30*3600e3).toISOString(), date:'x'})}));
+  check('"surely over" fits the sport: 5 h, baseball and tennis 7, fights 8, one-day cricket 11, golf 100, a Test 130 (not on Look out a day in)', hrs.nfl===5 && hrs.mlb===7 && hrs.tennis===7 && hrs.mma===8 && hrs.odi===11 && hrs.golf===100 && hrs.test===130 && hrs.testLook==='', hrs);
   check('no page errors', errs.length===0, errs);
   console.log(`\n${pass} passed, ${fail} failed`); await b.close(); process.exit(fail?1:0);
 })();

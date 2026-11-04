@@ -5,6 +5,12 @@
   `phone.html` only frames `index.html` at phone width (Settings > Layout > Phone on a computer). There is no build step.
 - Live at props.0xbeta.dev (see `CNAME`), served by GitHub Pages from `main`; merging a pull request is what deploys (about a minute).
   Claude Code may merge its own pull requests, but only after the owner says go. The Worker is deployed by the owner (`npx wrangler deploy`).
+- Who does what (`agent-notes/how-we-work_2026-11-03_v1.md`): Claude Code is the only one that changes the app's code
+  (branch, tests, publish on the owner's go). The claude.ai Project's agent keeps the history, researches and writes specs;
+  ChatGPT gives second opinions; the owner decides, deploys the Worker and carries notes. Code drafted elsewhere comes in
+  as a note to merge and test, never as an upload over `main`.
+- Notes for the Project's agent or ChatGPT: the owner copy-pastes them into those chats. Always put the full text in the
+  reply as one copy-paste block per note (say where it goes); the `agent-notes/` file is the record.
 - Reports: after each step, write one report in `agent-notes/` (`<topic>_<YYYY-MM-DD>_v<N>.md`, header with a `CC-` Ref, times in
   America/Chicago) and give it to the owner, who adds it to the claude.ai Project "Betting-for-Pros" (Project knowledge).
 - Prices come through the owner's Cloudflare Worker (`API_BASE`; a separate repo, `~/prop-bet-api` on the owner's Mac,
@@ -59,6 +65,9 @@
   name match on one of the game's two rosters (`espnShotFor`, `avEspn`; rosters saved 3 days in `mbev.rosters`). No exact
   match, no photo: the team logo stays. Team bets show the team logo, game totals both.
 - The data sources row (`#srcBar`, `#srcPanel`) is on the main page under the BettingPros bar. Settings keeps the passphrase.
+- 🌍 Leagues tab (`lgLeagues`, `lgScan`, `lgPaint`): every league the app knows, plus The Odds API's own list once the Worker
+  has `src=oddsapi_sports` (free), and which have games in the next 3 days (ESPN; `src=oddsapi_events` once the Worker has it;
+  the Sportsbook API's last load). Saved 30 minutes in `mbev.lgScan`. Load odds uses The Odds API panel's loader.
 
 ## Parlays tab (PrizePicks, DraftKings Pick6)
 - The math lives in the `pk*` functions (`pkDist`, `pkEV`, `pkBreakEven`, `pkKelly`, `pkEntry`). `tests/parlay-test.js` checks them against
