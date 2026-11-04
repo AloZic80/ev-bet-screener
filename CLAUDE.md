@@ -3,7 +3,10 @@
 ## What this is
 - A sports-betting screener in one file: `index.html` (HTML, CSS and JavaScript, about 8,400 lines).
   `phone.html` only frames `index.html` at phone width (Settings > Layout > Phone on a computer). There is no build step.
-- Live at props.0xbeta.dev (see `CNAME`), served by GitHub Pages from `main`. The owner merges pull requests; merging is what deploys.
+- Live at props.0xbeta.dev (see `CNAME`), served by GitHub Pages from `main`; merging a pull request is what deploys (about a minute).
+  Claude Code may merge its own pull requests, but only after the owner says go. The Worker is deployed by the owner (`npx wrangler deploy`).
+- Reports: after each step, write one report in `agent-notes/` (`<topic>_<YYYY-MM-DD>_v<N>.md`, header with a `CC-` Ref, times in
+  America/Chicago) and give it to the owner, who adds it to the claude.ai Project "Betting-for-Pros" (Project knowledge).
 - Prices come through the owner's Cloudflare Worker (`API_BASE`; a separate repo, `~/prop-bet-api` on the owner's Mac,
   deployed with `npx wrangler deploy`). Scores, schedules and grading come from ESPN's public scoreboard (free, no key).
 - Everything a user saves lives in their browser's localStorage under `mbev.*` keys (`mbev.log` bet log, `mbev.board`,
@@ -43,6 +46,19 @@
 - Grading (`autoGradeLog`) runs on page load and on the refresh buttons, not when a bet is saved.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
+- The Bet log draws newest first, grouped by game day (`logDays` remembers open/closed days per device). `data-i` on its
+  buttons is still the bet's index in `logged`, not its position on screen.
+- Look out (`lookOutWhy`): a bet with no result once its game is surely over (`overAfterH`: 5 hours, 8 for fights, 100 for
+  golf), a typed game whose day has passed, a `?` result, or a parlay whose day has passed. Its count is on the Bet log tab
+  and the Today card. The same finish time drives the log's "over · result pending" label.
+- Leagues: `MORE_LEAGUES` (code, name, sport, ESPN path, The Odds API key) feeds `ESPN_MAP`, `SOCCER`, `SPORT_NAMES` and
+  `OA_SPORTS`. A league with no ESPN path still loads and can be bet; its result comes from you via Look out. The Odds API
+  panel also takes any key typed in, and the Sportsbook API keeps leagues it doesn't know under their own code.
+- Pictures on every row (board, Parlays, Bet log: `avatarHtml`, filled in by `avFill`) and on Place these cards: the player's
+  photo is FantasyPros by player ID (`r.pid`, also saved with the bet by `addToLog`), else ESPN's headshot only on an exact
+  name match on one of the game's two rosters (`espnShotFor`, `avEspn`; rosters saved 3 days in `mbev.rosters`). No exact
+  match, no photo: the team logo stays. Team bets show the team logo, game totals both.
+- The data sources row (`#srcBar`, `#srcPanel`) is on the main page under the BettingPros bar. Settings keeps the passphrase.
 
 ## Parlays tab (PrizePicks, DraftKings Pick6)
 - The math lives in the `pk*` functions (`pkDist`, `pkEV`, `pkBreakEven`, `pkKelly`, `pkEntry`). `tests/parlay-test.js` checks them against
@@ -52,6 +68,9 @@
 - Payout defaults are in `PK_DEFAULT`; the owner's edits are saved per device in `mbev.pk`. Pick6 defaults are a copy of
   PrizePicks Power until the owner enters Pick6's own.
 - "Best for your bankroll" is the entry with the most log growth at its suggested stake, not the biggest return.
+- The Sentinels (`shopExchanges`) end by sending the Parlays tab the props that are not single bets to place (`pkAlone`)
+  but clear the per-pick break-even of a 2- to 6-pick entry (`pkSentLegs`, drawn by `pkSentHtml` in `#pkSent`). 4 picks is
+  starred as the target; the card there is "★ The Sentinels' 4 picks", not "Best for your bankroll".
 - **Get Pick6 lines** (and PrizePicks) calls the Worker's `/src/odds?src=oddsapi_events` and `src=oddsapi_props` (The Odds API,
   region `us_dfs`, JSON passed through unchanged; see `agent-notes/`). Only the games of the best NFL/NBA picks, at most 6 per press,
   4 stats each. A board row at the app's own line is `own`; a different line (`diff`) or a pick the app doesn't offer (`none`) is

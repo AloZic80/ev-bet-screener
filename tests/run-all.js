@@ -9,6 +9,12 @@ const runs = [
   ['Layout toggle (Auto / Phone / Desktop)',               'layout-test.js', []],
   ['Parlays: the math against brute force, and the tab',   'parlay-test.js', []],
   ['Parlays: Get Pick6 lines (stub Worker, step-2 routes)', 'pick6-lines-test.js', []],
+  ['Your own bets: formats, not started / live / over, grading, fill-in, calendar', 'own-bets-test.js', []],
+  ['Bet log: newest first, days open and close, Look out, board bet with a result', 'log-test.js', []],
+  ['Sportsbook vs prediction app (DraftKings, DK Predictions, Pick 6, FD Predicts)', 'books-test.js', []],
+  ['Player photos: FantasyPros by ID, ESPN by exact name, no guesses', 'photos-test.js', []],
+  ['Sources on the main page; every sport (league menu, typed key, 3-way, unknown leagues)', 'sources-test.js', []],
+  ['The Sentinels send parlay picks (not good alone, good in 2 to 6 picks) to the Parlays tab', 'sentinels-parlay-test.js', []],
 ];
 const run = (file, args) => spawnSync(process.execPath, [path.join(__dirname, file), ...args], { encoding: 'utf8', timeout: 300000 });
 const last = r => ((r.stdout || '') + (r.stderr || '')).trim().split('\n').pop();
