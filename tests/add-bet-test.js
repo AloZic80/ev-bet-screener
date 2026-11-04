@@ -69,6 +69,8 @@ const route=r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/'))
   check('phone: tab bar fixed at the bottom, in view', bar.pos==='fixed' && bar.bottom===bar.vh && bar.top>bar.vh-90, bar);
   await ph.click('.tab[data-view="v-log"]'); await ph.waitForTimeout(300);
   check('phone: tapping a tab switches view', await ph.$eval('#v-log',e=>e.offsetParent!==null), true);
+  const vm=await ph.evaluate(()=>{ const e=document.getElementById('verM'), r=e.getBoundingClientRect(), d=document.querySelector('.head .date').getBoundingClientRect(); return {text:e.textContent, shown:e.offsetParent!==null&&r.width>0, inRow:r.top>=d.top-1&&r.bottom<=d.bottom+1, fits:r.right<=innerWidth}; });
+  check('phone: the version shows next to the date', vm.shown && vm.text===(await ph.evaluate(()=>SCREENER_VERSION)) && vm.inRow && vm.fits, vm);
   check('no page errors (phone)', perr.length===0, perr);
   console.log(`\n${pass} passed, ${fail} failed`); await b.close(); process.exit(fail?1:0);
 })();
