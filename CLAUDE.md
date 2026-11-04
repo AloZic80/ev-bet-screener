@@ -80,6 +80,11 @@
 - The Sentinels (`shopExchanges`) end by sending the Parlays tab the props that are not single bets to place (`pkAlone`)
   but clear the per-pick break-even of a 2- to 6-pick entry (`pkSentLegs`, drawn by `pkSentHtml` in `#pkSent`). 4 picks is
   starred as the target; the card there is "★ The Sentinels' 4 picks", not "Best for your bankroll".
+- Apps (v3.59): `PK_APPS`, ticked ones in `pkState.apps`. Pick'em apps (PrizePicks, Pick6, Underdog, Sleeper) use payout
+  tables (Underdog and Sleeper start as copies of PrizePicks'). Combo apps (`PK_PRICED`: Kalshi, Novig, Polymarket US, DK and
+  FD Predictions, Fliff, Bovada…) use `pkLegsPriced`: only legs that app offers, paying the legs' odds multiplied with the
+  fee off each (`pkArr`). Promos on Your entry: a discounted line (`pkState.adj`, chance from the projection by `pkDiscP`,
+  or typed) and a boost (`pkState.boost`, what all-hit pays). The Sentinels' size is `pkState.sentN` (4 by default).
 - **Get Pick6 lines** (and PrizePicks) calls the Worker's `/src/odds?src=oddsapi_events` and `src=oddsapi_props` (The Odds API,
   region `us_dfs`, JSON passed through unchanged; see `agent-notes/`). Only the games of the best NFL/NBA picks, at most 6 per press,
   4 stats each. A board row at the app's own line is `own`; a different line (`diff`) or a pick the app doesn't offer (`none`) is
