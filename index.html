@@ -797,6 +797,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 .pk-act{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px} .pk-act label{font-size:13px; color:var(--soft); display:inline-flex; align-items:center; gap:6px}
 .pk-act input{width:84px; font:inherit; font-size:13px; padding:6px 8px; border:1px solid var(--rule); border-radius:6px; background:var(--panel); color:var(--ink)}
 .pk-act button.log.sm{margin-top:0}
+.pk-dfs{margin:0 0 12px} .pk-dfs button.log.sm{margin:0 8px 0 0} .pk-diff{color:var(--warn)}
 .pk-pool td{vertical-align:middle} .pk-pool tr.pk-low td{color:var(--soft)} .pk-pool b.pk-ok{color:var(--gain)}
 #pkMine .pk-card{max-width:420px}
 /* v3.54: layout toggle next to the theme toggle */
@@ -1095,6 +1096,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
   </div>
   <details class="pk-pays-box"><summary>Payouts <span class="meta">check them in your app: they change, and goblin or demon lines pay differently</span></summary><div class="pk-pays" id="pkPays"></div></details>
   <p class="hint" id="pkNote"></p>
+  <div class="pk-dfs" id="pkDfs"></div>
   <h3 class="set-h">Best entry for each size</h3>
   <div class="pk-cards" id="pkCards"></div>
   <h3 class="set-h">Your entry</h3>
@@ -6575,23 +6577,62 @@ function pkEntry(legs,arr,cfg){ const n=legs.length; if(!arr) return null; const
   const growth=fr>0?da.reduce((s,v,k)=>s+v*Math.log(Math.max(1e-300,1+fr*(pkMult(arr,n,k)-1))),0):0;
   return {n, arr, ev, be, pAll:d[n], avg:ps.reduce((a,b)=>a+b,0)/n, f, stake:Math.round(stake*100)/100, d, growth}; }
 // the pool: one leg per player and stat (the app's own line first, then the higher chance), games not started
-function pkLegs(rows){ const app=pkState.app, m=new Map();
-  const ownBook=b=>app==='PrizePicks' ? /prizepicks/i.test(b||'') : (/draftkings/i.test(b||'') && !isPredBook(b));
+/* v3.55: the apps' own lines, looked up through the Worker (The Odds API, DFS region us_dfs). Keyed by player and stat. */
+const PK_DFS={sport:{NFL:'americanfootball_nfl', NBA:'basketball_nba'},
+  markets:{NFL:{player_pass_yds:'Passing Yards', player_rush_yds:'Rushing Yards', player_reception_yds:'Receiving Yards', player_receptions:'Receptions'},
+           NBA:{player_points:'Points', player_rebounds:'Rebounds', player_assists:'Assists', player_points_rebounds_assists:'Points Rebounds Assists'}},
+  key:{'PrizePicks':'prizepicks', 'DraftKings Pick 6':'pick6'}};
+const pkDfs={lines:{}, games:new Set(), missing:new Set(), at:0, left:null, msg:'', busy:false};   // lines[player|stat][book] = line; games = looked up; missing = not in the odds feed
+const pkDfsKey=(name,stat)=>nrm(name)+'|'+statFam(stat);
+function pkLegs(rows){ const app=pkState.app, m=new Map(), dk=PK_DFS.key[app];
+  const ownBook=b=>app==='PrizePicks' && /prizepicks/i.test(b||'');   // PrizePicks rows from BettingPros are its own lines; Pick6 has none there
   (rows||[]).forEach(r=>{ if(r.kind!=='prop') return; const p=r.blendProb!=null?r.blendProb:r.fairProb; if(!(p>0&&p<1)) return;
     const st=liveState(r); if(st==='started'||st==='closed') return;
     const mk=String(r.market||'').match(/^([+-]?[\d.]+)\s*(.*)$/); if(!mk) return;
     const out=(r.flags||[]).find(f=>f[0]==='out');
-    const leg={key:(r.name+'|'+mk[2]).toLowerCase(), r, p, name:r.name, line:mk[1], stat:mk[2], side:r.side||'O', book:r.book||'', own:ownBook(r.book),
-      game:String(r.game||r.matchup||'').toUpperCase(), start:(r.gameInfo&&r.gameInfo.startISO)||null, gi:r.gameInfo||null, prior:!!r.prior,
+    const game=String(r.game||r.matchup||'').toUpperCase(), got=(pkDfs.lines[pkDfsKey(r.name,mk[2])]||{})[dk], looked=pkDfs.games.has(game);
+    // own: the app's own line (BettingPros PrizePicks row, or a row at the line the app shows). diff / none: looked up, not playable at this line
+    const dfs = got!=null ? (Math.abs(got-parseFloat(mk[1]))<0.01?'own':'diff') : (ownBook(r.book)?'own':(looked?'none':'unknown'));
+    const leg={key:(r.name+'|'+mk[2]).toLowerCase(), r, p, name:r.name, line:mk[1], stat:mk[2], side:r.side||'O', book:r.book||'', own:dfs==='own', dfs, appLine:got!=null?got:null,
+      pref:(app==='DraftKings Pick 6' && /draftkings/i.test(r.book||'') && !isPredBook(r.book))?1:0,
+      game, start:(r.gameInfo&&r.gameInfo.startISO)||null, gi:r.gameInfo||null, prior:!!r.prior, sport:r.sport,
       why: r.pass ? 'also a single bet on the board' : (out ? (/DFS pick/.test(out[1]) ? bookLabel(r.book)+' pick’em line' : out[1]) : 'below the board’s screens'), mkt:r.mktProb, model:r.fairProb};
-    const cur=m.get(leg.key); if(!cur || (leg.own&&!cur.own) || (leg.own===cur.own && leg.p>cur.p)) m.set(leg.key,leg); });
+    const rank=l=>(l.dfs==='own'?4:l.dfs==='unknown'?2:1)+(l.pref?0.5:0);   // the app's own line first, then unchecked, then the rest; DraftKings breaks ties for Pick6
+    const cur=m.get(leg.key); if(!cur || rank(leg)>rank(cur) || (rank(leg)===rank(cur) && leg.p>cur.p)) m.set(leg.key,leg); });
   return [...m.values()].sort((a,b)=>b.p-a.p); }
+// legs that can go in an entry: the app's own line, or not looked up yet ("check line"); never one the app shows at another line or not at all
+const pkPlayable=l=>l.dfs==='own'||l.dfs==='unknown';
+// look up the app's lines for the games the best picks come from (at most 6 games; credits = games x 4 stats)
+function pkDfsPlan(){ const legs=pkLegs(window._pkRows||[]).filter(l=>l.p>=pkState.minP && PK_DFS.sport[l.sport] && l.game && !pkDfs.games.has(l.game) && !pkDfs.missing.has(l.game) && l.dfs!=='own');
+  const games=[]; legs.forEach(l=>{ if(games.length<6 && !games.some(g=>g.game===l.game)) games.push(l); }); return games; }
+function pkEventFor(leg, evs){ const t=Date.parse(leg.start), teams=(leg.gi&&leg.gi.teams)||[], home=teams.find(x=>x.ha==='home'), away=teams.find(x=>x.ha==='away');
+  const has=(full,tm)=>!!tm && [tm.nick,tm.name,tm.loc].filter(Boolean).some(w=>String(full||'').toLowerCase().includes(String(w).toLowerCase()));
+  return (evs||[]).find(e=>(isNaN(t)||Math.abs(Date.parse(e.commence_time)-t)<3*3600e3) && (home||away ? (has(e.home_team,home) && has(e.away_team,away)) : !isNaN(t))) || null; }
+async function pkDfsFetch(){ if(pkDfs.busy) return; const plan=pkDfsPlan(), app=pkState.app;
+  if(!plan.length){ pkDfs.msg='Nothing to look up: the best NFL and NBA picks already have '+(app==='PrizePicks'?'PrizePicks':'Pick6')+' lines checked.'; renderParlays(); return; }
+  pkDfs.busy=true; pkDfs.msg='Looking up '+plan.length+' game'+(plan.length===1?'':'s')+'…'; renderParlays();
+  let found=0, calls=0, used=0, miss=[];
+  try{
+    const bySport={}; plan.forEach(l=>(bySport[l.sport]=bySport[l.sport]||[]).push(l));
+    for(const sp of Object.keys(bySport)){
+      const key=PK_DFS.sport[sp], ev=await srcFetch('src=oddsapi_events&sport='+encodeURIComponent(key)), evs=Array.isArray(ev.data)?ev.data:(ev.data&&ev.data.events)||[];
+      for(const l of bySport[sp]){ const e=pkEventFor(l,evs); if(!e){ miss.push(l.game); pkDfs.missing.add(l.game); continue; }
+        const mk=PK_DFS.markets[sp], r=await srcFetch('src=oddsapi_props&sport='+encodeURIComponent(key)+'&event='+encodeURIComponent(e.id)+'&markets='+Object.keys(mk).join(','));
+        calls++; if(!r.cached) used+=Object.keys(mk).length;
+        const q=r.quota||{}; if(q['x-requests-remaining']!=null) pkDfs.left=+q['x-requests-remaining'];
+        ((r.data&&r.data.bookmakers)||[]).forEach(b=>(b.markets||[]).forEach(m=>{ const stat=mk[m.key]; if(!stat) return;
+          (m.outcomes||[]).forEach(o=>{ if(o.point==null||!o.description) return; const k=pkDfsKey(o.description,stat); (pkDfs.lines[k]=pkDfs.lines[k]||{})[b.key]=+o.point; found++; }); }));
+        pkDfs.games.add(l.game); } }
+    pkDfs.at=Date.now();
+    pkDfs.msg='Looked up '+calls+' game'+(calls===1?'':'s')+(used?', about '+used+' credits':', no new credits (saved answers)')+(pkDfs.left!=null?', '+pkDfs.left+' left':'')+'.'+(miss.length?' Not found in the odds feed: '+miss.join(', ')+'.':'')+(found?'':' No lines came back.');
+  }catch(err){ pkDfs.msg='Couldn’t look up lines: '+err.message; }
+  finally{ pkDfs.busy=false; renderParlays(); } }
 function pkBest(legs,n){ const out=[], games=new Set();
-  for(const l of legs){ if(out.length===n) break; if(l.p<pkState.minP) break; const g=l.game||l.name.toUpperCase();
+  for(const l of legs){ if(out.length===n) break; if(l.p<pkState.minP) break; if(!pkPlayable(l)) continue; const g=l.game||l.name.toUpperCase();
     if(pkState.oneGame && games.has(g)) continue; out.push(l); games.add(g); }
   return out.length===n?out:null; }
 function pkSetRows(rows){ window._pkRows=rows||[]; pkBadge(); const v=document.getElementById('v-parlay'); if(v&&v.classList.contains('on')) renderParlays(); }
-function pkBadge(){ const el=document.getElementById('pkTabN'); if(!el) return; const n=pkLegs(window._pkRows||[]).filter(l=>l.p>=pkState.minP).length; el.textContent=n?String(n):''; }
+function pkBadge(){ const el=document.getElementById('pkTabN'); if(!el) return; const n=pkLegs(window._pkRows||[]).filter(l=>l.p>=pkState.minP && pkPlayable(l)).length; el.textContent=n?String(n):''; }
 const pkPick=l=>(l.side==='U'?'Under ':'Over ')+l.line+' '+shortStat(l.stat);
 const pkX=x=>String(+(+x).toFixed(2))+'x';   // 10 → 10x, 37.5 → 37.5x, 0.4 → 0.4x
 function pkPaysTxt(arr){ return 'pays '+pkX(arr[0])+(arr[1]?', '+pkX(arr[1])+' with one miss':'')+(arr[2]?', '+pkX(arr[2])+' with two':''); }
@@ -6611,7 +6652,7 @@ function pkCard(title,legs,e,id,best){
 function renderParlays(){
   const box=document.getElementById('pkPanel'); if(!box) return;
   const cfg=cfgRead(), app=pkState.app; if(pkPlays(app).indexOf(pkState.play)<0) pkState.play='power';
-  const pays=pkPays(app,pkState.play), pkRows=window._pkRows||[], legs=pkLegs(pkRows), elig=legs.filter(l=>l.p>=pkState.minP);
+  const pays=pkPays(app,pkState.play), pkRows=window._pkRows||[], legs=pkLegs(pkRows), elig=legs.filter(l=>l.p>=pkState.minP && pkPlayable(l)), appName=app==='PrizePicks'?'PrizePicks':'Pick6';
   document.querySelectorAll('#pkApp button').forEach(b=>{ const on=b.dataset.v===app; b.classList.toggle('on',on); b.setAttribute('aria-checked',on); });
   document.querySelectorAll('#pkPlay button').forEach(b=>{ const ok=pkPlays(app).indexOf(b.dataset.v)>=0, on=b.dataset.v===pkState.play; b.hidden=!ok; b.classList.toggle('on',on); b.setAttribute('aria-checked',on); });
   document.getElementById('pkOneGame').checked=!!pkState.oneGame; document.getElementById('pkMinP').value=(pkState.minP*100).toFixed(1).replace(/\.0$/,'');
@@ -6620,7 +6661,11 @@ function renderParlays(){
   const own=legs.filter(l=>l.own).length;
   document.getElementById('pkNote').innerHTML = !pkRows.length ? 'Nothing loaded yet. Load a board first: every prop on it that hasn’t started is a possible pick.'
     : (app==='PrizePicks' && !own ? 'No PrizePicks lines on this board. Turn on <b>PrizePicks</b> under Settings, Books you bet, and Load again: BettingPros then brings PrizePicks’ own lines. Until then, picks use sportsbook lines, so check each line in the app.' : '')
-    + (app!=='PrizePicks' ? 'BettingPros doesn’t carry Pick6 lines, so these picks use sportsbook lines (DraftKings’ first). Check each line in Pick6 before you enter.' : '');
+    + (app!=='PrizePicks' && !legs.some(l=>l.dfs==='own') ? 'BettingPros doesn’t carry Pick6 lines, so until you look them up these picks use sportsbook lines (DraftKings’ first). Check each line in Pick6, or press Get Pick6 lines.' : '');
+  { const plan=pkDfsPlan(), el=document.getElementById('pkDfs');   // look up the app's own lines (NFL and NBA)
+    if(el) el.innerHTML='<button type="button" class="log sm" id="pkDfsGo"'+(pkDfs.busy||!plan.length?' disabled':'')+'>Get '+esc(appName)+' lines</button> '+
+      '<span class="meta">'+(plan.length?plan.length+' game'+(plan.length===1?'':'s')+', about '+plan.length*4+' credits'+(pkDfs.left!=null?' of '+pkDfs.left+' left':''):(pkDfs.at?'all looked up':'no NFL or NBA picks to look up'))+'</span>'+
+      (pkDfs.msg?'<div class="meta" role="status" style="margin-top:4px">'+esc(pkDfs.msg)+'</div>':''); }
   // best entry for each size
   window._pkCards={}; let bestG=0, bestN=null; const cards=[];   // best = grows the bankroll most at its suggested stake (risk counted), not the biggest return
   Object.keys(pays).map(Number).sort((a,b)=>a-b).forEach(n=>{ const L=pkBest(legs,n); if(!L){ cards.push([n,null,null]); return; }
@@ -6629,20 +6674,20 @@ function renderParlays(){
       ? '<div class="pk-card empty"><div class="pk-h"><b>'+n+' picks</b><span class="meta">'+esc(pkPaysTxt(pays[n]))+'</span></div><div class="meta">Not enough picks at '+pct(pkState.minP)+' or better'+(pkState.oneGame?' from different games':'')+'.</div></div>'
       : (window._pkCards['n'+n]={legs:L,e}, pkCard(n+' picks',L,e,'n'+n,n===bestN))).join('');
   // your entry
-  const mine=pkState.mine.map(k=>legs.find(l=>l.key===k)).filter(Boolean); pkState.mine=mine.map(l=>l.key);
+  const mine=pkState.mine.map(k=>legs.find(l=>l.key===k)).filter(l=>l&&pkPlayable(l)); pkState.mine=mine.map(l=>l.key);
   const mArr=pays[mine.length];
   document.getElementById('pkMine').innerHTML = mine.length<2 ? '<div class="meta">Tick 2 to 6 picks below to price your own entry.</div>'
     : !mArr ? '<div class="meta">'+mine.length+' picks: no '+esc(pkState.play==='flex'?'Flex':'Power')+' payout for that many here. Pick '+Object.keys(pays).join(', ')+'.</div>'
     : (window._pkCards.mine={legs:mine,e:pkEntry(mine,mArr,cfg)}, pkCard('Your '+mine.length+' picks',mine,window._pkCards.mine.e,'mine',false));
   // the pool
-  document.getElementById('pkPoolN').textContent=legs.length?elig.length+' at '+pct(pkState.minP)+' or better, of '+legs.length:'';
+  document.getElementById('pkPoolN').textContent=legs.length?elig.length+' playable at '+pct(pkState.minP)+' or better, of '+legs.length:'';
   const full=mine.length>=6;
   document.getElementById('pkPool').innerHTML=legs.length ? legs.slice(0,80).map(l=>{ const on=pkState.mine.indexOf(l.key)>=0;
-      return '<tr class="'+(l.p>=pkState.minP?'':'pk-low')+'"><td><input type="checkbox" class="pk-pick" data-k="'+esc(l.key)+'" aria-label="Add '+esc(l.name)+' to your entry"'+(on?' checked':'')+(full&&!on?' disabled':'')+'></td>'+
+      return '<tr class="'+(l.p>=pkState.minP&&pkPlayable(l)?'':'pk-low')+'"><td><input type="checkbox" class="pk-pick" data-k="'+esc(l.key)+'" aria-label="Add '+esc(l.name)+' to your entry"'+(on?' checked':'')+((full&&!on)||(!pkPlayable(l)&&!on)?' disabled':'')+'></td>'+
         '<td><b>'+esc(l.name)+'</b>'+(l.prior?' <span class="tag t-warn">already bet</span>':'')+'</td>'+
         '<td>'+esc(pkPick(l))+'</td>'+
         '<td class="num" title="Market '+(l.mkt!=null?pct(l.mkt):'n/a')+', model '+(l.model!=null?pct(l.model):'n/a')+'"><b class="'+(l.p>=pkState.minP?'pk-ok':'')+'">'+pct(l.p)+'</b></td>'+
-        '<td>'+(l.own?'<b>'+esc(app==='PrizePicks'?'PrizePicks':'DraftKings')+'</b> ✓':esc(bookLabel(l.book)||'?')+' <span class="meta">check the line</span>')+'</td>'+
+        '<td>'+(l.dfs==='own'?'<b>'+esc(appName)+'</b> ✓':l.dfs==='diff'?'<b class="pk-diff">'+esc(appName)+' has '+esc(String(l.appLine))+'</b> <span class="meta">board line is '+esc(l.line)+'</span>':l.dfs==='none'?'<span class="pk-diff">not on '+esc(appName)+'</span>':esc(bookLabel(l.book)||'?')+' <span class="meta">check the line</span>')+'</td>'+
         '<td class="meta">'+esc(l.why)+'</td>'+
         '<td class="meta">'+esc(l.game)+(l.gi?'<br>'+esc(giWhen(l.gi)):'')+'</td></tr>'; }).join('')
     : '<tr><td colspan="7" class="meta">No props on the board yet.</td></tr>';
@@ -6661,7 +6706,8 @@ function pkLog(id,btn){ const c=(window._pkCards||{})[id]; if(!c) return; const 
   box.addEventListener('click',e=>{ const a=e.target.closest('#pkApp button'); if(a){ pkState.app=a.dataset.v; pkSave(); renderParlays(); pkBadge(); return; }
     const p=e.target.closest('#pkPlay button'); if(p){ pkState.play=p.dataset.v; pkSave(); renderParlays(); return; }
     if(e.target.closest('#pkPayReset')){ if(pkState.pays&&pkState.pays[pkState.app]) delete pkState.pays[pkState.app][pkState.play]; pkSave(); renderParlays(); return; }
-    const lg=e.target.closest('.pk-log'); if(lg){ pkLog(lg.dataset.id,lg); return; } });
+    const lg=e.target.closest('.pk-log'); if(lg){ pkLog(lg.dataset.id,lg); return; }
+    if(e.target.closest('#pkDfsGo')){ pkDfsFetch(); return; } });
   box.addEventListener('change',e=>{ const t=e.target;
     if(t.id==='pkOneGame'){ pkState.oneGame=t.checked; pkSave(); renderParlays(); return; }
     if(t.id==='pkMinP'){ const v=parseFloat(t.value); if(v>=50&&v<=90){ pkState.minP=v/100; pkSave(); renderParlays(); pkBadge(); } return; }
