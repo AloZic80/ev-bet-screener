@@ -14,6 +14,7 @@ const runs = [
   ['Sportsbook vs prediction app (DraftKings, DK Predictions, Pick 6, FD Predicts)', 'books-test.js', []],
   ['Player photos: FantasyPros by ID, ESPN by exact name, no guesses', 'photos-test.js', []],
   ['Sources on the main page; every sport (league menu, typed key, 3-way, unknown leagues)', 'sources-test.js', []],
+  ['The Sentinels send parlay picks (not good alone, good in 2 to 6 picks) to the Parlays tab', 'sentinels-parlay-test.js', []],
 ];
 const run = (file, args) => spawnSync(process.execPath, [path.join(__dirname, file), ...args], { encoding: 'utf8', timeout: 300000 });
 const last = r => ((r.stdout || '') + (r.stderr || '')).trim().split('\n').pop();

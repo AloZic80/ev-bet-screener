@@ -1,6 +1,7 @@
-// node tests/photos-test.js — player photos on the "Place these" cards: FantasyPros by the player's ID first, ESPN's own
-// headshot when that fails or there is no ID (college, WNBA, soccer), and only on an exact name match on the game's two
-// ESPN rosters. No exact match, or the same name on both teams, means no photo (the team logo stays). Images are stubbed.
+// node tests/photos-test.js — pictures: player photos on the "Place these" cards AND on every board row, Parlays pick and
+// Bet log bet: FantasyPros by the player's ID first, ESPN's own headshot when that fails or there is no ID (college, WNBA,
+// soccer), and only on an exact name match on the game's two ESPN rosters. No exact match, or the same name on both teams,
+// means no photo (the team logo stays). A team bet shows its team's logo; a game total both. Images are stubbed.
 const path=require('path'); const INDEX=path.join(__dirname,'..','index.html');
 const { chromium } = require('playwright'); const fs=require('fs');
 const html=fs.readFileSync(process.argv[2]||INDEX,'utf8');
@@ -59,6 +60,29 @@ const ROSTERS={   // ESPN: football comes in groups, basketball flat
   check('each team roster asked once, even ones ESPN does not have', rosterHits.length===uniq.size && uniq.size===14, rosterHits.length+' calls, '+uniq.size+' teams');
   await p.reload(); await p.waitForTimeout(2000);
   check('rosters are kept on the device: no new calls after a reload', rosterHits.length===uniq.size, rosterHits.length);
+  // the same pictures on the board's rows (cards off), the Parlays picks and the Bet log
+  await p.evaluate(()=>{ const c=document.getElementById('cardsOn'); c.checked=false; c.dispatchEvent(new Event('change')); });
+  await p.evaluate(()=>{ lastRows.push(Object.assign({},lastRows[0],{idx:900,name:'BUF',team:'BUF',kind:'moneyline',market:'Moneyline',side:'',pid:null,apiKey:'ml'}),
+      Object.assign({},lastRows[0],{idx:901,name:'BUF @ MIA',team:null,kind:'total',market:'47.5 Total',side:'O',pid:null,apiKey:'tot'})); refresh(); });
+  await p.waitForTimeout(1800);
+  const rowPic=await p.evaluate(()=>{ const o={}; document.querySelectorAll('#tbody tr').forEach(tr=>{ const av=tr.querySelector('.av'); const nm=(tr.querySelector('.pick')||{}).textContent; if(!av||!nm) return;
+      const hs=av.querySelector('.av-hs'); o[nm]={kind:[...av.classList].filter(c=>c!=='av').join(' '), photo:hs?hs.getAttribute('src'):null, logos:av.querySelectorAll('img:not(.av-hs)').length}; }); return o; });
+  const R=n=>rowPic[n]||{};
+  check('board rows: FantasyPros photo by ID (Josh Allen)', /fantasypros\.com\/images\/players\/nfl\/111\//.test(R('Josh Allen').photo||''), R('Josh Allen'));
+  check('board rows: ESPN photo when FantasyPros fails or has none (Tyreek Hill, Lionel Messi, Luka Doncic)', /espncdn/.test(R('Tyreek Hill').photo||'') && /espncdn/.test(R('Lionel Messi').photo||'') && /espncdn/.test(R('Luka Doncic').photo||''), [R('Tyreek Hill'),R('Lionel Messi'),R('Luka Doncic')]);
+  check('board rows: no exact match or a name on both teams → the team logo, no photo', R('Nic Claxton').photo===null && R('Nic Claxton').logos===1 && R('Jalen Williams').photo===null, [R('Nic Claxton'),R('Jalen Williams')]);
+  check('board rows: a team bet shows the team logo; a game total both teams', /av-team/.test(R('BUF').kind) && R('BUF').logos===1 && /av-pair/.test(R('BUF @ MIA').kind) && R('BUF @ MIA').logos===2, [R('BUF'),R('BUF @ MIA')]);
+  await p.click('.tab[data-view="v-parlay"]'); await p.waitForTimeout(1200);
+  const pk=await p.evaluate(()=>[...document.querySelectorAll('#pkPool tr')].map(tr=>{ const hs=tr.querySelector('.av .av-hs'); return [(tr.querySelector('b')||{}).textContent, hs?hs.getAttribute('src'):null]; }).filter(x=>x[0]));
+  check('Parlays picks have the same pictures', pk.length>=5 && pk.some(x=>x[0]==='Josh Allen' && /fantasypros/.test(x[1]||'')) && pk.some(x=>x[0]==='Luka Doncic' && /espncdn/.test(x[1]||'')), pk);
+  // a bet logged from the board keeps the player's ID, so its photo stays in the Bet log
+  await p.click('.tab[data-view="v-board"]'); await p.waitForTimeout(300);
+  const idx=await p.evaluate(()=>lastRows.find(r=>r.name==='Josh Allen').idx);
+  await p.click('#tbody button.bet-btn[data-idx="'+idx+'"]'); await p.waitForTimeout(200); await p.fill('#tbody tr.editor .eb-stake','5'); await p.click('#tbody tr.editor .eb-save'); await p.waitForTimeout(300);
+  if(await p.$('#tbody tr.editor')){ await p.click('#tbody tr.editor .eb-save'); await p.waitForTimeout(300); }
+  await p.click('.tab[data-view="v-log"]'); await p.waitForTimeout(1200);
+  const lg=await p.evaluate(()=>{ const i=logged.findIndex(b=>b.name==='Josh Allen'), tr=i>=0&&document.querySelector('#logBody button.kill.edit[data-i="'+i+'"]').closest('tr'), hs=tr&&tr.querySelector('.av .av-hs'); return {pid:i>=0?logged[i].pid:null, photo:hs?hs.getAttribute('src'):null}; });
+  check('Bet log: the bet keeps the player ID and shows the photo', lg.pid==='111' && /fantasypros/.test(lg.photo||''), lg);
   check('no page errors', errs.length===0, errs);
   console.log(`\n${pass} passed, ${fail} failed`); await b.close(); process.exit(fail?1:0);
 })();

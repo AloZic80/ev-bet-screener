@@ -18,6 +18,10 @@ const ODDS={
   tennis_atp_paris_masters:[{id:'t1',commence_time:iso(now+20*H),home_team:'Jannik Sinner',away_team:'Carlos Alcaraz',bookmakers:[
     bk('pinnacle','Pinnacle',[h2h([['Jannik Sinner',-110],['Carlos Alcaraz',-102]])]),
     bk('novig','Novig',[h2h([['Jannik Sinner',+110],['Carlos Alcaraz',-130]])])]}],
+  boxing_boxing:[{id:'x1',commence_time:iso(now+60*H),home_team:'Fighter A',away_team:'Fighter B',bookmakers:[
+    bk('pinnacle','Pinnacle',[h2h([['Fighter A',-200],['Fighter B',+180],['Draw',+2000]])]),
+    bk('novig','Novig',[h2h([['Fighter A',-150],['Fighter B',+140]])]),                     // 2-way: a draw refunds — a different bet
+    bk('kalshi','Kalshi',[h2h([['Fighter A',-190],['Fighter B',+175],['Draw',+1800]])])]}],
   cricket_test_match:[{id:'c1',commence_time:iso(now+40*H),home_team:'Australia',away_team:'England',bookmakers:[
     bk('pinnacle','Pinnacle',[h2h([['Australia',-105],['England',+260],['Draw',+400]])]),
     bk('novig','Novig',[h2h([['Australia',+120],['England',+250],['Draw',+380]])])]}],
@@ -59,6 +63,10 @@ const SB={advantages:[0,1,2].map(i=>{ const t=['WIN','WIN','DRAW'][i], pk=['p1',
   m=await load('TESTCRICKET');
   const cr=await p.evaluate(()=>lastRows.filter(r=>r.sport==='TESTCRICKET').map(r=>r.name));
   check('a Draw makes it 3-way in any sport (Test cricket)', cr.length===3 && cr.includes('Draw'), {msg:m, rows:cr});
+  m=await load('BOXING');
+  const bx=await p.evaluate(()=>lastRows.filter(r=>r.sport==='BOXING').map(r=>({name:r.name,book:r.book,fair:+r.fairProb.toFixed(3)})));
+  const fa=(bx.find(x=>x.name==='Fighter A')||{}).fair, pinA=(200/300)/((200/300)+(100/280)+(100/2100));   // Pinnacle's own 3-way no-vig (-200, +180, +2000)
+  check('a game with a Draw is 3-way for every book: a 2-way line (draw refunds) is not mixed in or offered', bx.length>0 && bx.every(x=>x.book!=='Novig') && Math.abs(fa-pinA)<0.002 && bx.some(x=>x.name==='Draw'), {msg:m, rows:bx, pinnacleA:+pinA.toFixed(3)});
   check('a bad key is refused before any call', /characters/.test(await load('','tennis atp!')) , await p.textContent('#srcMsg'));
   await p.click('.src-chip[data-src="sbapi"]'); await p.waitForTimeout(300); await p.click('#sbLoad'); await p.waitForTimeout(900);
   const sb=await p.evaluate(()=>({msg:document.getElementById('srcMsg').textContent, out:document.getElementById('srcOut').textContent, rows:lastRows.filter(r=>r.src==='api:sbapi:ev').map(r=>({sport:r.sport,name:r.name,soccer:isSoccer(r.sport),label:SPORT_NAMES[r.sport]}))}));

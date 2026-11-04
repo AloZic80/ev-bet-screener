@@ -54,8 +54,10 @@
 - Leagues: `MORE_LEAGUES` (code, name, sport, ESPN path, The Odds API key) feeds `ESPN_MAP`, `SOCCER`, `SPORT_NAMES` and
   `OA_SPORTS`. A league with no ESPN path still loads and can be bet; its result comes from you via Look out. The Odds API
   panel also takes any key typed in, and the Sportsbook API keeps leagues it doesn't know under their own code.
-- Player photos: FantasyPros by the row's player ID (`r.pid`), else ESPN's headshot only on an exact name match on one of
-  the game's two rosters (`espnShotFor`; rosters saved 3 days in `mbev.rosters`). No exact match, no photo.
+- Pictures on every row (board, Parlays, Bet log: `avatarHtml`, filled in by `avFill`) and on Place these cards: the player's
+  photo is FantasyPros by player ID (`r.pid`, also saved with the bet by `addToLog`), else ESPN's headshot only on an exact
+  name match on one of the game's two rosters (`espnShotFor`, `avEspn`; rosters saved 3 days in `mbev.rosters`). No exact
+  match, no photo: the team logo stays. Team bets show the team logo, game totals both.
 - The data sources row (`#srcBar`, `#srcPanel`) is on the main page under the BettingPros bar. Settings keeps the passphrase.
 
 ## Parlays tab (PrizePicks, DraftKings Pick6)
@@ -66,6 +68,9 @@
 - Payout defaults are in `PK_DEFAULT`; the owner's edits are saved per device in `mbev.pk`. Pick6 defaults are a copy of
   PrizePicks Power until the owner enters Pick6's own.
 - "Best for your bankroll" is the entry with the most log growth at its suggested stake, not the biggest return.
+- The Sentinels (`shopExchanges`) end by sending the Parlays tab the props that are not single bets to place (`pkAlone`)
+  but clear the per-pick break-even of a 2- to 6-pick entry (`pkSentLegs`, drawn by `pkSentHtml` in `#pkSent`). 4 picks is
+  starred as the target; the card there is "★ The Sentinels' 4 picks", not "Best for your bankroll".
 - **Get Pick6 lines** (and PrizePicks) calls the Worker's `/src/odds?src=oddsapi_events` and `src=oddsapi_props` (The Odds API,
   region `us_dfs`, JSON passed through unchanged; see `agent-notes/`). Only the games of the best NFL/NBA picks, at most 6 per press,
   4 stats each. A board row at the app's own line is `own`; a different line (`diff`) or a pick the app doesn't offer (`none`) is

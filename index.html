@@ -862,6 +862,36 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
   .board-score{border-bottom:0}
   body{padding-bottom:calc(60px + env(safe-area-inset-bottom,0px))}
 }
+/* v3.57: a picture on every row (board, Parlays, Bet log): the player over the team logo, or the team's logo */
+.c-who{display:flex; gap:9px; align-items:flex-start} .c-who>div{min-width:0}
+.av{position:relative; flex:none; width:34px; height:34px; border-radius:9px; overflow:hidden; background:#3B4656; display:inline-grid; place-items:center}
+.av img{display:block}
+.av-player .av-tl{position:absolute; left:-7px; top:5px; width:26px; height:26px; object-fit:contain; opacity:.4}
+.av-player.nohs .av-tl{position:static; width:24px; height:24px; opacity:1}
+.av-player .av-hs{position:absolute; right:-4px; bottom:0; height:34px; width:auto}
+.av-team{background:var(--panel-2); border:1px solid var(--rule)} .av-team img{width:26px; height:26px; object-fit:contain}
+.av-pair{width:46px; display:inline-flex; gap:2px; justify-content:center; align-items:center; background:var(--panel-2); border:1px solid var(--rule)} .av-pair img{width:19px; height:19px; object-fit:contain}
+.av-sport{background:var(--rail); color:var(--soft); font-size:10px; font-weight:800; letter-spacing:.04em}
+.pk-pool .c-who{align-items:center}
+@media (max-width:640px){ .c-who{gap:7px} .av{width:28px; height:28px; border-radius:8px} .av-player .av-hs{height:28px} .av-player .av-tl{width:22px; height:22px; left:-6px; top:4px} .av-team img{width:22px; height:22px} .av-pair{width:40px} .av-pair img{width:16px; height:16px} }
+/* v3.57: the Sentinels' parlay picks (Parlays tab) */
+.pk-sent{border:1px solid var(--accent); background:var(--accent-bg); border-radius:14px; padding:14px 16px; margin:14px 0 6px; display:flex; flex-direction:column; gap:10px}
+.pk-sent:empty{display:none}
+.pk-sent-h{display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 12px} .pk-sent-h b{font-size:16px} .pk-sent-h .ghost{margin-left:auto}
+.pk-be{display:flex; flex-wrap:wrap; gap:6px}
+.pk-be-i{font-size:12.5px; padding:4px 10px; border-radius:999px; background:var(--panel); border:1px solid var(--rule); color:var(--soft)} .pk-be-i b{color:var(--ink); margin-left:3px}
+.pk-be-i.star{border-color:var(--accent); color:var(--accent); font-weight:700}
+.pk-sent-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px}
+.pk-sent-list li{display:grid; grid-template-columns:minmax(0,1fr) auto auto auto; align-items:center; gap:6px 14px; background:var(--panel); border:1px solid var(--rule); border-radius:10px; padding:8px 12px}
+.pk-sl-who{min-width:0; overflow-wrap:anywhere}
+.pk-sl-p{font-size:18px; font-weight:800; color:var(--gain); font-variant-numeric:tabular-nums}
+.pk-fits{display:flex; gap:4px}
+.pk-fits i{font-style:normal; width:26px; height:26px; border-radius:50%; display:grid; place-items:center; font-size:12px; font-weight:700; border:1px solid var(--rule); color:var(--soft); background:var(--panel)}
+.pk-fits i.on{background:var(--live-bg); border-color:var(--live); color:var(--gain)}
+.pk-fits i.star{box-shadow:0 0 0 2px var(--accent)}
+#pkSent button.pk-sent-add.on,:root[data-theme="dark"] #pkSent button.pk-sent-add.on{background:var(--live-bg); color:var(--gain); border:1px solid var(--live)}
+.pk-sent .pk-card{background:var(--panel)}
+@media (max-width:640px){ .pk-sent-list li{grid-template-columns:minmax(0,1fr) auto} .pk-fits{grid-column:1/2} }
 /* v3.57: the data sources row on the main page, under the BettingPros bar */
 .srcline{padding-top:6px; padding-bottom:6px} .srcline .src-bar{margin:0}
 .head>.src-panel{margin:8px 0 0}
@@ -1121,6 +1151,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
   <details class="pk-pays-box"><summary>Payouts <span class="meta">check them in your app: they change, and goblin or demon lines pay differently</span></summary><div class="pk-pays" id="pkPays"></div></details>
   <p class="hint" id="pkNote"></p>
   <div class="pk-dfs" id="pkDfs"></div>
+  <div class="pk-sent" id="pkSent"></div>   <!-- v3.57: the Sentinels' parlay picks -->
   <h3 class="set-h">Best entry for each size</h3>
   <div class="pk-cards" id="pkCards"></div>
   <h3 class="set-h">Your entry</h3>
@@ -2373,11 +2404,11 @@ function render(rows,cfg){
       : fmtOdds(r.offeredRaw);
     const cells={};
     cells.name=
-      '<td class="c-name"><div class="pick">'+esc(r.name)+'</div>'+
+      '<td class="c-name"><div class="c-who">'+avatarHtml(r,'r:'+r.idx)+'<div><div class="pick">'+esc(r.name)+'</div>'+   // v3.57: a picture
         (r.matchup?'<div class="meta">'+esc(r.matchup)+'</div>':'')+kick+
         (isSweet(r,swc)?'<span class="sweet" title="Inside your sweet-spot settings">🎯 SWEET SPOT</span>':'')+
         (nTags?'<div><button class="ntog" data-nkey="'+esc(nKey)+'" aria-expanded="'+nOpen+'" title="Show or hide the notes for this bet">'+
-          '<span class="dot '+worst+'"></span>'+(nOpen?'▾ ':'▸ ')+nTags+' note'+(nTags===1?'':'s')+'</button></div>':'')+'</td>';
+          '<span class="dot '+worst+'"></span>'+(nOpen?'▾ ':'▸ ')+nTags+' note'+(nTags===1?'':'s')+'</button></div>':'')+'</div></div></td>';
     cells.sport='<td><span class="sport s-'+esc(r.sport)+'">'+esc(r.sport)+'</span></td>';
     cells.market='<td style="text-align:center">'+mktCell+'</td>';
     cells.odds='<td style="text-align:center"><div class="odds-stack">'+(bookLogo(r.book)?logoTag(r.book):'<span class="meta">'+esc(bookLabel(r.book)||'book?')+'</span>')+
@@ -2417,6 +2448,7 @@ function render(rows,cfg){
   if(pcBox){
     if(cardsOn && cardsHtml.length){ pcBox.innerHTML='<div class="pc-head"><b>Place these</b> · '+cardsHtml.length+'</div>'+cardsHtml.join(''); pcBox.style.display='block'; pcFillShots(); }   // v3.57: ESPN photos
     else { pcBox.innerHTML=''; pcBox.style.display='none'; }
+    avFillSoon();   // v3.57: and on the board's rows
   }
   const bothQ=sel=>[...tb.querySelectorAll(sel)].concat(pcBox?[...pcBox.querySelectorAll(sel)]:[]);
   bothQ('button.ntog').forEach(btn=>btn.addEventListener('click',()=>{
@@ -2501,7 +2533,34 @@ function espnShotFor(r){
 function pcShotErr(img){   // FantasyPros .webp → .png → ESPN → no photo (the team logo stays)
   if(/fantasypros/.test(img.src) && !img.dataset.p){ img.dataset.p=1; img.src=img.src.replace('.webp','.png'); return; }
   const alt=img.dataset.espn; if(alt && img.src!==alt){ img.dataset.espn=''; img.src=alt; return; }
-  const box=img.parentNode; if(box) box.classList.add('nohs'); img.remove(); }
+  const box=img.parentNode; if(box) box.classList.add('nohs'); img.remove(); if(box && box.dataset && box.dataset.av) avFillSoon(); }   // v3.57: rows try ESPN next
+/* v3.57 (Alonzo: "the pictures of teams and players. FIX THAT"): a picture on every row, not only on Place these cards.
+   A player: the photo (FantasyPros by player ID; else ESPN by exact name on the game's two rosters) over the team logo.
+   A team bet: the team's logo; a game total: both. Nothing known: the sport. Same no-guess rule. Board, Parlays, Bet log. */
+const FP_SPORT={NFL:'nfl',NBA:'nba',MLB:'mlb',NHL:'nhl'};
+function avTeams(o){ const T=(o&&o.gameInfo&&o.gameInfo.teams)||[]; if(T.length) return T;
+  const t=teamsOf(o&&(o.game||o.matchup)); return t?[{ha:'away',abbr:t[0]},{ha:'home',abbr:t[1]}]:[]; }
+function avShot(o){ const fp=FP_SPORT[String(o.sport||'').toUpperCase()]; return fp && o.pid ? 'https://images.fantasypros.com/images/players/'+fp+'/'+encodeURIComponent(o.pid)+'/headshot/210x210.webp' : ''; }
+function avEspn(o){ const n=normPName(o.name); if(!n || GL_KINDS.test(o.kind||'')) return '';
+  const hits=new Set(avTeams(o).map(t=>{ const m=rosterGet(o.sport,t); return m&&m[n]; }).filter(Boolean)); return hits.size===1?[...hits][0]:''; }
+function avatarHtml(o, key){
+  if(!o || o.kind==='parlay') return '';
+  const T=avTeams(o), gl=GL_KINDS.test(o.kind||''), logoOf=t=>t?teamLogo(o.sport,t.abbr,t.logo||''):'';
+  if(o.kind==='total') return T.length===2 ? '<span class="av av-pair" aria-hidden="true">'+T.map(t=>logoOf(t)?'<img src="'+esc(logoOf(t))+'" alt="" loading="lazy" onerror="this.remove()">':'').join('')+'</span>' : '<span class="av av-sport" aria-hidden="true">'+esc(String(o.sport||'').slice(0,4))+'</span>';
+  const ab=o.team?normAbbr(o.team):(gl?glTeam(o):null), mine=ab?T.find(t=>t.abbr===ab):null, logo=mine?logoOf(mine):(ab?teamLogo(o.sport,ab,''):'');
+  if(gl) return logo ? '<span class="av av-team" aria-hidden="true"><img src="'+esc(logo)+'" alt="" loading="lazy" onerror="this.remove()"></span>' : '<span class="av av-sport" aria-hidden="true">'+esc(String(o.sport||'').slice(0,4))+'</span>';
+  const espn=avEspn(o), shot=avShot(o)||espn, bg=mine&&mine.color?ezColor({color:mine.color, alternateColor:mine.alt}):'';
+  return '<span class="av av-player'+(shot?'':' nohs')+'" data-av="'+esc(key)+'"'+(bg?' style="background:'+bg+'"':'')+' aria-hidden="true">'+
+    (logo?'<img class="av-tl" src="'+esc(logo)+'" alt="" loading="lazy" onerror="this.remove()">':'')+
+    (shot?'<img class="av-hs" src="'+esc(shot)+'"'+(espn&&espn!==shot?' data-espn="'+esc(espn)+'"':'')+' alt="" loading="lazy" onerror="pcShotErr(this)">':'')+'</span>'; }
+function avObj(key){ const m=String(key||'').match(/^([rb]):(\d+)$/); if(!m) return null; return m[1]==='r' ? lastRows.find(x=>x.idx===+m[2]) : logged[+m[2]]; }
+async function avFill(){   // ESPN photos for the rows on screen that have none (rosters: one call per team, kept 3 days)
+  const items=[...document.querySelectorAll('[data-av]')].filter(el=>el.offsetParent!==null && !el.querySelector('.av-hs')).map(el=>[el,avObj(el.dataset.av)]).filter(x=>x[1]);
+  const jobs=[]; items.forEach(([el,o])=>avTeams(o).forEach(t=>{ if(!rosterGet(o.sport,t)) jobs.push(rosterLoad(o.sport,t)); }));
+  if(jobs.length) await Promise.all(jobs);
+  items.forEach(([el,o])=>{ if(!el.isConnected || el.querySelector('.av-hs')) return; const u=avEspn(o); if(!u) return;
+    const im=document.createElement('img'); im.className='av-hs'; im.alt=''; im.loading='lazy'; im.onerror=()=>pcShotErr(im); im.src=u; el.appendChild(im); el.classList.remove('nohs'); }); }
+let avT=0; function avFillSoon(){ clearTimeout(avT); avT=setTimeout(()=>{ avFill().catch(()=>{}); },120); }
 async function pcFillShots(){
   const cards=[...document.querySelectorAll('#placeCards [data-pcidx]')], rows=cards.map(c=>lastRows.find(x=>x.idx===+c.dataset.pcidx)).filter(r=>r && !GL_KINDS.test(r.kind||''));
   const jobs=[]; rows.forEach(r=>((r.gameInfo&&r.gameInfo.teams)||[]).forEach(t=>{ if(!rosterGet(r.sport,t)) jobs.push(rosterLoad(r.sport,t)); }));
@@ -3703,7 +3762,7 @@ function addToLog(r){
     odds:r.offeredRaw, fair:r.fairRaw, gross:r.gross, net:r.net, stake:r.stake, mkt:r.mktProb!=null?r.mktProb:null,
     kind:r.kind, closing:'', srcType: r.src==='paste:mev'?'mev':(String(r.src||'').startsWith('api:')?'api':'paste'),
     // v2.50: what's needed to match/grade it later
-    side:r.side||null, team:r.team||null, apiKey:r.apiKey||null,
+    side:r.side||null, team:r.team||null, apiKey:r.apiKey||null, pid:r.pid||undefined,   // v3.57: pid = the player's photo in the log
     start:(r.gameInfo&&r.gameInfo.startISO)||r.gameStart||null, manual:r.src==='manual'||undefined,   // v3.51: picked game's start   // v3.50: typed/added by hand — keep its day
     // v2.50: exact recommendation-time snapshot, for auditing results later
     snap:{ at:new Date().toISOString(), screener:SCREENER_VERSION, devig:DEVIG_METHOD,
@@ -3768,8 +3827,8 @@ function renderLog(){
     }
     tr.innerHTML=
       '<td class="meta" style="white-space:nowrap">'+esc(b.date)+'<div class="meta">bet '+esc(betTimeTxt(b))+'</div>'+(b.start?'':'<div class="meta" style="color:var(--warn)">game time unknown</div>')+playedHtml(b)+whyHtml(b)+'</td>'+
-      '<td><div class="pick">'+esc(b.name)+'</div><div class="meta" style="color:var(--ink)" title="'+esc(b.betnow||'')+'">'+esc(betLabel(b))+' <span class="meta">'+esc(fmtOdds(b.odds))+'</span></div>'+srcTagHtml(b)+liveChipHtml(b)+fillDiffHtml(b,i)+
-      '<div class="meta">'+(bookLogo(b.book)||isPredBook(b.book)?logoTag(b.book,'sm')+' ':'')+'<span class="book">'+esc(bookLabel(b.book))+'</span></div></td>'+   // v3.57: PREDICTS tag on prediction apps without a logo too (FanDuel Predicts)
+      '<td><div class="c-who">'+avatarHtml(b,'b:'+i)+'<div><div class="pick">'+esc(b.name)+'</div><div class="meta" style="color:var(--ink)" title="'+esc(b.betnow||'')+'">'+esc(betLabel(b))+' <span class="meta">'+esc(fmtOdds(b.odds))+'</span></div>'+srcTagHtml(b)+liveChipHtml(b)+fillDiffHtml(b,i)+
+      '<div class="meta">'+(bookLogo(b.book)||isPredBook(b.book)?logoTag(b.book,'sm')+' ':'')+'<span class="book">'+esc(bookLabel(b.book))+'</span></div></div></div></td>'+   // v3.57: PREDICTS tag on prediction apps without a logo too (FanDuel Predicts); a picture
       '<td><span class="sport s-'+esc(b.sport)+'">'+esc(b.sport)+'</span></td>'+
       '<td class="num">'+esc(fmtOdds(b.odds))+'</td>'+
       '<td class="num">'+esc(fmtOdds(b.fair))+'</td>'+
@@ -3824,7 +3883,7 @@ function renderLog(){
     const b=logged[parseInt(btn.dataset.i,10)]; if(b) askRemove(btn.closest('tr'), b, 11);
   }));
   empty.style.display = logged.length?'none':'block';
-  renderRemoved(); renderDays(); renderTodayLine(); renderLookOut();   // v3.57
+  renderRemoved(); renderDays(); renderTodayLine(); renderLookOut(); avFillSoon();   // v3.57
 }
 /* v3.57: the Bet log by game day, and Look out: a bet that should be settled by now but is not graded, automatically or by you */
 var logDays={}; try{ logDays=JSON.parse(localStorage.getItem('mbev.logDays')||'{}')||{}; }catch(e){ logDays={}; }   // days you opened or closed, this device only (var: renderLog can run before this line)
@@ -5782,10 +5841,15 @@ function oaToRows(data, sport, cfgBooks){
   (Array.isArray(data)?data:[]).forEach(e=>{
     const start=Date.parse(e.commence_time); if(!(start>now)){ no('already started'); return; }
     const home=e.home_team, away=e.away_team, game=away+' @ '+home;
+    // v3.57: one game is 3-way or 2-way for every book: a Draw anywhere in its moneyline makes it 3-way (soccer, cricket,
+    // rugby, boxing). Then a book's 2-way line (a draw refunds the bet) is a different bet: not priced in, not offered.
+    const hasDraw=bm=>(((bm.markets||[]).find(x=>x.key==='h2h')||{}).outcomes||[]).some(x=>/^draw$/i.test(x.name));
+    const threeWay=isSoccer(sport) || (e.bookmakers||[]).some(hasDraw);
     ['h2h','spreads','totals'].forEach(mk=>{
       const fair={}, sharp={}, offers={};   // outcome key → [probs] / pinnacle prob / [{book,price}]
       (e.bookmakers||[]).forEach(bm=>{
         const m=(bm.markets||[]).find(x=>x.key===mk); if(!m) return;
+        if(mk==='h2h' && threeWay && !hasDraw(bm)){ no('2-way line in a 3-way game'); return; }   // v3.57
         const O=(m.outcomes||[]).filter(x=>x.price!=null);
         const keyOf=x=> mk==='h2h' ? x.name : mk==='totals' ? x.name+'|'+x.point : x.name+'|'+x.point;
         // remove the book's cut within each complete set (h2h: all outcomes; totals: Over+Under at one line; spreads: a team and its mirror line)
@@ -5793,7 +5857,7 @@ function oaToRows(data, sport, cfgBooks){
         if(mk==='h2h') sets=[O];
         else if(mk==='totals'){ const by={}; O.forEach(x=>{ (by[x.point]=by[x.point]||[]).push(x); }); sets=Object.values(by); }
         else { const used=new Set(); O.forEach(x=>{ if(used.has(x)) return; const y=O.find(z=>z!==x && !used.has(z) && z.name!==x.name && Math.abs((z.point||0)+(x.point||0))<1e-9); if(y){ used.add(x); used.add(y); sets.push([x,y]); } }); }
-        sets.forEach(S=>{ const need=mk==='h2h'?((isSoccer(sport) || S.some(x=>/^draw$/i.test(x.name)))?3:2):2; if(S.length!==need) return;   // v3.57: a Draw means 3-way, any sport
+        sets.forEach(S=>{ const need=mk==='h2h'?(threeWay?3:2):2; if(S.length!==need) return;   // v3.57: 3-way when the game has a Draw, any sport
           const P=S.map(x=>toProb(x.price)), sum=P.reduce((t,v)=>t+v,0); if(!(sum>0)) return;
           S.forEach((x,i)=>{ const k=keyOf(x), p=P[i]/sum; (fair[k]=fair[k]||[]).push(p); if(bm.key==='pinnacle') sharp[k]=p; }); });
         O.forEach(x=>{ (offers[keyOf(x)]=offers[keyOf(x)]||[]).push({book:bm.title||bm.key, price:x.price, point:x.point, name:x.name}); });
@@ -6819,6 +6883,36 @@ function pkBest(legs,n){ const out=[], games=new Set();
   for(const l of legs){ if(out.length===n) break; if(l.p<pkState.minP) break; if(!pkPlayable(l)) continue; const g=l.game||l.name.toUpperCase();
     if(pkState.oneGame && games.has(g)) continue; out.push(l); games.add(g); }
   return out.length===n?out:null; }
+/* v3.57 (Alonzo: "on the Sentinels, put on the Parlay tab the bets that might not be good by themselves, but good in
+   2, 3, 4, 5 or 6, and the ultimate is 4"): props that are not a single bet to place (not in Place these), whose chance
+   beats what every pick of a 2- to 6-pick entry needs to break even on the app and play you chose. The Sentinels re-check
+   live prices first (that decides which bets stay single bets), then the board's Sentinels line links here. */
+let pkSentAt=0;
+function pkAlone(r){ return !!(r && r.pass && r.stake>0 && !r.prior && !r.removed && !r.moved && !r.glConflict); }   // the Place these test (isPlace)
+function pkSentBE(){ const pays=pkPays(pkState.app,pkState.play), be={}; Object.keys(pays).forEach(n=>{ be[n]=pkBreakEven(+n,pays[n]); }); return be; }
+function pkSentLegs(){ const be=pkSentBE(), need=Object.values(be).filter(x=>x!=null), floor=need.length?Math.min(...need):1;
+  return pkLegs(window._pkRows||[]).filter(l=>pkPlayable(l) && !l.prior && !pkAlone(l.r) && l.p>=floor)
+    .map(l=>Object.assign(l,{fits:Object.keys(be).filter(n=>be[n]!=null && l.p>=be[n]-1e-9).map(Number),
+      alone:l.r.pass ? (l.r.stake>0?'held back by your limits':'no stake left today (caps)') : l.why})); }
+function pkSentPick(S,n){ const out=[], games=new Set();
+  for(const l of S){ if(out.length===n) break; const g=l.game||l.name.toUpperCase(); if(pkState.oneGame && games.has(g)) continue; out.push(l); games.add(g); }
+  return out.length===n?out:null; }
+function pkSentHtml(pays,cfg,appName){
+  const be=pkSentBE(), sizes=Object.keys(be).map(Number).sort((a,b)=>a-b), S=pkSentLegs(), play=pkState.play==='flex'?'Flex':'Power';
+  const when=pkSentAt?'checked at live prices, '+new Date(pkSentAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'at the board’s prices';
+  const opts=sizes.map(n=>{ const L=pkSentPick(S,n); return L?{n,L,e:pkEntry(L,pays[n],cfg)}:null; }).filter(o=>o && o.e.ev>0);
+  const best=opts.find(o=>o.n===4) || opts.sort((a,b)=>b.e.growth-a.e.growth)[0];   // 4 picks when it pays, else the best for the bankroll
+  if(best) window._pkCards.sent={legs:best.L, e:best.e};
+  return '<div class="pk-sent-h"><b>🦑 Not good alone, good in a parlay</b><span class="meta">'+esc(when)+'</span><button type="button" class="ghost sm" id="pkSentGo">🦑 Send the Sentinels</button></div>'+
+    '<div class="pk-be" role="list" aria-label="The chance every pick needs to break even, '+esc(appName+' '+play)+'">'+sizes.map(n=>'<span role="listitem" class="pk-be-i'+(n===4?' star':'')+'">'+(n===4?'★ ':'')+n+' picks <b>'+(be[n]!=null?pct(be[n]):'n/a')+'</b></span>').join('')+'</div>'+
+    (S.length ? '<ul class="pk-sent-list">'+S.slice(0,12).map(l=>{ const on=pkState.mine.indexOf(l.key)>=0;
+        return '<li><div class="pk-sl-who c-who">'+avatarHtml(l.r,'r:'+l.r.idx)+'<div><b>'+esc(l.name)+'</b> <span class="meta">'+esc(pkPick(l))+'</span><div class="meta">alone: '+esc(l.alone)+'</div></div></div>'+
+          '<div class="pk-sl-p" title="The chance it hits">'+pct(l.p)+'</div>'+
+          '<div class="pk-fits" role="img" aria-label="Clears the break-even of '+esc(l.fits.join(', '))+'-pick entries">'+sizes.map(n=>'<i class="'+(l.fits.indexOf(n)>=0?'on':'')+(n===4?' star':'')+'">'+n+'</i>').join('')+'</div>'+
+          '<button type="button" class="log sm pk-sent-add'+(on?' on':'')+'" data-k="'+esc(l.key)+'" aria-pressed="'+on+'">'+(on?'✓ In your entry':'+ Add')+'</button></li>'; }).join('')+'</ul>'+
+        (S.length>12?'<div class="meta">and '+(S.length-12)+' more in Picks below</div>':'')
+      : '<div class="meta">Nothing right now: no pick that misses as a single bet clears a '+esc(appName)+' break-even.'+(pkSentAt?'':' Send the Sentinels to re-check at live prices.')+'</div>')+
+    (best ? pkCard((best.n===4?'★ ':'')+'The Sentinels’ '+best.n+' picks', best.L, best.e, 'sent', false) : (S.length?'<div class="meta">Not enough of these from different games for an entry that pays yet.</div>':'')); }
 function pkSetRows(rows){ window._pkRows=rows||[]; pkBadge(); const v=document.getElementById('v-parlay'); if(v&&v.classList.contains('on')) renderParlays(); }
 function pkBadge(){ const el=document.getElementById('pkTabN'); if(!el) return; const n=pkLegs(window._pkRows||[]).filter(l=>l.p>=pkState.minP && pkPlayable(l)).length; el.textContent=n?String(n):''; }
 const pkPick=l=>(l.side==='U'?'Under ':'Over ')+l.line+' '+shortStat(l.stat);
@@ -6861,6 +6955,8 @@ function renderParlays(){
   document.getElementById('pkCards').innerHTML=cards.map(([n,L,e])=> !L
       ? '<div class="pk-card empty"><div class="pk-h"><b>'+n+' picks</b><span class="meta">'+esc(pkPaysTxt(pays[n]))+'</span></div><div class="meta">Not enough picks at '+pct(pkState.minP)+' or better'+(pkState.oneGame?' from different games':'')+'.</div></div>'
       : (window._pkCards['n'+n]={legs:L,e}, pkCard(n+' picks',L,e,'n'+n,n===bestN))).join('');
+  { const el=document.getElementById('pkSent'); if(el) el.innerHTML=pkSentHtml(pays,cfg,appName); }   // v3.57
+  avFillSoon();
   // your entry
   const mine=pkState.mine.map(k=>legs.find(l=>l.key===k)).filter(l=>l&&pkPlayable(l)); pkState.mine=mine.map(l=>l.key);
   const mArr=pays[mine.length];
@@ -6872,7 +6968,7 @@ function renderParlays(){
   const full=mine.length>=6;
   document.getElementById('pkPool').innerHTML=legs.length ? legs.slice(0,80).map(l=>{ const on=pkState.mine.indexOf(l.key)>=0;
       return '<tr class="'+(l.p>=pkState.minP&&pkPlayable(l)?'':'pk-low')+'"><td><input type="checkbox" class="pk-pick" data-k="'+esc(l.key)+'" aria-label="Add '+esc(l.name)+' to your entry"'+(on?' checked':'')+((full&&!on)||(!pkPlayable(l)&&!on)?' disabled':'')+'></td>'+
-        '<td><b>'+esc(l.name)+'</b>'+(l.prior?' <span class="tag t-warn">already bet</span>':'')+'</td>'+
+        '<td><div class="c-who">'+avatarHtml(l.r,'r:'+l.r.idx)+'<div><b>'+esc(l.name)+'</b>'+(l.prior?' <span class="tag t-warn">already bet</span>':'')+'</div></div></td>'+   // v3.57: a picture
         '<td>'+esc(pkPick(l))+'</td>'+
         '<td class="num" title="Market '+(l.mkt!=null?pct(l.mkt):'n/a')+', model '+(l.model!=null?pct(l.model):'n/a')+'"><b class="'+(l.p>=pkState.minP?'pk-ok':'')+'">'+pct(l.p)+'</b></td>'+
         '<td>'+(l.dfs==='own'?'<b>'+esc(appName)+'</b> ✓':l.dfs==='diff'?'<b class="pk-diff">'+esc(appName)+' has '+esc(String(l.appLine))+'</b> <span class="meta">board line is '+esc(l.line)+'</span>':l.dfs==='none'?'<span class="pk-diff">not on '+esc(appName)+'</span>':esc(bookLabel(l.book)||'?')+' <span class="meta">check the line</span>')+'</td>'+
@@ -6895,6 +6991,9 @@ function pkLog(id,btn){ const c=(window._pkCards||{})[id]; if(!c) return; const 
     const p=e.target.closest('#pkPlay button'); if(p){ pkState.play=p.dataset.v; pkSave(); renderParlays(); return; }
     if(e.target.closest('#pkPayReset')){ if(pkState.pays&&pkState.pays[pkState.app]) delete pkState.pays[pkState.app][pkState.play]; pkSave(); renderParlays(); return; }
     const lg=e.target.closest('.pk-log'); if(lg){ pkLog(lg.dataset.id,lg); return; }
+    const sa=e.target.closest('.pk-sent-add'); if(sa){ const k=sa.dataset.k;   // v3.57
+      if(pkState.mine.indexOf(k)>=0) pkState.mine=pkState.mine.filter(x=>x!==k); else if(pkState.mine.length<6) pkState.mine.push(k); renderParlays(); return; }
+    const sg=e.target.closest('#pkSentGo'); if(sg){ sg.disabled=true; sg.textContent='🦑 hunting…'; Promise.resolve(shopExchanges()).catch(()=>{}).then(()=>renderParlays()); return; }
     if(e.target.closest('#pkDfsGo')){ pkDfsFetch(); return; } });
   box.addEventListener('change',e=>{ const t=e.target;
     if(t.id==='pkOneGame'){ pkState.oneGame=t.checked; pkSave(); renderParlays(); return; }
@@ -7365,7 +7464,7 @@ async function shopExchanges(){
   const started=r=>r.gameInfo&&(r.gameInfo.state==='in'||r.gameInfo.state==='post');
   const rows=lastRows.filter(r=>r.fairProb!=null && !r.prior && !started(r) && !r.hiddenDup && (boardSrc==='paste'?isPasteRow(r):!isPasteRow(r)));
   const jobs=[]; rows.forEach(r=>{ exch.forEach(n=>{ const d=liveDesc(Object.assign(rowAsBet(r),{book:n, id:'shop:'+r.idx+':'+LIVE_BOOK(n)})); if(d) jobs.push([r,n,d]); }); });
-  if(!jobs.length){ msg.textContent='🦑 nothing for the Sentinels to hunt'; return; }
+  if(!jobs.length){ msg.textContent='🦑 nothing for the Sentinels to hunt'; pkSentNote(msg,false); return; }   // v3.57: parlay picks still go out
   btn.disabled=true; let matched=0;
   const before=new Map(rows.map(r=>[r, isPlace(r)]));
   try{
@@ -7396,9 +7495,14 @@ async function shopExchanges(){
     rows.forEach(r=>{ const was=before.get(r), now=isPlace(r); if(!was && now){ r.freed=true; freed++; } else if(was && !now){ r.jailed=true; jailed++; } });
     refresh();
     msg.innerHTML='🦑 Sentinels are back: <b>'+matched+'</b> live prices · <b>'+repriced+'</b> repriced'+(freed?' · <b style="color:var(--live)">🔓 '+freed+' out of Skipping Jail</b>':'')+(jailed?' · <b style="color:var(--out)">🔒 '+jailed+' sent to Skipping Jail</b>':'')+' · '+new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    pkSentNote(msg,true);   // v3.57: what is better in a parlay goes to the Parlays tab
   }catch(e){ msg.textContent='🦑 the Sentinels got lost (exchange check failed)'; }
   finally{ btn.disabled=false; }
 }
+function pkSentNote(msg,live){ if(live) pkSentAt=Date.now(); const n=pkSentLegs().length; try{ if(document.getElementById('v-parlay').classList.contains('on')) renderParlays(); }catch(e){}
+  if(n) msg.insertAdjacentHTML('beforeend',' · <button type="button" class="linkbtn pk-sent-go" title="Not good alone, good in a 2- to 6-pick entry">🎟️ <b>'+n+'</b> better in a parlay → Parlays</button>'); }
+document.addEventListener('click',e=>{ if(!e.target.closest('.pk-sent-go')) return; const t=document.querySelector('.tab[data-view="v-parlay"]'); if(t) t.click();
+  setTimeout(()=>{ const el=document.getElementById('pkSent'); if(el) el.scrollIntoView({block:'start'}); },60); });
 document.getElementById('shopBtn') && document.getElementById('shopBtn').addEventListener('click', shopExchanges);
 
 /* ============ v2.93: your real bets from Kalshi / Polymarket US / Novig fills (read-only) ============ */
