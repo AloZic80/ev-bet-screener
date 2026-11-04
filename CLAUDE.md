@@ -3,7 +3,10 @@
 ## What this is
 - A sports-betting screener in one file: `index.html` (HTML, CSS and JavaScript, about 8,400 lines).
   `phone.html` only frames `index.html` at phone width (Settings > Layout > Phone on a computer). There is no build step.
-- Live at props.0xbeta.dev (see `CNAME`), served by GitHub Pages from `main`. The owner merges pull requests; merging is what deploys.
+- Live at props.0xbeta.dev (see `CNAME`), served by GitHub Pages from `main`; merging a pull request is what deploys (about a minute).
+  Claude Code may merge its own pull requests, but only after the owner says go. The Worker is deployed by the owner (`npx wrangler deploy`).
+- Reports: after each step, write one report in `agent-notes/` (`<topic>_<YYYY-MM-DD>_v<N>.md`, header with a `CC-` Ref, times in
+  America/Chicago) and give it to the owner, who adds it to the claude.ai Project "Betting-for-Pros" (Project knowledge).
 - Prices come through the owner's Cloudflare Worker (`API_BASE`; a separate repo, `~/prop-bet-api` on the owner's Mac,
   deployed with `npx wrangler deploy`). Scores, schedules and grading come from ESPN's public scoreboard (free, no key).
 - Everything a user saves lives in their browser's localStorage under `mbev.*` keys (`mbev.log` bet log, `mbev.board`,
