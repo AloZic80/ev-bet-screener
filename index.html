@@ -761,6 +761,21 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 .todaybar .tb-l2{font-size:12.5px; line-height:1.6}
 .todaybar .tb-pill{margin-top:6px}
 .todaybar .tb-empty{display:flex; align-items:center; border-left:0; padding-left:4px}
+/* v3.54 accessibility (WCAG 2.1 AA): text at 4.5:1, phone tap targets, keyboard focus */
+:root{--live:#0B7A3B; --neon:#0B7A3B; --warn:#925E06}   /* light mode: the greens and amber used for text, one shade darker (were #12A150 / #0B8F3A / #B5730A) */
+:root[data-theme="dark"] button.act,:root[data-theme="dark"] button.log:not(.parlay):not(.undo):not(.share-btn),
+:root[data-theme="dark"] .cal-seg button.on,:root[data-theme="dark"] .ab-seg button.on,:root[data-theme="dark"] .par-btn,
+:root[data-theme="dark"] .copy-big{background:#2563EB; border-color:#2563EB}   /* white text on #5B9BFF was 2.8:1 */
+:root[data-theme="dark"] .bk-pill.on{color:#0B1017}   /* white on bright green was 1.8:1 */
+.stars{color:var(--ink)} .stars .star-g{color:#AD7B00} :root[data-theme="dark"] .stars .star-g{color:#E0A100}   /* the number is the rating; the star is decoration, 3:1 */
+.tb-pill small{opacity:1}
+.cal-c.fut{opacity:1} .cal-c.fut .d,.cal-c.fut .v{color:var(--soft)}
+tbody tr.gameover td{opacity:1; filter:grayscale(1)}   /* games already started: grey, not faded (faded text dropped to 1.4:1) */
+::placeholder{color:var(--soft); opacity:1}
+:root[data-theme="dark"] ::placeholder{color:#A9B6C5}
+.ab-grid input::placeholder{opacity:1}
+.head .date input:focus,.head .date input:focus-visible,.head .date input:focus-within{outline:2px solid var(--accent); outline-offset:2px}   /* date boxes focus their inner fields, so :focus */
+[role="button"]:focus-visible,th.sortable:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 /* v3.54: long text wraps to the next line instead of running off in one long line */
 p,.hint,.meta,.ab-verdict,.ll-status,.empty,.ss-empty,.tb-empty{overflow-wrap:break-word}
 .kick{white-space:normal}
@@ -788,6 +803,11 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
   .tab{padding:13px 10px 12px; font-size:14px; margin:0; border-bottom:0; border-top:3px solid transparent}
   .tab.on{border-top-color:var(--accent)}
   .loadline .saved-note{margin-left:0; flex-basis:100%}
+  input[type=checkbox],input[type=radio]{width:24px!important; height:24px!important; flex:none}
+  input[type=number],input[type=text],input[type=password],input[type=date],select{min-height:32px}
+  button.linkbtn,.sync-chip,.tb-espn,.ss-ref,button.ntog,button.log.sm,summary.cut{min-height:32px}
+  button.linkbtn{padding:4px 6px}
+  .editor-row input,.editor-row select{min-height:32px}
   .head h1{font-size:21px; gap:4px 6px} .head h1 .ver{font-size:11px; padding:2px 6px} .head h1 .sync-chip{font-size:11px; padding:2px 7px; margin:0}
   .statbox .sb-rest:has(> .board-cuts:empty):has(> .alerts[style*="none"]){display:none}
   .statbox{justify-self:stretch; padding:6px 12px; border-radius:10px} .statbox .board-score .n{font-size:24px} .statbox .board-score .of{max-width:none}
@@ -803,13 +823,13 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
   <div class="head-row">
     <div class="brandbox">
       <h1>0xBeta Screener <span class="ver" id="verTag">v3.54</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
-      <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
+      <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
       <div class="board-score"><span class="n" id="count">0</span><span class="of" id="countNote">nothing loaded yet</span></div>
       <div class="sb-rest"><div class="board-cuts" id="cuts"></div><div class="alerts" id="alerts" style="display:none"></div></div>
     </div>
-    <button class="themer" id="themer" title="Dark mode">☾</button>
+    <button class="themer" id="themer" title="Dark mode" aria-label="Switch between light and dark mode">☾</button>
   </div>
   <div class="todaybar" id="todayBar" title="Today's games, per book — click for the Bet log"></div>
   <div class="pull-bar" id="pullBar" role="alert"></div>
@@ -847,28 +867,28 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
       <button class="linkbtn" id="pasteLink" hidden title="Paste a board from the BettingPros site — doesn't use the API">Paste ▸</button>
       <button class="linkbtn" id="passLink" hidden title="Screener passphrase">Passphrase ▸</button>
     </span>
-    <span class="saved-note" id="savedNote"></span>
+    <span class="saved-note" id="savedNote" role="status"></span>
   </div>
-  <div id="apiStatus" class="ll-status"></div>
+  <div id="apiStatus" class="ll-status" role="status"></div>
   <p class="hint" id="apiWeekHint" style="display:none;margin:4px 2px 0">NFL/NCAAF are organized by week. Week auto-fills from ESPN; leave it blank to let BettingPros use the current week.</p>
 </div>
 
-<div class="tabs">
-  <button class="tab on" data-view="v-board" data-src="api">Board</button>
-  <button class="tab" data-view="v-board" data-src="paste" hidden>Pasted <span class="tab-n" id="pasteTabN"></span></button>
-  <button class="tab" data-view="v-parole" title="Jail bets your own posted price would fix — Make orders on Novig">🔓 Parole <span class="tab-n" id="paroleTabN"></span></button>
-  <button class="tab" data-view="v-add" title="Take a price or post your own — BET or SKIP and how much">+ Add a bet</button>
-  <button class="tab" data-view="v-money">Moneylines</button>
-  <button class="tab" data-view="v-log">Bet log</button>
-  <button class="tab" data-view="v-perf">Performance</button>
-  <button class="tab" data-view="v-live">Live</button>
-  <button class="tab" data-view="v-settings">Settings</button>
-  <button class="tab" data-view="v-paste" hidden title="Paste a board from the BettingPros site — doesn't use the API">Paste a board</button>
+<div class="tabs" role="tablist" aria-label="Sections">
+  <button class="tab on" role="tab" aria-selected="true" data-view="v-board" data-src="api">Board</button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-board" data-src="paste" hidden>Pasted <span class="tab-n" id="pasteTabN"></span></button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-parole" title="Jail bets your own posted price would fix — Make orders on Novig">🔓 Parole <span class="tab-n" id="paroleTabN"></span></button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-add" title="Take a price or post your own — BET or SKIP and how much">+ Add a bet</button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-money">Moneylines</button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-log">Bet log</button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-perf">Performance</button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-live">Live</button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-settings">Settings</button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-paste" hidden title="Paste a board from the BettingPros site — doesn't use the API">Paste a board</button>
 </div>
 
 <!-- v2.71: ESPN score strip (free — no BettingPros calls) -->
 <div class="scorestrip" id="scoreStrip">
-  <div class="ss-sel"><div class="ss-ctl"><button type="button" class="ss-ref" id="ssRef" title="Refresh scores from ESPN now (no BettingPros calls)">⟳</button><span class="ss-at" id="ssAt"></span></div><select id="ssSport" title="Scores for…"><option>NFL</option><option>NCAAF</option><option>NBA</option><option>NCAAB</option><option>WNBA</option><option>NHL</option><option>MLB</option></select></div>
+  <div class="ss-sel"><div class="ss-ctl"><button type="button" class="ss-ref" id="ssRef" aria-label="Refresh scores from ESPN" title="Refresh scores from ESPN now (no BettingPros calls)">⟳</button><span class="ss-at" id="ssAt"></span></div><select id="ssSport" title="Scores for…"><option>NFL</option><option>NCAAF</option><option>NBA</option><option>NCAAB</option><option>WNBA</option><option>NHL</option><option>MLB</option></select></div>
   <div class="ss-games" id="ssGames"><div class="ss-empty">Loading scores…</div></div>
 </div>
 
@@ -962,7 +982,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
   <div class="ab-grid">
     <div class="field"><label for="abSport">Sport</label><select id="abSport"><option>NFL</option><option>NCAAF</option><option>NBA</option><option>WNBA</option><option>NCAAB</option><option>MLB</option><option>NHL</option></select></div>
     <div class="field"><label for="abType">Type</label><select id="abType"><option value="prop">Player prop</option><option value="spread">Spread</option><option value="total">Game total</option><option value="moneyline">Moneyline</option></select></div>
-    <div class="field ab-wide"><label for="abGame">Game</label><select id="abGame"><option value="">loading…</option></select><input id="abGameFree" type="text" placeholder="Not listed? Type it: TOR @ UTA" style="margin-top:4px" autocomplete="off"></div>
+    <div class="field ab-wide"><label for="abGame">Game</label><select id="abGame"><option value="">loading…</option></select><input id="abGameFree" type="text" aria-label="Game, typed in" placeholder="Not listed? Type it: TOR @ UTA" style="margin-top:4px" autocomplete="off"></div>
     <div class="field"><label for="abDate">Game date</label><input id="abDate" type="date"></div>
     <div class="field ab-prop"><label for="abPlayer">Player</label><input id="abPlayer" type="text" placeholder="as the app spells it" autocomplete="off"></div>
     <div class="field ab-team"><label for="abTeam">Team</label><select id="abTeam"></select><input id="abTeamFree" type="text" placeholder="e.g. LAL" autocomplete="off" style="display:none"></div>
@@ -986,7 +1006,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
   </div>
   <div id="abVerdict" class="ab-verdict"></div>
   <p class="hint" style="margin:8px 0 0">Copy what the app shows. <b>Odds</b> can be American (-110, +120), decimal (1.91) or a percentage (52.4%); <b>To win</b> is the profit, and when you type it, it's what the bet pays. Logging a bet that's already over? Set <b>Result</b> and it saves graded. Under <b>Model numbers</b>: <b>Cover %</b> decides PASS/FAIL (same as the board); <b>consensus</b> is the market check; <b>projection</b> is saved for reference. Left blank, the bet saves as <b>unchecked</b> and the next Load fills them in if BettingPros has the same player, stat and line. Pick the game from the list so ESPN can grade it.</p>
-  <div class="meta" id="abMsg" style="margin-top:6px"></div>
+  <div class="meta" id="abMsg" role="status" style="margin-top:6px"></div>
 </details>
 </div>
 <div class="view" id="v-paste">
@@ -1046,9 +1066,9 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
     <div class="src-panel" id="srcPanel" style="display:none"></div>
   <h3 class="set-h">Screener passphrase</h3>
   <div class="row" id="passBox" style="display:flex;margin-top:4px">
-    <input type="password" id="screenerPass" placeholder="passphrase" style="max-width:220px" autocomplete="new-password">
+    <input type="password" id="screenerPass" aria-label="Screener passphrase" placeholder="passphrase" style="max-width:220px" autocomplete="new-password">
     <button class="act" id="passSave" type="button" style="padding:7px 16px">Save</button>
-    <span class="meta" id="passMsg"></span>
+    <span class="meta" id="passMsg" role="status"></span>
     <span class="hint" style="margin:0">Saved in this browser only. Must match the SCREENER_PASS secret on the Worker.</span>
   </div>
 </details>
@@ -1056,7 +1076,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
   <summary><h2>☁ Your bets on every device <span class="sub">phone, other PCs — locked with your own sync password</span></h2></summary>
   <p class="hint">One copy of your bet log lives in your Cloudflare store. Any device with the screener passphrase <b>and</b> this password sees the same bets, baits and settings. Changes upload a few seconds after you make them; other devices pick them up when they open or come back to the page, and once a minute while it's open — Wi-Fi or cellular.</p>
   <div class="row" style="gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px">
-    <input type="password" id="syncPw" placeholder="sync password" autocomplete="new-password" style="max-width:220px;padding:8px 10px;font-size:14px">
+    <input type="password" id="syncPw" aria-label="Sync password" placeholder="sync password" autocomplete="new-password" style="max-width:220px;padding:8px 10px;font-size:14px">
     <button class="act" id="syncOn">Turn on</button>
     <button class="ghost" id="syncNowBtn" disabled>⟳ Sync now</button>
     <button class="ghost" id="syncOff" disabled>Turn off here</button>
@@ -1173,11 +1193,11 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
   <p class="hint">The sweet spot only marks rows. The outlier and risk-bet settings change stakes: an outlier is capped at the minimum, and one that is also below the market is skipped unless it fits the risk-bet allowance.</p>
   <div class="sweetbar">
     <label>Stars ≥ <input type="number" id="swStars" value="3" min="1" max="5" step="1"></label>
-    <label>+EV <input type="number" id="swNetMin" value="2" step="0.5"> to <input type="number" id="swNetMax" value="10" step="0.5">%</label>
-    <label>Odds <input type="number" id="swOMin" value="-150" step="10"> to <input type="number" id="swOMax" value="150" step="10"></label>
+    <label>+EV <input type="number" id="swNetMin" value="2" step="0.5"> to <input type="number" id="swNetMax" aria-label="+EV up to (%)" value="10" step="0.5">%</label>
+    <label>Odds <input type="number" id="swOMin" value="-150" step="10"> to <input type="number" id="swOMax" aria-label="Odds up to" value="150" step="10"></label>
     <label style="display:flex;align-items:center;gap:6px;cursor:pointer" title="When the market's no-vig price is known, the offered price has to beat it"><input type="checkbox" id="swMkt" checked style="width:15px;height:15px;accent-color:var(--accent)"> Must beat market price</label>
-    <label title="Treated as the model disagreeing with the market, not an edge">Outlier: EV over <input type="number" id="swOutlier" value="15" step="1">% or model <input type="number" id="swGap" value="8" step="1"> pts over market</label>
-    <label title="An outlier that's also below the market price is skipped — except for a few small 'risk bets' a day, the closest ones to the market. 0 turns them off.">Risk bets: up to <input type="number" id="swRiskN" value="2" min="0" step="1"> a day at the minimum, if no worse than <input type="number" id="swRiskGap" value="3" min="0" step="0.5">% below market</label>
+    <label title="Treated as the model disagreeing with the market, not an edge">Outlier: EV over <input type="number" id="swOutlier" value="15" step="1">% or model <input type="number" id="swGap" aria-label="Outlier: model points over market" value="8" step="1"> pts over market</label>
+    <label title="An outlier that's also below the market price is skipped — except for a few small 'risk bets' a day, the closest ones to the market. 0 turns them off.">Risk bets: up to <input type="number" id="swRiskN" value="2" min="0" step="1"> a day at the minimum, if no worse than <input type="number" id="swRiskGap" aria-label="Risk bets: no worse than (points)" value="3" min="0" step="0.5">% below market</label>
     <label title="Outliers that still beat the market are held to the minimum stake; this caps how many a day (best first, counting ones already logged). 0 = none. You can still log one past it.">Outliers: up to <input type="number" id="swOutN" value="5" min="0" step="1"> a day</label>
   </div>
 </details>
@@ -1372,7 +1392,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
     <div><div class="meta">Month</div><div class="cal-big" id="calMonthTot"></div></div>
     <div class="cal-seg"><button type="button" data-v="chart">Chart</button><button type="button" data-v="cal" class="on">Calendar</button></div></div>
   <div class="cal-chips" id="calChips"></div>
-  <div class="cal-nav"><button type="button" id="calPrev">‹</button><b id="calTitle"></b><button type="button" id="calNext">›</button></div>
+  <div class="cal-nav"><button type="button" id="calPrev" aria-label="Previous month">‹</button><b id="calTitle"></b><button type="button" id="calNext" aria-label="Next month">›</button></div>
   <div id="rbdBody"></div>
   <div class="cal-foot" id="calFoot"></div>
 </div>
@@ -2506,7 +2526,7 @@ function openBetEditor(tr, r, opt){
       '<span class="pm-calc eb-calc"></span></span>'+
     (opt.edit?ebResultHtml(opt.edit):'')+'<span class="eb-check"></span><span class="meta eb-rec"></span>'+
     '<button class="log sm eb-save">'+(opt.edit?'Save changes':'Save bet')+'</button> <button class="log sm undo eb-cancel">Cancel</button>'+
-    '<span class="meta eb-msg"></span></div>'+(isCard?'':'</td>');
+    '<span class="meta eb-msg" role="status"></span></div>'+(isCard?'':'</td>');
   if(isCard) tr.appendChild(ed); else tr.after(ed);
   if(opt.edit){ const B=opt.edit;   // v3.38: manual result + copy the book's bet ID
     ed.querySelectorAll('button.eb-res').forEach(btn=>btn.addEventListener('click',()=>{
@@ -2838,7 +2858,7 @@ function decisionHtml(r,cfg){
 function starsHtml(n){
   if(n==null) return '<span class="meta">—</span>';
   const k=Math.max(0,Math.min(5,Math.round(n)));
-  return '<span class="stars" title="BettingPros rating: '+k+' of 5" style="white-space:nowrap">'+k+' ★</span>';   // v2.60: number + one star
+  return '<span class="stars" title="BettingPros rating: '+k+' of 5" style="white-space:nowrap">'+k+' <span class="star-g" aria-hidden="true">★</span></span>';   // v2.60: number + one star
 }
 function hitHtml(r){
   if(r.l15N){ const h=Math.round(r.l15Hit*r.l15N);
@@ -3555,7 +3575,7 @@ function renderLog(){
       '<td class="num">'+esc(fmtOdds(b.odds))+'</td>'+
       '<td class="num">'+esc(fmtOdds(b.fair))+'</td>'+
       '<td class="num">'+(b.net!=null?pct(b.net):'—')+'</td>'+
-      '<td class="num"><input class="stake-in" type="number" step="0.01" min="0" data-i="'+i+'" value="'+(b.stake||0).toFixed(2)+'" style="width:60px"></td>'+
+      '<td class="num"><input class="stake-in" aria-label="Stake" type="number" step="0.01" min="0" data-i="'+i+'" value="'+(b.stake||0).toFixed(2)+'" style="width:60px"></td>'+
       '<td class="num">'+resultBadge(b)+resultSrcHtml(b)+'</td>'+
       '<td class="num"><input class="close-in" data-i="'+i+'" value="'+esc(b.closing)+'" placeholder="e.g. +105" title="Closing price for the same side at the same line">'+
         (b.closingSnap&&b.closingSnap.price ? '<div class="meta">market no-vig · '+new Date(b.closingSnap.at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</div>'
@@ -4385,11 +4405,11 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
   const tiles=order.map(tile).join('');
   const now=tot.net, best=now+tot.ded+tot.toWin, worst=now-(tot.riding-tot.ded);
   const sgn=v=>v>=0?up(v):dn(-v);
-  const espnBtn='<button class="tb-espn" type="button" title="Refresh scores and results from ESPN now (no BettingPros calls)'+(espnAt?' — last '+new Date(espnAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+'">⟳</button>';
+  const espnBtn='<button class="tb-espn" type="button" aria-label="Refresh scores and results from ESPN" title="Refresh scores and results from ESPN now (no BettingPros calls)'+(espnAt?' — last '+new Date(espnAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+'">⟳</button>';
   if(!tot.n && !tot.cancel){   // v3.54: nothing today — one quiet line, not a row of "no bets"
     const q=['No bets today. Your bankroll thanks you for the day off.','Nothing riding today. The sportsbooks will have to wait.','No action yet. Patience is a position too.','Zero bets, zero bad beats.'];
     el.innerHTML='<span class="tb-k"><span>TODAY '+espnBtn+'</span></span><span class="tb-empty">'+esc(q[Math.floor(Date.parse(today)/864e5)%q.length])+'</span>'; return; }
-  el.innerHTML='<span class="tb-k"><span>TODAY <button class="tb-espn" type="button" title="Refresh scores and results from ESPN now (no BettingPros calls)'+(espnAt?' — last '+new Date(espnAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+'">⟳</button></span><b class="tb-tot">'+usd(tot.bet)+'</b><span class="tb-n">'+tot.n+' bet'+(tot.n===1?'':'s')+'</span>'+(tot.n?'<span class="tb-st" title="played = has a result · playing = game started, no result yet · to play = game not started">✓ '+tot.played+' played</span><span class="tb-st live">▶ '+tot.playing+' playing</span><span class="tb-st">⏳ '+tot.toPlay+' to play</span>':'')+(Math.abs(now)<0.005?'<span class="tb-pill even" title="even">$0.00</span>':'<span class="tb-pill '+(now>0?'good':'bad')+'" title="Worst-case exposure: assumes every open bet loses (won − lost − money on the line). Hope for the best, expect the worst.">'+(now>0?'+':'−')+usd(now)+'</span>')+'</span>'+'<div class="tb-t all"><div class="tb-l1"><b>All</b></div>'+line2(tot)+(tot.open?'<div class="tb-l2" title="best = every open bet wins · worst = every open bet loses (money on the line is already counted as gone)">best '+sgn(best)+' · worst '+sgn(worst)+'</div>':'')+'<div class="tb-motto" title="Worst-case exposure: every open bet counts as LOST until it wins">Hope for the best, expect the worst.</div></div>'+tiles;
+  el.innerHTML='<span class="tb-k"><span>TODAY <button class="tb-espn" type="button" aria-label="Refresh scores and results from ESPN" title="Refresh scores and results from ESPN now (no BettingPros calls)'+(espnAt?' — last '+new Date(espnAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+'">⟳</button></span><b class="tb-tot">'+usd(tot.bet)+'</b><span class="tb-n">'+tot.n+' bet'+(tot.n===1?'':'s')+'</span>'+(tot.n?'<span class="tb-st" title="played = has a result · playing = game started, no result yet · to play = game not started">✓ '+tot.played+' played</span><span class="tb-st live">▶ '+tot.playing+' playing</span><span class="tb-st">⏳ '+tot.toPlay+' to play</span>':'')+(Math.abs(now)<0.005?'<span class="tb-pill even" title="even">$0.00</span>':'<span class="tb-pill '+(now>0?'good':'bad')+'" title="Worst-case exposure: assumes every open bet loses (won − lost − money on the line). Hope for the best, expect the worst.">'+(now>0?'+':'−')+usd(now)+'</span>')+'</span>'+'<div class="tb-t all"><div class="tb-l1"><b>All</b></div>'+line2(tot)+(tot.open?'<div class="tb-l2" title="best = every open bet wins · worst = every open bet loses (money on the line is already counted as gone)">best '+sgn(best)+' · worst '+sgn(worst)+'</div>':'')+'<div class="tb-motto" title="Worst-case exposure: every open bet counts as LOST until it wins">Hope for the best, expect the worst.</div></div>'+tiles;
 }
 /* v2.73: grade finished games in the background (ESPN, no BettingPros calls) */
 let agBusy=false; const sbStamp={};
@@ -6012,6 +6032,16 @@ renderMoneylines();
 document.getElementById('clear').addEventListener('click',()=>{
   document.getElementById('input').value=''; lastRows=lastRows.filter(r=>r.src!=='paste'); refresh(); autoSaveBoard();
 });
+/* v3.54 accessibility: tabs say which one is open; Enter/Space opens what a mouse click opens */
+document.querySelector('.tabs').addEventListener('click',()=>setTimeout(()=>document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected',x.classList.contains('on')?'true':'false')),0));
+(function(){
+  const SEL='th.sortable, .cal-c.has, img.blogo.go';   // the Today card isn't here: it holds its own ⟳ button, and the Bet log tab does the same job
+  const fix=()=>document.querySelectorAll('th.sortable:not([tabindex]), .cal-c.has:not([tabindex]), img.blogo.go:not([tabindex])').forEach(el=>{
+    el.tabIndex=0; if(el.matches('.cal-c.has')) el.setAttribute('role','button'); else if(el.tagName==='IMG') el.setAttribute('role','link'); });
+  let q=0; const soon=()=>{ if(!q) q=requestAnimationFrame(()=>{ q=0; fix(); }); };
+  fix(); new MutationObserver(soon).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+  document.addEventListener('keydown',e=>{ if(e.key!=='Enter'&&e.key!==' ') return; const el=e.target; if(!el.matches||!el.matches(SEL)) return; e.preventDefault(); el.click(); });
+})();
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
