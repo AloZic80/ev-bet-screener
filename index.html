@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v3.59</title>
+<title>0xBeta Screener v3.60</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -870,6 +870,13 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 .pk-apps-box{margin:8px 0 2px} .pk-apps-box summary{cursor:pointer; font-size:13px; font-weight:600}
 #pkApps{display:flex; flex-direction:column; gap:8px; margin:10px 0 4px} .pk-apps-g{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; font-size:13px} .pk-apps-g b{min-width:70px}
 .pk-app-seg{flex-wrap:wrap}
+/* v3.60: the app picker as separate chips in two groups (was one segmented pill that wrapped into an oval on phones) */
+#pkApp{display:flex; flex-direction:column; gap:8px; flex:1 1 100%}
+.pk-app-g{display:flex; flex-wrap:wrap; gap:6px; align-items:center}
+.pk-app-k{font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--soft); min-width:72px}
+#pkApp button{font:inherit; font-size:13px; font-weight:600; padding:6px 13px; border-radius:999px; border:1px solid var(--rule); background:var(--panel); color:var(--ink); cursor:pointer; min-height:32px}
+#pkApp button.on,:root[data-theme="dark"] #pkApp button.on{background:#2563EB; border-color:#2563EB; color:#fff}
+@media (max-width:640px){ .pk-app-k{flex-basis:100%} }
 /* v3.58: 🌍 Leagues tab */
 .lg-bar{gap:10px; align-items:center; margin-top:0}
 .lg-group{margin:16px 0 6px; font-size:12.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--soft)}
@@ -941,7 +948,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.59</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.60</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1174,7 +1181,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
   <h2>Parlays <span class="sub">pick'em apps (PrizePicks, Pick6, Underdog, Sleeper) pay a fixed multiple; combo apps (Kalshi, Novig, Polymarket, DK and FD Predictions, Fliff, Bovada) pay the legs' odds multiplied</span></h2>
   <details class="pk-apps-box"><summary>Apps you play <span class="meta">tick them, and only those show</span></summary><div id="pkApps"></div></details>
   <div class="pk-ctl">
-    <div class="ab-seg pk-app-seg" id="pkApp" role="radiogroup" aria-label="App"></div>
+    <div class="pk-app-seg" id="pkApp" role="radiogroup" aria-label="App"></div>
     <div class="ab-seg" id="pkPlay" role="radiogroup" aria-label="Play"><button type="button" role="radio" data-v="power" title="Every pick must hit">Power</button><button type="button" role="radio" data-v="flex" title="Still pays with one or two misses, but less">Flex</button></div>
     <label class="bar-check" title="Picks from the same game move together, which the math here doesn't count. One per game keeps it honest."><input type="checkbox" id="pkOneGame" checked> One pick per game</label>
     <label id="pkMinPL" title="Only picks at least this likely go into the best entries">Picks from <input type="number" id="pkMinP" value="54" min="50" max="90" step="0.5" style="width:72px"> % up</label>
@@ -1586,7 +1593,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v3.59';
+const SCREENER_VERSION='v3.60';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -7101,7 +7108,9 @@ function renderParlays(){
   const pays=pkPays(app,pkState.play), pkRows=window._pkRows||[], legs=pkLegs(pkRows), priced=pkPriced(app), appName=pkAppLabel(app);
   const elig=legs.filter(l=>priced ? l.p*l.mult>1 : (l.p>=pkState.minP && pkPlayable(l)));
   { const seg=document.getElementById('pkApp'), mineA=PK_APPS.filter(a=>pkState.apps.indexOf(a)>=0);   // v3.59: the apps you play
-    seg.innerHTML=mineA.map(a=>'<button type="button" role="radio" data-v="'+esc(a)+'" aria-checked="'+(a===app)+'" class="'+(a===app?'on':'')+'">'+esc(pkAppLabel(a))+'</button>').join('');
+    const chip=a=>'<button type="button" role="radio" data-v="'+esc(a)+'" aria-checked="'+(a===app)+'" class="'+(a===app?'on':'')+'">'+esc(pkAppLabel(a))+'</button>';   // v3.60: one chip per app, in two groups
+    const gA=mineA.filter(a=>!pkPriced(a)), gB=mineA.filter(pkPriced);
+    seg.innerHTML=(gA.length?'<div class="pk-app-g"><span class="pk-app-k">Pick’em</span>'+gA.map(chip).join('')+'</div>':'')+(gB.length?'<div class="pk-app-g"><span class="pk-app-k">Combos</span>'+gB.map(chip).join('')+'</div>':'');
     document.getElementById('pkApps').innerHTML='<div class="pk-apps-g"><b>Pick’em</b> '+PK_APPS.filter(a=>!pkPriced(a)).map(a=>'<label class="bar-check"><input type="checkbox" class="pk-app-on" value="'+esc(a)+'"'+(pkState.apps.indexOf(a)>=0?' checked':'')+'> '+esc(pkAppLabel(a))+'</label>').join('')+'</div>'+
       '<div class="pk-apps-g"><b>Combos</b> '+PK_PRICED.map(a=>'<label class="bar-check"><input type="checkbox" class="pk-app-on" value="'+esc(a)+'"'+(pkState.apps.indexOf(a)>=0?' checked':'')+'> '+esc(pkAppLabel(a))+'</label>').join('')+'</div>'; }
   document.getElementById('pkPlay').hidden=priced; document.getElementById('pkMinPL').hidden=priced; document.querySelector('.pk-pays-box').hidden=priced;
