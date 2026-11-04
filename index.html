@@ -3,6 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>/* v3.54: Layout (Auto / Phone / Desktop), saved on this device. Phone on a computer opens phone.html, which frames this page at phone width. */
+(function(){ var m='auto'; try{ m=localStorage.getItem('mbev.layout')||'auto'; }catch(e){}
+  var embed=/[?&]embed=phone(&|$)/.test(location.search), narrow=screen.width<700, de=document.documentElement;
+  de.setAttribute('data-layout', embed?'embed':m);
+  if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
+  else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
+})();</script>
 <title>0xBeta Screener v3.54</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -761,6 +768,10 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 .todaybar .tb-l2{font-size:12.5px; line-height:1.6}
 .todaybar .tb-pill{margin-top:6px}
 .todaybar .tb-empty{display:flex; align-items:center; border-left:0; padding-left:4px}
+/* v3.54: layout toggle next to the theme toggle */
+.head-btns{display:flex; gap:8px; align-items:center}
+#layoutBtn{display:inline-flex; align-items:center; justify-content:center}
+@media (max-width:900px){ .head-btns{grid-column:2; grid-row:1} }
 /* v3.54 accessibility (WCAG 2.1 AA): text at 4.5:1, phone tap targets, keyboard focus */
 :root{--live:#0B7A3B; --neon:#0B7A3B; --warn:#925E06}   /* light mode: the greens and amber used for text, one shade darker (were #12A150 / #0B8F3A / #B5730A) */
 :root[data-theme="dark"] button.act,:root[data-theme="dark"] button.log:not(.parlay):not(.undo):not(.share-btn),
@@ -808,6 +819,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
   button.linkbtn,.sync-chip,.tb-espn,.ss-ref,button.ntog,button.log.sm,summary.cut{min-height:32px}
   button.linkbtn{padding:4px 6px}
   .editor-row input,.editor-row select{min-height:32px}
+  .head h1 .ver{display:none}   /* v3.54: room for the layout button; the version is still in the tab title */
   .head h1{font-size:21px; gap:4px 6px} .head h1 .ver{font-size:11px; padding:2px 6px} .head h1 .sync-chip{font-size:11px; padding:2px 7px; margin:0}
   .statbox .sb-rest:has(> .board-cuts:empty):has(> .alerts[style*="none"]){display:none}
   .statbox{justify-self:stretch; padding:6px 12px; border-radius:10px} .statbox .board-score .n{font-size:24px} .statbox .board-score .of{max-width:none}
@@ -829,7 +841,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
       <div class="board-score"><span class="n" id="count">0</span><span class="of" id="countNote">nothing loaded yet</span></div>
       <div class="sb-rest"><div class="board-cuts" id="cuts"></div><div class="alerts" id="alerts" style="display:none"></div></div>
     </div>
-    <button class="themer" id="themer" title="Dark mode" aria-label="Switch between light and dark mode">☾</button>
+    <div class="head-btns"><button type="button" class="themer" id="layoutBtn"></button><button class="themer" id="themer" title="Dark mode" aria-label="Switch between light and dark mode">☾</button></div>
   </div>
   <div class="todaybar" id="todayBar" title="Today's games, per book — click for the Bet log"></div>
   <div class="pull-bar" id="pullBar" role="alert"></div>
@@ -1071,6 +1083,11 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
     <span class="meta" id="passMsg" role="status"></span>
     <span class="hint" style="margin:0">Saved in this browser only. Must match the SCREENER_PASS secret on the Worker.</span>
   </div>
+</details>
+<details class="panel fold" id="layoutPanel" open>   <!-- v3.54 -->
+  <summary><h2>Layout <span class="sub">how the screener fits this device</span></h2></summary>
+  <div class="ab-seg" id="layoutSeg" role="radiogroup" aria-label="Layout"><button type="button" role="radio" data-l="auto">Auto</button><button type="button" role="radio" data-l="phone">Phone</button><button type="button" role="radio" data-l="desktop">Desktop</button></div>
+  <p class="hint" style="margin:10px 0 0">Auto picks the layout from your screen size. Phone shows the phone layout, even on a computer. Desktop shows the full layout, even on a phone. Saved on this device only.</p>
 </details>
 <details class="panel fold" id="syncPanel" open>
   <summary><h2>☁ Your bets on every device <span class="sub">phone, other PCs — locked with your own sync password</span></h2></summary>
@@ -1429,6 +1446,19 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 </div>
 <script>
 const SCREENER_VERSION='v3.54';
+/* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
+   full name, which grading and matching read. The full name stays in the tooltip. */
+const STAT_SHORT=[
+  [/\bRushing\s*\+?\s*Receiving Yards\b/gi,'Rush+Rec Yds'], [/\bPassing\s*\+?\s*Rushing Yards\b/gi,'Pass+Rush Yds'],
+  [/\bPoints\s*\+?\s*Rebounds\s*\+?\s*Assists\b/gi,'Pts+Reb+Ast'], [/\bPoints\s*\+?\s*Rebounds\b/gi,'Pts+Reb'], [/\bPoints\s*\+?\s*Assists\b/gi,'Pts+Ast'], [/\bRebounds\s*\+?\s*Assists\b/gi,'Reb+Ast'],
+  [/\bPassing Yards\b/gi,'Pass Yds'], [/\bPassing Attempts\b/gi,'Pass Att'], [/\bPassing Completions\b/gi,'Completions'], [/\bPassing Touchdowns\b/gi,'Pass TDs'],
+  [/\bRushing Yards\b/gi,'Rush Yds'], [/\bRushing Attempts\b/gi,'Rush Att'], [/\bReceiving Yards\b/gi,'Rec Yds'], [/\bLongest Reception\b/gi,'Long Rec'], [/\bLongest Rush\b/gi,'Long Rush'], [/\bReceptions\b/gi,'Rec'],
+  [/\bAnytime Touchdown( Scorer)?\b/gi,'Anytime TD'], [/\bInterceptions\b/gi,'INTs'], [/\bDefensive Sacks\b/gi,'Sacks'],
+  [/\bThree Pointers Made\b|\b3 Point Field Goals( Made)?\b/gi,'3PM'], [/\bField Goals Made\b/gi,'FGM'], [/\bFree Throws Made\b/gi,'FTM'], [/\bDouble Double\b/gi,'Dbl-Dbl'], [/\bTriple Double\b/gi,'Trp-Dbl'],
+  [/\b(Pitcher )?Strikeouts\b/gi,'Ks'], [/\bEarned Runs( Allowed)?\b/gi,'ER'], [/\bPitching Outs\b/gi,'Outs'], [/\bTotal Bases\b/gi,'TB'], [/\bHits Allowed\b/gi,'H Allowed'], [/\bStolen Bases\b/gi,'SB'], [/\bHome Runs\b/gi,'HR'],
+  [/\bShots on Goal\b/gi,'SOG'], [/\bPower Play Points\b/gi,'PP Pts'],
+  [/\bTouchdowns\b/gi,'TDs'], [/\bYards\b/gi,'Yds'], [/\bPoints\b/gi,'Pts'], [/\bRebounds\b/gi,'Reb'], [/\bAssists\b/gi,'Ast'], [/\bSteals\b/gi,'Stl'], [/\bBlocks\b/gi,'Blk'], [/\bTurnovers\b/gi,'TO']];
+function shortStat(t){ let x=String(t==null?'':t); STAT_SHORT.forEach(([re,to])=>{ x=x.replace(re,to); }); return x; }
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -2254,7 +2284,7 @@ function render(rows,cfg){
       : '<div class="kick">🕒 '+esc(giWhen(r.gameInfo))+'</div>';
     const mk=(r.market||'').match(/^([+-]?[\d.]+)\s+(.*)$/);
     const mktCell = mk
-      ? '<div class="mkt-line">'+esc(mk[1])+'</div><div class="mkt-sub">'+esc(mk[2])+'</div>'
+      ? '<div class="mkt-line">'+esc(mk[1])+'</div><div class="mkt-sub" title="'+esc(mk[2])+'">'+esc(shortStat(mk[2]))+'</div>'
       : '<div class="mkt-line">'+esc(r.market||'—')+'</div><div class="mkt-sub">'+r.kind+'</div>';
     /* Bet Now reads the way you would place it: side, line, price.
        A moneyline has no line, a spread has no side. */
@@ -2391,7 +2421,7 @@ function placeCardHtml(r,cfg,o){
   return '<div class="pcard" data-idx="'+r.idx+'">'+
     '<div class="pc-hdr"><div class="pc-who">'+avatar+'<div style="min-width:0"><div class="pc-nm" title="'+esc(r.name)+'">'+esc(r.name)+'</div>'+
       '<div class="pc-sub">'+(r.pos?esc(r.pos)+' · ':'')+(r.jersey!=null&&r.jersey!==''?'#'+esc(r.jersey)+' · ':'')+'<b>'+esc(gameTxt)+'</b>'+(o.sweet?' · <span class="sweet">🎯 SWEET SPOT</span>':'')+'</div></div></div>'+
-      '<div class="pc-mkt"><div class="pc-mt">'+esc((line?line+' ':'')+mname)+'</div>'+(cons?'<div class="pc-mo">'+esc(cons)+'</div>':'')+'</div>'+
+      '<div class="pc-mkt"><div class="pc-mt" title="'+esc(mname)+'">'+esc((line?line+' ':'')+shortStat(mname))+'</div>'+(cons?'<div class="pc-mo">'+esc(cons)+'</div>':'')+'</div>'+
       '<div class="pc-game">'+game+'</div></div>'+
     '<div class="pc-stats">'+
       pcCell('Our pick','<div class="pc-big">'+esc(pick)+'</div><span class="pc-chip">'+esc(betNowOf(r))+' '+book+'</span>'+shopTagHtml(r)+pickPayHtml(r)+'<span class="mk-slot" data-idx="'+r.idx+'">'+makeTagHtml(r)+'</span>')+
@@ -3818,10 +3848,10 @@ function totalUnit(sport){ return sport==='MLB'?'Runs':(sport==='NHL'||sport==='
 function betLabel(b){
   const mk=String(b.market||'').match(/^([+-]?[\d.]+)\s+(.*)$/), line=mk?mk[1]:'', name=mk?mk[2]:String(b.market||'');
   const side=b.side||sideOf(b)||'', word=side==='U'?'Under':side==='O'?'Over':'';
-  if(b.kind==='total') return (word?word+' ':'')+line+' Total '+totalUnit(b.sport);
+  if(b.kind==='total') return shortStat((word?word+' ':'')+line+' Total '+totalUnit(b.sport));
   if(b.kind==='spread') return (glTeam(b)||b.name)+' '+line+' Spread';
   if(b.kind==='moneyline') return (glTeam(b)||b.name)+' Moneyline';
-  return ((word?word+' ':'')+(line?line+' ':'')+name).trim();
+  return shortStat(((word?word+' ':'')+(line?line+' ':'')+name).trim());   // v3.54: short stat names on screen
 }
 function unitShort(b){
   if(b.kind==='total') return totalUnit(b.sport).toLowerCase();
@@ -6359,6 +6389,27 @@ function loadCfg(){
     if(!(o.cfgVer>=3.03)) save();
   }catch(e){}
 }
+/* v3.54: Layout — Auto, Phone, Desktop. The header button switches to the other layout; Settings has all three. */
+(function layout(){
+  const svg=b=>'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+b+'</svg>';
+  const ICON={phone:svg('<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>'), desktop:svg('<rect x="2.5" y="4" width="19" height="12.5" rx="2"/><path d="M8.5 20h7M12 16.5V20"/>')};
+  const embed=document.documentElement.getAttribute('data-layout')==='embed', narrow=screen.width<700;
+  let mode='auto'; try{ mode=localStorage.getItem('mbev.layout')||'auto'; }catch(e){}
+  const go=m=>{ try{ localStorage.setItem('mbev.layout',m); }catch(e){}
+    if(embed){ top.location.href = m==='phone' ? 'phone.html' : './'; return; }   // inside the phone frame: the frame page changes
+    if(m==='phone' && !narrow){ location.href='phone.html'; return; }
+    location.reload(); };
+  const btn=document.getElementById('layoutBtn');
+  if(btn){ const toPhone = embed ? false : narrow ? mode==='desktop' : true;
+    const target = embed ? 'auto' : narrow ? (mode==='desktop'?'auto':'desktop') : 'phone';
+    const lab = toPhone ? 'Show the phone layout' : embed ? 'Show the full layout' : 'Show the desktop layout';
+    btn.innerHTML=toPhone?ICON.phone:ICON.desktop; btn.title=lab; btn.setAttribute('aria-label',lab);
+    btn.addEventListener('click',()=>go(target)); }
+  const seg=document.getElementById('layoutSeg');
+  if(seg){ const cur = embed ? 'phone' : mode;
+    seg.querySelectorAll('button').forEach(b=>{ const on=b.dataset.l===cur; b.classList.toggle('on',on); b.setAttribute('aria-checked',on?'true':'false');
+      b.addEventListener('click',()=>{ if(b.dataset.l!==cur) go(b.dataset.l); }); }); }
+})();
 /* theme — explicit choice, remembered per browser */
 (function theme(){
   const btn=document.getElementById('themer');

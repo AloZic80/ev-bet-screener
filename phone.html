@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>0xBeta Screener (phone view)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- v3.54: the phone layout on a computer. This page only frames index.html at phone width, so every phone style applies
+     and there is one app to maintain. Settings > Layout (or the button next to the theme toggle) brings you here and back. -->
+<style>
+:root{--page:#F2F4F7; --panel:#FFFFFF; --rule:#E4E8EE; --ink:#15181D; --soft:#5C6674; --accent:#2563EB; --bezel:#15181D; color-scheme:light}
+:root[data-theme="dark"]{--page:#06090D; --panel:#131C27; --rule:#26333F; --ink:#E9EEF4; --soft:#93A3B5; --accent:#5B9BFF; --bezel:#263241; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{margin:0; background:var(--page); color:var(--ink); font-family:Poppins,system-ui,-apple-system,sans-serif; display:flex; flex-direction:column; align-items:center}
+.bar{width:100%; max-width:1180px; display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; padding:16px 18px 14px}
+.bar h1{font-size:17px; font-weight:700; letter-spacing:-.01em; margin:0 auto 0 0}
+.bar h1 small{display:block; font-size:12.5px; font-weight:500; color:var(--soft); letter-spacing:0}
+.sizes{display:inline-flex; border:1px solid var(--rule); border-radius:999px; overflow:hidden; background:var(--panel)}
+.sizes button{border:0; background:transparent; color:var(--soft); font:inherit; font-size:13px; font-weight:600; padding:7px 14px; cursor:pointer}
+.sizes button[aria-checked="true"]{background:#2563EB; color:#fff}
+.back{font:inherit; font-size:13.5px; font-weight:600; padding:8px 16px; border-radius:8px; border:1px solid var(--rule); background:var(--panel); color:var(--ink); cursor:pointer}
+.back:hover{border-color:var(--soft)}
+button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.stage{width:100%; display:flex; justify-content:center; padding:2px 18px 32px}
+.device{border:11px solid var(--bezel); border-radius:48px; background:var(--bezel); box-shadow:0 34px 70px -34px rgba(16,24,40,.55)}
+.device iframe{display:block; border:0; border-radius:37px; background:var(--panel)}
+</style>
+</head>
+<body>
+<div class="bar">
+  <h1>Phone view<small>The app exactly as it lays out on a phone. Your bets and settings are the same.</small></h1>
+  <div class="sizes" role="radiogroup" aria-label="Phone size">
+    <button type="button" role="radio" data-w="360" title="360 px wide">Small</button><button type="button" role="radio" data-w="390" title="390 px wide">Standard</button><button type="button" role="radio" data-w="430" title="430 px wide">Large</button>
+  </div>
+  <button type="button" class="back" id="back">Back to the full layout</button>
+</div>
+<div class="stage"><div class="device"><iframe id="app" title="0xBeta Screener" src="index.html?embed=phone"></iframe></div></div>
+<script>
+(function(){
+  var th='light'; try{ th=localStorage.getItem('mbev.theme')||'light'; }catch(e){}
+  document.documentElement.setAttribute('data-theme',th);
+  addEventListener('storage',function(e){ if(e.key==='mbev.theme') document.documentElement.setAttribute('data-theme',e.newValue||'light'); });   // follows the app's theme toggle
+  if(screen.width<700){ location.replace('./'); return; }   // already on a phone: the app is the phone view
+  var W=390; try{ W=+localStorage.getItem('mbev.phoneW')||390; }catch(e){}
+  if([360,390,430].indexOf(W)<0) W=390;
+  var f=document.getElementById('app'), bar=document.querySelector('.bar');
+  function size(){ var h=Math.max(480, Math.min(844, innerHeight-bar.offsetHeight-56)); f.style.width=W+'px'; f.style.height=h+'px';
+    [].forEach.call(document.querySelectorAll('.sizes button'),function(b){ b.setAttribute('aria-checked', +b.dataset.w===W?'true':'false'); }); }
+  [].forEach.call(document.querySelectorAll('.sizes button'),function(b){ b.addEventListener('click',function(){ W=+b.dataset.w; try{ localStorage.setItem('mbev.phoneW',String(W)); }catch(e){} size(); }); });
+  addEventListener('resize',size); size();
+  document.getElementById('back').addEventListener('click',function(){ try{ localStorage.setItem('mbev.layout','auto'); }catch(e){} location.href='./'; });
+})();
+</script>
+</body>
+</html>
