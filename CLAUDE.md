@@ -43,6 +43,15 @@
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 
+## Parlays tab (PrizePicks, DraftKings Pick6)
+- The math lives in the `pk*` functions (`pkDist`, `pkEV`, `pkBreakEven`, `pkKelly`, `pkEntry`). `tests/parlay-test.js` checks them against
+  independent brute force; keep it passing if you touch them.
+- Legs come from every prop row on the board that hasn't started, passing or not; the chance is the row's `blendProb`.
+  PrizePicks rows come from BettingPros (book id 37, when PrizePicks is ticked under Books you bet). BettingPros has no Pick6.
+- Payout defaults are in `PK_DEFAULT`; the owner's edits are saved per device in `mbev.pk`. Pick6 defaults are a copy of
+  PrizePicks Power until the owner enters Pick6's own.
+- "Best for your bankroll" is the entry with the most log growth at its suggested stake, not the biggest return.
+
 ## Testing
 `tests/README.md` has the details. Before pushing:
 

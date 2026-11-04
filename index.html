@@ -768,6 +768,37 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 .todaybar .tb-l2{font-size:12.5px; line-height:1.6}
 .todaybar .tb-pill{margin-top:6px}
 .todaybar .tb-empty{display:flex; align-items:center; border-left:0; padding-left:4px}
+/* v3.54: Parlays tab */
+.sr-only{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
+.pk-ctl{display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center; margin:14px 0 8px}
+.pk-ctl label{font-size:13px; color:var(--soft); display:inline-flex; align-items:center; gap:6px}
+.pk-ab-seg button[hidden]{display:none}
+.pk-pays-box{margin:6px 0 4px} .pk-pays-box summary{cursor:pointer; font-size:13px; font-weight:600}
+.pk-pays{display:flex; flex-direction:column; gap:6px; margin:10px 0 4px; font-size:13px}
+.pk-pay{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center} .pk-pay b{min-width:62px}
+.pk-pay input{width:70px; font:inherit; font-size:13px; padding:4px 6px; border:1px solid var(--rule); border-radius:6px; background:var(--panel); color:var(--ink)}
+.pk-cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:12px}
+.pk-card{border:1px solid var(--rule); border-radius:12px; padding:14px 16px; background:var(--panel); display:flex; flex-direction:column; gap:9px}
+.pk-card.best{border-color:var(--live); box-shadow:inset 0 0 0 1px var(--live)}
+.pk-best{align-self:flex-start; font-size:11.5px; font-weight:700; color:var(--gain); background:var(--live-bg); border-radius:999px; padding:2px 10px}
+.pk-ctl input[type=number]{font:inherit; font-size:13px; padding:6px 8px; border:1px solid var(--rule); border-radius:6px; background:var(--panel); color:var(--ink)}
+.pk-card.neg{border-style:dashed}
+.pk-card.empty{background:transparent}
+.pk-h{display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap} .pk-h b{font-size:16px}
+.pk-ev{font-size:24px; font-weight:800; letter-spacing:-.01em; line-height:1.1} .pk-ev small{font-size:12px; font-weight:500; color:var(--soft); margin-left:6px}
+.pk-ev.up{color:var(--gain)} .pk-ev.down{color:var(--loss)}
+.pk-meter{position:relative; height:8px; border-radius:4px; background:var(--rail)}
+.pk-meter i{position:absolute; left:0; top:0; bottom:0; border-radius:4px; background:var(--live)}
+.pk-card.neg .pk-meter i{background:var(--soft)}
+.pk-meter b{position:absolute; top:-4px; bottom:-4px; width:2px; margin-left:-1px; background:var(--ink)}
+.pk-legs{list-style:none; margin:0; padding:0; font-size:13px}
+.pk-legs li{display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:5px 0; border-top:1px solid var(--rule-2)}
+.pk-chk{font-size:11px; font-weight:700; color:var(--warn); white-space:nowrap}
+.pk-act{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px} .pk-act label{font-size:13px; color:var(--soft); display:inline-flex; align-items:center; gap:6px}
+.pk-act input{width:84px; font:inherit; font-size:13px; padding:6px 8px; border:1px solid var(--rule); border-radius:6px; background:var(--panel); color:var(--ink)}
+.pk-act button.log.sm{margin-top:0}
+.pk-pool td{vertical-align:middle} .pk-pool tr.pk-low td{color:var(--soft)} .pk-pool b.pk-ok{color:var(--gain)}
+#pkMine .pk-card{max-width:420px}
 /* v3.54: layout toggle next to the theme toggle */
 .head-btns{display:flex; gap:8px; align-items:center}
 #layoutBtn{display:inline-flex; align-items:center; justify-content:center}
@@ -888,6 +919,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="tabs" role="tablist" aria-label="Sections">
   <button class="tab on" role="tab" aria-selected="true" data-view="v-board" data-src="api">Board</button>
   <button class="tab" role="tab" aria-selected="false" data-view="v-board" data-src="paste" hidden>Pasted <span class="tab-n" id="pasteTabN"></span></button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-parlay" title="PrizePicks and DraftKings Pick6 entries built from the board">Parlays <span class="tab-n" id="pkTabN"></span></button>
   <button class="tab" role="tab" aria-selected="false" data-view="v-parole" title="Jail bets your own posted price would fix — Make orders on Novig">🔓 Parole <span class="tab-n" id="paroleTabN"></span></button>
   <button class="tab" role="tab" aria-selected="false" data-view="v-add" title="Take a price or post your own — BET or SKIP and how much">+ Add a bet</button>
   <button class="tab" role="tab" aria-selected="false" data-view="v-money">Moneylines</button>
@@ -1050,6 +1082,27 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <!-- ======================= MONEYLINES ======================= -->
 <!-- v2.61: settings moved off the Board -->
 <!-- v2.66: live scores for your open bets (ESPN, no BettingPros calls) -->
+<div class="view" id="v-parlay">   <!-- v3.54: PrizePicks and DraftKings Pick6 entries -->
+<div class="panel" id="pkPanel">
+  <h2>Parlays <span class="sub">PrizePicks and DraftKings Pick6 pay a fixed multiple, so the sportsbook price doesn't matter: only how likely each pick is to hit</span></h2>
+  <div class="pk-ctl">
+    <div class="ab-seg" id="pkApp" role="radiogroup" aria-label="App"><button type="button" role="radio" data-v="PrizePicks">PrizePicks</button><button type="button" role="radio" data-v="DraftKings Pick 6">DraftKings Pick6</button></div>
+    <div class="ab-seg" id="pkPlay" role="radiogroup" aria-label="Play"><button type="button" role="radio" data-v="power" title="Every pick must hit">Power</button><button type="button" role="radio" data-v="flex" title="Still pays with one or two misses, but less">Flex</button></div>
+    <label class="bar-check" title="Picks from the same game move together, which the math here doesn't count. One per game keeps it honest."><input type="checkbox" id="pkOneGame" checked> One pick per game</label>
+    <label title="Only picks at least this likely go into the best entries">Picks from <input type="number" id="pkMinP" value="54" min="50" max="90" step="0.5" style="width:72px"> % up</label>
+  </div>
+  <details class="pk-pays-box"><summary>Payouts <span class="meta">check them in your app: they change, and goblin or demon lines pay differently</span></summary><div class="pk-pays" id="pkPays"></div></details>
+  <p class="hint" id="pkNote"></p>
+  <h3 class="set-h">Best entry for each size</h3>
+  <div class="pk-cards" id="pkCards"></div>
+  <h3 class="set-h">Your entry</h3>
+  <div id="pkMine"></div>
+  <div class="meta" id="pkMsg" role="status" style="margin-top:8px"></div>
+  <h3 class="set-h">Picks <span class="meta" id="pkPoolN"></span></h3>
+  <div class="scroll"><table class="pk-pool"><thead><tr><th><span class="sr-only">Add</span></th><th>Player</th><th>Pick</th><th class="num">Hits</th><th>Line from</th><th>Why it's here</th><th>Game</th></tr></thead><tbody id="pkPool"></tbody></table></div>
+  <p class="hint">How it's figured: each pick's chance is the board's own estimate (the market price, pulled toward BettingPros' model by your model weight in Settings). An entry adds up every way it can finish, all hit, and for Flex one or two misses, each with its exact chance. Break-even is the chance every pick would need for the entry to pay back what it costs. Suggested stakes use your Kelly fraction and edge haircut, kept between your smallest and largest bet. Picks are treated as independent, so keep one pick per game.</p>
+</div>
+</div>
 <div class="view" id="v-parole">
 <div class="panel">
   <h2>🔓 Parole <span class="sub">🎣 fishing: you're the Maker — post La Contadora's bait price on Novig and see who bites. Only a bet once someone takes it.</span></h2>
@@ -1865,7 +1918,7 @@ function auditCore(rows,cfg){
     if(r.net<cfg.eMin) r.flags.push(['out','net EV under the floor']);
     if(cfg.deriv&&r.kind==='derivative') r.flags.push(['out','quarter or half market']);
     if(cfg.prop&&r.kind==='prop'&&/NCAA/.test(r.sport)) r.flags.push(['out','college player prop']);
-    if(cfg.dfs&&DFS.test(r.book)) r.flags.push(['out','DFS pick\u2019em, not a single bet']);
+    if(cfg.dfs&&DFS.test(r.book)) r.flags.push(['out','DFS pick\u2019em, not a single bet: see Parlays']);
     if(!r.book) r.flags.push(['out','book not captured, fee unknown']);
     else if(cfg.books.length && !cfg.books.some(b=>bookIsMine(r.book,b)))
       r.flags.push(['out', !isPredBook(r.book) && cfg.books.some(b=>isPredBook(b) && bookIsMine(r.book+' predicts',b)) ? 'sportsbook price — you bet '+bookLabel(r.book)+'\'s prediction app, not the sportsbook' : 'not a book you bet']);
@@ -2140,6 +2193,7 @@ function applyDayLimits(rows,cfg,slateDay){
 /* ============ render board ============ */
 function esc(s){ return String(s===undefined||s===null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function render(rows,cfg){
+  window._pkRows=rows; try{ pkSetRows(rows); }catch(e){}   // v3.54: the Parlays tab picks from every row, passing or not
   const tb=document.getElementById('tbody'), empty=document.getElementById('emptyMsg');
   tb.innerHTML='';
   const passing=rows.filter(r=>r.pass);
@@ -6476,6 +6530,143 @@ document.getElementById('plAdd').addEventListener('click',()=>{
   ['plStake','plAll','plM1','plM2','plLegs'].forEach(id=>document.getElementById(id).value='');
   msg.textContent='Added — grade it in the log with "how many hit".';
 });
+/* ============ v3.54: Parlays — PrizePicks and DraftKings Pick6 entries built from the board ============
+   Pick'em pays a fixed multiple, so the price a sportsbook offers doesn't matter: only the chance each pick hits.
+   A leg's chance is the board's own sizing estimate (blendProb: the market price pulled toward the model by the model
+   weight). An entry's value adds every way it can finish: P(exactly k of n hit) is the Poisson-binomial distribution of
+   the legs' chances (legs treated as independent, which is why one pick per game is the default), times what k hits pays.
+   Payouts are editable because they change, and Pick6's may differ from PrizePicks'. */
+const PK_DEFAULT={
+  'PrizePicks':{ power:{2:[3],3:[5],4:[10],5:[20],6:[37.5]}, flex:{3:[2.25,1.25],4:[5,1.5],5:[10,2,0.4],6:[25,2,0.4]} },
+  'DraftKings Pick 6':{ power:{2:[3],3:[5],4:[10],5:[20],6:[37.5]} }   // a copy of PrizePicks Power until you enter Pick6's own
+};
+let pkState={app:'PrizePicks', play:'power', minP:0.54, oneGame:true, pays:{}, mine:[]};
+try{ const s=JSON.parse(localStorage.getItem('mbev.pk')||'null'); if(s&&typeof s==='object') Object.assign(pkState,s,{mine:[]}); }catch(e){}
+if(!PK_DEFAULT[pkState.app]) pkState.app='PrizePicks';
+function pkSave(){ try{ const k=Object.assign({},pkState); delete k.mine; localStorage.setItem('mbev.pk',JSON.stringify(k)); }catch(e){} }
+function pkPlays(app){ return Object.keys(PK_DEFAULT[app]||PK_DEFAULT.PrizePicks); }
+function pkPays(app,play){ const d=(PK_DEFAULT[app]||PK_DEFAULT.PrizePicks)[play]||{}, own=((pkState.pays||{})[app]||{})[play]||{}, out={};
+  Object.keys(d).forEach(n=>{ out[n]=(own[n]&&own[n].length===d[n].length&&own[n].every(x=>x>=0))?own[n].map(Number):d[n].slice(); }); return out; }
+// P(exactly k of the legs hit), k = 0..n
+function pkDist(ps){ let d=[1]; ps.forEach(p=>{ const nx=new Array(d.length+1).fill(0); d.forEach((v,k)=>{ nx[k]+=v*(1-p); nx[k+1]+=v*p; }); d=nx; }); return d; }
+// what k hits pays per $1 (arr[0] = all hit, arr[1] = one miss, arr[2] = two misses; anything else pays 0)
+function pkMult(arr,n,k){ const i=n-k; return arr&&arr[i]!=null?+arr[i]:0; }
+function pkEV(ps,arr){ const n=ps.length, d=pkDist(ps); let r=0; d.forEach((v,k)=>{ r+=v*pkMult(arr,n,k); }); return r-1; }
+// the chance every pick would need (all equal) for the entry to break even
+function pkBreakEven(n,arr){ if(!arr||!(arr[0]>0)) return null; const f=p=>pkEV(new Array(n).fill(p),arr);
+  let lo=0.0001, hi=0.9999; if(f(hi)<0) return null; for(let i=0;i<70;i++){ const m=(lo+hi)/2; if(f(m)<0) lo=m; else hi=m; } return (lo+hi)/2; }
+// Kelly fraction for an entry with several payouts: the stake share that maximises expected log growth
+function pkKelly(ps,arr){ const n=ps.length, d=pkDist(ps), o=d.map((v,k)=>[v,pkMult(arr,n,k)]).filter(x=>x[0]>0);
+  if(o.reduce((s,[v,m])=>s+v*m,0)<=1) return 0;
+  const g=f=>o.reduce((s,[v,m])=>s+v*Math.log(Math.max(1e-300,1+f*(m-1))),0);
+  let lo=0, hi=0.9999; for(let i=0;i<200;i++){ const a=lo+(hi-lo)/3, b=hi-(hi-lo)/3; if(g(a)<g(b)) lo=a; else hi=b; } return (lo+hi)/2; }
+function pkEntry(legs,arr,cfg){ const n=legs.length; if(!arr) return null; const ps=legs.map(l=>l.p), d=pkDist(ps), ev=pkEV(ps,arr), be=pkBreakEven(n,arr);
+  const h=Math.max(0,Math.min(1,+cfg.shrink||0)), adj=ps.map(p=>be==null?p:Math.min(0.9999,Math.max(0.0001,be+(1-h)*(p-be))));   // the board's edge haircut, applied to each pick
+  const f=pkKelly(adj,arr), raw=(+cfg.kelly||0)*f*(+cfg.bank||0);
+  const stake=f>0&&raw>0 ? Math.min(+cfg.sMax||raw, Math.max(+cfg.sMin||0, raw)) : 0;
+  const fr=(+cfg.bank>0)?stake/(+cfg.bank):0, da=pkDist(adj);   // bankroll growth per entry at that stake, on the haircut chances
+  const growth=fr>0?da.reduce((s,v,k)=>s+v*Math.log(Math.max(1e-300,1+fr*(pkMult(arr,n,k)-1))),0):0;
+  return {n, arr, ev, be, pAll:d[n], avg:ps.reduce((a,b)=>a+b,0)/n, f, stake:Math.round(stake*100)/100, d, growth}; }
+// the pool: one leg per player and stat (the app's own line first, then the higher chance), games not started
+function pkLegs(rows){ const app=pkState.app, m=new Map();
+  const ownBook=b=>app==='PrizePicks' ? /prizepicks/i.test(b||'') : (/draftkings/i.test(b||'') && !isPredBook(b));
+  (rows||[]).forEach(r=>{ if(r.kind!=='prop') return; const p=r.blendProb!=null?r.blendProb:r.fairProb; if(!(p>0&&p<1)) return;
+    const st=liveState(r); if(st==='started'||st==='closed') return;
+    const mk=String(r.market||'').match(/^([+-]?[\d.]+)\s*(.*)$/); if(!mk) return;
+    const out=(r.flags||[]).find(f=>f[0]==='out');
+    const leg={key:(r.name+'|'+mk[2]).toLowerCase(), r, p, name:r.name, line:mk[1], stat:mk[2], side:r.side||'O', book:r.book||'', own:ownBook(r.book),
+      game:String(r.game||r.matchup||'').toUpperCase(), start:(r.gameInfo&&r.gameInfo.startISO)||null, gi:r.gameInfo||null, prior:!!r.prior,
+      why: r.pass ? 'also a single bet on the board' : (out?out[1]:'below the board’s screens'), mkt:r.mktProb, model:r.fairProb};
+    const cur=m.get(leg.key); if(!cur || (leg.own&&!cur.own) || (leg.own===cur.own && leg.p>cur.p)) m.set(leg.key,leg); });
+  return [...m.values()].sort((a,b)=>b.p-a.p); }
+function pkBest(legs,n){ const out=[], games=new Set();
+  for(const l of legs){ if(out.length===n) break; if(l.p<pkState.minP) break; const g=l.game||l.name.toUpperCase();
+    if(pkState.oneGame && games.has(g)) continue; out.push(l); games.add(g); }
+  return out.length===n?out:null; }
+function pkSetRows(rows){ window._pkRows=rows||[]; pkBadge(); const v=document.getElementById('v-parlay'); if(v&&v.classList.contains('on')) renderParlays(); }
+function pkBadge(){ const el=document.getElementById('pkTabN'); if(!el) return; const n=pkLegs(window._pkRows||[]).filter(l=>l.p>=pkState.minP).length; el.textContent=n?String(n):''; }
+const pkPick=l=>(l.side==='U'?'Under ':'Over ')+l.line+' '+shortStat(l.stat);
+const pkX=x=>String(+(+x).toFixed(2))+'x';   // 10 → 10x, 37.5 → 37.5x, 0.4 → 0.4x
+function pkPaysTxt(arr){ return 'pays '+pkX(arr[0])+(arr[1]?', '+pkX(arr[1])+' with one miss':'')+(arr[2]?', '+pkX(arr[2])+' with two':''); }
+function pkCard(title,legs,e,id,best){
+  const lo=0.45, hi=0.75, pos=x=>Math.max(0,Math.min(100,(x-lo)/(hi-lo)*100)).toFixed(1)+'%';
+  const up=e.ev>0;
+  return '<div class="pk-card'+(best?' best':'')+(up?'':' neg')+'">'+
+    '<div class="pk-h"><b>'+esc(title)+'</b><span class="meta">'+esc(pkPaysTxt(e.arr))+'</span></div>'+
+    (best?'<div class="pk-best" title="Of these entries, this one grows your bankroll most at its suggested stake: the return weighed against how often it loses">Best for your bankroll</div>':'')+
+    '<div class="pk-ev '+(up?'up':'down')+'">'+(up?'+':'−')+(Math.abs(e.ev)*100).toFixed(1)+'%<small> expected return</small></div>'+
+    '<div class="pk-meter" role="img" aria-label="Picks average '+pct(e.avg)+', break-even '+(e.be!=null?pct(e.be):'n/a')+'"><i style="width:'+pos(e.avg)+'"></i>'+(e.be!=null?'<b style="left:'+pos(e.be)+'"></b>':'')+'</div>'+
+    '<div class="meta">Picks average <b>'+pct(e.avg)+'</b>, break-even '+(e.be!=null?pct(e.be):'n/a')+'. All '+e.n+' hit '+pct(e.pAll)+' of the time.</div>'+
+    '<ul class="pk-legs">'+legs.map(l=>'<li><span>'+esc(l.name)+' <span class="meta">'+esc(pkPick(l))+'</span>'+(l.own?'':' <span class="pk-chk" title="This line is from '+esc(bookLabel(l.book))+'. Check the app has the same line.">check line</span>')+'</span><b>'+pct(l.p)+'</b></li>').join('')+'</ul>'+
+    (up ? '<div class="pk-act"><label>Stake $ <input type="number" class="pk-stake" step="0.5" min="0" value="'+e.stake.toFixed(2)+'"></label><button type="button" class="log sm pk-log" data-id="'+id+'">Log this entry</button></div>'
+        : '<div class="meta"><b>Skip:</b> these picks are under break-even for this payout.</div>')+
+  '</div>'; }
+function renderParlays(){
+  const box=document.getElementById('pkPanel'); if(!box) return;
+  const cfg=cfgRead(), app=pkState.app; if(pkPlays(app).indexOf(pkState.play)<0) pkState.play='power';
+  const pays=pkPays(app,pkState.play), pkRows=window._pkRows||[], legs=pkLegs(pkRows), elig=legs.filter(l=>l.p>=pkState.minP);
+  document.querySelectorAll('#pkApp button').forEach(b=>{ const on=b.dataset.v===app; b.classList.toggle('on',on); b.setAttribute('aria-checked',on); });
+  document.querySelectorAll('#pkPlay button').forEach(b=>{ const ok=pkPlays(app).indexOf(b.dataset.v)>=0, on=b.dataset.v===pkState.play; b.hidden=!ok; b.classList.toggle('on',on); b.setAttribute('aria-checked',on); });
+  document.getElementById('pkOneGame').checked=!!pkState.oneGame; document.getElementById('pkMinP').value=(pkState.minP*100).toFixed(1).replace(/\.0$/,'');
+  document.getElementById('pkPays').innerHTML=Object.keys(pays).map(n=>'<div class="pk-pay"><b>'+n+' picks</b> '+pays[n].map((x,i)=>'<label>'+(i===0?'all hit':i===1?'1 miss':'2 misses')+' <input type="number" class="pk-pay-in" data-n="'+n+'" data-i="'+i+'" step="0.05" min="0" value="'+x+'">x</label>').join(' ')+'</div>').join('')+
+    '<button type="button" class="ghost sm" id="pkPayReset">Reset to '+esc(app==='PrizePicks'?'PrizePicks':'the starting')+' payouts</button>';
+  const own=legs.filter(l=>l.own).length;
+  document.getElementById('pkNote').innerHTML = !pkRows.length ? 'Nothing loaded yet. Load a board first: every prop on it that hasn’t started is a possible pick.'
+    : (app==='PrizePicks' && !own ? 'No PrizePicks lines on this board. Turn on <b>PrizePicks</b> under Settings, Books you bet, and Load again: BettingPros then brings PrizePicks’ own lines. Until then, picks use sportsbook lines, so check each line in the app.' : '')
+    + (app!=='PrizePicks' ? 'BettingPros doesn’t carry Pick6 lines, so these picks use sportsbook lines (DraftKings’ first). Check each line in Pick6 before you enter.' : '');
+  // best entry for each size
+  window._pkCards={}; let bestG=0, bestN=null; const cards=[];   // best = grows the bankroll most at its suggested stake (risk counted), not the biggest return
+  Object.keys(pays).map(Number).sort((a,b)=>a-b).forEach(n=>{ const L=pkBest(legs,n); if(!L){ cards.push([n,null,null]); return; }
+    const e=pkEntry(L,pays[n],cfg); cards.push([n,L,e]); if(e.ev>0 && e.growth>bestG){ bestG=e.growth; bestN=n; } });
+  document.getElementById('pkCards').innerHTML=cards.map(([n,L,e])=> !L
+      ? '<div class="pk-card empty"><div class="pk-h"><b>'+n+' picks</b><span class="meta">'+esc(pkPaysTxt(pays[n]))+'</span></div><div class="meta">Not enough picks at '+pct(pkState.minP)+' or better'+(pkState.oneGame?' from different games':'')+'.</div></div>'
+      : (window._pkCards['n'+n]={legs:L,e}, pkCard(n+' picks',L,e,'n'+n,n===bestN))).join('');
+  // your entry
+  const mine=pkState.mine.map(k=>legs.find(l=>l.key===k)).filter(Boolean); pkState.mine=mine.map(l=>l.key);
+  const mArr=pays[mine.length];
+  document.getElementById('pkMine').innerHTML = mine.length<2 ? '<div class="meta">Tick 2 to 6 picks below to price your own entry.</div>'
+    : !mArr ? '<div class="meta">'+mine.length+' picks: no '+esc(pkState.play==='flex'?'Flex':'Power')+' payout for that many here. Pick '+Object.keys(pays).join(', ')+'.</div>'
+    : (window._pkCards.mine={legs:mine,e:pkEntry(mine,mArr,cfg)}, pkCard('Your '+mine.length+' picks',mine,window._pkCards.mine.e,'mine',false));
+  // the pool
+  document.getElementById('pkPoolN').textContent=legs.length?elig.length+' at '+pct(pkState.minP)+' or better, of '+legs.length:'';
+  const full=mine.length>=6;
+  document.getElementById('pkPool').innerHTML=legs.length ? legs.slice(0,80).map(l=>{ const on=pkState.mine.indexOf(l.key)>=0;
+      return '<tr class="'+(l.p>=pkState.minP?'':'pk-low')+'"><td><input type="checkbox" class="pk-pick" data-k="'+esc(l.key)+'" aria-label="Add '+esc(l.name)+' to your entry"'+(on?' checked':'')+(full&&!on?' disabled':'')+'></td>'+
+        '<td><b>'+esc(l.name)+'</b>'+(l.prior?' <span class="tag t-warn">already bet</span>':'')+'</td>'+
+        '<td>'+esc(pkPick(l))+'</td>'+
+        '<td class="num" title="Market '+(l.mkt!=null?pct(l.mkt):'n/a')+', model '+(l.model!=null?pct(l.model):'n/a')+'"><b class="'+(l.p>=pkState.minP?'pk-ok':'')+'">'+pct(l.p)+'</b></td>'+
+        '<td>'+(l.own?'<b>'+esc(app==='PrizePicks'?'PrizePicks':'DraftKings')+'</b> ✓':esc(bookLabel(l.book)||'?')+' <span class="meta">check the line</span>')+'</td>'+
+        '<td class="meta">'+esc(l.why)+'</td>'+
+        '<td class="meta">'+esc(l.game)+(l.gi?'<br>'+esc(giWhen(l.gi)):'')+'</td></tr>'; }).join('')
+    : '<tr><td colspan="7" class="meta">No props on the board yet.</td></tr>';
+}
+function pkLog(id,btn){ const c=(window._pkCards||{})[id]; if(!c) return; const card=btn.closest('.pk-card'), inp=card&&card.querySelector('.pk-stake');
+  const s=Math.round((parseFloat(inp&&inp.value)||0)*100)/100, msg=document.getElementById('pkMsg');
+  if(!(s>0)){ msg.textContent='Enter a stake above $0.'; return; }
+  const app=pkState.app, L=c.legs, e=c.e, arr=e.arr, n=L.length;
+  const first=L.map(l=>l.start).filter(Boolean).sort()[0];
+  logged.push({ id:(self.crypto&&crypto.randomUUID)?crypto.randomUUID():('k'+Date.now()), kind:'parlay', date:ctDay(first?Date.parse(first):Date.now()), start:null,
+    name:(app==='DraftKings Pick 6'?'Pick 6':app)+' · '+n+' picks', sport:'PARLAY', market:n+'-pick parlay', betnow:n+' picks', book:app,
+    odds:fmtOdds(Math.round(americanOf(1/arr[0]))), fair:'', stake:s, result:'pending', closing:'',
+    parlay:{picks:n, legs:L.map(l=>l.name+' '+pkPick(l)).join('; '), pays:{all:+(s*arr[0]).toFixed(2), m1:arr[1]?+(s*arr[1]).toFixed(2):0, m2:arr[2]?+(s*arr[2]).toFixed(2):0}, hits:null, payout:null,
+      pk:{play:pkState.play, ev:+e.ev.toFixed(4), pAll:+e.pAll.toFixed(4), legs:L.map(l=>({name:l.name, market:l.line+' '+l.stat, side:l.side, p:+l.p.toFixed(4), book:l.book, game:l.game, start:l.start}))}},
+    snap:{at:new Date().toISOString(), screener:SCREENER_VERSION, said:{decision:'PARLAY', onList:e.ev>0}} });
+  saveLog(); renderLog(); renderPerf();
+  msg.textContent='Logged: '+n+' picks on '+(app==='DraftKings Pick 6'?'Pick6':app)+', $'+s.toFixed(2)+'. Grade it in the Bet log with how many hit.'; }
+(function(){ const box=document.getElementById('pkPanel'); if(!box) return;
+  box.addEventListener('click',e=>{ const a=e.target.closest('#pkApp button'); if(a){ pkState.app=a.dataset.v; pkSave(); renderParlays(); pkBadge(); return; }
+    const p=e.target.closest('#pkPlay button'); if(p){ pkState.play=p.dataset.v; pkSave(); renderParlays(); return; }
+    if(e.target.closest('#pkPayReset')){ if(pkState.pays&&pkState.pays[pkState.app]) delete pkState.pays[pkState.app][pkState.play]; pkSave(); renderParlays(); return; }
+    const lg=e.target.closest('.pk-log'); if(lg){ pkLog(lg.dataset.id,lg); return; } });
+  box.addEventListener('change',e=>{ const t=e.target;
+    if(t.id==='pkOneGame'){ pkState.oneGame=t.checked; pkSave(); renderParlays(); return; }
+    if(t.id==='pkMinP'){ const v=parseFloat(t.value); if(v>=50&&v<=90){ pkState.minP=v/100; pkSave(); renderParlays(); pkBadge(); } return; }
+    if(t.classList.contains('pk-pay-in')){ const v=parseFloat(t.value); if(!(v>=0)) return; const app=pkState.app, play=pkState.play, cur=pkPays(app,play);
+      cur[t.dataset.n][+t.dataset.i]=v; pkState.pays=pkState.pays||{}; pkState.pays[app]=pkState.pays[app]||{}; pkState.pays[app][play]=cur; pkSave(); renderParlays(); return; }
+    if(t.classList.contains('pk-pick')){ const k=t.dataset.k; pkState.mine=pkState.mine.filter(x=>x!==k); if(t.checked && pkState.mine.length<6) pkState.mine.push(k); renderParlays(); return; } });
+  const tab=document.querySelector('.tab[data-view="v-parlay"]'); if(tab) tab.addEventListener('click',()=>setTimeout(renderParlays,0));
+  try{ pkBadge(); }catch(e){}
+})();
 (function(){ const cb=document.getElementById('dkGroup'); if(!cb) return; cb.checked=dkGrouped();
   cb.addEventListener('change',()=>{ try{ localStorage.setItem('mbev.dkGroup',cb.checked?'1':'0'); }catch(e){} renderTodayBar(); }); })();
 

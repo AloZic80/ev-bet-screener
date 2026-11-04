@@ -37,6 +37,7 @@ graded automatically. That decision is parked; the line is shown, not counted.
 | `towin-edit-pct-test.js` | % mode (Cost + To win) saves the slip's real profit; editing a saved bet keeps, replaces or drops To win correctly. |
 | `add-bet-test.js` | Bets that already happened (Result: won / lost / push), typed games and teams, American / decimal / % odds, To win on a fee book, Mark PUSH, results surviving a reload, hidden paste tabs, score strip, phone tab bar. |
 | `layout-test.js` | Layout toggle: Phone on a computer opens `phone.html` (360 / 390 / 430 frame), Desktop on a phone shows the 1280px layout, Auto, and the way back. |
+| `parlay-test.js` | Parlays tab. The math, checked against independent code: Power break-evens equal payout^(-1/n), Flex break-evens are worth exactly 0, 40 random entries match brute force over all 2^n outcomes, Kelly matches a fine search and the textbook formula. Then the tab on a sample board: PrizePicks lines first, one pick per game, best entries, your own entry, logging to the Bet log, Flex, editing payouts, Pick6. |
 
 ## Reports (not pass/fail)
 

@@ -5,6 +5,7 @@ const runs = [
   ['% mode and editing a saved bet',                       'towin-edit-pct-test.js', []],
   ['+ Add a bet: past bets, price formats, results, tabs', 'add-bet-test.js', []],
   ['Layout toggle (Auto / Phone / Desktop)',               'layout-test.js', []],
+  ['Parlays: the math against brute force, and the tab',   'parlay-test.js', []],
 ];
 const run = (file, args) => spawnSync(process.execPath, [path.join(__dirname, file), ...args], { encoding: 'utf8', timeout: 300000 });
 const last = r => ((r.stdout || '') + (r.stderr || '')).trim().split('\n').pop();

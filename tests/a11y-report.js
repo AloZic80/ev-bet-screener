@@ -3,7 +3,7 @@ const path=require('path'); const INDEX=path.join(__dirname,'..','index.html');
 const { chromium, devices } = require('playwright'); const fs=require('fs');
 const html=fs.readFileSync(process.argv[2]||INDEX,'utf8');
 const seed=require('./seed.js');
-const TABS=['v-board','v-add','v-log','v-perf','v-live','v-settings'];
+const TABS=['v-board','v-parlay','v-add','v-log','v-perf','v-live','v-settings'];
 async function open(b,opt,theme){ const ctx=await b.newContext(opt); await ctx.addInitScript(seed);
   await ctx.addInitScript(t=>{ try{ localStorage.setItem('mbev.theme',t); }catch(e){} }, theme);
   const p=await ctx.newPage();
