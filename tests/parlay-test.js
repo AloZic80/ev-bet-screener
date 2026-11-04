@@ -50,6 +50,8 @@ const blend=(r,w)=>r.mktProb+w*(r.fairProb-r.mktProb);
   const pool=await p.$$eval('#pkPool tr',t=>t.map(r=>[...r.cells].slice(1,5).map(c=>c.innerText.trim())));
   check('pool: 8 picks, no started game, best first', pool.length===8 && !pool.some(r=>/Started/.test(r[0])) && pool[0][0].startsWith('Stefon Diggs'), pool.map(r=>r[0]+' '+r[2]));
   const puka=pool.find(r=>/Puka/.test(r[0]));
+  const why=await p.$$eval('#pkPool tr',t=>t.map(r=>r.cells[5]&&r.cells[5].innerText.trim()));
+  check('pool reason for PrizePicks rows reads as a pick’em line, not "see Parlays"', why.slice(0,3).every(w=>w==='PrizePicks pick’em line'), why.slice(0,3));
   check('PrizePicks picked over DraftKings for the same player and stat (its own line)', puka && /68\.5/.test(puka[1]) && /PrizePicks/.test(puka[3]), puka);
   const cards=await p.$$eval('#pkCards .pk-card',cs=>cs.map(c=>({t:c.querySelector('.pk-h b').textContent, ev:(c.querySelector('.pk-ev')||{}).textContent||'', legs:[...c.querySelectorAll('.pk-legs li')].map(l=>l.firstChild.firstChild.textContent.trim()), h:c.querySelector('.pk-h').innerText, stake:(c.querySelector('.pk-stake')||{}).value, best:c.classList.contains('best')})));
   const order=['Stefon Diggs','Tyreek Hill','Puka Nacua','Bijan Robinson','CeeDee Lamb','Lamar Jackson'];

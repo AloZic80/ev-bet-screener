@@ -19,7 +19,8 @@ What the PR adds:
   - long text wraps; short stat names (Receptions > Rec);
   - **Layout: Auto / Phone / Desktop** toggle; the Pasted and Paste a board tabs are hidden.
 - **Accessibility (WCAG 2.1 AA):** readable colours in light and dark mode, names on every control, keyboard focus, phone tap targets.
-- **For agents:** `CLAUDE.md` (rules) and `tests/` (80 automated checks, all passing).
+- **Grading bets added after kickoff:** a bet you add by hand grades itself even when saved after the game started.
+- **For agents:** `CLAUDE.md` (rules), `tests/` (100 automated checks, all passing) and `agent-notes/` (one file per instruction).
 
 Nothing changes in the Worker, so no `wrangler deploy` is needed for this PR. Your saved bets and settings carry over.
 
@@ -30,15 +31,15 @@ Nothing changes in the Worker, so no `wrangler deploy` is needed for this PR. Yo
 1. **Merge PR #1** when you're ready. On GitHub: open the PR, then **Merge pull request**, then **Confirm merge**. The site updates within a few minutes.
 2. **Tick PrizePicks** under Settings > Books you bet, then press **Load**. BettingPros then brings PrizePicks' own lines into the Parlays tab.
 3. **Check the payouts** in the Parlays tab (the Payouts section) against your apps. Pick6 starts with a copy of PrizePicks' payouts until you enter its own.
-4. **Decide on the 4-hour check.** A bet added more than 4 hours after its game started is not graded automatically. My recommendation: trust the game you pick from the ESPN list in + Add a bet, so late-added bets grade themselves. Tell Claude **"fix the 4-hour check"** to do it.
-5. **Pick6's own lines:** step 1 is done. To approve step 2, send your agent the message in section 3B, then bring its test results back to Claude.
+4. **Bets added after kickoff now grade themselves** (done). The one exception: a game more than 4 days back, where + Add a bet asks you to set Result yourself.
+5. **Pick6's own lines:** step 1 is done. Send your agent `agent-notes/2026-11-04-pick6-step-2.md` (the same message as section 3B), then bring its test results back to Claude.
 6. **Before you sell:** make the repo private and move hosting to Cloudflare Pages (section 7).
 
 ---
 
 ## 3. Instructions for the other agent
 
-Copy each block as it is.
+Copy each block as it is. Each new instruction also gets its own file in `agent-notes/`, so you can send just that file.
 
 ### 3A. Always send this first (whenever it works on this repo)
 
@@ -180,5 +181,6 @@ reference only. Which apps are allowed depends on your state, so check each app.
 - **Odds formats:** American (-110, +120), decimal (1.91) or a percentage (52.4%). Use % mode (Cost, @ %, To win) for Kalshi-style slips.
 - **To win** is the profit. When you type it, it's what the bet pays.
 - **Before the game starts:** the bet is matched to the ESPN game and grades itself.
-- **After the game started:** set **Result** when you add it, or grade it later with Mark WIN / LOSS / PUSH.
-  Automatic grading for late-added bets waits on the 4-hour decision in section 2.
+- **After the game started:** it still grades itself, as long as you pick the game from the ESPN list or type it with
+  the right date. Bets from the board and exchange fills keep the 4-hour rule, because they can't name their game.
+- **More than 4 days back:** set **Result** when you add it (the form asks), or grade it later with Mark WIN / LOSS / PUSH.

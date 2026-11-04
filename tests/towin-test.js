@@ -27,6 +27,7 @@ let pass=0, fail=0; const check=(name,ok,got)=>{ ok?pass++:fail++; console.log((
   await p.selectOption('#abSport','NBA'); await p.waitForTimeout(1500);
   console.log('game options:', JSON.stringify(await p.$$eval('#abGame option',o=>o.map(x=>x.textContent))));
   async function addBet(stake, towin){
+    await p.fill('#abGameFree','LAL @ BOS');   // typed first, then picked from the list: the list pick must win
     await p.selectOption('#abGame','401900001');
     await p.selectOption('#abType','moneyline'); await p.waitForTimeout(200);
     await p.selectOption('#abTeam','DET');
@@ -48,6 +49,7 @@ let pass=0, fail=0; const check=(name,ok,got)=>{ ok?pass++:fail++; console.log((
   const L=await p.evaluate(()=>JSON.parse(localStorage.getItem('mbev.log')||'[]'));
   console.log('saved after Save bet:', JSON.stringify(show(L),null,1));
   check('two bets saved', L.length===2, L.length);
+  check('a game picked from the list replaces a typed one', L.every(x=>x.game==='CHA @ DET' && x.start) && await p.inputValue('#abGameFree')==='', L.map(x=>x.game));
   check('bet 1 towin 0.99', L[0]&&L[0].towin===0.99, L[0]&&L[0].towin);
   check('bet 1 date 2026-11-02', L[0]&&L[0].date==='2026-11-02', L[0]&&L[0].date);
   check('bet 2 towin 9.95', L[1]&&L[1].towin===9.95, L[1]&&L[1].towin);

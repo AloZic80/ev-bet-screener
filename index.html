@@ -2807,9 +2807,7 @@ function openBetEditor(tr, r, opt){
       ed._slip = pr.allIn ? {listed:pr.listed!=null?+pr.listed.toFixed(4):null, real:+prob.toFixed(4), win:parseFloat(ed.querySelector('.eb-win').value)||null, read:pr.read} : null;   // v3.17
     } else {
       stake=parseFloat(ed.querySelector('.eb-stake').value)||0;
-      let oddsTxt=priceText(ed.querySelector('.eb-odds').value);   // v3.54: decimal or % too
-      // v3.49: a decimal price (2.20, 1.75) has a point; the app stores American odds (+120, -133), so convert it
-      if(/^\d+\.\d+$/.test(oddsTxt)){ const d=parseFloat(oddsTxt); if(d>1) oddsTxt = d>=2 ? '+'+Math.round((d-1)*100) : String(-Math.round(100/(d-1))); }
+      let oddsTxt=priceText(ed.querySelector('.eb-odds').value);   // v3.54: decimal (v3.49) or % become American odds, the format the app stores
       const winO=parseFloat(ed.querySelector('.eb-win-o').value);
       if(!oddsTxt && stake>0 && winO>0) oddsTxt=fmtOdds(Math.round(americanOf(1/(1+winO/stake))));   // v3.47: odds from stake + to win
       odds=oddsTxt.replace(/^(\d)/,'+$1');
@@ -4527,7 +4525,7 @@ function evOkFor(b, ev){
   if(isNaN(t) || isNaN(at)) return true;
   // v3.54: a bet added by hand names its game: picked from the ESPN list (that exact game) or typed with the date you
   // chose. Trust it even when it was saved after kickoff. Board bets and exchange fills keep the 4-hour rule below.
-  if(b.manual && b.start){ const s=Date.parse(b.start); if(!isNaN(s)) return Math.abs(s-t)<60e3; }
+  if(b.manual && b.start){ const s=Date.parse(b.start); if(!isNaN(s) && Math.abs(s-t)<60e3) return true; return t >= at-4*3600e3; }   // a moved game still matches a bet saved before kickoff
   if(b.manual && b.dateSet) return true;
   return t >= at-4*3600e3;
 }
@@ -6520,6 +6518,13 @@ document.getElementById('liveRefresh').addEventListener('click',()=>renderLive(t
 // v2.73: Today ribbon → Bet log; parlay form; DraftKings grouping
 document.getElementById('todayBar').addEventListener('click',e=>{ const eb=e.target.closest('.tb-espn'); if(eb){ e.stopPropagation(); espnRefreshNow(eb); return; } const t=document.querySelector('.tab[data-view="v-log"]'); if(t) t.click(); });
 (function(){ const d=document.getElementById('plDay'); if(d) d.value=ctDay(Date.now()); })();
+/* v3.54: one shape for a parlay in the Bet log, from the form here or the Parlays tab */
+function parlayRecord(o){ const stake=+(+o.stake).toFixed(2), all=+o.all;
+  return { id:(self.crypto&&crypto.randomUUID)?crypto.randomUUID():('p'+Date.now()+Math.random().toString(36).slice(2)), kind:'parlay', date:o.day, start:null,
+    name:o.name||((o.book==='DraftKings Pick 6'?'Pick 6':'Parlay')+' · '+o.picks+' picks'), sport:'PARLAY', market:o.picks+'-pick parlay', betnow:o.picks+' picks',
+    book:o.book, odds:fmtOdds(Math.round(americanOf(stake/all))), fair:'', stake, result:'pending', closing:'',
+    parlay:Object.assign({picks:o.picks, legs:o.legs||'', pays:{all:+all.toFixed(2), m1:o.m1>0?+(+o.m1).toFixed(2):0, m2:o.m2>0?+(+o.m2).toFixed(2):0}, hits:null, payout:null}, o.pk?{pk:o.pk}:{}),
+    snap:{at:new Date().toISOString(), screener:SCREENER_VERSION, said:{decision:'PARLAY', onList:!!o.onList}} }; }
 document.getElementById('plAdd').addEventListener('click',()=>{
   const v=id=>parseFloat(document.getElementById(id).value), msg=document.getElementById('plMsg');
   const book=document.getElementById('plBook').value, picks=Math.round(v('plPicks')), stake=v('plStake'), all=v('plAll');
@@ -6527,11 +6532,7 @@ document.getElementById('plAdd').addEventListener('click',()=>{
   if(!(stake>0) || !(all>stake)){ msg.textContent='Enter the stake and what it pays if all hit (more than the stake).'; return; }
   const day=document.getElementById('plDay').value||ctDay(Date.now()), legs=document.getElementById('plLegs').value.trim();
   const m1=v('plM1'), m2=v('plM2');
-  logged.push({ id:(self.crypto&&crypto.randomUUID)?crypto.randomUUID():('p'+Date.now()), kind:'parlay', date:day, start:null,
-    name:(book==='DraftKings Pick 6'?'Pick 6':'Parlay')+' · '+picks+' picks', sport:'PARLAY', market:picks+'-pick parlay', betnow:picks+' picks',
-    book, odds:fmtOdds(Math.round(americanOf(stake/all))), fair:'', stake:+stake.toFixed(2), result:'pending', closing:'',
-    parlay:{picks, legs, pays:{all:+all.toFixed(2), m1:m1>0?+m1.toFixed(2):0, m2:m2>0?+m2.toFixed(2):0}, hits:null, payout:null},
-    snap:{at:new Date().toISOString(), screener:SCREENER_VERSION, said:{decision:'PARLAY', onList:false}} });
+  logged.push(parlayRecord({book, picks, stake, all, m1, m2, legs, day}));
   saveLog(); renderLog(); renderPerf();
   ['plStake','plAll','plM1','plM2','plLegs'].forEach(id=>document.getElementById(id).value='');
   msg.textContent='Added — grade it in the log with "how many hit".';
@@ -6582,7 +6583,7 @@ function pkLegs(rows){ const app=pkState.app, m=new Map();
     const out=(r.flags||[]).find(f=>f[0]==='out');
     const leg={key:(r.name+'|'+mk[2]).toLowerCase(), r, p, name:r.name, line:mk[1], stat:mk[2], side:r.side||'O', book:r.book||'', own:ownBook(r.book),
       game:String(r.game||r.matchup||'').toUpperCase(), start:(r.gameInfo&&r.gameInfo.startISO)||null, gi:r.gameInfo||null, prior:!!r.prior,
-      why: r.pass ? 'also a single bet on the board' : (out?out[1]:'below the board’s screens'), mkt:r.mktProb, model:r.fairProb};
+      why: r.pass ? 'also a single bet on the board' : (out ? (/DFS pick/.test(out[1]) ? bookLabel(r.book)+' pick’em line' : out[1]) : 'below the board’s screens'), mkt:r.mktProb, model:r.fairProb};
     const cur=m.get(leg.key); if(!cur || (leg.own&&!cur.own) || (leg.own===cur.own && leg.p>cur.p)) m.set(leg.key,leg); });
   return [...m.values()].sort((a,b)=>b.p-a.p); }
 function pkBest(legs,n){ const out=[], games=new Set();
@@ -6651,12 +6652,9 @@ function pkLog(id,btn){ const c=(window._pkCards||{})[id]; if(!c) return; const 
   if(!(s>0)){ msg.textContent='Enter a stake above $0.'; return; }
   const app=pkState.app, L=c.legs, e=c.e, arr=e.arr, n=L.length;
   const first=L.map(l=>l.start).filter(Boolean).sort()[0];
-  logged.push({ id:(self.crypto&&crypto.randomUUID)?crypto.randomUUID():('k'+Date.now()), kind:'parlay', date:ctDay(first?Date.parse(first):Date.now()), start:null,
-    name:(app==='DraftKings Pick 6'?'Pick 6':app)+' · '+n+' picks', sport:'PARLAY', market:n+'-pick parlay', betnow:n+' picks', book:app,
-    odds:fmtOdds(Math.round(americanOf(1/arr[0]))), fair:'', stake:s, result:'pending', closing:'',
-    parlay:{picks:n, legs:L.map(l=>l.name+' '+pkPick(l)).join('; '), pays:{all:+(s*arr[0]).toFixed(2), m1:arr[1]?+(s*arr[1]).toFixed(2):0, m2:arr[2]?+(s*arr[2]).toFixed(2):0}, hits:null, payout:null,
-      pk:{play:pkState.play, ev:+e.ev.toFixed(4), pAll:+e.pAll.toFixed(4), legs:L.map(l=>({name:l.name, market:l.line+' '+l.stat, side:l.side, p:+l.p.toFixed(4), book:l.book, game:l.game, start:l.start}))}},
-    snap:{at:new Date().toISOString(), screener:SCREENER_VERSION, said:{decision:'PARLAY', onList:e.ev>0}} });
+  logged.push(parlayRecord({name:(app==='DraftKings Pick 6'?'Pick 6':app)+' · '+n+' picks', book:app, picks:n, stake:s, all:s*arr[0], m1:arr[1]?s*arr[1]:0, m2:arr[2]?s*arr[2]:0, day:ctDay(first?Date.parse(first):Date.now()),
+    legs:L.map(l=>l.name+' '+pkPick(l)).join('; '), onList:e.ev>0,
+    pk:{play:pkState.play, ev:+e.ev.toFixed(4), pAll:+e.pAll.toFixed(4), legs:L.map(l=>({name:l.name, market:l.line+' '+l.stat, side:l.side, p:+l.p.toFixed(4), book:l.book, game:l.game, start:l.start}))}}));
   saveLog(); renderLog(); renderPerf();
   msg.textContent='Logged: '+n+' picks on '+(app==='DraftKings Pick 6'?'Pick6':app)+', $'+s.toFixed(2)+'. Grade it in the Bet log with how many hit.'; }
 (function(){ const box=document.getElementById('pkPanel'); if(!box) return;
@@ -6771,7 +6769,9 @@ function abOpenEditor(){
     // v3.48: a bet already placed logs from Save bet in either mode (Make mode no longer blocks it)
     try{ localStorage.setItem('mbev.abBook', ed.querySelector('.eb-book').value); }catch(_){}
     abR._result=$ab('abResult').value||'';   // v3.54: already over — save it graded, and skip the "worth it?" second press
-    if(abR._result){ save.dataset.ok='1'; save.dataset.lc='1'; }
+    if(!abR._result && f.gameDay && f.gameDay < ctDay(Date.now()-4*86400e3)){ e.stopImmediatePropagation(); ed.querySelector('.eb-msg').textContent='That game was more than 4 days ago, too far back to grade itself: set Result (won, lost or push) first'; return; }
+    if(abR._result){ save.dataset.ok='1'; save.dataset.lc='1'; save.dataset.byResult='1'; }
+    else if(save.dataset.byResult){ delete save.dataset.ok; delete save.dataset.lc; delete save.dataset.byResult; }   // Result cleared: the checks apply again
   }, true);
   abUpdate();
 }
@@ -6788,7 +6788,7 @@ function fillManualFromRow(L, r){   // next Load: an unchecked manual bet picks 
   if(!$ab('addBetPanel')) return;
   $ab('abSport').addEventListener('change',abLoadGames);
   $ab('abType').addEventListener('change',abFields);
-  $ab('abGame').addEventListener('change',abFields);
+  $ab('abGame').addEventListener('change',()=>{ if($ab('abGameFree')) $ab('abGameFree').value=''; abFields(); });   // v3.54: a game picked from the list replaces a typed one
   $ab('abGameFree').addEventListener('input',abFields);   // v3.54
   $ab('addBetPanel').addEventListener('input',e=>{ if(!e.target.closest('.editor')) { abUpdate(); const s=$ab('abHost').querySelector('.eb-stake'); if(s) s.dispatchEvent(new Event('change')); } else setTimeout(()=>{ abUpdate(); const s=$ab('abHost').querySelector('.eb-stake'); if(s && e.target!==s) s.dispatchEvent(new Event('change')); },0); });
   $ab('addBetPanel').addEventListener('change',e=>{ if(e.target.closest('.editor')) setTimeout(abUpdate,0); });
