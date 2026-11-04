@@ -46,6 +46,17 @@
 - Grading (`autoGradeLog`) runs on page load and on the refresh buttons, not when a bet is saved.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
+- The Bet log draws newest first, grouped by game day (`logDays` remembers open/closed days per device). `data-i` on its
+  buttons is still the bet's index in `logged`, not its position on screen.
+- Look out (`lookOutWhy`): a bet with no result once its game is surely over (`overAfterH`: 5 hours, 8 for fights, 100 for
+  golf), a typed game whose day has passed, a `?` result, or a parlay whose day has passed. Its count is on the Bet log tab
+  and the Today card. The same finish time drives the log's "over · result pending" label.
+- Leagues: `MORE_LEAGUES` (code, name, sport, ESPN path, The Odds API key) feeds `ESPN_MAP`, `SOCCER`, `SPORT_NAMES` and
+  `OA_SPORTS`. A league with no ESPN path still loads and can be bet; its result comes from you via Look out. The Odds API
+  panel also takes any key typed in, and the Sportsbook API keeps leagues it doesn't know under their own code.
+- Player photos: FantasyPros by the row's player ID (`r.pid`), else ESPN's headshot only on an exact name match on one of
+  the game's two rosters (`espnShotFor`; rosters saved 3 days in `mbev.rosters`). No exact match, no photo.
+- The data sources row (`#srcBar`, `#srcPanel`) is on the main page under the BettingPros bar. Settings keeps the passphrase.
 
 ## Parlays tab (PrizePicks, DraftKings Pick6)
 - The math lives in the `pk*` functions (`pkDist`, `pkEV`, `pkBreakEven`, `pkKelly`, `pkEntry`). `tests/parlay-test.js` checks them against

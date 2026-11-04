@@ -41,7 +41,7 @@ const BOARD=[{name:'Josh Allen',game:'BUF @ MIA',matchup:'BUF @ MIA',side:'O',sp
     await p.selectOption('#abType',o.type||'moneyline'); await p.fill('#abGameFree',''); await p.dispatchEvent('#abGameFree','input');
     if(o.game) await p.selectOption('#abGame',o.game); else { await p.fill('#abGameFree',o.typed); await p.dispatchEvent('#abGameFree','input'); }
     await p.waitForTimeout(200); if(o.date) await p.fill('#abDate',o.date);
-    if(o.team){ if(await p.isVisible('#abTeam')){ try{ await p.selectOption('#abTeam',o.team,{timeout:3000}); }catch(e){ console.log('DEBUG team', JSON.stringify(await p.evaluate(()=>({game:document.getElementById('abGame').value, sel:abGameSel()&&abGameSel().id, opts:[...document.querySelectorAll('#abTeam option')].map(o=>o.value), free:document.getElementById('abGameFree').value, type:document.getElementById('abType').value, sport:document.getElementById('abSport').value})))); throw e; } } else await p.fill('#abTeamFree',o.team); }
+    if(o.team){ if(await p.isVisible('#abTeam')) await p.selectOption('#abTeam',o.team,{timeout:3000}); else await p.fill('#abTeamFree',o.team); }
     if(o.player){ await p.fill('#abPlayer',o.player); await p.fill('#abStat',o.stat); await p.selectOption('#abPick',o.pick); await p.fill('#abLine',o.line); }
     await p.waitForSelector('#abHost .editor'); await p.selectOption('#abHost .eb-book',o.book); await p.selectOption('#abHost .eb-mode',o.mode||'odds');
     if((o.mode||'odds')==='odds'){ await p.fill('#abHost .eb-odds',o.odds||''); await p.fill('#abHost .eb-stake',o.stake); await p.fill('#abHost .eb-win-o',o.towin||''); }

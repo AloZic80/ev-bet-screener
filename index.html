@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v3.56</title>
+<title>0xBeta Screener v3.57</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -862,6 +862,26 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
   .board-score{border-bottom:0}
   body{padding-bottom:calc(60px + env(safe-area-inset-bottom,0px))}
 }
+/* v3.57: the data sources row on the main page, under the BettingPros bar */
+.srcline{padding-top:6px; padding-bottom:6px} .srcline .src-bar{margin:0}
+.head>.src-panel{margin:8px 0 0}
+/* v3.57: the Bet log by game day (newest first; each day opens and closes) and the Look out list */
+#logBody tr.log-day>td{padding:0!important; max-width:none!important; min-width:0!important; white-space:normal!important; background:var(--panel-2); border-top:1px solid var(--rule)}
+.log-day-btn{position:sticky; left:0; max-width:calc(100vw - 48px); display:inline-flex; align-items:center; flex-wrap:wrap; gap:4px 8px; min-height:36px; padding:6px 10px; border:0; background:none; color:var(--ink); font:inherit; font-size:13.5px; text-align:left; cursor:pointer}
+.log-day-btn .ld-arrow{display:inline-block; width:12px; color:var(--soft)}
+.log-day-btn .lo-n{color:var(--warn); font-weight:700}
+.tab-n.look-n{background:var(--warn-bg); color:var(--warn)}
+.todaybar .tb-look{border:1px solid var(--warn); background:var(--warn-bg); color:var(--warn); font:inherit; font-size:12.5px; font-weight:700; letter-spacing:0; border-radius:999px; padding:2px 10px; min-height:28px; cursor:pointer; white-space:nowrap}
+.look-out{border:1px solid var(--warn); background:var(--warn-bg)}
+.look-out h2{color:var(--warn)}
+.lo-row{display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center; justify-content:space-between; padding:8px 0; border-top:1px solid var(--rule)}
+.look-out h2+.lo-row{border-top:0}
+.lo-what{flex:1 1 260px; min-width:0; overflow-wrap:anywhere}
+.lo-btns{display:flex; flex-wrap:wrap; gap:6px}
+.lo-foot{margin-top:8px; gap:8px; align-items:center}
+#logBody tr.lo-flash td{animation:loFlash 2.2s ease-out 1}
+@keyframes loFlash{from{background:var(--warn-bg)} to{background:transparent}}
+@media (prefers-reduced-motion:reduce){ #logBody tr.lo-flash td{animation:none; background:var(--warn-bg)} }
 </style>
 </head>
 <body>
@@ -870,7 +890,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.56</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.57</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -919,6 +939,8 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
   </div>
   <div id="apiStatus" class="ll-status" role="status"></div>
   <p class="hint" id="apiWeekHint" style="display:none;margin:4px 2px 0">NFL/NCAAF are organized by week. Week auto-fills from ESPN; leave it blank to let BettingPros use the current week.</p>
+  <div class="loadline srcline"><div class="src-bar" id="srcBar" title="Your data sources — each has its own key and allowance"></div></div>   <!-- v3.57: back on the main page (Settings in v3.54–v3.56) -->
+  <div class="src-panel" id="srcPanel" style="display:none"></div>
 </div>
 
 <div class="tabs" role="tablist" aria-label="Sections">
@@ -928,7 +950,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
   <button class="tab" role="tab" aria-selected="false" data-view="v-parole" title="Jail bets your own posted price would fix — Make orders on Novig">🔓 Parole <span class="tab-n" id="paroleTabN"></span></button>
   <button class="tab" role="tab" aria-selected="false" data-view="v-add" title="Take a price or post your own — BET or SKIP and how much">+ Add a bet</button>
   <button class="tab" role="tab" aria-selected="false" data-view="v-money">Moneylines</button>
-  <button class="tab" role="tab" aria-selected="false" data-view="v-log">Bet log</button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-log">Bet log <span class="tab-n look-n" id="logTabN"></span></button>
   <button class="tab" role="tab" aria-selected="false" data-view="v-perf">Performance</button>
   <button class="tab" role="tab" aria-selected="false" data-view="v-live">Live</button>
   <button class="tab" role="tab" aria-selected="false" data-view="v-settings">Settings</button>
@@ -1131,11 +1153,8 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 </div>
 
 <div class="view" id="v-settings">
-<details class="panel fold" id="srcSettings" open>   <!-- v3.54: moved here from the header -->
-  <summary><h2>Data sources <span class="sub">API keys, what's left of each allowance, and the screener passphrase</span></h2></summary>
-    <div class="src-bar" id="srcBar" title="Your data sources — each has its own key and allowance"></div>
-    <div class="src-panel" id="srcPanel" style="display:none"></div>
-  <h3 class="set-h">Screener passphrase</h3>
+<details class="panel fold" id="srcSettings" open>   <!-- v3.54: moved here from the header; v3.57: the sources went back to the main page, the passphrase stays -->
+  <summary><h2>Screener passphrase <span class="sub">your data sources are on the main page, under the BettingPros bar</span></h2></summary>
   <div class="row" id="passBox" style="display:flex;margin-top:4px">
     <input type="password" id="screenerPass" aria-label="Screener passphrase" placeholder="passphrase" style="max-width:220px" autocomplete="new-password">
     <button class="act" id="passSave" type="button" style="padding:7px 16px">Save</button>
@@ -1386,6 +1405,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 <!-- ======================= LOG ======================= -->
 <div class="view" id="v-log">
+<div class="panel look-out" id="lookOut" hidden></div>   <!-- v3.57: bets not graded yet, automatically or by you -->
 <!-- v2.63 -->
 <div class="panel">
   <h2>Bets by game day <span class="sub">counted on the day the game is played, not the day you logged it</span></h2>
@@ -1504,7 +1524,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v3.56';
+const SCREENER_VERSION='v3.57';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2395,7 +2415,7 @@ function render(rows,cfg){
 
   const pcBox=document.getElementById('placeCards');
   if(pcBox){
-    if(cardsOn && cardsHtml.length){ pcBox.innerHTML='<div class="pc-head"><b>Place these</b> · '+cardsHtml.length+'</div>'+cardsHtml.join(''); pcBox.style.display='block'; }
+    if(cardsOn && cardsHtml.length){ pcBox.innerHTML='<div class="pc-head"><b>Place these</b> · '+cardsHtml.length+'</div>'+cardsHtml.join(''); pcBox.style.display='block'; pcFillShots(); }   // v3.57: ESPN photos
     else { pcBox.innerHTML=''; pcBox.style.display='none'; }
   }
   const bothQ=sel=>[...tb.querySelectorAll(sel)].concat(pcBox?[...pcBox.querySelectorAll(sel)]:[]);
@@ -2452,6 +2472,49 @@ function render(rows,cfg){
    Same row, same numbers, same buttons as the table — laid out like BettingPros' prop analyzer. */
 function boardCardsOn(){ try{ return localStorage.getItem('mbev.cards')!=='0'; }catch(e){ return true; } }
 function pcCell(k,v){ return '<div class="pc-c"><span class="pc-k">'+k+'</span>'+v+'</div>'; }
+/* v3.57: player photos. First choice: FantasyPros' headshot by the player's ID (the ID comes with the same BettingPros row
+   as the name, so the two cannot disagree). Otherwise, or when that image fails to load: ESPN's own headshot, used only
+   when the name on the board matches a player on one of the two teams' ESPN rosters exactly (accents, dots and Jr./III
+   ignored; a name on both rosters is skipped). So a photo is never a guess: no exact match, no photo. Rosters are free
+   (no key) and kept on this device for 3 days. Works for college, WNBA and soccer too, which FantasyPros does not cover. */
+const ROSTER={}, ROSTER_P={}; let rosterLS=null;
+function normPName(n){ return String(n||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[.'’`-]/g,' ').replace(/\b(jr|sr|ii|iii|iv|v)\b/g,' ').replace(/\s+/g,' ').trim(); }
+function rosterKey(sport,t){ return sport+':'+String(t.id||t.abbr||'').toLowerCase(); }
+function rosterGet(sport,t){ const k=rosterKey(sport,t); if(ROSTER[k]) return ROSTER[k].m;
+  if(!rosterLS){ try{ rosterLS=JSON.parse(localStorage.getItem('mbev.rosters')||'{}')||{}; }catch(e){ rosterLS={}; } }
+  const c=rosterLS[k]; if(c && c.m && Date.now()-c.at<(c.miss?12*3600e3:3*86400e3)){ ROSTER[k]=c; return c.m; } return null; }   // a team ESPN did not have: asked again after 12 hours
+function rosterLoad(sport,t){
+  const path=ESPN_MAP[sport], id=String(t.id||t.abbr||'').toLowerCase(), k=rosterKey(sport,t);
+  if(!path || !id) return Promise.resolve(null); if(rosterGet(sport,t)) return Promise.resolve(ROSTER[k].m); if(ROSTER_P[k]) return ROSTER_P[k];
+  return ROSTER_P[k]=(async()=>{ try{
+      const res=await fetch('https://site.api.espn.com/apis/site/v2/sports/'+path+'/teams/'+encodeURIComponent(id)+'/roster');
+      if(!res.ok){ ROSTER[k]={at:Date.now(), m:{}, miss:1}; if(res.status===404){ rosterLS=rosterLS||{}; rosterLS[k]=ROSTER[k]; try{ localStorage.setItem('mbev.rosters',JSON.stringify(rosterLS)); }catch(e){} } return null; }
+      const j=await res.json(), m={}, list=[].concat(...(j.athletes||[]).map(a=>Array.isArray(a&&a.items)?a.items:[a]));   // football rosters come in groups
+      list.forEach(a=>{ const h=a&&a.headshot&&a.headshot.href; if(!h) return; new Set([a.fullName,a.displayName].map(normPName)).forEach(n=>{ if(n) m[n]=(n in m && m[n]!==h) ? '' : h; }); });   // '' = two players, same name
+      ROSTER[k]={at:Date.now(), m}; rosterLS=rosterLS||{}; rosterLS[k]=ROSTER[k];
+      try{ const ks=Object.keys(rosterLS); if(ks.length>60) ks.sort((a,b)=>rosterLS[a].at-rosterLS[b].at).slice(0,ks.length-60).forEach(x=>delete rosterLS[x]); localStorage.setItem('mbev.rosters',JSON.stringify(rosterLS)); }catch(e){}
+      return m; }catch(e){ ROSTER[k]={at:Date.now(), m:{}, miss:1}; return null; } finally { delete ROSTER_P[k]; } })(); }   // offline: not again this visit
+function espnShotFor(r){
+  const T=(r&&r.gameInfo&&r.gameInfo.teams)||[], n=normPName(r&&r.name); if(!n || GL_KINDS.test((r&&r.kind)||'')) return '';   // game lines name a team, not a player
+  const hits=new Set(T.map(t=>{ const m=rosterGet(r.sport,t); return m&&m[n]; }).filter(Boolean));
+  return hits.size===1 ? [...hits][0] : ''; }
+function pcShotErr(img){   // FantasyPros .webp → .png → ESPN → no photo (the team logo stays)
+  if(/fantasypros/.test(img.src) && !img.dataset.p){ img.dataset.p=1; img.src=img.src.replace('.webp','.png'); return; }
+  const alt=img.dataset.espn; if(alt && img.src!==alt){ img.dataset.espn=''; img.src=alt; return; }
+  const box=img.parentNode; if(box) box.classList.add('nohs'); img.remove(); }
+async function pcFillShots(){
+  const cards=[...document.querySelectorAll('#placeCards [data-pcidx]')], rows=cards.map(c=>lastRows.find(x=>x.idx===+c.dataset.pcidx)).filter(r=>r && !GL_KINDS.test(r.kind||''));
+  const jobs=[]; rows.forEach(r=>((r.gameInfo&&r.gameInfo.teams)||[]).forEach(t=>{ if(!rosterGet(r.sport,t)) jobs.push(rosterLoad(r.sport,t)); }));
+  if(jobs.length) await Promise.all(jobs);
+  document.querySelectorAll('#placeCards [data-pcidx]').forEach(box=>{
+    const r=lastRows.find(x=>x.idx===+box.dataset.pcidx); if(!r || GL_KINDS.test(r.kind||'')) return;
+    const u=espnShotFor(r); if(!u) return;
+    const img=box.querySelector('.pc-hs');
+    if(img){ if(/fantasypros/.test(img.src) && !img.dataset.espn) img.dataset.espn=u; return; }   // FantasyPros first; ESPN if it fails
+    let combo=box;
+    if(box.classList.contains('pc-logo')){ combo=document.createElement('span'); combo.className='pc-combo nohs'; combo.dataset.pcidx=box.dataset.pcidx; combo.style.background='#3B4656'; box.replaceWith(combo); }
+    const im=document.createElement('img'); im.className='pc-hs'; im.alt=''; im.loading='lazy'; im.onerror=()=>pcShotErr(im); im.src=u; combo.appendChild(im); combo.classList.remove('nohs'); });
+}
 function placeCardHtml(r,cfg,o){
   const gi=r.gameInfo||{}, T=gi.teams||[], away=T.find(t=>t.ha==='away'), home=T.find(t=>t.ha==='home');
   const gl=GL_KINDS.test(r.kind||''), myAb=r.team?normAbbr(r.team):(gl?glTeam(r):null), mine=myAb?T.find(t=>t.abbr===myAb):null;
@@ -2470,9 +2533,10 @@ function placeCardHtml(r,cfg,o){
   const myLogo=mine?LG(mine):(myAb?teamLogo(r.sport,myAb,''):'');
   const FP={NFL:'nfl',NBA:'nba',MLB:'mlb',NHL:'nhl'}[r.sport];
   const tcol=mine?ezColor({color:mine.color, alternateColor:mine.alt}):'#3B4656';
-  const shot=(FP && r.pid) ? 'https://images.fantasypros.com/images/players/'+FP+'/'+encodeURIComponent(r.pid)+'/headshot/210x210.webp' : '';
-  const avatar=(myLogo||shot) ? '<span class="pc-combo'+(shot?'':' nohs')+'" style="background:'+tcol+'">'+(myLogo?'<img class="pc-cl" src="'+esc(myLogo)+'" alt="" loading="lazy">':'')+
-      (shot?'<img class="pc-hs" src="'+esc(shot)+'" alt="" loading="lazy" onerror="if(!this.dataset.p){this.dataset.p=1;this.src=this.src.replace(\'.webp\',\'.png\')}else{this.parentNode.classList.add(\'nohs\');this.remove()}">':'')+'</span>' : '<span class="pc-logo pc-sport">'+esc(r.sport)+'</span>';
+  const espnHs=gl?'':espnShotFor(r);   // v3.57: ESPN's headshot, only on an exact name match on this game's rosters
+  const shot=(FP && r.pid) ? 'https://images.fantasypros.com/images/players/'+FP+'/'+encodeURIComponent(r.pid)+'/headshot/210x210.webp' : espnHs;
+  const avatar=(myLogo||shot) ? '<span class="pc-combo'+(shot?'':' nohs')+'" data-pcidx="'+r.idx+'" style="background:'+tcol+'">'+(myLogo?'<img class="pc-cl" src="'+esc(myLogo)+'" alt="" loading="lazy">':'')+
+      (shot?'<img class="pc-hs" src="'+esc(shot)+'"'+(espnHs&&espnHs!==shot?' data-espn="'+esc(espnHs)+'"':'')+' alt="" loading="lazy" onerror="pcShotErr(this)">':'')+'</span>' : '<span class="pc-logo pc-sport" data-pcidx="'+r.idx+'">'+esc(r.sport)+'</span>';
   const pick=r.side==='O'?'OVER':r.side==='U'?'UNDER':String(myAb||r.name||'').toUpperCase();
   const ev=r.net==null?'—':(r.net>0?'+':'')+pct(r.net);
   const nS=r.stars==null?null:Math.max(0,Math.min(5,Math.round(r.stars)));
@@ -2596,6 +2660,8 @@ function openBetEditor(tr, r, opt){
   if(open){ open.remove(); return; }
   document.querySelectorAll('tr.editor, #placeCards .editor').forEach(e=>e.remove());
   const books=[r.book].concat(BET_BOOKS.filter(b=>b.toLowerCase()!==(r.book||'').toLowerCase())).filter(Boolean);
+  const lateRow=!opt.edit && !tr.classList.contains('ab-host') && liveState(r)==='started';   // v3.57: a board bet logged once its game has started can be saved with its result
+  const lateT=lateRow && r.gameInfo && r.gameInfo.startISO ? Date.parse(r.gameInfo.startISO) : NaN, late4=!isNaN(lateT) && Date.now()-lateT>4*3600e3;
   const ed=document.createElement(isCard?'div':'tr'); ed.className='editor';
   // v2.59: the line can be changed (Under 38.5 on another app instead of 39.5)
   const lineM=String(r.market||'').match(/^([+-]?[\d.]+)\s+(.*)$/);
@@ -2614,6 +2680,8 @@ function openBetEditor(tr, r, opt){
       '<label>@ <input class="eb-pct" type="number" step="0.1" placeholder="62" style="width:60px">%</label>'+
       '<label title="Type exactly what the slip says (what you get back if it wins: cost + profit; a number below the cost is read as profit). What you type stays — Cost + To win is the real deal, the @ % stays as the listed price.">To win $ <input class="eb-win" type="number" step="0.01" placeholder="3.93"></label>'+
       '<span class="pm-calc eb-calc"></span></span>'+
+    (lateRow?'<label title="The game has started. Logging it after the fact? Set how it went and it is saved as graded by you.">Result <select class="eb-res-new"><option value="">Not settled yet</option><option value="win">Won</option><option value="loss">Lost</option><option value="push">Push / void</option></select></label>'+
+      (late4?'<span class="meta eb-late" style="color:var(--warn)">Started over 4 hours ago, so it will not grade itself: set Result, or mark it later in the Bet log</span>':''):'')+   // v3.57
     (opt.edit?ebResultHtml(opt.edit):'')+'<span class="eb-check"></span><span class="meta eb-rec"></span>'+
     '<button class="log sm eb-save">'+(opt.edit?'Save changes':'Save bet')+'</button> <button class="log sm undo eb-cancel">Cancel</button>'+
     '<span class="meta eb-msg" role="status"></span></div>'+(isCard?'':'</td>');
@@ -2821,6 +2889,8 @@ function openBetEditor(tr, r, opt){
       fee=feeRate(book, prob, cfg.fees, liveG());
     }
     if(!(stake>0)){ ed.querySelector('.eb-msg').textContent=pmMode()?'Enter the Cost you paid (above $0)':'Enter a stake above $0'; return; }
+    const resNew=lateRow ? ed.querySelector('.eb-res-new').value : '';   // v3.57: already settled, so it is a record, not a decision
+    if(resNew){ saveBtn.dataset.ok='1'; saveBtn.dataset.lc='1'; }
     // v2.71: La Contadora — past today's outlier / risk-bet limit: one line, then it's your call
     const pastLim=!opt.edit && (r.flags||[]).find(f=>/outlier limit reached|risk-bet limit reached/.test(f[1]));
     if(pastLim && saveBtn.dataset.lc!=='1'){
@@ -2869,6 +2939,7 @@ function openBetEditor(tr, r, opt){
     addToLog(Object.assign({}, r, extra));
     if(extra.lineAdj){ const L=logged[logged.length-1]; L.lineAdj=extra.lineAdj; saveLog(); }
     if(extra.slip){ const L=logged[logged.length-1]; L.slip=extra.slip; saveLog(); }
+    if(resNew){ const L=logged[logged.length-1]; L.result=resNew; L.gradedBy='manual'; L.resultSrc='you'; delete L.why; saveLog(); renderTodayBar(); }   // v3.57
     ed.remove();
     renderLog(); renderPerf(); refresh();
   });
@@ -2974,6 +3045,39 @@ const ESPN_MAP = {
 const SOCCER=new Set(['MLS','EPL','LALIGA','SERIEA','BUNDESLIGA','LIGUE1','UCL','UEL','LIGAMX','EFLC','SOCCER']);
 function isSoccer(sp){ return SOCCER.has(String(sp||'').toUpperCase()); }
 const SPORT_NAMES={MLS:'MLS',EPL:'Premier League',LALIGA:'La Liga',SERIEA:'Serie A',BUNDESLIGA:'Bundesliga',LIGUE1:'Ligue 1',UCL:'Champions League',UEL:'Europa League',LIGAMX:'Liga MX',EFLC:'EFL Championship',SOCCER:'Soccer (all leagues)',UFC:'UFC',GOLF:'Golf',TENNIS:'Tennis'};
+/* v3.57: more of the world. One line per league: code, name, sport, ESPN path (game times and grading; '' = graded by
+   you from the Look out list), The Odds API key. Keys and paths are the published ones, not yet confirmed from a real
+   load: one that is wrong only answers "unknown sport" for that league. A league that is not here can still be loaded:
+   type its key in The Odds API panel, and the Sportsbook API keeps leagues it does not know instead of dropping them. */
+const MORE_LEAGUES=[
+  ['CFL','CFL','Football','football/cfl','americanfootball_cfl'], ['UFL','UFL','Football','football/ufl','americanfootball_ufl'],
+  ['EUROLEAGUE','EuroLeague','Basketball','','basketball_euroleague'], ['NBL','NBL (Australia)','Basketball','','basketball_nbl'],
+  ['KBO','KBO (Korea)','Baseball','','baseball_kbo'], ['NPB','NPB (Japan)','Baseball','','baseball_npb'],
+  ['AHL','AHL','Hockey','','icehockey_ahl'], ['SHL','SHL (Sweden)','Hockey','','icehockey_sweden_hockey_league'], ['LIIGA','Liiga (Finland)','Hockey','','icehockey_liiga'],
+  ['EFL1','EFL League One','Soccer','soccer/eng.3','soccer_england_league1'], ['EFL2','EFL League Two','Soccer','soccer/eng.4','soccer_england_league2'],
+  ['FACUP','FA Cup','Soccer','soccer/eng.fa','soccer_fa_cup'], ['EFLCUP','EFL Cup','Soccer','soccer/eng.league_cup','soccer_england_efl_cup'],
+  ['LALIGA2','La Liga 2','Soccer','soccer/esp.2','soccer_spain_segunda_division'], ['BUNDESLIGA2','2. Bundesliga','Soccer','soccer/ger.2','soccer_germany_bundesliga2'],
+  ['SERIEB','Serie B','Soccer','soccer/ita.2','soccer_italy_serie_b'], ['LIGUE2','Ligue 2','Soccer','soccer/fra.2','soccer_france_ligue_two'],
+  ['EREDIVISIE','Eredivisie','Soccer','soccer/ned.1','soccer_netherlands_eredivisie'], ['PRIMEIRA','Primeira Liga','Soccer','soccer/por.1','soccer_portugal_primeira_liga'],
+  ['SPL','Scottish Premiership','Soccer','soccer/sco.1','soccer_spl'], ['BELGIUM','Belgian Pro League','Soccer','soccer/bel.1','soccer_belgium_first_div'],
+  ['SUPERLIG','Turkish Super Lig','Soccer','soccer/tur.1','soccer_turkey_super_league'], ['SWISS','Swiss Super League','Soccer','soccer/sui.1','soccer_switzerland_superleague'],
+  ['AUSTRIA','Austrian Bundesliga','Soccer','soccer/aut.1','soccer_austria_bundesliga'], ['DENMARK','Danish Superliga','Soccer','soccer/den.1','soccer_denmark_superliga'],
+  ['NORWAY','Eliteserien (Norway)','Soccer','soccer/nor.1','soccer_norway_eliteserien'], ['SWEDEN','Allsvenskan (Sweden)','Soccer','soccer/swe.1','soccer_sweden_allsvenskan'],
+  ['GREECE','Greek Super League','Soccer','soccer/gre.1','soccer_greece_super_league'], ['POLAND','Ekstraklasa (Poland)','Soccer','soccer/pol.1','soccer_poland_ekstraklasa'],
+  ['BRASILEIRAO','Brasileirao Serie A','Soccer','soccer/bra.1','soccer_brazil_campeonato'], ['BRAZIL2','Brasileirao Serie B','Soccer','soccer/bra.2','soccer_brazil_serie_b'],
+  ['ARGENTINA','Liga Profesional (Argentina)','Soccer','soccer/arg.1','soccer_argentina_primera_division'], ['CHILE','Primera (Chile)','Soccer','soccer/chi.1','soccer_chile_campeonato'],
+  ['SAUDI','Saudi Pro League','Soccer','soccer/ksa.1','soccer_saudi_arabia_pro_league'], ['JLEAGUE','J1 League','Soccer','soccer/jpn.1','soccer_japan_j_league'],
+  ['KLEAGUE','K League 1','Soccer','soccer/kor.1','soccer_korea_kleague1'], ['CHINA','Chinese Super League','Soccer','soccer/chn.1','soccer_china_superleague'],
+  ['ALEAGUE','A-League','Soccer','soccer/aus.1','soccer_australia_aleague'], ['UECL','Conference League','Soccer','soccer/uefa.europa.conf','soccer_uefa_europa_conference_league'],
+  ['LIBERTADORES','Copa Libertadores','Soccer','soccer/conmebol.libertadores','soccer_conmebol_copa_libertadores'], ['SUDAMERICANA','Copa Sudamericana','Soccer','soccer/conmebol.sudamericana','soccer_conmebol_copa_sudamericana'],
+  ['WORLDCUP','World Cup','Soccer','soccer/fifa.world','soccer_fifa_world_cup'], ['NATIONS','UEFA Nations League','Soccer','soccer/uefa.nations','soccer_uefa_nations_league'],
+  ['MMA','MMA','Fighting','','mma_mixed_martial_arts'], ['BOXING','Boxing','Fighting','','boxing_boxing'],
+  ['AFL','AFL','Aussie rules','','aussierules_afl'], ['NRL','NRL','Rugby','','rugbyleague_nrl'], ['SIXNATIONS','Six Nations','Rugby','','rugbyunion_six_nations'],
+  ['IPL','IPL','Cricket','','cricket_ipl'], ['BBL','Big Bash','Cricket','','cricket_big_bash'], ['TESTCRICKET','Test cricket','Cricket','','cricket_test_match'], ['ODI','One-day internationals','Cricket','','cricket_odi'],
+];
+const SPORT_GROUP={NFL:'Football',NCAAF:'Football',NBA:'Basketball',NCAAB:'Basketball',WNBA:'Basketball',MLB:'Baseball',NHL:'Hockey'};
+MORE_LEAGUES.forEach(([c,n,g,e])=>{ SPORT_NAMES[c]=n; SPORT_GROUP[c]=g; if(e) ESPN_MAP[c]=e; if(g==='Soccer') SOCCER.add(c); });
+SOCCER.forEach(c=>{ SPORT_GROUP[c]=SPORT_GROUP[c]||'Soccer'; });
 const ABBR_FIX = {WSH:'WAS',JAC:'JAX',LAR:'LA',LVR:'LV',NOS:'NO',SFO:'SF',TBB:'TB',
   KCC:'KC',GBP:'GB',NEP:'NE',WAS_:'WSH', CHW:'CWS', OAK:'ATH',
   // v3.18: NBA — BettingPros / exchanges vs ESPN (GS @ LAL went ungraded: "GSW" ≠ "GS")
@@ -3037,7 +3141,7 @@ function gameStatusOf(ev){
   const tm=dt.toLocaleTimeString('en-US',{...opts,hour:'numeric',minute:'2-digit'});
   const timeCT=wd+' '+md+' '+tm+' CT';
   const comp=(ev.competitions&&ev.competitions[0])||{};
-  const teams=compsOf(ev).map(c=>{ const t=c.team||{}; return {ha:c.homeAway, abbr:normAbbr(t.abbreviation), name:t.shortDisplayName||t.name||t.abbreviation||'', loc:t.location||'', nick:t.name||'', logo:t.logo||'', rec:(c.records&&c.records[0]&&c.records[0].summary)||'', color:t.color||'', alt:t.alternateColor||''}; });
+  const teams=compsOf(ev).map(c=>{ const t=c.team||{}; return {ha:c.homeAway, id:t.id||'', abbr:normAbbr(t.abbreviation), name:t.shortDisplayName||t.name||t.abbreviation||'', loc:t.location||'', nick:t.name||'', logo:t.logo||'', rec:(c.records&&c.records[0]&&c.records[0].summary)||'', color:t.color||'', alt:t.alternateColor||''}; });
   const tv=[...new Set([].concat(...(comp.broadcasts||[]).map(b=>b.names||[])))].slice(0,2).join(' · ');
   return {state:st.state, detail:st.shortDetail||'', timeCT, eventId:ev.id, startISO:isNaN(dt)?null:dt.toISOString(), teams, tv};   // v2.69: teams + tv
 }
@@ -3519,7 +3623,7 @@ function betStillOpen(b){
   const slate=document.getElementById('slate').value;
   if(!b.date||!slate) return false;
   const d=(Date.parse(slate)-Date.parse(b.date))/86400e3;
-  return d>=0 && d<=1;
+  return d>=-7 && d<=1;   // v3.57: a bet dated up to a week ahead (a hand-added bet on a later game) is still open too
 }
 function onBoardRaw(b){ const sl=document.getElementById('slate').value; return b.date===sl || gameDayOf(b)===sl || betStillOpen(b); }   // v2.86: game day too
 let _obMemo=null;   // v3.28: filled only while audit() runs
@@ -3634,10 +3738,17 @@ function renderLog(){
   tb.innerHTML='';
   { const lf=document.getElementById('logFilter'); if(lf){ lf.style.display=logDayFilter?'flex':'none';
     if(logDayFilter) lf.innerHTML='<span>Showing bets played <b>'+esc(new Date(logDayFilter+'T12:00:00Z').toLocaleDateString('en-US',{weekday:'short',month:'numeric',day:'numeric',timeZone:'UTC'}))+'</b></span><button type="button" class="ghost sm" id="logFilterOff">show all</button>'; } }
-  logged.forEach((b,i)=>{
-    if(logDayFilter && gameDayOf(b)!==logDayFilter) return;   // v2.88: from the calendar
+  // v3.57: newest first, one row per game day that opens and closes (days still open, yesterday and later, and days with a bet to check start open)
+  const yday=ctDay(Date.now()-86400e3), dst=dayStats(), atv=t=>isNaN(t)?0:t, look=new Map(), seen=new Set();
+  logged.forEach(b=>{ if(lookOutWhy(b)){ const d=gameDayOf(b)||b.date||''; look.set(d,(look.get(d)||0)+1); } });
+  const LD=logDays||{}, isOpen=d=>logDayFilter ? true : (d in LD ? !!LD[d] : (d>=yday || look.has(d)));
+  logged.map((b,i)=>({b,i,day:gameDayOf(b)||b.date||'',at:loggedAtOf(b)}))
+    .sort((x,y)=>x.day!==y.day ? (x.day<y.day?1:-1) : (atv(y.at)-atv(x.at)) || (y.i-x.i))
+    .forEach(({b,i,day})=>{
+    if(logDayFilter && day!==logDayFilter) return;   // v2.88: from the calendar
+    if(!seen.has(day)){ seen.add(day); const h=document.createElement('tr'); h.className='log-day'; h.innerHTML=logDayHtml(day, dst[day], isOpen(day), look.get(day)||0); tb.appendChild(h); }
     const c=clv(b);
-    const tr=document.createElement('tr');
+    const tr=document.createElement('tr'); tr.dataset.day=day; if(!isOpen(day)) tr.hidden=true;
     if(b.kind==='parlay'){   // v2.73
       const P=b.parlay||{}, n=+P.picks||0, pays=P.pays||{};
       const opt=(v,t)=>'<option value="'+v+'"'+(String(P.hits)===String(v)?' selected':'')+'>'+t+'</option>';
@@ -3648,7 +3759,7 @@ function renderLog(){
       const pr=betProfit(b);
       tr.innerHTML='<td class="meta" style="white-space:nowrap">'+esc(b.date)+'</td>'+
         '<td><div class="pick">'+esc(b.name)+'</div>'+(P.legs?'<div class="meta" style="white-space:normal;max-width:360px">'+esc(P.legs)+'</div>':'')+
-        '<div class="meta">'+(bookLogo(b.book)?logoTag(b.book,'sm')+' ':'')+'<span class="book">'+esc(bookLabel(b.book))+'</span></div></td>'+
+        '<div class="meta">'+(bookLogo(b.book)||isPredBook(b.book)?logoTag(b.book,'sm')+' ':'')+'<span class="book">'+esc(bookLabel(b.book))+'</span></div></td>'+
         '<td><span class="sport">PARLAY</span></td><td class="num">'+esc(fmtOdds(b.odds))+'</td><td class="num">—</td><td class="num">—</td>'+
         '<td class="num">$'+(+b.stake||0).toFixed(2)+'</td>'+
         '<td class="num">'+sel+(pr!=null?'<div class="meta '+(pr>=0?'pl-up':'pl-down')+'">'+money(pr,true)+'</div>':'')+'</td><td class="num">—</td><td class="num">—</td>'+
@@ -3658,7 +3769,7 @@ function renderLog(){
     tr.innerHTML=
       '<td class="meta" style="white-space:nowrap">'+esc(b.date)+'<div class="meta">bet '+esc(betTimeTxt(b))+'</div>'+(b.start?'':'<div class="meta" style="color:var(--warn)">game time unknown</div>')+playedHtml(b)+whyHtml(b)+'</td>'+
       '<td><div class="pick">'+esc(b.name)+'</div><div class="meta" style="color:var(--ink)" title="'+esc(b.betnow||'')+'">'+esc(betLabel(b))+' <span class="meta">'+esc(fmtOdds(b.odds))+'</span></div>'+srcTagHtml(b)+liveChipHtml(b)+fillDiffHtml(b,i)+
-      '<div class="meta">'+(bookLogo(b.book)?logoTag(b.book,'sm')+' ':'')+'<span class="book">'+esc(bookLabel(b.book))+'</span></div></td>'+
+      '<div class="meta">'+(bookLogo(b.book)||isPredBook(b.book)?logoTag(b.book,'sm')+' ':'')+'<span class="book">'+esc(bookLabel(b.book))+'</span></div></td>'+   // v3.57: PREDICTS tag on prediction apps without a logo too (FanDuel Predicts)
       '<td><span class="sport s-'+esc(b.sport)+'">'+esc(b.sport)+'</span></td>'+
       '<td class="num">'+esc(fmtOdds(b.odds))+'</td>'+
       '<td class="num">'+esc(fmtOdds(b.fair))+'</td>'+
@@ -3713,8 +3824,63 @@ function renderLog(){
     const b=logged[parseInt(btn.dataset.i,10)]; if(b) askRemove(btn.closest('tr'), b, 11);
   }));
   empty.style.display = logged.length?'none':'block';
-  renderRemoved(); renderDays(); renderTodayLine();
+  renderRemoved(); renderDays(); renderTodayLine(); renderLookOut();   // v3.57
 }
+/* v3.57: the Bet log by game day, and Look out: a bet that should be settled by now but is not graded, automatically or by you */
+var logDays={}; try{ logDays=JSON.parse(localStorage.getItem('mbev.logDays')||'{}')||{}; }catch(e){ logDays={}; }   // days you opened or closed, this device only (var: renderLog can run before this line)
+function saveLogDays(){ try{ localStorage.setItem('mbev.logDays',JSON.stringify(logDays)); }catch(e){} }
+function logDayHtml(day, d, open, nLook){
+  const n=d?d.bets:0, parts=[n+' bet'+(n===1?'':'s')];
+  if(d && d.w+d.l+d.p) parts.push(d.w+'–'+d.l+'–'+d.p);
+  if(d && d.pend) parts.push(d.pend+' open');
+  if(d && d.settled) parts.push('<b class="'+(d.profit>=0?'pl-up':'pl-down')+'">'+money(d.profit,true)+'</b>');
+  if(nLook) parts.push('<span class="lo-n">⚠ '+nLook+' to check</span>');
+  return '<td colspan="11"><button type="button" class="log-day-btn" data-day="'+esc(day)+'" aria-expanded="'+open+'"><span class="ld-arrow" aria-hidden="true">'+(open?'▾':'▸')+'</span><b>'+(day?dayLabel(day):'No date')+'</b>'+
+    (day===ctDay(Date.now())?' <span class="tag t-live">today</span>':'')+'<span class="meta">'+parts.join(' · ')+'</span></button></td>';
+}
+function lookChip(){ const n=logged.filter(b=>lookOutWhy(b)).length;   // v3.57: on the Today card too (the Bet log tab can be off screen on a phone)
+  return n ? '<button type="button" class="tb-look" title="Bets not graded yet, automatically or by you">⚠ '+n+' to check</button>' : ''; }
+function overAfterH(b){ const s=String(b.sport||'').toUpperCase(); return s==='GOLF' ? 100 : /MMA|UFC|BOX/.test(s) ? 8 : 5; }   // hours after the start when the game is surely over
+function lookOutWhy(b){
+  if(b.sold || b.voided || b.result==='win' || b.result==='loss' || b.result==='push') return '';
+  const today=ctDay(Date.now()), day=gameDayOf(b)||b.date||'';
+  if(b.kind==='parlay') return day && day<today ? 'parlay: set how many legs hit' : '';
+  if(b.result==='?') return 'cannot grade it automatically'+(b.why&&b.why.reason?': '+b.why.reason:'');
+  const t=Date.parse(b.start);
+  if(!isNaN(t)) return Date.now()>t+overAfterH(b)*3600e3 ? 'game over, no result yet' : '';
+  return day && day<today ? 'game day passed, no result yet' : '';
+}
+function renderLookOut(){
+  const L=logged.map((b,i)=>({b,i,why:lookOutWhy(b),day:gameDayOf(b)||b.date||''})).filter(x=>x.why).sort((x,y)=>x.day<y.day?1:x.day>y.day?-1:0);
+  const n=L.length, tab=document.getElementById('logTabN'), chipN=(document.querySelector('#todayBar .tb-look')||{}).textContent||'';
+  if(chipN!==(n?'⚠ '+n+' to check':'')) try{ renderTodayBar(); }catch(e){}   // keep the Today card's count in step
+  if(tab){ tab.textContent=n?String(n):''; tab.parentNode.title=n?n+' bet'+(n===1?'':'s')+' to check: not graded yet':''; }
+  const el=document.getElementById('lookOut'); if(!el) return;
+  if(!n){ el.hidden=true; el.innerHTML=''; return; }
+  el.hidden=false;
+  el.innerHTML='<h2>⚠ Look out <span class="sub">'+n+' bet'+(n===1?' is':'s are')+' not graded yet, automatically or by you</span></h2>'+
+    L.map(x=>{ const b=x.b, what=b.kind==='parlay' ? '' : betLabel(b), nm=String(b.name||'');
+      const head=what && what.toLowerCase().startsWith(nm.toLowerCase()) ? '<b>'+esc(what)+'</b>' : '<b>'+esc(nm)+'</b>'+(what?' '+esc(what):'');   // "NY Moneyline", not "NY NY Moneyline"
+      return '<div class="lo-row"><div class="lo-what">'+head+' <span class="meta">'+esc(bookLabel(b.book))+' · $'+(+b.stake||0).toFixed(2)+' · '+(x.day?dayLabel(x.day):'no date')+'</span><div class="meta lo-why">'+esc(x.why)+'</div></div>'+
+        '<div class="lo-btns">'+(b.kind==='parlay' ? '' : ['win','loss','push'].map(r=>'<button type="button" class="log sm lo-res" data-i="'+x.i+'" data-res="'+r+'">'+({win:'Won',loss:'Lost',push:'Push'}[r])+'</button>').join(''))+
+        '<button type="button" class="log sm undo lo-find" data-i="'+x.i+'">Find it</button></div></div>'; }).join('')+
+    '<div class="row lo-foot"><button type="button" class="ghost sm" id="lookCheck">Check results again</button><span class="meta">Grading runs when the page opens and on the refresh buttons. A bet that still does not grade needs your result.</span></div>';
+}
+document.addEventListener('click',e=>{
+  const dayBtn=e.target.closest('#logBody .log-day-btn');
+  if(dayBtn){ const d=dayBtn.dataset.day; logDays=logDays||{}; logDays[d]=dayBtn.getAttribute('aria-expanded')!=='true'; saveLogDays(); renderLog();
+    const nb=[...document.querySelectorAll('#logBody .log-day-btn')].find(x=>x.dataset.day===d); if(nb) nb.focus(); return; }
+  const res=e.target.closest('#lookOut .lo-res');
+  if(res){ const b=logged[+res.dataset.i]; if(b){ b.result=res.dataset.res; b.gradedBy='manual'; b.resultSrc='you'; delete b.why; saveLog(); renderLog(); renderPerf(); renderTodayBar(); refresh(); } return; }
+  const find=e.target.closest('#lookOut .lo-find');
+  if(find){ const i=+find.dataset.i, b=logged[i]; if(!b) return; const d=gameDayOf(b)||b.date||'';
+    if(logDayFilter && logDayFilter!==d) logDayFilter=null; logDays=logDays||{}; logDays[d]=true; saveLogDays(); renderLog();
+    const el=document.querySelector('#logBody [data-i="'+i+'"]'), tr=el&&el.closest('tr');
+    if(tr){ tr.classList.add('lo-flash'); tr.scrollIntoView({block:'center'}); setTimeout(()=>tr.classList.remove('lo-flash'),2200); } return; }
+  if(e.target.closest('#lookCheck')){ const c=document.getElementById('checkResults'); if(c) c.click(); return; }
+  if(e.target.closest('.tb-look')){ const t=document.querySelector('.tab[data-view="v-log"]'); if(t) t.click(); const lo=document.getElementById('lookOut'); if(lo && !lo.hidden) lo.scrollIntoView({block:'start'}); }
+});
+setInterval(()=>{ try{ renderLookOut(); }catch(e){} }, 5*60e3);   // a game passes its finish time while the page is open
 /* v2.63: bets by GAME day (kickoff in Central time; the board date if no kickoff was saved) */
 function ctDay(ms){ return new Date(ms).toLocaleDateString('en-CA',{timeZone:'America/Chicago'}); }
 function gameDayOf(b){
@@ -4496,8 +4662,8 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
   const espnBtn='<button class="tb-espn" type="button" aria-label="Refresh scores and results from ESPN" title="Refresh scores and results from ESPN now (no BettingPros calls)'+(espnAt?' — last '+new Date(espnAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+'">⟳</button>';
   if(!tot.n && !tot.cancel){   // v3.54: nothing today — one quiet line, not a row of "no bets"
     const q=['No bets today. Your bankroll thanks you for the day off.','Nothing riding today. The sportsbooks will have to wait.','No action yet. Patience is a position too.','Zero bets, zero bad beats.'];
-    el.innerHTML='<span class="tb-k"><span>TODAY '+espnBtn+'</span></span><span class="tb-empty">'+esc(q[Math.floor(Date.parse(today)/864e5)%q.length])+'</span>'; return; }
-  el.innerHTML='<span class="tb-k"><span>TODAY <button class="tb-espn" type="button" aria-label="Refresh scores and results from ESPN" title="Refresh scores and results from ESPN now (no BettingPros calls)'+(espnAt?' — last '+new Date(espnAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+'">⟳</button></span><b class="tb-tot">'+usd(tot.bet)+'</b><span class="tb-n">'+tot.n+' bet'+(tot.n===1?'':'s')+'</span>'+(tot.n?'<span class="tb-st" title="played = has a result · playing = game started, no result yet · to play = game not started">✓ '+tot.played+' played</span><span class="tb-st live">▶ '+tot.playing+' playing</span><span class="tb-st">⏳ '+tot.toPlay+' to play</span>':'')+(Math.abs(now)<0.005?'<span class="tb-pill even" title="even">$0.00</span>':'<span class="tb-pill '+(now>0?'good':'bad')+'" title="Worst-case exposure: assumes every open bet loses (won − lost − money on the line). Hope for the best, expect the worst.">'+(now>0?'+':'−')+usd(now)+'</span>')+'</span>'+'<div class="tb-t all"><div class="tb-l1"><b>All</b></div>'+line2(tot)+(tot.open?'<div class="tb-l2" title="best = every open bet wins · worst = every open bet loses (money on the line is already counted as gone)">best '+sgn(best)+' · worst '+sgn(worst)+'</div>':'')+'<div class="tb-motto" title="Worst-case exposure: every open bet counts as LOST until it wins">Hope for the best, expect the worst.</div></div>'+tiles;
+    el.innerHTML='<span class="tb-k"><span>TODAY '+espnBtn+'</span>'+lookChip()+'</span><span class="tb-empty">'+esc(q[Math.floor(Date.parse(today)/864e5)%q.length])+'</span>'; return; }   // v3.57: + bets to check
+  el.innerHTML='<span class="tb-k"><span>TODAY <button class="tb-espn" type="button" aria-label="Refresh scores and results from ESPN" title="Refresh scores and results from ESPN now (no BettingPros calls)'+(espnAt?' — last '+new Date(espnAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+'">⟳</button></span>'+lookChip()+'<b class="tb-tot">'+usd(tot.bet)+'</b><span class="tb-n">'+tot.n+' bet'+(tot.n===1?'':'s')+'</span>'+(tot.n?'<span class="tb-st" title="played = has a result · playing = game started, no result yet · to play = game not started">✓ '+tot.played+' played</span><span class="tb-st live">▶ '+tot.playing+' playing</span><span class="tb-st">⏳ '+tot.toPlay+' to play</span>':'')+(Math.abs(now)<0.005?'<span class="tb-pill even" title="even">$0.00</span>':'<span class="tb-pill '+(now>0?'good':'bad')+'" title="Worst-case exposure: assumes every open bet loses (won − lost − money on the line). Hope for the best, expect the worst.">'+(now>0?'+':'−')+usd(now)+'</span>')+'</span>'+'<div class="tb-t all"><div class="tb-l1"><b>All</b></div>'+line2(tot)+(tot.open?'<div class="tb-l2" title="best = every open bet wins · worst = every open bet loses (money on the line is already counted as gone)">best '+sgn(best)+' · worst '+sgn(worst)+'</div>':'')+'<div class="tb-motto" title="Worst-case exposure: every open bet counts as LOST until it wins">Hope for the best, expect the worst.</div></div>'+tiles;
 }
 /* v2.73: grade finished games in the background (ESPN, no BettingPros calls) */
 let agBusy=false; const sbStamp={};
@@ -4578,12 +4744,17 @@ function whyHtml(b){ return ''; /* v3.37: why text moved to the ? badge tooltip 
   return '<div class="meta" style="color:var(--warn)" title="Why the grader could not finish this bet">why ?: '+esc(w.reason)+(w.stat!=null?' · stat read '+w.stat:'')+(w.line?' · line '+w.line.line+' '+w.line.side:'')+(w.market?' · market "'+esc(w.market)+'"':'')+'</div>'; }
 function playedHtml(b){   // v2.84: "plays" before kickoff, "in progress" until graded, "played" once settled
   if(b.wrongGame18 && !b.start) return '<div style="font-size:11.5px;color:var(--warn)" title="This book fill was first attached to '+esc(b.wrongGame18)+', which had already been played">game unknown · the book\'s result will grade it</div>';
-  if(!b.start || isNaN(Date.parse(b.start))) return '';
+  const done=b.sold || b.result==='win' || b.result==='loss' || b.result==='push';
+  if(!b.start || isNaN(Date.parse(b.start))){   // v3.57: no game time (a typed game): go by the date you chose
+    if(!b.date || !(b.manual || b.dateSet)) return '';
+    const today=ctDay(Date.now()), dd=new Date(b.date+'T12:00:00Z').toLocaleDateString('en-US',{timeZone:'UTC',weekday:'short',month:'numeric',day:'numeric'});
+    const late=!done && b.date<today && b.result!=='?';
+    const tx = done ? 'played '+dd : b.result==='?' ? 'final · can\u2019t auto-grade · '+dd : b.date>today ? 'plays '+dd : b.date===today ? 'today · '+dd : 'over · '+dd+' · set the result';
+    return '<div style="font-size:11.5px;'+(late?'color:var(--warn)':'')+'" title="game day">'+esc(tx)+'</div>'; }
   const t=Date.parse(b.start), d=gameDayOf(b), opt={timeZone:'America/Chicago'};
   const day=new Date(t).toLocaleDateString('en-US',{...opt,weekday:'short',month:'numeric',day:'numeric'});
   const tm=new Date(t).toLocaleTimeString('en-US',{...opt,hour:'numeric',minute:'2-digit'});
-  const done=b.sold || b.result==='win' || b.result==='loss' || b.result==='push';
-  const txt = (Date.now()<t ? 'plays ' : done ? 'played ' : b.result==='?' ? 'final · can\'t auto-grade · ' : 'in progress · ')+day+' · '+tm;   // v3.35: game time always
+  const txt = (Date.now()<t ? 'plays ' : done ? 'played ' : b.result==='?' ? 'final · can\'t auto-grade · ' : Date.now()>t+overAfterH(b)*3600e3 ? 'over · result pending · ' : 'in progress · ')+day+' · '+tm;   // v3.35: game time always; v3.57: over once it is surely finished
   return '<div style="font-size:11.5px;'+(d!==b.date?'color:var(--warn)':'')+'" title="game day">'+esc(txt)+'</div>';
 }
 /* v3.36: when ESPN can't grade a bet that came from a book fill, use the book's own settlement (Kalshi, Polymarket, Novig) */
@@ -5207,7 +5378,7 @@ async function apiGet(path){
   let data=null; try{ data=await res.json(); }catch(e){}
   if(data && data._meta && data._meta.budget) showBudget(data._meta.budget);
   if(!res.ok){
-    if(res.status===401) throw new Error('locked — enter the screener passphrase in Settings → Data sources');
+    if(res.status===401) throw new Error('locked — enter the screener passphrase in Settings → Screener passphrase');
     const bud=data&&data._meta&&data._meta.budget;
     if(res.status===429 && bud && bud.next_free_at)   // v2.63: say when the next call frees up
       throw new Error(((data&&data.error)||'API limit reached')+' — next call '+fmtCT(bud.next_free_at)+'. Saved boards still work');
@@ -5495,10 +5666,14 @@ function sbToRows(data){
   A.forEach(a=>{ const m=a.market||{}; (a.marketStatistics||[]).forEach(st=>{ if(st.type!=='OUTCOME_IMPLIED_PROBABILITY_AVERAGE'||st.value==null) return;
     const k=m.key+'|'+(m.type==='POINT_TOTAL'?Math.abs(st.modifier||0):''), slot=(st.subType||'')+'|'+(st.participantKey||'')+'|'+(st.modifier||0);
     if(!avgs.has(k)) avgs.set(k,new Map()); avgs.get(k).set(slot, st.value/100); }); });
+  const compOf=a=>((((a.market||{}).event||{}).competitionInstance||{}).competition)||{};
+  const threeWay=new Set(A.filter(a=>(a.market||{}).type==='MONEYLINE_3WAY').map(a=>compOf(a).shortName||''));   // v3.57: a 3-way moneyline = a sport with draws (soccer)
   const rows=A.map(a=>{
     const m=a.market||{}, ev=m.event||{}, o=(a.outcomes||[])[0]; if(!o) return no('no outcome');
-    const comp=(((ev.competitionInstance||{}).competition)||{}).shortName||'';
-    const sport=SB_SPORTS[comp]; if(!sport) return no('league not set up ('+comp+')');
+    const C=compOf(a), comp=C.shortName||'';
+    let sport=SB_SPORTS[comp];
+    if(!sport){ if(!comp) return no('no league');   // v3.57: a league not set up is kept under its own code; ESPN cannot grade it, so it lands on Look out for your result
+      sport=comp.toUpperCase().replace(/[^A-Z0-9]+/g,'_').slice(0,20); if(!SPORT_NAMES[sport]) SPORT_NAMES[sport]=C.name||comp; if(threeWay.has(comp)) SOCCER.add(sport); }
     const start=Date.parse(ev.startTime||''); if(!(start>now)) return no('already started');
     const sides=SB_SIDES[m.type]; if(!sides) return no(String(m.type||'?').toLowerCase().replace(/_/g,' ')+' (no grader yet)');
     if(m.segment==='REGULATION_TIME' ? !isSoccer(sport) : m.segment!=='FULL_MATCH') return no('part-game line');
@@ -5538,7 +5713,7 @@ async function loadSbapi(fresh){
   if(msg) msg.textContent='loading…'; if(btn) btn.disabled=true;
   try{
     const res=await fetch(API_BASE+'/src/sbapi?type=PLUS_EV_AVERAGE'+(fresh?'&fresh=1':''),{headers:apiHeaders()});
-    if(res.status===401) throw new Error('locked — enter the screener passphrase in Settings → Data sources');
+    if(res.status===401) throw new Error('locked — enter the screener passphrase in Settings → Screener passphrase');
     if(!res.ok){ let j={}; try{ j=await res.json(); }catch(e){} throw new Error(j.error||('Worker returned '+res.status)); }
     const cached=res.headers.get('x-sb-cached')==='1', left=res.headers.get('x-sb-remaining'), lim=res.headers.get('x-sb-limit'), at=res.headers.get('x-sb-at');
     if(!cached && left){ try{ localStorage.setItem('mbev.sbq', JSON.stringify({left:+left, limit:+lim||150, day:todayCT()})); }catch(e){} }
@@ -5564,6 +5739,11 @@ const OA_SPORTS={NFL:'americanfootball_nfl',NCAAF:'americanfootball_ncaaf',NBA:'
   NHL:'icehockey_nhl',MLB:'baseball_mlb',MLS:'soccer_usa_mls',EPL:'soccer_epl',LALIGA:'soccer_spain_la_liga',SERIEA:'soccer_italy_serie_a',
   BUNDESLIGA:'soccer_germany_bundesliga',LIGUE1:'soccer_france_ligue_one',UCL:'soccer_uefa_champs_league',UEL:'soccer_uefa_europa_league',
   LIGAMX:'soccer_mexico_ligamx',EFLC:'soccer_efl_champ'};
+MORE_LEAGUES.forEach(([c,,,,k])=>{ if(k && !OA_SPORTS[c]) OA_SPORTS[c]=k; });   // v3.57
+/* v3.57: a key you type (any league on The Odds API, e.g. a tennis tournament) gets a code of its own, from the key */
+function oaCodeOf(key){ const k=String(key||'').toLowerCase().trim(); const hit=Object.keys(OA_SPORTS).find(c=>OA_SPORTS[c]===k); if(hit) return hit;
+  const c=k.replace(/^(soccer|basketball|baseball|icehockey|americanfootball|tennis|mma|boxing|cricket|rugbyunion|rugbyleague|aussierules|golf|lacrosse|handball|volleyball|darts|snooker|esports)_/,'').toUpperCase().replace(/[^A-Z0-9]+/g,'_').slice(0,20)||'OTHER';
+  OA_SPORTS[c]=k; if(!SPORT_NAMES[c]) SPORT_NAMES[c]=k; if(/^soccer_/.test(k)) SOCCER.add(c); return c; }
 // SportsGameOdds league IDs — NFL seen in a real answer; the others are their documented names (unverified until loaded)
 // v3.24: only what the FREE plan opens (checked 10/31/2026: these answered 200; EPL and LA_LIGA said "unavailable at your tier")
 const SGO_LEAGUES={NFL:'NFL',NCAAF:'NCAAF',NBA:'NBA',NCAAB:'NCAAB',NHL:'NHL',MLB:'MLB',MLS:'MLS',UCL:'UEFA_CHAMPIONS_LEAGUE'};
@@ -5571,10 +5751,14 @@ const SGO_BOOKS={fanduel:'FanDuel',draftkings:'DraftKings',betmgm:'BetMGM',caesa
   pointsbet:'PointsBet',williamhill:'William Hill',novig:'Novig',polymarket:'Polymarket',kalshi:'Kalshi',prophetexchange:'ProphetX',pinnacle:'Pinnacle',
   fanatics:'Fanatics',betrivers:'BetRivers',hardrockbet:'Hard Rock',thescorebet:'theScore',fliff:'Fliff'};
 function oaLeft(){ try{ const q=JSON.parse(localStorage.getItem('mbev.oaq')||'null'); if(q && q.left!=null) return q.left+' credits left'; }catch(e){} return ''; }
-function srcSportOptions(map){ return Object.keys(map).map(k=>'<option value="'+k+'">'+esc(sportLabel(k))+'</option>').join(''); }
+function srcSportOptions(map){   // v3.57: grouped by sport, so a long list stays readable
+  const G={}; Object.keys(map).forEach(k=>{ const g=SPORT_GROUP[k]||'Other'; (G[g]=G[g]||[]).push(k); });
+  const order=['Football','Basketball','Baseball','Hockey','Soccer','Fighting','Tennis','Aussie rules','Rugby','Cricket','Other'];
+  return Object.keys(G).sort((a,b)=>(order.indexOf(a)+1||99)-(order.indexOf(b)+1||99)).map(g=>'<optgroup label="'+esc(g)+'">'+G[g].map(k=>'<option value="'+k+'">'+esc(sportLabel(k))+'</option>').join('')+'</optgroup>').join(''); }
 function srcLoadForm(id){
   if(id==='oddsapi') return '<div class="loadline" style="margin:6px 0;gap:8px;flex-wrap:wrap;display:flex;align-items:center">'+
-    '<select id="oaSport">'+srcSportOptions(OA_SPORTS)+'</select>'+
+    '<select id="oaSport" aria-label="League">'+srcSportOptions(OA_SPORTS)+'</select>'+
+    '<input type="text" id="oaKey" aria-label="Or any The Odds API key" placeholder="or any key, e.g. tennis_atp_paris_masters" title="Any league on The Odds API (their sports list on the-odds-api.com). Leave empty to use the list." style="min-width:240px">'+
     '<label><input type="checkbox" id="oaMkH" checked> Moneyline</label><label><input type="checkbox" id="oaMkS"> Spreads</label><label><input type="checkbox" id="oaMkT"> Totals</label>'+
     '<label title="Exchanges (Novig, Kalshi, Polymarket… when The Odds API carries them) — doubles the cost"><input type="checkbox" id="oaRgX"> + exchanges</label>'+
     '<button type="button" class="log sm oddsLoad" data-src="oddsapi">Load game lines</button> <span class="meta" id="oaCostTxt"></span></div>'+
@@ -5609,7 +5793,7 @@ function oaToRows(data, sport, cfgBooks){
         if(mk==='h2h') sets=[O];
         else if(mk==='totals'){ const by={}; O.forEach(x=>{ (by[x.point]=by[x.point]||[]).push(x); }); sets=Object.values(by); }
         else { const used=new Set(); O.forEach(x=>{ if(used.has(x)) return; const y=O.find(z=>z!==x && !used.has(z) && z.name!==x.name && Math.abs((z.point||0)+(x.point||0))<1e-9); if(y){ used.add(x); used.add(y); sets.push([x,y]); } }); }
-        sets.forEach(S=>{ const need=mk==='h2h'?(isSoccer(sport)?3:2):2; if(S.length!==need) return;
+        sets.forEach(S=>{ const need=mk==='h2h'?((isSoccer(sport) || S.some(x=>/^draw$/i.test(x.name)))?3:2):2; if(S.length!==need) return;   // v3.57: a Draw means 3-way, any sport
           const P=S.map(x=>toProb(x.price)), sum=P.reduce((t,v)=>t+v,0); if(!(sum>0)) return;
           S.forEach((x,i)=>{ const k=keyOf(x), p=P[i]/sum; (fair[k]=fair[k]||[]).push(p); if(bm.key==='pinnacle') sharp[k]=p; }); });
         O.forEach(x=>{ (offers[keyOf(x)]=offers[keyOf(x)]||[]).push({book:bm.title||bm.key, price:x.price, point:x.point, name:x.name}); });
@@ -5676,7 +5860,7 @@ function sgoToRows(data, sport, cfgBooks, want){
 }
 async function srcFetch(q){
   const res=await fetch(API_BASE+'/src/odds?'+q,{headers:apiHeaders()});
-  if(res.status===401) throw new Error('locked — enter the screener passphrase in Settings → Data sources');
+  if(res.status===401) throw new Error('locked — enter the screener passphrase in Settings → Screener passphrase');
   if(res.status===404) throw new Error('the Worker doesn\'t have this yet — run npx wrangler deploy on the Mac');
   let quota={}; try{ quota=JSON.parse(res.headers.get('x-src-quota')||'{}'); }catch(e){}
   const cached=res.headers.get('x-src-cached')==='1';
@@ -5701,7 +5885,9 @@ async function loadOddsSrc(id){
   const books=cfgRead().books;
   try{
     if(id==='oddsapi'){
-      const sp=document.getElementById('oaSport').value, mk=[['oaMkH','h2h'],['oaMkS','spreads'],['oaMkT','totals']].filter(([i])=>document.getElementById(i).checked).map(x=>x[1]);
+      const typed=((document.getElementById('oaKey')||{}).value||'').trim().toLowerCase();   // v3.57: any league, typed
+      if(typed && !/^[a-z0-9_]{3,60}$/.test(typed)) throw new Error('that key has characters The Odds API keys never have');
+      const sp=typed ? oaCodeOf(typed) : document.getElementById('oaSport').value, mk=[['oaMkH','h2h'],['oaMkS','spreads'],['oaMkT','totals']].filter(([i])=>document.getElementById(i).checked).map(x=>x[1]);
       if(!mk.length) throw new Error('pick at least one bet type');
       const rg=document.getElementById('oaRgX').checked?'us,us_ex':'us';
       const {data, quota, cached}=await srcFetch('src=oddsapi&sport='+encodeURIComponent(OA_SPORTS[sp])+'&markets='+mk.join(',')+'&regions='+rg);
@@ -8328,7 +8514,7 @@ function syncErrText(r){
   if(r.err) return r.err;
   const code=r.j&&r.j.code, msg=r.j&&r.j.error||'';
   if(r.status===401 && code==='bad_key') return 'wrong sync password';
-  if(r.status===401) return 'screener passphrase missing or wrong (Settings → Data sources)';
+  if(r.status===401) return 'screener passphrase missing or wrong (Settings → Screener passphrase)';
   if(r.status===503 && code==='no_key') return 'the Worker has no sync password yet — on the Mac: cd ~/prop-bet-api, npx wrangler secret put SYNC_KEY, then npx wrangler deploy';
   if(code==='no_store') return 'the Worker has no sync store yet — on the Mac: cd ~/prop-bet-api, then npx wrangler deploy (wrangler.jsonc needs the SYNC Durable Object)';
   if(code==='broken') return 'the cloud copy is incomplete — nothing was changed here; send Claude Settings → Test my books';
