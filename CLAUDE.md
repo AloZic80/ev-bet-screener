@@ -27,8 +27,9 @@
 - Keep the file's style: long one-line records, a `// vX.YY:` comment on lines you change, and new CSS in a versioned block
   (`/* v3.54 ... */`) near the end of the first `<style>` instead of editing old rules.
 - A version bump is exactly three places: `SCREENER_VERSION`, `<title>` and `#verTag`. Only when the owner asks.
-- Parked decision, don't change it: `evOkFor` ignores a game that started more than 4 hours before the bet was saved,
-  so bets added the day after their game aren't graded automatically.
+- Grading and the 4-hour rule (`evOkFor`): a bet added by hand names its game (picked from the ESPN list, matched by exact
+  start time, or typed with a chosen date) and is graded against it even when saved after kickoff. Board bets and exchange
+  fills can't name their game, so they keep the rule: a game that started more than 4 hours before the bet was saved is ignored.
 - No new external dependencies, CDNs or build tools.
 
 ## Gotchas
@@ -59,5 +60,5 @@
 node tests/run-all.js
 ```
 
-It must end with "All tests passed". The `INFO real clock` line showing 4 failures is the parked 4-hour check, not a new bug.
+It must end with "All tests passed".
 For layout or colour changes, also look at `node tests/a11y-report.js` and `node tests/table-width-report.js`.

@@ -25,15 +25,14 @@ cd tests && npm test
 `npm test` prints one line per test file and ends with **All tests passed** (exit code 0).
 Any `FAIL` line means don't push; the lines under it say which check failed.
 
-The `INFO real clock` line is expected to show `7 passed, 4 failed` for now: a bet saved more than
-4 hours after its game started isn't matched to that game (the 4-hour check in `evOkFor`), so it isn't
-graded automatically. That decision is parked; the line is shown, not counted.
+Every test uses fixed or relative dates, so the results don't depend on the day you run them.
 
 ## The pass/fail tests
 
 | File | What it checks |
 |---|---|
-| `towin-test.js [tz] [clock]` | Adds CHA @ DET (ESPN stub: 2026-11-02, Detroit wins 112–104), DET moneyline at DraftKings: $1.00 to win $0.99, then $10.00 to win $9.95. Saved date 2026-11-02, saved `towin`, profit = To win, graded WIN after a reload. `run-all` sets the clock to 2026-11-03T02:30:00Z (bet saved during the game). |
+| `towin-test.js [tz] [clock]` | Adds CHA @ DET (ESPN stub: 2026-11-02, Detroit wins 112–104), DET moneyline at DraftKings: $1.00 to win $0.99, then $10.00 to win $9.95. Saved date 2026-11-02, saved `towin`, profit = To win, graded WIN after a reload. `run-all` runs it twice: clock 2026-11-03T02:30:00Z (saved during the game) and 2026-11-04T00:05:00Z (saved the next day). |
+| `grading-test.js` | Bets added after kickoff: a typed game with the date you chose grades itself; a game picked from the ESPN list grades against that exact game (two games between the same teams that day); a bet from the board saved after kickoff is still not matched (the 4-hour rule). |
 | `towin-edit-pct-test.js` | % mode (Cost + To win) saves the slip's real profit; editing a saved bet keeps, replaces or drops To win correctly. |
 | `add-bet-test.js` | Bets that already happened (Result: won / lost / push), typed games and teams, American / decimal / % odds, To win on a fee book, Mark PUSH, results surviving a reload, hidden paste tabs, score strip, phone tab bar. |
 | `layout-test.js` | Layout toggle: Phone on a computer opens `phone.html` (360 / 390 / 430 frame), Desktop on a phone shows the 1280px layout, Auto, and the way back. |

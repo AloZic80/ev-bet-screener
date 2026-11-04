@@ -772,7 +772,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 .sr-only{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
 .pk-ctl{display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center; margin:14px 0 8px}
 .pk-ctl label{font-size:13px; color:var(--soft); display:inline-flex; align-items:center; gap:6px}
-.pk-ab-seg button[hidden]{display:none}
+#pkPlay button[hidden]{display:none}
 .pk-pays-box{margin:6px 0 4px} .pk-pays-box summary{cursor:pointer; font-size:13px; font-weight:600}
 .pk-pays{display:flex; flex-direction:column; gap:6px; margin:10px 0 4px; font-size:13px}
 .pk-pay{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center} .pk-pay b{min-width:62px}
@@ -813,6 +813,8 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 .tb-pill small{opacity:1}
 .cal-c.fut{opacity:1} .cal-c.fut .d,.cal-c.fut .v{color:var(--soft)}
 tbody tr.gameover td{opacity:1; filter:grayscale(1)}   /* games already started: grey, not faded (faded text dropped to 1.4:1) */
+tbody tr.out td{opacity:1; filter:grayscale(1)} tr.skiprow td>*{opacity:1; filter:grayscale(1)}   /* rejected and can't-place rows: grey, not faded to 42% */
+tr.skiprow:hover td>*, tr.skiprow.nopen td>*{filter:none}
 ::placeholder{color:var(--soft); opacity:1}
 :root[data-theme="dark"] ::placeholder{color:#A9B6C5}
 .ab-grid input::placeholder{opacity:1}
@@ -4523,6 +4525,10 @@ function loggedAtOf(b){   // when the bet was saved (ms)
 function evOkFor(b, ev){
   const t=Date.parse(ev&&ev.date), at=Date.parse(b.snap&&b.snap.at);   // only a real save time
   if(isNaN(t) || isNaN(at)) return true;
+  // v3.54: a bet added by hand names its game: picked from the ESPN list (that exact game) or typed with the date you
+  // chose. Trust it even when it was saved after kickoff. Board bets and exchange fills keep the 4-hour rule below.
+  if(b.manual && b.start){ const s=Date.parse(b.start); if(!isNaN(s)) return Math.abs(s-t)<60e3; }
+  if(b.manual && b.dateSet) return true;
   return t >= at-4*3600e3;
 }
 async function findBetGame(b){
