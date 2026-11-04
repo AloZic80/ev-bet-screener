@@ -43,6 +43,15 @@ const BOARD=[prop('Leg One','AAA','BBB',20,0.60),prop('Leg Two','CCC','DDD',21,0
   await p.fill('.pk-boost','12'); await p.dispatchEvent('.pk-boost','change'); await p.waitForTimeout(200);
   const bo=await p.evaluate(()=>({all:window._pkCards.mine.e.arr[0], txt:document.querySelector('#pkMine .pk-h .meta').textContent}));
   check('a promo boost sets what all-hit pays (12x instead of 10x)', bo.all===12 && /12x/.test(bo.txt), bo);
+  // ready-made slips: tap 3-Leg; players can repeat across slips, or not
+  await p.click('.pk-slipn[data-n="3"]'); await p.waitForTimeout(300);
+  const sl=()=>p.evaluate(()=>[...document.querySelectorAll('#pkSlips .pk-card')].map(c=>({t:c.querySelector('.pk-h b').textContent, legs:[...c.querySelectorAll('.pk-legs li')].map(li=>li.firstChild.textContent.split(' Over')[0].trim()), log:!!c.querySelector('.pk-log')})));
+  let S1=await sl(); const all=S1.flatMap(x=>x.legs), rep=all.length!==new Set(all).size;
+  check('3-Leg: several ready-made slips, 3 picks each, each one loggable, a player can repeat across slips', S1.length>=2 && S1.every(x=>x.legs.length===3 && x.log && new Set(x.legs).size===3) && rep && /^Slip 1 · 3-Leg/.test(S1[0].t), S1);
+  await p.uncheck('#pkSlipRep'); await p.waitForTimeout(300);
+  S1=await sl(); const all2=S1.flatMap(x=>x.legs);
+  check('untick it and no player repeats across slips', S1.length>=1 && all2.length===new Set(all2).size, S1);
+  await p.check('#pkSlipRep'); await p.click('.pk-slipn[data-n="4"]'); await p.waitForTimeout(200);
   // a Kalshi combo
   await p.click('#pkApp button[data-v="Kalshi"]'); await p.waitForTimeout(300);
   const k=await p.evaluate(()=>{ const c=window._pkCards.n2, f=cfgRead().fees; return c?{legs:c.legs.map(l=>l.name), mult:+c.e.arr[0].toFixed(4), want:+c.legs.reduce((x,l)=>x/(l.r.offeredProb*(1+feeRate('Kalshi',l.r.offeredProb,f))),1).toFixed(4), ev:c.e.ev}:null; });
