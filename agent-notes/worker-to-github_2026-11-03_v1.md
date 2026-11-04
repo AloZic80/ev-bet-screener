@@ -36,7 +36,7 @@ That keeps out installed packages, Wrangler's local files and the local secrets 
 Now check the code itself for a key typed straight into it:
 
 ```bash
-grep -rInE "(api[_-]?key|secret|token|password)[\"']?\s*[:=]\s*[\"'][A-Za-z0-9_\-]{16,}" --exclude-dir=node_modules --exclude-dir=.wrangler --exclude=.dev.vars --exclude=.env .
+grep -rIniE "(api[_-]?key|secret|token|password)[\"']?[[:space:]]*[:=][[:space:]]*[\"'][A-Za-z0-9_-]{16,}" --exclude-dir=node_modules --exclude-dir=.wrangler --exclude=.dev.vars --exclude=.env .
 ```
 
 - **Nothing printed:** good, go on to step 3.
