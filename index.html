@@ -2646,6 +2646,7 @@ function openBetEditor(tr, r, opt){
     const net=gross==null?null:(gross-fee)/(1+fee);
     const extra={book, offeredRaw:odds, offeredProb:prob, gross, net, stake, fee};
     if(!pmMode()){ const tw=parseFloat(ed.querySelector('.eb-win-o').value); if(tw>0) extra.towin=tw; }   // v3.51: keep the To win $ you typed
+    if(pmMode() && ed._slip && ed._slip.win>0) extra.towin=+(ed._slip.read==='profit'?ed._slip.win:ed._slip.win-stake).toFixed(2);   // v3.54: % mode — the slip's profit, not the rounded odds
     if(pmMode() && ed._slip) extra.slip=ed._slip;   // v3.17: what the slip said (listed %, real price) — teaches each book's real cut
     // v2.63: what the screener said about the row you clicked (before your own stake/odds replace it)
     extra.said=saidOf(r);
@@ -2662,6 +2663,7 @@ function openBetEditor(tr, r, opt){
     if(opt.edit){   // v2.71: change the saved bet in place, keep a record of what it was
       const L=opt.edit, before={book:L.book, odds:L.odds, stake:L.stake, market:L.market};
       L.book=book; L.odds=odds; L.stake=+(+stake).toFixed(2); L.fee=fee; if(pmMode() && ed._slip) L.slip=ed._slip;
+      if(extra.towin>0) L.towin=extra.towin; else if(L.stake!==+(+before.stake||0).toFixed(2) || L.odds!==before.odds) delete L.towin;   // v3.54: a new To win replaces the old one; a new stake or odds drops a stale one
       if(gross!=null){ L.gross=gross; L.net=net; }
       if(extra.market) L.market=extra.market;
       L.betnow=betNowOf({market:L.market, side:L.side||sideOf(L)||'', offeredRaw:odds});
