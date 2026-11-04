@@ -77,8 +77,8 @@
 - Payout defaults are in `PK_DEFAULT`; the owner's edits are saved per device in `mbev.pk`. Pick6 defaults are a copy of
   PrizePicks Power until the owner enters Pick6's own.
 - "Best for your bankroll" is the entry with the most log growth at its suggested stake, not the biggest return.
-- The Sentinels (`shopExchanges`) end by sending the Parlays tab the props that are not single bets to place (`pkAlone`)
-  but clear the per-pick break-even of a 2- to 6-pick entry (`pkSentLegs`, drawn by `pkSentHtml` in `#pkSent`). 4 picks is
+- The Sentinels (`shopExchanges`) end by sending the Parlays tab every prop that clears the per-pick break-even of a 2- to
+  6-pick entry, good alone or not (v3.62: good-alone ones, `pkAlone`, are marked "✓ good alone too") (`pkSentLegs`, drawn by `pkSentHtml` in `#pkSent`). 4 picks is
   starred as the target; the card there is "★ The Sentinels' 4 picks", not "Best for your bankroll".
 - Apps (v3.59): `PK_APPS`, ticked ones in `pkState.apps`. Pick'em apps (PrizePicks, Pick6, Underdog, Sleeper) use payout
   tables (Underdog and Sleeper start as copies of PrizePicks'). Combo apps (`PK_PRICED`: Kalshi, Novig, Polymarket US, DK and

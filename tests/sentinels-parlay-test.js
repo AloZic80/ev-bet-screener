@@ -31,15 +31,15 @@ const BOARD=[
   await p.goto('http://app.test/'); await p.waitForTimeout(1500);
   await p.click('#shopBtn'); await p.waitForTimeout(1500);
   const msg=await p.textContent('#shopMsg');
-  check('the Sentinels come back with picks for a parlay', /🎟️\s*5 better in a parlay/.test(msg), msg);
+  check('the Sentinels come back with picks for a parlay', /🎟️\s*6 good in a parlay/.test(msg), msg);
   await p.click('#shopMsg .pk-sent-go'); await p.waitForTimeout(500);
   check('the link opens the Parlays tab at those picks', await p.evaluate(()=>document.getElementById('v-parlay').classList.contains('on') && !!document.querySelector('#pkSent .pk-sent-list')), true);
   const S=await p.evaluate(()=>[...document.querySelectorAll('#pkSent .pk-sent-list li')].map(li=>({name:li.querySelector('.pk-sl-who b').textContent, p:li.querySelector('.pk-sl-p').textContent,
     fits:[...li.querySelectorAll('.pk-fits i.on')].map(i=>+i.textContent), alone:li.querySelector('.pk-sl-who .meta:last-child').textContent})));
   const F=n=>(S.find(x=>x.name===n)||{}).fits||[];
-  check('only picks that are not good alone, best first', S.map(x=>x.name).join()==='Pick Em,Top Leg,Second Leg,Four Fit,Five Six', S.map(x=>x.name+' '+x.p));
+  check('every pick that clears a break-even, good alone or not, best first (a single bet stays on the board too)', S.map(x=>x.name).join()==='Alone Good,Pick Em,Top Leg,Second Leg,Four Fit,Five Six', S.map(x=>x.name+' '+x.p));
   check('which entry sizes each clears (2, 3, 4, 5, 6)', F('Top Leg').join()==='2,3,4,5,6' && F('Four Fit').join()==='4,5,6' && F('Five Six').join()==='5,6', S.map(x=>x.name+': '+x.fits.join(' ')));
-  check('each says why it is not a single bet', /pick’em line/.test(S[0].alone) && S.slice(1).every(x=>/alone: /.test(x.alone)), S.map(x=>x.alone));
+  check('each says it is good alone too, or why it is not a single bet', /good alone too/.test(S[0].alone) && /pick’em line/.test(S[1].alone) && S.slice(2).every(x=>/alone: /.test(x.alone)), S.map(x=>x.alone));
   const be=await p.evaluate(()=>[...document.querySelectorAll('#pkSent .pk-be-i')].map(x=>x.textContent));
   check('the break-even of each size is shown, 4 starred', be.length===5 && /★ 4 picks 56\.2%/.test(be.join('|')) && /2 picks 57\.7%/.test(be[0]) && /6 picks 54\.7%/.test(be[4]), be);
   const card=await p.evaluate(()=>{ const c=document.querySelector('#pkSent .pk-card'); return c?{title:c.querySelector('.pk-h b').textContent, best:!!c.querySelector('.pk-best'), ev:c.querySelector('.pk-ev').textContent, legs:[...c.querySelectorAll('.pk-legs li')].length}:null; });
