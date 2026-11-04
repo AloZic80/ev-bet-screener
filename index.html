@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>0xBeta Screener v3.53</title>
+<title>0xBeta Screener v3.54</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -722,6 +722,23 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 .src-panel code{font-size:12px}
 .makes-bar{margin:0 0 10px; padding:8px 12px; border:1px solid var(--warn); background:var(--warn-bg); border-radius:10px; font-size:13.5px; font-weight:700; cursor:pointer}
 button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px solid var(--rule)}   /* v3.10 */
+/* v3.54 polish: tabs always in reach (sticky on desktop, a bottom bar on phones), quieter Today card, Add-a-bet price first */
+.tab[hidden],button.linkbtn[hidden]{display:none!important}
+.tabs{position:sticky; top:0; z-index:30; background:var(--page)}
+.tb-t.dim{display:none}
+.tb-empty{padding:2px 10px; color:var(--soft); font-size:12.5px; white-space:normal}
+.ab-more{margin-top:12px; border:1px solid var(--rule); border-radius:10px; padding:8px 12px; background:var(--panel)}
+.ab-more summary{cursor:pointer; font-size:13px; font-weight:600; color:var(--ink)}
+.ab-more summary .meta{font-weight:400; margin-left:6px}
+.ab-more[open] summary{margin-bottom:10px}
+.editor input.eb-odds{min-width:128px}
+@media (max-width:640px){
+  .tabs{position:fixed; left:0; right:0; bottom:0; top:auto; margin:0; padding:0 8px env(safe-area-inset-bottom,0px); gap:2px;
+    border-bottom:0; border-top:1px solid var(--rule); background:var(--panel); box-shadow:0 -6px 18px rgba(16,24,40,.08); z-index:60}
+  .tab{padding:13px 10px 12px; font-size:14px; margin:0; border-bottom:0; border-top:3px solid transparent}
+  .tab.on{border-top-color:var(--accent)}
+  body{padding-bottom:calc(60px + env(safe-area-inset-bottom,0px))}
+}
 </style>
 </head>
 <body>
@@ -730,7 +747,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.53</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.54</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate"> <span class="built">· build 22 Sep 2026</span></div>
     </div>
     <div class="statbox">
@@ -774,7 +791,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
       <button class="linkbtn" id="openBoard" title="Load a board file you saved earlier — saved boards use no API calls">Open</button>
       <input type="file" id="openBoardFile" accept=".json,application/json" style="display:none">
       <button class="linkbtn" id="clearBoard" title="Clear the board">Clear</button>
-      <button class="linkbtn" id="pasteLink" title="Paste a board from the BettingPros site — doesn't use the API">Paste ▸</button>
+      <button class="linkbtn" id="pasteLink" hidden title="Paste a board from the BettingPros site — doesn't use the API">Paste ▸</button>
       <button class="linkbtn" id="passLink" title="Screener passphrase">Passphrase ▸</button>
     </span>
     <span class="saved-note" id="savedNote"></span>
@@ -791,7 +808,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 
 <div class="tabs">
   <button class="tab on" data-view="v-board" data-src="api">Board</button>
-  <button class="tab" data-view="v-board" data-src="paste">Pasted <span class="tab-n" id="pasteTabN"></span></button>
+  <button class="tab" data-view="v-board" data-src="paste" hidden>Pasted <span class="tab-n" id="pasteTabN"></span></button>
   <button class="tab" data-view="v-parole" title="Jail bets your own posted price would fix — Make orders on Novig">🔓 Parole <span class="tab-n" id="paroleTabN"></span></button>
   <button class="tab" data-view="v-add" title="Take a price or post your own — BET or SKIP and how much">+ Add a bet</button>
   <button class="tab" data-view="v-money">Moneylines</button>
@@ -799,7 +816,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
   <button class="tab" data-view="v-perf">Performance</button>
   <button class="tab" data-view="v-live">Live</button>
   <button class="tab" data-view="v-settings">Settings</button>
-  <button class="tab" data-view="v-paste" title="Paste a board from the BettingPros site — doesn't use the API">Paste a board</button>
+  <button class="tab" data-view="v-paste" hidden title="Paste a board from the BettingPros site — doesn't use the API">Paste a board</button>
 </div>
 
 <!-- v2.71: ESPN score strip (free — no BettingPros calls) -->
@@ -898,25 +915,30 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
   <div class="ab-grid">
     <div class="field"><label for="abSport">Sport</label><select id="abSport"><option>NFL</option><option>NCAAF</option><option>NBA</option><option>WNBA</option><option>NCAAB</option><option>MLB</option><option>NHL</option></select></div>
     <div class="field"><label for="abType">Type</label><select id="abType"><option value="prop">Player prop</option><option value="spread">Spread</option><option value="total">Game total</option><option value="moneyline">Moneyline</option></select></div>
-    <div class="field ab-wide"><label for="abGame">Game <span class="meta">(ESPN)</span></label><select id="abGame"><option value="">loading…</option></select><input id="abGameFree" type="text" placeholder="or type it, e.g. TOR @ UTA" style="margin-top:4px" autocomplete="off"></div>
-    <div class="field"><label for="abDate">Game date <span class="meta">(you choose)</span></label><input id="abDate" type="date"></div>
-    <div class="field ab-prop"><label for="abPlayer">Player</label><input id="abPlayer" type="text" placeholder="as the app shows it" autocomplete="off"></div>
-    <div class="field ab-team"><label for="abTeam">Team</label><select id="abTeam"></select></div>
+    <div class="field ab-wide"><label for="abGame">Game</label><select id="abGame"><option value="">loading…</option></select><input id="abGameFree" type="text" placeholder="Not listed? Type it: TOR @ UTA" style="margin-top:4px" autocomplete="off"></div>
+    <div class="field"><label for="abDate">Game date</label><input id="abDate" type="date"></div>
+    <div class="field ab-prop"><label for="abPlayer">Player</label><input id="abPlayer" type="text" placeholder="as the app spells it" autocomplete="off"></div>
+    <div class="field ab-team"><label for="abTeam">Team</label><select id="abTeam"></select><input id="abTeamFree" type="text" placeholder="e.g. LAL" autocomplete="off" style="display:none"></div>
     <div class="field ab-prop"><label for="abStat">Stat</label><input id="abStat" type="text" list="abStats" placeholder="e.g. Passing Yards" autocomplete="off"><datalist id="abStats"></datalist></div>
     <div class="field ab-ou"><label for="abPick">Pick</label><select id="abPick"><option value="O">Over</option><option value="U">Under</option></select></div>
     <div class="field ab-line"><label for="abLine">Line</label><input id="abLine" type="number" step="0.5" placeholder="e.g. 249.5"></div>
-    <div class="field"><label for="abProj">Projection <span class="meta">(optional)</span></label><input id="abProj" type="number" step="0.1"></div>
-    <div class="field"><label for="abCover">Cover probability % <span class="meta">(optional)</span></label><input id="abCover" type="number" step="0.1" min="1" max="99"></div>
-    <div class="field"><label for="abCons">Consensus odds <span class="meta">(optional)</span></label><input id="abCons" type="text" placeholder="e.g. -122"></div>
+    <div class="field"><label for="abResult" title="Logging a bet after the fact? Set how it went and it's saved as graded by you.">Result</label><select id="abResult"><option value="">Not played yet</option><option value="win">Won 🎉</option><option value="loss">Lost</option><option value="push">Push / void</option></select></div>
   </div>
+  <div id="abHost" class="ab-host"></div>
+  <details class="ab-more" id="abMore"><summary>Model numbers <span class="meta">optional · projection, cover %, consensus</span></summary>
+  <div class="ab-grid">
+    <div class="field"><label for="abProj">Projection</label><input id="abProj" type="number" step="0.1"></div>
+    <div class="field"><label for="abCover">Cover probability %</label><input id="abCover" type="number" step="0.1" min="1" max="99"></div>
+    <div class="field"><label for="abCons">Consensus odds</label><input id="abCons" type="text" placeholder="e.g. -122"></div>
+  </div>
+  </details>
   <div class="ab-modebar">
     <div class="ab-seg" id="abMode"><button type="button" data-m="take" class="on" title="You found a price — should you take it, and for how much?">Take a price</button><button type="button" data-m="make" title="Post your own price on Novig, Kalshi or Polymarket US and let someone take it">📌 Make my own</button></div>
     <button type="button" class="act" id="abAsk" title="Look this bet up on Kalshi, Polymarket US and Novig (Worker, not BettingPros calls)">🔎 What should I bet?</button>
     <span class="meta" id="abAskMsg"></span>
   </div>
-  <div id="abHost" class="ab-host"></div>
   <div id="abVerdict" class="ab-verdict"></div>
-  <p class="hint" style="margin:8px 0 0">Copy what the app shows. <b>Cover %</b> decides PASS/FAIL (same as the board); <b>consensus</b> is the market check; <b>projection</b> is saved for reference. Left blank, the bet saves as <b>unchecked</b> and the next Load fills them in if BettingPros has the same player, stat and line. Pick the game from the list so ESPN can grade it.</p>
+  <p class="hint" style="margin:8px 0 0">Copy what the app shows. <b>Odds</b> can be American (-110, +120), decimal (1.91) or a percentage (52.4%); <b>To win</b> is the profit, and when you type it, it's what the bet pays. Logging a bet that's already over? Set <b>Result</b> and it saves graded. Under <b>Model numbers</b>: <b>Cover %</b> decides PASS/FAIL (same as the board); <b>consensus</b> is the market check; <b>projection</b> is saved for reference. Left blank, the bet saves as <b>unchecked</b> and the next Load fills them in if BettingPros has the same player, stat and line. Pick the game from the list so ESPN can grade it.</p>
   <div class="meta" id="abMsg" style="margin-top:6px"></div>
 </details>
 </div>
@@ -1327,7 +1349,7 @@ button.log.sm.share-btn{background:transparent; color:var(--accent); border:1px 
 
 </div>
 <script>
-const SCREENER_VERSION='v3.53';
+const SCREENER_VERSION='v3.54';
 // the header and tab title always show this one number
 document.title='0xBeta Screener '+SCREENER_VERSION;
 { const t=document.getElementById('verTag'); if(t) t.textContent=SCREENER_VERSION; }
@@ -1352,6 +1374,12 @@ function logit(p){ const q=Math.min(.99,Math.max(.01,p)); return Math.log(q/(1-q
 function americanOf(p){
   if(p<=0||p>=1) return 0;
   return p>=.5 ? -Math.round(p/(1-p)*100) : Math.round((1-p)/p*100);
+}
+function priceText(t){   // v3.54: one box for any price — American (-110, +120), decimal (1.91) or a % (52.4%) → American
+  t=String(t==null?'':t).trim();
+  const m=t.match(/^(\d+(?:\.\d+)?)\s*%$/); if(m){ const p=parseFloat(m[1])/100; return (p>0&&p<1)?fmtOdds(americanOf(p)):t; }
+  if(/^\d+\.\d+$/.test(t)){ const d=parseFloat(t); if(d>1) return d>=2?'+'+Math.round((d-1)*100):String(-Math.round(100/(d-1))); }
+  return t;
 }
 function pct(x,d){ return (x*100).toFixed(d===undefined?1:d)+'%'; }
 function feeRate(bookRaw, prob, cfg, live){   // v3.03: Polymarket US on Kalshi's curve (6.95%); Novig's 6% curve only once the game is live
@@ -2383,10 +2411,10 @@ function ebResultHtml(b){
     ? '<span class="meta">Book bet ID</span> <code class="eb-id" style="font-size:12px;user-select:all">'+esc(b.fillRef)+'</code> <button type="button" class="log sm eb-copy">copy</button>'
     : '<span class="meta">No book ID: this book has no API link (FanDuel, DraftKings, etc.), so grade it by hand below</span>';
   const manual = b.gradedBy==='manual';
-  const status = manual ? 'Graded by you: '+(b.result==='win'?'WIN':'LOSS') : (b.result==='?' ? "Can't auto-grade" : '');
+  const status = manual ? 'Graded by you: '+(b.result==='win'?'WIN':b.result==='push'?'PUSH':'LOSS') : (b.result==='?' ? "Can't auto-grade" : '');
   const can = true;   // v3.45: any bet can be graded by hand (Bovada, FanDuel, pending, or a grader miss)
   const btns = can
-    ? '<button type="button" class="log sm eb-res" data-res="win">Mark WIN</button> <button type="button" class="log sm eb-res" data-res="loss">Mark LOSS</button>'
+    ? '<button type="button" class="log sm eb-res" data-res="win">Mark WIN</button> <button type="button" class="log sm eb-res" data-res="loss">Mark LOSS</button> <button type="button" class="log sm eb-res" data-res="push" title="Push or void: stake back">Mark PUSH</button>'   // v3.54: push
       + (manual ? ' <button type="button" class="log sm undo eb-clear">Clear my result</button>' : '')
     : '';
   return '<div class="eb-result" style="width:100%;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px">'
@@ -2409,9 +2437,9 @@ function openBetEditor(tr, r, opt){
     '<label>Book <select class="eb-book">'+books.map(b=>'<option value="'+esc(b)+'">'+esc(bookLabel(b))+'</option>').join('')+'</select></label>'+
     '<label title="What the app shows: American odds, or a % price">Enter as <select class="eb-mode"><option value="odds">odds</option><option value="pct">%</option></select></label>'+
     '<span class="eb-plain" style="display:contents">'+
-      '<label>Odds you got <input class="eb-odds" type="text" value="'+esc(r.offeredRaw)+'"></label>'+
+      '<label title="American (-110, +120), decimal (1.91) or a percentage (52.4%)">Odds <input class="eb-odds" type="text" placeholder="-110 · 1.91 · 52%" value="'+esc(r.offeredRaw)+'"></label>'+
       '<label>Stake $ <input class="eb-stake" type="number" step="0.25" value="'+(r.stake?r.stake.toFixed(2):'')+'"></label>'+
-      '<label title="Profit you win. Leave Odds blank and this + Stake gives the odds.">To win $ <input class="eb-win-o" type="number" step="0.01" placeholder="optional" style="width:90px"></label></span>'+
+      '<label title="The profit (your stake not included). When you type it, that is what the bet pays, fee or no fee. Leave Odds blank and this + Stake gives the odds.">To win $ <input class="eb-win-o" type="number" step="0.01" placeholder="optional" style="width:90px"></label></span>'+
     '<span class="pm-fields eb-pm">'+
       '<label>Cost $ <input class="eb-cost" type="number" step="0.01" placeholder="2.50"></label>'+
       '<label>@ <input class="eb-pct" type="number" step="0.1" placeholder="62" style="width:60px">%</label>'+
@@ -2505,7 +2533,7 @@ function openBetEditor(tr, r, opt){
   const priceNow=()=>{
     const cfg=cfgRead(), book=bookSel.value;
     if(pmMode()){ const pr=pmPrice(); if(!pr) return null; return {prob:pr.prob, fee:pr.allIn?0:feeRate(book,pr.prob,cfg.fees,liveG())}; }
-    const o=ed.querySelector('.eb-odds').value.trim().replace(/^(\d)/,'+$1'); const prob=toProb(o);
+    const o=priceText(ed.querySelector('.eb-odds').value).replace(/^(\d)/,'+$1'); const prob=toProb(o);
     return prob===null?null:{prob, fee:feeRate(book,prob,cfg.fees,liveG())};
   };
   function valueCheck(){
@@ -2614,7 +2642,7 @@ function openBetEditor(tr, r, opt){
       ed._slip = pr.allIn ? {listed:pr.listed!=null?+pr.listed.toFixed(4):null, real:+prob.toFixed(4), win:parseFloat(ed.querySelector('.eb-win').value)||null, read:pr.read} : null;   // v3.17
     } else {
       stake=parseFloat(ed.querySelector('.eb-stake').value)||0;
-      let oddsTxt=ed.querySelector('.eb-odds').value.trim();
+      let oddsTxt=priceText(ed.querySelector('.eb-odds').value);   // v3.54: decimal or % too
       // v3.49: a decimal price (2.20, 1.75) has a point; the app stores American odds (+120, -133), so convert it
       if(/^\d+\.\d+$/.test(oddsTxt)){ const d=parseFloat(oddsTxt); if(d>1) oddsTxt = d>=2 ? '+'+Math.round((d-1)*100) : String(-Math.round(100/(d-1))); }
       const winO=parseFloat(ed.querySelector('.eb-win-o').value);
@@ -3537,7 +3565,7 @@ function betProfit(b){
   if(b.result==='loss') return -st;
   if(b.result==='push') return 0;
   if(b.result==='win'){
-    if(b.towin>0 && !(+b.fee>0)) return +(+b.towin).toFixed(2);   // v3.51: the To win $ you typed
+    if(b.towin>0) return +(+b.towin).toFixed(2);   // v3.51: the To win $ you typed — v3.54: on any book, fee or not
     const p=toProb(b.odds); if(p==null) return null;
     const fee=+b.fee||0;   // fee charged on top of the price (Kalshi): stake = cost × (1 + fee)
     return +(st*((1/p)-1-fee)/(1+fee)).toFixed(2);
@@ -4276,6 +4304,7 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
     } else {
       x.open++; x.riding+=st;
       if(b.kind==='parlay') x.toWin+=Math.max(0,(+(b.parlay&&b.parlay.pays&&b.parlay.pays.all)||0)-st);
+      else if(b.towin>0) x.toWin+=+b.towin;   // v3.54: the To win you typed
       else { const q=toProb(b.odds), f=+b.fee||0; if(q) x.toWin+=st*((1/q)-1-f)/(1+f); }
     }
   });
@@ -4297,6 +4326,10 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
   const tiles=order.map(tile).join('');
   const now=tot.net, best=now+tot.ded+tot.toWin, worst=now-(tot.riding-tot.ded);
   const sgn=v=>v>=0?up(v):dn(-v);
+  const espnBtn='<button class="tb-espn" type="button" title="Refresh scores and results from ESPN now (no BettingPros calls)'+(espnAt?' — last '+new Date(espnAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+'">⟳</button>';
+  if(!tot.n && !tot.cancel){   // v3.54: nothing today — one quiet line, not a row of "no bets"
+    const q=['No bets today. Your bankroll thanks you for the day off.','Nothing riding today. The sportsbooks will have to wait.','No action yet. Patience is a position too.','Zero bets, zero bad beats.'];
+    el.innerHTML='<span class="tb-k"><span>TODAY '+espnBtn+'</span></span><span class="tb-empty">'+esc(q[Math.floor(Date.parse(today)/864e5)%q.length])+'</span>'; return; }
   el.innerHTML='<span class="tb-k"><span>TODAY <button class="tb-espn" type="button" title="Refresh scores and results from ESPN now (no BettingPros calls)'+(espnAt?' — last '+new Date(espnAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+'">⟳</button></span><b class="tb-tot">'+usd(tot.bet)+'</b><span class="tb-n">'+tot.n+' bet'+(tot.n===1?'':'s')+'</span>'+(tot.n?'<span class="tb-st" title="played = has a result · playing = game started, no result yet · to play = game not started">✓ '+tot.played+' played</span><span class="tb-st live">▶ '+tot.playing+' playing</span><span class="tb-st">⏳ '+tot.toPlay+' to play</span>':'')+(Math.abs(now)<0.005?'<span class="tb-pill even" title="even">$0.00</span>':'<span class="tb-pill '+(now>0?'good':'bad')+'" title="Worst-case exposure: assumes every open bet loses (won − lost − money on the line). Hope for the best, expect the worst.">'+(now>0?'+':'−')+usd(now)+'</span>')+'</span>'+'<div class="tb-t all"><div class="tb-l1"><b>All</b></div>'+line2(tot)+(tot.open?'<div class="tb-l2" title="best = every open bet wins · worst = every open bet loses (money on the line is already counted as gone)">best '+sgn(best)+' · worst '+sgn(worst)+'</div>':'')+'<div class="tb-motto" title="Worst-case exposure: every open bet counts as LOST until it wins">Hope for the best, expect the worst.</div></div>'+tiles;
 }
 /* v2.73: grade finished games in the background (ESPN, no BettingPros calls) */
@@ -6316,7 +6349,8 @@ const AB_STATS={
 AB_STATS.NCAAF=AB_STATS.NFL; AB_STATS.WNBA=AB_STATS.NBA; AB_STATS.NCAAB=AB_STATS.NBA;
 let abEvents=[], abR=null, abLogLen=0;
 const $ab=id=>document.getElementById(id);
-function abGameSel(){ const id=$ab('abGame').value; return abEvents.find(e=>String(e.id)===id)||null; }
+function abGameSel(){ if($ab('abGameFree') && $ab('abGameFree').value.trim()) return null;   // v3.54: a typed game wins over the list
+  const id=$ab('abGame').value; return abEvents.find(e=>String(e.id)===id)||null; }
 function abTeams(ev){ const c=compsOf(ev), a=c.find(x=>x.homeAway==='away'), h=c.find(x=>x.homeAway==='home');
   return a&&h ? {away:normAbbr(a.team&&a.team.abbreviation), home:normAbbr(h.team&&h.team.abbreviation)} : null; }
 async function abLoadGames(){
@@ -6342,16 +6376,18 @@ function abFields(){
   document.querySelectorAll('#addBetPanel .ab-team').forEach(e=>e.style.display=(ty==='spread'||ty==='moneyline')?'':'none');
   document.querySelectorAll('#addBetPanel .ab-ou').forEach(e=>e.style.display=(ty==='prop'||ty==='total')?'':'none');
   document.querySelectorAll('#addBetPanel .ab-line').forEach(e=>e.style.display=ty==='moneyline'?'none':'');
-  const ts=$ab('abTeam'), keep=ts.value;
-  ts.innerHTML=t?['away','home'].map(k=>'<option value="'+t[k]+'">'+t[k]+(k==='home'?' (home)':'')+'</option>').join(''):'';
-  if(keep && t && (keep===t.away||keep===t.home)) ts.value=keep;
+  const ts=$ab('abTeam'), keep=ts.value, tf=$ab('abTeamFree');
+  const tt=t||(()=>{ const g=teamsOf($ab('abGameFree').value.toUpperCase()); return g?{away:g[0],home:g[1]}:null; })();   // v3.54: a typed game fills the Team list too
+  ts.innerHTML=tt?['away','home'].map(k=>'<option value="'+tt[k]+'">'+tt[k]+(k==='home'?' (home)':'')+'</option>').join(''):'';
+  if(keep && tt && (keep===tt.away||keep===tt.home)) ts.value=keep;
+  ts.style.display=tt?'':'none'; tf.style.display=tt?'none':'';   // v3.54: no teams to list → type the team
   $ab('abLine').placeholder = ty==='spread'?'-3.5':ty==='total'?'47.5':'249.5';
   abUpdate();
 }
 function abRowFields(){
   const sp=$ab('abSport').value, ty=$ab('abType').value, ev=abGameSel(), t=ev?abTeams(ev):null, gi=ev?gameStatusOf(ev):null;
   const freeGame=($ab('abGameFree')?$ab('abGameFree').value.trim():''); const game=t?t.away+' @ '+t.home:freeGame; const lnRaw=$ab('abLine').value.trim(), ln=lnRaw===''?null:parseFloat(lnRaw);
-  const stat=$ab('abStat').value.trim(), side=$ab('abPick').value, team=$ab('abTeam').value||null;
+  const stat=$ab('abStat').value.trim(), side=$ab('abPick').value, team=$ab('abTeam').value||$ab('abTeamFree').value.trim().toUpperCase()||null;
   let name='', market='', sd='', missing='';
   if(ty==='prop'){ name=$ab('abPlayer').value.trim(); market=(ln!=null?ln+' ':'')+stat; sd=side;
     missing=!name?'player':!stat?'stat':ln==null?'line':''; }
@@ -6376,7 +6412,7 @@ function abPrice(){   // the price typed in the editor below (same reading as Sa
     const ed=h.querySelector('.editor'), pr=ed&&ed._pmPrice?ed._pmPrice():null; if(!pr) return null;
     return pr.allIn ? {prob:pr.prob, fee:0, book, stake:pr.cost} : {prob:pr.prob, fee:feeRate(book,pr.prob,cfg.fees,live), book, stake:pr.cost>0?pr.cost:0};
   }
-  const o=q('.eb-odds').value.trim().replace(/^(\d)/,'+$1'), p=toProb(o);
+  const o=priceText(q('.eb-odds').value).replace(/^(\d)/,'+$1'), p=toProb(o);
   return p==null?null:{prob:p, fee:feeRate(book,p,cfg.fees,live), book, stake:parseFloat(q('.eb-stake').value)||0, odds:o};
 }
 function abUpdate(){ abUpdate94(); }
@@ -6397,6 +6433,8 @@ function abOpenEditor(){
     if(f._missing){ e.stopImmediatePropagation(); ed.querySelector('.eb-msg').textContent='Add the '+f._missing+' first — ESPN needs it to grade the bet'; return; }
     // v3.48: a bet already placed logs from Save bet in either mode (Make mode no longer blocks it)
     try{ localStorage.setItem('mbev.abBook', ed.querySelector('.eb-book').value); }catch(_){}
+    abR._result=$ab('abResult').value||'';   // v3.54: already over — save it graded, and skip the "worth it?" second press
+    if(abR._result){ save.dataset.ok='1'; save.dataset.lc='1'; }
   }, true);
   abUpdate();
 }
@@ -6414,6 +6452,7 @@ function fillManualFromRow(L, r){   // next Load: an unchecked manual bet picks 
   $ab('abSport').addEventListener('change',abLoadGames);
   $ab('abType').addEventListener('change',abFields);
   $ab('abGame').addEventListener('change',abFields);
+  $ab('abGameFree').addEventListener('input',abFields);   // v3.54
   $ab('addBetPanel').addEventListener('input',e=>{ if(!e.target.closest('.editor')) { abUpdate(); const s=$ab('abHost').querySelector('.eb-stake'); if(s) s.dispatchEvent(new Event('change')); } else setTimeout(()=>{ abUpdate(); const s=$ab('abHost').querySelector('.eb-stake'); if(s && e.target!==s) s.dispatchEvent(new Event('change')); },0); });
   $ab('addBetPanel').addEventListener('change',e=>{ if(e.target.closest('.editor')) setTimeout(abUpdate,0); });
   let loaded=false;
@@ -6424,8 +6463,9 @@ function fillManualFromRow(L, r){   // next Load: an unchecked manual bet picks 
       const L=logged[logged.length-1];
       L.manual=true; L.srcType='manual';
       if(abR){ if(abR.projValue!=null) L.proj=abR.projValue; if(abR.team) L.team=abR.team; if(L.snap) L.snap.outlier=!!abR.outlier; }
-      saveLog(); renderLog();
-      $ab('abMsg').innerHTML='<b>Saved:</b> '+esc(L.name)+' — '+esc(betLabel(L))+' · $'+(+L.stake||0).toFixed(2)+' on '+esc(bookLabel(L.book))+(L.net==null?' · <span class="meta">unchecked until the next Load</span>':'');
+      if(abR && abR._result){ L.result=abR._result; L.gradedBy='manual'; L.resultSrc='you'; delete L.why; $ab('abResult').value=''; }   // v3.54: a bet that's already over saves graded
+      saveLog(); renderLog(); renderPerf(); renderTodayBar();
+      $ab('abMsg').innerHTML='<b>Saved:</b> '+esc(L.name)+' — '+esc(betLabel(L))+' · $'+(+L.stake||0).toFixed(2)+' on '+esc(bookLabel(L.book))+(L.result?' · <b>'+({win:'WON',loss:'LOST',push:'PUSH'}[L.result]||'')+'</b>'+(L.result==='win'&&betProfit(L)!=null?' +$'+betProfit(L).toFixed(2):''):'')+(L.net==null?' · <span class="meta">unchecked until the next Load</span>':'');
       ['abPlayer','abLine','abProj','abCover','abCons'].forEach(id=>$ab(id).value='');
     }
     abOpenEditor();
