@@ -5,9 +5,9 @@ const path=require('path'); const INDEX=path.join(__dirname,'..','index.html');
 const { chromium } = require('playwright'); const fs=require('fs');
 const html=fs.readFileSync(process.argv[2]||INDEX,'utf8');
 let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?'PASS ':'FAIL ')+n+'  → '+JSON.stringify(got)); };
-const FULL={LAL:['Los Angeles','Lakers'], BOS:['Boston','Celtics'], MIA:['Miami','Heat'], NY:['New York','Knicks'], DEN:['Denver','Nuggets'], PHX:['Phoenix','Suns']};
-const comp=(ha,ab,score)=>({homeAway:ha, score:String(score), team:{abbreviation:ab, shortDisplayName:FULL[ab][1], name:FULL[ab][1], location:FULL[ab][0], displayName:FULL[ab].join(' ')}});
-let PINN=null;   // v3.74: null = the Worker has no /pinnapi/live yet (404)
+const FULL={LAL:['Los Angeles','Lakers'], BOS:['Boston','Celtics'], MIA:['Miami','Heat'], NY:['New York','Knicks'], DEN:['Denver','Nuggets'], PHX:['Phoenix','Suns'], ARS:['','Arsenal'], CHE:['','Chelsea']};
+const comp=(ha,ab,score)=>({homeAway:ha, score:String(score), team:{abbreviation:ab, shortDisplayName:FULL[ab][1], name:FULL[ab][1], location:FULL[ab][0], displayName:FULL[ab].join(' ').trim()}});
+let PINN=null, SOC=null, PINN1=null; const sbAsked=[], pinAsked=[];   // v3.76: SOC = a Premier League game with no ESPN win chance; PINN1 = Pinnacle soccer   // v3.74: null = the Worker has no /pinnapi/live yet (404)
 const pinnEv=(home,away,dh,da)=>({event_id:1, sport_id:3, home, away, periods:{num_0:{money_line:{home:dh, away:da}}}, state:{match:{quarter:3}}});
 const ev=(id,a,h,sa,sh,pHome,state)=>({id, date:new Date(Date.now()-3600e3).toISOString(), status:{period:3, displayClock:'5:12', type:{name:'STATUS_IN_PROGRESS', state:state||'in', shortDetail:'3rd 5:12', detail:'3rd Quarter'}},
   competitions:[{competitors:[comp('away',a,sa),comp('home',h,sh)], situation:{lastPlay:{probability:{homeWinPercentage:pHome, awayWinPercentage:1-pHome}}}}]});
@@ -15,7 +15,7 @@ const NBA={events:[ev('401','LAL','BOS',70,78,0.55), ev('402','MIA','NY',60,90,0
 // what the exchanges sell each team at now (by the id the app sends: le:<event>:<team>:<exchange>)
 const PRICES={'le:401:BOS:kalshi':{ok:true,src:'kalshi',price:0.50,title:'Boston wins'}, 'le:401:LAL:kalshi':{ok:true,src:'kalshi',price:0.47},
   'le:401:BOS:novig':{ok:true,src:'novig',price:0.90}, 'le:401:BOS:poly':{ok:false,note:'Polymarket: no market'}, 'le:401:LAL:poly':{ok:true,src:'poly',price:0.33},
-  'le:402:NY:kalshi':{ok:true,src:'kalshi',price:0.90}};
+  'le:402:NY:kalshi':{ok:true,src:'kalshi',price:0.90}, 'le:501:ARS:kalshi':{ok:true,src:'kalshi',price:0.44,title:'Arsenal wins'}};
 (async()=>{
   const b=await chromium.launch(); const ctx=await b.newContext({timezoneId:'America/Chicago', viewport:{width:1400,height:1000}});
   await ctx.addInitScript(()=>{ try{ if(sessionStorage.getItem('seeded')) return; sessionStorage.setItem('seeded','1'); localStorage.clear(); }catch(e){} });
@@ -23,6 +23,9 @@ const PRICES={'le:401:BOS:kalshi':{ok:true,src:'kalshi',price:0.50,title:'Boston
   await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html});
     if(/api\.0xbeta\.dev\/live\?/.test(u)){ const bets=JSON.parse(decodeURIComponent(u.split('bets=')[1])); asked.push(...bets); const results={}; bets.forEach(d=>{ if(PRICES[d.id]) results[d.id]=PRICES[d.id]; });
       return r.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({results})}); }
+    if(/scoreboard/.test(u)) sbAsked.push(u); if(/pinnapi\/live/.test(u)) pinAsked.push(u);
+    if(/api\.0xbeta\.dev\/pinnapi\/live\?sport_id=1/.test(u)) return PINN1 ? r.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-expose-headers':'x-src-at','x-src-at':new Date().toISOString()},body:JSON.stringify(PINN1)}) : r.fulfill({status:404,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{}'});
+    if(/espn\.com.*soccer\/eng\.1\/scoreboard/.test(u) && SOC) return r.fulfill({contentType:'application/json',body:JSON.stringify(SOC)});
     if(/api\.0xbeta\.dev\/pinnapi\/live\?sport_id=3/.test(u)) return PINN ? r.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-expose-headers':'x-src-at','x-src-at':new Date().toISOString()},body:JSON.stringify(PINN)}) : r.fulfill({status:404,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{"error":"not found"}'});
     if(/espn\.com.*basketball\/nba\/scoreboard/.test(u)) return r.fulfill({contentType:'application/json',body:JSON.stringify(NBA)});
     if(/espn\.com.*scoreboard/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
@@ -70,6 +73,21 @@ const PRICES={'le:401:BOS:kalshi':{ok:true,src:'kalshi',price:0.50,title:'Boston
   PINN=null; await rescan();
   const top=await p.evaluate(()=>({sum:document.getElementById('leSum').textContent, tab:document.getElementById('leTabN').textContent, stamp:document.getElementById('leStamp').textContent}));
   check('the count is on the Live tab and the panel says when it checked', top.sum==='✓ 1 live edge' && top.tab==='1' && /checked \d/.test(top.stamp), top);
+  const n0=sbAsked.length; await rescan(); const n1=sbAsked.length-n0;
+  check('v3.76: every team league is checked (first scan), then leagues with nothing live are skipped', n0>=40 && n1<=3, {first:n0, next:n1});
+  SOC={events:[ev('501','CHE','ARS',0,1,null)]}; SOC.events[0].competitions[0].situation={}; PINN1={events:[{home:'Arsenal', away:'Chelsea', periods:{num_0:{money_line:{home:2.0, draw:3.6, away:4.0}}}}]};
+  await p.evaluate(()=>leQuiet.clear()); await rescan();
+  const so=await p.evaluate(()=>{ const g=[...document.querySelectorAll('#leBody .le-game')].find(x=>/EPL/.test(x.querySelector('.le-head b').textContent)); return g?{head:g.querySelector('.le-head').textContent, ars:g.querySelectorAll('.le-side')[1].textContent, good:[...g.querySelectorAll('.le-q.good')].map(x=>x.textContent)}:null; });
+  check('v3.76: a soccer game ESPN has no win chance for is priced by Pinnacle alone (draw included)', so && /no ESPN win chance: Pinnacle only/.test(so.head) && /ESPN — · Pinnacle 48\.6%/.test(so.ars) && so.good.length===1 && /^Kalshi 44\.0¢ · \+6\.4% ✓ edge/.test(so.good[0]), so);
+  SOC=null; PINN1=null;
+  PINN={events:[pinnEv('Boston Celtics','Los Angeles Lakers',1.80,2.10)]}; let k=pinAsked.length;
+  await p.evaluate(()=>leScan(false)); await p.waitForFunction(()=>!leBusy);
+  const au=await p.evaluate(()=>document.getElementById('leStamp').textContent);
+  check('v3.76: Auto-refresh does not ask Pinnacle (daily limit); it says to press Scan', pinAsked.length===k && /\d+ of 40 Pinnacle checks today/.test(au), {asked:pinAsked.length-k, au});
+  await p.evaluate(()=>localStorage.setItem('mbev.lePinn',JSON.stringify({day:ctDay(Date.now()),n:40}))); k=pinAsked.length; await rescan();
+  const cap=await p.evaluate(()=>document.getElementById('leStamp').textContent);
+  check('v3.76: after 40 Pinnacle checks today, a press uses ESPN and says so', pinAsked.length===k && /today.s 40 used|40 of 40/.test(cap), {asked:pinAsked.length-k, cap});
+  await p.evaluate(()=>localStorage.removeItem('mbev.lePinn')); PINN=null;
   await p.setViewportSize({width:390,height:844}); await p.waitForTimeout(300);
   const ph=await p.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth+1, right:document.getElementById('lePanel').getBoundingClientRect().right, w:innerWidth}));
   check('phone: fits the screen', !ph.overflow && ph.right<=ph.w+1, ph);

@@ -5,7 +5,8 @@
   `phone.html` only frames `index.html` at phone width (Settings > Layout > Phone on a computer). There is no build step.
 - Live at props.0xbeta.dev (see `CNAME`), served by GitHub Pages from `main`; merging a pull request is what deploys (about a minute).
   Claude Code may merge its own pull requests, but only after the owner says go. Before each merge ask plainly ("Publish v3.7x to props.0xbeta.dev now?")
-  and quote the owner's answer in the report; "build" alone is not a go to publish (agreed 2026-11-04, Ref 2026-11-04-02). The Worker is deployed by the owner (`npx wrangler deploy`).
+  and quote the owner's answer in the report; "build" alone is not a go to publish (agreed 2026-11-04, Ref 2026-11-04-02). The Worker (AloZic80/prop-bet-api, on GitHub since 2026-11-05) deploys itself: merging into its
+  `main` runs `.github/workflows/deploy.yml` (route test, then `wrangler deploy`, token in the `CLOUDFARE_API_TOKEN` secret). Same rule: ask before merging.
 - Who does what (`agent-notes/how-we-work_2026-11-03_v1.md`): Claude Code is the only one that changes the app's code
   (branch, tests, publish on the owner's go). The claude.ai Project's agent keeps the history, researches and writes specs;
   ChatGPT gives second opinions; the owner decides, deploys the Worker and carries notes. Code drafted elsewhere comes in
@@ -84,6 +85,10 @@
   `agent-notes/worker-pinnapi-live_2026-11-04_v1.md`; not deployed yet) passes pinnapi's `/kit/v1/markets?event_type=live`.
   When it answers, Pinnacle's no-vig moneyline is the fair price and ESPN must agree (a plus after the fee); a 404 means
   "not on your Worker yet" and ESPN alone is used. The response layout is from pinnapi's docs, not yet seen live.
+  v3.76: every team league in `ESPN_MAP` (`LE_TEAM`: football, basketball, hockey, baseball, soccer); a league with nothing live
+  is skipped for `LE_QUIET` (10 min); up to `LE_MAXG` (30) games. A game ESPN has no win chance for (often soccer) is priced by
+  Pinnacle alone. pinnapi's trial is 100 requests a day: Pinnacle live is asked only on a Scan press (`leScan(true)`), at most
+  `LE_PINN_DAY` (40) a day per device (`mbev.lePinn`); Auto-refresh reuses the last answer until it is a minute old, then ESPN.
 
 ## Parlays tab (PrizePicks, DraftKings Pick6)
 - The math lives in the `pk*` functions (`pkDist`, `pkEV`, `pkBreakEven`, `pkKelly`, `pkEntry`). `tests/parlay-test.js` checks them against
