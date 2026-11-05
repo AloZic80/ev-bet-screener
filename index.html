@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v3.76</title>
+<title>0xBeta Screener v3.77</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -976,6 +976,10 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 .le-q{max-width:100%; white-space:normal; overflow-wrap:anywhere}
 .le-q .le-max{white-space:nowrap}
 .le-q.good{border-radius:10px; padding:4px 9px}
+/* v3.77 ribbon: every league, Top events, Live now */
+#ssSport{max-width:190px}
+.ss-g .ss-h span:last-child{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px}
+.ss-note{min-width:170px; font-size:11.5px}
 </style>
 </head>
 <body>
@@ -984,7 +988,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.76</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.77</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1642,7 +1646,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v3.76';
+const SCREENER_VERSION='v3.77';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -4841,7 +4845,7 @@ setInterval(()=>{ const sec=+((document.getElementById('liveEvery')||{}).value)|
   if(leOn && sec>0 && on && document.visibilityState==='visible' && !leBusy && Date.now()-leAt>=Math.max(30,sec)*1000-300) leScan(); }, 1000);
 /* ============ v2.71: ESPN score strip (free — no BettingPros calls) ============ */
 let ssLastRun=0, ssBusy=false;
-function ssTile(ev, sport, mine){
+function ssTile(ev, sport, mine, lab){   // v3.77: lab = the league, on the ribbon's Top events and Live now
   const st=(ev.status&&ev.status.type)||{}, comp=(ev.competitions&&ev.competitions[0])||{}, sit=comp.situation||{};
   const comps=compsOf(ev), a=comps.find(c=>c.homeAway==='away'), h=comps.find(c=>c.homeAway==='home'); if(!a||!h) return '';
   const val=c=>c&&c.score!=null?(typeof c.score==='object'?c.score.value:c.score):'';
@@ -4858,7 +4862,7 @@ function ssTile(ev, sport, mine){
   if(live && fb && (sit.shortDownDistanceText||sit.possessionText)) dd=esc(sit.shortDownDistanceText||'')+(sit.possessionText?'<br>'+esc(sit.possessionText):'');
   else if(live && sport==='MLB' && sit.outs!=null) dd=(sit.balls!=null?esc(sit.balls+'-'+sit.strikes)+'<br>':'')+esc(sit.outs+' out'+(+sit.outs===1?'':'s'));
   return '<div class="ss-g'+(mine?' mine':'')+'" data-key="'+esc(sport+':'+ev.id)+'"'+(mine?' title="You have a bet in this game — open it in the Live tab"':'')+'>'+
-    '<div class="ss-h"><span class="'+(live?'lv':post?'fin':'')+'">'+esc(when)+'</span><span>'+esc(tv)+'</span></div>'+
+    '<div class="ss-h"><span class="'+(live?'lv':post?'fin':'')+'">'+esc(when)+'</span><span>'+esc(lab?lab+(tv?' · '+tv:''):tv)+'</span></div>'+
     '<div class="ss-b"><div class="ss-t">'+row(a)+row(h)+'</div>'+(dd?'<div class="ss-dd">'+dd+'</div>':'')+'</div></div>';
 }
 async function renderStrip(force){
@@ -4866,7 +4870,9 @@ async function renderStrip(force){
   ssBusy=true; ssLastRun=Date.now();
   { const at=document.getElementById('ssAt'); if(at) at.textContent='updated '+new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'}); }
   try{
-    const sport=sel.value; if(force) delete scoreboardCache[sport];
+    const sport=sel.value; if(sport==='TOP'||sport==='ALL'){ await ssMulti(box, sport, force); return; }   // v3.77
+    if(sport.startsWith('X:')){ await ssExtra(box, sport.slice(2), force); return; }   // v3.77: F1, golf, tennis, UFC...
+    if(force) delete scoreboardCache[sport];
     const evs=(await fetchScoreboard(sport))||[], today=ctDay(Date.now()), stOf=ev=>(ev.status&&ev.status.type&&ev.status.type.state)||'pre';
     let list=evs.filter(ev=>stOf(ev)==='in' || ctDay(Date.parse(ev.date))===today);
     if(!list.length) list=evs.filter(ev=>stOf(ev)==='pre').slice(0,16);
@@ -4879,6 +4885,85 @@ async function renderStrip(force){
     box.querySelectorAll('.ss-g.mine').forEach(t=>t.addEventListener('click',()=>{ liveScrollTo=t.dataset.key; const tab=document.querySelector('.tab[data-view="v-live"]'); if(tab) tab.click(); }));
   }catch(e){ box.innerHTML='<div class="ss-empty">Scores unavailable right now.</div>'; }
   finally{ ssBusy=false; setTimeout(autoGradeLog,0); }
+}
+/* ============ v3.77: the score ribbon for every league (Alonzo: "ESPN has other live scores than what we have on our app.
+   It even has a Top Events. Put all those inside on the ribbon.") ============
+   The menu lists ⭐ Top events (ESPN's own cross-sport header, the one on espn.com; its layout is not documented, so it is read
+   defensively and, if it does not answer, the ribbon falls back to Live now), 🔴 Live now: every league, then every league the
+   app knows by sport. Live now asks ESPN for every league, but a league with nothing live is skipped for 10 minutes (leQuiet). */
+const SS_GN={football:'Football', basketball:'Basketball', hockey:'Hockey', baseball:'Baseball', soccer:'Soccer'};
+/* More of ESPN, for the ribbon only (kept out of ESPN_MAP so grading, Live edges and the board do not change): sports with no
+   home and away team. Tennis and fights show each match; racing and golf the top 3. Paths are ESPN's public scoreboards. */
+const SS_EXTRA=[['F1','Formula 1','Racing','racing/f1'],['NASCAR','NASCAR Cup','Racing','racing/nascar-premier'],['INDYCAR','IndyCar','Racing','racing/irl'],
+  ['PGA','PGA Tour','Golf','golf/pga'],['LPGA','LPGA','Golf','golf/lpga'],['LIV','LIV Golf','Golf','golf/liv'],['DPWT','DP World Tour','Golf','golf/eur'],
+  ['ATP','ATP','Tennis','tennis/atp'],['WTA','WTA','Tennis','tennis/wta'],['UFCX','UFC','Fighting','mma/ufc'],
+  ['NCAAW','Women\'s college basketball','More','basketball/womens-college-basketball'],['NWSL','NWSL','More','soccer/usa.nwsl'],['NLL','NLL lacrosse','More','lacrosse/nll'],['PLL','PLL lacrosse','More','lacrosse/pll']];
+const ssXCache={};
+async function ssXFetch(code, force){ const x=SS_EXTRA.find(r=>r[0]===code); if(!x) return [];
+  const c=ssXCache[code]; if(c && !force && Date.now()-c.at<30000) return c.evs;
+  try{ const r=await fetch('https://site.api.espn.com/apis/site/v2/sports/'+x[3]+'/scoreboard',{cache:'no-store'}); const j=r.ok?await r.json():null; const evs=(j&&j.events)||[]; ssXCache[code]={at:Date.now(), evs}; return evs; }catch(e){ return (c&&c.evs)||[]; } }
+function ssXName(c){ const a=c.athlete||{}, t=c.team||{}, r=c.roster||{}; return a.shortName||a.displayName||t.abbreviation||t.shortDisplayName||r.shortDisplayName||r.displayName||t.displayName||''; }
+function ssXScore(c){ if(c.score!=null && typeof c.score!=='object') return String(c.score); if(c.score&&c.score.displayValue) return c.score.displayValue; const ls=c.linescores; return Array.isArray(ls)&&ls.length?ls.map(l=>l.value!=null?Math.round(l.value):'').join(' '):''; }
+function ssXItems(ev){ const out=[], cs=ev.competitions||[];   // one tile per match or fight, or one for a race or tournament
+  (ev.groupings||[]).forEach(g=>(g.competitions||[]).forEach(c=>out.push({ev,c,two:true})));
+  if(out.length) return out;
+  if(cs.length>1){ cs.forEach(c=>out.push({ev,c,two:(c.competitors||[]).length===2})); return out; }
+  if(cs[0]) out.push({ev,c:cs[0],two:(cs[0].competitors||[]).length===2});
+  return out; }
+function ssXState(it){ const t=(it.c.status&&it.c.status.type)||(it.ev.status&&it.ev.status.type)||{}; return t.state||'pre'; }
+function ssXTile(it, lab){ const st=ssXState(it), live=st==='in', post=st==='post', t=(it.c.status&&it.c.status.type)||(it.ev.status&&it.ev.status.type)||{};
+  const when=live||post ? (t.shortDetail||t.detail||(post?'Final':'')) : new Date(it.c.date||it.ev.date).toLocaleString('en-US',{timeZone:'America/Chicago',weekday:'short',hour:'numeric',minute:'2-digit'});
+  const comps=(it.c.competitors||[]).slice();
+  let body;
+  if(it.two){ body=comps.map(c=>'<div class="ss-r'+(post&&c.winner===false?' dim':'')+'"><span class="nl"></span><b>'+esc(ssXName(c))+'</b>'+(live||post?'<span class="sc">'+esc(ssXScore(c))+(c.winner?'<span class="w">◀</span>':'')+'</span>':'')+'</div>').join(''); }
+  else { const top=comps.sort((x,y)=>(+x.order||+x.sortOrder||999)-(+y.order||+y.sortOrder||999)).slice(0,3);
+    body=(live||post)&&top.length ? top.map((c,i)=>'<div class="ss-r"><span class="nl">'+(i+1)+'</span><b>'+esc(ssXName(c))+'</b><span class="sc">'+esc(ssXScore(c))+'</span></div>').join('') : '<div class="ss-r"><b>'+esc(it.ev.shortName||it.ev.name||'')+'</b></div>'; }
+  return '<div class="ss-g"><div class="ss-h"><span class="'+(live?'lv':post?'fin':'')+'">'+esc(when)+'</span><span>'+esc(lab)+'</span></div><div class="ss-b"><div class="ss-t">'+body+'</div></div></div>'; }
+async function ssExtra(box, code, force){ const evs=await ssXFetch(code, force), rk={in:0,pre:1,post:2};
+  let items=[]; evs.forEach(ev=>items.push(...ssXItems(ev)));
+  const live=items.filter(i=>ssXState(i)==='in'); if(live.length) items=live.concat(items.filter(i=>ssXState(i)!=='in').slice(0,8));
+  items.sort((x,y)=>rk[ssXState(x)]-rk[ssXState(y)]); items=items.slice(0,40);
+  const lab=(SS_EXTRA.find(r=>r[0]===code)||[])[1]||code;
+  box.innerHTML=items.length?items.map(i=>ssXTile(i,lab)).join(''):'<div class="ss-empty">Nothing on ESPN for '+esc(lab)+' right now.</div>';
+  box.dataset.live=live.length?'1':''; }
+function ssFillSel(sel){ const g={}; Object.keys(ESPN_MAP).forEach(c=>{ const k=String(ESPN_MAP[c]).split('/')[0]; (g[k]=g[k]||[]).push(c); });
+  const opt=c=>'<option value="'+esc(c)+'">'+esc(SPORT_NAMES[c]&&SPORT_NAMES[c]!==c?SPORT_NAMES[c]+' ('+c+')':c)+'</option>';
+  sel.innerHTML='<option value="TOP">⭐ Top events (ESPN)</option><option value="ALL">🔴 Live now: every league</option>'+
+    Object.keys(g).sort((x,y)=>(SS_GN[x]?0:1)-(SS_GN[y]?0:1)).map(k=>'<optgroup label="'+esc(SS_GN[k]||k)+'">'+g[k].map(opt).join('')+'</optgroup>').join('')+
+    [...new Set(SS_EXTRA.map(r=>r[2]))].map(k=>'<optgroup label="'+esc(k)+'">'+SS_EXTRA.filter(r=>r[2]===k).map(r=>'<option value="X:'+esc(r[0])+'">'+esc(r[1])+'</option>').join('')+'</optgroup>').join(''); }
+async function ssTopEvents(){
+  const r=await fetch('https://site.web.api.espn.com/apis/personalized/v2/scoreboard/header?region=us&lang=en&contentorigin=espn&tz=America%2FChicago',{cache:'no-store'});
+  if(!r.ok) throw new Error('top events '+r.status);
+  const j=await r.json(), out=[];
+  (j.sports||[]).forEach(sp=>(sp.leagues||[]).forEach(lg=>(lg.events||[]).forEach(e=>{ if(e&&e.id) out.push({e, lg:lg.abbreviation||lg.shortName||lg.name||sp.name||''}); })));
+  return out;
+}
+function ssHdState(e){ const t=(e.fullStatus&&e.fullStatus.type)||(e.status&&typeof e.status==='object'&&e.status.type)||{}; return t.state||(typeof e.status==='string'?e.status:'pre'); }
+function ssHdTile(x){ const e=x.e, st=ssHdState(e), live=st==='in', post=st==='post', t=(e.fullStatus&&e.fullStatus.type)||{};
+  const comps=Array.isArray(e.competitors)?e.competitors:[], a=comps.find(c=>c.homeAway==='away')||comps[0], h=comps.find(c=>c.homeAway==='home')||comps[1];
+  const when=live||post ? (e.summary||t.shortDetail||(post?'Final':'')) : (e.date?(ctDay(Date.parse(e.date))===ctDay(Date.now())?new Date(e.date).toLocaleTimeString('en-US',{timeZone:'America/Chicago',hour:'numeric',minute:'2-digit'}):new Date(e.date).toLocaleString('en-US',{timeZone:'America/Chicago',weekday:'short',hour:'numeric',minute:'2-digit'})):'');
+  const row=c=>'<div class="ss-r">'+(c.logo?'<img src="'+esc(c.logo)+'" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'">':'<span class="nl"></span>')+'<b>'+esc(c.abbreviation||c.shortDisplayName||c.displayName||c.name||'')+'</b>'+(live||post?'<span class="sc">'+esc(c.score!=null?String(c.score):'')+'</span>':'')+'</div>';
+  const body=a&&h&&a!==h ? row(a)+row(h) : '<div class="ss-r"><b>'+esc(e.shortName||e.name||'')+'</b></div>';
+  return '<div class="ss-g"><div class="ss-h"><span class="'+(live?'lv':post?'fin':'')+'">'+esc(when)+'</span><span>'+esc(x.lg)+'</span></div><div class="ss-b"><div class="ss-t">'+body+'</div></div></div>'; }
+async function ssMulti(box, mode, force){
+  if(mode==='TOP'){ try{ const L=await ssTopEvents(); if(L.length){ const rk=x=>({in:0,pre:1,post:2})[ssHdState(x.e)]??1;
+        L.sort((x,y)=>rk(x)-rk(y) || Date.parse(x.e.date||0)-Date.parse(y.e.date||0));
+        box.innerHTML=L.map(ssHdTile).join(''); box.dataset.live=L.some(x=>ssHdState(x.e)==='in')?'1':''; return; } }catch(e){} }
+  const lgs=Object.keys(ESPN_MAP), ask=lgs.filter(c=>!(leQuiet.get(c)>Date.now()));
+  if(force) ask.forEach(c=>{ delete scoreboardCache[c]; });
+  await Promise.all(ask.map(c=>fetchScoreboard(c).catch(()=>[])));
+  const stOf=ev=>(ev&&ev.status&&ev.status.type&&ev.status.type.state)||'pre', soon=Date.now()+15*60e3, today=ctDay(Date.now());
+  ask.forEach(c=>{ const evs=scoreboardCache[c]||[]; if(!evs.some(ev=>stOf(ev)==='in' || (stOf(ev)==='pre' && Date.parse(ev.date)<=soon))) leQuiet.set(c, Date.now()+LE_QUIET); else leQuiet.delete(c); });
+  const all=[]; lgs.forEach(c=>(scoreboardCache[c]||[]).forEach(ev=>all.push({c,ev})));
+  let list=all.filter(x=>stOf(x.ev)==='in');
+  if(!list.length) list=all.filter(x=>stOf(x.ev)==='pre' && ctDay(Date.parse(x.ev.date))===today).sort((x,y)=>Date.parse(x.ev.date)-Date.parse(y.ev.date)).slice(0,30);
+  const mine=new Set(); liveOpenBets().forEach(b=>{ const evs=scoreboardCache[b.sport]||[]; const ev=findGame(evs,b.game)||findGameAny(evs,b.game,b.name,b.matchup); if(ev) mine.add(b.sport+':'+ev.id); });
+  const xs=[]; await Promise.all(SS_EXTRA.filter(r=>!(leQuiet.get('X:'+r[0])>Date.now())).map(async r=>{ const evs=await ssXFetch(r[0], force), its=[]; evs.forEach(ev=>its.push(...ssXItems(ev)));
+    const lv=its.filter(i=>ssXState(i)==='in'); if(!lv.length && !its.some(i=>ssXState(i)==='pre' && Date.parse(i.c.date||i.ev.date)<=soon)) leQuiet.set('X:'+r[0], Date.now()+LE_QUIET); lv.forEach(i=>xs.push(ssXTile(i,r[1]))); }));   // v3.77: racing, golf, tennis, fights live too
+  const note=mode==='TOP'?'<div class="ss-empty ss-note">ESPN top events did not answer · every league live now</div>':'';
+  box.innerHTML=note+(list.length||xs.length ? list.map(x=>ssTile(x.ev,x.c,mine.has(x.c+':'+x.ev.id),x.c)).join('')+xs.join('') : '<div class="ss-empty">No games in progress or left today in any league.</div>');
+  box.dataset.live=(list.some(x=>stOf(x.ev)==='in')||xs.length)?'1':'';
+  box.querySelectorAll('.ss-g.mine').forEach(t=>t.addEventListener('click',()=>{ liveScrollTo=t.dataset.key; const tab=document.querySelector('.tab[data-view="v-live"]'); if(tab) tab.click(); }));
 }
 /* ============ v2.73: Today ribbon (per book) ============ */
 const RIBBON_BOOKS=['Novig','Kalshi','Polymarket','DraftKings','FD Predicts','Bovada'];   // v3.31: Bovada gets its own tile
@@ -8833,7 +8918,7 @@ document.getElementById('passLink').addEventListener('click',()=>{ const pb=docu
 // v2.71: score strip — picks the sport you have the most open bets in (or your last pick), refreshes on the
 // Live timer while a game is on, every 5 minutes otherwise
 setTimeout(()=>{
-  const sel=document.getElementById('ssSport'); if(!sel) return;
+  const sel=document.getElementById('ssSport'); if(!sel) return; ssFillSel(sel);   // v3.77: every league, Top events, Live now
   let v=null; try{ v=localStorage.getItem('mbev.ssSport'); }catch(e){}
   if(!v){ const c={}; liveOpenBets().forEach(b=>{ c[b.sport]=(c[b.sport]||0)+1; }); v=Object.keys(c).sort((x,y)=>c[y]-c[x])[0]||'NFL'; }
   if(![...sel.options].some(o=>o.value===v)) v='NFL';
