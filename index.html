@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v3.64</title>
+<title>0xBeta Screener v3.65</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -871,6 +871,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 #pkApps{display:flex; flex-direction:column; gap:8px; margin:10px 0 4px} .pk-apps-g{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; font-size:13px} .pk-apps-g b{min-width:70px}
 .pk-app-seg{flex-wrap:wrap}
 /* v3.62 */ .pk-good{color:var(--gain)}
+/* v3.65 */ button.log.sm.pk-logged,:root[data-theme="dark"] button.log.sm.pk-logged{background:var(--live-bg); color:var(--gain); border:1px solid var(--live); cursor:default} .pk-logged-msg{font-size:13px; color:var(--gain); font-weight:600}
 /* v3.64 */ .pk-combo-ctl{display:contents} .pk-combo-ctl[hidden]{display:none} .pk-combo-ctl label{font-size:13px; color:var(--soft); display:inline-flex; align-items:center; gap:6px}
 .pk-combo-ctl input[type=number]{font:inherit; font-size:13px; padding:6px 8px; border:1px solid var(--rule); border-radius:6px; background:var(--panel); color:var(--ink)}
 .pk-slip-bar select{font:inherit; font-size:13px; padding:5px 8px; border:1px solid var(--rule); border-radius:6px; background:var(--panel); color:var(--ink)}
@@ -962,7 +963,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.64</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.65</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1610,7 +1611,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v3.64';
+const SCREENER_VERSION='v3.65';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -7148,7 +7149,7 @@ function pkCard(title,legs,e,id,best){
     '<div class="pk-meter" role="img" aria-label="Picks average '+pct(e.avg)+', break-even '+(e.be!=null?pct(e.be):'n/a')+'"><i style="width:'+pos(e.avg)+'"></i>'+(e.be!=null?'<b style="left:'+pos(e.be)+'"></b>':'')+'</div>'+
     '<div class="meta">Picks average <b>'+pct(e.avg)+'</b>, break-even '+(e.be!=null?pct(e.be):'n/a')+'. All '+e.n+' hit '+pct(e.pAll)+' of the time'+(e.pAll>0?' (about 1 in '+Math.max(1,Math.round(1/e.pAll))+')':'')+'.</div>'+   // v3.64
     '<ul class="pk-legs">'+legs.map(l=>'<li><span>'+esc(l.name)+' <span class="meta">'+esc(pkPick(l))+'</span>'+(l.own?'':' <span class="pk-chk" title="This line is from '+esc(bookLabel(l.book))+'. Check the app has the same line.">check line</span>')+'<span class="pk-where">'+esc(pkWhere(l))+'</span></span><b>'+pct(l.p)+'</b></li>').join('')+'</ul>'+   // v3.63: sport, team, game
-    (up ? '<div class="pk-act"><label>Stake $ <input type="number" class="pk-stake" step="0.5" min="0" value="'+e.stake.toFixed(2)+'"></label><button type="button" class="log sm pk-log" data-id="'+id+'">Log this entry</button></div>'
+    (up ? '<div class="pk-act"><label>Stake $ <input type="number" class="pk-stake" step="0.5" min="0" value="'+e.stake.toFixed(2)+'"></label>'+((window._pkLogged&&window._pkLogged.has(legs.map(l=>l.key).sort().join('+')))?'<button type="button" class="log sm pk-log pk-logged" data-id="'+id+'" disabled>✓ Logged</button> <span class="pk-logged-msg">In the Bet log. <button type="button" class="linkbtn pk-see-log">See it ›</button></span>':'<button type="button" class="log sm pk-log" data-id="'+id+'">Log this entry</button>')+'</div>'
         : '<div class="meta"><b>Skip:</b> these picks are under break-even for this payout.</div>')+
   '</div>'; }
 function renderParlays(){
@@ -7220,12 +7221,16 @@ function pkLog(id,btn){ const c=(window._pkCards||{})[id]; if(!c) return; const 
     legs:L.map(l=>l.name+' '+pkPick(l)).join('; '), onList:e.ev>0,
     pk:{play:pkState.play, ev:+e.ev.toFixed(4), pAll:+e.pAll.toFixed(4), legs:L.map(l=>({name:l.name, market:l.line+' '+l.stat, side:l.side, p:+l.p.toFixed(4), book:l.book, game:l.game, start:l.start}))}}));
   saveLog(); renderLog(); renderPerf();
-  msg.textContent='Logged: '+n+' picks on '+(app==='DraftKings Pick 6'?'Pick6':app)+', $'+s.toFixed(2)+'. Grade it in the Bet log with how many hit.'; }
+  msg.textContent='Logged: '+n+' picks on '+(app==='DraftKings Pick 6'?'Pick6':app)+', $'+s.toFixed(2)+'. Grade it in the Bet log with how many hit.';
+  // v3.65 (Alonzo: "I press Log this entry and nothing happens"): say so on the slip itself, and one press logs it once
+  btn.disabled=true; btn.textContent='✓ Logged'; btn.classList.add('pk-logged'); (window._pkLogged=window._pkLogged||new Set()).add(L.map(l=>l.key).sort().join('+'));
+  btn.insertAdjacentHTML('afterend',' <span class="pk-logged-msg" role="status">Saved in the Bet log ($'+s.toFixed(2)+'). <button type="button" class="linkbtn pk-see-log">See it ›</button></span>'); }
 (function(){ const box=document.getElementById('pkPanel'); if(!box) return;
   box.addEventListener('click',e=>{ const a=e.target.closest('#pkApp button'); if(a){ pkState.app=a.dataset.v; pkSave(); renderParlays(); pkBadge(); return; }
     const p=e.target.closest('#pkPlay button'); if(p){ pkState.play=p.dataset.v; pkSave(); renderParlays(); return; }
     if(e.target.closest('#pkPayReset')){ if(pkState.pays&&pkState.pays[pkState.app]) delete pkState.pays[pkState.app][pkState.play]; pkSave(); renderParlays(); return; }
-    const lg=e.target.closest('.pk-log'); if(lg){ pkLog(lg.dataset.id,lg); return; }
+    const lg=e.target.closest('.pk-log'); if(lg){ if(!lg.disabled) pkLog(lg.dataset.id,lg); return; }
+    if(e.target.closest('.pk-see-log')){ const t=document.querySelector('.tab[data-view="v-log"]'); if(t) t.click(); window.scrollTo(0,0); return; }   // v3.65
     const sn=e.target.closest('.pk-slipn'); if(sn){ pkState.slipN=+sn.dataset.n; pkSave(); renderParlays(); return; }   // v3.61
     const bn=e.target.closest('#pkSent .pk-be-i'); if(bn){ pkState.sentN=+bn.dataset.n; pkSave(); renderParlays(); return; }   // v3.59
     const dx=e.target.closest('.pk-disc-x'); if(dx){ delete pkState.adj[dx.dataset.k]; pkSave(); renderParlays(); return; }

@@ -61,6 +61,9 @@ const BOARD=[prop('Leg One','AAA','BBB',20,0.60),prop('Leg Two','CCC','DDD',21,0
   await p.click('.pk-slipn[data-n="2"]'); await p.waitForTimeout(300);
   const sl2=await p.evaluate(()=>[...document.querySelectorAll('#pkSlips .pk-card')].map(c=>({t:c.querySelector('.pk-h b').textContent, hit:c.innerText})));
   check('Kalshi slips: most likely to win first, with "about 1 in N"', sl2.length>=1 && /most likely to win/.test(sl2[0].t) && /about 1 in \d+/.test(sl2[0].hit), sl2);
+  const n0=await p.evaluate(()=>logged.length); await p.click('#pkSlips .pk-log'); await p.waitForTimeout(250); await p.click('#pkSlips .pk-log',{force:true}).catch(()=>{}); await p.waitForTimeout(250);
+  const lg2=await p.evaluate(n0=>({added:logged.length-n0, btn:document.querySelector('#pkSlips .pk-log').textContent, msg:(document.querySelector('#pkSlips .pk-logged-msg')||{}).textContent||''}),n0);
+  check('Log this entry: saved once (a second press does nothing), and the slip itself says so with a link to the Bet log', lg2.added===1 && /Logged/.test(lg2.btn) && /Saved in the Bet log/.test(lg2.msg), lg2);
   check('combos hide the payout table and Power/Flex', await p.evaluate(()=>document.querySelector('.pk-pays-box').hidden && document.getElementById('pkPlay').hidden), true);
   check('no page errors', errs.length===0, errs);
   console.log(`\n${pass} passed, ${fail} failed`); await b.close(); process.exit(fail?1:0);
