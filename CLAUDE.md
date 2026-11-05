@@ -5,7 +5,9 @@
   `phone.html` only frames `index.html` at phone width (Settings > Layout > Phone on a computer). There is no build step.
 - Live at props.0xbeta.dev (see `CNAME`), served by GitHub Pages from `main`; merging a pull request is what deploys (about a minute).
   Claude Code may merge its own pull requests, but only after the owner says go. Before each merge ask plainly ("Publish v3.7x to props.0xbeta.dev now?")
-  and quote the owner's answer in the report; "build" alone is not a go to publish (agreed 2026-11-04, Ref 2026-11-04-02). The Worker (AloZic80/prop-bet-api, on GitHub since 2026-11-05) deploys itself: merging into its
+  and quote the owner's answer in the report; "build" alone is not a go to publish (agreed 2026-11-04, Ref 2026-11-04-02).
+  Owner, 2026-11-05: "Publish if they pass. Always publish if it passes." So for the app: when `node tests/run-all.js` ends
+  "All tests passed", merge and publish without asking, and say so in the PR and the reply. Any failing test: do not publish, report it. The Worker (AloZic80/prop-bet-api, on GitHub since 2026-11-05) deploys itself: merging into its
   `main` runs `.github/workflows/deploy.yml` (route test, then `wrangler deploy`, token in the `CLOUDFARE_API_TOKEN` secret). Same rule: ask before merging.
 - Who does what (`agent-notes/how-we-work_2026-11-03_v1.md`): Claude Code is the only one that changes the app's code
   (branch, tests, publish on the owner's go). The claude.ai Project's agent keeps the history, researches and writes specs;
@@ -57,8 +59,13 @@
   because grading and matching read it.
 - Team codes are normalised to ESPN's (`normAbbr`, e.g. NYK to NY).
 - Grading (`autoGradeLog`) runs on page load and on the refresh buttons, not when a bet is saved.
+  The Check results button (`checkResultsRun`, also Look out's "Check results again") skips `gradedBy==='manual'` bets and keeps a
+  win/loss/push when ESPN cannot grade it (v3.84); before, it overwrote them with `?` and they went back to Look out.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
+- Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American
+  odds, parsed from `parlay.legs` "text odds; text odds"), add or remove legs, stake, and Pays if all hit (from the legs until typed).
+  Saving sets `parlay.legs`, `picks`, `pays.all`, `odds`; an all-hit parlay gets the new payout; each edit goes in `edits`.
 - The Bet log draws newest first, grouped by game day (`logDays` remembers open/closed days per device). `data-i` on its
   buttons is still the bet's index in `logged`, not its position on screen.
 - Look out (`lookOutWhy`): a bet with no result once its game is surely over (`overAfterH`: 5 hours, 8 for fights, 100 for

@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v3.83</title>
+<title>0xBeta Screener v3.85</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -999,6 +999,13 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
   .from-books td{display:block; border:0!important; min-width:0}
   .from-books td.fb-act{grid-column:1 / -1; width:auto!important; display:flex; gap:8px; justify-content:flex-end}
   .from-books td.fb-act button{display:inline-block; width:auto; margin:0; padding:8px 18px; font-size:14px} }
+/* v3.85 edit a logged parlay */
+.pl-edbox{display:flex; flex-direction:column; gap:8px; padding:10px 4px; white-space:normal}
+.pl-legs{display:flex; flex-direction:column; gap:6px}
+.pl-leg{display:grid; grid-template-columns:minmax(0,1fr) 84px 36px; gap:6px; align-items:center}
+.pl-leg input, .pl-edrow input{font:inherit; font-size:14px; padding:6px 8px; border:1px solid var(--rule); border-radius:7px; background:var(--panel); color:var(--ink); min-width:0}
+.pl-edrow{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+.pl-edrow input{width:96px}
 #saveFail{position:sticky; top:0; z-index:50; padding:10px 16px; background:var(--out-bg); color:var(--loss); font-weight:700; font-size:14px; border-bottom:1px solid var(--loss)}
 </style>
 </head>
@@ -1008,7 +1015,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.83</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.85</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1666,7 +1673,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v3.83';
+const SCREENER_VERSION='v3.85';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -4016,7 +4023,7 @@ function renderLog(){
         '<td><span class="sport">PARLAY</span></td><td class="num">'+esc(fmtOdds(b.odds))+'</td><td class="num">—</td><td class="num">—</td>'+
         '<td class="num">$'+(+b.stake||0).toFixed(2)+'</td>'+
         '<td class="num">'+sel+(pr!=null?'<div class="meta '+(pr>=0?'pl-up':'pl-down')+'">'+money(pr,true)+'</div>':'')+'</td><td class="num">—</td><td class="num">—</td>'+
-        '<td style="white-space:nowrap"><button class="kill" data-i="'+i+'">remove</button></td>';
+        '<td style="white-space:nowrap"><button class="kill edit pl-edit" data-i="'+i+'">edit</button> <button class="kill" data-i="'+i+'">remove</button></td>';   // v3.85: edit a parlay
       tb.appendChild(tr); return;
     }
     tr.innerHTML=
@@ -4042,6 +4049,7 @@ function renderLog(){
         ' <button class="kill" data-i="'+i+'">remove</button></td>';
     tb.appendChild(tr);
   });
+  tb.querySelectorAll('button.pl-edit').forEach(btn=>btn.addEventListener('click',()=>{ const i=+btn.dataset.i, tr=btn.closest('tr'); const nx=tr.nextElementSibling; if(nx&&nx.classList.contains('pl-ed')){ nx.remove(); return; } plEditOpen(tr,i); }));   // v3.85
   tb.querySelectorAll('select.pl-hit').forEach(sel=>sel.addEventListener('change',()=>{   // v2.73: grade a parlay
     const b=logged[parseInt(sel.dataset.i,10)]; if(!b||!b.parlay) return;
     const P=b.parlay, n=+P.picks||0, pays=P.pays||{};
@@ -7030,16 +7038,18 @@ async function checkResultsRun(){
   await Promise.all(sports.map(fetchScoreboard));
   for(const b of logged){
     if(b.sold || b.kind==='parlay') continue;   // a cashed-out bet keeps its sale result; parlays are graded by hand
+    if(b.gradedBy==='manual') continue;   // v3.84 (Alonzo: "I press Check results again, they come back"): your own result wins here too
+    const had=/^(win|loss|push)$/.test(b.result||'') ? b.result : null;   // v3.84: a settled result is not erased when ESPN cannot grade it
     const gl=GL_KINDS.test(b.kind||'');
     let ev=findGame(scoreboardCache[b.sport], b.game);
     if(!ev && gl) ev=findGameAny(scoreboardCache[b.sport], b.game, b.name);   // v2.59: "NO-PIT" style games
     const gi=gameStatusOf(ev);
     if(!gi){ continue; }
-    if(gi.state!=='post'){ b.result='pending'; continue; }
-    if(gl){ const g=gradeGameLine(b, ev); b.result = g===null ? '?' : g.push ? 'push' : (g.won?'win':'loss'); continue; }
+    if(gi.state!=='post'){ if(!had) b.result='pending'; continue; }   // v3.84: had
+    if(gl){ const g=gradeGameLine(b, ev); b.result = g===null ? (had||'?') : g.push ? 'push' : (g.won?'win':'loss'); continue; }   // v3.84: had
     const box=await fetchBoxscore(b.sport, gi.eventId, true);
     const g=gradeBet(b, box);
-    b.result = g===null ? '?' : (g.won?'win':'loss');
+    b.result = g===null ? (had||'?') : (g.won?'win':'loss');   // v3.84: had
   }
   saveLog(); renderLog(); renderPerf();
   btn.textContent=was; btn.disabled=false;
@@ -7258,6 +7268,49 @@ document.getElementById('liveRefresh').addEventListener('click',()=>renderLive(t
 // v2.73: Today ribbon → Bet log; parlay form; DraftKings grouping
 document.getElementById('todayBar').addEventListener('click',e=>{ const eb=e.target.closest('.tb-espn'); if(eb){ e.stopPropagation(); espnRefreshNow(eb); return; } const t=document.querySelector('.tab[data-view="v-log"]'); if(t) t.click(); });
 (function(){ const d=document.getElementById('plDay'); if(d) d.value=ctDay(Date.now()); })();
+/* v3.85 (Alonzo: "this one hit, I won 12.66, look what you have. I need to put the odds for each one and change if need be"):
+   a logged parlay can be edited: each leg (what it is and its odds), add or remove a leg, the stake, and what it pays if all
+   hit. The pay is worked out from the legs (their decimal odds multiplied, times the stake) until you type the book's own
+   number; the parlay's odds follow from it. A parlay already marked all-hit gets its new payout. */
+function plDec(o){ const n=parseFloat(String(o).replace(/[^\d.+-]/g,'')); if(!isFinite(n)||Math.abs(n)<100) return null; return n>0 ? 1+n/100 : 1+100/Math.abs(n); }
+function plParseLegs(t){ return String(t||'').split(/\s*;\s*/).filter(x=>x.trim()).map(x=>{ const m=x.match(/^(.*?)\s*([+-]\d{3,5})\s*$/); return m?{t:m[1],o:m[2]}:{t:x.trim(),o:''}; }); }
+function plEditOpen(tr, i){
+  const b=logged[i]; if(!b||!b.parlay) return; const P=b.parlay, legs=plParseLegs(P.legs); if(!legs.length) for(let k=0;k<(+P.picks||2);k++) legs.push({t:'',o:''});
+  const ed=document.createElement('tr'); ed.className='pl-ed'; const cols=tr.children.length||11;
+  const legRow=l=>'<div class="pl-leg"><input class="pl-lt" type="text" value="'+esc(l.t)+'" placeholder="leg (team, player, line)" aria-label="Leg"><input class="pl-lo" type="text" inputmode="text" value="'+esc(l.o)+'" placeholder="+105" aria-label="Odds"><button type="button" class="ghost sm pl-ldel" aria-label="Remove this leg">×</button></div>';
+  ed.innerHTML='<td colspan="'+cols+'"><div class="pl-edbox"><b>Edit this parlay</b> <span class="meta">each leg and its odds, as your book shows them</span>'+
+    '<div class="pl-legs">'+legs.map(legRow).join('')+'</div><button type="button" class="ghost sm pl-ladd">+ leg</button>'+
+    '<div class="pl-edrow"><label>Stake $ <input class="pl-st" type="number" step="0.01" min="0" value="'+(+b.stake||0)+'"></label>'+
+    '<label>Pays if all hit $ <input class="pl-pay" type="number" step="0.01" min="0" value="'+(+(P.pays&&P.pays.all)||0).toFixed(2)+'"></label><span class="meta pl-calc"></span></div>'+
+    '<div class="pl-edrow"><button type="button" class="log sm pl-save">Save</button><button type="button" class="ghost sm pl-cancel">Cancel</button><span class="meta pl-msg" role="status"></span></div></div></td>';
+  tr.after(ed);
+  const box=ed.querySelector('.pl-legs'), stIn=ed.querySelector('.pl-st'), payIn=ed.querySelector('.pl-pay'), calc=ed.querySelector('.pl-calc'); let payTyped=false;
+  const read=()=>[...box.querySelectorAll('.pl-leg')].map(r=>({t:r.querySelector('.pl-lt').value.trim(), o:r.querySelector('.pl-lo').value.trim()})).filter(l=>l.t||l.o);
+  const recalc=()=>{ const L=read(), st=parseFloat(stIn.value)||0, ds=L.map(l=>plDec(l.o)), ok=L.length && ds.every(d=>d);
+    const all=ok?st*ds.reduce((a,d)=>a*d,1):null;
+    if(!payTyped && all!=null) payIn.value=all.toFixed(2);
+    const pay=parseFloat(payIn.value)||0;
+    calc.textContent=(ok?'from the legs: $'+all.toFixed(2)+' · ':'')+(st>0&&pay>0?'odds '+fmtOdds(Math.round(americanOf(st/pay)))+' · wins $'+(pay-st).toFixed(2):''); };
+  ed.addEventListener('input',e=>{ if(e.target===payIn) payTyped=true; recalc(); });
+  ed.addEventListener('click',e=>{
+    if(e.target.closest('.pl-ladd')){ box.insertAdjacentHTML('beforeend',legRow({t:'',o:''})); recalc(); return; }
+    const del=e.target.closest('.pl-ldel'); if(del){ del.closest('.pl-leg').remove(); recalc(); return; }
+    if(e.target.closest('.pl-cancel')){ ed.remove(); return; }
+    if(e.target.closest('.pl-save')){ const L=read(), st=parseFloat(stIn.value), pay=parseFloat(payIn.value), msg=ed.querySelector('.pl-msg');
+      if(L.length<2){ msg.textContent='A parlay needs 2 legs or more.'; return; }
+      if(!(st>0) || !(pay>st)){ msg.textContent='Set the stake and what it pays if all hit (more than the stake).'; return; }
+      const oldN=+P.picks||0, wasAll=P.hits!=null && +P.hits===oldN;
+      (b.edits=b.edits||[]).push({at:new Date().toISOString(), before:{stake:b.stake, odds:b.odds, legs:P.legs, all:P.pays&&P.pays.all}});
+      P.legs=L.map(l=>(l.t+' '+l.o).trim()).join('; '); P.picks=L.length; P.pays=Object.assign({}, P.pays||{}, {all:+pay.toFixed(2)});
+      b.stake=+st.toFixed(2); b.odds=fmtOdds(Math.round(americanOf(st/pay))); b.market=L.length+'-pick parlay'; b.betnow=L.length+' picks';
+      if(/·\s*\d+\s*picks?$/.test(b.name||'')) b.name=String(b.name).replace(/\d+\s*picks?$/, L.length+' picks');
+      if(wasAll){ P.hits=L.length; P.payout=+pay.toFixed(2); b.result='win'; }
+      saveLog(); renderLog(); renderPerf(); if(typeof renderTodayBar==='function') renderTodayBar(); }
+  });
+  { const L=read(), ds=L.map(l=>plDec(l.o)), saved=+(P.pays&&P.pays.all)||0, st=+b.stake||0;   // a pay that is not what the legs make was typed: keep it
+    payTyped = saved>0 && !(L.length && ds.every(d=>d) && Math.abs(st*ds.reduce((x,d)=>x*d,1)-saved)<=0.02); }
+  recalc();
+}
 /* v3.54: one shape for a parlay in the Bet log, from the form here or the Parlays tab */
 function parlayRecord(o){ const stake=+(+o.stake).toFixed(2), all=+o.all;
   return { id:(self.crypto&&crypto.randomUUID)?crypto.randomUUID():('p'+Date.now()+Math.random().toString(36).slice(2)), kind:'parlay', date:o.day, start:null,
