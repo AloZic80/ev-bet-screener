@@ -50,6 +50,7 @@
   breaks the whole app. Write "it is", or `\'`.
 - Saving the bet log (v3.82, `saveLog` → `lsSafeSet`): if the browser storage is full, the app's caches (`LS_CACHES`: rosters, injuries,
   weather, league scan, quotes, logos) are dropped to make room; if it still fails, a red `#saveFail` note shows. Never swallow a log save error.
+  v3.83: `saveFills` (From your books: Add, Ignore) saves the same way.
 - `addToLog` copies a fixed list of fields into a saved bet. A new field on the row (like `towin`) must be added there too, or
   it's silently dropped. `fee` is only stored when a bet is edited.
 - Stat names are shortened on screen only (`shortStat`, e.g. Receptions to Rec). The saved `market` text keeps full names

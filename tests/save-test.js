@@ -25,6 +25,21 @@ async function run(fillKey){
   // storage full of the app's own rosters cache (as a phone can end up)
   let R=await run('mbev.rosters');
   check('storage full of caches: Won, Won, Push are still saved and survive a reload', R.after.res==='win,win,push' && R.after.look===0 && !R.note, R);
+  // v3.83: From your books, Ignore with the storage full: it stays ignored after a reload
+  { const b=await chromium.launch(); const ctx=await b.newContext({timezoneId:'America/Chicago'});
+    await ctx.addInitScript(()=>{ try{ if(sessionStorage.getItem('s')) return; sessionStorage.setItem('s','1'); localStorage.clear();
+      localStorage.setItem('mbev.fillPending',JSON.stringify([{book:'novig',id:'f1',price:.5,qty:10,cost:5,fee:0,ts:Date.now()-86400e3,bet:{name:'BOS',stat:'Moneyline'}},{book:'novig',id:'f2',price:.5,qty:10,cost:5,fee:0,ts:Date.now()-86400e3,bet:{name:'LAL',stat:'Moneyline'}}]));
+      let n=0; for(const size of [256*1024, 4096, 64]){ const chunk='x'.repeat(size); try{ for(let i=0;i<400;i++) localStorage.setItem('mbev.rosters'+(n++?'.'+n:''), chunk); }catch(e){} } }catch(e){} });
+    const p=await ctx.newPage(); await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
+    await p.goto('http://app.test/'); await p.waitForTimeout(1500);
+    const before=await p.evaluate(()=>fillPending.length);
+    const clicked=await p.evaluate(()=>{ renderFromBooks(); const b=document.querySelector('#fromBooks .fb-ign'); if(b) b.click(); return !!b; }); await p.waitForTimeout(300);
+    await p.reload(); await p.waitForTimeout(1500);
+    await p.setViewportSize({width:390,height:844}); await p.waitForTimeout(300);
+    const btns=await p.evaluate(()=>{ renderFromBooks(); document.querySelector('.tab[data-view="v-log"]').click(); return [...document.querySelectorAll('#fromBooks .fb-add, #fromBooks .fb-ign')].map(x=>{ const r=x.getBoundingClientRect(); return r.left>=0 && r.right<=innerWidth && r.width>0; }); });
+    check('v3.83: on a phone, every Add and Ignore button in From your books is on screen', btns.length===2 && btns.every(Boolean), btns);
+    const after=await p.evaluate(()=>fillPending.length); await b.close();
+    check('v3.83: From your books, Ignore with the storage full is kept after a reload', clicked && before===2 && after===1, {clicked, before, after}); }
   // storage full of something the app may not delete
   R=await run('somethingelse');
   check('storage full and nothing to free: a red note says the log could not be saved', /could not be saved on this device/.test(R.note), R.note.slice(0,90));
