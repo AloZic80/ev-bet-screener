@@ -57,6 +57,8 @@
   because grading and matching read it.
 - Team codes are normalised to ESPN's (`normAbbr`, e.g. NYK to NY).
 - Grading (`autoGradeLog`) runs on page load and on the refresh buttons, not when a bet is saved.
+  The Check results button (`checkResultsRun`, also Look out's "Check results again") skips `gradedBy==='manual'` bets and keeps a
+  win/loss/push when ESPN cannot grade it (v3.84); before, it overwrote them with `?` and they went back to Look out.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - The Bet log draws newest first, grouped by game day (`logDays` remembers open/closed days per device). `data-i` on its
