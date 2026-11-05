@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v3.65</title>
+<title>0xBeta Screener v3.66</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -871,6 +871,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 #pkApps{display:flex; flex-direction:column; gap:8px; margin:10px 0 4px} .pk-apps-g{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; font-size:13px} .pk-apps-g b{min-width:70px}
 .pk-app-seg{flex-wrap:wrap}
 /* v3.62 */ .pk-good{color:var(--gain)}
+/* v3.66 */ .pk-rec{font-size:13px; color:var(--soft); background:var(--panel-2); border:1px solid var(--rule); border-radius:10px; padding:8px 12px; margin:4px 0 8px} .pk-rec b{color:var(--ink)} .pk-rec-ok{color:var(--gain); font-weight:700}
 /* v3.65 */ button.log.sm.pk-logged,:root[data-theme="dark"] button.log.sm.pk-logged{background:var(--live-bg); color:var(--gain); border:1px solid var(--live); cursor:default} .pk-logged-msg{font-size:13px; color:var(--gain); font-weight:600}
 /* v3.64 */ .pk-combo-ctl{display:contents} .pk-combo-ctl[hidden]{display:none} .pk-combo-ctl label{font-size:13px; color:var(--soft); display:inline-flex; align-items:center; gap:6px}
 .pk-combo-ctl input[type=number]{font:inherit; font-size:13px; padding:6px 8px; border:1px solid var(--rule); border-radius:6px; background:var(--panel); color:var(--ink)}
@@ -963,7 +964,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.65</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.66</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1202,6 +1203,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
     <span id="pkComboCtl" class="pk-combo-ctl" hidden><label title="No longshots: each leg at least this likely">Each pick at least <input type="number" id="pkMinPC" min="5" max="90" step="1" style="width:64px"> % to hit</label><label title="No home-run slips">Slip hits at least <input type="number" id="pkSlipMinHit" min="0.5" max="80" step="0.5" style="width:64px"> % of the time</label><label class="bar-check" title="Legs the board likes by themselves: good alone, outliers, small-risk bets, +EV alone"><input type="checkbox" id="pkGoodOnly"> Only good bets</label></span>   <!-- v3.64 -->
     <label id="pkMinPL" title="Only picks at least this likely go into the best entries">Picks from <input type="number" id="pkMinP" value="54" min="50" max="90" step="0.5" style="width:72px"> % up</label>
   </div>
+  <div class="pk-rec" id="pkRec" role="status"></div>   <!-- v3.66: what is recommended for this app and size -->
   <details class="pk-pays-box"><summary>Payouts <span class="meta">check them in your app: they change, and goblin or demon lines pay differently</span></summary><div class="pk-pays" id="pkPays"></div></details>
   <p class="hint" id="pkNote"></p>
   <div class="pk-dfs" id="pkDfs"></div>
@@ -1611,7 +1613,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v3.65';
+const SCREENER_VERSION='v3.66';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -7133,6 +7135,21 @@ function pkSlipsHtml(legs,pays,cfg,app){
 function pkWhere(l){   // v3.63 (Alonzo: "you give me the names, but not the sports or team"): sport · team · game · when
   const r=l.r||{}, tm=r.team?normAbbr(r.team):(GL_KINDS.test(r.kind||'')?glTeam(r):null), when=l.gi?giWhen(l.gi):'';
   return [SPORT_NAMES[l.sport]&&SPORT_NAMES[l.sport]!==l.sport?SPORT_NAMES[l.sport]:l.sport, tm, l.game, when, l.tag].filter(Boolean).join(' · '); }   // v3.64: + good alone / outlier / small risk
+/* v3.66 (Alonzo: "if I pick a 4-Leg, change to what you recommend; 2-3, what you recommend; Bovada, etc."): you choose the
+   app, then the size, and the boxes take the recommended values. Pick'em: each pick's break-even for that size plus a
+   1-point cushion for estimate error (PrizePicks Power: 4-Leg 57%, 3-Leg 59.5%, 2-Leg 58.5%). Combos: each pick at least 40%,
+   and the slip must hit at least 20% / 10% / 5% / 3% / 2% for 2 to 6 legs. You can still type your own. */
+function pkSlipSize(app){ const sz=Object.keys(pkPays(app,pkState.play)).map(Number); return sz.indexOf(pkState.slipN)>=0 ? pkState.slipN : (sz.indexOf(4)>=0?4:sz[0]); }
+function pkRec(app,n){
+  if(pkPriced(app)) return {minPC:0.40, hit:({2:0.20,3:0.10,4:0.05,5:0.03,6:0.02})[n]||0.05};
+  const arr=pkPays(app,pkState.play)[n], be=arr?pkBreakEven(n,arr):null;
+  return {minP: be!=null ? Math.min(0.9,Math.max(0.5,Math.round((be+0.01)*200)/200)) : 0.57, be}; }
+function pkApplyRec(){ const app=pkState.app, r=pkRec(app,pkSlipSize(app)); if(pkPriced(app)){ pkState.minPC=r.minPC; pkState.slipMinHit=r.hit; } else pkState.minP=r.minP; }
+function pkRecHtml(app){ const n=pkSlipSize(app), r=pkRec(app,n), nm=pkAppLabel(app)+' '+n+'-Leg';
+  if(pkPriced(app)){ const same=Math.abs((pkState.minPC!=null?pkState.minPC:0.2)-r.minPC)<1e-9 && Math.abs((pkState.slipMinHit!=null?pkState.slipMinHit:0.05)-r.hit)<1e-9;
+    return '💡 <b>Recommended for '+esc(nm)+':</b> each pick at least '+pct(r.minPC,0)+' (favourites and near coin flips, no longshots); the slip hits at least '+pct(r.hit,0)+' of the time (about 1 in '+Math.round(1/r.hit)+').'+(same?' <span class="pk-rec-ok">✓ in use</span>':' <button type="button" class="linkbtn pk-rec-use">use it</button>'); }
+  const same=Math.abs(pkState.minP-r.minP)<1e-9;
+  return '💡 <b>Recommended for '+esc(nm)+':</b> picks from '+pct(r.minP)+(r.be!=null?' (each pick needs '+pct(r.be)+' to break even, plus a 1-point cushion because the chances are estimates)':'')+'.'+(same?' <span class="pk-rec-ok">✓ in use</span>':' <button type="button" class="linkbtn pk-rec-use">use it</button>'); }
 function pkSetRows(rows){ window._pkRows=rows||[]; pkBadge(); const v=document.getElementById('v-parlay'); if(v&&v.classList.contains('on')) renderParlays(); }
 function pkBadge(){ const el=document.getElementById('pkTabN'); if(!el) return; const n=pkLegs(window._pkRows||[]).filter(l=>pkPriced(pkState.app) ? pkComboOk(l) : (l.p>=pkState.minP && pkPlayable(l))).length; el.textContent=n?String(n):''; }   // v3.59: combo apps count legs with an edge
 const pkPick=l=>l.label?l.label+' '+(l.price||''):(l.side==='U'?'Under ':'Over ')+l.line+' '+shortStat(l.stat)+(l.price?' '+l.price:'');   // v3.59: a combo leg shows its price
@@ -7163,7 +7180,7 @@ function renderParlays(){
     seg.innerHTML=(gA.length?'<div class="pk-app-g"><span class="pk-app-k">Pick’em</span>'+gA.map(chip).join('')+'</div>':'')+(gB.length?'<div class="pk-app-g"><span class="pk-app-k">Combos</span>'+gB.map(chip).join('')+'</div>':'');
     document.getElementById('pkApps').innerHTML='<div class="pk-apps-g"><b>Pick’em</b> '+PK_APPS.filter(a=>!pkPriced(a)).map(a=>'<label class="bar-check"><input type="checkbox" class="pk-app-on" value="'+esc(a)+'"'+(pkState.apps.indexOf(a)>=0?' checked':'')+'> '+esc(pkAppLabel(a))+'</label>').join('')+'</div>'+
       '<div class="pk-apps-g"><b>Combos</b> '+PK_PRICED.map(a=>'<label class="bar-check"><input type="checkbox" class="pk-app-on" value="'+esc(a)+'"'+(pkState.apps.indexOf(a)>=0?' checked':'')+'> '+esc(pkAppLabel(a))+'</label>').join('')+'</div>'; }
-  document.getElementById('pkPlay').hidden=priced; document.getElementById('pkMinPL').hidden=priced;
+  document.getElementById('pkPlay').hidden=priced; document.getElementById('pkMinPL').hidden=priced; document.getElementById('pkRec').innerHTML=pkRecHtml(app);   // v3.66
   { const cc=document.getElementById('pkComboCtl'); cc.hidden=!priced; document.getElementById('pkMinPC').value=Math.round(100*(pkState.minPC!=null?pkState.minPC:0.2)); document.getElementById('pkSlipMinHit').value=+(100*(pkState.slipMinHit!=null?pkState.slipMinHit:0.05)).toFixed(1); document.getElementById('pkGoodOnly').checked=pkState.goodOnly!==false; } document.querySelector('.pk-pays-box').hidden=priced;   // v3.64
   document.querySelectorAll('#pkPlay button').forEach(b=>{ const ok=pkPlays(app).indexOf(b.dataset.v)>=0, on=b.dataset.v===pkState.play; b.hidden=!ok; b.classList.toggle('on',on); b.setAttribute('aria-checked',on); });
   document.getElementById('pkOneGame').checked=!!pkState.oneGame; document.getElementById('pkMinP').value=(pkState.minP*100).toFixed(1).replace(/\.0$/,'');
@@ -7226,12 +7243,13 @@ function pkLog(id,btn){ const c=(window._pkCards||{})[id]; if(!c) return; const 
   btn.disabled=true; btn.textContent='✓ Logged'; btn.classList.add('pk-logged'); (window._pkLogged=window._pkLogged||new Set()).add(L.map(l=>l.key).sort().join('+'));
   btn.insertAdjacentHTML('afterend',' <span class="pk-logged-msg" role="status">Saved in the Bet log ($'+s.toFixed(2)+'). <button type="button" class="linkbtn pk-see-log">See it ›</button></span>'); }
 (function(){ const box=document.getElementById('pkPanel'); if(!box) return;
-  box.addEventListener('click',e=>{ const a=e.target.closest('#pkApp button'); if(a){ pkState.app=a.dataset.v; pkSave(); renderParlays(); pkBadge(); return; }
+  box.addEventListener('click',e=>{ const a=e.target.closest('#pkApp button'); if(a){ pkState.app=a.dataset.v; pkApplyRec(); pkSave(); renderParlays(); pkBadge(); return; }   // v3.66: recommended thresholds
     const p=e.target.closest('#pkPlay button'); if(p){ pkState.play=p.dataset.v; pkSave(); renderParlays(); return; }
     if(e.target.closest('#pkPayReset')){ if(pkState.pays&&pkState.pays[pkState.app]) delete pkState.pays[pkState.app][pkState.play]; pkSave(); renderParlays(); return; }
     const lg=e.target.closest('.pk-log'); if(lg){ if(!lg.disabled) pkLog(lg.dataset.id,lg); return; }
     if(e.target.closest('.pk-see-log')){ const t=document.querySelector('.tab[data-view="v-log"]'); if(t) t.click(); window.scrollTo(0,0); return; }   // v3.65
-    const sn=e.target.closest('.pk-slipn'); if(sn){ pkState.slipN=+sn.dataset.n; pkSave(); renderParlays(); return; }   // v3.61
+    if(e.target.closest('.pk-rec-use')){ pkApplyRec(); pkSave(); renderParlays(); pkBadge(); return; }   // v3.66
+    const sn=e.target.closest('.pk-slipn'); if(sn){ pkState.slipN=+sn.dataset.n; pkApplyRec(); pkSave(); renderParlays(); return; }   // v3.66   // v3.61
     const bn=e.target.closest('#pkSent .pk-be-i'); if(bn){ pkState.sentN=+bn.dataset.n; pkSave(); renderParlays(); return; }   // v3.59
     const dx=e.target.closest('.pk-disc-x'); if(dx){ delete pkState.adj[dx.dataset.k]; pkSave(); renderParlays(); return; }
     if(e.target.closest('.pk-boost-x')){ pkState.boost=0; pkSave(); renderParlays(); return; }

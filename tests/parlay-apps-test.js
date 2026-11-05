@@ -43,8 +43,13 @@ const BOARD=[prop('Leg One','AAA','BBB',20,0.60),prop('Leg Two','CCC','DDD',21,0
   await p.fill('.pk-boost','12'); await p.dispatchEvent('.pk-boost','change'); await p.waitForTimeout(200);
   const bo=await p.evaluate(()=>({all:window._pkCards.mine.e.arr[0], txt:document.querySelector('#pkMine .pk-h .meta').textContent}));
   check('a promo boost sets what all-hit pays (12x instead of 10x)', bo.all===12 && /12x/.test(bo.txt), bo);
-  // ready-made slips: tap 3-Leg; players can repeat across slips, or not
-  await p.click('.pk-slipn[data-n="3"]'); await p.waitForTimeout(300);
+  // recommended thresholds follow the app and the size you pick
+  const rec=async n=>{ await p.click('.pk-slipn[data-n="'+n+'"]'); await p.waitForTimeout(200); return p.evaluate(()=>({minP:+(pkState.minP*100).toFixed(1), box:document.getElementById('pkMinP').value, note:document.getElementById('pkRec').textContent})); };
+  const r4=await rec(4), r2=await rec(2), r3=await rec(3);
+  check('PrizePicks: 4-Leg sets picks from 57%, 2-Leg 58.5%, 3-Leg 59.5%, and the note says why', r4.minP===57 && r2.minP===58.5 && r3.minP===59.5 && r4.box==='57' && /Recommended for PrizePicks 4-Leg/.test(r4.note) && /56\.2% to break even/.test(r4.note) && /in use/.test(r3.note), {r4,r2,r3});
+  await p.fill('#pkMinP','54'); await p.dispatchEvent('#pkMinP','change'); await p.waitForTimeout(200);
+  check('you can still type your own; the note then offers the recommended one', /use it/.test(await p.textContent('#pkRec')) && Math.abs(await p.evaluate(()=>pkState.minP)-0.54)<1e-9, await p.textContent('#pkRec'));
+  // ready-made slips: 3-Leg; players can repeat across slips, or not (picks from 54%, your own number)
   const sl=()=>p.evaluate(()=>[...document.querySelectorAll('#pkSlips .pk-card')].map(c=>({t:c.querySelector('.pk-h b').textContent, legs:[...c.querySelectorAll('.pk-legs li')].map(li=>li.firstChild.textContent.split(' Over')[0].trim()), log:!!c.querySelector('.pk-log')})));
   let S1=await sl(); const all=S1.flatMap(x=>x.legs), rep=all.length!==new Set(all).size;
   check('3-Leg: several ready-made slips, 3 picks each, each one loggable, a player can repeat across slips', S1.length>=2 && S1.every(x=>x.legs.length===3 && x.log && new Set(x.legs).size===3) && rep && /^Slip 1 · 3-Leg/.test(S1[0].t), S1);
@@ -54,6 +59,8 @@ const BOARD=[prop('Leg One','AAA','BBB',20,0.60),prop('Leg Two','CCC','DDD',21,0
   await p.check('#pkSlipRep'); await p.click('.pk-slipn[data-n="4"]'); await p.waitForTimeout(200);
   // a Kalshi combo
   await p.click('#pkApp button[data-v="Kalshi"]'); await p.waitForTimeout(300);
+  const rk=await p.evaluate(()=>({minPC:pkState.minPC, hit:pkState.slipMinHit, note:document.getElementById('pkRec').textContent}));
+  check('Kalshi, 4-Leg: each pick at least 40%, the slip hits at least 5%, with the note', rk.minPC===0.4 && rk.hit===0.05 && /Recommended for Kalshi 4-Leg/.test(rk.note), rk);
   const k=await p.evaluate(()=>{ const c=window._pkCards.n2, f=cfgRead().fees; return c?{legs:c.legs.map(l=>l.name), mult:+c.e.arr[0].toFixed(4), want:+c.legs.reduce((x,l)=>x/(l.r.offeredProb*(1+feeRate('Kalshi',l.r.offeredProb,f))),1).toFixed(4), ev:c.e.ev}:null; });
   check('Kalshi combo: only Kalshi legs with an edge, paying their odds multiplied (fee off each)', k && k.legs.sort().join()==='LAL,NY' && k.mult===k.want && k.ev>0, k);
   const lg=await p.evaluate(()=>pkLegs(window._pkRows).map(l=>({n:l.name, ok:pkComboOk(l), where:pkWhere(l)})));
