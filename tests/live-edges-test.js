@@ -5,7 +5,10 @@ const path=require('path'); const INDEX=path.join(__dirname,'..','index.html');
 const { chromium } = require('playwright'); const fs=require('fs');
 const html=fs.readFileSync(process.argv[2]||INDEX,'utf8');
 let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?'PASS ':'FAIL ')+n+'  → '+JSON.stringify(got)); };
-const comp=(ha,ab,score)=>({homeAway:ha, score:String(score), team:{abbreviation:ab, shortDisplayName:ab, name:ab}});
+const FULL={LAL:['Los Angeles','Lakers'], BOS:['Boston','Celtics'], MIA:['Miami','Heat'], NY:['New York','Knicks'], DEN:['Denver','Nuggets'], PHX:['Phoenix','Suns']};
+const comp=(ha,ab,score)=>({homeAway:ha, score:String(score), team:{abbreviation:ab, shortDisplayName:FULL[ab][1], name:FULL[ab][1], location:FULL[ab][0], displayName:FULL[ab].join(' ')}});
+let PINN=null;   // v3.74: null = the Worker has no /pinnapi/live yet (404)
+const pinnEv=(home,away,dh,da)=>({event_id:1, sport_id:3, home, away, periods:{num_0:{money_line:{home:dh, away:da}}}, state:{match:{quarter:3}}});
 const ev=(id,a,h,sa,sh,pHome,state)=>({id, date:new Date(Date.now()-3600e3).toISOString(), status:{period:3, displayClock:'5:12', type:{name:'STATUS_IN_PROGRESS', state:state||'in', shortDetail:'3rd 5:12', detail:'3rd Quarter'}},
   competitions:[{competitors:[comp('away',a,sa),comp('home',h,sh)], situation:{lastPlay:{probability:{homeWinPercentage:pHome, awayWinPercentage:1-pHome}}}}]});
 const NBA={events:[ev('401','LAL','BOS',70,78,0.55), ev('402','MIA','NY',60,90,0.97), ev('403','DEN','PHX',0,0,0.5,'pre')]};
@@ -20,6 +23,7 @@ const PRICES={'le:401:BOS:kalshi':{ok:true,src:'kalshi',price:0.50,title:'Boston
   await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html});
     if(/api\.0xbeta\.dev\/live\?/.test(u)){ const bets=JSON.parse(decodeURIComponent(u.split('bets=')[1])); asked.push(...bets); const results={}; bets.forEach(d=>{ if(PRICES[d.id]) results[d.id]=PRICES[d.id]; });
       return r.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({results})}); }
+    if(/api\.0xbeta\.dev\/pinnapi\/live\?sport_id=3/.test(u)) return PINN ? r.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-expose-headers':'x-src-at','x-src-at':new Date().toISOString()},body:JSON.stringify(PINN)}) : r.fulfill({status:404,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{"error":"not found"}'});
     if(/espn\.com.*basketball\/nba\/scoreboard/.test(u)) return r.fulfill({contentType:'application/json',body:JSON.stringify(NBA)});
     if(/espn\.com.*scoreboard/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1200);
@@ -50,6 +54,16 @@ const PRICES={'le:401:BOS:kalshi':{ok:true,src:'kalshi',price:0.50,title:'Boston
   st=await g0();
   check('v3.72: once ESPN moves again the edge is back', st.good && /ESPN changed \d+ s ago/.test(st.meta) && !/stale/.test(st.meta), st);
   await back(); NBA.events[0].competitions[0].situation.lastPlay.probability={homeWinPercentage:0.55, awayWinPercentage:0.45}; await rescan();
+  check('v3.74: no Pinnacle route on the Worker yet: ESPN only, and it says so', /Pinnacle live: not on your Worker yet \(ESPN only\)/.test(await p.textContent('#leStamp')), await p.textContent('#leStamp'));
+  PINN={events:[pinnEv('Boston Celtics','Los Angeles Lakers',1.80,2.10), pinnEv('New York Knicks','Miami Heat',1.03,12.0)]}; await rescan();
+  const pz=await p.evaluate(()=>{ const g=document.querySelector('#leBody .le-game'), s=g.querySelectorAll('.le-side'); return {stamp:document.getElementById('leStamp').textContent, meta:g.querySelector('.le-head .meta').textContent, bos:s[1].textContent, good:[...s[1].querySelectorAll('.le-q.good')].map(x=>x.textContent)}; });
+  check('v3.74: Pinnacle live (vig removed) is the fair price, ESPN agrees: edge kept, both shown, Pinnacle age shown', /Pinnacle live on/.test(pz.stamp) && /ESPN 55\.0% · Pinnacle 53\.8%/.test(pz.bos) && /Pinnacle \d+ s old/.test(pz.meta) && pz.good.length===1 && /^Kalshi 50\.0¢ · \+4\.1% ✓ edge · pay at most 5[01]\.\d¢/.test(pz.good[0]), pz);
+  PINN={events:[pinnEv('Boston Celtics','Los Angeles Lakers',1.90,1.98)]}; await rescan();
+  const pd=await p.evaluate(()=>{ const s=document.querySelectorAll('#leBody .le-game')[0].querySelectorAll('.le-side'); return {bos:s[1].textContent, good:document.querySelectorAll('#leBody .le-q.good').length, sum:document.getElementById('leSum').textContent}; });
+  check('v3.74: Pinnacle says 51% while ESPN says 55%: Pinnacle wins, no edge', /Pinnacle 51\.0%/.test(pd.bos) && pd.good===0 && !/✓/.test(pd.sum), pd);
+  PINN={events:[pinnEv('Los Angeles Lakers','Boston Celtics',2.10,1.80)]}; await rescan();
+  check('v3.74: home and away listed the other way round still match the right team', /^BOS.*Pinnacle 53\.8%/.test(await p.evaluate(()=>document.querySelectorAll('#leBody .le-game')[0].querySelectorAll('.le-side')[1].textContent)), await p.evaluate(()=>document.querySelectorAll('#leBody .le-game')[0].querySelectorAll('.le-side')[1].textContent));
+  PINN=null; await rescan();
   const top=await p.evaluate(()=>({sum:document.getElementById('leSum').textContent, tab:document.getElementById('leTabN').textContent, stamp:document.getElementById('leStamp').textContent}));
   check('the count is on the Live tab and the panel says when it checked', top.sum==='✓ 1 live edge' && top.tab==='1' && /checked \d/.test(top.stamp), top);
   await p.setViewportSize({width:390,height:844}); await p.waitForTimeout(300);
