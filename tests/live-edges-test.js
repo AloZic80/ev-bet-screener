@@ -63,6 +63,10 @@ const PRICES={'le:401:BOS:kalshi':{ok:true,src:'kalshi',price:0.50,title:'Boston
   check('v3.74: Pinnacle says 51% while ESPN says 55%: Pinnacle wins, no edge', /Pinnacle 51\.0%/.test(pd.bos) && pd.good===0 && !/✓/.test(pd.sum), pd);
   PINN={events:[pinnEv('Los Angeles Lakers','Boston Celtics',2.10,1.80)]}; await rescan();
   check('v3.74: home and away listed the other way round still match the right team', /^BOS.*Pinnacle 53\.8%/.test(await p.evaluate(()=>document.querySelectorAll('#leBody .le-game')[0].querySelectorAll('.le-side')[1].textContent)), await p.evaluate(()=>document.querySelectorAll('#leBody .le-game')[0].querySelectorAll('.le-side')[1].textContent));
+  await p.setViewportSize({width:390,height:844}); await p.waitForTimeout(200); PINN={events:[pinnEv('Boston Celtics','Los Angeles Lakers',1.80,2.10)]}; await rescan();
+  const chip=await p.evaluate(()=>[...document.querySelectorAll('#leBody .le-q')].map(q=>{ const c=q.closest('.le-game').getBoundingClientRect(), r=q.getBoundingClientRect(); return {t:q.textContent, out:r.right>c.right+0.5}; }).filter(x=>x.out));
+  check('v3.75: on a phone every chip, the ✓ edge one too, stays inside its card', chip.length===0 && await p.$('#leBody .le-q.good'), chip);
+  await p.setViewportSize({width:1400,height:1000}); await p.waitForTimeout(200);
   PINN=null; await rescan();
   const top=await p.evaluate(()=>({sum:document.getElementById('leSum').textContent, tab:document.getElementById('leTabN').textContent, stamp:document.getElementById('leStamp').textContent}));
   check('the count is on the Live tab and the panel says when it checked', top.sum==='✓ 1 live edge' && top.tab==='1' && /checked \d/.test(top.stamp), top);
