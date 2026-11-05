@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v3.62</title>
+<title>0xBeta Screener v3.63</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -871,6 +871,11 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 #pkApps{display:flex; flex-direction:column; gap:8px; margin:10px 0 4px} .pk-apps-g{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; font-size:13px} .pk-apps-g b{min-width:70px}
 .pk-app-seg{flex-wrap:wrap}
 /* v3.62 */ .pk-good{color:var(--gain)}
+/* v3.63: where each pick plays, and what the circles mean */
+.pk-where{display:block; font-size:12px; color:var(--soft); margin-top:1px}
+.pk-fits{align-items:center} .pk-fits-k{font-size:11px; font-weight:700; color:var(--soft); margin-right:2px}
+.pk-dot{font-style:normal; display:inline-grid; place-items:center; width:20px; height:20px; border-radius:50%; font-size:11px; font-weight:700; border:1px solid var(--rule); color:var(--soft); vertical-align:middle}
+.pk-dot.on{background:var(--live-bg); border-color:var(--live); color:var(--gain)}
 /* v3.61: ready-made slips */
 .pk-slip-bar{display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; margin:4px 0 10px}
 .pk-slip-ns{display:flex; flex-wrap:wrap; gap:6px}
@@ -954,7 +959,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.62</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.63</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1601,7 +1606,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v3.62';
+const SCREENER_VERSION='v3.63';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -7065,10 +7070,11 @@ function pkSentHtml(pays,cfg,appName){
                                     : want+' picks does not pay with these picks. '+best.n+' picks grows your bankroll most.';
   return '<div class="pk-sent-h"><b>🦑 Good in a parlay</b><span class="meta">'+esc(when)+'</span><button type="button" class="ghost sm" id="pkSentGo">🦑 Send the Sentinels</button></div>'+
     '<div class="pk-be" role="list" aria-label="The chance every pick needs to break even, '+esc(appName+' '+play)+'">'+sizes.map(n=>'<button type="button" role="listitem" class="pk-be-i'+(n===4?' star':'')+(n===want?' pick':'')+'" data-n="'+n+'" aria-pressed="'+(n===want)+'" title="Show the '+n+'-pick entry">'+(n===4?'★ ':'')+n+' picks <b>'+(be[n]!=null?pct(be[n]):'n/a')+'</b></button>').join('')+'</div>'+   // v3.59: tap a size
+    '<div class="meta pk-legend">Each pick’s circles are the entry sizes it is strong enough for: <i class="pk-dot on">4</i> filled = its chance beats what that size needs; <i class="pk-dot">4</i> empty = not enough. The ring marks 4, your target.</div>'+   // v3.63
     (S.length ? '<ul class="pk-sent-list">'+S.slice(0,12).map(l=>{ const on=pkState.mine.indexOf(l.key)>=0;
-        return '<li><div class="pk-sl-who c-who">'+avatarHtml(l.r,'r:'+l.r.idx)+'<div><b>'+esc(l.name)+'</b> <span class="meta">'+esc(pkPick(l))+'</span><div class="meta">'+(l.good?'<b class="pk-good">✓ good alone too</b> (a single bet on the board)':'alone: '+esc(l.alone))+'</div></div></div>'+
+        return '<li><div class="pk-sl-who c-who">'+avatarHtml(l.r,'r:'+l.r.idx)+'<div><b>'+esc(l.name)+'</b> <span class="meta">'+esc(pkPick(l))+'</span><div class="pk-where">'+esc(pkWhere(l))+'</div><div class="meta">'+(l.good?'<b class="pk-good">✓ good alone too</b> (a single bet on the board)':'alone: '+esc(l.alone))+'</div></div></div>'+
           '<div class="pk-sl-p" title="The chance it hits">'+pct(l.p)+'</div>'+
-          '<div class="pk-fits" role="img" aria-label="Clears the break-even of '+esc(l.fits.join(', '))+'-pick entries">'+sizes.map(n=>'<i class="'+(l.fits.indexOf(n)>=0?'on':'')+(n===4?' star':'')+'">'+n+'</i>').join('')+'</div>'+
+          '<div class="pk-fits" role="img" aria-label="Strong enough for '+esc(l.fits.join(', '))+'-pick entries"><span class="pk-fits-k">fits</span>'+sizes.map(n=>'<i class="'+(l.fits.indexOf(n)>=0?'on':'')+(n===4?' star':'')+'">'+n+'</i>').join('')+'</div>'+
           '<button type="button" class="log sm pk-sent-add'+(on?' on':'')+'" data-k="'+esc(l.key)+'" aria-pressed="'+on+'">'+(on?'✓ In your entry':'+ Add')+'</button></li>'; }).join('')+'</ul>'+
         (S.length>12?'<div class="meta">and '+(S.length-12)+' more in Picks below</div>':'')
       : '<div class="meta">Nothing right now: no pick that misses as a single bet clears a '+esc(appName)+' break-even.'+(pkSentAt?'':' Send the Sentinels to re-check at live prices.')+'</div>')+
@@ -7110,6 +7116,9 @@ function pkSlipsHtml(legs,pays,cfg,app){
     '<label class="bar-check"><input type="checkbox" id="pkSlipRep"'+(rep?' checked':'')+'> Same player in more than one slip</label></div>'+
     (out.length ? '<div class="pk-cards">'+out.map((f,i)=>pkCard('Slip '+(i+1)+' · '+n+'-Leg'+(i===0?' · most bankroll growth':''), f.L, f.e, 's'+i, false)).join('')+'</div>'
       : '<div class="meta">No '+n+'-Leg slip pays with the picks on this board'+(priced?'':' at '+pct(pkState.minP)+' or better')+(pkState.oneGame?', one per game':'')+'. Try another size'+(pkState.oneGame?', or untick One pick per game':'')+'.</div>'); }
+function pkWhere(l){   // v3.63 (Alonzo: "you give me the names, but not the sports or team"): sport · team · game · when
+  const r=l.r||{}, tm=r.team?normAbbr(r.team):(GL_KINDS.test(r.kind||'')?glTeam(r):null), when=l.gi?giWhen(l.gi):'';
+  return [SPORT_NAMES[l.sport]&&SPORT_NAMES[l.sport]!==l.sport?SPORT_NAMES[l.sport]:l.sport, tm, l.game, when].filter(Boolean).join(' · '); }
 function pkSetRows(rows){ window._pkRows=rows||[]; pkBadge(); const v=document.getElementById('v-parlay'); if(v&&v.classList.contains('on')) renderParlays(); }
 function pkBadge(){ const el=document.getElementById('pkTabN'); if(!el) return; const n=pkLegs(window._pkRows||[]).filter(l=>pkPriced(pkState.app) ? l.p*l.mult>1 : (l.p>=pkState.minP && pkPlayable(l))).length; el.textContent=n?String(n):''; }   // v3.59: combo apps count legs with an edge
 const pkPick=l=>l.label?l.label+' '+(l.price||''):(l.side==='U'?'Under ':'Over ')+l.line+' '+shortStat(l.stat)+(l.price?' '+l.price:'');   // v3.59: a combo leg shows its price
@@ -7125,7 +7134,7 @@ function pkCard(title,legs,e,id,best){
     '<div class="pk-ev '+(up?'up':'down')+'">'+(up?'+':'−')+(Math.abs(e.ev)*100).toFixed(1)+'%<small> expected return</small></div>'+
     '<div class="pk-meter" role="img" aria-label="Picks average '+pct(e.avg)+', break-even '+(e.be!=null?pct(e.be):'n/a')+'"><i style="width:'+pos(e.avg)+'"></i>'+(e.be!=null?'<b style="left:'+pos(e.be)+'"></b>':'')+'</div>'+
     '<div class="meta">Picks average <b>'+pct(e.avg)+'</b>, break-even '+(e.be!=null?pct(e.be):'n/a')+'. All '+e.n+' hit '+pct(e.pAll)+' of the time.</div>'+
-    '<ul class="pk-legs">'+legs.map(l=>'<li><span>'+esc(l.name)+' <span class="meta">'+esc(pkPick(l))+'</span>'+(l.own?'':' <span class="pk-chk" title="This line is from '+esc(bookLabel(l.book))+'. Check the app has the same line.">check line</span>')+'</span><b>'+pct(l.p)+'</b></li>').join('')+'</ul>'+
+    '<ul class="pk-legs">'+legs.map(l=>'<li><span>'+esc(l.name)+' <span class="meta">'+esc(pkPick(l))+'</span>'+(l.own?'':' <span class="pk-chk" title="This line is from '+esc(bookLabel(l.book))+'. Check the app has the same line.">check line</span>')+'<span class="pk-where">'+esc(pkWhere(l))+'</span></span><b>'+pct(l.p)+'</b></li>').join('')+'</ul>'+   // v3.63: sport, team, game
     (up ? '<div class="pk-act"><label>Stake $ <input type="number" class="pk-stake" step="0.5" min="0" value="'+e.stake.toFixed(2)+'"></label><button type="button" class="log sm pk-log" data-id="'+id+'">Log this entry</button></div>'
         : '<div class="meta"><b>Skip:</b> these picks are under break-even for this payout.</div>')+
   '</div>'; }
@@ -7185,7 +7194,7 @@ function renderParlays(){
         '<td class="num" title="Market '+(l.mkt!=null?pct(l.mkt):'n/a')+', model '+(l.model!=null?pct(l.model):'n/a')+'"><b class="'+((priced?l.p*l.mult>1:l.p>=pkState.minP)?'pk-ok':'')+'">'+pct(l.p)+'</b></td>'+
         '<td>'+(l.dfs==='own'?'<b>'+esc(appName)+'</b> ✓':l.dfs==='diff'?'<b class="pk-diff">'+esc(appName)+' has '+esc(String(l.appLine))+'</b> <span class="meta">board line is '+esc(l.line)+'</span>':l.dfs==='none'?'<span class="pk-diff">not on '+esc(appName)+'</span>':esc(bookLabel(l.book)||'?')+' <span class="meta">check the line</span>')+'</td>'+
         '<td class="meta">'+esc(l.why)+'</td>'+
-        '<td class="meta">'+esc(l.game)+(l.gi?'<br>'+esc(giWhen(l.gi)):'')+'</td></tr>'; }).join('')
+        '<td class="meta">'+esc(pkWhere(l))+'</td></tr>'; }).join('')   // v3.63: sport, team, game, when
     : '<tr><td colspan="7" class="meta">No props on the board yet.</td></tr>';
 }
 function pkLog(id,btn){ const c=(window._pkCards||{})[id]; if(!c) return; const card=btn.closest('.pk-card'), inp=card&&card.querySelector('.pk-stake');

@@ -88,6 +88,7 @@
 - Ready-made slips (v3.61, `pkSlipsHtml`): size buttons 2-Leg to 6-Leg (`pkState.slipN`, 4 by default); the best slips by
   bankroll growth from the playable picks, up to 5. One player per slip; across slips a player can repeat unless
   `pkState.slipRepeat` is false. Works for pick'em and combo apps.
+- Every leg shows where it plays (`pkWhere`: sport · team · game · time) on the Sentinels' list, slip cards and the pick list.
 - **Get Pick6 lines** (and PrizePicks) calls the Worker's `/src/odds?src=oddsapi_events` and `src=oddsapi_props` (The Odds API,
   region `us_dfs`, JSON passed through unchanged; see `agent-notes/`). Only the games of the best NFL/NBA picks, at most 6 per press,
   4 stats each. A board row at the app's own line is `own`; a different line (`diff`) or a pick the app doesn't offer (`none`) is
