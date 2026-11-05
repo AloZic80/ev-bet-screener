@@ -8,7 +8,8 @@ let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?
 const CT=ms=>new Date(ms).toLocaleDateString('en-CA',{timeZone:'America/Chicago'});
 const now=Date.now(), H=3600e3, D=24*H;
 const atCT=(day,h)=>new Date(day+'T'+String(h).padStart(2,'0')+':00:00-06:00').getTime();
-const TODAY=CT(now), YDAY=CT(now-D), TWO=CT(now-2*D), TMRW=CT(now+D), NEXT=CT(now+3*D);
+const cday=n=>{ const d=new Date(CT(now)+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); };   // calendar days, safe across daylight saving
+const TODAY=cday(0), YDAY=cday(-1), TWO=cday(-2), TMRW=cday(1), NEXT=cday(3);
 const T_LIVE=now-H, T_FINAL=atCT(YDAY,18), T_FUT=atCT(TMRW,18);
 const ev=(id,t,away,home,state,ap,hp)=>({ id, date:new Date(t).toISOString(), shortName:away+' @ '+home,
   status:{type:{state, completed:state==='post', name:state==='post'?'STATUS_FINAL':'', detail:state==='post'?'Final':state==='in'?'Q2 5:00':'', shortDetail:state==='post'?'Final':state==='in'?'Q2 5:00':''}},

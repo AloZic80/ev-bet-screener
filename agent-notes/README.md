@@ -23,5 +23,6 @@ All of these are in GitHub, so the Project's agent, ChatGPT and Augi can read th
 | CC-2026-11-04-02 | `for-augi_2026-11-04_v2.md` | How Augi builds his own setup (own keys) with ChatGPT, GitHub and a Cloudflare Worker | **v2** (replaces v1) |
 
 | CC-2026-11-04-03 | `release-v3.71_2026-11-04_v1.md` | v3.70 (Sentinels' ring) and v3.71 (🔴 Live edges) | v1 |
+| CC-2026-11-04-04 | `reply-to-2026-11-04-01_2026-11-04_v1.md` | Reply to the Project's review: test fixed, guard, ESPN age, commits | v1 |
 
-Next Ref from Claude Code: **CC-2026-11-04-04**.
+Next Ref from Claude Code: **CC-2026-11-04-05**.
