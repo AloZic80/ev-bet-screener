@@ -74,6 +74,9 @@
   `site.web.api.espn.com/apis/personalized/v2/scoreboard/header`, layout undocumented, read defensively; falls back to Live now),
   🔴 Live now (every league, quiet ones skipped via `leQuiet`), every `ESPN_MAP` league by sport, and `SS_EXTRA` (F1, NASCAR,
   IndyCar, golf, tennis, UFC, more): ESPN scoreboards for the ribbon only, kept out of `ESPN_MAP` so grading does not change.
+- 🚑 Injury flag (v3.78, `injTagHtml`, `injFill`, `injGet`): a player prop whose player is on ESPN's free `/injuries` list
+  (per league, `ESPN_MAP` path) gets OUT / IR / SUSP (red) or DOUBTFUL / QUESTIONABLE / DTD (amber) on the board and Place these,
+  ESPN's note on hover. Exact `normName` match only. Kept in `mbev.inj` for 30 minutes (names, status, team, note only).
 - The data sources row (`#srcBar`, `#srcPanel`) is on the main page under the BettingPros bar. Settings keeps the passphrase.
 - 🌍 Leagues tab (`lgLeagues`, `lgScan`, `lgPaint`): every league the app knows, plus The Odds API's own list once the Worker
   has `src=oddsapi_sports` (free), and which have games in the next 3 days (ESPN; `src=oddsapi_events` once the Worker has it;
