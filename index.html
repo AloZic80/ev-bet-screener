@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v3.82</title>
+<title>0xBeta Screener v3.83</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1002,7 +1002,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.82</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.83</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1660,7 +1660,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v3.82';
+const SCREENER_VERSION='v3.83';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3923,7 +3923,7 @@ function lsSafeSet(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){
   for(const c of LS_CACHES){ if(c===k) continue; try{ localStorage.removeItem(c); }catch(e){} try{ localStorage.setItem(k,v); return true; }catch(e){} } return false; }
 function saveFailNote(bad){ let el=document.getElementById('saveFail'); if(!bad){ if(el) el.remove(); return; }
   if(!el){ el=document.createElement('div'); el.id='saveFail'; el.setAttribute('role','alert'); document.body.prepend(el); }
-  el.textContent='⚠ Your bet log could not be saved on this device: the browser storage is full ('+Math.round(lsSize()/1024)+' KB used). Your last change will be lost when the page reloads. Tell Claude Code.'; }
+  el.textContent='⚠ Your bet log (or a book fill you added or ignored) could not be saved on this device: the browser storage is full ('+Math.round(lsSize()/1024)+' KB used). Your last change will be lost when the page reloads. Tell Claude Code.'; }
 function saveLog(){ saveFailNote(!lsSafeSet('mbev.log',JSON.stringify(logged))); if(typeof renderTodayBar==='function') setTimeout(renderTodayBar,0); syncTouched(); }   // v3.82: no more silent failures
 /* v2.63: what the screener said about a row, in one word — saved with every bet you log.
    "On the list" = the screener had a stake on it (BET / RISK / OUTLIER / LIMITED) and the game hadn't started. */
@@ -8125,7 +8125,7 @@ document.getElementById('shopBtn') && document.getElementById('shopBtn').addEven
 /* ============ v2.93: your real bets from Kalshi / Polymarket US / Novig fills (read-only) ============ */
 var fillSeen={}, fillPending=[], fillAt=0, fillBusy=false;
 try{ fillSeen=JSON.parse(localStorage.getItem('mbev.fillSeen')||'{}'); fillPending=JSON.parse(localStorage.getItem('mbev.fillPending')||'[]'); }catch(e){}
-function saveFills(){ try{ localStorage.setItem('mbev.fillSeen',JSON.stringify(fillSeen)); localStorage.setItem('mbev.fillPending',JSON.stringify(fillPending)); }catch(e){} syncTouched(); }
+function saveFills(){ const ok=lsSafeSet('mbev.fillSeen',JSON.stringify(fillSeen)) && lsSafeSet('mbev.fillPending',JSON.stringify(fillPending)); if(!ok) saveFailNote(true); syncTouched(); }   // v3.83: From your books' Add and Ignore are not lost in silence either
 const FILL_NAME={kalshi:'Kalshi', poly:'Polymarket US', novig:'Novig'};
 function quoteMatchesFill(q, f){
   if(!q || !q.ok || q.src!==f.book) return false;
