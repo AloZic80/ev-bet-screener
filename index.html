@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v3.77</title>
+<title>0xBeta Screener v3.78</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -980,6 +980,12 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 #ssSport{max-width:190px}
 .ss-g .ss-h span:last-child{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px}
 .ss-note{min-width:170px; font-size:11.5px}
+/* v3.78 injury flag on player props */
+.inj:empty{display:none}
+.inj{display:inline-block; margin-left:6px; padding:1px 6px; border-radius:6px; font-size:11px; font-weight:700; white-space:nowrap; vertical-align:1px; cursor:help}
+.inj.out{color:var(--loss); background:var(--out-bg)}
+.inj.doubt,.inj.q{color:var(--warn); background:var(--warn-bg)}
+.pc-sub .inj{margin:0 6px 0 0}
 </style>
 </head>
 <body>
@@ -988,7 +994,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.77</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.78</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1646,7 +1652,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v3.77';
+const SCREENER_VERSION='v3.78';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2495,7 +2501,7 @@ function render(rows,cfg){
       : fmtOdds(r.offeredRaw);
     const cells={};
     cells.name=
-      '<td class="c-name"><div class="c-who">'+avatarHtml(r,'r:'+r.idx)+'<div><div class="pick">'+esc(r.name)+'</div>'+   // v3.57: a picture
+      '<td class="c-name"><div class="c-who">'+avatarHtml(r,'r:'+r.idx)+'<div><div class="pick">'+esc(r.name)+injTagHtml(r)+'</div>'+   // v3.57: a picture; v3.78: injury flag
         (r.matchup?'<div class="meta">'+esc(r.matchup)+'</div>':'')+kick+
         (isSweet(r,swc)?'<span class="sweet" title="Inside your sweet-spot settings">🎯 SWEET SPOT</span>':'')+
         (nTags?'<div><button class="ntog" data-nkey="'+esc(nKey)+'" aria-expanded="'+nOpen+'" title="Show or hide the notes for this bet">'+
@@ -2540,6 +2546,7 @@ function render(rows,cfg){
     if(cardsOn && cardsHtml.length){ pcBox.innerHTML='<div class="pc-head"><b>Place these</b> · '+cardsHtml.length+'</div>'+cardsHtml.join(''); pcBox.style.display='block'; pcFillShots(); }   // v3.57: ESPN photos
     else { pcBox.innerHTML=''; pcBox.style.display='none'; }
     avFillSoon();   // v3.57: and on the board's rows
+    injFillSoon();   // v3.78: injury flags
   }
   const bothQ=sel=>[...tb.querySelectorAll(sel)].concat(pcBox?[...pcBox.querySelectorAll(sel)]:[]);
   bothQ('button.ntog').forEach(btn=>btn.addEventListener('click',()=>{
@@ -2652,6 +2659,24 @@ async function avFill(){   // ESPN photos for the rows on screen that have none 
   items.forEach(([el,o])=>{ if(!el.isConnected || el.querySelector('.av-hs')) return; const u=avEspn(o); if(!u) return;
     const im=document.createElement('img'); im.className='av-hs'; im.alt=''; im.loading='lazy'; im.onerror=()=>pcShotErr(im); im.src=u; el.appendChild(im); el.classList.remove('nohs'); }); }
 let avT=0; function avFillSoon(){ clearTimeout(avT); avT=setTimeout(()=>{ avFill().catch(()=>{}); },120); }
+/* v3.78 (Alonzo: "injury flag on the board - could help"): a player prop whose player is on ESPN's injury report gets a 🚑 tag
+   (OUT, IR, SUSP, DOUBTFUL, QUESTIONABLE, DTD), with ESPN's note on hover. ESPN's free /injuries list per league (NFL about
+   350 KB compressed); only name, status, team and note are kept, in mbev.inj, for INJ_TTL. Exact name only, as with photos. */
+const INJ_TTL=1800000, INJ_SHOW=/^(out|doubtful|questionable|probable|day-to-day|injured reserve|suspension|suspended)$/i; let injMem=null;
+function injLoad(){ if(injMem) return injMem; try{ injMem=JSON.parse(localStorage.getItem('mbev.inj')||'{}')||{}; }catch(e){ injMem={}; } return injMem; }
+async function injGet(sport){ const M=injLoad(), c=M[sport]; if(c && Date.now()-c.at<INJ_TTL) return c.m; const path=ESPN_MAP[sport]; if(!path) return null;
+  try{ const r=await fetch('https://site.api.espn.com/apis/site/v2/sports/'+path+'/injuries',{cache:'no-store'}); if(!r.ok) return c?c.m:null; const j=await r.json(), m={};
+    (j.injuries||[]).forEach(t=>(t.injuries||[]).forEach(i=>{ const a=i.athlete||{}, st=String(i.status||''); if(!a.displayName || !INJ_SHOW.test(st)) return;
+      m[normName(a.displayName)]=[st, normAbbr((a.team||{}).abbreviation||t.abbreviation||''), String(i.shortComment||'').slice(0,240), i.date||'']; }));
+    M[sport]={at:Date.now(), m}; try{ localStorage.setItem('mbev.inj',JSON.stringify(M)); }catch(e){} return m; }catch(e){ return c?c.m:null; } }
+function injTagHtml(r){ return r && r.kind==='prop' && r.name && ESPN_MAP[r.sport] ? '<span class="inj" data-ij="'+esc(r.sport+'|'+r.name)+'"></span>' : ''; }
+function injLabel(st){ const s=String(st).toLowerCase(); return /injured reserve/.test(s)?'IR':/susp/.test(s)?'SUSP':/day-to-day/.test(s)?'DTD':String(st).toUpperCase(); }
+async function injFill(){ const els=[...document.querySelectorAll('span.inj[data-ij]:not([data-done])')]; if(!els.length) return;
+  const maps={}; await Promise.all([...new Set(els.map(e=>e.dataset.ij.split('|')[0]))].map(async sp=>{ maps[sp]=await injGet(sp); }));
+  els.forEach(e=>{ const i=e.dataset.ij.indexOf('|'), sp=e.dataset.ij.slice(0,i), nm=e.dataset.ij.slice(i+1), m=maps[sp]; if(!m) return; e.dataset.done='1'; const x=m[normName(nm)]; if(!x) return;
+    const st=x[0].toLowerCase(); e.className='inj '+(/^out|injured|susp/.test(st)?'out':/doubt/.test(st)?'doubt':'q'); e.textContent='🚑 '+injLabel(x[0]);
+    e.title='ESPN injury report: '+x[0]+(x[1]?' · '+x[1]:'')+(x[3]?' · '+new Date(x[3]).toLocaleDateString('en-US',{month:'short',day:'numeric'}):'')+(x[2]?' · '+x[2]:''); }); }
+let injT=0; function injFillSoon(){ clearTimeout(injT); injT=setTimeout(()=>{ injFill().catch(()=>{}); },150); }
 async function pcFillShots(){
   const cards=[...document.querySelectorAll('#placeCards [data-pcidx]')], rows=cards.map(c=>lastRows.find(x=>x.idx===+c.dataset.pcidx)).filter(r=>r && !GL_KINDS.test(r.kind||''));
   const jobs=[]; rows.forEach(r=>((r.gameInfo&&r.gameInfo.teams)||[]).forEach(t=>{ if(!rosterGet(r.sport,t)) jobs.push(rosterLoad(r.sport,t)); }));
@@ -2694,7 +2719,7 @@ function placeCardHtml(r,cfg,o){
   const book=bookLogo(r.book)?logoTag(r.book):'<i>'+esc(bookLabel(r.book)||'book?')+'</i>';
   return '<div class="pcard" data-idx="'+r.idx+'">'+
     '<div class="pc-hdr"><div class="pc-who">'+avatar+'<div style="min-width:0"><div class="pc-nm" title="'+esc(r.name)+'">'+esc(r.name)+'</div>'+
-      '<div class="pc-sub">'+(r.pos?esc(r.pos)+' · ':'')+(r.jersey!=null&&r.jersey!==''?'#'+esc(r.jersey)+' · ':'')+'<b>'+esc(gameTxt)+'</b>'+(o.sweet?' · <span class="sweet">🎯 SWEET SPOT</span>':'')+'</div></div></div>'+
+      '<div class="pc-sub">'+injTagHtml(r)+(r.pos?esc(r.pos)+' · ':'')+(r.jersey!=null&&r.jersey!==''?'#'+esc(r.jersey)+' · ':'')+'<b>'+esc(gameTxt)+'</b>'+(o.sweet?' · <span class="sweet">🎯 SWEET SPOT</span>':'')+'</div></div></div>'+
       '<div class="pc-mkt"><div class="pc-mt" title="'+esc(mname)+'">'+esc((line?line+' ':'')+shortStat(mname))+'</div>'+(cons?'<div class="pc-mo">'+esc(cons)+'</div>':'')+'</div>'+
       '<div class="pc-game">'+game+'</div></div>'+
     '<div class="pc-stats">'+
