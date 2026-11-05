@@ -35,6 +35,9 @@ async function run(fillKey){
     const before=await p.evaluate(()=>fillPending.length);
     const clicked=await p.evaluate(()=>{ renderFromBooks(); const b=document.querySelector('#fromBooks .fb-ign'); if(b) b.click(); return !!b; }); await p.waitForTimeout(300);
     await p.reload(); await p.waitForTimeout(1500);
+    await p.setViewportSize({width:390,height:844}); await p.waitForTimeout(300);
+    const btns=await p.evaluate(()=>{ renderFromBooks(); document.querySelector('.tab[data-view="v-log"]').click(); return [...document.querySelectorAll('#fromBooks .fb-add, #fromBooks .fb-ign')].map(x=>{ const r=x.getBoundingClientRect(); return r.left>=0 && r.right<=innerWidth && r.width>0; }); });
+    check('v3.83: on a phone, every Add and Ignore button in From your books is on screen', btns.length===2 && btns.every(Boolean), btns);
     const after=await p.evaluate(()=>fillPending.length); await b.close();
     check('v3.83: From your books, Ignore with the storage full is kept after a reload', clicked && before===2 && after===1, {clicked, before, after}); }
   // storage full of something the app may not delete
