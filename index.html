@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v3.81</title>
+<title>0xBeta Screener v3.82</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -992,6 +992,8 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 .pc-sub .wx{margin:0 6px 0 0}
 /* v3.81: normal weather and domes get a quiet chip, so you can see it was checked */
 .wx.calm{color:var(--soft); background:transparent; box-shadow:inset 0 0 0 1px var(--rule); font-weight:600}
+/* v3.82 a bet log that could not be saved says so */
+#saveFail{position:sticky; top:0; z-index:50; padding:10px 16px; background:var(--out-bg); color:var(--loss); font-weight:700; font-size:14px; border-bottom:1px solid var(--loss)}
 </style>
 </head>
 <body>
@@ -1000,7 +1002,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.81</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.82</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1658,7 +1660,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v3.81';
+const SCREENER_VERSION='v3.82';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3912,7 +3914,17 @@ function propKey(r){ return [document.getElementById('slate').value,r.name,r.mar
 function propKeyOf(b){ return [b.date,b.name,b.market].join('|').toLowerCase(); }
 function betKey(r){ return [document.getElementById('slate').value,r.name,r.market,r.book,r.offeredRaw].join('|'); }
 function loadLog(){ try{ logged=JSON.parse(localStorage.getItem('mbev.log')||'[]'); }catch(e){ logged=[]; } }
-function saveLog(){ try{ localStorage.setItem('mbev.log',JSON.stringify(logged)); }catch(e){} if(typeof renderTodayBar==='function') setTimeout(renderTodayBar,0); syncTouched(); }
+/* v3.82 (Alonzo: "I classified them manually but it did not record them"): saving the log failed in silence when the browser's
+   storage was full, so a result looked set until the next reload. Now a failed save frees the app's own caches (they refill by
+   themselves) and tries again; if it still cannot save, a red note says so instead of losing the change quietly. */
+const LS_CACHES=['mbev.rosters','mbev.inj','mbev.wx','mbev.wxGeo','mbev.lgScan','mbev.sbq','mbev.oaq','mbev.teamlogos'];
+function lsSize(){ let t=0; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); t+=k.length+(localStorage.getItem(k)||'').length; } }catch(e){} return t; }
+function lsSafeSet(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){}
+  for(const c of LS_CACHES){ if(c===k) continue; try{ localStorage.removeItem(c); }catch(e){} try{ localStorage.setItem(k,v); return true; }catch(e){} } return false; }
+function saveFailNote(bad){ let el=document.getElementById('saveFail'); if(!bad){ if(el) el.remove(); return; }
+  if(!el){ el=document.createElement('div'); el.id='saveFail'; el.setAttribute('role','alert'); document.body.prepend(el); }
+  el.textContent='⚠ Your bet log could not be saved on this device: the browser storage is full ('+Math.round(lsSize()/1024)+' KB used). Your last change will be lost when the page reloads. Tell Claude Code.'; }
+function saveLog(){ saveFailNote(!lsSafeSet('mbev.log',JSON.stringify(logged))); if(typeof renderTodayBar==='function') setTimeout(renderTodayBar,0); syncTouched(); }   // v3.82: no more silent failures
 /* v2.63: what the screener said about a row, in one word — saved with every bet you log.
    "On the list" = the screener had a stake on it (BET / RISK / OUTLIER / LIMITED) and the game hadn't started. */
 function saidOf(r){
