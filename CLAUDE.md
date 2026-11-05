@@ -5,7 +5,9 @@
   `phone.html` only frames `index.html` at phone width (Settings > Layout > Phone on a computer). There is no build step.
 - Live at props.0xbeta.dev (see `CNAME`), served by GitHub Pages from `main`; merging a pull request is what deploys (about a minute).
   Claude Code may merge its own pull requests, but only after the owner says go. Before each merge ask plainly ("Publish v3.7x to props.0xbeta.dev now?")
-  and quote the owner's answer in the report; "build" alone is not a go to publish (agreed 2026-11-04, Ref 2026-11-04-02). The Worker (AloZic80/prop-bet-api, on GitHub since 2026-11-05) deploys itself: merging into its
+  and quote the owner's answer in the report; "build" alone is not a go to publish (agreed 2026-11-04, Ref 2026-11-04-02).
+  Owner, 2026-11-05: "Publish if they pass. Always publish if it passes." So for the app: when `node tests/run-all.js` ends
+  "All tests passed", merge and publish without asking, and say so in the PR and the reply. Any failing test: do not publish, report it. The Worker (AloZic80/prop-bet-api, on GitHub since 2026-11-05) deploys itself: merging into its
   `main` runs `.github/workflows/deploy.yml` (route test, then `wrangler deploy`, token in the `CLOUDFARE_API_TOKEN` secret). Same rule: ask before merging.
 - Who does what (`agent-notes/how-we-work_2026-11-03_v1.md`): Claude Code is the only one that changes the app's code
   (branch, tests, publish on the owner's go). The claude.ai Project's agent keeps the history, researches and writes specs;
