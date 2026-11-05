@@ -57,6 +57,8 @@
 - Look out (`lookOutWhy`): a bet with no result once its game is surely over (`overAfterH`: 5 hours, 8 for fights, 100 for
   golf), a typed game whose day has passed, a `?` result, or a parlay whose day has passed. Its count is on the Bet log tab
   and the Today card. The same finish time drives the log's "over · result pending" label.
+- 🔒 Spent (v3.67, `betLocked`): stake on bets settled, sold, or whose game has started (a typed game: its day has passed),
+  shown per game day in "Bets by game day" and on the Today card, with the rest as "not started".
 - Leagues: `MORE_LEAGUES` (code, name, sport, ESPN path, The Odds API key) feeds `ESPN_MAP`, `SOCCER`, `SPORT_NAMES` and
   `OA_SPORTS`. A league with no ESPN path still loads and can be bet; its result comes from you via Look out. The Odds API
   panel also takes any key typed in, and the Sportsbook API keeps leagues it doesn't know under their own code.
