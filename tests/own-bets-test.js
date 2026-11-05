@@ -6,7 +6,7 @@ const { chromium } = require('playwright'); const fs=require('fs');
 const html=fs.readFileSync(process.argv[2]||INDEX,'utf8');
 let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?'PASS ':'FAIL ')+n+'  → '+JSON.stringify(got)); };
 const CT=ms=>new Date(ms).toLocaleDateString('en-CA',{timeZone:'America/Chicago'});
-const now=Date.now(), H=3600e3, D=24*H;
+const now=(()=>{ const r=Date.now(), [h,m,sec]=new Date(r).toLocaleTimeString('en-GB',{timeZone:'America/Chicago',hour12:false}).split(':').map(Number); return r-((h%24)*3600+m*60+sec)*1000+12*3600e3; })(), H=3600e3, D=24*H;
 const atCT=(day,h)=>new Date(day+'T'+String(h).padStart(2,'0')+':00:00-06:00').getTime();
 const cday=n=>{ const d=new Date(CT(now)+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); };   // calendar days, safe across daylight saving
 const TODAY=cday(0), YDAY=cday(-1), TWO=cday(-2), TMRW=cday(1), NEXT=cday(3);
@@ -17,7 +17,7 @@ const ev=(id,t,away,home,state,ap,hp)=>({ id, date:new Date(t).toISOString(), sh
 const EVENTS=[ev('gLive',T_LIVE,'LAL','BOS','in',40,44), ev('gFinal',T_FINAL,'NY','MIA','post',100,110), ev('gFut',T_FUT,'CHA','DET','pre')];
 const BOARD=[{name:'Josh Allen',game:'BUF @ MIA',matchup:'BUF @ MIA',side:'O',sport:'NFL',market:'245.5 Passing Yards',kind:'prop',book:'DraftKings',offeredRaw:'-110',offeredProb:0.5238,fairProb:0.58,fairRaw:'-138',mktProb:0.55,stars:3,evModel:'projection',
   gameInfo:{state:'pre',startISO:new Date(now+30*H).toISOString(),timeCT:'',detail:'',teams:[]},src:'api:NFL:props',apiKey:'ja'}];
-(async()=>{ const b=await chromium.launch(); const ctx=await b.newContext({timezoneId:'America/Chicago',viewport:{width:1400,height:1000}}); const live=[];
+(async()=>{ const b=await chromium.launch(); const ctx=await b.newContext({timezoneId:'America/Chicago',viewport:{width:1400,height:1000}}); await ctx.clock.install({time:now}); /* noon in Chicago on today's date, so 'an hour ago' never crosses midnight */ const live=[];
   await ctx.addInitScript(([rows,day])=>{ try{ if(sessionStorage.getItem('seeded')) return; sessionStorage.setItem('seeded','1'); localStorage.clear();
     localStorage.setItem('mbev.board',JSON.stringify({v:1,savedAt:new Date().toISOString(),slate:day,rows})); }catch(e){} }, [BOARD,TMRW]);   // the board you'd load for tomorrow's game
   const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));

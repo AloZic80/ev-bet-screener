@@ -5,7 +5,7 @@ const path=require('path'); const INDEX=path.join(__dirname,'..','index.html');
 const { chromium } = require('playwright'); const fs=require('fs');
 const html=fs.readFileSync(process.argv[2]||INDEX,'utf8');
 let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?'PASS ':'FAIL ')+n+'  → '+JSON.stringify(got)); };
-const H=3600e3, D=24*H, now=Date.now(), CT=ms=>new Date(ms).toLocaleDateString('en-CA',{timeZone:'America/Chicago'});
+const H=3600e3, D=24*H, now=(()=>{ const r=Date.now(), [h,m,sec]=new Date(r).toLocaleTimeString('en-GB',{timeZone:'America/Chicago',hour12:false}).split(':').map(Number); return r-((h%24)*3600+m*60+sec)*1000+12*3600e3; })(), CT=ms=>new Date(ms).toLocaleDateString('en-CA',{timeZone:'America/Chicago'});
 const day=n=>{ const d=new Date(CT(now)+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }, at=(d,h)=>new Date(d+'T'+String(h).padStart(2,'0')+':00:00-06:00').toISOString(), iso=ms=>new Date(ms).toISOString();
 const TODAY=day(0), YDAY=day(-1), D2=day(-2), D3=day(-3), D4=day(-4), D5=day(-5), T1DAY=CT(now+5*H);   // today's game may start after midnight
 const bet=(id,o)=>Object.assign({id, key:id, sport:'NBA', kind:'moneyline', book:'FanDuel', odds:'-110', stake:10, closing:'', snap:{at:iso(now-H)}}, o);
@@ -25,7 +25,7 @@ const BOARD=[
   {name:'Cade Cunningham',game:'CHA @ DET',matchup:'CHA @ DET',side:'O',sport:'NBA',market:'8.5 Assists',kind:'prop',book:'DraftKings',offeredRaw:'-110',offeredProb:.524,fairProb:.58,fairRaw:'-138',mktProb:.55,stars:3,evModel:'projection',gameInfo:gi('pre',now+5*H),src:'api:NBA:props',apiKey:'b2'},
 ];
 (async()=>{
-  const b=await chromium.launch(); const ctx=await b.newContext({timezoneId:'America/Chicago', viewport:{width:1400,height:1000}});
+  const b=await chromium.launch(); const ctx=await b.newContext({timezoneId:'America/Chicago', viewport:{width:1400,height:1000}}); await ctx.clock.install({time:now});   // noon in Chicago on today's date, so 'an hour ago' or 'in 5 hours' never crosses midnight
   await ctx.addInitScript(([L,rows,d])=>{ try{ if(sessionStorage.getItem('seeded')) return; sessionStorage.setItem('seeded','1'); localStorage.clear();
     localStorage.setItem('mbev.log',JSON.stringify(L)); localStorage.setItem('mbev.board',JSON.stringify({v:1,savedAt:new Date().toISOString(),slate:d,rows})); }catch(e){} }, [LOG,BOARD,TODAY]);
   const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
@@ -95,7 +95,7 @@ const BOARD=[
     golf:overAfterH({sport:'GOLF'}), tennis:overAfterH({sport:'ATP_PARIS_MASTERS'}), testLook:lookOutWhy({sport:'TESTCRICKET', kind:'moneyline', start:new Date(Date.now()-30*3600e3).toISOString(), date:'x'})}));
   check('"surely over" fits the sport: 5 h, baseball and tennis 7, fights 8, one-day cricket 11, golf 100, a Test 130 (not on Look out a day in)', hrs.nfl===5 && hrs.mlb===7 && hrs.tennis===7 && hrs.mma===8 && hrs.odi===11 && hrs.golf===100 && hrs.test===130 && hrs.testLook==='', hrs);
   const sp=await p.evaluate(([d3,yd,t1])=>{ const S=dayStats(); return {d3:[S[d3].locked,S[d3].notStarted], yd:[S[yd].locked,S[yd].notStarted], t1:[S[t1].locked,S[t1].notStarted], head:[...document.querySelectorAll('table.days th')].map(t=>t.textContent).join('|')}; },[D3,YDAY,T1DAY]);
-  check('🔒 Spent: played and playing are locked in; a game not started is listed apart (you can still get out)', sp.d3[0]===20 && sp.d3[1]===0 && sp.yd[0]===20 && sp.t1[0]===0 && sp.t1[1]===10 && /🔒 Spent/.test(sp.head), sp);
+  check('🔒 Spent: played and playing are locked in (today: the $4 bet on the game that finished this morning); a game not started is listed apart (you can still get out)', sp.d3[0]===20 && sp.d3[1]===0 && sp.yd[0]===20 && sp.t1[0]===4 && sp.t1[1]===10 && /🔒 Spent/.test(sp.head), sp);
   check('soccer totals say Goals, not Pts', await p.evaluate(()=>betLabel({kind:'total',sport:'UEL',market:'3 Total',side:'O'})), 'Over 3 Total Goals');
   check('no page errors', errs.length===0, errs);
   console.log(`\n${pass} passed, ${fail} failed`); await b.close(); process.exit(fail?1:0);

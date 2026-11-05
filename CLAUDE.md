@@ -10,6 +10,8 @@
   (branch, tests, publish on the owner's go). The claude.ai Project's agent keeps the history, researches and writes specs;
   ChatGPT gives second opinions; the owner decides, deploys the Worker and carries notes. Code drafted elsewhere comes in
   as a note to merge and test, never as an upload over `main`.
+- Owner (2026-11-05): "build without my other agent". No relay blocks or reports for the other agents unless the owner asks;
+  keep the record in the PR description. Still ask plainly before each publish.
 - Notes for the Project's agent or ChatGPT: the owner copy-pastes them into those chats. Always put the full text in the
   reply as one copy-paste block per note (say where it goes); the `agent-notes/` file is the record.
 - Reports: after each step, write one report in `agent-notes/` (`<topic>_<YYYY-MM-DD>_v<N>.md`, header with a `CC-` Ref, times in
@@ -78,7 +80,10 @@
   Auto-refresh, 30 s at most. v3.72: `leSeen` remembers per game when ESPN's number last changed and when the game last moved
   (period, score, clock, last play); edges are hidden once ESPN is unchanged for `LE_STALE` (2 min) while the game moved
   (`leRunning`: not halftime, end of period or a delay). Each game shows "ESPN changed N ago".
-  Pinnacle live (pinnapi has a live feed; the Worker only calls `/kit/v1/prematch/`) would be a second fair price: needs a Worker route.
+  v3.74: Pinnacle live (`lePinnId`, `lePinnML`, `leTeamHit`): the Worker's `/pinnapi/live?sport_id=N` (note in
+  `agent-notes/worker-pinnapi-live_2026-11-04_v1.md`; not deployed yet) passes pinnapi's `/kit/v1/markets?event_type=live`.
+  When it answers, Pinnacle's no-vig moneyline is the fair price and ESPN must agree (a plus after the fee); a 404 means
+  "not on your Worker yet" and ESPN alone is used. The response layout is from pinnapi's docs, not yet seen live.
 
 ## Parlays tab (PrizePicks, DraftKings Pick6)
 - The math lives in the `pk*` functions (`pkDist`, `pkEV`, `pkBreakEven`, `pkKelly`, `pkEntry`). `tests/parlay-test.js` checks them against
