@@ -9,8 +9,11 @@ const now=Date.now(), H=3600e3, kick=Math.round((now+30*H)/H)*H, iso=ms=>new Dat
 const team=(ha,abbr)=>({ha,id:abbr,abbr,name:abbr,loc:abbr,nick:abbr,logo:'',rec:'',color:'333333',alt:'ffffff'});
 const row=(name,game,o)=>Object.assign({name,game,matchup:game,side:'O',sport:'NFL',market:'225.5 Passing Yards',kind:'prop',book:'DraftKings',offeredRaw:'-110',offeredProb:.524,fairProb:.60,fairRaw:'-150',mktProb:.60,stars:3,evModel:'projection',stake:5,
   gameInfo:{state:'pre',startISO:iso(kick),timeCT:'',detail:'',teams:[team('away',game.split(' @ ')[0]),team('home',game.split(' @ ')[1])]},src:'api:NFL:props',apiKey:name},o||{});
-const BOARD=[row('Windy QB','JAX @ BAL'), row('Dome QB','DAL @ IND'), row('Calm QB','NYJ @ KC'), row('Snow QB','CLE @ GB')];
-const c=(ha,ab)=>({homeAway:ha, score:'0', team:{abbreviation:ab, displayName:ab}});
+const BOARD=[row('Windy QB','JAX @ BAL'), row('Dome QB','DAL @ IND'), row('Calm QB','NYJ @ KC'), row('Snow QB','CLE @ GB'),
+  row('Full Total','Jacksonville Jaguars @ Baltimore Ravens',{kind:'total',market:'39.5 Total',gameInfo:{state:'pre',startISO:iso(kick),eventId:'1',timeCT:'',detail:'',teams:[]}}),   // v3.80: full names, ESPN id on the row
+  row('Full Names','Cleveland Browns @ Green Bay Packers',{gameInfo:{state:'pre',startISO:iso(kick),timeCT:'',detail:'',teams:[]}})];   // v3.80: full names, no id
+const FULLN={CLE:['Cleveland','Browns'], GB:['Green Bay','Packers']};
+const c=(ha,ab)=>({homeAway:ha, score:'0', team:{abbreviation:ab, displayName:FULLN[ab]?FULLN[ab].join(' '):ab, location:FULLN[ab]?FULLN[ab][0]:ab, name:FULLN[ab]?FULLN[ab][1]:ab}});
 const ev=(id,a,h,city,st,indoor,w)=>({id, date:iso(kick), status:{type:{state:'pre'}}, weather:w, competitions:[{competitors:[c('away',a),c('home',h)], venue:{fullName:h+' Stadium', indoor, address:{city, state:st, country:'USA'}}}]});
 const SB={week:{number:10}, events:[ev('1','JAX','BAL','Baltimore','MD',false,{displayValue:'Cloudy',temperature:66}), ev('2','DAL','IND','Indianapolis','IN',true,{displayValue:'Mostly sunny',temperature:53}),
   ev('3','NYJ','KC','Kansas City','MO',false,{displayValue:'Sunny',temperature:61}), ev('4','CLE','GB','Green Bay','WI',false,{displayValue:'Snow',temperature:27})]};
@@ -36,9 +39,10 @@ let OM_OK=true; const asked={geo:0, om:0};
   check('wind at kickoff (21 mph, gusts 33) in Baltimore', W['Windy QB'] && W['Windy QB'].t==='🌬️ 21 mph · gusts 33' && /in Baltimore \(Open-Meteo\): wind 21 mph, gusts 33/.test(W['Windy QB'].title), W['Windy QB']);
   check('snow and cold in Green Bay', W['Snow QB'] && /❄️ snow 80%/.test(W['Snow QB'].t) && /🥶 27°F/.test(W['Snow QB'].t), W['Snow QB']);
   check('a dome never gets a tag, and calm weather none either', !W['Dome QB'] && !W['Calm QB'], Object.keys(W));
+  check('v3.80: a game written in full names is found too (by ESPN id, or by the teams\' full names)', W['Full Total'] && /21 mph/.test(W['Full Total'].t) && W['Full Names'] && /snow/.test(W['Full Names'].t), [W['Full Total'], W['Full Names']]);
   check('the right city: the US state from ESPN picks among same-name places', asked.geo===3, asked);
   const g0=asked.geo; await p.reload(); await p.waitForTimeout(2200);
-  check('cities and forecasts are kept: a reload asks again for neither', asked.geo===g0 && asked.om===3 && Object.keys(await read()).length===2, asked);
+  check('cities and forecasts are kept: a reload asks again for neither', asked.geo===g0 && asked.om===3 && Object.keys(await read()).length===4, asked);
   OM_OK=false; await p.evaluate(()=>{ localStorage.removeItem('mbev.wx'); }); await p.reload(); await p.waitForTimeout(2200);
   W=await read();
   check('if Open-Meteo does not answer, ESPN\'s own forecast still flags snow and cold', W['Snow QB'] && /❄️ snow/.test(W['Snow QB'].t) && /🥶 27°F/.test(W['Snow QB'].t) && !W['Windy QB'], W);
