@@ -70,6 +70,11 @@
 - 🌍 Leagues tab (`lgLeagues`, `lgScan`, `lgPaint`): every league the app knows, plus The Odds API's own list once the Worker
   has `src=oddsapi_sports` (free), and which have games in the next 3 days (ESPN; `src=oddsapi_events` once the Worker has it;
   the Sportsbook API's last load). Saved 30 minutes in `mbev.lgScan`. Load odds uses The Odds API panel's loader.
+- 🔴 Live edges (v3.71, `leScan`, `lePaint`, top of the Live tab): games in progress only. The fair price is ESPN's live win
+  chance (`liveGameProbs`), because the board's model is pre-game; prices are Kalshi, Polymarket US and Novig through the Worker's
+  `/live` (moneylines, ids `le:<event>:<team>:<exchange>`). Flagged only with `LE_MIN` (3%) edge after the fee (`feeRate(..., live)`),
+  a chance of 8-92%, and a price within 25 points of ESPN's. Shows "pay at most" (`leMaxPay`). Repeats with Auto-refresh, 30 s at most.
+  Pinnacle live (pinnapi has a live feed; the Worker only calls `/kit/v1/prematch/`) would be a second fair price: needs a Worker route.
 
 ## Parlays tab (PrizePicks, DraftKings Pick6)
 - The math lives in the `pk*` functions (`pkDist`, `pkEV`, `pkBreakEven`, `pkKelly`, `pkEntry`). `tests/parlay-test.js` checks them against
