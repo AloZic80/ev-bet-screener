@@ -26,5 +26,8 @@ All of these are in GitHub, so the Project's agent, ChatGPT and Augi can read th
 | CC-2026-11-04-04 | `reply-to-2026-11-04-01_2026-11-04_v1.md` | Reply to the Project's review: test fixed, guard, ESPN age, commits | v1 |
 | CC-2026-11-04-05 | `reply-to-2026-11-04-02_2026-11-04_v1.md` | Process point accepted; waiting on Alonzo's two decisions | v1 |
 | CC-2026-11-04-06 | `build-v3.72_2026-11-04_v1.md` | v3.72 built and tested, not published | v1 |
+| CC-2026-11-04-07 | `published-v3.72_2026-11-04_v1.md` | v3.72 published | v1 |
+| CC-2026-11-04-08 | `build-v3.73_2026-11-04_v1.md` | v3.73 built (hint); Pinnacle live plan | v1 |
+| CC-2026-11-04-09 | `worker-pinnapi-live_2026-11-04_v1.md` | Worker change for Alonzo: /pinnapi/live | v1 |
 
-Next Ref from Claude Code: **CC-2026-11-04-07**.
+Next Ref from Claude Code: **CC-2026-11-04-10**.

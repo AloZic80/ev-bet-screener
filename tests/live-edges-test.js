@@ -36,6 +36,7 @@ const PRICES={'le:401:BOS:kalshi':{ok:true,src:'kalshi',price:0.50,title:'Boston
   check('a game nearly decided (97%) is not flagged, even when the price looks good', !G[1].edge && /too sure/.test(G[1].sides[1].espn) && /^Kalshi 90\.0¢ · \+/.test(q(G[1].sides[1],'Kalshi').t) && !q(G[1].sides[1],'Kalshi').good, G[1].sides[1]);
   check('v3.72: a price 12 points from ESPN is ignored too (the guard is 10 points, was 25)', q(lal,'Polymarket').t==='Polymarket ?' && !q(lal,'Polymarket').good, q(lal,'Polymarket'));
   check('v3.72: each game says when ESPN last changed its number', /ESPN changed \d+ s ago/.test(await p.textContent('#leBody .le-game .le-head .meta')), await p.textContent('#leBody .le-game .le-head .meta'));
+  check('v3.73: the hint says the stale check needs about 2 minutes of watching', /needs about 2 minutes of watching/.test(await p.textContent('#lePanel .hint')), true);
   const rescan=async()=>{ await p.click('#leScan'); await p.waitForFunction(()=>!document.getElementById('leScan').disabled, null, {timeout:15000}); await p.waitForTimeout(100); };
   const back=()=>p.evaluate(()=>leSeen.forEach(r=>{ r.pAt-=180000; r.sigAt-=180000; }));
   const g0=()=>p.evaluate(()=>{ const g=document.querySelector('#leBody .le-game'); return {meta:g.querySelector('.le-head .meta').textContent, good:!!g.querySelector('.le-q.good'), sum:document.getElementById('leSum').textContent}; });
