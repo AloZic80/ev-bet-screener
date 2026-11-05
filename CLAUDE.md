@@ -87,6 +87,9 @@
   FD Predictions, Fliff, Bovada…) use `pkLegsPriced`: only legs that app offers, paying the legs' odds multiplied with the
   fee off each (`pkArr`). Promos on Your entry: a discounted line (`pkState.adj`, chance from the projection by `pkDiscP`,
   or typed) and a boost (`pkState.boost`, what all-hit pays). The Sentinels' size is `pkState.sentN` (4 by default).
+- More books (v3.68), names from OpticOdds' public list (their IDs only work with their paid API): pick'em Dabble, Betr Picks,
+  ParlayPlay (PrizePicks payouts to start); combos Underdog Predict, Robinhood, Gemini, Fanatics Markets, Webull, Crypto.com;
+  in `BET_BOOKS` and `BOOK_CHOICES` also Circa Sports, BookMaker, BetOnline, LowVig, Heritage, BetUS, PS3838 and others.
 - Ready-made slips (v3.61, `pkSlipsHtml`): size buttons 2-Leg to 6-Leg (`pkState.slipN`, 4 by default); the best slips by
   bankroll growth from the playable picks, up to 5. One player per slip; across slips a player can repeat unless
   `pkState.slipRepeat` is false. Works for pick'em and combo apps.
