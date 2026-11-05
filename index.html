@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v3.63</title>
+<title>0xBeta Screener v3.64</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -871,6 +871,9 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 #pkApps{display:flex; flex-direction:column; gap:8px; margin:10px 0 4px} .pk-apps-g{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; font-size:13px} .pk-apps-g b{min-width:70px}
 .pk-app-seg{flex-wrap:wrap}
 /* v3.62 */ .pk-good{color:var(--gain)}
+/* v3.64 */ .pk-combo-ctl{display:contents} .pk-combo-ctl[hidden]{display:none} .pk-combo-ctl label{font-size:13px; color:var(--soft); display:inline-flex; align-items:center; gap:6px}
+.pk-combo-ctl input[type=number]{font:inherit; font-size:13px; padding:6px 8px; border:1px solid var(--rule); border-radius:6px; background:var(--panel); color:var(--ink)}
+.pk-slip-bar select{font:inherit; font-size:13px; padding:5px 8px; border:1px solid var(--rule); border-radius:6px; background:var(--panel); color:var(--ink)}
 /* v3.63: where each pick plays, and what the circles mean */
 .pk-where{display:block; font-size:12px; color:var(--soft); margin-top:1px}
 .pk-fits{align-items:center} .pk-fits-k{font-size:11px; font-weight:700; color:var(--soft); margin-right:2px}
@@ -959,7 +962,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.63</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.64</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1195,6 +1198,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
     <div class="pk-app-seg" id="pkApp" role="radiogroup" aria-label="App"></div>
     <div class="ab-seg" id="pkPlay" role="radiogroup" aria-label="Play"><button type="button" role="radio" data-v="power" title="Every pick must hit">Power</button><button type="button" role="radio" data-v="flex" title="Still pays with one or two misses, but less">Flex</button></div>
     <label class="bar-check" title="Picks from the same game move together, which the math here doesn't count. One per game keeps it honest."><input type="checkbox" id="pkOneGame" checked> One pick per game</label>
+    <span id="pkComboCtl" class="pk-combo-ctl" hidden><label title="No longshots: each leg at least this likely">Each pick at least <input type="number" id="pkMinPC" min="5" max="90" step="1" style="width:64px"> % to hit</label><label title="No home-run slips">Slip hits at least <input type="number" id="pkSlipMinHit" min="0.5" max="80" step="0.5" style="width:64px"> % of the time</label><label class="bar-check" title="Legs the board likes by themselves: good alone, outliers, small-risk bets, +EV alone"><input type="checkbox" id="pkGoodOnly"> Only good bets</label></span>   <!-- v3.64 -->
     <label id="pkMinPL" title="Only picks at least this likely go into the best entries">Picks from <input type="number" id="pkMinP" value="54" min="50" max="90" step="0.5" style="width:72px"> % up</label>
   </div>
   <details class="pk-pays-box"><summary>Payouts <span class="meta">check them in your app: they change, and goblin or demon lines pay differently</span></summary><div class="pk-pays" id="pkPays"></div></details>
@@ -1606,7 +1610,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v3.63';
+const SCREENER_VERSION='v3.64';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -6982,6 +6986,12 @@ const PK_DFS={sport:{NFL:'americanfootball_nfl', NBA:'basketball_nba'},
   key:{'PrizePicks':'prizepicks', 'DraftKings Pick 6':'pick6', 'Underdog':'underdog'}};   // v3.59: Underdog
 const pkDfs={lines:{}, games:new Set(), missing:new Set(), at:0, left:null, msg:'', busy:false};   // lines[player|stat][book] = line; games = looked up; missing = not in the odds feed
 const pkDfsKey=(name,stat)=>nrm(name)+'|'+statFam(stat);
+/* v3.64 (Alonzo: "I don't want those HOME RUN slips. I want feasible ones, more chance of winning, made of bets that are
+   good alone, outliers or small risks"): on a combo app a leg must (1) have an edge after fees, (2) be at least
+   pkState.minPC likely to hit (20% by default: no 2+ goal longshots), and (3) when "Only good bets" is ticked, be a bet the
+   board likes by itself: good alone (Place these), an outlier, a small-risk bet, or +EV alone. A slip must hit at least
+   pkState.slipMinHit of the time (5% = 1 in 20 by default). Slips are ranked most likely to win first. */
+function pkComboOk(l){ return l.p*l.mult>1 && l.p>=(pkState.minPC!=null?pkState.minPC:0.20) && (pkState.goodOnly===false || l.good); }
 function pkLegsPriced(rows,app){   // v3.59: a combo app: legs it offers on the board, at its price, its fee off each leg
   const m=new Map(), fees=cfgRead().fees;
   (rows||[]).forEach(r=>{ if(!(r.kind==='prop' || GL_KINDS.test(r.kind||''))) return; if(!bookIsMine(r.book, app)) return;
@@ -6989,10 +6999,11 @@ function pkLegsPriced(rows,app){   // v3.59: a combo app: legs it offers on the 
     const st=liveState(r); if(st==='started'||st==='closed') return;
     const mk=String(r.market||'').match(/^([+-]?[\d.]+)\s*(.*)$/), f=feeRate(r.book,q,fees)||0, mult=1/(q*(1+f));
     const leg={key:(r.name+'|'+r.market+'|'+(r.side||'')).toLowerCase(), r, p, name:r.name, line:mk?mk[1]:'', stat:mk?mk[2]:(r.market||''), side:r.side||'', book:r.book||'',
-      label:r.kind==='prop'?null:betLabel(r), own:true, dfs:'own', mult, price:fmtOdds(r.offeredRaw), game:String(r.game||r.matchup||'').toUpperCase(), start:(r.gameInfo&&r.gameInfo.startISO)||null,
+      label:r.kind==='prop'?null:betLabel(r), own:true, dfs:'own', mult,
+      good:pkAlone(r)||!!r.outlier||!!r.risk||(r.net!=null&&r.net>0), tag:pkAlone(r)?'good alone':r.outlier?'outlier':r.risk?'small risk':(r.net!=null&&r.net>0)?'+EV alone':'', /* v3.64 */ price:fmtOdds(r.offeredRaw), game:String(r.game||r.matchup||'').toUpperCase(), start:(r.gameInfo&&r.gameInfo.startISO)||null,
       gi:r.gameInfo||null, prior:!!r.prior, sport:r.sport, why:r.pass?'also a single bet on the board':'below the board’s screens', mkt:r.mktProb, model:r.fairProb};
     const cur=m.get(leg.key); if(!cur || leg.p*leg.mult>cur.p*cur.mult) m.set(leg.key,leg); });
-  return [...m.values()].sort((a,b)=>b.p*b.mult-a.p*a.mult); }
+  return [...m.values()].sort((a,b)=>b.p-a.p); }   // v3.64: most likely first (was the biggest edge, which favoured longshots)
 function pkLegs(rows){ const app=pkState.app, m=new Map(), dk=PK_DFS.key[app];
   if(pkPriced(app)) return pkLegsPriced(rows,app);   // v3.59
   const ownBook=b=>(app==='PrizePicks' && /prizepicks/i.test(b||'')) || (app==='Underdog' && /underdog/i.test(b||'') && !isPredBook(b));   // v3.59: Underdog's own rows too   // PrizePicks rows from BettingPros are its own lines; Pick6 has none there
@@ -7038,7 +7049,7 @@ async function pkDfsFetch(){ if(pkDfs.busy) return; const plan=pkDfsPlan(), app=
   }catch(err){ pkDfs.msg='Couldn’t look up lines: '+err.message; }
   finally{ pkDfs.busy=false; renderParlays(); } }
 function pkBest(legs,n){ const out=[], games=new Set();
-  if(pkPriced(pkState.app)){ for(const l of legs){ if(out.length===n) break; if(!(l.p*l.mult>1)) break; const g=l.game||l.name.toUpperCase(); if(pkState.oneGame && games.has(g)) continue; out.push(l); games.add(g); } return out.length===n?out:null; }   // v3.59
+  if(pkPriced(pkState.app)){ for(const l of legs){ if(out.length===n) break; if(!pkComboOk(l)) continue; /* v3.64 */ const g=l.game||l.name.toUpperCase(); if(pkState.oneGame && games.has(g)) continue; out.push(l); games.add(g); } return out.length===n?out:null; }   // v3.59
   for(const l of legs){ if(out.length===n) break; if(l.p<pkState.minP) break; if(!pkPlayable(l)) continue; const g=l.game||l.name.toUpperCase();
     if(pkState.oneGame && games.has(g)) continue; out.push(l); games.add(g); }
   return out.length===n?out:null; }
@@ -7104,23 +7115,25 @@ function pkPromoHtml(mine, arr){
 function pkSlipsHtml(legs,pays,cfg,app){
   const sizes=Object.keys(pays).map(Number).sort((a,b)=>a-b); if(!sizes.length) return '';
   const n=sizes.indexOf(pkState.slipN)>=0 ? pkState.slipN : (sizes.indexOf(4)>=0?4:sizes[0]), priced=pkPriced(app), rep=pkState.slipRepeat!==false;
-  const pool=legs.filter(l=>priced ? l.p*l.mult>1 : (l.p>=pkState.minP && pkPlayable(l))).slice(0,n+7), found=[], cur=[];
-  const pick=start=>{ if(cur.length===n){ const L=cur.slice(), e=pkEntry(L,pkArr(app,pays,L,n),cfg); if(e.ev>0) found.push({L,e}); return; }
+  const pool=legs.filter(l=>priced ? pkComboOk(l) : (l.p>=pkState.minP && pkPlayable(l))).slice(0,n+7), found=[], cur=[];
+  const minHit=priced?(pkState.slipMinHit!=null?pkState.slipMinHit:0.05):0;   // v3.64: no home-run slips
+  const pick=start=>{ if(cur.length===n){ const L=cur.slice(), e=pkEntry(L,pkArr(app,pays,L,n),cfg); if(e.ev>0 && e.pAll>=minHit) found.push({L,e}); return; }
     for(let i=start;i<pool.length;i++){ const l=pool[i]; if(cur.some(c=>nrm(c.name)===nrm(l.name))) continue;
       if(pkState.oneGame && cur.some(c=>(c.game||c.name)===(l.game||l.name))) continue; cur.push(l); pick(i+1); cur.pop(); } };
-  pick(0); found.sort((a,b)=>b.e.growth-a.e.growth || b.e.ev-a.e.ev);
+  pick(0); found.sort(pkState.slipRank==='growth' ? (a,b)=>b.e.growth-a.e.growth || b.e.ev-a.e.ev : (a,b)=>b.e.pAll-a.e.pAll || b.e.ev-a.e.ev);   // v3.64: most likely to win first
   const out=[], used=new Set();
   for(const f of found){ if(out.length===5) break; if(!rep && f.L.some(l=>used.has(l.key))) continue; out.push(f); f.L.forEach(l=>used.add(l.key)); }
   out.forEach((f,i)=>{ window._pkCards['s'+i]={legs:f.L, e:f.e}; });
   return '<div class="pk-slip-bar"><div class="pk-slip-ns" role="group" aria-label="Slip size">'+sizes.map(k=>'<button type="button" class="pk-slipn'+(k===n?' on':'')+'" data-n="'+k+'" aria-pressed="'+(k===n)+'">'+(k===4?'★ ':'')+k+'-Leg</button>').join('')+'</div>'+
-    '<label class="bar-check"><input type="checkbox" id="pkSlipRep"'+(rep?' checked':'')+'> Same player in more than one slip</label></div>'+
-    (out.length ? '<div class="pk-cards">'+out.map((f,i)=>pkCard('Slip '+(i+1)+' · '+n+'-Leg'+(i===0?' · most bankroll growth':''), f.L, f.e, 's'+i, false)).join('')+'</div>'
-      : '<div class="meta">No '+n+'-Leg slip pays with the picks on this board'+(priced?'':' at '+pct(pkState.minP)+' or better')+(pkState.oneGame?', one per game':'')+'. Try another size'+(pkState.oneGame?', or untick One pick per game':'')+'.</div>'); }
+    '<label class="bar-check"><input type="checkbox" id="pkSlipRep"'+(rep?' checked':'')+'> Same player in more than one slip</label>'+
+    '<label>Rank <select id="pkSlipRank"><option value="hit"'+(pkState.slipRank!=='growth'?' selected':'')+'>most likely to win</option><option value="growth"'+(pkState.slipRank==='growth'?' selected':'')+'>most bankroll growth</option></select></label></div>'+   // v3.64
+    (out.length ? '<div class="pk-cards">'+out.map((f,i)=>pkCard('Slip '+(i+1)+' · '+n+'-Leg'+(i===0?(pkState.slipRank==='growth'?' · most bankroll growth':' · most likely to win'):''), f.L, f.e, 's'+i, false)).join('')+'</div>'
+      : '<div class="meta">No '+n+'-Leg slip pays with the picks on this board'+(priced?' that are good bets, at least '+pct(pkState.minPC!=null?pkState.minPC:0.2,0)+' likely each, and hit at least '+pct(minHit,0)+' of the time':' at '+pct(pkState.minP)+' or better')+(pkState.oneGame?', one per game':'')+'. Try another size'+(pkState.oneGame?', or untick One pick per game':'')+'.</div>'); }
 function pkWhere(l){   // v3.63 (Alonzo: "you give me the names, but not the sports or team"): sport · team · game · when
   const r=l.r||{}, tm=r.team?normAbbr(r.team):(GL_KINDS.test(r.kind||'')?glTeam(r):null), when=l.gi?giWhen(l.gi):'';
-  return [SPORT_NAMES[l.sport]&&SPORT_NAMES[l.sport]!==l.sport?SPORT_NAMES[l.sport]:l.sport, tm, l.game, when].filter(Boolean).join(' · '); }
+  return [SPORT_NAMES[l.sport]&&SPORT_NAMES[l.sport]!==l.sport?SPORT_NAMES[l.sport]:l.sport, tm, l.game, when, l.tag].filter(Boolean).join(' · '); }   // v3.64: + good alone / outlier / small risk
 function pkSetRows(rows){ window._pkRows=rows||[]; pkBadge(); const v=document.getElementById('v-parlay'); if(v&&v.classList.contains('on')) renderParlays(); }
-function pkBadge(){ const el=document.getElementById('pkTabN'); if(!el) return; const n=pkLegs(window._pkRows||[]).filter(l=>pkPriced(pkState.app) ? l.p*l.mult>1 : (l.p>=pkState.minP && pkPlayable(l))).length; el.textContent=n?String(n):''; }   // v3.59: combo apps count legs with an edge
+function pkBadge(){ const el=document.getElementById('pkTabN'); if(!el) return; const n=pkLegs(window._pkRows||[]).filter(l=>pkPriced(pkState.app) ? pkComboOk(l) : (l.p>=pkState.minP && pkPlayable(l))).length; el.textContent=n?String(n):''; }   // v3.59: combo apps count legs with an edge
 const pkPick=l=>l.label?l.label+' '+(l.price||''):(l.side==='U'?'Under ':'Over ')+l.line+' '+shortStat(l.stat)+(l.price?' '+l.price:'');   // v3.59: a combo leg shows its price
 function pkArr(app,pays,L,n){ return pkPriced(app) ? [L.reduce((x,l)=>x*l.mult,1)] : pays[n]; }   // v3.59: a combo pays its legs' odds multiplied
 const pkX=x=>String(+(+x).toFixed(2))+'x';   // 10 → 10x, 37.5 → 37.5x, 0.4 → 0.4x
@@ -7133,7 +7146,7 @@ function pkCard(title,legs,e,id,best){
     (best?'<div class="pk-best" title="Of these entries, this one grows your bankroll most at its suggested stake: the return weighed against how often it loses">Best for your bankroll</div>':'')+
     '<div class="pk-ev '+(up?'up':'down')+'">'+(up?'+':'−')+(Math.abs(e.ev)*100).toFixed(1)+'%<small> expected return</small></div>'+
     '<div class="pk-meter" role="img" aria-label="Picks average '+pct(e.avg)+', break-even '+(e.be!=null?pct(e.be):'n/a')+'"><i style="width:'+pos(e.avg)+'"></i>'+(e.be!=null?'<b style="left:'+pos(e.be)+'"></b>':'')+'</div>'+
-    '<div class="meta">Picks average <b>'+pct(e.avg)+'</b>, break-even '+(e.be!=null?pct(e.be):'n/a')+'. All '+e.n+' hit '+pct(e.pAll)+' of the time.</div>'+
+    '<div class="meta">Picks average <b>'+pct(e.avg)+'</b>, break-even '+(e.be!=null?pct(e.be):'n/a')+'. All '+e.n+' hit '+pct(e.pAll)+' of the time'+(e.pAll>0?' (about 1 in '+Math.max(1,Math.round(1/e.pAll))+')':'')+'.</div>'+   // v3.64
     '<ul class="pk-legs">'+legs.map(l=>'<li><span>'+esc(l.name)+' <span class="meta">'+esc(pkPick(l))+'</span>'+(l.own?'':' <span class="pk-chk" title="This line is from '+esc(bookLabel(l.book))+'. Check the app has the same line.">check line</span>')+'<span class="pk-where">'+esc(pkWhere(l))+'</span></span><b>'+pct(l.p)+'</b></li>').join('')+'</ul>'+   // v3.63: sport, team, game
     (up ? '<div class="pk-act"><label>Stake $ <input type="number" class="pk-stake" step="0.5" min="0" value="'+e.stake.toFixed(2)+'"></label><button type="button" class="log sm pk-log" data-id="'+id+'">Log this entry</button></div>'
         : '<div class="meta"><b>Skip:</b> these picks are under break-even for this payout.</div>')+
@@ -7142,14 +7155,15 @@ function renderParlays(){
   const box=document.getElementById('pkPanel'); if(!box) return;
   const cfg=cfgRead(), app=pkState.app; if(pkPlays(app).indexOf(pkState.play)<0) pkState.play='power';
   const pays=pkPays(app,pkState.play), pkRows=window._pkRows||[], legs=pkLegs(pkRows), priced=pkPriced(app), appName=pkAppLabel(app);
-  const elig=legs.filter(l=>priced ? l.p*l.mult>1 : (l.p>=pkState.minP && pkPlayable(l)));
+  const elig=legs.filter(l=>priced ? pkComboOk(l) : (l.p>=pkState.minP && pkPlayable(l)));   // v3.64
   { const seg=document.getElementById('pkApp'), mineA=PK_APPS.filter(a=>pkState.apps.indexOf(a)>=0);   // v3.59: the apps you play
     const chip=a=>'<button type="button" role="radio" data-v="'+esc(a)+'" aria-checked="'+(a===app)+'" class="'+(a===app?'on':'')+'">'+esc(pkAppLabel(a))+'</button>';   // v3.60: one chip per app, in two groups
     const gA=mineA.filter(a=>!pkPriced(a)), gB=mineA.filter(pkPriced);
     seg.innerHTML=(gA.length?'<div class="pk-app-g"><span class="pk-app-k">Pick’em</span>'+gA.map(chip).join('')+'</div>':'')+(gB.length?'<div class="pk-app-g"><span class="pk-app-k">Combos</span>'+gB.map(chip).join('')+'</div>':'');
     document.getElementById('pkApps').innerHTML='<div class="pk-apps-g"><b>Pick’em</b> '+PK_APPS.filter(a=>!pkPriced(a)).map(a=>'<label class="bar-check"><input type="checkbox" class="pk-app-on" value="'+esc(a)+'"'+(pkState.apps.indexOf(a)>=0?' checked':'')+'> '+esc(pkAppLabel(a))+'</label>').join('')+'</div>'+
       '<div class="pk-apps-g"><b>Combos</b> '+PK_PRICED.map(a=>'<label class="bar-check"><input type="checkbox" class="pk-app-on" value="'+esc(a)+'"'+(pkState.apps.indexOf(a)>=0?' checked':'')+'> '+esc(pkAppLabel(a))+'</label>').join('')+'</div>'; }
-  document.getElementById('pkPlay').hidden=priced; document.getElementById('pkMinPL').hidden=priced; document.querySelector('.pk-pays-box').hidden=priced;
+  document.getElementById('pkPlay').hidden=priced; document.getElementById('pkMinPL').hidden=priced;
+  { const cc=document.getElementById('pkComboCtl'); cc.hidden=!priced; document.getElementById('pkMinPC').value=Math.round(100*(pkState.minPC!=null?pkState.minPC:0.2)); document.getElementById('pkSlipMinHit').value=+(100*(pkState.slipMinHit!=null?pkState.slipMinHit:0.05)).toFixed(1); document.getElementById('pkGoodOnly').checked=pkState.goodOnly!==false; } document.querySelector('.pk-pays-box').hidden=priced;   // v3.64
   document.querySelectorAll('#pkPlay button').forEach(b=>{ const ok=pkPlays(app).indexOf(b.dataset.v)>=0, on=b.dataset.v===pkState.play; b.hidden=!ok; b.classList.toggle('on',on); b.setAttribute('aria-checked',on); });
   document.getElementById('pkOneGame').checked=!!pkState.oneGame; document.getElementById('pkMinP').value=(pkState.minP*100).toFixed(1).replace(/\.0$/,'');
   document.getElementById('pkPays').innerHTML=Object.keys(pays).map(n=>'<div class="pk-pay"><b>'+n+' picks</b> '+pays[n].map((x,i)=>'<label>'+(i===0?'all hit':i===1?'1 miss':'2 misses')+' <input type="number" class="pk-pay-in" data-n="'+n+'" data-i="'+i+'" step="0.05" min="0" value="'+x+'">x</label>').join(' ')+'</div>').join('')+
@@ -7188,10 +7202,10 @@ function renderParlays(){
   document.getElementById('pkPoolN').textContent=legs.length?elig.length+(priced?' with an edge on '+appName:' playable at '+pct(pkState.minP)+' or better')+', of '+legs.length:'';
   const full=mine.length>=6;
   document.getElementById('pkPool').innerHTML=legs.length ? legs.slice(0,80).map(l=>{ const on=pkState.mine.indexOf(l.key)>=0;
-      return '<tr class="'+((priced?l.p*l.mult>1:l.p>=pkState.minP&&pkPlayable(l))?'':'pk-low')+'"><td><input type="checkbox" class="pk-pick" data-k="'+esc(l.key)+'" aria-label="Add '+esc(l.name)+' to your entry"'+(on?' checked':'')+((full&&!on)||(!pkPlayable(l)&&!on)?' disabled':'')+'></td>'+
+      return '<tr class="'+((priced?pkComboOk(l):l.p>=pkState.minP&&pkPlayable(l))?'':'pk-low')+'"><td><input type="checkbox" class="pk-pick" data-k="'+esc(l.key)+'" aria-label="Add '+esc(l.name)+' to your entry"'+(on?' checked':'')+((full&&!on)||(!pkPlayable(l)&&!on)?' disabled':'')+'></td>'+
         '<td><div class="c-who">'+avatarHtml(l.r,'r:'+l.r.idx)+'<div><b>'+esc(l.name)+'</b>'+(l.prior?' <span class="tag t-warn">already bet</span>':'')+'</div></div></td>'+   // v3.57: a picture
         '<td>'+esc(pkPick(l))+'</td>'+
-        '<td class="num" title="Market '+(l.mkt!=null?pct(l.mkt):'n/a')+', model '+(l.model!=null?pct(l.model):'n/a')+'"><b class="'+((priced?l.p*l.mult>1:l.p>=pkState.minP)?'pk-ok':'')+'">'+pct(l.p)+'</b></td>'+
+        '<td class="num" title="Market '+(l.mkt!=null?pct(l.mkt):'n/a')+', model '+(l.model!=null?pct(l.model):'n/a')+'"><b class="'+((priced?pkComboOk(l):l.p>=pkState.minP)?'pk-ok':'')+'">'+pct(l.p)+'</b></td>'+
         '<td>'+(l.dfs==='own'?'<b>'+esc(appName)+'</b> ✓':l.dfs==='diff'?'<b class="pk-diff">'+esc(appName)+' has '+esc(String(l.appLine))+'</b> <span class="meta">board line is '+esc(l.line)+'</span>':l.dfs==='none'?'<span class="pk-diff">not on '+esc(appName)+'</span>':esc(bookLabel(l.book)||'?')+' <span class="meta">check the line</span>')+'</td>'+
         '<td class="meta">'+esc(l.why)+'</td>'+
         '<td class="meta">'+esc(pkWhere(l))+'</td></tr>'; }).join('')   // v3.63: sport, team, game, when
@@ -7223,6 +7237,10 @@ function pkLog(id,btn){ const c=(window._pkCards||{})[id]; if(!c) return; const 
   box.addEventListener('change',e=>{ const t=e.target;
     if(t.id==='pkOneGame'){ pkState.oneGame=t.checked; pkSave(); renderParlays(); return; }
     if(t.id==='pkSlipRep'){ pkState.slipRepeat=t.checked; pkSave(); renderParlays(); return; }   // v3.61
+    if(t.id==='pkSlipRank'){ pkState.slipRank=t.value; pkSave(); renderParlays(); return; }   // v3.64
+    if(t.id==='pkMinPC'){ const v=parseFloat(t.value); if(v>=5&&v<=90){ pkState.minPC=v/100; pkSave(); renderParlays(); pkBadge(); } return; }
+    if(t.id==='pkSlipMinHit'){ const v=parseFloat(t.value); if(v>=0.5&&v<=80){ pkState.slipMinHit=v/100; pkSave(); renderParlays(); } return; }
+    if(t.id==='pkGoodOnly'){ pkState.goodOnly=t.checked; pkSave(); renderParlays(); pkBadge(); return; }
     if(t.classList.contains('pk-disc-line')){ const k=t.dataset.k, l=pkLegs(window._pkRows||[]).find(x=>x.key===k); if(!l) return;   // v3.59: a discounted line
       if(t.value===''){ delete pkState.adj[k]; } else { const est=pkDiscP(l,t.value), a=pkState.adj[k]||{}; pkState.adj[k]={line:t.value, p:est!=null?est:a.p, est:est!=null}; }
       pkSave(); renderParlays(); return; }

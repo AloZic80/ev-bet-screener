@@ -13,7 +13,7 @@ const prop=(name,a,b,h,p,o)=>Object.assign({name,game:a+' @ '+b,matchup:a+' @ '+
 const ml=(team,a,b,h,p,q)=>({name:team,team,game:a+' @ '+b,matchup:team+' vs ?',side:'',sport:'NBA',market:'Moneyline',kind:'moneyline',book:'Kalshi',offeredRaw:String(Math.round(-100*q/(1-q))),offeredProb:q,
   fairProb:p,fairRaw:'-150',mktProb:p,evModel:'market',gameInfo:gi(h,a,b),src:'api:sbapi:ev',apiKey:'k'+team});
 const BOARD=[prop('Leg One','AAA','BBB',20,0.60),prop('Leg Two','CCC','DDD',21,0.59),prop('Leg Three','EEE','FFF',22,0.585),prop('Leg Four','GGG','HHH',23,0.57),prop('Leg Five','III','JJJ',24,0.565),
-  ml('LAL','LAL','BOS',25,0.60,0.55), ml('NY','NY','MIA',26,0.58,0.52), ml('DEN','DEN','PHX',27,0.40,0.45)];
+  ml('LAL','LAL','BOS',25,0.60,0.55), ml('NY','NY','MIA',26,0.58,0.52), ml('DEN','DEN','PHX',27,0.40,0.45), ml('UTAH','UTAH','SAC',28,0.15,0.10)];   // UTAH: a longshot with an edge
 (async()=>{
   const b=await chromium.launch(); const ctx=await b.newContext({timezoneId:'America/Chicago', viewport:{width:1400,height:1100}});
   await ctx.addInitScript(([rows,d])=>{ try{ if(sessionStorage.getItem('seeded')) return; sessionStorage.setItem('seeded','1'); localStorage.clear();
@@ -56,6 +56,11 @@ const BOARD=[prop('Leg One','AAA','BBB',20,0.60),prop('Leg Two','CCC','DDD',21,0
   await p.click('#pkApp button[data-v="Kalshi"]'); await p.waitForTimeout(300);
   const k=await p.evaluate(()=>{ const c=window._pkCards.n2, f=cfgRead().fees; return c?{legs:c.legs.map(l=>l.name), mult:+c.e.arr[0].toFixed(4), want:+c.legs.reduce((x,l)=>x/(l.r.offeredProb*(1+feeRate('Kalshi',l.r.offeredProb,f))),1).toFixed(4), ev:c.e.ev}:null; });
   check('Kalshi combo: only Kalshi legs with an edge, paying their odds multiplied (fee off each)', k && k.legs.sort().join()==='LAL,NY' && k.mult===k.want && k.ev>0, k);
+  const lg=await p.evaluate(()=>pkLegs(window._pkRows).map(l=>({n:l.name, ok:pkComboOk(l), where:pkWhere(l)})));
+  check('no home runs: a 15% longshot with an edge is kept out (each pick at least 20%), and every leg says its game and why it is a good bet', lg.find(x=>x.n==='UTAH').ok===false && lg.find(x=>x.n==='LAL').ok && /LAL @ BOS/.test(lg.find(x=>x.n==='LAL').where) && /\+EV alone|good alone|outlier|small risk/.test(lg.find(x=>x.n==='LAL').where), lg);
+  await p.click('.pk-slipn[data-n="2"]'); await p.waitForTimeout(300);
+  const sl2=await p.evaluate(()=>[...document.querySelectorAll('#pkSlips .pk-card')].map(c=>({t:c.querySelector('.pk-h b').textContent, hit:c.innerText})));
+  check('Kalshi slips: most likely to win first, with "about 1 in N"', sl2.length>=1 && /most likely to win/.test(sl2[0].t) && /about 1 in \d+/.test(sl2[0].hit), sl2);
   check('combos hide the payout table and Power/Flex', await p.evaluate(()=>document.querySelector('.pk-pays-box').hidden && document.getElementById('pkPlay').hidden), true);
   check('no page errors', errs.length===0, errs);
   console.log(`\n${pass} passed, ${fail} failed`); await b.close(); process.exit(fail?1:0);
