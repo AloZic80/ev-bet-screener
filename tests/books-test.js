@@ -46,6 +46,8 @@ let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?
   check('Performance calendar can show FD Predicts alone', cal.fdp===1 && cal.all===4, cal);
   const mine=await p.evaluate(()=>({sbOnApp:bookIsMine('DraftKings','DraftKings Predictions'), appOnSb:bookIsMine('DraftKings Predictions','DraftKings'), fdShort:bookIsMine('FanDuel Predicts','FD Predicts'), dkShort:bookIsMine('DraftKings Predictions','DK Predictions'), fdOnDk:bookIsMine('FanDuel Predicts','DK Predictions'), sb:bookIsMine('DraftKings','DraftKings')}));
   check('board: ticking DraftKings never lets a Predictions price through, and the other way round', !mine.sbOnApp && !mine.appOnSb && mine.fdShort && mine.dkShort && !mine.fdOnDk && mine.sb, mine);
+  const fm=await p.evaluate(()=>({sbOnApp:bookIsMine('Fanatics Markets','Fanatics'), appOnSb:bookIsMine('Fanatics','Fanatics Markets'), app:bookIsMine('Fanatics Markets','Fanatics Markets'), sb:bookIsMine('Fanatics','Fanatics')}));
+  check('Fanatics and Fanatics Markets are kept apart too', !fm.sbOnApp && !fm.appOnSb && fm.app && fm.sb, fm);
   const sb=await p.evaluate(()=>[sbBook('FAN_DUEL'),sbBook('FAN_DUEL_PREDICTS'),sbBook('DRAFT_KINGS'),sbBook('DRAFT_KINGS_PREDICTIONS')]);
   check('Sportsbook API names map to the right book', sb.join()==='FanDuel,FanDuel Predicts,DraftKings,DraftKings Predictions', sb);
   check('no page errors', errs.length===0, errs);
