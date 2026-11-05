@@ -4,7 +4,8 @@
 - A sports-betting screener in one file: `index.html` (HTML, CSS and JavaScript, about 8,400 lines).
   `phone.html` only frames `index.html` at phone width (Settings > Layout > Phone on a computer). There is no build step.
 - Live at props.0xbeta.dev (see `CNAME`), served by GitHub Pages from `main`; merging a pull request is what deploys (about a minute).
-  Claude Code may merge its own pull requests, but only after the owner says go. The Worker is deployed by the owner (`npx wrangler deploy`).
+  Claude Code may merge its own pull requests, but only after the owner says go. Before each merge ask plainly ("Publish v3.7x to props.0xbeta.dev now?")
+  and quote the owner's answer in the report; "build" alone is not a go to publish (agreed 2026-11-04, Ref 2026-11-04-02). The Worker is deployed by the owner (`npx wrangler deploy`).
 - Who does what (`agent-notes/how-we-work_2026-11-03_v1.md`): Claude Code is the only one that changes the app's code
   (branch, tests, publish on the owner's go). The claude.ai Project's agent keeps the history, researches and writes specs;
   ChatGPT gives second opinions; the owner decides, deploys the Worker and carries notes. Code drafted elsewhere comes in
@@ -73,7 +74,10 @@
 - 🔴 Live edges (v3.71, `leScan`, `lePaint`, top of the Live tab): games in progress only. The fair price is ESPN's live win
   chance (`liveGameProbs`), because the board's model is pre-game; prices are Kalshi, Polymarket US and Novig through the Worker's
   `/live` (moneylines, ids `le:<event>:<team>:<exchange>`). Flagged only with `LE_MIN` (3%) edge after the fee (`feeRate(..., live)`),
-  a chance of 8-92%, and a price within 25 points of ESPN's. Shows "pay at most" (`leMaxPay`). Repeats with Auto-refresh, 30 s at most.
+  a chance of 8-92%, and a price within `LE_GAP` (10 points, v3.72; was 25) of ESPN's. Shows "pay at most" (`leMaxPay`). Repeats with
+  Auto-refresh, 30 s at most. v3.72: `leSeen` remembers per game when ESPN's number last changed and when the game last moved
+  (period, score, clock, last play); edges are hidden once ESPN is unchanged for `LE_STALE` (2 min) while the game moved
+  (`leRunning`: not halftime, end of period or a delay). Each game shows "ESPN changed N ago".
   Pinnacle live (pinnapi has a live feed; the Worker only calls `/kit/v1/prematch/`) would be a second fair price: needs a Worker route.
 
 ## Parlays tab (PrizePicks, DraftKings Pick6)
