@@ -94,6 +94,9 @@ const BOARD=[
   const hrs=await p.evaluate(()=>({nfl:overAfterH({sport:'NFL'}), mlb:overAfterH({sport:'MLB'}), test:overAfterH({sport:'TESTCRICKET'}), odi:overAfterH({sport:'ODI'}), mma:overAfterH({sport:'MMA'}),
     golf:overAfterH({sport:'GOLF'}), tennis:overAfterH({sport:'ATP_PARIS_MASTERS'}), testLook:lookOutWhy({sport:'TESTCRICKET', kind:'moneyline', start:new Date(Date.now()-30*3600e3).toISOString(), date:'x'})}));
   check('"surely over" fits the sport: 5 h, baseball and tennis 7, fights 8, one-day cricket 11, golf 100, a Test 130 (not on Look out a day in)', hrs.nfl===5 && hrs.mlb===7 && hrs.tennis===7 && hrs.mma===8 && hrs.odi===11 && hrs.golf===100 && hrs.test===130 && hrs.testLook==='', hrs);
+  const sp=await p.evaluate(([d3,yd,t1])=>{ const S=dayStats(); return {d3:[S[d3].locked,S[d3].notStarted], yd:[S[yd].locked,S[yd].notStarted], t1:[S[t1].locked,S[t1].notStarted], head:[...document.querySelectorAll('table.days th')].map(t=>t.textContent).join('|')}; },[D3,YDAY,T1DAY]);
+  check('🔒 Spent: played and playing are locked in; a game not started is listed apart (you can still get out)', sp.d3[0]===20 && sp.d3[1]===0 && sp.yd[0]===20 && sp.t1[0]===0 && sp.t1[1]===10 && /🔒 Spent/.test(sp.head), sp);
+  check('soccer totals say Goals, not Pts', await p.evaluate(()=>betLabel({kind:'total',sport:'UEL',market:'3 Total',side:'O'})), 'Over 3 Total Goals');
   check('no page errors', errs.length===0, errs);
   console.log(`\n${pass} passed, ${fail} failed`); await b.close(); process.exit(fail?1:0);
 })();
