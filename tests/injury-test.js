@@ -30,6 +30,8 @@ const INJ={injuries:[{displayName:'Atlanta Hawks', injuries:[inj('Asa Newell','D
   check('exact names only: a different spelling is not guessed (Porziņģis vs Porzingis)', !T('Kristaps Porziņģis').t, tags['Kristaps Porziņģis']);
   const both=await p.evaluate(()=>({board:[...document.querySelectorAll('#tbody span.inj')].filter(e=>e.textContent).length, cards:[...document.querySelectorAll('#placeCards span.inj')].filter(e=>e.textContent).length, cardsShown:document.getElementById('placeCards').style.display!=='none'}));
   check('tagged on the board rows and on Place these', both.board>=1 && both.cardsShown && both.cards>=2, both);
+  const sw=await p.evaluate(()=>{ const h=document.getElementById('swipeHint'), pc=document.getElementById('placeCards'), t=document.querySelector('.scroll.board'); return {belowCards:!!(pc.compareDocumentPosition(h)&Node.DOCUMENT_POSITION_FOLLOWING), aboveTable:!!(h.compareDocumentPosition(t)&Node.DOCUMENT_POSITION_FOLLOWING), hasHint:!!h, shownWithRows:h.style.display!=='none'}; });
+  check('v3.80: the swipe hint sits on the table (below the cards), where the swiping is', sw.hasHint && sw.belowCards && sw.aboveTable && sw.shownWithRows, sw);
   const n1=asked; await p.reload(); await p.waitForTimeout(1800);
   check('ESPN\'s list is kept 30 minutes: a reload does not ask again', asked===n1 && asked===1, {asked});
   check('no page errors', errs.length===0, errs);
