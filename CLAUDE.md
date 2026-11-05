@@ -81,6 +81,8 @@
   ESPN's `venue.indoor` never) get wind (15 mph or gusts 25+), rain or snow (50%+) or cold (32°F or less) at kickoff. ESPN gives
   indoor, the city and its own sky and temperature; Open-Meteo (free, no key) the hourly wind, gusts and rain chance. City
   coordinates kept for good (`mbev.wxGeo`), forecasts 1 hour (`mbev.wx`). If Open-Meteo fails, ESPN's forecast still flags rain, snow, cold.
+  v3.80: the game is found by the row's ESPN id (`gameInfo.eventId`), then codes, then full names (`wxFind`). v3.81: normal weather
+  gets a quiet chip (`wx calm`: sky, °F, mph) and domes "🏟️ dome", so a checked game always shows something.
 - The data sources row (`#srcBar`, `#srcPanel`) is on the main page under the BettingPros bar. Settings keeps the passphrase.
 - 🌍 Leagues tab (`lgLeagues`, `lgScan`, `lgPaint`): every league the app knows, plus The Odds API's own list once the Worker
   has `src=oddsapi_sports` (free), and which have games in the next 3 days (ESPN; `src=oddsapi_events` once the Worker has it;
