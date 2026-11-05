@@ -6,7 +6,7 @@ const { chromium } = require('playwright'); const fs=require('fs');
 const html=fs.readFileSync(process.argv[2]||INDEX,'utf8');
 let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?'PASS ':'FAIL ')+n+'  → '+JSON.stringify(got)); };
 const H=3600e3, D=24*H, now=Date.now(), CT=ms=>new Date(ms).toLocaleDateString('en-CA',{timeZone:'America/Chicago'});
-const day=n=>CT(now+n*D), at=(d,h)=>new Date(d+'T'+String(h).padStart(2,'0')+':00:00-06:00').toISOString(), iso=ms=>new Date(ms).toISOString();
+const day=n=>{ const d=new Date(CT(now)+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }, at=(d,h)=>new Date(d+'T'+String(h).padStart(2,'0')+':00:00-06:00').toISOString(), iso=ms=>new Date(ms).toISOString();
 const TODAY=day(0), YDAY=day(-1), D2=day(-2), D3=day(-3), D4=day(-4), D5=day(-5), T1DAY=CT(now+5*H);   // today's game may start after midnight
 const bet=(id,o)=>Object.assign({id, key:id, sport:'NBA', kind:'moneyline', book:'FanDuel', odds:'-110', stake:10, closing:'', snap:{at:iso(now-H)}}, o);
 const LOG=[
