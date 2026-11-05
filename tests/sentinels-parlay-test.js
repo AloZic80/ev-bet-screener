@@ -42,6 +42,10 @@ const BOARD=[
   check('each says it is good alone too, or why it is not a single bet', /good alone too/.test(S[0].alone) && /pick’em line/.test(S[1].alone) && S.slice(2).every(x=>/alone: /.test(x.alone)), S.map(x=>x.alone));
   const wh=await p.evaluate(()=>({sent:[...document.querySelectorAll('#pkSent .pk-sent-list .pk-where')].map(x=>x.textContent), card:[...document.querySelectorAll('#pkSent .pk-card .pk-where')].map(x=>x.textContent), legend:!!document.querySelector('#pkSent .pk-legend')}));
   check('every pick says its sport and game (and team when known), on the list and on the slip; the circles are explained', wh.sent.length===6 && wh.sent.every(t=>/^NBA · [A-Z]{3} @ [A-Z]{3}/.test(t)) && wh.card.length>=4 && wh.card.every(t=>/^NBA · /.test(t)) && wh.legend, wh);
+  await p.click('#pkSent .pk-be-i[data-n="2"]'); await p.waitForTimeout(200);
+  const ring=await p.evaluate(()=>({ring:[...document.querySelectorAll('#pkSent .pk-sent-list li:first-child .pk-fits i.star')].map(i=>i.textContent), jump:(document.querySelector('#pkSent .pk-sent-jump')||{}).textContent||''}));
+  check('tap 2 picks: the ring moves to 2 and a link jumps to the 2-pick entry', ring.ring.join()==='2' && /best 2-pick entry/.test(ring.jump), ring);
+  await p.click('#pkSent .pk-be-i[data-n="4"]'); await p.waitForTimeout(200);
   const be=await p.evaluate(()=>[...document.querySelectorAll('#pkSent .pk-be-i')].map(x=>x.textContent));
   check('the break-even of each size is shown, 4 starred', be.length===5 && /★ 4 picks 56\.2%/.test(be.join('|')) && /2 picks 57\.7%/.test(be[0]) && /6 picks 54\.7%/.test(be[4]), be);
   const card=await p.evaluate(()=>{ const c=document.querySelector('#pkSent .pk-card'); return c?{title:c.querySelector('.pk-h b').textContent, best:!!c.querySelector('.pk-best'), ev:c.querySelector('.pk-ev').textContent, legs:[...c.querySelectorAll('.pk-legs li')].length}:null; });

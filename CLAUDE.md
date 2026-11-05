@@ -80,7 +80,8 @@
   PrizePicks Power until the owner enters Pick6's own.
 - "Best for your bankroll" is the entry with the most log growth at its suggested stake, not the biggest return.
 - The Sentinels (`shopExchanges`) end by sending the Parlays tab every prop that clears the per-pick break-even of a 2- to
-  6-pick entry, good alone or not (v3.62: good-alone ones, `pkAlone`, are marked "✓ good alone too") (`pkSentLegs`, drawn by `pkSentHtml` in `#pkSent`). 4 picks is
+  6-pick entry, good alone or not (v3.62: good-alone ones, `pkAlone`, are marked "✓ good alone too") (`pkSentLegs`, drawn by `pkSentHtml` in `#pkSent`). The ring on the fits circles (2 3 4 5 6) follows the
+  size picked (`pkState.sentN`, v3.70); picks that fit it come first, and "↓ See the best N-pick entry" jumps to its card. 4 picks is
   starred as the target; the card there is "★ The Sentinels' 4 picks", not "Best for your bankroll".
 - Apps (v3.59): `PK_APPS`, ticked ones in `pkState.apps`. Pick'em apps (PrizePicks, Pick6, Underdog, Sleeper) use payout
   tables (Underdog and Sleeper start as copies of PrizePicks'). Combo apps (`PK_PRICED`: Kalshi, Novig, Polymarket US, DK and
