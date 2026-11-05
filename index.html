@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v3.78</title>
+<title>0xBeta Screener v3.79</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -986,6 +986,10 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 .inj.out{color:var(--loss); background:var(--out-bg)}
 .inj.doubt,.inj.q{color:var(--warn); background:var(--warn-bg)}
 .pc-sub .inj{margin:0 6px 0 0}
+/* v3.79 weather tag on outdoor NFL, college football and MLB games */
+.wx:empty{display:none}
+.wx{display:inline-block; margin-left:6px; padding:1px 6px; border-radius:6px; font-size:11px; font-weight:700; white-space:nowrap; vertical-align:1px; cursor:help; color:var(--accent); background:var(--accent-bg)}
+.pc-sub .wx{margin:0 6px 0 0}
 </style>
 </head>
 <body>
@@ -994,7 +998,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.78</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.79</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1652,7 +1656,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v3.78';
+const SCREENER_VERSION='v3.79';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2501,7 +2505,7 @@ function render(rows,cfg){
       : fmtOdds(r.offeredRaw);
     const cells={};
     cells.name=
-      '<td class="c-name"><div class="c-who">'+avatarHtml(r,'r:'+r.idx)+'<div><div class="pick">'+esc(r.name)+injTagHtml(r)+'</div>'+   // v3.57: a picture; v3.78: injury flag
+      '<td class="c-name"><div class="c-who">'+avatarHtml(r,'r:'+r.idx)+'<div><div class="pick">'+esc(r.name)+injTagHtml(r)+wxTagHtml(r)+'</div>'+   // v3.57: a picture; v3.78: injury flag
         (r.matchup?'<div class="meta">'+esc(r.matchup)+'</div>':'')+kick+
         (isSweet(r,swc)?'<span class="sweet" title="Inside your sweet-spot settings">🎯 SWEET SPOT</span>':'')+
         (nTags?'<div><button class="ntog" data-nkey="'+esc(nKey)+'" aria-expanded="'+nOpen+'" title="Show or hide the notes for this bet">'+
@@ -2547,6 +2551,7 @@ function render(rows,cfg){
     else { pcBox.innerHTML=''; pcBox.style.display='none'; }
     avFillSoon();   // v3.57: and on the board's rows
     injFillSoon();   // v3.78: injury flags
+    wxFillSoon();   // v3.79: weather tags
   }
   const bothQ=sel=>[...tb.querySelectorAll(sel)].concat(pcBox?[...pcBox.querySelectorAll(sel)]:[]);
   bothQ('button.ntog').forEach(btn=>btn.addEventListener('click',()=>{
@@ -2677,6 +2682,48 @@ async function injFill(){ const els=[...document.querySelectorAll('span.inj[data
     const st=x[0].toLowerCase(); e.className='inj '+(/^out|injured|susp/.test(st)?'out':/doubt/.test(st)?'doubt':'q'); e.textContent='🚑 '+injLabel(x[0]);
     e.title='ESPN injury report: '+x[0]+(x[1]?' · '+x[1]:'')+(x[3]?' · '+new Date(x[3]).toLocaleDateString('en-US',{month:'short',day:'numeric'}):'')+(x[2]?' · '+x[2]:''); }); }
 let injT=0; function injFillSoon(){ clearTimeout(injT); injT=setTimeout(()=>{ injFill().catch(()=>{}); },150); }
+/* v3.79 (Alonzo: "Build the weather tag"): outdoor NFL, college football and MLB games get a tag when the weather can move
+   scoring: 🌬️ wind of WX_WIND mph or more (or gusts of WX_GUST), 🌧️ rain or ❄️ snow likely (WX_RAIN%), 🥶 WX_COLD°F or colder.
+   Domes and closed stadiums (ESPN's venue.indoor) never get one. ESPN's scoreboard gives indoor, the city and its own forecast
+   (sky and temperature, no wind); Open-Meteo (free, no key) gives the wind, gusts and rain chance for the kickoff hour.
+   The city's coordinates are kept for good (mbev.wxGeo), forecasts for WX_TTL (mbev.wx). Nothing notable, no tag. */
+const WX_SPORTS={NFL:1, NCAAF:1, MLB:1}, WX_WIND=15, WX_GUST=25, WX_RAIN=50, WX_COLD=32, WX_TTL=3600000;
+function wxStore(k){ try{ return JSON.parse(localStorage.getItem(k)||'{}')||{}; }catch(e){ return {}; } }
+function wxPut(k,o){ try{ localStorage.setItem(k,JSON.stringify(o)); }catch(e){} }
+function wxTagHtml(r){ return r && WX_SPORTS[r.sport] && r.game ? '<span class="wx" data-wx="'+esc(r.sport+'|'+r.game)+'"></span>' : ''; }
+async function wxGeo(city, state){ const G=wxStore('mbev.wxGeo'), k=city+'|'+(state||''); if(G[k]) return G[k];
+  try{ const r=await fetch('https://geocoding-api.open-meteo.com/v1/search?count=10&language=en&format=json&name='+encodeURIComponent(city)); if(!r.ok) return null; const j=await r.json();
+    const L=(j.results||[]).filter(x=>x.country_code==='US' || !state), st=String(state||'').toUpperCase();
+    const pick=L.find(x=>st && (String(x.admin1_code||'').toUpperCase()===st || (STATE_NAMES[st]&&x.admin1===STATE_NAMES[st]))) || L[0]; if(!pick) return null;
+    G[k]=[+pick.latitude.toFixed(3), +pick.longitude.toFixed(3)]; wxPut('mbev.wxGeo',G); return G[k]; }catch(e){ return null; } }
+const STATE_NAMES={AL:'Alabama',AZ:'Arizona',CA:'California',CO:'Colorado',FL:'Florida',GA:'Georgia',IL:'Illinois',IN:'Indiana',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',MA:'Massachusetts',MD:'Maryland',MI:'Michigan',MN:'Minnesota',MO:'Missouri',NC:'North Carolina',NJ:'New Jersey',NV:'Nevada',NY:'New York',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',SC:'South Carolina',TN:'Tennessee',TX:'Texas',UT:'Utah',VA:'Virginia',WA:'Washington',WI:'Wisconsin',IA:'Iowa',NE:'Nebraska',AR:'Arkansas',MS:'Mississippi',WV:'West Virginia',CT:'Connecticut',ID:'Idaho',NM:'New Mexico',WY:'Wyoming',MT:'Montana',ND:'North Dakota',SD:'South Dakota',HI:'Hawaii',AK:'Alaska',ME:'Maine',NH:'New Hampshire',VT:'Vermont',RI:'Rhode Island',DE:'Delaware',DC:'District of Columbia'};
+async function wxHour(ll, iso){ const W=wxStore('mbev.wx'), t=Date.parse(iso); if(isNaN(t)) return null; const k=ll.join(',')+'|'+new Date(t).toISOString().slice(0,13);
+  if(W[k] && Date.now()-W[k].at<WX_TTL) return W[k].h;
+  if(t-Date.now()>15*86400e3 || Date.now()-t>6*3600e3) return null;   // Open-Meteo looks 16 days ahead
+  try{ const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+ll[0]+'&longitude='+ll[1]+'&hourly=temperature_2m,precipitation_probability,precipitation,snowfall,wind_speed_10m,wind_gusts_10m&wind_speed_unit=mph&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=UTC&forecast_days=16');
+    if(!r.ok) return null; const j=await r.json(), H=j.hourly||{}, T=H.time||[]; const want=new Date(Math.round(t/3600e3)*3600e3).toISOString().slice(0,13);
+    const i=T.findIndex(x=>String(x).slice(0,13)===want); if(i<0) return null;
+    const g=(a)=>Array.isArray(H[a])?H[a][i]:null, h={temp:g('temperature_2m'), pop:g('precipitation_probability'), rain:g('precipitation'), snow:g('snowfall'), wind:g('wind_speed_10m'), gust:g('wind_gusts_10m')};
+    for(const kk in W) if(Date.now()-W[kk].at>WX_TTL*6) delete W[kk];
+    W[k]={at:Date.now(), h}; wxPut('mbev.wx',W); return h; }catch(e){ return null; } }
+function wxTags(h, espnW){ const out=[]; const d=String((espnW&&espnW.displayValue)||'').toLowerCase(), et=espnW&&espnW.temperature;
+  if(h){ if((h.wind!=null&&h.wind>=WX_WIND)||(h.gust!=null&&h.gust>=WX_GUST)) out.push(['wind','🌬️ '+Math.round(h.wind||0)+' mph'+(h.gust>=WX_GUST?' · gusts '+Math.round(h.gust):'')]);
+    if(h.snow>0 || (h.pop>=WX_RAIN && h.temp!=null && h.temp<=34)) out.push(['snow','❄️ snow'+(h.pop!=null?' '+Math.round(h.pop)+'%':'')]);
+    else if(h.pop!=null && h.pop>=WX_RAIN) out.push(['rain','🌧️ rain '+Math.round(h.pop)+'%']);
+    if(h.temp!=null && h.temp<=WX_COLD) out.push(['cold','🥶 '+Math.round(h.temp)+'°F']); }
+  else { if(/snow|flurr/.test(d)) out.push(['snow','❄️ snow']); else if(/rain|shower|storm|thunder/.test(d)) out.push(['rain','🌧️ '+d]); if(et!=null && et<=WX_COLD) out.push(['cold','🥶 '+Math.round(et)+'°F']); }
+  return out; }
+async function wxFill(){ const els=[...document.querySelectorAll('span.wx[data-wx]:not([data-done])')]; if(!els.length) return;
+  const sports=[...new Set(els.map(e=>e.dataset.wx.split('|')[0]))]; await Promise.all(sports.map(sp=>fetchScoreboard(sp).catch(()=>[])));
+  const memo={};
+  for(const e of els){ const i=e.dataset.wx.indexOf('|'), sp=e.dataset.wx.slice(0,i), game=e.dataset.wx.slice(i+1); e.dataset.done='1';
+    const ev=findGame(scoreboardCache[sp]||[], game); if(!ev) continue;
+    const comp=(ev.competitions&&ev.competitions[0])||{}, v=comp.venue||{}; if(v.indoor) continue;   // a dome: the weather does not play
+    if(!memo[ev.id]) memo[ev.id]=(async()=>{ const a=v.address||{}; const ll=a.city?await wxGeo(a.city,a.state):null; const h=ll?await wxHour(ll, ev.date):null; return {h, w:ev.weather||null, at:a.city||''}; })();
+    const {h,w,at}=await memo[ev.id], tags=wxTags(h,w); if(!tags.length) continue;
+    e.className='wx '+tags[0][0]; e.textContent=tags.map(t=>t[1]).join(' · ');
+    e.title='Weather at kickoff'+(at?' in '+at:'')+(h?' (Open-Meteo): wind '+Math.round(h.wind||0)+' mph, gusts '+Math.round(h.gust||0)+', rain chance '+(h.pop!=null?Math.round(h.pop)+'%':'?')+', '+Math.round(h.temp)+'°F':'')+(w&&w.displayValue?' · ESPN: '+w.displayValue+(w.temperature!=null?' '+w.temperature+'°F':''):'')+'. Wind and rain tend to lower passing, kicking and home-run totals.'; } }
+let wxT=0; function wxFillSoon(){ clearTimeout(wxT); wxT=setTimeout(()=>{ wxFill().catch(()=>{}); },200); }
 async function pcFillShots(){
   const cards=[...document.querySelectorAll('#placeCards [data-pcidx]')], rows=cards.map(c=>lastRows.find(x=>x.idx===+c.dataset.pcidx)).filter(r=>r && !GL_KINDS.test(r.kind||''));
   const jobs=[]; rows.forEach(r=>((r.gameInfo&&r.gameInfo.teams)||[]).forEach(t=>{ if(!rosterGet(r.sport,t)) jobs.push(rosterLoad(r.sport,t)); }));
@@ -2719,7 +2766,7 @@ function placeCardHtml(r,cfg,o){
   const book=bookLogo(r.book)?logoTag(r.book):'<i>'+esc(bookLabel(r.book)||'book?')+'</i>';
   return '<div class="pcard" data-idx="'+r.idx+'">'+
     '<div class="pc-hdr"><div class="pc-who">'+avatar+'<div style="min-width:0"><div class="pc-nm" title="'+esc(r.name)+'">'+esc(r.name)+'</div>'+
-      '<div class="pc-sub">'+injTagHtml(r)+(r.pos?esc(r.pos)+' · ':'')+(r.jersey!=null&&r.jersey!==''?'#'+esc(r.jersey)+' · ':'')+'<b>'+esc(gameTxt)+'</b>'+(o.sweet?' · <span class="sweet">🎯 SWEET SPOT</span>':'')+'</div></div></div>'+
+      '<div class="pc-sub">'+injTagHtml(r)+wxTagHtml(r)+(r.pos?esc(r.pos)+' · ':'')+(r.jersey!=null&&r.jersey!==''?'#'+esc(r.jersey)+' · ':'')+'<b>'+esc(gameTxt)+'</b>'+(o.sweet?' · <span class="sweet">🎯 SWEET SPOT</span>':'')+'</div></div></div>'+
       '<div class="pc-mkt"><div class="pc-mt" title="'+esc(mname)+'">'+esc((line?line+' ':'')+shortStat(mname))+'</div>'+(cons?'<div class="pc-mo">'+esc(cons)+'</div>':'')+'</div>'+
       '<div class="pc-game">'+game+'</div></div>'+
     '<div class="pc-stats">'+
