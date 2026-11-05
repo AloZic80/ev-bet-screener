@@ -20,6 +20,7 @@ const runs = [
   ['Score ribbon: Top events, Live now in every league, F1, golf, tennis, UFC', 'ribbon-test.js', []],
   ['🚑 Injury flag: ESPN injury report on player props (board, Place these)', 'injury-test.js', []],
   ['🌬️ Weather tag: wind, rain, snow, cold at kickoff on outdoor NFL, college football and MLB games', 'weather-test.js', []],
+  ['Bet log saves even with the browser storage full (caches make room), or says it could not', 'save-test.js', []],
 ];
 const run = (file, args) => spawnSync(process.execPath, [path.join(__dirname, file), ...args], { encoding: 'utf8', timeout: 300000 });
 const last = r => ((r.stdout || '') + (r.stderr || '')).trim().split('\n').pop();
