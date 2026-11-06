@@ -84,6 +84,10 @@
   v3.95: v3.94 cleared shots bets of every age but `autoGradeLog` only grades the last 4 days, so older ones went to Look out (30 on
   Alonzo's phone). `redo94` grades every `fixSog94` bet without a result, whatever its age; only "Shots On Goal" markets are cleared.
   Lesson: never clear saved results to force a regrade; grade first and replace only when the new grade exists.
+- v3.96: `autoGradeLog` also grades every Look out bet from the last 30 days (`redo94`), and each bet is in its own try. Bets from your
+  books keep `placedAt` (the fill's time, `notePlaced`) and `evOkFor` counts the 4-hour rule from it; a bet whose book gave the start
+  time (`autoFrom` + `start`) matches that exact game. Before, a fill read after 10 PM made a 6 PM game "too early" (Dorofeyev 11/5).
+  Real NFL box score in `tests/fixtures-nfl-2026-11-01.json`.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American

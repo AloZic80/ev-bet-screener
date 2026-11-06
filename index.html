@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v3.95</title>
+<title>0xBeta Screener v3.96</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1019,7 +1019,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.95</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.96</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1677,7 +1677,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v3.95';
+const SCREENER_VERSION='v3.96';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -5204,12 +5204,13 @@ function loggedAtOf(b){   // when the bet was saved (ms)
    (live bets are fine; yesterday's game between the same teams, or yesterday's box score for the
    same player, is not). With a saved start time, only that game day is searched. */
 function evOkFor(b, ev){
-  const t=Date.parse(ev&&ev.date), at=Date.parse(b.snap&&b.snap.at);   // only a real save time
+  const t=Date.parse(ev&&ev.date), at=Date.parse(b.placedAt||(b.snap&&b.snap.at));   // only a real save time   // v3.96: a bet from your book counts from when you placed it (placedAt), not when the app read it
   if(isNaN(t) || isNaN(at)) return true;
   // v3.54: a bet added by hand names its game: picked from the ESPN list (that exact game) or typed with the date you
   // chose. Trust it even when it was saved after kickoff. Board bets and exchange fills keep the 4-hour rule below.
   if(b.manual && b.start){ const s=Date.parse(b.start); if(!isNaN(s) && Math.abs(s-t)<60e3) return true; return t >= at-4*3600e3; }   // a moved game still matches a bet saved before kickoff
   if(b.manual && b.dateSet) return true;
+  if(b.autoFrom && b.start){ const s=Date.parse(b.start); if(!isNaN(s) && Math.abs(s-t)<60e3) return true; }   // v3.96: the book said when its game starts: that exact game
   return t >= at-4*3600e3;
 }
 async function findBetGame(b){
@@ -5293,7 +5294,7 @@ async function autoGradeLog(){
       const t=Date.parse(b.start); if(!isNaN(t) && t>Date.now()){ delete b.result; changed++; } });
     logged.forEach(b=>{ if(b.fixSog94 || b.gradedBy==='manual' || b.gradedBy==='book' || b.sold || !(b.sport==='NHL'||b.sport==='MLS') || !/SHOT/i.test(b.market||'') || !/GOAL/i.test(b.market||'')) return; b.fixSog94=1;   // v3.94: graded as goals before; grade it again   // v3.95: only "Shots On Goal" (plain "Shots" was graded right)
       if(b.result==='win'||b.result==='loss'||b.result==='push'||b.result==='?'){ if(b.resultSrc && b.resultSrc!=='ESPN') return; delete b.result; delete b.why; changed++; } });
-    const redo94=b=>b.fixSog94 && ESPN_MAP[b.sport] && b.kind!=='parlay';   // v3.95 (Alonzo: "30 that were graded before but now they are not"): v3.94 cleared shots bets of every age, but only the last 4 days were graded again
+    const redo94=b=>(b.fixSog94 || (lookOutWhy(b) && (gameDayOf(b)||b.date||'')>=ctDay(Date.now()-30*86400e3))) && ESPN_MAP[b.sport] && b.kind!=='parlay';   // v3.96 (Alonzo: "you have the dates they played and the ESPN api"): every bet in Look out from the last 30 days is graded too, not only the last 4 days   // v3.95 (Alonzo: "30 that were graded before but now they are not"): v3.94 cleared shots bets of every age, but only the last 4 days were graded again
     const open=logged.filter(b=>(recent(b)||redo94(b)) && !settled(b));
     if(!open.length && !undated.length){ if(changed){ saveLog(); renderLog(); renderPerf(); refresh(); } return; }
     for(const b of undated){
@@ -5302,7 +5303,7 @@ async function autoGradeLog(){
         if(!teamsOf(b.game)){ const a=gi.teams.find(t=>t.ha==='away'), h=gi.teams.find(t=>t.ha==='home'); if(a&&h) b.game=a.abbr+' @ '+h.abbr; } }
       else { b.noStart=1; changed++; }   // not on ESPN — don't look again
     }
-    for(const b of open){
+    for(const b of open){ try{   // v3.96: one bet that fails cannot stop the others
       const ev=await findBetGame(b);
       if(!ev && b.fills && b.fills.length && !b.start && teamsOf(b.game) && !b.wrongGame18){   // v3.18: its saved game was already over when the fill came in
         const at=Date.parse(b.snap&&b.snap.at), E=[].concat(...await Promise.all([-3,-2,-1,0].map(n=>fetchScoreboardDay(b.sport, dayPlus(ctDay(isNaN(at)?Date.now():at),n)))));
@@ -5327,7 +5328,7 @@ async function autoGradeLog(){
         continue; }
       delete b.why;
       b.result = g.push?'push':(g.won?'win':'loss'); changed++;
-    }
+    }catch(e){ console.warn('grade', b&&b.name, e); } }
     if(changed){ saveLog(); renderLog(); renderPerf(); refresh(); }
   }catch(e){}
   finally{ agBusy=false; logBusy--; }
@@ -8309,7 +8310,7 @@ function autoAddFromDesc(f){ const b=f.bet, book=FILL_NAME[f.book], prob=+f.pric
     gameInfo:isNaN(st)?null:{state:'pre', startISO:new Date(st).toISOString(), teams:[]}});
   const L=logged[logged.length-1]; L.autoFrom=f.book; L.fills=[f.id]; L.fillQty=+f.qty||0; L.fillCost=stake; noteFillRef(L,f);
   if(f.soldFor!=null) L.sold={price:+(+f.soldFor).toFixed(2), at:new Date(f.soldAt||Date.now()).toISOString(), auto:true};
-  saveLog(); }
+  notePlaced(L,f); saveLog(); }
 function autoAddFromRow(r,f){   // a bet on your board — log it for you, at the price and cost the book filled
   const book=FILL_NAME[f.book], prob=f.price, stake=+((+f.cost||0)+(+f.fee||0)).toFixed(2);
   const fee=f.fee!=null&&f.cost?(+f.fee)/(+f.cost):feeRate(book,prob,cfgRead().fees);
@@ -8317,7 +8318,7 @@ function autoAddFromRow(r,f){   // a bet on your board — log it for you, at th
   addToLog(Object.assign({}, r, {book, offeredRaw:fmtOdds(Math.round(americanOf(prob))), offeredProb:prob, stake, fee, gross, net:gross==null?null:(gross-fee)/(1+fee), said:saidOf(r)}));
   const L=logged[logged.length-1]; L.autoFrom=f.book; L.fills=[f.id]; L.fillQty=+f.qty||0; L.fillCost=stake; noteFillRef(L,f);
   if(f.soldFor!=null) L.sold={price:+f.soldFor.toFixed(2), at:new Date(f.soldAt||Date.now()).toISOString(), auto:true};
-  saveLog();
+  notePlaced(L,f); saveLog();   // v3.96
 }
 document.addEventListener('click',e=>{
   const fx=e.target.closest('.fill-fix'), kp=e.target.closest('.fill-keep'), ad=e.target.closest('.fb-add'), ig=e.target.closest('.fb-ign');
@@ -8428,9 +8429,10 @@ function postForFill(f){
   const old=postForFillRef(f); if(old) return old;
   return f.bet ? posts.find(P=>P.src===f.book && betMatches(f.bet,{kind:P.kind, sport:P.sport, name:P.name, market:P.market, side:P.side, team:P.team, game:P.game, start:P.start}))||null : null;
 }
+function notePlaced(b,f){ const t=f&&f.ts!=null?(typeof f.ts==='number'?f.ts:Date.parse(f.ts)):NaN; if(isNaN(t)) return false; const o=Date.parse(b.placedAt); if(!isNaN(o) && o<=t) return false; b.placedAt=new Date(t).toISOString(); return true; }   // v3.96
 function noteFillRef(b,f){ b.fillBook=f.book; b.fillRef=f.ref||b.fillRef||null; b.fillSide=f.side||b.fillSide||null; b.fillOutcome=f.outcome||b.fillOutcome||null; }
 function linkFill(b,f){   // you saved it already — link, and flag differences
-  noteFillRef(b,f);
+  noteFillRef(b,f); notePlaced(b,f);   // v3.96
   const stake=+((+f.cost||0)+(+f.fee||0)).toFixed(2);
   const ids=[f.id].concat(f.ids||[]);
   const had=(b.fills||[]).filter(id=>ids.includes(id));
@@ -8490,6 +8492,7 @@ async function syncFills(force){
       (j.fills||[]).forEach(f=>{ if(f.isSale) sales.push(f); }); }
     (j.fills||[]).slice().reverse().forEach(f=>{ try{   // oldest first; v3.90: one fill that fails cannot stop the others
       const key=f.book+':'+f.id, seen=fillSeen[key];
+      { const LB=linkedTo(f); if(LB && notePlaced(LB,f)) changed=true; }   // v3.96: when it was placed
       if(seen && seen.s==='ignored') return;
       if(f.isSale){ fillSeen[key]={s:'sale',q:+f.qty||0}; return; }   // handled with the bet it closes
       if(seen && seen.s!=='pending' && Math.abs((seen.q||0)-(+f.qty||0))<1e-6 && !fillLost(f,seen)) return;   // nothing new on this order   // v3.91: unless its bet went missing
