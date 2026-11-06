@@ -75,6 +75,9 @@
 - Grading (`autoGradeLog`) runs on page load and on the refresh buttons, not when a bet is saved.
   The Check results button (`checkResultsRun`, also Look out's "Check results again") skips `gradedBy==='manual'` bets and keeps a
   win/loss/push when ESPN cannot grade it (v3.84); before, it overwrote them with `?` and they went back to Look out.
+  v3.93: every result you set (Look out, editor, + Add a bet) is also kept in `mbev.grades` (synced, `SYNC_SETS.grades`) by bet id and by
+  `gradeKey` (name, market, side, game day). `gradesReapply` (run by `renderLookOut`) puts it back on a bet with no result: same id or a
+  twin. Clear in the editor forgets it (`gradeRemember`). Call `gradeRemember(b)` wherever a new manual result is set.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American
