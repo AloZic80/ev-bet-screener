@@ -20,11 +20,14 @@ const EV={events:[{id:'401',date:at('2026-10-31',18),status:{type:{state:'post',
   await p.goto('http://app.test/'); await p.waitForTimeout(1500); await p.click('.tab[data-view="v-log"]'); await p.waitForTimeout(400);
   const res=()=>p.evaluate(()=>({r:logged.map(x=>x.id+':'+(x.result||'-')).join(' '), look:document.querySelectorAll('#lookOut .lo-row').length}));
   const before=await res();
-  for(const r of ['win','win','loss']){ await p.click('#lookOut .lo-res[data-res="'+r+'"]'); await p.waitForTimeout(250); }
+  // v3.96: Look out bets from the last 30 days are graded on their own: m3 (LAL moneyline, LAL lost 101-112) is Lost before you tap
+  const auto=await res();
+  check('v3.96: the LAL moneyline from 10/31 is graded Lost on its own (ESPN), only the 2 props wait for you', /m3:loss/.test(auto.r) && auto.look===2, auto);
+  for(const r of ['win','win']){ await p.click('#lookOut .lo-res[data-res="'+r+'"]'); await p.waitForTimeout(250); }
   const graded=await res();
   await p.click('#checkResults'); await p.waitForTimeout(1500);
   const after=await res();
-  check('Look out had the 3 to grade', before.look===3, before);
+  check('Look out had the 2 props ESPN cannot grade (the moneyline graded itself)', before.look===2, before);
   check('Won, Won, Lost set by you', /m1:win m2:win m3:loss/.test(graded.r) && graded.look===0, graded);
   check('Check results again keeps your results (ESPN says LAL lost, your Lost stays; props it cannot grade stay Won)', /m1:win m2:win m3:loss/.test(after.r) && after.look===0, after);
   check('a result the book settled is not erased when ESPN cannot grade the bet', /s1:win/.test(after.r), after.r);

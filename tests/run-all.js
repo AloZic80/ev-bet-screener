@@ -31,6 +31,7 @@ const runs = [
   ['A result you set stays: put back if lost, and on a second copy of the same bet', 'grade-stick-test.js', []],
   ['NHL shots on goal graded from shots, not goals (ESPN box score of 11/5); Ignore from another device', 'nhl-shots-test.js', []],
   ['Shots bets of every age that v3.94 cleared are graded again (11 days later)', 'regrade-old-test.js', []],
+  ['Look out bets graded on their own: Saquon 11/1 (Lost), Dorofeyev logged after 10 PM (Won), real ESPN box scores', 'lookout-grade-test.js', []],
 ];
 const run = (file, args) => spawnSync(process.execPath, [path.join(__dirname, file), ...args], { encoding: 'utf8', timeout: 300000 });
 const last = r => ((r.stdout || '') + (r.stderr || '')).trim().split('\n').pop();
