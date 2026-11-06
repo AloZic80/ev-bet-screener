@@ -90,6 +90,13 @@
   Real NFL box score in `tests/fixtures-nfl-2026-11-01.json`.
   v3.97: `evOkFor` also accepts a game played on the bet's set game day (`dateSet` + `date`), whoever set it: Saquon 11/1 was logged
   from the Novig fill on 11/5 (not `manual`), so the 4-hour rule from the save time hid its game.
+- Real money (v3.98, edit editor `.eb-money`): Got back $ (stake included) and Winnings $ (stake not included) fill each other in; saved
+  as `towin` (the profit) with `paidReal` (a boost or what the book really paid), kept when stake or odds change. Lost $ → `lostAmt`
+  (only when it differs from the stake). 🎁 Free bet → `free`: `betProfit` counts a loss as $0 and a win as winnings only; free stakes
+  are not money staked (Today card, `dayStats`, Performance ROI `_st`). Performance profit and ROI never include the returned stake.
+- Today card (v3.98, `renderTodayBar`): per day and per book: money staked (free bets apart, 🎁), bets, ✓ played · ▶ playing · ⏳ to play,
+  won $ vs lost $, ▶ money at risk, ⏳ money not started. `heldValue` (owner, 2026-11-05, replacing the v3.08 rule): a game not started
+  and a free bet count $0, not as lost; once the game starts the stake counts as gone until it wins. Worst = won − lost − money playing.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American

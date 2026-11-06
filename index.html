@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v3.97</title>
+<title>0xBeta Screener v3.98</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1011,6 +1011,10 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 #saveFail{position:sticky; top:0; z-index:50; padding:10px 16px; background:var(--out-bg); color:var(--loss); font-weight:700; font-size:14px; border-bottom:1px solid var(--loss)}
 /* v3.92: on combo apps (Bovada, Kalshi, Novig...) the pick'em boxes (Power/Flex, Picks from) were hidden in code but still shown by display:flex */
 #pkMinPL[hidden], #pkPlay[hidden]{display:none!important}
+/* v3.98: Real money in the bet editor */
+.eb-money{display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; width:100%; max-width:calc(100vw - 48px); box-sizing:border-box; position:sticky; left:0; padding:8px 10px; border:1px solid var(--rule); border-radius:8px; margin-top:4px}   /* fits a phone screen inside the scrolling log table */
+.eb-money-h{font-size:13px; width:100%}
+.eb-freetag{background:var(--panel); border:1px solid var(--rule)}
 </style>
 </head>
 <body>
@@ -1019,7 +1023,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.97</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.98</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1677,7 +1681,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v3.97';
+const SCREENER_VERSION='v3.98';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2937,6 +2941,12 @@ function openBetEditor(tr, r, opt){
     (lateRow?'<label title="The game has started. Logging it after the fact? Set how it went and it is saved as graded by you.">Result <select class="eb-res-new"><option value="">Not settled yet</option><option value="win">Won</option><option value="loss">Lost</option><option value="push">Push / void</option></select></label>'+
       (late4?'<span class="meta eb-late" style="color:var(--warn)">Started over 4 hours ago, so it will not grade itself: set Result, or mark it later in the Bet log</span>':''):'')+   // v3.57
     (opt.edit?'<label title="The day the game is played. Change it if you picked the wrong one.">Game day <input class="eb-date" type="date" value="'+esc(gameDayOf(opt.edit)||opt.edit.date||'')+'"></label>':'')+   // v3.88: the date can be fixed when editing
+    (opt.edit?'<span class="eb-money"><b class="eb-money-h">Real money</b>'+   // v3.98 (Alonzo: "I want to have the real total amounts I get back"): boosts, free bets, what the book really paid
+      '<label class="bar-check" title="A free bet (bonus bet) is not your money: if it loses you lose $0, if it wins you get the winnings. It does not count as money you staked."><input type="checkbox" class="eb-free"'+(opt.edit.free?' checked':'')+'> 🎁 Free bet</label>'+
+      '<label title="Everything the book paid you, your stake included (a boost: the boosted amount). Type this or Winnings: the other one fills in.">Got back $ <input class="eb-back" type="number" step="0.01" min="0" style="width:90px"></label>'+
+      '<label title="Only the winnings, your stake not included. Performance and ROI use this one.">Winnings $ <input class="eb-prof" type="number" step="0.01" min="0" style="width:90px"></label>'+
+      '<label title="What you lost. Less than your stake if you cashed out part of it. A free bet loses $0.">Lost $ <input class="eb-lostamt" type="number" step="0.01" min="0" style="width:80px"></label>'+
+      '<span class="meta eb-money-note"></span></span>':'')+
     (opt.edit?ebResultHtml(opt.edit):'')+'<span class="eb-check"></span><span class="meta eb-rec"></span>'+
     '<button class="log sm eb-save">'+(opt.edit?'Save changes':'Save bet')+'</button> <button class="log sm undo eb-cancel">Cancel</button>'+
     '<span class="meta eb-msg" role="status"></span></div>'+(isCard?'':'</td>');
@@ -2950,6 +2960,20 @@ function openBetEditor(tr, r, opt){
       saveLog(); renderLog(); renderPerf(); renderTodayBar(); refresh(); });
     const cp=ed.querySelector('button.eb-copy');
     if(cp) cp.addEventListener('click',async()=>{ try{ await navigator.clipboard.writeText(String(B.fillRef||'')); cp.textContent='copied'; }catch(e){ cp.textContent='select & copy'; } });
+    // v3.98: Real money: Got back (stake included) and Winnings (stake not included) fill each other in; a free bet's stake is not yours
+    const mb=ed.querySelector('.eb-money');
+    if(mb){ const fr=mb.querySelector('.eb-free'), bk=mb.querySelector('.eb-back'), pf=mb.querySelector('.eb-prof'), la=mb.querySelector('.eb-lostamt'), note=mb.querySelector('.eb-money-note');
+      const stNow=()=>{ const pmOn=(ed.querySelector('.eb-mode')||{}).value==='pct'; const v=parseFloat((ed.querySelector(pmOn?'.eb-cost':'.eb-stake')||{}).value); return v>0?v:(+B.stake||0); };
+      const mine=()=>fr.checked?0:stNow(), r2m=x=>(Math.round(x*100)/100).toFixed(2);
+      const say=()=>{ note.textContent=fr.checked?'Free bet: a loss costs you $0; a win pays the winnings.':''; };
+      const w0=B.towin>0?+B.towin:(B.result==='win'?betProfit(B):null);
+      if(w0!=null && w0>=0){ pf.value=r2m(w0); bk.value=r2m(w0+mine()); }
+      la.placeholder=r2m(fr.checked?0:(+B.stake||0)); if(B.lostAmt>=0) la.value=r2m(+B.lostAmt);
+      bk.addEventListener('input',()=>{ mb.dataset.won='1'; const v=parseFloat(bk.value); pf.value=isNaN(v)?'':r2m(Math.max(0,v-mine())); });
+      pf.addEventListener('input',()=>{ mb.dataset.won='1'; const v=parseFloat(pf.value); bk.value=isNaN(v)?'':r2m(v+mine()); });
+      la.addEventListener('input',()=>{ mb.dataset.lost='1'; });
+      fr.addEventListener('change',()=>{ mb.dataset.free='1'; const v=parseFloat(pf.value); if(!isNaN(v)) bk.value=r2m(v+mine()); la.placeholder=r2m(mine()); say(); });
+      say(); }
   }
   // v2.71: % mode starts filled in — Cost = the screener's stake (or what you saved), @ % = the price
   { const pr0=r.offeredProb!=null?r.offeredProb:toProb(r.offeredRaw);
@@ -3188,7 +3212,12 @@ function openBetEditor(tr, r, opt){
         if(nd && nd!==od){ before.date=od; const t=Date.parse(L.start);
           if(!isNaN(t)){ const shift=Date.parse(nd+'T12:00:00Z')-Date.parse(ctDay(t)+'T12:00:00Z'); L.start=new Date(t+shift).toISOString(); }   // same kickoff time, on the new day
           L.date=nd; L.dateSet=true; if(L.result==='?'){ delete L.result; delete L.why; } } }
-      if(extra.towin>0) L.towin=extra.towin; else if(L.stake!==+(+before.stake||0).toFixed(2) || L.odds!==before.odds) delete L.towin;   // v3.54: a new To win replaces the old one; a new stake or odds drops a stale one
+      if(extra.towin>0) L.towin=extra.towin; else if(!L.paidReal && (L.stake!==+(+before.stake||0).toFixed(2) || L.odds!==before.odds)) delete L.towin;   // v3.54: a new To win replaces the old one; a new stake or odds drops a stale one   // v3.98: not what the book really paid
+      { const mb=ed.querySelector('.eb-money'); if(mb){   // v3.98: Real money
+        before.free=!!L.free; before.towin=L.towin; before.lostAmt=L.lostAmt;
+        if(mb.querySelector('.eb-free').checked) L.free=true; else delete L.free;
+        if(mb.dataset.won==='1'){ const pv=parseFloat(mb.querySelector('.eb-prof').value); if(pv>0){ L.towin=+pv.toFixed(2); L.paidReal=true; } else { delete L.towin; delete L.paidReal; } }
+        if(mb.dataset.lost==='1'){ const lv=parseFloat(mb.querySelector('.eb-lostamt').value); if(lv>=0 && Math.abs(lv-(+L.stake||0))>0.004) L.lostAmt=+lv.toFixed(2); else delete L.lostAmt; } } }
       if(gross!=null){ L.gross=gross; L.net=net; }
       if(extra.market) L.market=extra.market;
       L.betnow=betNowOf({market:L.market, side:L.side||sideOf(L)||'', offeredRaw:odds});
@@ -4047,7 +4076,7 @@ function renderLog(){
     }
     tr.innerHTML=
       '<td class="meta" style="white-space:nowrap">'+esc(b.date)+'<div class="meta">bet '+esc(betTimeTxt(b))+'</div>'+(b.start?'':'<div class="meta" style="color:var(--warn)">game time unknown</div>')+playedHtml(b)+whyHtml(b)+'</td>'+
-      '<td><div class="c-who">'+avatarHtml(b,'b:'+i)+'<div><div class="pick">'+esc(b.name)+'</div><div class="meta" style="color:var(--ink)" title="'+esc(b.betnow||'')+'">'+esc(betLabel(b))+' <span class="meta">'+esc(fmtOdds(b.odds))+'</span></div>'+srcTagHtml(b)+liveChipHtml(b)+fillDiffHtml(b,i)+
+      '<td><div class="c-who">'+avatarHtml(b,'b:'+i)+'<div><div class="pick">'+esc(b.name)+'</div><div class="meta" style="color:var(--ink)" title="'+esc(b.betnow||'')+'">'+esc(betLabel(b))+' <span class="meta">'+esc(fmtOdds(b.odds))+'</span></div>'+srcTagHtml(b)+(b.free?' <span class="tag eb-freetag" title="Free bet: not your money. A loss costs $0.">🎁 free bet</span>':'')+(b.paidReal?' <span class="meta" title="The winnings you typed: what the book really paid">paid as typed</span>':'')+(b.lostAmt>=0&&b.result==="loss"?' <span class="meta">lost $'+(+b.lostAmt).toFixed(2)+' (typed)</span>':'')+liveChipHtml(b)+fillDiffHtml(b,i)+
       '<div class="meta">'+(bookLogo(b.book)||isPredBook(b.book)?logoTag(b.book,'sm')+' ':'')+'<span class="book">'+esc(bookLabel(b.book))+'</span></div></div></div></td>'+   // v3.57: PREDICTS tag on prediction apps without a logo too (FanDuel Predicts); a picture
       '<td><span class="sport s-'+esc(b.sport)+'">'+esc(b.sport)+'</span></td>'+
       '<td class="num">'+esc(fmtOdds(b.odds))+'</td>'+
@@ -4196,16 +4225,16 @@ function gameDayOf(b){
   return (sd && (!b.date || sd>b.date)) ? sd : (b.date || '');
 }
 function betProfit(b){
-  const st=+b.stake||0;
-  if(b.kind==='parlay'){ if(b.sold) return +((+b.sold.price||0)-st).toFixed(2); return (b.parlay&&b.parlay.payout!=null) ? +((+b.parlay.payout)-st).toFixed(2) : null; }   // v2.73
+  const st=b.free?0:(+b.stake||0);   // v3.98: a free bet (bonus bet) is not your money: it costs nothing when it loses, and a win is the winnings only
+  if(b.kind==='parlay'){ if(b.sold) return +((+b.sold.price||0)-st).toFixed(2); if(b.towin>0 && b.result==='win') return +(+b.towin).toFixed(2); if(b.result==='loss' && !(b.parlay&&b.parlay.payout>0)) return b.lostAmt>=0?-(+b.lostAmt):-st; return (b.parlay&&b.parlay.payout!=null) ? +((+b.parlay.payout)-st).toFixed(2) : null; }   // v2.73   // v3.98: typed winnings, free parlays
   if(b.sold) return +((+b.sold.price||0) - st).toFixed(2);
-  if(b.result==='loss') return -st;
+  if(b.result==='loss') return b.free?0:(b.lostAmt>=0?-(+b.lostAmt):-st);   // v3.98: what you really lost (a partial cash-out), if you typed it
   if(b.result==='push') return 0;
   if(b.result==='win'){
-    if(b.towin>0) return +(+b.towin).toFixed(2);   // v3.51: the To win $ you typed — v3.54: on any book, fee or not
+    if(b.towin>0) return +(+b.towin).toFixed(2);   // v3.51: the To win $ you typed — v3.54: on any book, fee or not   // v3.98: or the winnings you typed after it won (a boost pays more than the odds)
     const p=toProb(b.odds); if(p==null) return null;
-    const fee=+b.fee||0;   // fee charged on top of the price (Kalshi): stake = cost × (1 + fee)
-    return +(st*((1/p)-1-fee)/(1+fee)).toFixed(2);
+    const fee=+b.fee||0, st0=+b.stake||0;   // fee charged on top of the price (Kalshi): stake = cost × (1 + fee)
+    return +(st0*((1/p)-1-fee)/(1+fee)).toFixed(2);   // v3.98: a free bet wins the same winnings (its stake does not come back)
   }
   return null;   // not settled yet
 }
@@ -4219,7 +4248,8 @@ function dayStats(){
   const at=day=>days[day]||(days[day]=blankDay(day));
   logged.forEach(b=>{
     const d=at(gameDayOf(b));
-    d.bets++; d.staked+=(+b.stake||0); if(betLocked(b)) d.locked+=(+b.stake||0); else d.notStarted+=(+b.stake||0);   // v3.67
+    const stM=b.free?0:(+b.stake||0);   // v3.98: free bets are not your money
+    d.bets++; d.staked+=stM; if(betLocked(b)) d.locked+=stM; else d.notStarted+=stM;   // v3.67
     if(b.sold) d.sold++;
     else if(b.result==='win') d.w++; else if(b.result==='loss') d.l++; else if(b.result==='push') d.p++; else d.pend++;
     const hv=heldValue(b); d.profit+=hv.v; if(hv.open){ d.risk=(d.risk||0)+hv.d; } else d.settled++;
@@ -4235,8 +4265,10 @@ function dayStats(){
    Cancelled with a loss → −that loss (removedBets). */
 function heldValue(b){
   const pr=betProfit(b); if(pr!=null) return {v:pr, open:false, d:0};
+  if(b.free) return {v:0, open:true, d:0, why:'free bet'};   // v3.98: a free bet risks none of your money
+  if(!betLocked(b)) return {v:0, open:true, d:0, why:'not started'};   // v3.98 (Alonzo: "if it has not played, do not add it as the worst day of losses"): a game not started yet is not counted as lost
   const st=+b.stake||0;
-  return {v:-st, open:true, d:st, why:'open'};   // v3.08: an open bet counts as LOST — the whole stake — until it wins
+  return {v:-st, open:true, d:st, why:'open'};   // v3.08: an open bet counts as LOST — the whole stake — until it wins   // v3.98: once its game has started
 }
 function money(x,signed){ return (x<0?'−':(signed&&x>0?'+':''))+'$'+Math.abs(x).toFixed(2); }
 function dayLabel(day){
@@ -5134,22 +5166,22 @@ async function espnRefreshNow(btn){   // v2.85: manual ESPN refresh — scores, 
     espnAt=Date.now();
   } finally { espnBusy=false; renderTodayBar(); }
 }
-function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding → to win
+function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding → to win   // v3.98 (Alonzo): played / playing / to play, in bets and in money, per day and per book
   const el=document.getElementById('todayBar'); if(!el) return;
   const today=ctDay(Date.now()), by={};
-  const blank=k=>({book:k,n:0,bet:0,won:0,lost:0,w:0,l:0,p:0,open:0,riding:0,toWin:0,net:0,ded:0,cancel:0,played:0,playing:0,toPlay:0,locked:0,notStarted:0});   // v3.67
+  const blank=k=>({book:k,n:0,bet:0,free:0,won:0,lost:0,w:0,l:0,p:0,open:0,toWin:0,net:0,cancel:0,played:0,playing:0,toPlay:0,playedAmt:0,playingAmt:0,toPlayAmt:0});
   const at=k=>by[k]||(by[k]=blank(k));
   logged.forEach(b=>{
     if(gameDayOf(b)!==today) return;
-    const x=at(ribbonBook(b.book)), st=+b.stake||0, pr=betProfit(b), hv=heldValue(b);
-    x.n++; x.bet+=st; x.net+=hv.v; x.ded+=hv.d; if(betLocked(b)) x.locked+=st; else x.notStarted+=st;   // v3.67
-    { const t=Date.parse(b.start); if(pr!=null) x.played++; else if(!isNaN(t) && t<=Date.now()) x.playing++; else x.toPlay++; }
-    if(pr!=null){
+    const x=at(ribbonBook(b.book)), st=+b.stake||0, mine=b.free?0:st, pr=betProfit(b), hv=heldValue(b);
+    x.n++; x.bet+=mine; if(b.free) x.free+=st; x.net+=hv.v;
+    if(pr!=null){ x.played++; x.playedAmt+=mine;
       if(pr>0) x.won+=pr; else if(pr<0) x.lost+=-pr;
-      if(!b.sold){ if(b.result==='win') x.w++; else if(b.result==='loss') x.l++; else if(b.result==='push') x.p++; }
-    } else {
-      x.open++; x.riding+=st;
-      if(b.kind==='parlay') x.toWin+=Math.max(0,(+(b.parlay&&b.parlay.pays&&b.parlay.pays.all)||0)-st);
+      if(!b.sold){ if(b.result==='win') x.w++; else if(b.result==='loss') x.l++; else if(b.result==='push') x.p++; } }
+    else {
+      x.open++;
+      if(betLocked(b)){ x.playing++; x.playingAmt+=mine; } else { x.toPlay++; x.toPlayAmt+=mine; }
+      if(b.kind==='parlay') x.toWin+=Math.max(0,(+(b.parlay&&b.parlay.pays&&b.parlay.pays.all)||0)-mine);
       else if(b.towin>0) x.toWin+=+b.towin;   // v3.54: the To win you typed
       else { const q=toProb(b.odds), f=+b.fee||0; if(q) x.toWin+=st*((1/q)-1-f)/(1+f); }
     }
@@ -5157,8 +5189,11 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
   removedBets.forEach(b=>{ if(!(b.lost>0) || gameDayOf(b)!==today) return; const x=at(ribbonBook(b.book)); x.lost+=b.lost; x.net-=b.lost; x.cancel+=b.lost; });
   const usd=x=>'$'+Math.abs(x).toFixed(2);
   const z=x=>Math.abs(x)<0.005, up=x=>z(x)?'<span class="open">$0.00</span>':'<span class="tb-up">+'+usd(x)+'</span>', dn=x=>z(x)?'<span class="open">$0.00</span>':'<span class="tb-down">−'+usd(x)+'</span>';
-  const line2=x=>'<div class="tb-l2"><span class="tb-up" title="won">'+usd(x.won)+'</span> <span class="open">vs</span> <span class="tb-down" title="lost">'+usd(x.lost)+'</span></div><div class="tb-l2">'+(x.open?x.open+' bet'+(x.open===1?'':'s')+' · <span class="tb-ride" title="on the line">'+usd(x.riding)+'</span> → <span class="tb-up" title="profit if they all win">+'+usd(x.toWin)+'</span></div><div class="tb-l2">':'')+
-    (Math.abs(x.net)<0.005?'<span class="open">even</span>':'<span class="tb-pill '+(x.net>0?'good':'bad')+'" title="Worst-case exposure: assumes every open bet loses (won − lost − every open stake). Hope for the best, expect the worst."><small>'+(x.net>0?'PROFIT':'LOST')+'</small> '+(x.net>0?'+':'−')+usd(x.net)+'</span>')+'</div>';
+  const sgn=v=>v>=0?up(v):dn(-v);
+  const counts=x=>'<div class="tb-l2 tb-cnt"><span title="has a result">✓ '+x.played+' played</span> <span class="live" title="game started, no result yet">▶ '+x.playing+' playing</span> <span title="game not started">⏳ '+x.toPlay+' to play</span></div>';
+  const wl=x=>'<div class="tb-l2"><span class="open">won</span> <span class="tb-up" title="winnings (your stake not included)">'+usd(x.won)+'</span> <span class="open">vs lost</span> <span class="tb-down" title="money lost">'+usd(x.lost)+'</span></div>';
+  const amts=x=>(x.playingAmt||x.toPlayAmt)?'<div class="tb-l2">'+(x.playingAmt?'<span class="tb-ride" title="games started: at risk">▶ '+usd(x.playingAmt)+' at risk</span> ':'')+(x.toPlayAmt?'<span class="open" title="games not started: not counted as lost">⏳ '+usd(x.toPlayAmt)+' not started</span>':'')+'</div>':'';
+  const pill=x=>'<div class="tb-l2">'+(z(x.net)?'<span class="open">even</span>':'<span class="tb-pill '+(x.net>0?'good':'bad')+'" title="Won − lost − money on games already started. Games not started are not counted."><small>'+(x.net>0?'UP':'DOWN')+'</small> '+(x.net>0?'+':'−')+usd(x.net)+'</span>')+'</div>';
   const order=RIBBON_BOOKS.concat(Object.keys(by).filter(k=>!RIBBON_BOOKS.includes(k)).sort());
   const tot=blank('All');
   const tile=k=>{ const x=by[k]; if(!x && !RIBBON_BOOKS.includes(k)) return '';
@@ -5167,16 +5202,23 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
     if(!x) return '<div class="tb-t dim" title="'+esc(k)+': no bets today"><div class="tb-l1">'+head+'<span class="open">no bets</span></div></div>';
     Object.keys(tot).forEach(f=>{ if(typeof tot[f]==='number') tot[f]+=x[f]; });
     const rec=(x.w+x.l+x.p)?' <span class="open">'+x.w+'–'+x.l+(x.p?'–'+x.p:'')+'</span>':'';
-    return '<div class="tb-t" title="'+esc(k+': '+x.n+' bet'+(x.n===1?'':'s')+' today · '+x.open+' open')+'"><div class="tb-l1">'+head+(x.n?'<b>'+usd(x.bet)+'</b> <span class="open">· '+x.n+' bet'+(x.n===1?'':'s')+'</span>':'<span class="open">cancelled only</span>')+rec+'</div>'+line2(x)+'</div>';
+    return '<div class="tb-t" title="'+esc(k+': '+x.n+' bet'+(x.n===1?'':'s')+' today')+'"><div class="tb-l1">'+head+(x.n?'<b>'+usd(x.bet)+'</b> <span class="open">· '+x.n+' bet'+(x.n===1?'':'s')+'</span>'+(x.free?' <span class="open" title="free bets: not your money">🎁 '+usd(x.free)+'</span>':''):'<span class="open">cancelled only</span>')+rec+'</div>'+(x.n?counts(x):'')+wl(x)+amts(x)+pill(x)+'</div>';
   };
   const tiles=order.map(tile).join('');
-  const now=tot.net, best=now+tot.ded+tot.toWin, worst=now-(tot.riding-tot.ded);
-  const sgn=v=>v>=0?up(v):dn(-v);
+  const now=tot.net, best=now+tot.playingAmt+tot.toWin, worst=now;
   const espnBtn='<button class="tb-espn" type="button" aria-label="Refresh scores and results from ESPN" title="Refresh scores and results from ESPN now (no BettingPros calls)'+(espnAt?' — last '+new Date(espnAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+'">⟳</button>';
   if(!tot.n && !tot.cancel){   // v3.54: nothing today — one quiet line, not a row of "no bets"
     const q=['No bets today. Your bankroll thanks you for the day off.','Nothing riding today. The sportsbooks will have to wait.','No action yet. Patience is a position too.','Zero bets, zero bad beats.'];
     el.innerHTML='<span class="tb-k"><span>TODAY '+espnBtn+'</span>'+lookChip()+'</span><span class="tb-empty">'+esc(q[Math.floor(Date.parse(today)/864e5)%q.length])+'</span>'; return; }   // v3.57: + bets to check
-  el.innerHTML='<span class="tb-k"><span>TODAY <button class="tb-espn" type="button" aria-label="Refresh scores and results from ESPN" title="Refresh scores and results from ESPN now (no BettingPros calls)'+(espnAt?' — last '+new Date(espnAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+'">⟳</button></span>'+lookChip()+'<b class="tb-tot">'+usd(tot.bet)+'</b><span class="tb-n">'+tot.n+' bet'+(tot.n===1?'':'s')+'</span>'+(tot.n?'<span class="tb-st" title="played = has a result · playing = game started, no result yet · to play = game not started">✓ '+tot.played+' played</span><span class="tb-st live">▶ '+tot.playing+' playing</span><span class="tb-st">⏳ '+tot.toPlay+' to play</span><span class="tb-st" title="Played or playing: you cannot get it back unless you cash out">🔒 '+usd(tot.locked)+' spent</span>'+(tot.notStarted?'<span class="tb-st" title="Games not started: you can still get out, usually for a small loss">'+usd(tot.notStarted)+' not started</span>':'')+'':'')+(Math.abs(now)<0.005?'<span class="tb-pill even" title="even">$0.00</span>':'<span class="tb-pill '+(now>0?'good':'bad')+'" title="Worst-case exposure: assumes every open bet loses (won − lost − money on the line). Hope for the best, expect the worst.">'+(now>0?'+':'−')+usd(now)+'</span>')+'</span>'+'<div class="tb-t all"><div class="tb-l1"><b>All</b></div>'+line2(tot)+(tot.open?'<div class="tb-l2" title="best = every open bet wins · worst = every open bet loses (money on the line is already counted as gone)">best '+sgn(best)+' · worst '+sgn(worst)+'</div>':'')+'<div class="tb-motto" title="Worst-case exposure: every open bet counts as LOST until it wins">Hope for the best, expect the worst.</div></div>'+tiles;
+  const allCard='<div class="tb-t all"><div class="tb-l1"><b>All</b> <span class="open">'+tot.w+'–'+tot.l+(tot.p?'–'+tot.p:'')+'</span></div>'+
+    '<div class="tb-l2"><span class="open">✓ played</span> <b>'+usd(tot.playedAmt)+'</b> → <span class="open">won</span> <span class="tb-up">'+usd(tot.won)+'</span> <span class="open">vs lost</span> <span class="tb-down">'+usd(tot.lost)+'</span></div>'+
+    (tot.playing?'<div class="tb-l2"><span class="tb-ride">▶ playing '+usd(tot.playingAmt)+'</span> <span class="open">at risk</span></div>':'')+
+    (tot.toPlay?'<div class="tb-l2"><span class="open">⏳ to play '+usd(tot.toPlayAmt)+': not counted yet</span></div>':'')+
+    (tot.open?'<div class="tb-l2" title="best = every open bet wins · worst = every bet already playing loses (games not started are not counted)">best '+sgn(best)+' · worst '+sgn(worst)+'</div>':'')+
+    '<div class="tb-motto" title="Money on games already started counts as gone until it wins; games not started are not counted">Hope for the best, expect the worst.</div></div>';
+  el.innerHTML='<span class="tb-k"><span>TODAY '+espnBtn+'</span>'+lookChip()+'<b class="tb-tot">'+usd(tot.bet)+'</b><span class="tb-n">'+tot.n+' bet'+(tot.n===1?'':'s')+'</span>'+(tot.free?'<span class="tb-st" title="free bets: not your money">🎁 '+usd(tot.free)+' free</span>':'')+
+    (tot.n?'<span class="tb-st" title="has a result">✓ '+tot.played+' played</span><span class="tb-st live" title="game started, no result yet">▶ '+tot.playing+' playing</span><span class="tb-st" title="game not started">⏳ '+tot.toPlay+' to play</span>':'')+
+    (z(now)?'<span class="tb-pill even" title="even">$0.00</span>':'<span class="tb-pill '+(now>0?'good':'bad')+'" title="Won − lost − money on games already started. Games not started are not counted.">'+(now>0?'+':'−')+usd(now)+'</span>')+'</span>'+allCard+tiles;
 }
 /* v2.73: grade finished games in the background (ESPN, no BettingPros calls) */
 let agBusy=false; const sbStamp={};
@@ -5427,7 +5469,7 @@ const roiOf=xs=>{ let p=0,s=0; xs.forEach(b=>{ p+=b._pl; s+=b._st; }); return s>
 const medOf=xs=>{ if(!xs.length) return null; const a=xs.map(b=>b._clv).sort((x,y)=>x-y), m=a.length>>1; return a.length%2?a[m]:(a[m-1]+a[m])/2; };
 const meanClvOf=xs=>xs.length?xs.reduce((t,b)=>t+b._clv,0)/xs.length:null;
 function scoreSet(list){
-  const S=list.filter(b=>b.kind!=='parlay' && !b.research).map(b=>({b, _pl:betProfit(b), _st:+b.stake||0, _clv:clv(b), _day:gameDayOf(b)}));
+  const S=list.filter(b=>b.kind!=='parlay' && !b.research).map(b=>({b, _pl:betProfit(b), _st:b.free?0:(+b.stake||0), _clv:clv(b), _day:gameDayOf(b)}));   // v3.98: ROI on your own money: profit without the stake, free bets stake $0
   return {settled:S.filter(x=>x._pl!=null && x._st>0), withClose:S.filter(x=>x._clv!=null)};
 }
 function segLabel(n){ return n>=1000?'<span class="sc-tag ev">evidence</span>':n>=300?'<span class="sc-tag cmp">comparison</span>':n>=100?'<span class="sc-tag">exploratory</span>':'<span class="sc-tag" style="opacity:.6">too few</span>'; }
