@@ -81,6 +81,9 @@
 - v3.94: `statForMarket` NHL and MLS check shots before goals ("Shots On Goal" was graded as goals). ESPN's NHL `SOG` column is always 0;
   shots on goal are `S`. NHL/MLS shots bets graded by ESPN the old way are graded again once (`fixSog94`). Real box score in
   `tests/fixtures-nhl-2026-11-05.json`. Ignore also counts `fillSeen` 'ignored' (synced) and `mbev.fillIgnored` is in `SYNC_SETS`.
+  v3.95: v3.94 cleared shots bets of every age but `autoGradeLog` only grades the last 4 days, so older ones went to Look out (30 on
+  Alonzo's phone). `redo94` grades every `fixSog94` bet without a result, whatever its age; only "Shots On Goal" markets are cleared.
+  Lesson: never clear saved results to force a regrade; grade first and replace only when the new grade exists.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American
