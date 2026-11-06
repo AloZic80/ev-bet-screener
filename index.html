@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v3.85</title>
+<title>0xBeta Screener v3.86</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1015,7 +1015,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.85</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.86</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1673,7 +1673,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v3.85';
+const SCREENER_VERSION='v3.86';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2938,10 +2938,10 @@ function openBetEditor(tr, r, opt){
   if(isCard) tr.appendChild(ed); else tr.after(ed);
   if(opt.edit){ const B=opt.edit;   // v3.38: manual result + copy the book's bet ID
     ed.querySelectorAll('button.eb-res').forEach(btn=>btn.addEventListener('click',()=>{
-      B.result=btn.dataset.res; B.gradedBy='manual'; B.resultSrc='you'; delete B.why;
+      B.result=btn.dataset.res; B.gradedBy='manual'; B.resultSrc='you'; delete B.why; ed.remove();   // v3.86: close it first, so the log redraws now
       saveLog(); renderLog(); renderPerf(); renderTodayBar(); refresh(); }));
     const clr=ed.querySelector('button.eb-clear');
-    if(clr) clr.addEventListener('click',()=>{ delete B.result; delete B.gradedBy; delete B.resultSrc;
+    if(clr) clr.addEventListener('click',()=>{ delete B.result; delete B.gradedBy; delete B.resultSrc; ed.remove();   // v3.86
       saveLog(); renderLog(); renderPerf(); renderTodayBar(); refresh(); });
     const cp=ed.querySelector('button.eb-copy');
     if(cp) cp.addEventListener('click',async()=>{ try{ await navigator.clipboard.writeText(String(B.fillRef||'')); cp.textContent='copied'; }catch(e){ cp.textContent='select & copy'; } });
@@ -3993,7 +3993,14 @@ function resultBadge(b){
   return b.result==='win' ? '<span class="tag" style="background:var(--live-bg);color:var(--live)">WIN</span>'
                            : '<span class="tag t-out">LOSS</span>';
 }
+/* v3.86 (Alonzo: "if I have it on edit, after maybe 30 seconds it refreshes and closes the edit"): live prices, book fills and
+   sync redraw the log in the background, which threw away an open editor. While one is open in the log, a redraw waits until
+   it is saved or closed; your own buttons close the editor first, so they still redraw at once. */
+let logRenderLater=false;
+function logEditorOpen(){ return !!document.querySelector('#logBody tr.pl-ed, #logBody tr.editor'); }
+setInterval(()=>{ if(logRenderLater && !logEditorOpen()){ logRenderLater=false; try{ renderLog(); }catch(e){} } }, 1000);
 function renderLog(){
+  if(logEditorOpen()){ logRenderLater=true; return; }   // v3.86
   const tb=document.getElementById('logBody'), empty=document.getElementById('logEmpty');
   tb.innerHTML='';
   { const lf=document.getElementById('logFilter'); if(lf){ lf.style.display=logDayFilter?'flex':'none';
@@ -4078,7 +4085,7 @@ function renderLog(){
     }
     saveLog(); renderLog(); renderPerf(); refresh();
   }));
-  tb.querySelectorAll('button.kill.edit').forEach(btn=>btn.addEventListener('click',()=>{   // v2.71
+  tb.querySelectorAll('button.kill.edit:not(.pl-edit)').forEach(btn=>btn.addEventListener('click',()=>{   // v2.71; v3.86: a parlay has its own editor (it opened both)
     const b=logged[parseInt(btn.dataset.i,10)]; if(b) openBetEditor(btn.closest('tr'), rowFromBet(b), {edit:b, cols:11});
   }));
   tb.querySelectorAll('button.kill:not(.sell):not(.edit)').forEach(btn=>btn.addEventListener('click',()=>{
@@ -7305,7 +7312,7 @@ function plEditOpen(tr, i){
       b.stake=+st.toFixed(2); b.odds=fmtOdds(Math.round(americanOf(st/pay))); b.market=L.length+'-pick parlay'; b.betnow=L.length+' picks';
       if(/·\s*\d+\s*picks?$/.test(b.name||'')) b.name=String(b.name).replace(/\d+\s*picks?$/, L.length+' picks');
       if(wasAll){ P.hits=L.length; P.payout=+pay.toFixed(2); b.result='win'; }
-      saveLog(); renderLog(); renderPerf(); if(typeof renderTodayBar==='function') renderTodayBar(); }
+      ed.remove(); /* v3.86: close it first */ saveLog(); renderLog(); renderPerf(); if(typeof renderTodayBar==='function') renderTodayBar(); }
   });
   { const L=read(), ds=L.map(l=>plDec(l.o)), saved=+(P.pays&&P.pays.all)||0, st=+b.stake||0;   // a pay that is not what the legs make was typed: keep it
     payTyped = saved>0 && !(L.length && ds.every(d=>d) && Math.abs(st*ds.reduce((x,d)=>x*d,1)-saved)<=0.02); }
