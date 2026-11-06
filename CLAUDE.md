@@ -107,6 +107,10 @@
   a day with only unstarted games is a grey amount (`.cal-c.tp`) and is not a best or worst day. ▶ marks games playing (hidden on a phone).
 - Today card days (v4.01, `tbDay`, `.tb-day`): ‹ › step a day back or forward and "Today" comes back; the label shows the day
   ("WED, 11/4"). `tbDay` null means today and follows the clock past midnight. The arrows stop the click that opens the Bet log.
+- Book slips on a phone (v4.04, `slipReady`, `#slipGo`): an iPhone opens a book's app (Novig `novigapp://`, Kalshi, Polymarket, DraftKings)
+  only from a tap on the link itself, never from a tab the page opened and pointed there after an `await`. So on a phone the logo (or book name) tap
+  fetches the slip, then shows a bar with a real "Open in Novig ›" link (and the website for Novig). Kalshi, Polymarket US, DraftKings
+  and PrizePicks (`BOOK_HOME.pp`, v4.04) the same; DraftKings and PrizePicks have no prefilled slip. The Mac keeps the side window.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American
