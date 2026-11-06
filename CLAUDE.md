@@ -94,6 +94,9 @@
   as `towin` (the profit) with `paidReal` (a boost or what the book really paid), kept when stake or odds change. Lost $ → `lostAmt`
   (only when it differs from the stake). 🎁 Free bet → `free`: `betProfit` counts a loss as $0 and a win as winnings only; free stakes
   are not money staked (Today card, `dayStats`, Performance ROI `_st`). Performance profit and ROI never include the returned stake.
+  v4.03: the 🎁 tick saves at once (`.eb-free`, and `.pl-free` in the parlay editor); `ebMoneyApply` is used by Save changes and by
+  Mark WIN / LOSS / PUSH (Mark LOSS used to close the editor without the tick). A free parlay that wins counts payout − stake (the
+  stake does not come back), one that misses $0. `tests/free-bet-test.js`.
 - Today card (v3.98, `renderTodayBar`): per day and per book: money staked (free bets apart, 🎁), bets, ✓ played · ▶ playing · ⏳ to play,
   won $ vs lost $, ▶ money at risk, ⏳ money not started. `heldValue` (owner, 2026-11-05, replacing the v3.08 rule): a game not started
   and a free bet count $0, not as lost; once the game starts the stake counts as gone until it wins. Worst = won − lost − money playing.
