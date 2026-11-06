@@ -55,6 +55,12 @@
   v3.83: `saveFills` (From your books: Add, Ignore) saves the same way.
 - From your books › Add (v3.87, `addFromFill`, `abFromFill`): opens the + Add a bet tab (`v-add`) filled in from the fill; the fill stays
   listed until Save bet, which links it (`linkFill`, `fillSeen` 'added') and removes it. Before, it switched to the Board tab and dropped the fill.
+- Book fills (v3.89): a fill that matches no logged bet and no board row is still logged on its own when the book describes it
+  (`fillDescOk`, `autoAddFromDesc`: player, stat, line, side, or team and line; price, cost, kickoff). Only undescribed ones wait in From
+  your books. Ignore is also kept by fingerprint (`fillIgnored`, `fillPrint`, `mbev.fillIgnored`) and filtered on every render, so a
+  re-read, a `fillV` reset or a new fill id cannot bring it back. Add saves in one tap when the form is complete (`addFromFill`).
+- Save in the bet editor (v3.89, `ebSay`): a second-press check (worse than fair, a limit) or a missing field shows an amber `.eb-warn`
+  box and the button reads "Save bet anyway".
 - `addToLog` copies a fixed list of fields into a saved bet. A new field on the row (like `towin`) must be added there too, or
   it's silently dropped. `fee` is only stored when a bet is edited.
 - Stat names are shortened on screen only (`shortStat`, e.g. Receptions to Rec). The saved `market` text keeps full names
