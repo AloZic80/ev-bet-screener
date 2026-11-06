@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.02</title>
+<title>0xBeta Screener v4.03</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1041,7 +1041,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.02</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.03</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1699,7 +1699,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 
 </div>
 <script>
-const SCREENER_VERSION='v4.02';
+const SCREENER_VERSION='v4.03';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2929,6 +2929,13 @@ function ebResultHtml(b){
   return '<div class="eb-result" style="width:100%;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px">'
     + idTxt + (status ? ' <span class="meta">· '+esc(status)+'</span>' : '') + ' ' + btns + '</div>';
 }
+/* v4.03 (Alonzo: "when I edit and put it as a freebie, it still counts it as a loss"): ticking Free bet and then Mark LOSS closed the
+   editor without the tick. Now the Real money box is applied by Save changes and by Mark WIN / LOSS / PUSH, and the tick saves at once. */
+function ebMoneyApply(ed,L,before){ const mb=ed&&ed.querySelector('.eb-money'); if(!mb||!L) return;
+  if(before){ before.free=!!L.free; before.towin=L.towin; before.lostAmt=L.lostAmt; }
+  if(mb.querySelector('.eb-free').checked) L.free=true; else delete L.free;
+  if(mb.dataset.won==='1'){ const pv=parseFloat(mb.querySelector('.eb-prof').value); if(pv>0){ L.towin=+pv.toFixed(2); L.paidReal=true; } else { delete L.towin; delete L.paidReal; } }
+  if(mb.dataset.lost==='1'){ const lv=parseFloat(mb.querySelector('.eb-lostamt').value); if(lv>=0 && Math.abs(lv-(+L.stake||0))>0.004) L.lostAmt=+lv.toFixed(2); else delete L.lostAmt; } }
 function openBetEditor(tr, r, opt){
   opt=opt||{};
   const isCard=tr.classList.contains('pcard')||tr.classList.contains('ab-host');   // v2.79: + Add a bet hosts one too   // v2.69: the card holds its own editor
@@ -2971,6 +2978,7 @@ function openBetEditor(tr, r, opt){
   if(isCard) tr.appendChild(ed); else tr.after(ed);
   if(opt.edit){ const B=opt.edit;   // v3.38: manual result + copy the book's bet ID
     ed.querySelectorAll('button.eb-res').forEach(btn=>btn.addEventListener('click',()=>{
+      ebMoneyApply(ed,B,null);   // v4.03: what you set in Real money counts too
       B.result=btn.dataset.res; B.gradedBy='manual'; B.resultSrc='you'; delete B.why; gradeRemember(B); ed.remove();   // v3.86: close it first, so the log redraws now
       saveLog(); renderLog(); renderPerf(); renderTodayBar(); refresh(); }));
     const clr=ed.querySelector('button.eb-clear');
@@ -2990,7 +2998,8 @@ function openBetEditor(tr, r, opt){
       bk.addEventListener('input',()=>{ mb.dataset.won='1'; const v=parseFloat(bk.value); pf.value=isNaN(v)?'':r2m(Math.max(0,v-mine())); });
       pf.addEventListener('input',()=>{ mb.dataset.won='1'; const v=parseFloat(pf.value); bk.value=isNaN(v)?'':r2m(v+mine()); });
       la.addEventListener('input',()=>{ mb.dataset.lost='1'; });
-      fr.addEventListener('change',()=>{ mb.dataset.free='1'; const v=parseFloat(pf.value); if(!isNaN(v)) bk.value=r2m(v+mine()); la.placeholder=r2m(mine()); say(); });
+      fr.addEventListener('change',()=>{ mb.dataset.free='1'; const v=parseFloat(pf.value); if(!isNaN(v)) bk.value=r2m(v+mine()); la.placeholder=r2m(mine()); say();
+        if(fr.checked) B.free=true; else delete B.free; saveLog(); try{ renderPerf(); renderTodayBar(); }catch(e){} note.textContent=(fr.checked?'🎁 Saved as a free bet: a loss costs you $0; a win pays the winnings.':'Saved: not a free bet.'); });   // v4.03: saved at once, whatever you press next
       say(); }
   }
   // v2.71: % mode starts filled in — Cost = the screener's stake (or what you saved), @ % = the price
@@ -3231,11 +3240,7 @@ function openBetEditor(tr, r, opt){
           if(!isNaN(t)){ const shift=Date.parse(nd+'T12:00:00Z')-Date.parse(ctDay(t)+'T12:00:00Z'); L.start=new Date(t+shift).toISOString(); }   // same kickoff time, on the new day
           L.date=nd; L.dateSet=true; if(L.result==='?'){ delete L.result; delete L.why; } } }
       if(extra.towin>0) L.towin=extra.towin; else if(!L.paidReal && (L.stake!==+(+before.stake||0).toFixed(2) || L.odds!==before.odds)) delete L.towin;   // v3.54: a new To win replaces the old one; a new stake or odds drops a stale one   // v3.98: not what the book really paid
-      { const mb=ed.querySelector('.eb-money'); if(mb){   // v3.98: Real money
-        before.free=!!L.free; before.towin=L.towin; before.lostAmt=L.lostAmt;
-        if(mb.querySelector('.eb-free').checked) L.free=true; else delete L.free;
-        if(mb.dataset.won==='1'){ const pv=parseFloat(mb.querySelector('.eb-prof').value); if(pv>0){ L.towin=+pv.toFixed(2); L.paidReal=true; } else { delete L.towin; delete L.paidReal; } }
-        if(mb.dataset.lost==='1'){ const lv=parseFloat(mb.querySelector('.eb-lostamt').value); if(lv>=0 && Math.abs(lv-(+L.stake||0))>0.004) L.lostAmt=+lv.toFixed(2); else delete L.lostAmt; } } }
+      ebMoneyApply(ed,L,before);   // v3.98: Real money   // v4.03: one helper, also used by the result buttons
       if(gross!=null){ L.gross=gross; L.net=net; }
       if(extra.market) L.market=extra.market;
       L.betnow=betNowOf({market:L.market, side:L.side||sideOf(L)||'', offeredRaw:odds});
@@ -4085,7 +4090,7 @@ function renderLog(){
       const pr=betProfit(b);
       tr.innerHTML='<td class="meta" style="white-space:nowrap">'+esc(b.date)+'</td>'+
         '<td><div class="pick">'+esc(b.name)+'</div>'+(P.legs?'<div class="meta" style="white-space:normal;max-width:360px">'+esc(P.legs)+'</div>':'')+
-        '<div class="meta">'+(bookLogo(b.book)||isPredBook(b.book)?logoTag(b.book,'sm')+' ':'')+'<span class="book">'+esc(bookLabel(b.book))+'</span></div></td>'+
+        '<div class="meta">'+(bookLogo(b.book)||isPredBook(b.book)?logoTag(b.book,'sm')+' ':'')+'<span class="book">'+esc(bookLabel(b.book))+'</span>'+(b.free?' <span class="tag eb-freetag" title="Free bet: not your money. A miss costs $0.">🎁 free bet</span>':'')+'</div></td>'+   /* v4.03: free parlays show it too */
         '<td><span class="sport">PARLAY</span></td><td class="num">'+esc(fmtOdds(b.odds))+'</td><td class="num">—</td><td class="num">—</td>'+
         '<td class="num">$'+(+b.stake||0).toFixed(2)+'</td>'+
         '<td class="num">'+sel+(pr!=null?'<div class="meta '+(pr>=0?'pl-up':'pl-down')+'">'+money(pr,true)+'</div>':'')+'</td><td class="num">—</td><td class="num">—</td>'+
@@ -4244,7 +4249,11 @@ function gameDayOf(b){
 }
 function betProfit(b){
   const st=b.free?0:(+b.stake||0);   // v3.98: a free bet (bonus bet) is not your money: it costs nothing when it loses, and a win is the winnings only
-  if(b.kind==='parlay'){ if(b.sold) return +((+b.sold.price||0)-st).toFixed(2); if(b.towin>0 && b.result==='win') return +(+b.towin).toFixed(2); if(b.result==='loss' && !(b.parlay&&b.parlay.payout>0)) return b.lostAmt>=0?-(+b.lostAmt):-st; return (b.parlay&&b.parlay.payout!=null) ? +((+b.parlay.payout)-st).toFixed(2) : null; }   // v2.73   // v3.98: typed winnings, free parlays
+  if(b.kind==='parlay'){ const stR=+b.stake||0, pay=b.parlay&&b.parlay.payout;   // v4.03: a free parlay that wins pays its winnings (payout − stake: the stake does not come back); one that misses costs nothing
+    if(b.sold) return +((+b.sold.price||0)-st).toFixed(2); if(b.towin>0 && b.result==='win') return +(+b.towin).toFixed(2);
+    if(b.result==='loss' && !(pay>0)) return b.free?0:(b.lostAmt>=0?-(+b.lostAmt):-stR);
+    if(pay==null) return null; if(b.free) return +Math.max(0,(+pay)-stR).toFixed(2);
+    return +((+pay)-stR).toFixed(2); }   // v2.73   // v3.98: typed winnings
   if(b.sold) return +((+b.sold.price||0) - st).toFixed(2);
   if(b.result==='loss') return b.free?0:(b.lostAmt>=0?-(+b.lostAmt):-st);   // v3.98: what you really lost (a partial cash-out), if you typed it
   if(b.result==='push') return 0;
@@ -7389,6 +7398,7 @@ function plEditOpen(tr, i){
     '<div class="pl-legs">'+legs.map(legRow).join('')+'</div><button type="button" class="ghost sm pl-ladd">+ leg</button>'+
     '<div class="pl-edrow"><label>Stake $ <input class="pl-st" type="number" step="0.01" min="0" value="'+(+b.stake||0)+'"></label>'+
     '<label>Pays if all hit $ <input class="pl-pay" type="number" step="0.01" min="0" value="'+(+(P.pays&&P.pays.all)||0).toFixed(2)+'"></label><span class="meta pl-calc"></span></div>'+
+    '<div class="pl-edrow"><label class="bar-check" title="A free bet (bonus bet) is not your money: if it misses you lose $0; if it hits you get the winnings"><input type="checkbox" class="pl-free"'+(b.free?' checked':'')+'> 🎁 Free bet</label><span class="meta pl-free-note"></span></div>'+   // v4.03: free parlays
     '<div class="pl-edrow"><button type="button" class="log sm pl-save">Save</button><button type="button" class="ghost sm pl-cancel">Cancel</button><span class="meta pl-msg" role="status"></span></div></div></td>';
   tr.after(ed);
   const box=ed.querySelector('.pl-legs'), stIn=ed.querySelector('.pl-st'), payIn=ed.querySelector('.pl-pay'), calc=ed.querySelector('.pl-calc'); let payTyped=false;
@@ -7399,6 +7409,7 @@ function plEditOpen(tr, i){
     const pay=parseFloat(payIn.value)||0;
     calc.textContent=(ok?'from the legs: $'+all.toFixed(2)+' · ':'')+(st>0&&pay>0?'odds '+fmtOdds(Math.round(americanOf(st/pay)))+' · wins $'+(pay-st).toFixed(2):''); };
   ed.addEventListener('input',e=>{ if(e.target===payIn) payTyped=true; recalc(); });
+  { const fr=ed.querySelector('.pl-free'); fr.addEventListener('change',()=>{ if(fr.checked) b.free=true; else delete b.free; saveLog(); try{ renderPerf(); renderTodayBar(); }catch(e){} ed.querySelector('.pl-free-note').textContent=fr.checked?'🎁 Saved as a free bet: a miss costs you $0.':'Saved: not a free bet.'; }); }   // v4.03: saved at once
   ed.addEventListener('click',e=>{
     if(e.target.closest('.pl-ladd')){ box.insertAdjacentHTML('beforeend',legRow({t:'',o:''})); recalc(); return; }
     const del=e.target.closest('.pl-ldel'); if(del){ del.closest('.pl-leg').remove(); recalc(); return; }
