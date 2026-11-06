@@ -25,6 +25,8 @@ const runs = [
   ['Edit a logged parlay: each leg and its odds, stake, what it pays', 'parlay-edit-test.js', []],
   ['From your books › Add opens + Add a bet and keeps the fill until it is saved', 'fill-add-test.js', []],
   ['Editing a saved bet can fix its game day', 'edit-date-test.js', []],
+  ['Save says why it needs a second press, in a box you can see', 'save-confirm-test.js', []],
+  ['Novig bets log on their own; From your books Ignore sticks', 'fill-autolog-test.js', []],
 ];
 const run = (file, args) => spawnSync(process.execPath, [path.join(__dirname, file), ...args], { encoding: 'utf8', timeout: 300000 });
 const last = r => ((r.stdout || '') + (r.stderr || '')).trim().split('\n').pop();

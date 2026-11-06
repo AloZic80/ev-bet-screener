@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v3.88</title>
+<title>0xBeta Screener v3.89</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -999,6 +999,8 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
   .from-books td{display:block; border:0!important; min-width:0}
   .from-books td.fb-act{grid-column:1 / -1; width:auto!important; display:flex; gap:8px; justify-content:flex-end}
   .from-books td.fb-act button{display:inline-block; width:auto; margin:0; padding:8px 18px; font-size:14px} }
+/* v3.89 a Save that needs a second press (or a missing field) says so where you can see it */
+.eb-msg.eb-warn{display:block; width:100%; margin-top:6px; padding:8px 12px; border-radius:8px; background:var(--warn-bg); color:var(--warn); font-weight:600; font-size:14px; white-space:normal}
 /* v3.85 edit a logged parlay */
 .pl-edbox{display:flex; flex-direction:column; gap:8px; padding:10px 4px; white-space:normal}
 .pl-legs{display:flex; flex-direction:column; gap:6px}
@@ -1015,7 +1017,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.88</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.89</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1673,7 +1675,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v3.88';
+const SCREENER_VERSION='v3.89';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3120,11 +3122,12 @@ function openBetEditor(tr, r, opt){
   const saveBtn=ed.querySelector('.eb-save');
   saveBtn.addEventListener('click',()=>{
     if(saveBtn.disabled) return;   // v2.51: a double-click can't log it twice
+    const ebSay=(t,again)=>{ const m=ed.querySelector('.eb-msg'); m.textContent=t; m.classList.add('eb-warn'); if(again) saveBtn.textContent=opt.edit?'Save anyway':'Save bet anyway'; try{ m.scrollIntoView({block:'nearest'}); }catch(e){} };   // v3.89: a note you can see, and a button that says so
     const book=bookSel.value, cfg=cfgRead();
     let odds, prob, stake, fee;
     if(pmMode()){
       const pr=pmPrice();
-      if(!pr){ ed.querySelector('.eb-msg').textContent='Enter Cost and To win (or the @ %)'; return; }
+      if(!pr){ ebSay('Enter Cost and To win (or the @ %)'); return; }
       prob=pr.prob; odds=fmtOdds(Math.round(americanOf(prob))); stake=pr.cost;
       fee = pr.allIn ? 0 : feeRate(book, prob, cfg.fees, liveG());   // all-in price already paid the fee
       ed._slip = pr.allIn ? {listed:pr.listed!=null?+pr.listed.toFixed(4):null, real:+prob.toFixed(4), win:parseFloat(ed.querySelector('.eb-win').value)||null, read:pr.read} : null;   // v3.17
@@ -3135,25 +3138,25 @@ function openBetEditor(tr, r, opt){
       if(!oddsTxt && stake>0 && winO>0) oddsTxt=fmtOdds(Math.round(americanOf(1/(1+winO/stake))));   // v3.47: odds from stake + to win
       odds=oddsTxt.replace(/^(\d)/,'+$1');
       prob=toProb(odds);
-      if(prob===null){ ed.querySelector('.eb-msg').textContent='Type the odds (e.g. -110 or +120), or leave them blank and fill Stake and To win $'; return; }
+      if(prob===null){ ebSay('Type the odds (e.g. -110 or +120), or leave them blank and fill Stake and To win $'); return; }
       stake=parseFloat(ed.querySelector('.eb-stake').value)||0;
       fee=feeRate(book, prob, cfg.fees, liveG());
     }
-    if(!(stake>0)){ ed.querySelector('.eb-msg').textContent=pmMode()?'Enter the Cost you paid (above $0)':'Enter a stake above $0'; return; }
+    if(!(stake>0)){ ebSay(pmMode()?'Enter the Cost you paid (above $0)':'Enter a stake above $0'); return; }
     const resNew=lateRow ? ed.querySelector('.eb-res-new').value : '';   // v3.57: already settled, so it is a record, not a decision
     if(resNew){ saveBtn.dataset.ok='1'; saveBtn.dataset.lc='1'; }
     // v2.71: La Contadora — past today's outlier / risk-bet limit: one line, then it's your call
     const pastLim=!opt.edit && (r.flags||[]).find(f=>/outlier limit reached|risk-bet limit reached/.test(f[1]));
     if(pastLim && saveBtn.dataset.lc!=='1'){
       saveBtn.dataset.lc='1';
-      ed.querySelector('.eb-msg').textContent='La Contadora: that\'s past today\'s '+(/outlier/.test(pastLim[1])?'outlier':'risk-bet')+' limit. Press Save bet again if it\'s your call.';
+      ebSay('La Contadora: that\'s past today\'s '+(/outlier/.test(pastLim[1])?'outlier':'risk-bet')+' limit. Press Save bet anyway if it is your call.', true);
       return;
     }
     // v2.59: not worth it → say so, and only log it on a second press
     const v=valueCheck();
     if(v && v.level==='bad' && saveBtn.dataset.ok!=='1'){
       saveBtn.dataset.ok='1';
-      ed.querySelector('.eb-msg').textContent=v.msg+' — press Save bet again to log it anyway.';
+      ebSay(v.msg+' — press Save bet anyway to log it.', true);
       return;
     }
     saveBtn.disabled=true;
@@ -8197,6 +8200,11 @@ document.getElementById('shopBtn') && document.getElementById('shopBtn').addEven
 
 /* ============ v2.93: your real bets from Kalshi / Polymarket US / Novig fills (read-only) ============ */
 var fillSeen={}, fillPending=[], fillAt=0, fillBusy=false;
+/* v3.89 (Alonzo: "I put IGNORE, and it keeps coming back"): an ignored fill is also remembered by what it is (book, market, price,
+   cost), in its own list that no re-read or reset clears (mbev.fillIgnored), and From your books never lists it again. */
+let fillIgnored={}; try{ fillIgnored=JSON.parse(localStorage.getItem('mbev.fillIgnored')||'{}')||{}; }catch(e){}
+function fillPrint(f){ return [f.book, f.ref||'', f.price!=null?(+f.price).toFixed(3):'', (Math.round(((+f.cost||0)+(+f.fee||0))*100)/100).toFixed(2)].join('|'); }
+function fillIsIgnored(f){ return !!(fillIgnored[f.book+':'+f.id] || (f.ref && fillIgnored['fp:'+fillPrint(f)])); }
 try{ fillSeen=JSON.parse(localStorage.getItem('mbev.fillSeen')||'{}'); fillPending=JSON.parse(localStorage.getItem('mbev.fillPending')||'[]'); }catch(e){}
 function saveFills(){ const ok=lsSafeSet('mbev.fillSeen',JSON.stringify(fillSeen)) && lsSafeSet('mbev.fillPending',JSON.stringify(fillPending)); if(!ok) saveFailNote(true); syncTouched(); }   // v3.83: From your books' Add and Ignore are not lost in silence either
 const FILL_NAME={kalshi:'Kalshi', poly:'Polymarket US', novig:'Novig'};
@@ -8255,6 +8263,23 @@ function fillDiffHtml(b,i){
   return '<span class="fill-diff">⚠ '+esc(bookLabel(b.book))+' says '+(d.price*100).toFixed(1)+'% ('+esc(fmtOdds(Math.round(americanOf(d.price))))+') · $'+d.stake.toFixed(2)+
     ' <button class="ghost sm fill-fix" data-i="'+i+'">Fix</button> <button class="ghost sm fill-keep" data-i="'+i+'">Keep mine</button></span>';
 }
+/* v3.89 (Alonzo: "make sure they are added correctly and not HERE"): a fill that matches nothing on the log or the board is
+   still logged on its own when the book says exactly what it is (player, stat, line, side, or team and line), with its price,
+   cost and kickoff time. Only a fill the book does not describe (a "Novig market 01a…") waits in From your books. */
+function fillDescOk(f){ const b=f&&f.bet||{}; if(!f || f.action==='sell' || !(f.price>0) || b.part) return false;
+  if(b.kind==='prop') return !!(b.player && b.statText && b.line!=null && (b.side==='O'||b.side==='U'));
+  if(b.kind==='moneyline') return !!b.team; if(b.kind==='spread') return !!(b.team && b.line!=null); if(b.kind==='total') return b.line!=null && (b.side==='O'||b.side==='U'); return false; }
+function autoAddFromDesc(f){ const b=f.bet, book=FILL_NAME[f.book], prob=+f.price, stake=Math.round(((+f.cost||0)+(+f.fee||0))*100)/100;
+  const fee=f.fee!=null&&f.cost?(+f.fee)/(+f.cost):feeRate(book,prob,cfgRead().fees), st=Date.parse(b.start);
+  const game=b.away&&b.home?normAbbr(b.away)+' @ '+normAbbr(b.home):(b.teamsCode||'');
+  const market=b.kind==='prop'?b.line+' '+prettyStat(b.statText):b.kind==='total'?b.line+' Total':b.kind==='spread'?(b.line>0?'+':'')+b.line+' Spread':'Moneyline';
+  const name=b.kind==='prop'?b.player:b.kind==='total'?(game||'Total'):normAbbr(b.team);
+  addToLog({name, sport:String(b.sport||'').toUpperCase(), kind:b.kind, market, side:b.side||'', team:b.team?normAbbr(b.team):null, game, matchup:game, book,
+    offeredRaw:fmtOdds(Math.round(americanOf(prob))), offeredProb:prob, stake, fee, gameDay:isNaN(st)?undefined:ctDay(st), dateSet:!isNaN(st)||undefined,
+    gameInfo:isNaN(st)?null:{state:'pre', startISO:new Date(st).toISOString(), teams:[]}});
+  const L=logged[logged.length-1]; L.autoFrom=f.book; L.fills=[f.id]; L.fillQty=+f.qty||0; L.fillCost=stake; noteFillRef(L,f);
+  if(f.soldFor!=null) L.sold={price:+(+f.soldFor).toFixed(2), at:new Date(f.soldAt||Date.now()).toISOString(), auto:true};
+  saveLog(); }
 function autoAddFromRow(r,f){   // a bet on your board — log it for you, at the price and cost the book filled
   const book=FILL_NAME[f.book], prob=f.price, stake=+((+f.cost||0)+(+f.fee||0)).toFixed(2);
   const fee=f.fee!=null&&f.cost?(+f.fee)/(+f.cost):feeRate(book,prob,cfgRead().fees);
@@ -8271,7 +8296,8 @@ document.addEventListener('click',e=>{
       b.odds=fmtOdds(Math.round(americanOf(d.price))); b.stake=+d.stake.toFixed(2); if(d.fee&&d.stake) b.fee=d.fee/Math.max(0.01,d.stake-d.fee);
       b.betnow=betNowOf({market:b.market, side:b.side||sideOf(b)||'', offeredRaw:b.odds}); }
     delete b.fillDiff; saveLog(); renderLog(); renderPerf(); refresh(); return; }
-  if(ig){ const f=fillPending[+ig.dataset.i]; if(f) fillSeen[f.book+':'+f.id]={s:'ignored',q:+f.qty||0}; fillPending.splice(+ig.dataset.i,1); saveFills(); renderFromBooks(); return; }
+  if(ig){ const f=fillPending[+ig.dataset.i]; if(f){ fillSeen[f.book+':'+f.id]={s:'ignored',q:+f.qty||0}; fillIgnored[f.book+':'+f.id]=Date.now(); if(f.ref) fillIgnored['fp:'+fillPrint(f)]=Date.now(); lsSafeSet('mbev.fillIgnored',JSON.stringify(fillIgnored)); }   // v3.89
+    fillPending=fillPending.filter(x=>!fillIsIgnored(x)); saveFills(); renderFromBooks(); return; }
   if(ad){ const f=fillPending[+ad.dataset.i]; if(!f) return; addFromFill(f); return; }   // v3.87: it stays listed until the bet is saved (it was dropped here, then lost)
   const cp=e.target.closest('.fb-copy'); if(cp){ copyText(fromBooksText(), cp); return; }
 });
@@ -8391,7 +8417,7 @@ async function syncFills(force){
   try{
     // v2.95: one bet per order (partial fills merged), so always read the whole window
     let days=3; try{ if(localStorage.getItem('mbev.fillWide')==='1'){ days=14; localStorage.removeItem('mbev.fillWide'); } }catch(e){}
-    try{ if(localStorage.getItem('mbev.fillV')!=='95'){ fillPending=[]; fillSeen={}; localStorage.setItem('mbev.fillV','95'); } }catch(e){}
+    try{ if(localStorage.getItem('mbev.fillV')!=='95'){ fillPending=[]; fillSeen={}; lsSafeSet('mbev.fillV','95'); } }catch(e){}   // v3.89: a failed write here wiped what you ignored on every read
     const res=await fetch(API_BASE+'/mine/fills?since='+(Date.now()-days*86400e3), {headers:apiHeaders()});
     if(!res.ok) return;
     const j=await res.json(); fillAt=Date.now();
@@ -8427,6 +8453,7 @@ async function syncFills(force){
       if(P && f.price>0){ autoAddFromPost(P,f); fillSeen[key]={s:'added',q:+f.qty||0}; changed=true; return; }
       const r=rowForFill(f);
       if(r && f.price>0){ autoAddFromRow(r,f); fillSeen[key]={s:'added',q:+f.qty||0}; changed=true; return; }
+      if(fillDescOk(f) && !fillIsIgnored(f)){ autoAddFromDesc(f); fillSeen[key]={s:'added',q:+f.qty||0}; changed=true; return; }   // v3.89: logged on its own
       fillPending.push(f); fillSeen[key]={s:'pending',q:+f.qty||0};
     });
     if(fingerprintPending()) changed=true;   // v2.98: cost to the cent + price + day
@@ -8465,6 +8492,7 @@ async function syncFills(force){
 }
 function renderFromBooks(){
   const el=document.getElementById('fromBooks'); if(!el) return;
+  fillPending=fillPending.filter(f=>!fillIsIgnored(f));   // v3.89: an ignored fill never comes back, whatever re-listed it
   const err=window._fillErrors||{}, errTxt=Object.entries(err).map(([k,v])=>esc((FILL_NAME[k]||k)+': '+v)).join(' · ');
   if(!fillPending.length && !errTxt){ el.style.display='none'; el.innerHTML=''; return; }
   el.style.display='block';
@@ -8561,7 +8589,11 @@ async function addFromFill(f){
     if(c) c.value=(+(f.cost||0)+(+f.fee||0)).toFixed(2); if(pc&&f.price) pc.value=(f.price*100).toFixed(1);
     [c,pc].forEach(x=>x&&x.dispatchEvent(new Event('input',{bubbles:true})));
     const m=$ab('abMsg'); if(m) m.innerHTML='From your '+esc(FILL_NAME[f.book])+' bet: <b>'+esc(fillLabel(f).bet)+'</b> — '+(gameMiss?'<b>pick the game</b>, ':'')+'check the fields, add a cover % if you have one, then Save bet.';
-    abUpdate94(); }, 700);
+    abUpdate94();
+    const sb=h.querySelector('.eb-save'); if(sb){ sb.dataset.ok='1'; sb.dataset.lc='1'; }   // v3.89: already placed: no "worth it" check
+    const complete=!gameMiss && (ty!=='prop' || ($ab('abPlayer').value && $ab('abStat').value && b.line!=null && b.side)) && (ty==='prop' || ty==='total' || b.team);
+    if(sb && complete){ const n0=logged.length; sb.click(); setTimeout(()=>{ if(logged.length>n0){ const m2=$ab('abMsg'); if(m2) m2.innerHTML='✓ Saved from your '+esc(FILL_NAME[f.book])+' bet: <b>'+esc(fillLabel(f).bet)+'</b>. It is in your Bet log.'; } }, 300); }   // v3.89: one tap
+  }, 700);
 }
 
 /* ============ v2.94: + Add a bet says BET $x or SKIP — Take a price, or 📌 Make your own (a ladder of posted prices) ============ */
