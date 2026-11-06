@@ -30,6 +30,9 @@ const LOG=[
   check('the day is down by won − lost − money already playing (2 + 10 − 1.50 − 2 = +8.50), the not-started $4 is not counted', c.pill==='+$8.50', c.pill);
   check('Novig: $10.50 · 4 bets · 1–1, 2 played · 1 playing · 1 to play, won $2.00 vs lost $1.50', /\$10\.50 · 4 bets 1–1/.test(c.novig) && /✓ 2 played ▶ 1 playing ⏳ 1 to play/.test(c.novig) && /won \$2\.00 vs lost \$1\.50/.test(c.novig), c.novig);
   check('Bovada: the free bet shows as 🎁 and adds nothing to the money staked', /\$1\.00 · 2 bets/.test(c.bovada) && /🎁 \$5\.00/.test(c.bovada), c.bovada);
+  const spill=async()=>p.evaluate(()=>{ const bad=[]; document.querySelectorAll('#todayBar > .tb-t, #todayBar > .tb-k').forEach(t=>{ const r=t.getBoundingClientRect(); t.querySelectorAll('span,b,div,img').forEach(e=>{ const q=e.getBoundingClientRect(); if(q.width && (q.right>r.right+1 || q.left<r.left-1)) bad.push(e.textContent.slice(0,30)); }); }); return bad; });
+  for(const w of [1960,1280,1000,390]){ await p.setViewportSize({width:w,height:1000}); await p.waitForTimeout(150); const sp=await spill(); check('v3.98: at '+w+' px wide, no Today card text runs into the next tile', !sp.length, sp.slice(0,4)); }
+  await p.setViewportSize({width:1400,height:1000});
   const ds=await p.evaluate(d=>{ const x=dayStats()[d]; return {staked:x.staked, profit:+x.profit.toFixed(2)}; }, DAY);
   check('Performance by day: staked leaves out the free bet; the not-started bet is not a loss', ds.staked===11.5 && ds.profit===8.5, ds);
   // the boosted bet: it paid $13.66 back on a $1 stake (the odds alone say $11)
