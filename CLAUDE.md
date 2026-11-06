@@ -78,6 +78,9 @@
   v3.93: every result you set (Look out, editor, + Add a bet) is also kept in `mbev.grades` (synced, `SYNC_SETS.grades`) by bet id and by
   `gradeKey` (name, market, side, game day). `gradesReapply` (run by `renderLookOut`) puts it back on a bet with no result: same id or a
   twin. Clear in the editor forgets it (`gradeRemember`). Call `gradeRemember(b)` wherever a new manual result is set.
+- v3.94: `statForMarket` NHL and MLS check shots before goals ("Shots On Goal" was graded as goals). ESPN's NHL `SOG` column is always 0;
+  shots on goal are `S`. NHL/MLS shots bets graded by ESPN the old way are graded again once (`fixSog94`). Real box score in
+  `tests/fixtures-nhl-2026-11-05.json`. Ignore also counts `fillSeen` 'ignored' (synced) and `mbev.fillIgnored` is in `SYNC_SETS`.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American

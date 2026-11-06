@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v3.93</title>
+<title>0xBeta Screener v3.94</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1019,7 +1019,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.93</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.94</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1677,7 +1677,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v3.93';
+const SCREENER_VERSION='v3.94';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3674,8 +3674,8 @@ function statForMarket(box, playerName, market, sport){
       [/PASS.*TD/,['TD']],[/RUSH.*TD/,['TD']],[/REC.*TD/,['TD']],[/INT/,['INT']]],
     NCAAF:'NFL', WNBA:[[/\bPTS\b|POINTS/,['PTS']],[/\bREB\b|REBOUNDS/,['REB']],[/\bAST\b|ASSISTS/,['AST']],
       [/\bSTL\b/,['STL']],[/\bBLK\b/,['BLK']],[/3PT|THREE/,['3PT']]],
-    MLS:[[/GOAL/,['G']],[/ASSIST/,['A']],[/SHOTS ON/,['SOG']],[/SHOTS/,['SH']]],
-    NHL:[[/POWER\s*PLAY/,null],[/BLOCK/,['BS']],[/SAVE/,['SV']],[/GOALS?\s*AGAINST/,['GA']],[/POINT/,['G','A']],[/ASSIST/,['A']],[/GOAL/,['G']],[/HITS/,['HT']],[/SHOT|\bSOG\b/,['S']]],   // v2.96: checked against ESPN box scores (shots = "S")
+    MLS:[[/SHOTS ON/,['SOG']],[/SHOTS/,['SH']],[/GOAL/,['G']],[/ASSIST/,['A']]],   // v3.94: shots first: "Shots On Goal" was read as goals
+    NHL:[[/POWER\s*PLAY/,null],[/BLOCK/,['BS']],[/SAVE/,['SV']],[/GOALS?\s*AGAINST/,['GA']],[/SHOT|\bSOG\b/,['S']],[/POINT/,['G','A']],[/ASSIST/,['A']],[/GOAL/,['G']],[/HITS/,['HT']]],   // v3.94: shots before goals ("Shots On Goal" was graded as goals: Dorofeyev 4 shots, 1 goal, Over 2.5 graded Lost); ESPN's own SOG column is always 0, shots are "S"   // v2.96: checked against ESPN box scores (shots = "S")
     NCAAB:'NBA'
   };
   let r = rules[sport]; if(r==='NFL') r=rules.NFL;
@@ -5291,6 +5291,8 @@ async function autoGradeLog(){
     // v2.85: graded, but its game hasn't started yet → that grade came from the wrong game
     logged.forEach(b=>{ if(b.sold || !b.start || !(b.result==='win'||b.result==='loss'||b.result==='push')) return;
       const t=Date.parse(b.start); if(!isNaN(t) && t>Date.now()){ delete b.result; changed++; } });
+    logged.forEach(b=>{ if(b.fixSog94 || b.gradedBy==='manual' || b.gradedBy==='book' || b.sold || !(b.sport==='NHL'||b.sport==='MLS') || !/SHOT|\bSOG\b/i.test(b.market||'')) return; b.fixSog94=1;   // v3.94: graded as goals before; grade it again
+      if(b.result==='win'||b.result==='loss'||b.result==='push'||b.result==='?'){ if(b.resultSrc && b.resultSrc!=='ESPN') return; delete b.result; delete b.why; changed++; } });
     const open=logged.filter(b=>recent(b) && !settled(b));
     if(!open.length && !undated.length){ if(changed){ saveLog(); renderLog(); renderPerf(); refresh(); } return; }
     for(const b of undated){
@@ -8223,7 +8225,7 @@ var fillSeen={}, fillPending=[], fillAt=0, fillBusy=false;
    cost), in its own list that no re-read or reset clears (mbev.fillIgnored), and From your books never lists it again. */
 let fillIgnored={}; try{ fillIgnored=JSON.parse(localStorage.getItem('mbev.fillIgnored')||'{}')||{}; }catch(e){}
 function fillPrint(f){ return [f.book, f.ref||'', f.price!=null?(+f.price).toFixed(3):'', (Math.round(((+f.cost||0)+(+f.fee||0))*100)/100).toFixed(2)].join('|'); }
-function fillIsIgnored(f){ return !!(fillIgnored[f.book+':'+f.id] || (f.ref && fillIgnored['fp:'+fillPrint(f)])); }
+function fillIsIgnored(f){ const s=fillSeen&&fillSeen[f.book+':'+f.id]; return !!((s && s.s==='ignored') || fillIgnored[f.book+':'+f.id] || (f.ref && fillIgnored['fp:'+fillPrint(f)])); }   // v3.94: an Ignore on another device counts too (fillSeen is synced)
 try{ fillSeen=JSON.parse(localStorage.getItem('mbev.fillSeen')||'{}'); fillPending=JSON.parse(localStorage.getItem('mbev.fillPending')||'[]'); }catch(e){}
 function saveFills(){ const ok=lsSafeSet('mbev.fillSeen',JSON.stringify(fillSeen)) && lsSafeSet('mbev.fillPending',JSON.stringify(fillPending)); if(!ok) saveFailNote(true); syncTouched(); }   // v3.83: From your books' Add and Ignore are not lost in silence either
 const FILL_NAME={kalshi:'Kalshi', poly:'Polymarket US', novig:'Novig'};
@@ -8543,6 +8545,7 @@ async function syncFills(force){
 }
 function renderFromBooks(){
   const el=document.getElementById('fromBooks'); if(!el) return;
+  try{ Object.assign(fillIgnored, JSON.parse(localStorage.getItem('mbev.fillIgnored')||'{}')||{}); }catch(e){}   // v3.94: what a sync brought in
   fillPending=fillPending.filter(f=>!fillIsIgnored(f));   // v3.89: an ignored fill never comes back, whatever re-listed it
   const err=window._fillErrors||{}, errTxt=Object.entries(err).map(([k,v])=>esc((FILL_NAME[k]||k)+': '+v)).join(' · ');
   if(!fillPending.length && !errTxt){ el.style.display='none'; el.innerHTML=''; return; }
@@ -9276,7 +9279,7 @@ function syncBaseColl(pairs, st){
    The Worker never reads the data: it stores what the page sends and refuses a save made from an older copy (409) — the
    page then merges the newer copy and saves again. The board is separate: rows by source, the newer load wins. */
 var SY=null;
-const SYNC_SETS={cfg:'mbev.cfg', sweet:'mbev.sweet2', maker:'mbev.makerFees', grades:'mbev.grades'};   // v3.93: your results, on every device
+const SYNC_SETS={cfg:'mbev.cfg', sweet:'mbev.sweet2', maker:'mbev.makerFees', grades:'mbev.grades', ignored:'mbev.fillIgnored'};   // v3.94: Ignore on every device   // v3.93: your results, on every device
 function syncLS(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v); return true; }catch(e){ return v===undefined?null:false; } }
 function syncDev(){ const u=navigator.userAgent||''; return /iPhone/.test(u)?'iPhone':/iPad/.test(u)?'iPad':/Android/.test(u)?'Android':/Macintosh/.test(u)?'Mac':/Windows/.test(u)?'Windows PC':/CrOS/.test(u)?'Chromebook':/Linux/.test(u)?'Linux PC':'browser'; }
 function syncNewMeta(){ return {v:1, rev:0, brev:0, c:{}, s:{}, bsig:'', at:0, dirty:false, joined:false}; }
