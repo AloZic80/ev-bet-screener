@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v3.99</title>
+<title>0xBeta Screener v4.00</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1020,6 +1020,11 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 .todaybar .tb-l2 > span, .todaybar .tb-l1 > *{white-space:nowrap}
 .todaybar .tb-l1{flex-wrap:wrap; row-gap:2px}
 .todaybar .tb-cnt{display:flex; flex-wrap:wrap; gap:0 10px}
+/* v4.00: Performance calendar: money on games not started is grey (not won, not lost yet) */
+.cal-tp{color:var(--soft); font-weight:600}
+.cal-c .v .cal-tp-s{display:block; font-size:11px}
+.cal-big .cal-tp{font-size:.6em}
+@media (max-width:640px){ .cal-c .v{font-size:10px; letter-spacing:-.02em; white-space:nowrap} .cal-c{padding:4px 2px} .cal-tp-w, .cal-pl{display:none} .cal-c .v .cal-tp-s{font-size:9px} }
 </style>
 </head>
 <body>
@@ -1028,7 +1033,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.99</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.00</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1686,7 +1691,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v3.99';
+const SCREENER_VERSION='v4.00';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -7912,10 +7917,10 @@ try{ calView=localStorage.getItem('mbev.calView')||'cal'; }catch(e){}
 function calDays(book){
   const days={};
   logged.forEach(b=>{ const d=gameDayOf(b); if(!d) return; if(book!=='All' && ribbonBook(b.book)!==book) return;
-    const x=days[d]||(days[d]={n:0,settled:0,profit:0,staked:0,w:0,l:0,p:0,open:0}); x.n++; x.staked+=+b.stake||0;
-    const hv=heldValue(b); x.profit+=hv.v; if(hv.open){ x.open++; return; } x.settled++;
+    const x=days[d]||(days[d]={n:0,settled:0,profit:0,staked:0,w:0,l:0,p:0,open:0,playing:0,toPlay:0,toPlayAmt:0}); x.n++; x.staked+=b.free?0:(+b.stake||0);   // v3.98: free bets are not your money
+    const hv=heldValue(b); x.profit+=hv.v; if(hv.open){ x.open++; if(betLocked(b)) x.playing++; else { x.toPlay++; x.toPlayAmt+=b.free?0:(+b.stake||0); } return; } x.settled++;   // v4.00: games not started: their money is shown apart, in grey
     if(!b.sold){ if(b.result==='win') x.w++; else if(b.result==='loss') x.l++; else if(b.result==='push') x.p++; } });
-  removedBets.forEach(b=>{ if(!(b.lost>0)) return; if(book!=='All' && ribbonBook(b.book)!==book) return; const d=gameDayOf(b); const x=days[d]||(days[d]={n:0,settled:0,profit:0,staked:0,w:0,l:0,p:0,open:0}); x.profit-=b.lost; x.settled++; });
+  removedBets.forEach(b=>{ if(!(b.lost>0)) return; if(book!=='All' && ribbonBook(b.book)!==book) return; const d=gameDayOf(b); const x=days[d]||(days[d]={n:0,settled:0,profit:0,staked:0,w:0,l:0,p:0,open:0,playing:0,toPlay:0,toPlayAmt:0}); x.profit-=b.lost; x.settled++; });
   return days;
 }
 function renderCal(){
@@ -7927,16 +7932,18 @@ function renderCal(){
   const [Y,M]=calMonth.split('-').map(Number), first=new Date(Date.UTC(Y,M-1,1)), nd=new Date(Date.UTC(Y,M,0)).getUTCDate();
   document.getElementById('calTitle').textContent=first.toLocaleDateString('en-US',{month:'long',year:'numeric',timeZone:'UTC'});
   const inMonth=Object.keys(days).filter(d=>d.slice(0,7)===calMonth).sort();
-  const tot=inMonth.reduce((a,d)=>{ const x=days[d]; a.p+=x.profit; a.n+=x.n; a.st+=x.staked; a.w+=x.w; a.l+=x.l; a.pu+=x.p; if(x.settled){ if(x.profit>0.005)a.up++; else if(x.profit<-0.005)a.dn++; } a.best=Math.max(a.best,(x.settled||x.open)?x.profit:-Infinity); a.worst=Math.min(a.worst,(x.settled||x.open)?x.profit:Infinity); return a; },{p:0,n:0,st:0,w:0,l:0,pu:0,up:0,dn:0,best:-Infinity,worst:Infinity});
+  const tot=inMonth.reduce((a,d)=>{ const x=days[d]; a.p+=x.profit; a.n+=x.n; a.st+=x.staked; a.w+=x.w; a.l+=x.l; a.pu+=x.p; if(x.settled){ if(x.profit>0.005)a.up++; else if(x.profit<-0.005)a.dn++; } a.best=Math.max(a.best,(x.settled||x.playing)?x.profit:-Infinity); a.worst=Math.min(a.worst,(x.settled||x.playing)?x.profit:Infinity); /* v4.00 (Alonzo): a day whose games have not started is not a best or worst day */ return a; },{p:0,n:0,st:0,w:0,l:0,pu:0,up:0,dn:0,best:-Infinity,worst:Infinity});
   const td=days[today];
-  const tEl=document.getElementById('calToday'); tEl.className='cal-big '+(td&&td.profit>0.005?'up':td&&td.profit<-0.005?'dn':''); tEl.innerHTML=(td&&(td.settled||td.open)?usd(td.profit):'$0.00')+' <span class="meta">today</span>';
+  const tEl=document.getElementById('calToday'), tCnt=td&&(td.settled||td.playing);   // v4.00: money on games not started is grey, not green or red
+  tEl.className='cal-big '+(tCnt&&td.profit>0.005?'up':tCnt&&td.profit<-0.005?'dn':'');
+  tEl.innerHTML=(tCnt?usd(td.profit):(td&&td.toPlayAmt?'<span class="cal-tp">$'+td.toPlayAmt.toFixed(2)+'</span>':'$0.00'))+' <span class="meta">today</span>'+(tCnt&&td.toPlayAmt?' <span class="cal-tp" title="games not started: not counted yet">· $'+td.toPlayAmt.toFixed(2)+' to play</span>':(!tCnt&&td&&td.toPlayAmt?' <span class="cal-tp">to play</span>':''));
   const mEl=document.getElementById('calMonthTot'); mEl.className='cal-big '+(tot.p>0.005?'up':tot.p<-0.005?'dn':''); mEl.textContent=usd(tot.p);
   document.getElementById('calSub').textContent=(calBook==='All'?'all books':calBook);
   document.getElementById('calFoot').innerHTML='<span>Days: <b>'+tot.up+' up · '+tot.dn+' down</b></span><span>Bets: <b>'+tot.n+'</b> · W–L'+(tot.pu?'–P':'')+' <b>'+tot.w+'–'+tot.l+(tot.pu?'–'+tot.pu:'')+'</b></span><span>Staked <b>$'+tot.st.toFixed(2)+'</b></span>'+
     (isFinite(tot.best)?'<span>Best day <b style="color:var(--live)">'+usd(tot.best)+'</b> · worst <b style="color:var(--out)">'+usd(tot.worst)+'</b></span>':'');
   document.querySelectorAll('.cal-seg button').forEach(b=>b.classList.toggle('on',b.dataset.v===calView));
   if(calView==='chart'){
-    let run=0; const pts=[]; for(let d=1; d<=nd; d++){ const k=calMonth+'-'+String(d).padStart(2,'0'); const x=days[k]; const has=!!(x&&(x.settled||x.open)); const v=has?x.profit:0; run+=v; pts.push({d,v,run,has,fut:k>today}); }
+    let run=0; const pts=[]; for(let d=1; d<=nd; d++){ const k=calMonth+'-'+String(d).padStart(2,'0'); const x=days[k]; const has=!!(x&&(x.settled||x.playing)); /* v4.00 */ const v=has?x.profit:0; run+=v; pts.push({d,v,run,has,fut:k>today}); }
     const W=700,H=220,pad=34, maxA=Math.max(1,...pts.map(p=>Math.abs(p.run)),...pts.map(p=>Math.abs(p.v)));
     const X=d=>pad+(d-1)*(W-pad-10)/(nd-1), Yv=v=>H/2-v/maxA*(H/2-18);
     const bars=pts.filter(p=>p.has).map(p=>'<rect x="'+(X(p.d)-5)+'" y="'+Math.min(Yv(p.v),H/2)+'" width="10" height="'+Math.abs(Yv(p.v)-H/2)+'" rx="2" fill="'+(p.v>=0?'var(--live)':'var(--out)')+'" opacity=".45"/>').join('');
@@ -7956,8 +7963,10 @@ function renderCal(){
     const k=calMonth+'-'+String(d).padStart(2,'0'), x=days[k];
     let cls='cal-c', t='', v='--', n='';
     if(x){ cls+=' has';
-      if(x.settled||x.open){ v=usd(x.profit)+(x.open?' ⏳':''); if(x.profit>0.005){cls+=' w';t='W';} else if(x.profit<-0.005){cls+=' l';t='L';} }
-      n=x.n+' bet'+(x.n===1?'':'s')+(x.open&&x.settled?' · '+x.open+' open':x.open&&!x.settled?' pending':''); }
+      if(x.settled||x.playing){ v=usd(x.profit)+(x.playing?'<span class="cal-pl" title="games playing now"> ▶</span>':'');   /* v4.00: ▶ playing, ⏳ to play, as on the Today card */ if(x.profit>0.005){cls+=' w';t='W';} else if(x.profit<-0.005){cls+=' l';t='L';} }
+      else if(x.toPlay){ cls+=' tp'; v='<span class="cal-tp" title="games not started: not counted as won or lost yet">$'+x.toPlayAmt.toFixed(2)+'</span>'; }   // v4.00 (Alonzo): grey, not red, not green
+      if(x.toPlayAmt && (x.settled||x.playing)) v+='<div class="cal-tp cal-tp-s" title="games not started: not counted yet"><span class="cal-tp-w">⏳ </span>$'+x.toPlayAmt.toFixed(2)+'<span class="cal-tp-w"> to play</span></div>';
+      n=x.n+' bet'+(x.n===1?'':'s')+(x.open&&x.settled?' · '+x.open+' open':x.open&&!x.settled?(x.playing?' playing':' to play'):''); }
     if(k===today) cls+=' today'; if(k>today) cls+=' fut';
     h+='<div class="'+cls+'" data-day="'+k+'" title="'+(x?esc(x.n+' bets · $'+x.staked.toFixed(2)+' staked'+(x.settled?' · '+x.w+'–'+x.l:'')):'')+'"><span class="d">'+d+'</span><span class="t">'+t+'</span><div class="v">'+v+'</div><div class="n">'+n+'</div></div>';
   }
