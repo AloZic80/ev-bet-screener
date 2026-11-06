@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v3.92</title>
+<title>0xBeta Screener v3.93</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1019,7 +1019,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.92</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.93</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1677,7 +1677,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v3.92';
+const SCREENER_VERSION='v3.93';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2943,10 +2943,10 @@ function openBetEditor(tr, r, opt){
   if(isCard) tr.appendChild(ed); else tr.after(ed);
   if(opt.edit){ const B=opt.edit;   // v3.38: manual result + copy the book's bet ID
     ed.querySelectorAll('button.eb-res').forEach(btn=>btn.addEventListener('click',()=>{
-      B.result=btn.dataset.res; B.gradedBy='manual'; B.resultSrc='you'; delete B.why; ed.remove();   // v3.86: close it first, so the log redraws now
+      B.result=btn.dataset.res; B.gradedBy='manual'; B.resultSrc='you'; delete B.why; gradeRemember(B); ed.remove();   // v3.86: close it first, so the log redraws now
       saveLog(); renderLog(); renderPerf(); renderTodayBar(); refresh(); }));
     const clr=ed.querySelector('button.eb-clear');
-    if(clr) clr.addEventListener('click',()=>{ delete B.result; delete B.gradedBy; delete B.resultSrc; ed.remove();   // v3.86
+    if(clr) clr.addEventListener('click',()=>{ delete B.result; delete B.gradedBy; delete B.resultSrc; gradeRemember(B); ed.remove();   // v3.86
       saveLog(); renderLog(); renderPerf(); renderTodayBar(); refresh(); });
     const cp=ed.querySelector('button.eb-copy');
     if(cp) cp.addEventListener('click',async()=>{ try{ await navigator.clipboard.writeText(String(B.fillRef||'')); cp.textContent='copied'; }catch(e){ cp.textContent='select & copy'; } });
@@ -3201,7 +3201,7 @@ function openBetEditor(tr, r, opt){
       try{ linkFill(L,f); }catch(e){ noteFillRef(L,f); } fillSeen[f.book+':'+f.id]={s:'added',q:+f.qty||0}; fillPending=fillPending.filter(x=>!(x.book===f.book && x.id===f.id)); saveFills(); saveLog(); renderFromBooks(); }
     if(extra.lineAdj){ const L=logged[logged.length-1]; L.lineAdj=extra.lineAdj; saveLog(); }
     if(extra.slip){ const L=logged[logged.length-1]; L.slip=extra.slip; saveLog(); }
-    if(resNew){ const L=logged[logged.length-1]; L.result=resNew; L.gradedBy='manual'; L.resultSrc='you'; delete L.why; saveLog(); renderTodayBar(); }   // v3.57
+    if(resNew){ const L=logged[logged.length-1]; L.result=resNew; L.gradedBy='manual'; L.resultSrc='you'; delete L.why; gradeRemember(L); saveLog(); renderTodayBar(); }   // v3.57
     ed.remove();
     renderLog(); renderPerf(); refresh();
   });
@@ -4128,6 +4128,22 @@ function overAfterH(b){ const s=String(b.sport||'').toUpperCase(); let g=''; try
   if(g==='Tennis' || /^(ATP|WTA)/.test(s)) return 7;          // v3.58: five-set matches, rain and late starts
   if(/^(MLB|KBO|NPB)$/.test(s)) return 7;                     // v3.58: rain delays
   return 5; }
+/* v3.93 (Alonzo: "Why do I keep getting that one back when I already graded it?"): every result you set is also kept on its own
+   (mbev.grades, synced), by the bet's id and by what the bet is (player or team, market with its line, side, game day). A bet with no
+   result whose id or twin you graded gets your result back, so a lost save, a sync from another device or a second copy of the same
+   bet cannot send it back to Look out. Clear in the editor forgets it. */
+var myGrades=null;
+function gradeKey(b){ return [b.name, b.market, sideOf(b), gameDayOf(b)||b.date||''].join('|').toLowerCase(); }
+function gradesLoad(){ try{ myGrades=JSON.parse(localStorage.getItem('mbev.grades')||'{}')||{}; }catch(e){ myGrades={}; } myGrades.id=myGrades.id||{}; myGrades.k=myGrades.k||{}; return myGrades; }
+function gradeRemember(b){ if(!b || b.kind==='parlay') return; const G=gradesLoad(), r=b.result, at=Date.now();
+  if(r==='win'||r==='loss'||r==='push'){ if(b.id) G.id[b.id]={r,at}; G.k[gradeKey(b)]={r,at}; }
+  else { if(b.id) delete G.id[b.id]; delete G.k[gradeKey(b)]; }
+  lsSafeSet('mbev.grades',JSON.stringify(G)); }
+function gradesReapply(){ const G=gradesLoad(); let n=0;
+  logged.forEach(b=>{ if(!b || b.kind==='parlay' || b.sold || b.voided || b.result==='win' || b.result==='loss' || b.result==='push') return;
+    const g=(b.id&&G.id[b.id]) || G.k[gradeKey(b)]; if(!g) return;
+    b.result=g.r; b.gradedBy='manual'; b.resultSrc='you'; delete b.why; n++; });
+  if(n) saveLog(); return n; }
 function lookOutWhy(b){
   if(b.sold || b.voided || b.result==='win' || b.result==='loss' || b.result==='push') return '';
   const today=ctDay(Date.now()), day=gameDayOf(b)||b.date||'';
@@ -4138,6 +4154,7 @@ function lookOutWhy(b){
   return day && day<today ? 'game day passed, no result yet' : '';
 }
 function renderLookOut(){
+  try{ gradesReapply(); }catch(e){}   // v3.93: your results come back on their own
   const L=logged.map((b,i)=>({b,i,why:lookOutWhy(b),day:gameDayOf(b)||b.date||''})).filter(x=>x.why).sort((x,y)=>x.day<y.day?1:x.day>y.day?-1:0);
   const n=L.length, tab=document.getElementById('logTabN'), chipN=(document.querySelector('#todayBar .tb-look')||{}).textContent||'';
   if(chipN!==(n?'⚠ '+n+' to check':'')) try{ renderTodayBar(); }catch(e){}   // keep the Today card's count in step
@@ -4158,7 +4175,7 @@ document.addEventListener('click',e=>{
   if(dayBtn){ const d=dayBtn.dataset.day; logDays=logDays||{}; logDays[d]=dayBtn.getAttribute('aria-expanded')!=='true'; saveLogDays(); renderLog();
     const nb=[...document.querySelectorAll('#logBody .log-day-btn')].find(x=>x.dataset.day===d); if(nb) nb.focus(); return; }
   const res=e.target.closest('#lookOut .lo-res');
-  if(res){ const b=logged[+res.dataset.i]; if(b){ b.result=res.dataset.res; b.gradedBy='manual'; b.resultSrc='you'; delete b.why; saveLog(); renderLog(); renderPerf(); renderTodayBar(); refresh(); } return; }
+  if(res){ const b=logged[+res.dataset.i]; if(b){ b.result=res.dataset.res; b.gradedBy='manual'; b.resultSrc='you'; delete b.why; gradeRemember(b); saveLog(); renderLog(); renderPerf(); renderTodayBar(); refresh(); } return; }
   const find=e.target.closest('#lookOut .lo-find');
   if(find){ const i=+find.dataset.i, b=logged[i]; if(!b) return; const d=gameDayOf(b)||b.date||'';
     if(logDayFilter && logDayFilter!==d) logDayFilter=null; logDays=logDays||{}; logDays[d]=true; saveLogDays(); renderLog();
@@ -7828,7 +7845,7 @@ function fillManualFromRow(L, r){   // next Load: an unchecked manual bet picks 
       const L=logged[logged.length-1];
       L.manual=true; L.srcType='manual';
       if(abR){ if(abR.projValue!=null) L.proj=abR.projValue; if(abR.team) L.team=abR.team; if(L.snap) L.snap.outlier=!!abR.outlier; }
-      if(abR && abR._result){ L.result=abR._result; L.gradedBy='manual'; L.resultSrc='you'; delete L.why; $ab('abResult').value=''; }   // v3.54: a bet that's already over saves graded
+      if(abR && abR._result){ L.result=abR._result; L.gradedBy='manual'; L.resultSrc='you'; delete L.why; gradeRemember(L); $ab('abResult').value=''; }   // v3.54: a bet that's already over saves graded
       saveLog(); renderLog(); renderPerf(); renderTodayBar();
       $ab('abMsg').innerHTML='<b>Saved:</b> '+esc(L.name)+' — '+esc(betLabel(L))+' · $'+(+L.stake||0).toFixed(2)+' on '+esc(bookLabel(L.book))+(L.result?' · <b>'+({win:'WON',loss:'LOST',push:'PUSH'}[L.result]||'')+'</b>'+(L.result==='win'&&betProfit(L)!=null?' +$'+betProfit(L).toFixed(2):''):'')+(L.net==null?' · <span class="meta">unchecked until the next Load</span>':'');
       ['abPlayer','abLine','abProj','abCover','abCons'].forEach(id=>$ab(id).value='');
@@ -9259,7 +9276,7 @@ function syncBaseColl(pairs, st){
    The Worker never reads the data: it stores what the page sends and refuses a save made from an older copy (409) — the
    page then merges the newer copy and saves again. The board is separate: rows by source, the newer load wins. */
 var SY=null;
-const SYNC_SETS={cfg:'mbev.cfg', sweet:'mbev.sweet2', maker:'mbev.makerFees'};
+const SYNC_SETS={cfg:'mbev.cfg', sweet:'mbev.sweet2', maker:'mbev.makerFees', grades:'mbev.grades'};   // v3.93: your results, on every device
 function syncLS(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v); return true; }catch(e){ return v===undefined?null:false; } }
 function syncDev(){ const u=navigator.userAgent||''; return /iPhone/.test(u)?'iPhone':/iPad/.test(u)?'iPad':/Android/.test(u)?'Android':/Macintosh/.test(u)?'Mac':/Windows/.test(u)?'Windows PC':/CrOS/.test(u)?'Chromebook':/Linux/.test(u)?'Linux PC':'browser'; }
 function syncNewMeta(){ return {v:1, rev:0, brev:0, c:{}, s:{}, bsig:'', at:0, dirty:false, joined:false}; }
