@@ -88,6 +88,8 @@
   books keep `placedAt` (the fill's time, `notePlaced`) and `evOkFor` counts the 4-hour rule from it; a bet whose book gave the start
   time (`autoFrom` + `start`) matches that exact game. Before, a fill read after 10 PM made a 6 PM game "too early" (Dorofeyev 11/5).
   Real NFL box score in `tests/fixtures-nfl-2026-11-01.json`.
+  v3.97: `evOkFor` also accepts a game played on the bet's set game day (`dateSet` + `date`), whoever set it: Saquon 11/1 was logged
+  from the Novig fill on 11/5 (not `manual`), so the 4-hour rule from the save time hid its game.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American

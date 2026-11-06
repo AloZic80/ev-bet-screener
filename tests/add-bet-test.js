@@ -43,8 +43,8 @@ const route=r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/'))
   console.log('Kalshi (fee book), To win 4.70, won:',JSON.stringify(r));
   const withFee=await p.evaluate(()=>betProfit(Object.assign({},logged[logged.length-1],{fee:0.035})));   // a fee is stored when a bet is edited
   check('fee book: typed To win is the profit (4.70), also with a 3.5% fee stored', r.towin===4.7 && r.profit===4.7 && withFee===4.7, [r.towin,r.profit,withFee]);
-  const old=await add({game:'NYK @ MIA',team:'MIA',book:'DraftKings',odds:'-120',stake:'6',result:''});
-  check('Result left blank on a game more than 4 days back: asks for the Result', !!old.notSaved && /more than 4 days ago/.test(old.notSaved), old);
+  const old=await add({game:'NYK @ MIA',team:'MIA',book:'DraftKings',odds:'-120',stake:'6',result:'',date:new Date(Date.now()-40*86400e3).toLocaleDateString('en-CA',{timeZone:'America/Chicago'})});
+  check('Result left blank on a game more than 30 days back: asks for the Result (v3.97: grading reaches 30 days)', !!old.notSaved && /more than 30 days ago/.test(old.notSaved), old);
   const yday=new Date(Date.now()-86400e3).toLocaleDateString('en-CA',{timeZone:'America/Chicago'});
   r=await add({game:'NYK @ MIA',team:'MIA',book:'DraftKings',odds:'-120',stake:'6',result:'',date:yday});
   check('Result left blank → not graded', r.result===undefined && r.profit===null, r);
