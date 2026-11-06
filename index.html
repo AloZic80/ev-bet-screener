@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.03</title>
+<title>0xBeta Screener v4.04</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1024,6 +1024,13 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 .cal-tp{color:var(--soft); font-weight:600}
 .cal-c .v .cal-tp-s{display:block; font-size:11px}
 .cal-big .cal-tp{font-size:.6em}
+/* v4.04: on a phone the prefilled slip waits here as a real link, so the book's app opens */
+.slip-go{position:fixed; left:12px; right:12px; bottom:calc(76px + env(safe-area-inset-bottom)); z-index:60; display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:12px 14px; border-radius:12px; background:var(--panel); border:1px solid var(--accent); box-shadow:0 8px 24px rgba(0,0,0,.35); font-size:15px}
+.slip-go[hidden]{display:none}
+.slip-go-t{font-weight:700; flex:1 1 auto}
+.slip-go-a{background:var(--accent); color:#fff; font-weight:800; padding:10px 14px; border-radius:9px; text-decoration:none; min-height:24px}
+.slip-go-w{color:var(--soft); font-size:13px}
+.slip-go-x{background:transparent; border:0; color:var(--soft); font-size:22px; min-width:36px; min-height:36px; cursor:pointer}
 /* v4.02 (Alonzo: "on the Performance tab we do not need the API info, it makes everything cluttered"): the BettingPros bar and Sources show on the Board only */
 body[data-view]:not([data-view="v-board"]) .loadbar, body[data-view]:not([data-view="v-board"]) #apiStatus, body[data-view]:not([data-view="v-board"]) .srcline, body[data-view]:not([data-view="v-board"]) #srcPanel{display:none!important}
 body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /* the board's count ("12 pass · of 1512") belongs to the Board too */
@@ -1041,7 +1048,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.03</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.04</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1699,7 +1706,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 
 </div>
 <script>
-const SCREENER_VERSION='v4.03';
+const SCREENER_VERSION='v4.04';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -8074,7 +8081,7 @@ setTimeout(()=>refreshLivePrices(true), 1500);
 
 /* ============ v2.90: open the bet on the book (click its logo) · line shopping across exchanges ============ */
 const BOOK_NAME={kalshi:'Kalshi', poly:'Polymarket US', novig:'Novig'};
-const BOOK_HOME={kalshi:'https://kalshi.com/', poly:'https://polymarket.us/', novig:'https://novig.com/', dk:'https://sportsbook.draftkings.com/'};
+const BOOK_HOME={kalshi:'https://kalshi.com/', poly:'https://polymarket.us/', novig:'https://novig.com/', dk:'https://sportsbook.draftkings.com/', pp:'https://app.prizepicks.com/'};   // v4.04: + PrizePicks
 const isPhone=()=>/iPhone|iPad|iPod|Android/i.test(navigator.userAgent||'');
 function bookUrl(src, q, amount){
   if(!q || (!q.ok && !q.outcome)) return BOOK_HOME[src]||null;
@@ -8232,11 +8239,11 @@ document.addEventListener('click', async e=>{
   const kb=host.querySelector('button.kill[data-i]'); if(kb) obj=logged[+kb.dataset.i];
   if(!obj){ const bb=host.querySelector('[data-idx]'); if(bb){ const r=lastRows.find(x=>x.idx===+bb.dataset.idx); if(r) obj=rowAsBet(r); } }
   if(!obj) return;
-  const src=LIVE_BOOK(obj.book) || (/draftkings/i.test(obj.book||'')?'dk':null); if(!src) return;
+  const src=LIVE_BOOK(obj.book) || (/draftkings/i.test(obj.book||'')?'dk':/prizepicks/i.test(obj.book||'')?'pp':null); if(!src) return;   // v4.04: PrizePicks opens too (its app or site; it has no prefilled slip)
   e.preventDefault(); e.stopPropagation();
-  const w=slipWindow();   // open now (pop-up blockers), point it once we know where
+  const w=isPhone()?null:slipWindow();   // open now (pop-up blockers), point it once we know where   // v4.04: not on a phone (see slipReady)
   let url=BOOK_HOME[src];
-  try{ if(src!=='dk'){ const q=await quoteFor(obj, obj.book);
+  try{ if(src!=='dk' && src!=='pp'){ const q=await quoteFor(obj, obj.book);
     // v3.05: a book price far from the card's price means the book matched a different bet (a half, the other side of
     // the spread) — open the book's home page instead of a prefilled slip, and say why on the card
     const p0=obj.odds!=null?toProb(String(obj.odds).trim().replace(/^(\d)/,'+$1')):null;
@@ -8244,10 +8251,20 @@ document.addEventListener('click', async e=>{
       const note=host.querySelector('.pp-open'); if(note){ note.textContent='⚠ '+(BOOK_NAME[src]||'book')+' slip is '+(q.price*100).toFixed(1)+'%, the card says '+(p0*100).toFixed(1)+'% — not prefilled, check the market'; note.style.color='var(--out)'; }
       url=BOOK_HOME[src];
     } else url=bookUrl(src, q, +obj.stake||0) || url; } }catch(_){}
+  if(isPhone()){ slipReady(url, src); return; }   // v4.04
   if(w) w.location.href=url; else location.href=url;
 }, true);
+/* v4.04 (Alonzo: "when I press to prefill, open the app instead of the website"): an iPhone hands a link to an app (Novig, Kalshi,
+   Polymarket, DraftKings) only when you tap the link itself. A tab the page opened and pointed at the slip after the price check
+   always stayed in Safari. On a phone the slip now waits in a bar at the bottom as a real link: one tap opens the app. */
+function slipReady(url, src){ if(!url) return; let el=document.getElementById('slipGo');
+  if(!el){ el=document.createElement('div'); el.id='slipGo'; el.className='slip-go'; el.setAttribute('role','status'); document.body.appendChild(el);
+    el.addEventListener('click',e=>{ if(e.target.closest('.slip-go-x')){ el.hidden=true; return; } if(e.target.closest('a')) setTimeout(()=>{ el.hidden=true; },800); }); }
+  const nm=BOOK_NAME[src]||(src==='dk'?'DraftKings':src==='pp'?'PrizePicks':'the book'), web=/^novigapp:\/\//.test(url)?url.replace(/^novigapp:\/\//,'https://novig.com/'):'';
+  el.innerHTML='<span class="slip-go-t">'+(src==='dk'||src==='pp'?esc(nm)+': no prefilled slip, find the bet in the app':esc(nm)+' slip is ready')+'</span><a class="slip-go-a" href="'+esc(url)+'">Open in '+esc(nm)+' ›</a>'+(web?'<a class="slip-go-w" href="'+esc(web)+'" target="_blank" rel="noopener">website</a>':'')+'<button type="button" class="slip-go-x" aria-label="Close">×</button>';
+  el.hidden=false; }
 // mark clickable logos
-const _markGo=()=>document.querySelectorAll('#logBody img.blogo, #tbody img.blogo, #placeCards img.blogo, #liveBody img.blogo').forEach(i=>{ if(/kalshi|polymarket|novig|draftkings/i.test(i.alt||'')){ i.classList.add('go'); i.title=(i.alt||'')+' — open this bet'; } });
+const _markGo=()=>document.querySelectorAll('#logBody img.blogo, #tbody img.blogo, #placeCards img.blogo, #liveBody img.blogo').forEach(i=>{ if(/kalshi|polymarket|novig|draftkings|prizepicks/i.test(i.alt||'')){ i.classList.add('go'); i.title=(i.alt||'')+' — open this bet'; } });
 new MutationObserver(()=>_markGo()).observe(document.body,{childList:true,subtree:true});
 
 /* v2.91: La Contadora's live check — every not-started row with a fair value (passing OR skipped) gets live
