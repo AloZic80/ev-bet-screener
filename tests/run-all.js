@@ -27,6 +27,7 @@ const runs = [
   ['Editing a saved bet can fix its game day', 'edit-date-test.js', []],
   ['Save says why it needs a second press, in a box you can see', 'save-confirm-test.js', []],
   ['Novig bets log on their own; From your books Ignore sticks', 'fill-autolog-test.js', []],
+  ['+ Add logs a described bet in one tap; a bet marked added but missing is logged again', 'fill-oneclick-test.js', []],
 ];
 const run = (file, args) => spawnSync(process.execPath, [path.join(__dirname, file), ...args], { encoding: 'utf8', timeout: 300000 });
 const last = r => ((r.stdout || '') + (r.stderr || '')).trim().split('\n').pop();

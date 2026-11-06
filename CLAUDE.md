@@ -62,6 +62,9 @@
 - v3.90: fills already waiting go through the same steps on every check (`pendingAutoAdd`); each fill in `syncFills` is in its own try,
   so one that fails cannot stop the others (its error shows as "could not log it"). My books has + Add on each not-logged row (`.mb-add`)
   and a reason line (`fillWhyNot`).
+- v3.91: + Add (My books and From your books, `addFillNow`) logs a described fill in one tap; the form opens only when the book did not
+  say what the bet is. A fill marked added or linked whose bet is not in the log is logged again on the next check (`fillLost`),
+  unless you removed that bet by hand (it is in `removedBets` with that fill id).
 - Save in the bet editor (v3.89, `ebSay`): a second-press check (worse than fair, a limit) or a missing field shows an amber `.eb-warn`
   box and the button reads "Save bet anyway".
 - `addToLog` copies a fixed list of fields into a saved bet. A new field on the row (like `towin`) must be added there too, or
