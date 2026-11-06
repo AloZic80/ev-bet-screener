@@ -61,6 +61,12 @@ const BOARD=[prop('Leg One','AAA','BBB',20,0.60),prop('Leg Two','CCC','DDD',21,0
   await p.click('#pkApp button[data-v="Kalshi"]'); await p.waitForTimeout(300);
   const rk=await p.evaluate(()=>({minPC:pkState.minPC, hit:pkState.slipMinHit, note:document.getElementById('pkRec').textContent}));
   check('Kalshi, 4-Leg: each pick at least 40%, the slip hits at least 5%, with the note', rk.minPC===0.4 && rk.hit===0.05 && /Recommended for Kalshi 4-Leg/.test(rk.note), rk);
+  const vis=async()=>p.evaluate(()=>({picksFrom:document.getElementById('pkMinPL').getBoundingClientRect().width>0, power:document.getElementById('pkPlay').getBoundingClientRect().width>0, combo:document.getElementById('pkComboCtl').querySelector('label').getBoundingClientRect().width>0}));
+  const vk=await vis();
+  check('v3.92: on a combo app the pick\'em boxes (Power, Picks from) are not shown; Each pick and Slip hits are', !vk.picksFrom && !vk.power && vk.combo, vk);
+  const hits=[]; for(const n of [2,3,4,5,6]){ await p.click('.pk-slipn[data-n="'+n+'"]'); await p.waitForTimeout(120); hits.push(await p.evaluate(()=>document.getElementById('pkSlipMinHit').value)); }
+  check('v3.92: on a combo app Slip hits at least follows the size: 20 10 5 3 2', hits.join(' ')==='20 10 5 3 2', hits);
+  await p.click('.pk-slipn[data-n="4"]'); await p.waitForTimeout(150);
   const k=await p.evaluate(()=>{ const c=window._pkCards.n2, f=cfgRead().fees; return c?{legs:c.legs.map(l=>l.name), mult:+c.e.arr[0].toFixed(4), want:+c.legs.reduce((x,l)=>x/(l.r.offeredProb*(1+feeRate('Kalshi',l.r.offeredProb,f))),1).toFixed(4), ev:c.e.ev}:null; });
   check('Kalshi combo: only Kalshi legs with an edge, paying their odds multiplied (fee off each)', k && k.legs.sort().join()==='LAL,NY' && k.mult===k.want && k.ev>0, k);
   const lg=await p.evaluate(()=>pkLegs(window._pkRows).map(l=>({n:l.name, ok:pkComboOk(l), where:pkWhere(l)})));
