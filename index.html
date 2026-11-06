@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v3.90</title>
+<title>0xBeta Screener v3.91</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1017,7 +1017,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.90</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.91</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1675,7 +1675,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v3.90';
+const SCREENER_VERSION='v3.91';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -8306,7 +8306,7 @@ document.addEventListener('click',e=>{
     delete b.fillDiff; saveLog(); renderLog(); renderPerf(); refresh(); return; }
   if(ig){ const f=fillPending[+ig.dataset.i]; if(f){ fillSeen[f.book+':'+f.id]={s:'ignored',q:+f.qty||0}; fillIgnored[f.book+':'+f.id]=Date.now(); if(f.ref) fillIgnored['fp:'+fillPrint(f)]=Date.now(); lsSafeSet('mbev.fillIgnored',JSON.stringify(fillIgnored)); }   // v3.89
     fillPending=fillPending.filter(x=>!fillIsIgnored(x)); saveFills(); renderFromBooks(); return; }
-  if(ad){ const f=fillPending[+ad.dataset.i]; if(!f) return; addFromFill(f); return; }   // v3.87: it stays listed until the bet is saved (it was dropped here, then lost)
+  if(ad){ const f=fillPending[+ad.dataset.i]; if(!f) return; addFillNow(f); return; }   // v3.91: one tap when the book described it   // v3.87: it stays listed until the bet is saved (it was dropped here, then lost)
   const cp=e.target.closest('.fb-copy'); if(cp){ copyText(fromBooksText(), cp); return; }
 });
 /* ============ v2.95: fills say what the bet IS — match by player · stat · line · side · game ============ */
@@ -8423,6 +8423,18 @@ function linkFill(b,f){   // you saved it already — link, and flag differences
 /* v3.90 (Alonzo: "I thought you fixed it"): v3.89 logged only fills read fresh from the book; bets already waiting in From your
    books (read before, and not in the latest read) stayed there. Now what is waiting goes through the same steps on every check:
    linked to a bet you logged, or logged on its own when the book described it. */
+/* v3.91 (Alonzo: "if you already know what the bet is, just add it when I press ADD"): + Add logs a bet the book described in
+   one tap (player, stat, line, side, price, cost, kickoff all come from the book); the form opens only when something is missing. */
+function addFillNow(f){ if(!f) return false; const key=f.book+':'+f.id;
+  delete fillIgnored[key]; if(f.ref) delete fillIgnored['fp:'+fillPrint(f)]; lsSafeSet('mbev.fillIgnored',JSON.stringify(fillIgnored));
+  if(!linkedTo(f)){ const b=betForFill(f);
+    if(b){ linkFill(b,f); fillSeen[key]={s:'linked',q:+f.qty||0}; }
+    else if(fillDescOk(f)){ autoAddFromDesc(f); fillSeen[key]={s:'added',q:+f.qty||0}; }
+    else { addFromFill(f); return false; } }   // the book did not say what it is: the form, filled in as far as it can be
+  fillPending=fillPending.filter(x=>!(x.book===f.book && x.id===f.id)); saveFills(); saveLog();
+  try{ renderLog(); renderPerf(); refresh(); }catch(e){} renderFromBooks(); renderMyBooks(); return true; }
+// v3.91: a fill marked added or linked whose bet is not in the log (and that you did not remove) is logged again
+function fillLost(f,seen){ return !!seen && (seen.s==='added'||seen.s==='linked') && f.action!=='sell' && !linkedTo(f) && !fillIsIgnored(f) && !removedBets.some(R=>(R.fills||[]).includes(f.id)); }
 function pendingAutoAdd(){ let changed=false;
   fillPending=fillPending.filter(p=>{ if(!p || p.action==='sell' || fillIsIgnored(p)) return true; const key=p.book+':'+p.id;
     try{ const b=betForFill(p); if(b){ linkFill(b,p); fillSeen[key]={s:'linked',q:+p.qty||0}; changed=true; return false; }
@@ -8458,7 +8470,7 @@ async function syncFills(force){
       const key=f.book+':'+f.id, seen=fillSeen[key];
       if(seen && seen.s==='ignored') return;
       if(f.isSale){ fillSeen[key]={s:'sale',q:+f.qty||0}; return; }   // handled with the bet it closes
-      if(seen && seen.s!=='pending' && Math.abs((seen.q||0)-(+f.qty||0))<1e-6) return;   // nothing new on this order
+      if(seen && seen.s!=='pending' && Math.abs((seen.q||0)-(+f.qty||0))<1e-6 && !fillLost(f,seen)) return;   // nothing new on this order   // v3.91: unless its bet went missing
       if(f.action==='sell'){   // a sell that covers the whole position marks the bet sold
         const b=betForFill(Object.assign({},f,{action:'buy'}));
         if(b && !b.sold){ b.soldFills=+f.qty||0; b.soldCash=+((+f.price||0)*(+f.qty||0)).toFixed(2);
@@ -8968,7 +8980,7 @@ function fingerprintPending(){   // single fills, then same-market pieces placed
   return changed;
 }
 // ---- 📒 My books: every bet exactly as the books report it
-document.addEventListener('click',e=>{ const a=e.target.closest('.mb-add'); if(!a) return; const f=(window._fills||[]).find(x=>x.book+':'+x.id===a.dataset.k); if(f) addFromFill(f); });   // v3.90: My books › + Add
+document.addEventListener('click',e=>{ const a=e.target.closest('.mb-add'); if(!a) return; const f=(window._fills||[]).find(x=>x.book+':'+x.id===a.dataset.k); if(f) addFillNow(f); });   // v3.90: My books › + Add   // v3.91: one tap
 function renderMyBooks(){
   const el=document.getElementById('myBooksBody'); if(!el) return;
   const F=(window._fills||[]).filter(f=>f.action!=='sell' && !f.isSale);
