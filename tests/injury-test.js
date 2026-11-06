@@ -5,7 +5,8 @@ const path=require('path'); const INDEX=path.join(__dirname,'..','index.html');
 const { chromium } = require('playwright'); const fs=require('fs');
 const html=fs.readFileSync(process.argv[2]||INDEX,'utf8');
 let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?'PASS ':'FAIL ')+n+'  → '+JSON.stringify(got)); };
-const now=Date.now(), H=3600e3, iso=ms=>new Date(ms).toISOString(), day=new Date(now).toLocaleDateString('en-CA',{timeZone:'America/Chicago'});
+const now=Date.parse('2026-11-05T18:00:00Z'), H=3600e3,   // a fixed noon (CT) clock: after midnight the board hid tomorrow-night games and this failed
+     iso=ms=>new Date(ms).toISOString(), day=new Date(now).toLocaleDateString('en-CA',{timeZone:'America/Chicago'});
 const team=(ha,abbr)=>({ha,id:abbr,abbr,name:abbr,loc:abbr,nick:abbr,logo:'',rec:'',color:'333333',alt:'ffffff'});
 const prop=(name,o)=>Object.assign({name,game:'ATL @ WSH',matchup:'ATL @ WSH',side:'O',sport:'NBA',market:'14.5 Points',kind:'prop',book:'DraftKings',
   offeredRaw:'-110',offeredProb:.524,fairProb:.60,fairRaw:'-150',mktProb:.60,stars:3,evModel:'projection',stake:5,
@@ -14,7 +15,7 @@ const BOARD=[prop('Asa Newell'), prop('Trae Young',{gameInfo:{state:'in',startIS
 const inj=(name,status,abbr,note)=>({status, shortComment:note, date:iso(now-H), athlete:{displayName:name, team:{abbreviation:abbr}}});
 const INJ={injuries:[{displayName:'Atlanta Hawks', injuries:[inj('Asa Newell','Day-To-Day','ATL','Newell will not return (toe).'), inj('Jalen Johnson','Out','ATL','Johnson (ankle) is out.'), inj('Trae Young','Questionable','ATL','Young is questionable (knee).'), inj('Kristaps Porzingis','Doubtful','ATL','Porzingis (illness) is doubtful.'), inj('Someone Active','Active','ATL','Back from IR.')]}]};
 (async()=>{
-  const b=await chromium.launch(); const ctx=await b.newContext({timezoneId:'America/Chicago', viewport:{width:1400,height:1000}});
+  const b=await chromium.launch(); const ctx=await b.newContext({timezoneId:'America/Chicago', viewport:{width:1400,height:1000}}); await ctx.clock.install({time:new Date(now)});
   await ctx.addInitScript(([rows,d])=>{ try{ if(sessionStorage.getItem('seeded')) return; sessionStorage.setItem('seeded','1'); localStorage.clear();
     localStorage.setItem('mbev.board',JSON.stringify({v:1,savedAt:new Date().toISOString(),slate:d,rows})); }catch(e){} }, [BOARD,day]);
   const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message)); let asked=0;

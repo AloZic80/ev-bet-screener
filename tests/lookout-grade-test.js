@@ -9,6 +9,8 @@ const html=fs.readFileSync(process.argv[2]||INDEX,'utf8'), NHL=JSON.parse(fs.rea
 let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?'PASS ':'FAIL ')+n+'  → '+JSON.stringify(got)); };
 const LOG=[
   {id:'saq',key:'saq',sport:'NFL',kind:'prop',book:'Novig',odds:'+120',stake:5,date:'2026-11-01',dateSet:true,manual:true,game:'PHI @ WSH',matchup:'PHI @ WSH',name:'Saquon Barkley',side:'O',market:'53.5 Rushing Yards',betnow:'O 53.5 +120',snap:{at:'2026-11-02T02:00:00Z'}},
+  {id:'saq2',key:'saq2',sport:'NFL',kind:'prop',book:'Novig',odds:'+120',stake:5,date:'2026-11-01',dateSet:true,game:'PHI @ WSH',matchup:'PHI @ WSH',name:'Saquon Barkley',side:'O',market:'53.5 Rushing Yards',betnow:'O 53.5 +120',fills:['f-saq'],snap:{at:'2026-11-05T22:00:00Z'}},   // v3.97: Alonzo's real case: logged from the Novig fill on 11/5, not "by hand"
+  {id:'saq3',key:'saq3',sport:'NFL',kind:'prop',book:'Novig',odds:'+120',stake:5,date:'2026-11-01',dateSet:true,game:'',matchup:'',name:'Saquon Barkley',side:'O',market:'53.5 Rushing Yards',betnow:'O 53.5 +120',autoFrom:'novig',fills:['f-saq3'],snap:{at:'2026-11-05T22:00:00Z'}},   // the same with no teams saved
   {id:'dor',key:'dor',sport:'NHL',kind:'prop',book:'Novig',odds:'-115',stake:4.8,date:'2026-11-05',dateSet:true,game:'',matchup:'',name:'Pavel Dorofeyev',side:'O',market:'2.5 Shots On Goal',betnow:'O 2.5 -115',start:'2026-11-06T00:00:00.000Z',autoFrom:'novig',fills:['f-dor'],fixSog94:1,fix83:1,snap:{at:'2026-11-06T04:30:00Z'}}];   // read at 10:30 PM
 (async()=>{
   const b=await chromium.launch(); const ctx=await b.newContext({timezoneId:'America/Chicago'}); await ctx.clock.install({time:new Date('2026-11-06T05:44:00Z')});
@@ -24,6 +26,8 @@ const LOG=[
   await p.goto('http://app.test/'); await p.waitForTimeout(5000);
   const R=await p.evaluate(()=>Object.fromEntries(logged.map(x=>[x.id,x.result||'-'])));
   check('Saquon Over 53.5 Rushing Yards (30 yards), game 4 days ago: graded Lost on its own', R.saq==='loss', R);
+  check('v3.97: the same Saquon bet logged from the Novig fill on 11/5 (not by hand): Lost', R.saq2==='loss', R);
+  check('v3.97: and with no teams saved: Lost', R.saq3==='loss', R);
   check('Dorofeyev Over 2.5 SOG (4 shots), logged from Novig after 10 PM: graded Won on its own', R.dor==='win', R);
   await p.click('.tab[data-view="v-log"]'); await p.waitForTimeout(300);
   const n=await p.evaluate(()=>document.querySelectorAll('#lookOut .lo-row').length);
