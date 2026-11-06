@@ -34,6 +34,14 @@ const LOG=[
   const spill=async()=>p.evaluate(()=>{ const bad=[]; document.querySelectorAll('#todayBar > .tb-t, #todayBar > .tb-k').forEach(t=>{ const r=t.getBoundingClientRect(); t.querySelectorAll('span,b,div,img').forEach(e=>{ const q=e.getBoundingClientRect(); if(q.width && (q.right>r.right+1 || q.left<r.left-1)) bad.push(e.textContent.slice(0,30)); }); }); return bad; });
   for(const w of [1960,1280,1000,390]){ await p.setViewportSize({width:w,height:1000}); await p.waitForTimeout(150); const sp=await spill(); check('v3.98: at '+w+' px wide, no Today card text runs into the next tile', !sp.length, sp.slice(0,4)); }
   await p.setViewportSize({width:1400,height:1000});
+  // v4.01 (Alonzo: "toggle between days, a button to go back and forth")
+  const day=()=>p.evaluate(()=>({k:document.querySelector('#todayBar .tb-k > span').innerText.replace(/\s+/g,' '), t:document.getElementById('todayBar').innerText.replace(/\s+/g,' '), log:document.getElementById('v-log').classList.contains('on')}));
+  await p.click('#todayBar .tb-day[data-d="-1"]'); await p.waitForTimeout(150); let dv=await day();
+  check('v4.01: ‹ goes to the day before: WED, 11/4, no bets, and it stays on the Board', /^WED, 11\/4/.test(dv.k) && /No bets on Wed, 11\/4\./.test(dv.t) && !dv.log, dv);
+  await p.click('#todayBar .tb-day[data-d="1"]'); await p.click('#todayBar .tb-day[data-d="1"]'); await p.waitForTimeout(150); dv=await day();
+  check('v4.01: › › goes to tomorrow, FRI, 11/6: $3.00 · 1 bet, ⏳ 1 to play, with a Today button', /^FRI, 11\/6/.test(dv.k) && /\$3\.00 1 bet/.test(dv.t) && /⏳ 1 to play/.test(dv.t) && /Today/.test(dv.k), dv);
+  await p.click('#todayBar .tb-back'); await p.waitForTimeout(150); dv=await day();
+  check('v4.01: Today brings it back to today', /^TODAY/.test(dv.k) && /\$11\.50/.test(dv.t) && !/Today/.test(dv.k.replace('TODAY','')), dv.k);
   const ds=await p.evaluate(d=>{ const x=dayStats()[d]; return {staked:x.staked, profit:+x.profit.toFixed(2)}; }, DAY);
   check('Performance by day: staked leaves out the free bet; the not-started bet is not a loss', ds.staked===11.5 && ds.profit===8.5, ds);
   // v4.00 (Alonzo): the Performance calendar shows money on games not started in grey: not green, not red, not a worst day
