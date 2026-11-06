@@ -34,6 +34,16 @@ const LOG=[
   const spill=async()=>p.evaluate(()=>{ const bad=[]; document.querySelectorAll('#todayBar > .tb-t, #todayBar > .tb-k').forEach(t=>{ const r=t.getBoundingClientRect(); t.querySelectorAll('span,b,div,img').forEach(e=>{ const q=e.getBoundingClientRect(); if(q.width && (q.right>r.right+1 || q.left<r.left-1)) bad.push(e.textContent.slice(0,30)); }); }); return bad; });
   for(const w of [1960,1280,1000,390]){ await p.setViewportSize({width:w,height:1000}); await p.waitForTimeout(150); const sp=await spill(); check('v3.98: at '+w+' px wide, no Today card text runs into the next tile', !sp.length, sp.slice(0,4)); }
   await p.setViewportSize({width:1400,height:1000});
+  // v4.02 (Alonzo: "on the Performance tab we do not need the API info"): the BettingPros bar and Sources show on the Board only, and Results by day comes first
+  const seen=()=>p.evaluate(()=>{ const v=sel=>{ const e=document.querySelector(sel); return !!e && e.getBoundingClientRect().height>0; }; return {bp:v('.loadbar'), src:v('#srcBar'), count:v('.statbox')}; });
+  let sn=await seen(); check('v4.02: on the Board, the BettingPros bar, Sources and the board count are there', sn.bp && sn.src && sn.count, sn);
+  await p.click('.tab[data-view="v-perf"]'); await p.waitForTimeout(300); sn=await seen();
+  const order=await p.evaluate(()=>{ const c=document.getElementById('calPanel'), s=document.getElementById('scorePanel'); return !!(c.compareDocumentPosition(s) & Node.DOCUMENT_POSITION_FOLLOWING); });
+  check('v4.02: on Performance they are gone, and Results by day comes before the Scorecard', !sn.bp && !sn.src && !sn.count && order, {sn, order});
+  for(const v of ['v-log','v-parlay','v-live','v-settings']){ await p.click('.tab[data-view="'+v+'"]'); await p.waitForTimeout(100); }
+  sn=await seen(); check('v4.02: and on the other tabs (Bet log, Parlays, Live, Settings)', !sn.bp && !sn.src, sn);
+  await p.click('.tab[data-view="v-board"][data-src="api"]'); await p.waitForTimeout(200); sn=await seen();
+  check('v4.02: back on the Board they come back', sn.bp && sn.src && sn.count, sn);
   // v4.01 (Alonzo: "toggle between days, a button to go back and forth")
   const day=()=>p.evaluate(()=>({k:document.querySelector('#todayBar .tb-k > span').innerText.replace(/\s+/g,' '), t:document.getElementById('todayBar').innerText.replace(/\s+/g,' '), log:document.getElementById('v-log').classList.contains('on')}));
   await p.click('#todayBar .tb-day[data-d="-1"]'); await p.waitForTimeout(150); let dv=await day();

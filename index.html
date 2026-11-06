@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.01</title>
+<title>0xBeta Screener v4.02</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1024,6 +1024,9 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 .cal-tp{color:var(--soft); font-weight:600}
 .cal-c .v .cal-tp-s{display:block; font-size:11px}
 .cal-big .cal-tp{font-size:.6em}
+/* v4.02 (Alonzo: "on the Performance tab we do not need the API info, it makes everything cluttered"): the BettingPros bar and Sources show on the Board only */
+body[data-view]:not([data-view="v-board"]) .loadbar, body[data-view]:not([data-view="v-board"]) #apiStatus, body[data-view]:not([data-view="v-board"]) .srcline, body[data-view]:not([data-view="v-board"]) #srcPanel{display:none!important}
+body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /* the board's count ("12 pass · of 1512") belongs to the Board too */
 /* v4.01: Today card: previous / next day */
 .tb-nav{display:inline-flex; gap:4px; margin-left:6px; vertical-align:middle}
 .tb-day{padding:0 8px; height:22px; line-height:20px; border-radius:6px; border:1px solid var(--rule); background:transparent; color:var(--accent); font-size:14px; font-weight:700; cursor:pointer}
@@ -1038,7 +1041,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.01</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.02</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1650,12 +1653,8 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 <!-- ======================= PERFORMANCE ======================= -->
 <div class="view" id="v-perf">
-<div class="panel sc-panel" id="scorePanel">
-  <h2>📏 Scorecard <span class="sub">the 1,000-bet test · beat the close, then profit · research Makes and parlays kept out</span></h2>
-  <div id="scoreBody"></div>
-</div>
-<div class="panel" id="calPanel">
-  <h2>Results by day <span class="sub">by the day the game is played · money on the line counts as gone</span></h2>
+<div class="panel" id="calPanel">   <!-- v4.02: results by day first (it was under the Scorecard) -->
+  <h2>Results by day <span class="sub">by the day the game is played · money on games already started counts as gone · games not started in grey</span></h2>
   <div class="cal-top"><div><div class="meta" id="calSub">this month</div><div class="cal-big" id="calToday"></div></div>
     <div><div class="meta">Month</div><div class="cal-big" id="calMonthTot"></div></div>
     <div class="cal-seg"><button type="button" data-v="chart">Chart</button><button type="button" data-v="cal" class="on">Calendar</button></div></div>
@@ -1663,6 +1662,10 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
   <div class="cal-nav"><button type="button" id="calPrev" aria-label="Previous month">‹</button><b id="calTitle"></b><button type="button" id="calNext" aria-label="Next month">›</button></div>
   <div id="rbdBody"></div>
   <div class="cal-foot" id="calFoot"></div>
+</div>
+<div class="panel sc-panel" id="scorePanel">
+  <h2>📏 Scorecard <span class="sub">the 1,000-bet test · beat the close, then profit · research Makes and parlays kept out</span></h2>
+  <div id="scoreBody"></div>
 </div>
 <div class="stats" id="statCards"></div>
 <div class="panel">
@@ -1696,7 +1699,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v4.01';
+const SCREENER_VERSION='v4.02';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -6982,8 +6985,10 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
   t.classList.add('on'); document.getElementById(t.dataset.view).classList.add('on');
+  document.body.dataset.view=t.dataset.view;   // v4.02: the BettingPros bar and Sources show on the Board only
   if(t.dataset.src && t.dataset.src!==boardSrc){ boardSrc=t.dataset.src; refresh(); }   // v2.86: Board (API) vs Pasted
 }));
+document.body.dataset.view=(document.querySelector('.view.on')||{}).id||'v-board';   // v4.02
 function showBoardSrc(src){ const t=document.querySelector('.tab[data-src="'+src+'"]'); if(t) t.click(); }
 const NUMS=['oMin','oMax','eMin','eMax','devig','bank','kelly','shrink','sMin','sMax','mWeight','gameCapPct','dayGoal','dayMaxPct','dayMaxMevPct',
             'fKalshi','fProphet','fPoly','fNovig','fFliff','fBook','fFdp'];

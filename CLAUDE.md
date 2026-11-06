@@ -141,6 +141,10 @@
   v3.80: the game is found by the row's ESPN id (`gameInfo.eventId`), then codes, then full names (`wxFind`). v3.81: normal weather
   gets a quiet chip (`wx calm`: sky, °F, mph) and domes "🏟️ dome", so a checked game always shows something.
 - The data sources row (`#srcBar`, `#srcPanel`) is on the main page under the BettingPros bar. Settings keeps the passphrase.
+  v4.02 (owner: "on the Performance tab we do not need the API info, it makes everything cluttered"): the BettingPros bar (`.loadbar`,
+  `#apiStatus`), Sources (`.srcline`, `#srcPanel`) and the board count (`.statbox`) show on the Board only, by CSS on `body[data-view]`
+  (set by the tab handler). Leagues' Load odds switches to the Board first, so its Sources panel still opens. Performance starts with
+  Results by day (`#calPanel`), then the Scorecard.
 - 🌍 Leagues tab (`lgLeagues`, `lgScan`, `lgPaint`): every league the app knows, plus The Odds API's own list once the Worker
   has `src=oddsapi_sports` (free), and which have games in the next 3 days (ESPN; `src=oddsapi_events` once the Worker has it;
   the Sportsbook API's last load). Saved 30 minutes in `mbev.lgScan`. Load odds uses The Odds API panel's loader.
