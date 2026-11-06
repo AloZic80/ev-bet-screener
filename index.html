@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v3.89</title>
+<title>0xBeta Screener v3.90</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1017,7 +1017,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.89</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.90</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1675,7 +1675,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v3.89';
+const SCREENER_VERSION='v3.90';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -8266,6 +8266,14 @@ function fillDiffHtml(b,i){
 /* v3.89 (Alonzo: "make sure they are added correctly and not HERE"): a fill that matches nothing on the log or the board is
    still logged on its own when the book says exactly what it is (player, stat, line, side, or team and line), with its price,
    cost and kickoff time. Only a fill the book does not describe (a "Novig market 01a…") waits in From your books. */
+function fillWhyNot(f){ const b=f&&f.bet||{}, seen=fillSeen[f.book+':'+f.id], miss=[];   // v3.90: why a fill was not logged on its own, shown in My books
+  if(f._why) return 'error: '+f._why; if(fillIsIgnored(f)) return 'you ignored it'; if(!f.bet || !b.kind) return (FILL_NAME[f.book]||'the book')+' did not say what this bet is: use + Add';
+  if(b.part) return 'a half or period market'; if(!(f.price>0)) miss.push('price');
+  if(b.kind==='prop'){ if(!b.player) miss.push('player'); if(!b.statText) miss.push('stat'); if(b.line==null) miss.push('line'); if(b.side!=='O'&&b.side!=='U') miss.push('over/under'); }
+  else if(b.kind==='moneyline'||b.kind==='spread'){ if(!b.team) miss.push('team code'); if(b.kind==='spread'&&b.line==null) miss.push('line'); }
+  else if(b.kind==='total'){ if(b.line==null) miss.push('line'); if(b.side!=='O'&&b.side!=='U') miss.push('over/under'); }
+  else miss.push('kind '+(b.kind||'?'));
+  return (miss.length?'missing '+miss.join(', '):'checked: '+(seen?seen.s:'not yet'))+' · '+[b.kind,b.player||b.team||b.teamName,b.statText,b.line,b.side].map(x=>x==null?'-':x).join('/'); }
 function fillDescOk(f){ const b=f&&f.bet||{}; if(!f || f.action==='sell' || !(f.price>0) || b.part) return false;
   if(b.kind==='prop') return !!(b.player && b.statText && b.line!=null && (b.side==='O'||b.side==='U'));
   if(b.kind==='moneyline') return !!b.team; if(b.kind==='spread') return !!(b.team && b.line!=null); if(b.kind==='total') return b.line!=null && (b.side==='O'||b.side==='U'); return false; }
@@ -8412,8 +8420,19 @@ function linkFill(b,f){   // you saved it already — link, and flag differences
   if(mine==null || (px && Math.abs(px-mine)>0.006) || Math.abs(b.fillCost-(+b.stake||0))>0.06) b.fillDiff={price:px||mine, stake:b.fillCost, fee:+f.fee||0, at:f.ts};
   else delete b.fillDiff;
 }
+/* v3.90 (Alonzo: "I thought you fixed it"): v3.89 logged only fills read fresh from the book; bets already waiting in From your
+   books (read before, and not in the latest read) stayed there. Now what is waiting goes through the same steps on every check:
+   linked to a bet you logged, or logged on its own when the book described it. */
+function pendingAutoAdd(){ let changed=false;
+  fillPending=fillPending.filter(p=>{ if(!p || p.action==='sell' || fillIsIgnored(p)) return true; const key=p.book+':'+p.id;
+    try{ const b=betForFill(p); if(b){ linkFill(b,p); fillSeen[key]={s:'linked',q:+p.qty||0}; changed=true; return false; }
+      if(fillDescOk(p)){ autoAddFromDesc(p); fillSeen[key]={s:'added',q:+p.qty||0}; changed=true; return false; } }catch(e){ console.warn('pendingAutoAdd', e); p._why=String(e&&e.message||e).slice(0,140); }
+    return true; });
+  if(changed){ saveFills(); saveLog(); try{ renderLog(); renderPerf(); refresh(); }catch(e){} }
+  return changed; }
 async function syncFills(force){
   if(fillBusy || (!force && Date.now()-fillAt<55000)) return; fillBusy=true;
+  try{ pendingAutoAdd(); }catch(e){}   // v3.90: what is already waiting, whatever the book answers
   try{
     // v2.95: one bet per order (partial fills merged), so always read the whole window
     let days=3; try{ if(localStorage.getItem('mbev.fillWide')==='1'){ days=14; localStorage.removeItem('mbev.fillWide'); } }catch(e){}
@@ -8435,7 +8454,7 @@ async function syncFills(force){
           p.f.soldFor=r2((p.f.soldFor||0)+q-((+f.cost||0)+(+f.fee||0))*share); p.f.soldAt=f.ts; p.f.soldQty=(p.f.soldQty||0)+q; f.isSale=true; }
         if(left>1e-9) pos.push({f, left}); });
       (j.fills||[]).forEach(f=>{ if(f.isSale) sales.push(f); }); }
-    (j.fills||[]).slice().reverse().forEach(f=>{   // oldest first
+    (j.fills||[]).slice().reverse().forEach(f=>{ try{   // oldest first; v3.90: one fill that fails cannot stop the others
       const key=f.book+':'+f.id, seen=fillSeen[key];
       if(seen && seen.s==='ignored') return;
       if(f.isSale){ fillSeen[key]={s:'sale',q:+f.qty||0}; return; }   // handled with the bet it closes
@@ -8455,8 +8474,9 @@ async function syncFills(force){
       if(r && f.price>0){ autoAddFromRow(r,f); fillSeen[key]={s:'added',q:+f.qty||0}; changed=true; return; }
       if(fillDescOk(f) && !fillIsIgnored(f)){ autoAddFromDesc(f); fillSeen[key]={s:'added',q:+f.qty||0}; changed=true; return; }   // v3.89: logged on its own
       fillPending.push(f); fillSeen[key]={s:'pending',q:+f.qty||0};
-    });
+    }catch(e){ console.warn('fill', f&&f.id, e); f._why=String(e&&e.message||e).slice(0,140); if(!fillPending.some(x=>x.book===f.book && x.id===f.id)) fillPending.push(f); } });
     if(fingerprintPending()) changed=true;   // v2.98: cost to the cent + price + day
+    if(pendingAutoAdd()) changed=true;   // v3.90
     // a Novig sale closes the bet it offsets: whole position → SOLD with the cash back
     (j.fills||[]).forEach(f=>{ if(f.soldFor==null) return;
       const b=linkedTo(f), full=(f.soldQty||0)>=(+f.qty||0)-1e-6;
@@ -8500,7 +8520,7 @@ function renderFromBooks(){
     (errTxt?' <span class="meta">('+errTxt+')</span>':'')+
     (fillPending.length?'<div class="copy-bar"><button type="button" class="copy-big" data-copy-fn="fromBooksText">📋 Copy this list</button></div><div class="fb-wrap"><table>'+fillPending.map((f,i)=>{ const L=fillLabel(f);
       return '<tr><td>'+(bookLogo(FILL_NAME[f.book])?logoTag(FILL_NAME[f.book],'sm'):esc(FILL_NAME[f.book]))+'</td>'+
-      '<td><b>'+esc(L.bet)+'</b>'+(f.action==='sell'?' <b>(sold)</b>':'')+(f.soldFor!=null?' <span class="tag t-sold">SOLD $'+r2(f.soldFor).toFixed(2)+' ('+(r2(f.soldFor)-r2((+f.cost||0)+(+f.fee||0))>=0?'+':'−')+'$'+Math.abs(r2(f.soldFor)-r2((+f.cost||0)+(+f.fee||0))).toFixed(2)+')</span>':'')+'<div class="meta">'+esc([L.game,L.when].filter(Boolean).join(' · '))+'</div></td>'+
+      '<td><b>'+esc(L.bet)+'</b>'+(f._why?' <span class="meta tb-down">could not log it: '+esc(f._why)+'</span>':'')+(f.action==='sell'?' <b>(sold)</b>':'')+(f.soldFor!=null?' <span class="tag t-sold">SOLD $'+r2(f.soldFor).toFixed(2)+' ('+(r2(f.soldFor)-r2((+f.cost||0)+(+f.fee||0))>=0?'+':'−')+'$'+Math.abs(r2(f.soldFor)-r2((+f.cost||0)+(+f.fee||0))).toFixed(2)+')</span>':'')+'<div class="meta">'+esc([L.game,L.when].filter(Boolean).join(' · '))+'</div></td>'+
       '<td class="num">'+(f.price!=null?(f.price*100).toFixed(1)+'%<div class="meta">'+esc(fmtOdds(Math.round(americanOf(f.price))))+'</div>':'—')+'</td>'+
       '<td class="num">$'+(+(f.cost||0)+(+f.fee||0)).toFixed(2)+(f.qty!=null?'<div class="meta">'+f.qty+' ct</div>':'')+'</td>'+
       '<td class="meta fb-ts">bet '+(f.ts?new Date(f.ts).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}):'')+'</td>'+
@@ -8948,6 +8968,7 @@ function fingerprintPending(){   // single fills, then same-market pieces placed
   return changed;
 }
 // ---- 📒 My books: every bet exactly as the books report it
+document.addEventListener('click',e=>{ const a=e.target.closest('.mb-add'); if(!a) return; const f=(window._fills||[]).find(x=>x.book+':'+x.id===a.dataset.k); if(f) addFromFill(f); });   // v3.90: My books › + Add
 function renderMyBooks(){
   const el=document.getElementById('myBooksBody'); if(!el) return;
   const F=(window._fills||[]).filter(f=>f.action!=='sell' && !f.isSale);
@@ -8969,7 +8990,7 @@ function renderMyBooks(){
       '<td class="num">$'+cost.toFixed(2)+'</td>'+
       '<td class="num '+cls+'"><b>'+esc(st==='open'?(b&&b.result==='?'?'final · ?':'open'):st)+'</b></td>'+
       '<td class="num">'+(paid!=null?'$'+paid.toFixed(2):'—')+'</td>'+
-      '<td>'+(b?'<span class="ok-t">✓ in log</span>'+(b.fingerprint?' <span class="meta">(fingerprint)</span>':''):'<span class="tb-down">✗ not logged</span>')+'</td></tr>';
+      '<td>'+(b?'<span class="ok-t">✓ in log</span>'+(b.fingerprint?' <span class="meta">(fingerprint)</span>':''):'<span class="tb-down">✗ not logged</span> <button type="button" class="log sm mb-add" data-k="'+esc(f.book+':'+f.id)+'">+ Add</button><div class="meta mb-why">'+esc(fillWhyNot(f))+'</div>')+'</td></tr>';   // v3.90: add it from here, and why it was not logged
   }).join('');
   const sum=Object.entries(tot).map(([k,t])=>{ const pl=t.back-t.settled;
     const logPl=logged.filter(b=>b.fillBook===k).reduce((s,b)=>{ const v=heldValue(b); return s+(v&&!v.open?v.v:0); },0);

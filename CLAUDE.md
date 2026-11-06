@@ -59,6 +59,9 @@
   (`fillDescOk`, `autoAddFromDesc`: player, stat, line, side, or team and line; price, cost, kickoff). Only undescribed ones wait in From
   your books. Ignore is also kept by fingerprint (`fillIgnored`, `fillPrint`, `mbev.fillIgnored`) and filtered on every render, so a
   re-read, a `fillV` reset or a new fill id cannot bring it back. Add saves in one tap when the form is complete (`addFromFill`).
+- v3.90: fills already waiting go through the same steps on every check (`pendingAutoAdd`); each fill in `syncFills` is in its own try,
+  so one that fails cannot stop the others (its error shows as "could not log it"). My books has + Add on each not-logged row (`.mb-add`)
+  and a reason line (`fillWhyNot`).
 - Save in the bet editor (v3.89, `ebSay`): a second-press check (worse than fair, a limit) or a missing field shows an amber `.eb-warn`
   box and the button reads "Save bet anyway".
 - `addToLog` copies a fixed list of fields into a saved bet. A new field on the row (like `towin`) must be added there too, or
