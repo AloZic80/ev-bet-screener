@@ -6,7 +6,7 @@ const { chromium } = require('playwright'); const fs=require('fs');
 const html=fs.readFileSync(process.argv[2]||INDEX,'utf8');
 let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?'PASS ':'FAIL ')+n+'  → '+JSON.stringify(got)); };
 const FILL={book:'novig', id:'nv-saquon', ref:'74e79907e5ac', price:0.455, qty:10.98, cost:5, fee:0, ts:Date.now()-5*86400e3,
-  bet:{sport:'NFL', kind:'prop', player:'Saquon Barkley', statText:'Rushing Yards', side:'O', line:53.5, away:'PHI', home:'WSH'}};
+  bet:{sport:'NFL', kind:'prop', player:'Saquon Barkley', statText:'Rushing Yards', line:53.5, away:'PHI', home:'WSH'}};   // no over/under from the book: it waits for you (v3.90 logs complete ones on its own)
 (async()=>{
   const b=await chromium.launch(); const ctx=await b.newContext({timezoneId:'America/Chicago', viewport:{width:1400,height:1000}});
   await ctx.addInitScript(F=>{ try{ if(sessionStorage.getItem('s')) return; sessionStorage.setItem('s','1'); localStorage.clear(); localStorage.setItem('mbev.fillV','95'); localStorage.setItem('mbev.fillPending',JSON.stringify([F])); }catch(e){} }, FILL);
