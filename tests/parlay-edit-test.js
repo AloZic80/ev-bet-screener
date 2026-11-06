@@ -14,6 +14,13 @@ const PAR={id:'px1', key:'px1', kind:'parlay', date:day, start:null, name:'Bovad
   await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1200); await p.click('.tab[data-view="v-log"]'); await p.waitForTimeout(300);
   await p.click('#logBody .pl-edit'); await p.waitForTimeout(200);
+  check('v3.86: edit on a parlay opens only the parlay editor (not the single-bet one too)', await p.evaluate(()=>document.querySelectorAll('#logBody tr.pl-ed').length===1 && !document.querySelector('#logBody tr.editor')), true);
+  await p.fill('#logBody .pl-ed .pl-pay','9.99');
+  await p.evaluate(()=>{ renderLog(); saveLog(); renderLog(); }); await p.waitForTimeout(1300);   // what live prices, fills and sync do in the background
+  check('v3.86: a background redraw does not close the editor or lose what you typed', await p.evaluate(()=>!!document.querySelector('#logBody .pl-ed') && document.querySelector('#logBody .pl-ed .pl-pay').value==='9.99'), true);
+  await p.click('#logBody .pl-ed .pl-cancel'); await p.waitForTimeout(1300);
+  check('v3.86: once it is closed, the waiting redraw runs', await p.evaluate(()=>!document.querySelector('#logBody .pl-ed') && !logRenderLater), true);
+  await p.click('#logBody .pl-edit'); await p.waitForTimeout(200);
   const legs=await p.$$eval('#logBody .pl-ed .pl-leg',r=>r.map(x=>x.querySelector('.pl-lt').value+' | '+x.querySelector('.pl-lo').value));
   check('the editor shows each leg with its own odds', legs.length===3 && /OFI Crete .* \| -122/.test(legs[0]) && /\| \+105/.test(legs[1]) && /Blackhawks .* \| \+158/.test(legs[2]), legs);
   check('and the pay it was saved with ($9.62)', await p.$eval('#logBody .pl-ed .pl-pay',x=>x.value)==='9.62', true);
