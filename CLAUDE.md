@@ -68,6 +68,8 @@
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American
   odds, parsed from `parlay.legs` "text odds; text odds"), add or remove legs, stake, and Pays if all hit (from the legs until typed).
   Saving sets `parlay.legs`, `picks`, `pays.all`, `odds`; an all-hit parlay gets the new payout; each edit goes in `edits`.
+- Editing a saved bet (v3.88): the editor has Game day (`.eb-date`, from `gameDayOf`). A new day sets `date`, `dateSet` and moves
+  `start` to the same kickoff time on that day; the old day goes in `edits[].before.date`.
 - An open editor in the Bet log (v3.86, `logEditorOpen`): background redraws (live prices, fills, sync) wait (`logRenderLater`) until it
   is saved or closed. Your own buttons must remove the editor before calling `renderLog`, or their redraw waits too.
 - The Bet log draws newest first, grouped by game day (`logDays` remembers open/closed days per device). `data-i` on its

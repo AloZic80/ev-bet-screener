@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v3.87</title>
+<title>0xBeta Screener v3.88</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1015,7 +1015,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v3.87</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v3.88</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1673,7 +1673,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 
 </div>
 <script>
-const SCREENER_VERSION='v3.87';
+const SCREENER_VERSION='v3.88';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2932,6 +2932,7 @@ function openBetEditor(tr, r, opt){
       '<span class="pm-calc eb-calc"></span></span>'+
     (lateRow?'<label title="The game has started. Logging it after the fact? Set how it went and it is saved as graded by you.">Result <select class="eb-res-new"><option value="">Not settled yet</option><option value="win">Won</option><option value="loss">Lost</option><option value="push">Push / void</option></select></label>'+
       (late4?'<span class="meta eb-late" style="color:var(--warn)">Started over 4 hours ago, so it will not grade itself: set Result, or mark it later in the Bet log</span>':''):'')+   // v3.57
+    (opt.edit?'<label title="The day the game is played. Change it if you picked the wrong one.">Game day <input class="eb-date" type="date" value="'+esc(gameDayOf(opt.edit)||opt.edit.date||'')+'"></label>':'')+   // v3.88: the date can be fixed when editing
     (opt.edit?ebResultHtml(opt.edit):'')+'<span class="eb-check"></span><span class="meta eb-rec"></span>'+
     '<button class="log sm eb-save">'+(opt.edit?'Save changes':'Save bet')+'</button> <button class="log sm undo eb-cancel">Cancel</button>'+
     '<span class="meta eb-msg" role="status"></span></div>'+(isCard?'':'</td>');
@@ -3178,6 +3179,10 @@ function openBetEditor(tr, r, opt){
     if(opt.edit){   // v2.71: change the saved bet in place, keep a record of what it was
       const L=opt.edit, before={book:L.book, odds:L.odds, stake:L.stake, market:L.market};
       L.book=book; L.odds=odds; L.stake=+(+stake).toFixed(2); L.fee=fee; if(pmMode() && ed._slip) L.slip=ed._slip;
+      { const di=ed.querySelector('.eb-date'), nd=di&&/^\d{4}-\d{2}-\d{2}$/.test(di.value)?di.value:null, od=gameDayOf(L)||L.date||'';   // v3.88 (Alonzo: "if I mess up the date, let me edit it again")
+        if(nd && nd!==od){ before.date=od; const t=Date.parse(L.start);
+          if(!isNaN(t)){ const shift=Date.parse(nd+'T12:00:00Z')-Date.parse(ctDay(t)+'T12:00:00Z'); L.start=new Date(t+shift).toISOString(); }   // same kickoff time, on the new day
+          L.date=nd; L.dateSet=true; if(L.result==='?'){ delete L.result; delete L.why; } } }
       if(extra.towin>0) L.towin=extra.towin; else if(L.stake!==+(+before.stake||0).toFixed(2) || L.odds!==before.odds) delete L.towin;   // v3.54: a new To win replaces the old one; a new stake or odds drops a stale one
       if(gross!=null){ L.gross=gross; L.net=net; }
       if(extra.market) L.market=extra.market;
