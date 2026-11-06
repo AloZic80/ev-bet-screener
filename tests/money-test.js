@@ -13,7 +13,8 @@ const LOG=[
   bet('playing',{stake:2,start:iso(NOW-H)}),                                                      // game started, no result
   bet('later',{stake:4,start:iso(NOW+5*H)}),                                                      // not started
   bet('free',{book:'Bovada',stake:5,free:true,start:iso(NOW+5*H)}),                               // a free bet, not started
-  bet('boost',{book:'Bovada',stake:1,odds:'+1000',result:'win',gradedBy:'manual',start:iso(NOW-4*H),name:'Boosted'})];  // boosted: paid more than the odds
+  bet('boost',{book:'Bovada',stake:1,odds:'+1000',result:'win',gradedBy:'manual',start:iso(NOW-4*H),name:'Boosted'}),
+  bet('tmrw',{date:'2026-11-06',stake:3,start:iso(NOW+30*H)})];   // v4.00: tomorrow, not started  // boosted: paid more than the odds
 (async()=>{
   const b=await chromium.launch(); const ctx=await b.newContext({timezoneId:'America/Chicago', viewport:{width:1400,height:1000}}); await ctx.clock.install({time:new Date(NOW)});
   await ctx.addInitScript(L=>{ try{ if(sessionStorage.getItem('s')) return; sessionStorage.setItem('s','1'); localStorage.clear(); localStorage.setItem('mbev.log',JSON.stringify(L)); }catch(e){} }, LOG);
@@ -35,6 +36,19 @@ const LOG=[
   await p.setViewportSize({width:1400,height:1000});
   const ds=await p.evaluate(d=>{ const x=dayStats()[d]; return {staked:x.staked, profit:+x.profit.toFixed(2)}; }, DAY);
   check('Performance by day: staked leaves out the free bet; the not-started bet is not a loss', ds.staked===11.5 && ds.profit===8.5, ds);
+  // v4.00 (Alonzo): the Performance calendar shows money on games not started in grey: not green, not red, not a worst day
+  await p.click('.tab[data-view="v-perf"]'); await p.waitForTimeout(400);
+  const cal=await p.evaluate(()=>{ const c=d=>{ const e=document.querySelector('.cal-c[data-day="'+d+'"]'); return e?{cls:e.className, v:e.querySelector('.v').innerText.replace(/\s+/g,' ')}:null; };
+    return {today:c('2026-11-05'), tmrw:c('2026-11-06'), big:document.getElementById('calToday').innerText.replace(/\s+/g,' '), foot:document.getElementById('calFoot').innerText.replace(/\s+/g,' ')}; });
+  check('calendar, today: +$8.50 (played and playing) and, in grey, ⏳ $4.00 to play', /\+\$8\.50/.test(cal.today.v) && /⏳ \$4\.00 to play/.test(cal.today.v) && /▶/.test(cal.today.v) && / w\b/.test(cal.today.cls), cal.today);
+  check('calendar, a day whose games have not started: $3.00 in grey, neither won nor lost', cal.tmrw && /\$3\.00/.test(cal.tmrw.v) && !/ w\b| l\b/.test(cal.tmrw.cls) && / tp\b/.test(cal.tmrw.cls), cal.tmrw);
+  check('it is not the month\'s worst day (worst stays +$8.50, not $0.00)', /worst \+\$8\.50/.test(cal.foot), cal.foot);
+  check('today at the top: +$8.50 · $4.00 to play', /\+\$8\.50 today · \$4\.00 to play/.test(cal.big), cal.big);
+  for(const w of [1280,390]){ await p.setViewportSize({width:w,height:1000}); await p.waitForTimeout(200);
+    const sp=await p.evaluate(()=>{ const bad=[]; document.querySelectorAll('.cal-c.has').forEach(c=>{ const r=c.getBoundingClientRect(); c.querySelectorAll('.v, .v *').forEach(e=>{ const q=e.getBoundingClientRect(); if(q.width && (q.right>r.right+0.5 || q.left<r.left-0.5)) bad.push(c.dataset.day+': '+e.textContent.slice(0,20)); }); }); return bad; });
+    check('v4.00: at '+w+' px wide, every calendar amount fits inside its day', !sp.length, sp.slice(0,4)); }
+  await p.setViewportSize({width:1400,height:1000});
+  await p.click('.tab[data-view="v-log"]'); await p.waitForTimeout(300);
   // the boosted bet: it paid $13.66 back on a $1 stake (the odds alone say $11)
   await p.click('.tab[data-view="v-log"]'); await p.waitForTimeout(300);
   const edit=async id=>{ const i=await p.evaluate(id=>logged.findIndex(x=>x.id===id), id); await p.evaluate(i=>document.querySelector('#logBody button.kill.edit[data-i="'+i+'"]').click(), i); await p.waitForTimeout(300); };

@@ -100,6 +100,8 @@
   v3.99: on a computer the tiles had `white-space:nowrap` (old `.tb-t` rule), so the longer lines ran into the next tile; they wrap now.
   Owner, 2026-11-06: "what you make for Phone mode also needs to look right in web browser mode". Check every layout change at
   phone (390) and computer widths (1000, 1280, 1960); `tests/money-test.js` checks the Today card at all four.
+- Performance calendar (v4.00, `calDays`, `renderCal`): money on games not started is grey (`.cal-tp`, `toPlayAmt`), never green or red;
+  a day with only unstarted games is a grey amount (`.cal-c.tp`) and is not a best or worst day. ▶ marks games playing (hidden on a phone).
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American
