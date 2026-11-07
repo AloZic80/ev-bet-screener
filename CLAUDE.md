@@ -139,6 +139,10 @@
   = stake ÷ (limit + Kalshi fee), 3 Limit price = La Contadora's `maxPriceFor` in whole cents rounded down, then check Cost ≈ stake and
   Max payout = shares × $1. Not shown when the price is over her limit. "I bet this" on Kalshi labels the % fields Price ¢ / Max payout $.
   Owner: the same for every book next (he will say which); Bovada stays manual until there is money for an API.
+- The price as a % (v4.10, `impTagHtml`, `.imp`; owner: "+230, what does that mean in %?"): under each price on the board and the
+  Place cards, its chance (+230 = 100 / 330 = 30.3%), green "OK to" La Contadora's most at that book (`maxPriceFor`, after its fee), or amber
+  "need ≤ x% · look elsewhere" when it costs more. I bet this / + Add a bet: the check line starts "+230 = 30.3%" and ends "look elsewhere"
+  when the typed price is not worth it. The board lists passing bets only, so amber shows mostly when you type a price. `tests/price-pct-test.js`.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American

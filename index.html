@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.09</title>
+<title>0xBeta Screener v4.10</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1024,6 +1024,10 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 .cal-tp{color:var(--soft); font-weight:600}
 .cal-c .v .cal-tp-s{display:block; font-size:11px}
 .cal-big .cal-tp{font-size:.6em}
+/* v4.10: the price as a %, and "look elsewhere" when it costs more than La Contadora allows */
+.imp{display:block; font-size:11px; line-height:1.25; color:var(--dim); white-space:normal}
+.imp.ok{color:var(--live)} .imp.over{color:var(--warn); font-weight:600}
+.editor .eb-check .tag{white-space:normal; display:inline-block; max-width:100%; line-height:1.35}
 /* v4.09: what to type on Kalshi */
 .kx-how{margin:0 14px 12px; padding:10px 12px; border:1px solid var(--accent); border-radius:10px; text-align:left; white-space:normal}
 .kx-h{font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--soft); margin-bottom:6px}
@@ -1058,7 +1062,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.09</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.10</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1716,7 +1720,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 
 </div>
 <script>
-const SCREENER_VERSION='v4.09';
+const SCREENER_VERSION='v4.10';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2611,7 +2615,7 @@ function render(rows,cfg){
     cells.sport='<td><span class="sport s-'+esc(r.sport)+'">'+esc(r.sport)+'</span></td>';
     cells.market='<td style="text-align:center">'+mktCell+'</td>';
     cells.odds='<td style="text-align:center"><div class="odds-stack">'+(bookLogo(r.book)?logoTag(r.book):'<span class="meta">'+esc(bookLabel(r.book)||'book?')+'</span>')+
-        '<span>'+esc(fmtOdds(r.offeredRaw))+'</span>'+shopTagHtml(r)+maxTagHtml(r)+'<span class="mk-slot" data-idx="'+r.idx+'">'+makeTagHtml(r)+'</span></div></td>';
+        '<span>'+esc(fmtOdds(r.offeredRaw))+'</span>'+impTagHtml(r)+shopTagHtml(r)+maxTagHtml(r)+'<span class="mk-slot" data-idx="'+r.idx+'">'+makeTagHtml(r)+'</span></div></td>';
     cells.cover='<td class="num">'+(r.fairProb==null?'—':'<span class="cover">'+pct(r.fairProb)+'</span>'+
         '<div class="meta">fair '+esc(fmtOdds(r.fairRaw))+'</div>'+
         (r.mktProb!=null?'<div class="meta" title="'+(r.mktSharp?'Market benchmark: BettingPros Market EV fair price, from the sharpest books':'Market benchmark: BettingPros consensus odds (mostly retail books), both sides devigged')+(r.logitGap!=null?' · logit gap '+(r.logitGap>=0?'+':'')+r.logitGap.toFixed(2):'')+'">mkt '+pct(r.mktProb)+(r.mktSharp?' <b>sharp</b>':'')+'</div>':''))+'</td>';
@@ -2876,7 +2880,7 @@ function placeCardHtml(r,cfg,o){
       '<div class="pc-mkt"><div class="pc-mt" title="'+esc(mname)+'">'+esc((line?line+' ':'')+shortStat(mname))+'</div>'+(cons?'<div class="pc-mo">'+esc(cons)+'</div>':'')+'</div>'+
       '<div class="pc-game">'+game+'</div></div>'+
     '<div class="pc-stats">'+
-      pcCell('Our pick','<div class="pc-big">'+esc(pick)+'</div><span class="pc-chip">'+esc(betNowOf(r))+' '+book+'</span>'+shopTagHtml(r)+pickPayHtml(r)+'<span class="mk-slot" data-idx="'+r.idx+'">'+makeTagHtml(r)+'</span>')+
+      pcCell('Our pick','<div class="pc-big">'+esc(pick)+'</div><span class="pc-chip">'+esc(betNowOf(r))+' '+book+'</span>'+impTagHtml(r)+shopTagHtml(r)+pickPayHtml(r)+'<span class="mk-slot" data-idx="'+r.idx+'">'+makeTagHtml(r)+'</span>')+
       pcCell('Consensus','<div class="pc-big">'+esc(line||'—')+'</div><span class="pc-s">'+esc(cons||'—')+(r.mktProb!=null?' · mkt '+pct(r.mktProb):'')+'</span>')+
       pcCell('Projection','<div class="pc-big">'+(r.projValue!=null?(Math.round(r.projValue*10)/10):'—')+'</div><span class="pc-s">'+esc(mname)+'</span>')+
       pcCell('EV after fees','<div class="pc-big '+(r.net>0?'up':'down')+'">'+ev+'</div><span class="pc-s">'+(r.fairProb!=null?pct(r.fairProb)+' cover':'')+(bp?' · '+bp:'')+'</span>')+
@@ -3180,7 +3184,10 @@ function openBetEditor(tr, r, opt){
   function showCheck(){
     const v=valueCheck(), el=ed.querySelector('.eb-check');
     saveBtnEl.dataset.ok='0';
-    el.innerHTML = v ? '<span class="tag '+({bad:'t-out',warn:'t-warn',ok:'t-live'}[v.level])+'">'+esc(v.msg)+'</span>' : '';
+    { const pr=priceNow(), P=x=>(x*100).toFixed(1)+'%', am=pr?Math.round(americanOf(pr.prob)):0;   // v4.10: the price as a % (+230 = 30.3%), and "look elsewhere" when it is not worth it here
+      const imp=pr?(pmMode()?P(pr.prob):fmtOdds(am)+' = '+P(pr.prob)):'', mx=v&&v.fairAt!=null?maxPriceFor(v.fairAt,bookSel.value,cfgRead().eMin):null;
+      const tail=v&&v.level!=='ok'?(mx!=null&&pr&&pr.prob>mx?' · need ≤ '+P(mx):'')+' · look elsewhere':'';
+      el.innerHTML = v ? '<span class="tag '+({bad:'t-out',warn:'t-warn',ok:'t-live'}[v.level])+'">'+esc((imp?imp+' · ':'')+v.msg+tail)+'</span>' : (imp?'<span class="tag" title="The chance this price charges for">'+esc(imp)+'</span>':''); }
     const rs=recStake(), re=ed.querySelector('.eb-rec');
     if(re) re.textContent = rs==null ? '' : 'recommended at this price: $'+rs.toFixed(2);
   }
@@ -8193,6 +8200,17 @@ function maxPriceFor(fair, book, eMin){
   let lo=0.01, hi=0.99; if(netAt(lo)<eMin) return null;
   for(let i=0;i<40;i++){ const m=(lo+hi)/2; if(netAt(m)>=eMin) lo=m; else hi=m; }
   return lo;
+}
+/* v4.10 (Alonzo: "+230 on X, what does that mean in %? put a hint on the bet, so we know it is better to look elsewhere"):
+   the price as the chance the book is charging for (+230 = 100 / 330 = 30.3%), green when it is at or under the most La Contadora
+   lets you pay at this book (maxPriceFor, after its fee), amber "look elsewhere" when it is over: another book needs a lower %. */
+function impTagHtml(r){
+  const p=r.offeredProb; if(!(p>0 && p<1)) return '';
+  const cfg=cfgRead(), mx=r.fairProb!=null?maxPriceFor(r.fairProb, r.book, cfg.eMin):null, P=x=>(x*100).toFixed(1)+'%';
+  const over=r.fairProb!=null && (mx==null || p>mx+1e-9), ok=mx!=null && !over;
+  const am=Math.round(americanOf(p)), how=am>0?'100 / ('+am+' + 100)':(-am)+' / ('+(-am)+' + 100)';
+  const tip=fmtOdds(am)+' means the book charges for a '+P(p)+' chance ('+how+').'+(r.fairProb!=null?' La Contadora puts it at '+P(r.fairProb)+(mx!=null?'; at '+bookLabel(r.book)+' you can pay up to '+P(mx)+' after its fee.':'; no price at '+bookLabel(r.book)+' clears your EV floor after its fee.'):'')+(over?' Look for a book whose price is a lower %.':'');
+  return '<span class="imp'+(ok?' ok':over?' over':'')+'" title="'+esc(tip)+'">'+P(p)+(ok?' · OK to '+P(mx):over?(mx!=null?' · need ≤ '+P(mx):'')+' · look elsewhere':'')+'</span>';
 }
 function maxTagHtml(r){
   if(r.fairProb==null) return '';
