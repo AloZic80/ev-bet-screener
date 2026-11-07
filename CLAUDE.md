@@ -125,6 +125,11 @@
   fetched once per row) → the row moves there (`r.swap.orig` keeps the original, restored before every audit) and is screened at that
   price. No price anywhere: stays "not a book you bet". The Sentinels never let a book you do not bet win. BettingPros has DraftKings
   Predictions (book 74) and Underdog Predict (76): requested when those are in your books; it has no FanDuel Predicts.
+- What to type on Kalshi (v4.09, `kalshiHow`, `kalshiHowHtml`, `.kx-how` strip across a Kalshi card): owner typed the card's $1.62 into
+  Kalshi's Shares box and bought $0.88. The strip says, in Kalshi's words: 1 Press YES / NO (an Under is NO on the Over), 2 Shares
+  = stake ÷ (limit + Kalshi fee), 3 Limit price = La Contadora's `maxPriceFor` in whole cents rounded down, then check Cost ≈ stake and
+  Max payout = shares × $1. Not shown when the price is over her limit. "I bet this" on Kalshi labels the % fields Price ¢ / Max payout $.
+  Owner: the same for every book next (he will say which); Bovada stays manual until there is money for an API.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American
