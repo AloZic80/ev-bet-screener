@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.15</title>
+<title>0xBeta Screener v4.16</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1071,7 +1071,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.15</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.16</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1630,6 +1630,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
   <p class="hint">Log a bet from the board, then come back after the game starts and enter where the line closed. Closing line value is the only thing that tells you whether an edge was real before you have hundreds of settled bets.</p>
   <div class="row" style="margin-top:0">
     <button class="ghost" id="csvBtn">Show as CSV</button>
+    <label class="bar-item" title="Download your bets as a spreadsheet (CSV opens in Excel, Numbers and Google Sheets)">Download <select id="csvDay" class="bar-sel"><option value="">All days</option></select></label><button class="ghost" id="csvDl">⬇ CSV</button><!-- v4.16 -->
     <button class="ghost" id="checkResults">Check results</button>
     <button class="ghost" id="grabClose" title="Best 5–15 minutes before the game starts. Uses 1 API call per game.">Grab closing lines</button>
     <span id="closeStatus" style="font-size:13px;color:var(--soft)"></span>
@@ -1732,7 +1733,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 
 </div>
 <script>
-const SCREENER_VERSION='v4.15';
+const SCREENER_VERSION='v4.16';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2222,8 +2223,8 @@ function auditCore(rows,cfg){
     if(!prior && exSrc && myOrders && Array.isArray(myOrders.orders)){   // v4.15: also rows with no exchange price read yet   // v4.14: placed at the book, not filled yet
       const o=myOrders.orders.find(o=>o && o.book===exSrc && o.action!=='sell' && ((o.ref && exHit({book:o.book, ref:o.ref, side:o.side, outcome:o.outcome})) || (o.bet && o.bet.kind!=='other' && (()=>{ try{ return betMatches(o.bet, r); }catch(e){ return false; } })())));   // v4.15: + what the order is
       if(!o && GL_KINDS.test(r.kind||'') && r.kind!=='total'){   // v4.15: an order on the same team in ANOTHER game (another day): say this one is not placed
-        const me=giTeamFor(r, r.team||r.name), sch=me?nrm(me.loc||me.name).replace(/\bstate\b/g,'st'):'', rd=r.gameInfo&&r.gameInfo.startISO?Date.parse(r.gameInfo.startISO):NaN;
-        if(sch && !isNaN(rd)) r.otherGameOrder=myOrders.orders.find(o=>o && o.book===exSrc && o.action!=='sell' && o.title && (' '+nrm(o.title).replace(/\bstate\b/g,'st')+' ').includes(' '+sch+' ') && o.bet && o.bet.start && Math.abs(Date.parse(o.bet.start)-rd)>36*3600e3)||null;
+        const me=giTeamFor(r, r.team||r.name), sch=me?nrmT(me.loc||me.name).replace(/\bstate\b/g,'st'):'', rd=r.gameInfo&&r.gameInfo.startISO?Date.parse(r.gameInfo.startISO):NaN;
+        if(sch && !isNaN(rd)) r.otherGameOrder=myOrders.orders.find(o=>o && o.book===exSrc && o.action!=='sell' && o.title && (' '+nrmT(o.title).replace(/\bstate\b/g,'st')+' ').includes(' '+sch+' ') && o.bet && o.bet.start && Math.abs(Date.parse(o.bet.start)-rd)>36*3600e3)||null;
         if(r.otherGameOrder) r.flags.push(['warn','Your Kalshi order “'+(r.otherGameOrder.title||'')+'” is another game: this one is not placed']); }
       if(o){ r.waitOrder=o; r.flags.unshift(['dupe','ORDER WAITING on '+exNm+(o.qty!=null?': '+(+o.qty)+' shares':'')+(o.price!=null?' at '+Math.round(o.price*100)+'¢':'')+', not filled yet. It is placed: do not bet it again']); } }
     // v2.51: you already hold the OTHER side of this exact prop
@@ -4171,7 +4172,7 @@ function resultBadge(b){
 let logRenderLater=false;
 function logEditorOpen(){ return !!document.querySelector('#logBody tr.pl-ed, #logBody tr.editor'); }
 setInterval(()=>{ if(logRenderLater && !logEditorOpen()){ logRenderLater=false; try{ renderLog(); }catch(e){} } }, 1000);
-function renderLog(){
+function renderLog(){ setTimeout(()=>{ try{ csvDays(); }catch(e){} },0);   // v4.16: the CSV day list follows the log
   if(logEditorOpen()){ logRenderLater=true; return; }   // v3.86
   const tb=document.getElementById('logBody'), empty=document.getElementById('logEmpty');
   tb.innerHTML='';
@@ -7225,6 +7226,29 @@ document.getElementById('csvBtn').addEventListener('click',()=>{
   ta.value=['# Market Based EV v2.6',head.join(','),...body].join('\n');
   ta.style.display='block'; ta.select();
 });
+/* v4.16 (Alonzo: "download in CSV, by day or ALL"): one row per bet, by game day, newest first. Profit is betProfit (settled bets only;
+   free bets count their winnings only), the same number Performance uses. Excel reads the UTF-8 mark at the start. */
+function csvDays(){ const sel=document.getElementById('csvDay'); if(!sel) return; const cur=sel.value, D={};
+  logged.forEach(b=>{ const d=gameDayOf(b)||b.date||''; if(d) D[d]=(D[d]||0)+1; });
+  const h='<option value="">All days · '+logged.length+' bets</option>'+Object.keys(D).sort().reverse().map(d=>'<option value="'+d+'">'+esc(new Date(d+'T12:00:00Z').toLocaleDateString('en-US',{timeZone:'UTC',weekday:'short',month:'numeric',day:'numeric',year:'numeric'}))+' · '+D[d]+'</option>').join('');
+  if(sel.innerHTML!==h){ sel.innerHTML=h; sel.value=D[cur]?cur:''; } }
+function logCsv(day){
+  const q=s=>{ s=s===undefined||s===null?'':String(s); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+  const head=['game day','placed','bet','pick','sport','type','book','odds','implied %','stake $','free bet','result','profit $','fair %','EV after fees %','closing','CLV %','game','kickoff (CT)','legs'];
+  const rows=logged.map((b,i)=>({b,i,d:gameDayOf(b)||b.date||''})).filter(x=>!day||x.d===day).sort((a,b)=>(b.d.localeCompare(a.d))||(b.i-a.i)).map(({b,d})=>{
+    const p=toProb(b.odds), pr=betProfit(b), c=clv(b), st=b.start||(b.gameInfo&&b.gameInfo.startISO);
+    const res=b.sold?'sold':b.result==='win'?'win':b.result==='loss'?'loss':b.result==='push'?'push':'open';
+    return [d, (()=>{ const t=loggedAtOf(b); return isNaN(t)?'':new Date(t).toLocaleString('en-US',{timeZone:'America/Chicago'}); })(), b.name, b.betnow||[(b.side==='O'?'Over':b.side==='U'?'Under':''),b.market].join(' ').trim(), b.sport, b.kind,
+      bookLabel(b.book||''), b.odds, p!=null?(p*100).toFixed(1):'', (+b.stake||0).toFixed(2), b.free?'yes':'', res, pr!=null?pr.toFixed(2):'',
+      b.fair!=null?b.fair:(b.fairProb!=null?(b.fairProb*100).toFixed(1):''), b.net!=null?(b.net*100).toFixed(2):'', b.closing||'', c!==null?(c*100).toFixed(2):'',
+      b.game||b.matchup||'', st?new Date(st).toLocaleString('en-US',{timeZone:'America/Chicago'}):'', b.kind==='parlay'&&b.parlay?String(b.parlay.legs||''):''].map(q).join(','); });
+  return '\ufeff'+[head.join(','),...rows].join('\r\n'); }
+document.getElementById('csvDay').addEventListener('focus',csvDays); document.getElementById('csvDay').addEventListener('pointerdown',csvDays);
+document.getElementById('csvDl').addEventListener('click',()=>{ csvDays(); const day=document.getElementById('csvDay').value;
+  if(!logged.length){ alert('No bets in the log yet.'); return; }
+  const blob=new Blob([logCsv(day)],{type:'text/csv;charset=utf-8'}), a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='0xbeta-bets-'+(day||'all-'+ctDay(Date.now()))+'.csv'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1500); });
+setTimeout(csvDays,0);
 document.getElementById('wipe').addEventListener('click',()=>{
   if(!logged.length) return;
   if(confirm('Delete all '+logged.length+' logged bets? This cannot be undone.'+(SY&&SY.on?' ☁ Sync is on: they are deleted on your other devices too.':''))){
@@ -7754,7 +7778,7 @@ function pkSentPick(S,n){ const out=[], games=new Set();
   for(const l of S){ if(out.length===n) break; const g=l.game||l.name.toUpperCase(); if(pkState.oneGame && games.has(g)) continue; out.push(l); games.add(g); }
   return out.length===n?out:null; }
 function pkSentHtml(pays,cfg,appName){
-  if(pkPriced(pkState.app)) return '<div class="pk-sent-h"><b>🦑 Not good alone, good in a parlay</b></div><div class="meta">That only happens on pick’em apps (fixed payouts). On '+esc(appName)+' a combo pays the legs’ odds multiplied, so a leg that loses value alone loses it in a combo too: only legs with an edge help. Switch to a pick’em app to see these.</div>';   // v3.59
+  if(pkPriced(pkState.app)) return '<div class="pk-sent-h"><b>🦑 Not good alone, good in a parlay</b><button type="button" class="ghost sm" id="pkSentGo" title="Re-check every leg at live Kalshi, Polymarket US and Novig prices">🦑 Send the Sentinels</button></div><div class="meta">That only happens on pick’em apps (fixed payouts). On '+esc(appName)+' a combo pays the legs’ odds multiplied, so a leg that loses value alone loses it in a combo too: only legs with an edge help. Switch to a pick’em app to see these.</div>';   // v3.59
   const be=pkSentBE(), sizes=Object.keys(be).map(Number).sort((a,b)=>a-b), S=pkSentLegs(), play=pkState.play==='flex'?'Flex':'Power';
   const when=pkSentAt?'checked at live prices, '+new Date(pkSentAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'at the board’s prices';
   const opts=sizes.map(n=>{ const L=pkSentPick(S,n); return L?{n,L,e:pkEntry(L,pays[n],cfg)}:null; }).filter(o=>o && o.e.ev>0);
@@ -7769,7 +7793,7 @@ function pkSentHtml(pays,cfg,appName){
     '<div class="pk-be" role="list" aria-label="The chance every pick needs to break even, '+esc(appName+' '+play)+'">'+sizes.map(n=>'<button type="button" role="listitem" class="pk-be-i'+(n===4?' star':'')+(n===want?' pick':'')+'" data-n="'+n+'" aria-pressed="'+(n===want)+'" title="Show the '+n+'-pick entry">'+(n===4?'★ ':'')+n+' picks <b>'+(be[n]!=null?pct(be[n]):'n/a')+'</b></button>').join('')+'</div>'+   // v3.59: tap a size
     '<div class="meta pk-legend">Each pick’s circles are the entry sizes it is strong enough for: <i class="pk-dot on">4</i> filled = its chance beats what that size needs; <i class="pk-dot">4</i> empty = not enough. The ring marks the size you picked ('+want+'). ★ 4 is your target.'+(best?' <button type="button" class="linkbtn pk-sent-jump">↓ See the best '+best.n+'-pick entry</button>':'')+'</div>'+   // v3.63
     (S.length ? '<ul class="pk-sent-list">'+S.slice().sort((a,b)=>((b.fits.indexOf(want)>=0)-(a.fits.indexOf(want)>=0)) || b.p-a.p).slice(0,12).map(l=>{ const on=pkState.mine.indexOf(l.key)>=0;
-        return '<li><div class="pk-sl-who c-who">'+avatarHtml(l.r,'r:'+l.r.idx)+'<div><b>'+esc(l.name)+'</b> <span class="meta">'+esc(pkPick(l))+'</span><div class="pk-where">'+esc(pkWhere(l))+'</div><div class="meta">'+(l.good?'<b class="pk-good">✓ good alone too</b> (a single bet on the board)':'alone: '+esc(l.alone))+'</div></div></div>'+
+        return '<li><div class="pk-sl-who c-who">'+avatarHtml(l.r,'r:'+l.r.idx)+'<div><b>'+esc(l.name)+'</b> <span class="meta">'+esc(pkPick(l))+'</span>'+pkBetTag(l)+'<div class="pk-where">'+esc(pkWhere(l))+'</div><div class="meta">'+(l.good?'<b class="pk-good">✓ good alone too</b> (a single bet on the board)':'alone: '+esc(l.alone))+'</div></div></div>'+
           '<div class="pk-sl-p" title="The chance it hits">'+pct(l.p)+'</div>'+
           '<div class="pk-fits" role="img" aria-label="Strong enough for '+esc(l.fits.join(', '))+'-pick entries"><span class="pk-fits-k">fits</span>'+sizes.map(n=>'<i class="'+(l.fits.indexOf(n)>=0?'on':'')+(n===want?' star':'')+'">'+n+'</i>').join('')+'</div>'+
           '<button type="button" class="log sm pk-sent-add'+(on?' on':'')+'" data-k="'+esc(l.key)+'" aria-pressed="'+on+'">'+(on?'✓ In your entry':'+ Add')+'</button></li>'; }).join('')+'</ul>'+
@@ -7815,6 +7839,21 @@ function pkSlipsHtml(legs,pays,cfg,app){
     '<label>Rank <select id="pkSlipRank"><option value="hit"'+(pkState.slipRank!=='growth'?' selected':'')+'>most likely to win</option><option value="growth"'+(pkState.slipRank==='growth'?' selected':'')+'>most bankroll growth</option></select></label></div>'+   // v3.64
     (out.length ? '<div class="pk-cards">'+out.map((f,i)=>pkCard('Slip '+(i+1)+' · '+n+'-Leg'+(i===0?(pkState.slipRank==='growth'?' · most bankroll growth':' · most likely to win'):''), f.L, f.e, 's'+i, false)).join('')+'</div>'
       : '<div class="meta">No '+n+'-Leg slip pays with the picks on this board'+(priced?' that are good bets, at least '+pct(pkState.minPC!=null?pkState.minPC:0.2,0)+' likely each, and hit at least '+pct(minHit,0)+' of the time':' at '+pct(pkState.minP)+' or better')+(pkState.oneGame?', one per game':'')+'. Try another size'+(pkState.oneGame?', or untick One pick per game':'')+'.</div>'); }
+/* v4.16 (Alonzo: "put something on a parlay where we say we bet on the leg, or on it somewhere"): a leg you already hold as a single
+   (the board row's prior, or an order waiting at the book) or inside a parlay in your Bet log (last 2 days; legs written as text by the
+   book, "Kris Letang Over 1.5 Shots On Goal +127; ...") says so on every list: the Sentinels' picks, the slip and entry cards, the pick list. */
+function pkBetTag(l){ const r=l&&l.r; if(!r) return ''; const out=[];
+  if(r.prior) out.push('single $'+(+r.prior.stake||0).toFixed(2)+' on '+bookLabel(r.prior.book||'?'));
+  else if(r.waitOrder) out.push('order waiting on '+bookLabel(r.book||'?'));
+  const from=ctDay(Date.now()-2*86400e3), me=GL_KINDS.test(r.kind||'')?giTeamFor(r,r.team||r.name):null, code=me?me.abbr:(/^[A-Z0-9]{2,5}$/.test(r.team||'')?r.team:null);
+  const ln=lineOfMarket(r.market), side=r.side==='O'?'over':r.side==='U'?'under':'';
+  logged.forEach(b=>{ if(b.kind!=='parlay' || !b.parlay || (b.date||'')<from) return;
+    const segs=Array.isArray(b.parlay.pk&&b.parlay.pk.legs) ? b.parlay.pk.legs.map(x=>[x.name,x.side==='O'?'Over':x.side==='U'?'Under':'',x.market].join(' ')) : String(b.parlay.legs||'').split(';');
+    const hit=segs.some(t=>{ const n=' '+nrmT(t)+' ';
+      const who=r.kind==='prop' ? n.includes(' '+nrmT(r.name)+' ') : (code && (' '+String(t).toUpperCase()+' ').includes(' '+code+' ')) || n.includes(' '+nrmT(me?me.loc||me.name:r.name)+' ');
+      if(!who) return false; if(ln!=null && r.kind!=='moneyline' && !new RegExp('(^|\\s)[+-]?'+String(Math.abs(ln)).replace('.','\\.')+'(\\s|$)').test(String(t))) return false; if(side && !n.includes(' '+side+' ')) return false; return true; });
+    if(hit) out.push('in your '+bookLabel(b.book||'?')+' parlay ('+(b.parlay.picks||segs.length)+' picks)'); });
+  return out.length ? ' <span class="tag t-warn pk-bet" title="You already have this pick">✓ you bet this: '+esc(out.join(' · '))+'</span>' : ''; }
 function pkWhere(l){   // v3.63 (Alonzo: "you give me the names, but not the sports or team"): sport · team · game · when
   const r=l.r||{}, tm=r.team?normAbbr(r.team):(GL_KINDS.test(r.kind||'')?glTeam(r):null), when=l.gi?giWhen(l.gi):'';
   return [SPORT_NAMES[l.sport]&&SPORT_NAMES[l.sport]!==l.sport?SPORT_NAMES[l.sport]:l.sport, tm, l.game, when, l.tag].filter(Boolean).join(' · '); }   // v3.64: + good alone / outlier / small risk
@@ -7848,7 +7887,7 @@ function pkCard(title,legs,e,id,best){
     '<div class="pk-ev '+(up?'up':'down')+'">'+(up?'+':'−')+(Math.abs(e.ev)*100).toFixed(1)+'%<small> expected return</small></div>'+
     '<div class="pk-meter" role="img" aria-label="Picks average '+pct(e.avg)+', break-even '+(e.be!=null?pct(e.be):'n/a')+'"><i style="width:'+pos(e.avg)+'"></i>'+(e.be!=null?'<b style="left:'+pos(e.be)+'"></b>':'')+'</div>'+
     '<div class="meta">Picks average <b>'+pct(e.avg)+'</b>, break-even '+(e.be!=null?pct(e.be):'n/a')+'. All '+e.n+' hit '+pct(e.pAll)+' of the time'+(e.pAll>0?' (about 1 in '+Math.max(1,Math.round(1/e.pAll))+')':'')+'.</div>'+   // v3.64
-    '<ul class="pk-legs">'+legs.map(l=>'<li><span>'+esc(l.name)+' <span class="meta">'+esc(pkPick(l))+'</span>'+(l.own?'':' <span class="pk-chk" title="This line is from '+esc(bookLabel(l.book))+'. Check the app has the same line.">check line</span>')+'<span class="pk-where">'+esc(pkWhere(l))+'</span></span><b>'+pct(l.p)+'</b></li>').join('')+'</ul>'+   // v3.63: sport, team, game
+    '<ul class="pk-legs">'+legs.map(l=>'<li><span>'+esc(l.name)+' <span class="meta">'+esc(pkPick(l))+'</span>'+pkBetTag(l)+(l.own?'':' <span class="pk-chk" title="This line is from '+esc(bookLabel(l.book))+'. Check the app has the same line.">check line</span>')+'<span class="pk-where">'+esc(pkWhere(l))+'</span></span><b>'+pct(l.p)+'</b></li>').join('')+'</ul>'+   // v3.63: sport, team, game
     (up ? '<div class="pk-act"><label>Stake $ <input type="number" class="pk-stake" step="0.5" min="0" value="'+e.stake.toFixed(2)+'"></label>'+((window._pkLogged&&window._pkLogged.has(legs.map(l=>l.key).sort().join('+')))?'<button type="button" class="log sm pk-log pk-logged" data-id="'+id+'" disabled>✓ Logged</button> <span class="pk-logged-msg">In the Bet log. <button type="button" class="linkbtn pk-see-log">See it ›</button></span>':'<button type="button" class="log sm pk-log" data-id="'+id+'">Log this entry</button>')+'</div>'
         : '<div class="meta"><b>Skip:</b> these picks are under break-even for this payout.</div>')+
   '</div>'; }
@@ -7905,7 +7944,7 @@ function renderParlays(){
   const full=mine.length>=6;
   document.getElementById('pkPool').innerHTML=legs.length ? legs.slice(0,80).map(l=>{ const on=pkState.mine.indexOf(l.key)>=0;
       return '<tr class="'+((priced?pkComboOk(l):l.p>=pkState.minP&&pkPlayable(l))?'':'pk-low')+'"><td><input type="checkbox" class="pk-pick" data-k="'+esc(l.key)+'" aria-label="Add '+esc(l.name)+' to your entry"'+(on?' checked':'')+((full&&!on)||(!pkPlayable(l)&&!on)?' disabled':'')+'></td>'+
-        '<td><div class="c-who">'+avatarHtml(l.r,'r:'+l.r.idx)+'<div><b>'+esc(l.name)+'</b>'+(l.prior?' <span class="tag t-warn">already bet</span>':'')+'</div></div></td>'+   // v3.57: a picture
+        '<td><div class="c-who">'+avatarHtml(l.r,'r:'+l.r.idx)+'<div><b>'+esc(l.name)+'</b>'+pkBetTag(l)+'</div></div></td>'+   // v4.16: was "already bet" (singles only)   // v3.57: a picture
         '<td>'+esc(pkPick(l))+'</td>'+
         '<td class="num" title="Market '+(l.mkt!=null?pct(l.mkt):'n/a')+', model '+(l.model!=null?pct(l.model):'n/a')+'"><b class="'+((priced?pkComboOk(l):l.p>=pkState.minP)?'pk-ok':'')+'">'+pct(l.p)+'</b></td>'+
         '<td>'+(l.dfs==='own'?'<b>'+esc(appName)+'</b> ✓':l.dfs==='diff'?'<b class="pk-diff">'+esc(appName)+' has '+esc(String(l.appLine))+'</b> <span class="meta">board line is '+esc(l.line)+'</span>':l.dfs==='none'?'<span class="pk-diff">not on '+esc(appName)+'</span>':esc(bookLabel(l.book)||'?')+' <span class="meta">check the line</span>')+'</td>'+
@@ -8199,9 +8238,13 @@ var liveQuotes={}, liveAt=0, liveBusy2=false;
 /* v4.15 (Alonzo: his three Kalshi orders were other games than the cards): rows from The Odds API name teams in full ("Texas Tech Red
    Raiders @ Oklahoma State Cowboys"), so liveDesc found no team codes, the exchanges were never asked for that exact market, and "open slip"
    opened Kalshi's home page, where the Oklahoma St. market on top was another game. The codes now come from ESPN's game (gameInfo.teams). */
+/* v4.16 fix: v4.15 used nrm (a const defined much lower in the file) from giTeamFor. A logged bet with a full team name drew the Bet log
+   during startup, before nrm existed: "Cannot access 'nrm' before initialization" stopped the page halfway (no board, Sources or Today
+   card; the data was untouched). New code at startup uses this hoisted function instead. */
+function nrmT(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,' ').replace(/\b(jr|sr|ii|iii|iv)\b/g,'').replace(/\s+/g,' ').trim(); }
 function giTeamsOf(b){ const T=(b&&b.gameInfo&&b.gameInfo.teams)||[], a=T.find(x=>x&&x.ha==='away'), h=T.find(x=>x&&x.ha==='home'); return a&&h&&a.abbr&&h.abbr?[a,h]:null; }
-function giTeamFor(b,name){ const AH=giTeamsOf(b), n=nrm(name); if(!AH||!n) return null;
-  return AH.find(x=>[x.loc&&x.nick?x.loc+' '+x.nick:'', x.name, x.loc, x.abbr].some(v=>v && (nrm(v)===n || n.startsWith(nrm(v)+' '))))||null; }
+function giTeamFor(b,name){ const AH=giTeamsOf(b), n=nrmT(name); if(!AH||!n) return null;
+  return AH.find(x=>[x.loc&&x.nick?x.loc+' '+x.nick:'', x.name, x.loc, x.abbr].some(v=>v && (nrmT(v)===n || n.startsWith(nrmT(v)+' '))))||null; }
 function gameHintOf(b){ const AH=giTeamsOf(b), t=b&&((b.gameInfo&&b.gameInfo.startISO)||b.start), d=t?new Date(t):null;
   const g=AH?(AH[0].loc||AH[0].name)+' at '+(AH[1].loc||AH[1].name):String((b&&(b.game||b.matchup))||'');
   return g+(d&&!isNaN(d)?', '+d.toLocaleString('en-US',{timeZone:'America/Chicago',weekday:'short',month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'})+' CT':''); }
