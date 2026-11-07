@@ -196,6 +196,20 @@
   Bovada or other card got nothing. Now every card is checked against every order (ref match stays same-book; `betMatches` and the team checks
   take any book), the tag names the order's book, and with no ESPN `gameInfo.teams` the school comes from the name (longest prefix found in an
   order title: "Oklahoma State Cowboys" → oklahoma st). `tests/order-anybook-test.js`.
+- The Sentinels cards (v4.21, `placeCardHtml`, `sentScore`, `pxNote`/`pxSeries`/`pxChartSvg`, `scKalshiLine`, `.sc-card`, `#placeCards.sc-grid`; owner,
+  showing OddsJam's Momentum: "I want it like this", "they call it Momentum, we call it Sentinels", "La Contadora already allowed the bet, so we
+  may not need all the info, unless a drop-down", "you decide, nice GUI, phone and Mac"): Place these is a grid of short cards (1 column on a
+  phone, 2-3 on a computer; narrow cards switch layout by `@container (max-width:360px)`). Short card: score, book + EV after fees, ⏱ age of the
+  price (`rowSeenAt`: `loadedAt`, `_liveAt` set by `shopExchanges`/`swapHunt`, `shop.at`, `exOpen.at`; amber after 30 min), the price move in
+  the last hour (`pxMove`), who / stat / kickoff + game, tags (order tag, injury, weather, swap/shop, warns, Makes), the bet bar (pick + v4.10's
+  `impTagHtml` line, stake, pays/wins, price chip `.sc-price.book` that opens the slip through the logo handler), the one-line Kalshi "what to
+  type", I bet this (its box opens under `.sc-act`), Parlay, open slip. "Why this play?" (`details.sc-why`, closed by default, remembered per bet
+  in `mbev.scOpen`, all open with Show all notes): tiles (EV, Fair, OK up to, Market, Consensus, Projection, Rating, Hit rate), the score's
+  parts, the price chart, the decision, the full Kalshi strip, notes, Share. Score 0-100 = Edge 50·min(1, EV/6%) + Market (`mktNet`: 20 at
+  break-even, 30 at +4%, 0 at -3%, x0.85 consensus, 8 with no market) + Fresh (20 under 3 min, 0 at 90). Price history: `mbev.px` (in
+  `LS_CACHES`), per bet `[minute, price, fair]`, a point on a change or every 15 min, 40 points, 250 bets, 3 days; recorded at the end of
+  `auditCore`. Cents for Kalshi / Polymarket, % for Novig and other % apps, odds for sportsbooks. Sort › Sentinel score. `tests/sentinel-card-test.js`;
+  `tests/kalshi-how-test.js` reads the one line on the card, then opens Why this play? for the four steps.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American
