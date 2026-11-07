@@ -108,6 +108,9 @@
   Today card: the pill is settled only (UP / DOWN), with a grey `.tb-pill.inplay` "IN PLAY $x"; worst (if everything playing loses) is
   grey. Calendar: a day's colour and W/L come from settled bets only, with grey "▶ $x in play" and "⏳ $y to play" lines (`playingAmt`);
   best/worst day and the chart use settled days only. Bets by game day: "$x in play" in grey.
+  v4.08 (owner: "worst is only REAL DATA", "a BEST DAY EVER and vice versa"): the calendar footer shows this month's best and worst
+  settled day with their dates, and "Ever: best · worst" over the whole log. On a phone the day boxes drop the $ (`.cal-cur`) so
+  +20.88 fits. `tests/cal-worst-test.js` is Alonzo's November (Fri 11/6 in play: grey, not the worst day).
 - Performance calendar (v4.00, `calDays`, `renderCal`): money on games not started is grey (`.cal-tp`, `toPlayAmt`), never green or red;
   a day with only unstarted games is a grey amount (`.cal-c.tp`) and is not a best or worst day. ▶ marks games playing (hidden on a phone).
 - Today card days (v4.01, `tbDay`, `.tb-day`): ‹ › step a day back or forward and "Today" comes back; the label shows the day
