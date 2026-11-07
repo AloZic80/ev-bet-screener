@@ -160,6 +160,13 @@
   a logged bet's `fillRef`/`fillSide` (a fill worded differently is still `prior`) and an order in `myOrders` (/mine/orders, read with
   each fills check; `syncOrders` redraws when it changes): `r.waitOrder`, decision "ORDER WAITING n shares at x¢", Already bet group, no
   stake, not in Place these, Sentinels or Parlays. Cancelled at the book: back in Place these. `tests/kalshi-placed-test.js`.
+- Rows with full team names (v4.15, `giTeamsOf`, `giTeamFor`, `gameHintOf`; Alonzo's three Kalshi orders were other games): The Odds API
+  writes "Texas Tech Red Raiders @ Oklahoma State Cowboys", so `liveDesc` found no codes and the exchanges were never asked; "open slip"
+  opened Kalshi's home page and the Oklahoma St. market there was another game. Codes now come from ESPN's `gameInfo.teams` (`rowAsBet`
+  carries `gameInfo`; `betMatches` uses them too). The Kalshi strip says "in Texas Tech at Oklahoma State, Sat, 11/14, 11:00 AM CT"; an
+  order on the same school in another game (`r.otherGameOrder`, title match, more than 36 h apart) says "is another game. This one is not
+  placed"; a slip the book cannot find says which game to pick (card note, phone bar). Kalshi's college codes are not checked against ESPN's
+  (kalshi.com is not reachable from the build machine). `tests/kalshi-game-test.js`.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American
