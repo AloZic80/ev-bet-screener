@@ -176,6 +176,11 @@
   the books with a full team name and ESPN's game made the Bet log call it during startup, before that line ran: "Cannot access 'nrm' before
   initialization" stopped the page halfway (no board, Sources, budget or Today card; localStorage untouched). Code that can run at startup must
   use function declarations (hoisted, like `nrmT`), never a `const`/`let` helper defined further down. The startup test loads data like Alonzo's.
+- Orders waiting at your books (v4.17, `renderLogOrders`, `renderOrdersTop`, `#logOrders`, `#ordersTop`, `window._ordersErr`; owner: "I don't see
+  them on my Bet log, so where are they?", three Kalshi orders with Filled 0): drawn by `renderMakes` after each `syncOrders`. Top of the Bet log:
+  each order (book, YES/NO, what, market title, shares at the limit = cost rounded up like Kalshi's Cash, filled, game time), the money held and
+  "not bets yet; a filled order goes into the Bet log". Under the Today card: "N orders waiting at … · $x held · See them ›". When /mine/orders
+  fails or returns `errors`, both say "Could not read your orders: …" instead of showing nothing. `tests/log-orders-test.js`.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American
