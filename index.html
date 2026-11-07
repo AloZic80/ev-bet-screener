@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.06</title>
+<title>0xBeta Screener v4.07</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1024,6 +1024,10 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 .cal-tp{color:var(--soft); font-weight:600}
 .cal-c .v .cal-tp-s{display:block; font-size:11px}
 .cal-big .cal-tp{font-size:.6em}
+/* v4.07: money in play is grey: not won, not lost yet */
+.tb-inplay{color:var(--soft); font-weight:700}
+.tb-pill.inplay{color:var(--soft); background:transparent; border:1.5px solid var(--rule)}
+.tb-pill.inplay small{color:var(--soft)}
 /* v4.04: on a phone the prefilled slip waits here as a real link, so the book's app opens */
 .slip-go{position:fixed; left:12px; right:12px; bottom:calc(76px + env(safe-area-inset-bottom)); z-index:60; display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:12px 14px; border-radius:12px; background:var(--panel); border:1px solid var(--accent); box-shadow:0 8px 24px rgba(0,0,0,.35); font-size:15px}
 .slip-go[hidden]{display:none}
@@ -1048,7 +1052,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.06</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.07</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1661,7 +1665,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 <!-- ======================= PERFORMANCE ======================= -->
 <div class="view" id="v-perf">
 <div class="panel" id="calPanel">   <!-- v4.02: results by day first (it was under the Scorecard) -->
-  <h2>Results by day <span class="sub">by the day the game is played · money on games already started counts as gone · games not started in grey</span></h2>
+  <h2>Results by day <span class="sub">by the day the game is played · won and lost count once settled · in play and not started in grey</span></h2>
   <div class="cal-top"><div><div class="meta" id="calSub">this month</div><div class="cal-big" id="calToday"></div></div>
     <div><div class="meta">Month</div><div class="cal-big" id="calMonthTot"></div></div>
     <div class="cal-seg"><button type="button" data-v="chart">Chart</button><button type="button" data-v="cal" class="on">Calendar</button></div></div>
@@ -1706,7 +1710,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 
 </div>
 <script>
-const SCREENER_VERSION='v4.06';
+const SCREENER_VERSION='v4.07';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -4340,7 +4344,7 @@ function heldValue(b){
   if(b.free) return {v:0, open:true, d:0, why:'free bet'};   // v3.98: a free bet risks none of your money
   if(!betLocked(b)) return {v:0, open:true, d:0, why:'not started'};   // v3.98 (Alonzo: "if it has not played, do not add it as the worst day of losses"): a game not started yet is not counted as lost
   const st=+b.stake||0;
-  return {v:-st, open:true, d:st, why:'open'};   // v3.08: an open bet counts as LOST — the whole stake — until it wins   // v3.98: once its game has started
+  return {v:0, open:true, d:st, why:'in play'};   // v4.07 (Alonzo: "do not say lost, say IN PLAY and put it in grey, unless I already lost it"): a game playing is in play ($0 so far, d = the stake in play), only a settled loss counts   // v3.08: an open bet counts as LOST — the whole stake — until it wins   // v3.98: once its game has started
 }
 function money(x,signed){ return (x<0?'−':(signed&&x>0?'+':''))+'$'+Math.abs(x).toFixed(2); }
 function dayLabel(day){
@@ -4355,7 +4359,7 @@ function dayCells(d,goal,bank){
     '<td class="num">'+(d.locked?'<b>'+money(d.locked)+'</b>':'—')+(d.notStarted?'<div class="meta" title="Games not started yet: you can still get out, usually for a small loss">'+money(d.notStarted)+' not started</div>':'')+'</td>'+   // v3.67: spent, locked in
     '<td class="num">'+wlp+(d.sold?'<div class="meta">'+d.sold+' sold</div>':'')+(d.cancelled?'<div class="meta">'+d.cancelled+' cancelled</div>':'')+'</td>'+
     '<td class="num">'+(d.pend||'—')+'</td>'+
-    '<td class="num">'+((d.settled||d.risk)?'<b class="'+(d.profit>=0?'pl-up':'pl-down')+'">'+money(d.profit,true)+'</b>'+(d.risk?'<div class="meta">incl. −'+money(d.risk)+' on the line</div>':''):'—')+'</td>'+
+    '<td class="num">'+(d.settled?'<b class="'+(d.profit>=0?'pl-up':'pl-down')+'">'+money(d.profit,true)+'</b>':'')+(d.risk?'<div class="meta tb-inplay">'+money(d.risk)+' in play</div>':'')+(!d.settled&&!d.risk?'—':'')+'</td>'+   // v4.07: in play in grey, not counted as lost
     '<td class="num">'+(!d.bets ? '—'
       : (d.on||d.against) ? d.on+' on'+(d.against?' · <span class="pl-down">'+d.against+' against</span>':'')+(d.unknown?'<div class="meta">'+d.unknown+' not tagged</div>':'')
       : '<span class="meta">not tagged</span>')+'</td>';
@@ -5265,8 +5269,8 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
   const sgn=v=>v>=0?up(v):dn(-v);
   const counts=x=>'<div class="tb-l2 tb-cnt"><span title="has a result">✓ '+x.played+' played</span> <span class="live" title="game started, no result yet">▶ '+x.playing+' playing</span> <span title="game not started">⏳ '+x.toPlay+' to play</span></div>';
   const wl=x=>'<div class="tb-l2"><span class="open">won</span> <span class="tb-up" title="winnings (your stake not included)">'+usd(x.won)+'</span> <span class="open">vs lost</span> <span class="tb-down" title="money lost">'+usd(x.lost)+'</span></div>';
-  const amts=x=>(x.playingAmt||x.toPlayAmt)?'<div class="tb-l2">'+(x.playingAmt?'<span class="tb-ride" title="games started: at risk">▶ '+usd(x.playingAmt)+' at risk</span> ':'')+(x.toPlayAmt?'<span class="open" title="games not started: not counted as lost">⏳ '+usd(x.toPlayAmt)+' not started</span>':'')+'</div>':'';
-  const pill=x=>'<div class="tb-l2">'+(z(x.net)?'<span class="open">even</span>':'<span class="tb-pill '+(x.net>0?'good':'bad')+'" title="Won − lost − money on games already started. Games not started are not counted."><small>'+(x.net>0?'UP':'DOWN')+'</small> '+(x.net>0?'+':'−')+usd(x.net)+'</span>')+'</div>';
+  const amts=x=>(x.playingAmt||x.toPlayAmt)?'<div class="tb-l2">'+(x.playingAmt?'<span class="tb-inplay" title="games playing: not won or lost yet">▶ '+usd(x.playingAmt)+' in play</span> ':'')+(x.toPlayAmt?'<span class="open" title="games not started: not counted as lost">⏳ '+usd(x.toPlayAmt)+' not started</span>':'')+'</div>':'';
+  const pill=x=>'<div class="tb-l2">'+((x.played||x.cancel)?(z(x.net)?'<span class="open">even</span>':'<span class="tb-pill '+(x.net>0?'good':'bad')+'" title="Won − lost, on bets already settled"><small>'+(x.net>0?'UP':'DOWN')+'</small> '+(x.net>0?'+':'−')+usd(x.net)+'</span>'):'')+(x.playingAmt?' <span class="tb-pill inplay" title="Games playing: not won or lost yet"><small>IN PLAY</small> '+usd(x.playingAmt)+'</span>':'')+'</div>';   // v4.07: UP/DOWN only for what is settled; in play in grey
   const order=RIBBON_BOOKS.concat(Object.keys(by).filter(k=>!RIBBON_BOOKS.includes(k)).sort());
   const tot=blank('All');
   const tile=k=>{ const x=by[k]; if(!x && !RIBBON_BOOKS.includes(k)) return '';
@@ -5278,7 +5282,7 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
     return '<div class="tb-t" title="'+esc(k+': '+x.n+' bet'+(x.n===1?'':'s')+' today')+'"><div class="tb-l1">'+head+(x.n?'<b>'+usd(x.bet)+'</b> <span class="open">· '+x.n+' bet'+(x.n===1?'':'s')+'</span>'+(x.free?' <span class="open" title="free bets: not your money">🎁 '+usd(x.free)+'</span>':''):'<span class="open">cancelled only</span>')+rec+'</div>'+(x.n?counts(x):'')+wl(x)+amts(x)+pill(x)+'</div>';
   };
   const tiles=order.map(tile).join('');
-  const now=tot.net, best=now+tot.playingAmt+tot.toWin, worst=now;
+  const now=tot.net, best=now+tot.playingAmt+tot.toWin, worst=now-tot.playingAmt;   // v4.07: now = settled only; worst = if every bet playing lost
   const espnBtn='<button class="tb-espn" type="button" aria-label="Refresh scores and results from ESPN" title="Refresh scores and results from ESPN now (no BettingPros calls)'+(espnAt?' — last '+new Date(espnAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+'">⟳</button>';
   const isToday=today===realToday, lbl=isToday?'TODAY':esc(dayLabel(today)).toUpperCase();
   const navBtns='<span class="tb-nav"><button type="button" class="tb-day" data-d="-1" aria-label="Previous day" title="Previous day">‹</button><button type="button" class="tb-day" data-d="1" aria-label="Next day" title="Next day">›</button>'+(isToday?'':'<button type="button" class="tb-day tb-back" data-d="0" title="Back to today">Today</button>')+'</span>';
@@ -5287,13 +5291,13 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
     el.innerHTML='<span class="tb-k"><span>'+lbl+' '+espnBtn+navBtns+'</span>'+lookChip()+'</span><span class="tb-empty">'+(isToday?esc(q[Math.floor(Date.parse(today)/864e5)%q.length]):'No bets on '+esc(dayLabel(today))+'.')+'</span>'; return; }   // v3.57: + bets to check
   const allCard='<div class="tb-t all"><div class="tb-l1"><b>All</b> <span class="open">'+tot.w+'–'+tot.l+(tot.p?'–'+tot.p:'')+'</span></div>'+
     '<div class="tb-l2"><span class="open">✓ played</span> <b>'+usd(tot.playedAmt)+'</b> → <span class="open">won</span> <span class="tb-up">'+usd(tot.won)+'</span> <span class="open">vs lost</span> <span class="tb-down">'+usd(tot.lost)+'</span></div>'+
-    (tot.playing?'<div class="tb-l2"><span class="tb-ride">▶ playing '+usd(tot.playingAmt)+'</span> <span class="open">at risk</span></div>':'')+
+    (tot.playing?'<div class="tb-l2"><span class="tb-inplay">▶ IN PLAY '+usd(tot.playingAmt)+'</span> <span class="open">not won or lost yet</span></div>':'')+   // v4.07
     (tot.toPlay?'<div class="tb-l2"><span class="open">⏳ to play '+usd(tot.toPlayAmt)+': not counted yet</span></div>':'')+
-    (tot.open?'<div class="tb-l2" title="best = every open bet wins · worst = every bet already playing loses (games not started are not counted)">best '+sgn(best)+' · worst '+sgn(worst)+'</div>':'')+
-    '<div class="tb-motto" title="Money on games already started counts as gone until it wins; games not started are not counted">Hope for the best, expect the worst.</div></div>';
+    (tot.open?'<div class="tb-l2" title="best = every open bet wins · worst = every bet playing loses (games not started are not counted)">best '+sgn(best)+' · worst <span class="tb-inplay">'+(worst<0?'−':'')+usd(worst)+'</span></div>':'')+   // v4.07: worst is not a loss yet: grey
+    '<div class="tb-motto" title="Only settled bets count as won or lost; games playing are in play, games not started are not counted">Hope for the best, expect the worst.</div></div>';
   el.innerHTML='<span class="tb-k"><span>'+lbl+' '+espnBtn+navBtns+'</span>'+lookChip()+'<b class="tb-tot">'+usd(tot.bet)+'</b><span class="tb-n">'+tot.n+' bet'+(tot.n===1?'':'s')+'</span>'+(tot.free?'<span class="tb-st" title="free bets: not your money">🎁 '+usd(tot.free)+' free</span>':'')+
     (tot.n?'<span class="tb-st" title="has a result">✓ '+tot.played+' played</span><span class="tb-st live" title="game started, no result yet">▶ '+tot.playing+' playing</span><span class="tb-st" title="game not started">⏳ '+tot.toPlay+' to play</span>':'')+
-    (z(now)?'<span class="tb-pill even" title="even">$0.00</span>':'<span class="tb-pill '+(now>0?'good':'bad')+'" title="Won − lost − money on games already started. Games not started are not counted.">'+(now>0?'+':'−')+usd(now)+'</span>')+'</span>'+allCard+tiles;
+    (z(now)?'<span class="tb-pill even" title="Nothing won or lost yet">$0.00</span>':'<span class="tb-pill '+(now>0?'good':'bad')+'" title="Won − lost, on bets already settled">'+(now>0?'+':'−')+usd(now)+'</span>')+(tot.playingAmt?'<span class="tb-pill inplay" title="Games playing: not won or lost yet"><small>IN PLAY</small> '+usd(tot.playingAmt)+'</span>':'')+'</span>'+allCard+tiles;   // v4.07
 }
 /* v2.73: grade finished games in the background (ESPN, no BettingPros calls) */
 let agBusy=false; const sbStamp={};
@@ -8000,7 +8004,7 @@ function calDays(book){
   const days={};
   logged.forEach(b=>{ const d=gameDayOf(b); if(!d) return; if(book!=='All' && ribbonBook(b.book)!==book) return;
     const x=days[d]||(days[d]={n:0,settled:0,profit:0,staked:0,w:0,l:0,p:0,open:0,playing:0,toPlay:0,toPlayAmt:0}); x.n++; x.staked+=b.free?0:(+b.stake||0);   // v3.98: free bets are not your money
-    const hv=heldValue(b); x.profit+=hv.v; if(hv.open){ x.open++; if(betLocked(b)) x.playing++; else { x.toPlay++; x.toPlayAmt+=b.free?0:(+b.stake||0); } return; } x.settled++;   // v4.00: games not started: their money is shown apart, in grey
+    const hv=heldValue(b); x.profit+=hv.v; if(hv.open){ x.open++; if(betLocked(b)){ x.playing++; x.playingAmt=(x.playingAmt||0)+(b.free?0:(+b.stake||0)); } else { x.toPlay++; x.toPlayAmt+=b.free?0:(+b.stake||0); } return; } x.settled++;   // v4.00: games not started: their money is shown apart, in grey   // v4.07: games playing too (in play), only settled bets count
     if(!b.sold){ if(b.result==='win') x.w++; else if(b.result==='loss') x.l++; else if(b.result==='push') x.p++; } });
   removedBets.forEach(b=>{ if(!(b.lost>0)) return; if(book!=='All' && ribbonBook(b.book)!==book) return; const d=gameDayOf(b); const x=days[d]||(days[d]={n:0,settled:0,profit:0,staked:0,w:0,l:0,p:0,open:0,playing:0,toPlay:0,toPlayAmt:0}); x.profit-=b.lost; x.settled++; });
   return days;
@@ -8014,18 +8018,18 @@ function renderCal(){
   const [Y,M]=calMonth.split('-').map(Number), first=new Date(Date.UTC(Y,M-1,1)), nd=new Date(Date.UTC(Y,M,0)).getUTCDate();
   document.getElementById('calTitle').textContent=first.toLocaleDateString('en-US',{month:'long',year:'numeric',timeZone:'UTC'});
   const inMonth=Object.keys(days).filter(d=>d.slice(0,7)===calMonth).sort();
-  const tot=inMonth.reduce((a,d)=>{ const x=days[d]; a.p+=x.profit; a.n+=x.n; a.st+=x.staked; a.w+=x.w; a.l+=x.l; a.pu+=x.p; if(x.settled){ if(x.profit>0.005)a.up++; else if(x.profit<-0.005)a.dn++; } a.best=Math.max(a.best,(x.settled||x.playing)?x.profit:-Infinity); a.worst=Math.min(a.worst,(x.settled||x.playing)?x.profit:Infinity); /* v4.00 (Alonzo): a day whose games have not started is not a best or worst day */ return a; },{p:0,n:0,st:0,w:0,l:0,pu:0,up:0,dn:0,best:-Infinity,worst:Infinity});
+  const tot=inMonth.reduce((a,d)=>{ const x=days[d]; a.p+=x.profit; a.n+=x.n; a.st+=x.staked; a.w+=x.w; a.l+=x.l; a.pu+=x.p; if(x.settled){ if(x.profit>0.005)a.up++; else if(x.profit<-0.005)a.dn++; } a.best=Math.max(a.best,x.settled?x.profit:-Infinity); a.worst=Math.min(a.worst,x.settled?x.profit:Infinity); /* v4.00 (Alonzo): a day whose games have not started is not a best or worst day */ return a; },{p:0,n:0,st:0,w:0,l:0,pu:0,up:0,dn:0,best:-Infinity,worst:Infinity});
   const td=days[today];
-  const tEl=document.getElementById('calToday'), tCnt=td&&(td.settled||td.playing);   // v4.00: money on games not started is grey, not green or red
+  const tEl=document.getElementById('calToday'), tCnt=td&&td.settled, tIP=td&&td.playingAmt||0, tTP=td&&td.toPlayAmt||0;   // v4.00: money on games not started is grey, not green or red   // v4.07: and money in play
   tEl.className='cal-big '+(tCnt&&td.profit>0.005?'up':tCnt&&td.profit<-0.005?'dn':'');
-  tEl.innerHTML=(tCnt?usd(td.profit):(td&&td.toPlayAmt?'<span class="cal-tp">$'+td.toPlayAmt.toFixed(2)+'</span>':'$0.00'))+' <span class="meta">today</span>'+(tCnt&&td.toPlayAmt?' <span class="cal-tp" title="games not started: not counted yet">· $'+td.toPlayAmt.toFixed(2)+' to play</span>':(!tCnt&&td&&td.toPlayAmt?' <span class="cal-tp">to play</span>':''));
+  tEl.innerHTML=(tCnt?usd(td.profit):(tIP+tTP?'<span class="cal-tp">$'+(tIP+tTP).toFixed(2)+'</span>':'$0.00'))+' <span class="meta">today</span>'+(tIP?' <span class="cal-tp" title="games playing: not won or lost yet">· $'+tIP.toFixed(2)+' in play</span>':'')+(tTP?' <span class="cal-tp" title="games not started: not counted yet">· $'+tTP.toFixed(2)+' to play</span>':'');
   const mEl=document.getElementById('calMonthTot'); mEl.className='cal-big '+(tot.p>0.005?'up':tot.p<-0.005?'dn':''); mEl.textContent=usd(tot.p);
   document.getElementById('calSub').textContent=(calBook==='All'?'all books':calBook);
   document.getElementById('calFoot').innerHTML='<span>Days: <b>'+tot.up+' up · '+tot.dn+' down</b></span><span>Bets: <b>'+tot.n+'</b> · W–L'+(tot.pu?'–P':'')+' <b>'+tot.w+'–'+tot.l+(tot.pu?'–'+tot.pu:'')+'</b></span><span>Staked <b>$'+tot.st.toFixed(2)+'</b></span>'+
     (isFinite(tot.best)?'<span>Best day <b style="color:var(--live)">'+usd(tot.best)+'</b> · worst <b style="color:var(--out)">'+usd(tot.worst)+'</b></span>':'');
   document.querySelectorAll('.cal-seg button').forEach(b=>b.classList.toggle('on',b.dataset.v===calView));
   if(calView==='chart'){
-    let run=0; const pts=[]; for(let d=1; d<=nd; d++){ const k=calMonth+'-'+String(d).padStart(2,'0'); const x=days[k]; const has=!!(x&&(x.settled||x.playing)); /* v4.00 */ const v=has?x.profit:0; run+=v; pts.push({d,v,run,has,fut:k>today}); }
+    let run=0; const pts=[]; for(let d=1; d<=nd; d++){ const k=calMonth+'-'+String(d).padStart(2,'0'); const x=days[k]; const has=!!(x&&x.settled); /* v4.00 */ /* v4.07: settled only */ const v=has?x.profit:0; run+=v; pts.push({d,v,run,has,fut:k>today}); }
     const W=700,H=220,pad=34, maxA=Math.max(1,...pts.map(p=>Math.abs(p.run)),...pts.map(p=>Math.abs(p.v)));
     const X=d=>pad+(d-1)*(W-pad-10)/(nd-1), Yv=v=>H/2-v/maxA*(H/2-18);
     const bars=pts.filter(p=>p.has).map(p=>'<rect x="'+(X(p.d)-5)+'" y="'+Math.min(Yv(p.v),H/2)+'" width="10" height="'+Math.abs(Yv(p.v)-H/2)+'" rx="2" fill="'+(p.v>=0?'var(--live)':'var(--out)')+'" opacity=".45"/>').join('');
@@ -8045,10 +8049,12 @@ function renderCal(){
     const k=calMonth+'-'+String(d).padStart(2,'0'), x=days[k];
     let cls='cal-c', t='', v='--', n='';
     if(x){ cls+=' has';
-      if(x.settled||x.playing){ v=usd(x.profit)+(x.playing?'<span class="cal-pl" title="games playing now"> ▶</span>':'');   /* v4.00: ▶ playing, ⏳ to play, as on the Today card */ if(x.profit>0.005){cls+=' w';t='W';} else if(x.profit<-0.005){cls+=' l';t='L';} }
-      else if(x.toPlay){ cls+=' tp'; v='<span class="cal-tp" title="games not started: not counted as won or lost yet">$'+x.toPlayAmt.toFixed(2)+'</span>'; }   // v4.00 (Alonzo): grey, not red, not green
-      if(x.toPlayAmt && (x.settled||x.playing)) v+='<div class="cal-tp cal-tp-s" title="games not started: not counted yet"><span class="cal-tp-w">⏳ </span>$'+x.toPlayAmt.toFixed(2)+'<span class="cal-tp-w"> to play</span></div>';
-      n=x.n+' bet'+(x.n===1?'':'s')+(x.open&&x.settled?' · '+x.open+' open':x.open&&!x.settled?(x.playing?' playing':' to play'):''); }
+      const ip=x.playingAmt||0;   // v4.07 (Alonzo: "say IN PLAY, in grey, unless I already lost it"): only settled bets are won or lost
+      if(x.settled){ v=usd(x.profit); if(x.profit>0.005){cls+=' w';t='W';} else if(x.profit<-0.005){cls+=' l';t='L';} }
+      else if(x.open){ cls+=' tp'; v='<span class="cal-tp" title="games playing or not started: not won or lost yet">$'+(ip+x.toPlayAmt).toFixed(2)+'</span>'; }   // v4.00 (Alonzo): grey, not red, not green
+      if(ip && x.settled) v+='<div class="cal-tp cal-tp-s" title="games playing: not won or lost yet"><span class="cal-tp-w">▶ </span>$'+ip.toFixed(2)+'<span class="cal-tp-w"> in play</span></div>';
+      if(x.toPlayAmt && x.settled) v+='<div class="cal-tp cal-tp-s" title="games not started: not counted yet"><span class="cal-tp-w">⏳ </span>$'+x.toPlayAmt.toFixed(2)+'<span class="cal-tp-w"> to play</span></div>';
+      n=x.n+' bet'+(x.n===1?'':'s')+(x.open&&x.settled?' · '+x.open+' open':x.open&&!x.settled?(x.playing?' in play':' to play'):''); }
     if(k===today) cls+=' today'; if(k>today) cls+=' fut';
     h+='<div class="'+cls+'" data-day="'+k+'" title="'+(x?esc(x.n+' bets · $'+x.staked.toFixed(2)+' staked'+(x.settled?' · '+x.w+'–'+x.l:'')):'')+'"><span class="d">'+d+'</span><span class="t">'+t+'</span><div class="v">'+v+'</div><div class="n">'+n+'</div></div>';
   }

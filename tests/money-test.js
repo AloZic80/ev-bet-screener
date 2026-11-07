@@ -27,9 +27,11 @@ const LOG=[
   let c=await card();
   check('Today: your money staked ($3 + $1.50 + $2 + $4 + $1 = $11.50; the $5 free bet is not your money) and 6 bets', /\$11\.50/.test(c.t) && /6 bets/.test(c.t) && /🎁 \$5\.00 free/.test(c.t), c.t);
   check('Today: 3 played · 1 playing · 2 to play', /✓ 3 played/.test(c.t) && /▶ 1 playing/.test(c.t) && /⏳ 2 to play/.test(c.t), c.t);
-  check('Today: won vs lost, money playing (at risk) and to play (not counted)', /played \$5\.50 → won \$12\.00 vs lost \$1\.50/.test(c.t) && /playing \$2\.00 at risk/.test(c.t) && /to play \$4\.00: not counted/.test(c.t), c.t);
-  check('the day is down by won − lost − money already playing (2 + 10 − 1.50 − 2 = +8.50), the not-started $4 is not counted', c.pill==='+$8.50', c.pill);
-  check('Novig: $10.50 · 4 bets · 1–1, 2 played · 1 playing · 1 to play, won $2.00 vs lost $1.50', /\$10\.50 · 4 bets 1–1/.test(c.novig) && /✓ 2 played ▶ 1 playing ⏳ 1 to play/.test(c.novig) && /won \$2\.00 vs lost \$1\.50/.test(c.novig), c.novig);
+  check('Today: won vs lost, money playing (at risk) and to play (not counted)', /played \$5\.50 → won \$12\.00 vs lost \$1\.50/.test(c.t) && /IN PLAY \$2\.00 not won or lost yet/.test(c.t) && /to play \$4\.00: not counted/.test(c.t), c.t);
+  check('v4.07: the day counts only what is settled (2 + 10 − 1.50 = +$10.50); the $2 playing is IN PLAY in grey, not a loss; the $4 not started is not counted', c.pill==='+$10.50' && /IN PLAY \$2\.00/.test(c.t), [c.pill]);
+  const ipCol=await p.evaluate(()=>{ const e=document.querySelector('#todayBar .tb-k .tb-pill.inplay'); return e?getComputedStyle(e).color===getComputedStyle(document.querySelector('#todayBar .tb-k .tb-n')).color:null; });
+  check('v4.07: the IN PLAY pill is grey (the same grey as "6 bets"), not red', ipCol===true, ipCol);
+  check('Novig: $10.50 · 4 bets · 1–1, 2 played · 1 playing · 1 to play, won $2.00 vs lost $1.50, UP +$0.50 and IN PLAY $2.00 (no DOWN)', /\$10\.50 · 4 bets 1–1/.test(c.novig) && /✓ 2 played ▶ 1 playing ⏳ 1 to play/.test(c.novig) && /won \$2\.00 vs lost \$1\.50/.test(c.novig) && /UP \+\$0\.50/.test(c.novig) && /IN PLAY \$2\.00/.test(c.novig) && !/DOWN/.test(c.novig), c.novig);
   check('Bovada: the free bet shows as 🎁 and adds nothing to the money staked', /\$1\.00 · 2 bets/.test(c.bovada) && /🎁 \$5\.00/.test(c.bovada), c.bovada);
   const spill=async()=>p.evaluate(()=>{ const bad=[]; document.querySelectorAll('#todayBar > .tb-t, #todayBar > .tb-k').forEach(t=>{ const r=t.getBoundingClientRect(); t.querySelectorAll('span,b,div,img').forEach(e=>{ const q=e.getBoundingClientRect(); if(q.width && (q.right>r.right+1 || q.left<r.left-1)) bad.push(e.textContent.slice(0,30)); }); }); return bad; });
   for(const w of [1960,1280,1000,390]){ await p.setViewportSize({width:w,height:1000}); await p.waitForTimeout(150); const sp=await spill(); check('v3.98: at '+w+' px wide, no Today card text runs into the next tile', !sp.length, sp.slice(0,4)); }
@@ -53,15 +55,15 @@ const LOG=[
   await p.click('#todayBar .tb-back'); await p.waitForTimeout(150); dv=await day();
   check('v4.01: Today brings it back to today', /^TODAY/.test(dv.k) && /\$11\.50/.test(dv.t) && !/Today/.test(dv.k.replace('TODAY','')), dv.k);
   const ds=await p.evaluate(d=>{ const x=dayStats()[d]; return {staked:x.staked, profit:+x.profit.toFixed(2)}; }, DAY);
-  check('Performance by day: staked leaves out the free bet; the not-started bet is not a loss', ds.staked===11.5 && ds.profit===8.5, ds);
+  check('Performance by day: staked leaves out the free bet; the not-started bet is not a loss', ds.staked===11.5 && ds.profit===10.5, ds);
   // v4.00 (Alonzo): the Performance calendar shows money on games not started in grey: not green, not red, not a worst day
   await p.click('.tab[data-view="v-perf"]'); await p.waitForTimeout(400);
   const cal=await p.evaluate(()=>{ const c=d=>{ const e=document.querySelector('.cal-c[data-day="'+d+'"]'); return e?{cls:e.className, v:e.querySelector('.v').innerText.replace(/\s+/g,' ')}:null; };
     return {today:c('2026-11-05'), tmrw:c('2026-11-06'), big:document.getElementById('calToday').innerText.replace(/\s+/g,' '), foot:document.getElementById('calFoot').innerText.replace(/\s+/g,' ')}; });
-  check('calendar, today: +$8.50 (played and playing) and, in grey, ⏳ $4.00 to play', /\+\$8\.50/.test(cal.today.v) && /⏳ \$4\.00 to play/.test(cal.today.v) && /▶/.test(cal.today.v) && / w\b/.test(cal.today.cls), cal.today);
+  check('calendar, today: +$10.50 (settled), then in grey ▶ $2.00 in play and ⏳ $4.00 to play', /\+\$10\.50/.test(cal.today.v) && /▶ \$2\.00 in play/.test(cal.today.v) && /⏳ \$4\.00 to play/.test(cal.today.v) && / w\b/.test(cal.today.cls), cal.today);
   check('calendar, a day whose games have not started: $3.00 in grey, neither won nor lost', cal.tmrw && /\$3\.00/.test(cal.tmrw.v) && !/ w\b| l\b/.test(cal.tmrw.cls) && / tp\b/.test(cal.tmrw.cls), cal.tmrw);
-  check('it is not the month\'s worst day (worst stays +$8.50, not $0.00)', /worst \+\$8\.50/.test(cal.foot), cal.foot);
-  check('today at the top: +$8.50 · $4.00 to play', /\+\$8\.50 today · \$4\.00 to play/.test(cal.big), cal.big);
+  check('a day with games not started is not the month\'s worst day (worst stays +$10.50, not $0.00)', /worst \+\$10\.50/.test(cal.foot), cal.foot);
+  check('today at the top: +$10.50 · $2.00 in play · $4.00 to play', /\+\$10\.50 today · \$2\.00 in play · \$4\.00 to play/.test(cal.big), cal.big);
   for(const w of [1280,390]){ await p.setViewportSize({width:w,height:1000}); await p.waitForTimeout(200);
     const sp=await p.evaluate(()=>{ const bad=[]; document.querySelectorAll('.cal-c.has').forEach(c=>{ const r=c.getBoundingClientRect(); c.querySelectorAll('.v, .v *').forEach(e=>{ const q=e.getBoundingClientRect(); if(q.width && (q.right>r.right+0.5 || q.left<r.left-0.5)) bad.push(c.dataset.day+': '+e.textContent.slice(0,20)); }); }); return bad; });
     check('v4.00: at '+w+' px wide, every calendar amount fits inside its day', !sp.length, sp.slice(0,4)); }

@@ -86,7 +86,7 @@ const BOARD=[{name:'Josh Allen',game:'BUF @ MIA',matchup:'BUF @ MIA',side:'O',sp
   // Performance calendar
   await p.click('.tab[data-view="v-perf"]'); await p.waitForTimeout(600);
   const cal=await p.evaluate(d=>{ const x=calDays('All'); return {y:x[d[0]]||null, two:x[d[1]]||null}; },[YDAY,TWO]);
-  check('calendar, yesterday: 1 win, 1 loss, 1 still open; +$9.09 − $5 − $4 open (counted as gone until settled) = +$0.09', cal.y && cal.y.w===1 && cal.y.l===1 && cal.y.open===1 && Math.abs(cal.y.profit-0.09)<0.01, cal.y);
+  check('calendar, yesterday: 1 win, 1 loss, 1 still open; +$9.09 − $5 = +$4.09, the open $4 is in play, not lost (v4.07)', cal.y && cal.y.w===1 && cal.y.l===1 && cal.y.open===1 && Math.abs(cal.y.profit-4.09)<0.01 && cal.y.playingAmt===4, cal.y);
   check('calendar, two days ago: the typed bet you won, +$9.50', cal.two && cal.two.w===1 && Math.abs(cal.two.profit-9.5)<0.01, cal.two);
   const cell=await p.evaluate(d=>{ const c=document.querySelector('.cal-c[data-day="'+d+'"]'); return c?c.innerText.replace(/\s+/g,' '):null; }, TWO);
   check('the calendar shows that day', !!cell, cell);
