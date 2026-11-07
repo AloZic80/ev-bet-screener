@@ -151,6 +151,10 @@
   "refreshes"): `render` called while an I bet this box is open on the board or a Place card only remembers the call; it runs once the box
   is saved or closed (checked every 400 ms). A click or change of your own outside the box sets `_boardForce` for that tick, so sort,
   filters, Parlay and other buttons still redraw. Save / Cancel must remove the editor before redrawing (they do). `tests/editor-stays-test.js`.
+- Book on the board (v4.13, `#boardBook`, `boardBook`, `mbev.boardBook`; owner: "only choose by book: Kalshi, Novig"): next to Sport, the
+  books on the board with counts ("Kalshi · 2"), from the rows left after sport and duplicates; picking one shows only its bets (table and
+  Place these). It matches `bookLabel(r.book)`, so a swapped row (v4.05) counts at the book it moved to. Separate from Settings' typed Book
+  filter (`filterBook`). `tests/board-book-test.js`.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American

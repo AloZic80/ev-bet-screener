@@ -37,6 +37,7 @@ const runs = [
   ['On an iPhone the prefilled slip waits as a real link, so the book app opens; Mac unchanged', 'slip-app-test.js', []],
   ['Texas: a bet at a book you do not bet moves to your best book (board row or live Novig/Kalshi/Polymarket), screened at that price', 'texas-swap-test.js', []],
   ['Calendar: in play is never a loss; best and worst day, this month and ever, from real results only (Alonzo\'s November)', 'cal-worst-test.js', []],
+  ['v4.13: the board Book menu: only the bets at one book (counts, remembered, All books)', 'board-book-test.js', []],
   ['v4.12: background redraws wait while I bet this is open (the box stays, the page does not move)', 'editor-stays-test.js', []],
   ['v4.11: BettingPros ☰ Several: tick sports, calls vs left today, load soonest first, stop before going over', 'bp-several-test.js', []],
   ['v4.10: the price as a % (+230 = 30.3%), OK to / look elsewhere, on the board, Place cards and I bet this', 'price-pct-test.js', []],
