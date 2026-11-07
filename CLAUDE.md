@@ -191,6 +191,11 @@
   the tab: legs split on ; , new line | " + "; same pick = last name (or team code / school) and line, and the side when written (O/Over/U/Under).
   `pkNotLogged` leaves those picks out of entries and slips (as v4.06) and `pkBetTag` tags them; a single typed in with + Add a bet, worded
   differently, is tagged too (same stat family). A parlay saved with no legs cannot be matched. `tests/manual-parlay-test.js`.
+- Orders against every card (v4.20; owner: "you have the Kalshi API, get my bets even if not filled and put an identifier on them"): v4.14/v4.18
+  checked orders only against cards priced at that same exchange (`o.book===exSrc`), so a Kalshi order on the same team or player at a Novig,
+  Bovada or other card got nothing. Now every card is checked against every order (ref match stays same-book; `betMatches` and the team checks
+  take any book), the tag names the order's book, and with no ESPN `gameInfo.teams` the school comes from the name (longest prefix found in an
+  order title: "Oklahoma State Cowboys" → oklahoma st). `tests/order-anybook-test.js`.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American
