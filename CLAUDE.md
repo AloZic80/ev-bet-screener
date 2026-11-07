@@ -143,6 +143,10 @@
   Place cards, its chance (+230 = 100 / 330 = 30.3%), green "OK to" La Contadora's most at that book (`maxPriceFor`, after its fee), or amber
   "need ≤ x% · look elsewhere" when it costs more. I bet this / + Add a bet: the check line starts "+230 = 30.3%" and ends "look elsewhere"
   when the typed price is not worth it. The board lists passing bets only, so amber shows mostly when you type a price. `tests/price-pct-test.js`.
+- BettingPros ☰ Several (v4.11, `bmPaint`, `loadSeveral`, `#bpMulti`, `mbev.bpMulti`; owner: "choose all of those or not, around what we
+  can do"): tick sports (All with games = a game in 24 hours, or None); the line shows sports × calls each against `_bpLeft`. Load (and
+  Refresh) then run `loadApi(fresh, sport)` for each, soonest first; no game in 24 hours is skipped, and a sport that would go over the calls
+  left is not loaded. While open, the one-sport menu is greyed; closed, Load works as before. `tests/bp-several-test.js`.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American

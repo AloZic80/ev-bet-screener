@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.10</title>
+<title>0xBeta Screener v4.11</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1024,6 +1024,14 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 .cal-tp{color:var(--soft); font-weight:600}
 .cal-c .v .cal-tp-s{display:block; font-size:11px}
 .cal-big .cal-tp{font-size:.6em}
+/* v4.11: BettingPros, several sports in one press */
+.bp-multi{flex-basis:100%; order:0; display:flex; flex-direction:column; gap:8px; padding:10px 12px; border:1px dashed var(--rule); border-radius:10px}
+.bp-multi[hidden]{display:none}
+.bp-multi .bm-top{display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; font-size:12.5px}
+.bp-multi .bm-list{display:flex; flex-wrap:wrap; gap:6px}
+.bp-multi .bm-sp{display:inline-flex; align-items:center; gap:5px; font-size:12.5px; padding:4px 9px; border:1px solid var(--rule); border-radius:999px; cursor:pointer}
+.bp-multi .bm-sp.off{color:var(--dim)}
+.bp-multi .bm-cost{font-size:12.5px; color:var(--soft)} .bp-multi .bm-cost.over{color:var(--warn); font-weight:600}
 /* v4.10: the price as a %, and "look elsewhere" when it costs more than La Contadora allows */
 .imp{display:block; font-size:11px; line-height:1.25; color:var(--dim); white-space:normal}
 .imp.ok{color:var(--live)} .imp.over{color:var(--warn); font-weight:600}
@@ -1062,7 +1070,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.10</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.11</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1079,6 +1087,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
       <option value="MLB">MLB</option><option value="NFL">NFL</option><option value="NCAAF">NCAAF</option><option value="NBA">NBA</option>
       <option value="NHL">NHL</option><option value="NCAAB">NCAAB</option><option value="WNBA">WNBA</option><option value="MLS">MLS</option>
     </select>
+    <button type="button" class="ghost" id="bpMultiBtn" aria-expanded="false" title="Choose several sports and load them in one press">☰ Several</button><!-- v4.11 -->
     <select id="apiType" title="Bet type">
       <option value="props">Player props</option>
       <option value="moneyline">Moneylines</option>
@@ -1095,6 +1104,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
       <input type="number" id="apiSeason" value="2026" title="Season year" style="width:70px">
       <input type="number" id="apiWeek" placeholder="week" min="0" max="20" title="Week number. Auto-fills from ESPN; leave it blank and BettingPros uses the current week (NFL / NCAAF run Thu–Mon)." style="width:62px">
     </span>
+    <div id="bpMulti" class="bp-multi" hidden></div><!-- v4.11: tick the sports you want, see the calls, load them in one press -->
     <button class="act" id="loadApi" title="Reuses the last pull for 30 minutes, so repeat loads cost no API calls">Load</button>
     <button class="ghost" id="refreshApi" disabled title="Skips the 30-minute cache and spends API calls">⟳ Refresh (API)</button>
     <span class="budget" id="apiBudget" title="BettingPros requests used through the Worker">API today: —</span>
@@ -1720,7 +1730,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 
 </div>
 <script>
-const SCREENER_VERSION='v4.10';
+const SCREENER_VERSION='v4.11';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -6080,7 +6090,7 @@ async function scanSportTimes(){
     try{ const E=[].concat(...await Promise.all(days.map(d=>fetchScoreboardDay(sp,d))));
       const T=E.filter(e=>((e.status&&e.status.type&&e.status.type.state)||'pre')==='pre').map(e=>Date.parse(e.date)).filter(t=>!isNaN(t) && t>Date.now()-60e3);
       sportNext[sp]=T.length?Math.min(...T):null; }catch(e){} }));
-  paintSportSelects(); pickStartSport();
+  paintSportSelects(); pickStartSport(); bmPaint();   // v4.11
 }
 document.addEventListener('click', e=>{ const b=e.target.closest('#loadAnyway'); if(!b) return; window._loadAnyway=b.dataset.s; loadApi(false); });
 async function checkBpSports(){
@@ -6753,13 +6763,14 @@ async function fetchPinnacleMap(sport, date, weekParam){
     return map;
   }catch(e){ pinnacleCache[cacheKey]={}; return {}; }
 }
-async function loadApi(fresh){
+async function loadApi(fresh, spOver){   // v4.11: spOver = one of the sports ticked under ☰ Several; returns what it says
   fresh = fresh===true;
   const btn=document.getElementById('loadApi'), status=document.getElementById('apiStatus');
-  const sport=document.getElementById('apiSport').value, type=document.getElementById('apiType').value;
+  const sport=spOver||document.getElementById('apiSport').value, type=document.getElementById('apiType').value;
   // v3.12: 24/7 — no game in the next 24 hours → don't spend calls (ESPN knows; sports ESPN doesn't cover always load)
   { const nx=sportNext[sport], anyway=window._loadAnyway===sport; window._loadAnyway=null;
     if(!anyway && (nx===null || (nx && nx-Date.now()>24*3600e3))){
+      if(spOver) return sport+': no game in the next 24 hours, skipped (no calls)';   // v4.11
       status.innerHTML='No '+esc(sportLabel(sport))+' game in the next 24 hours'+(nx?' (next: '+esc(whenCT(new Date(nx).toISOString()))+')':'')+' — not spending BettingPros calls. <button type="button" class="ghost sm" id="loadAnyway" data-s="'+esc(sport)+'">Load anyway</button>';
       return; } }
   const was=btn.textContent; btn.textContent='Loading…'; btn.disabled=true; status.textContent='';
@@ -6820,11 +6831,53 @@ async function loadApi(fresh){
   }finally{
     btn.textContent=was; btn.disabled=false;
   }
+  return status.textContent;   // v4.11
 }
-document.getElementById('loadApi').addEventListener('click',()=>loadApi(false));
+/* v4.11 (Alonzo: "give an option to choose all of those or not, around what we can do"; "we can choose"): ☰ Several opens a list of
+   every sport (soonest games first, as in the menu). Tick the ones you want, or All with games / None; the line says what it costs
+   (sports × calls each) against BettingPros calls left today. Load then loads the ticked sports one after another, soonest first,
+   and stops before one that would go over what is left. A sport with no game in 24 hours is skipped at no cost. Ticks: mbev.bpMulti. */
+function bmGet(){ try{ const v=JSON.parse(localStorage.getItem('mbev.bpMulti')||'null'); return v&&Array.isArray(v.on)?v:{open:false,on:[]}; }catch(e){ return {open:false,on:[]}; } }
+function bmSet(v){ try{ localStorage.setItem('mbev.bpMulti',JSON.stringify(v)); }catch(e){} }
+function bmSoon(sp){ const t=sportNext[sp]; return !!t && t-Date.now()<=24*3600e3; }
+function bmCost(){ return document.getElementById('apiType').value==='props'?apiPages():1; }
+function bmOrder(){ const L=allSports(), rank=sp=>{ const t=sportNext[sp]; return t?t:t===null?9e15:8e15; }; return L.slice().sort((a,b)=>rank(a)-rank(b)||L.indexOf(a)-L.indexOf(b)); }
+function bmPaint(){
+  const el=document.getElementById('bpMulti'), btn=document.getElementById('bpMultiBtn'); if(!el||!btn) return;
+  const st=bmGet(); el.hidden=!st.open; btn.setAttribute('aria-expanded',st.open?'true':'false');
+  btn.textContent=st.open&&st.on.length?'☰ Several · '+st.on.length:'☰ Several';
+  document.getElementById('apiSport').disabled=st.open;
+  if(!st.open) return;
+  const order=bmOrder(), on=new Set(st.on), pick=order.filter(sp=>on.has(sp)), go=pick.filter(sp=>bmSoon(sp)||sportNext[sp]===undefined);
+  const per=bmCost(), need=go.length*per, left=window._bpLeft;
+  el.innerHTML='<div class="bm-top"><b>Load these</b><button type="button" class="linkbtn" data-bm="all">All with games</button><button type="button" class="linkbtn" data-bm="none">None</button>'+
+    '<span class="bm-cost'+(left!=null&&need>left?' over':'')+'">'+(pick.length?pick.length+' ticked'+(go.length<pick.length?' ('+(pick.length-go.length)+' with no game in 24 h, skipped)':'')+' · up to '+need+' call'+(need===1?'':'s')+' ('+go.length+' × '+per+')':'none ticked')+(left!=null?' · '+left+' left today':'')+(left!=null&&need>left?' · only the first '+Math.floor(left/per)+' will load':'')+' · a sport loaded in the last 30 min costs nothing</span></div>'+
+    '<div class="bm-list">'+order.map(sp=>{ const n=nextTxt(sportNext[sp]); return '<label class="bm-sp'+(sportNext[sp]===null?' off':'')+'"><input type="checkbox" data-bmsp="'+esc(sp)+'"'+(on.has(sp)?' checked':'')+'>'+esc(sp)+(n?' · '+esc(n):'')+'</label>'; }).join('')+'</div>';
+}
+document.addEventListener('click', e=>{
+  if(e.target.closest('#bpMultiBtn')){ const st=bmGet(); st.open=!st.open; if(st.open&&!st.on.length) st.on=bmOrder().filter(bmSoon); bmSet(st); bmPaint(); return; }
+  const a=e.target.closest('#bpMulti [data-bm]'); if(a){ const st=bmGet(); st.on=a.dataset.bm==='all'?bmOrder().filter(bmSoon):[]; bmSet(st); bmPaint(); }
+});
+document.addEventListener('change', e=>{ const c=e.target.closest('#bpMulti [data-bmsp]'); if(c){ const st=bmGet(), on=new Set(st.on); c.checked?on.add(c.dataset.bmsp):on.delete(c.dataset.bmsp); st.on=bmOrder().filter(sp=>on.has(sp)); bmSet(st); bmPaint(); return; }
+  if(e.target.closest('#apiType, #apiPages')) bmPaint(); });
+async function loadSeveral(fresh){
+  const st=bmGet(), on=new Set(st.on), list=bmOrder().filter(sp=>on.has(sp)), status=document.getElementById('apiStatus');
+  if(!list.length){ status.textContent='☰ Several: tick at least one sport (or All with games).'; return; }
+  const per=bmCost(), out=[];
+  for(const sp of list){
+    if(!(bmSoon(sp)||sportNext[sp]===undefined)){ out.push(sp+': no game in the next 24 hours, skipped (no calls)'); continue; }
+    const left=window._bpLeft; if(left!=null && left<per){ out.push(sp+': not loaded, '+left+' BettingPros call'+(left===1?'':'s')+' left today'); continue; }
+    status.textContent='Loading '+sp+' ('+(list.indexOf(sp)+1)+' of '+list.length+')…';
+    out.push(await loadApi(fresh, sp)); try{ await refreshBudget(); }catch(e){}
+  }
+  status.innerHTML=out.map(esc).join('<br>'); bmPaint();
+}
+bmPaint();
+document.getElementById('loadApi').addEventListener('click',()=>bmGet().open?loadSeveral(false):loadApi(false));   // v4.11
 document.getElementById('refreshApi').addEventListener('click',()=>{
-  const n=document.getElementById('apiType').value==='props'?apiPages():2;
-  if(confirm('Refresh now skips the 30-minute cache and uses API calls (up to '+n+' for this load). Continue?')) loadApi(true);
+  const sev=bmGet().open, k=sev?bmOrder().filter(sp=>bmGet().on.includes(sp)&&(bmSoon(sp)||sportNext[sp]===undefined)).length:1;   // v4.11
+  const n=(document.getElementById('apiType').value==='props'?apiPages():2)*k;
+  if(confirm('Refresh now skips the 30-minute cache and uses API calls (up to '+n+' for this load). Continue?')) sev?loadSeveral(true):loadApi(true);
 });
 
 /* save / copy / open / clear */
