@@ -111,6 +111,12 @@
   only from a tap on the link itself, never from a tab the page opened and pointed there after an `await`. So on a phone the logo (or book name) tap
   fetches the slip, then shows a bar with a real "Open in Novig ›" link (and the website for Novig). Kalshi, Polymarket US, DraftKings
   and PrizePicks (`BOOK_HOME.pp`, v4.04) the same; DraftKings and PrizePicks have no prefilled slip. The Mac keeps the side window.
+- Books you can't bet (v4.05, `swapBooks` in `auditCore`, `swapHunt` after each `refresh`): owner is in Texas (no DraftKings / FanDuel
+  sportsbooks). A row at a book not in "Books you bet" takes the same bet at your best book: another board row (same `coreKey` and game,
+  e.g. Bovada from SportsGameOdds → the unbettable row hides, `swapHid`) or a live Kalshi / Polymarket US / Novig price (`r._altQ`,
+  fetched once per row) → the row moves there (`r.swap.orig` keeps the original, restored before every audit) and is screened at that
+  price. No price anywhere: stays "not a book you bet". The Sentinels never let a book you do not bet win. BettingPros has DraftKings
+  Predictions (book 74) and Underdog Predict (76): requested when those are in your books; it has no FanDuel Predicts.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American
