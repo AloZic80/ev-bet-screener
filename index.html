@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.18</title>
+<title>0xBeta Screener v4.19</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1079,7 +1079,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.18</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.19</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1743,7 +1743,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 
 </div>
 <script>
-const SCREENER_VERSION='v4.18';
+const SCREENER_VERSION='v4.19';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -7726,8 +7726,9 @@ function pkLoggedLegKeys(){ const k=new Set(), from=ctDay(Date.now()-2*86400e3);
   logged.forEach(b=>{ if(b.kind!=='parlay' || !b.parlay || !b.parlay.pk || !Array.isArray(b.parlay.pk.legs) || (b.date||'')<from) return;
     b.parlay.pk.legs.forEach(l=>{ const m=String(l.market||'').match(/^([+-]?[\d.]+)\s*(.*)$/); k.add(pkLegKey(l.name, m?m[1]:'', m?m[2]:l.market, l.side)); }); });
   return k; }
-function pkNotLogged(legs){ const k=pkLoggedLegKeys(); if(!k.size){ window._pkInLogged=0; return legs; }
-  const out=legs.filter(l=>!k.has(pkLegKey(l.name,l.line,l.stat,l.side))); window._pkInLogged=legs.length-out.length; return out; }
+function pkNotLogged(legs){ const k=pkLoggedLegKeys();
+  const out=legs.filter(l=>!k.has(pkLegKey(l.name,l.line,l.stat,l.side)) && !(l.r && (()=>{ try{ return pkParlaysWith(l.r).length>0; }catch(e){ return false; } })()));   // v4.19: + parlays you typed in
+  window._pkInLogged=legs.length-out.length; return out; }
 function pkLegsPriced(rows,app){   // v3.59: a combo app: legs it offers on the board, at its price, its fee off each leg
   const m=new Map(), fees=cfgRead().fees;
   (rows||[]).forEach(r=>{ if(!(r.kind==='prop' || GL_KINDS.test(r.kind||''))) return; if(!bookIsMine(r.book, app)) return;
@@ -7868,17 +7869,33 @@ function pkSlipsHtml(legs,pays,cfg,app){
 /* v4.16 (Alonzo: "put something on a parlay where we say we bet on the leg, or on it somewhere"): a leg you already hold as a single
    (the board row's prior, or an order waiting at the book) or inside a parlay in your Bet log (last 2 days; legs written as text by the
    book, "Kris Letang Over 1.5 Shots On Goal +127; ...") says so on every list: the Sentinels' picks, the slip and entry cards, the pick list. */
+/* v4.19 (Alonzo: "I made this bet and saved it manually, but you do not identify it as already bet on"): a parlay you typed in the Bet log
+   (Add a parlay, legs like "Mahomes O 1.5 TD, Bijan O 70.5 rush") counts like one logged from this tab. Legs split on ; , new lines, | or
+   " + "; a leg is the same pick when the player's last name (or the team's code or school) and the line match, and the side when one is
+   written (O / Over / U / Under). Those picks are left out of entries and slips (pkNotLogged, as v4.06) and tagged on every list. */
+function pkSegs(b){ const P=b&&b.parlay; if(!P) return [];
+  if(Array.isArray(P.pk&&P.pk.legs)) return P.pk.legs.map(x=>[x.name,x.side==='O'?'Over':x.side==='U'?'Under':'',x.market].join(' '));
+  return String(P.legs||'').split(/;|,|\n|\||\s\+\s/).map(t=>t.trim()).filter(Boolean); }
+function pkSegHit(r,t){ const n=' '+nrmT(t)+' ', raw=' '+String(t)+' ';
+  const me=GL_KINDS.test(r.kind||'')?giTeamFor(r,r.team||r.name):null, code=me?normAbbr(me.abbr):(/^[A-Z0-9]{2,5}$/.test(r.team||'')?r.team:null);
+  let who;
+  if(r.kind==='prop'){ const w=nrmT(r.name).split(' ').filter(Boolean), last=w[w.length-1]||''; who=n.includes(' '+nrmT(r.name)+' ') || (last.length>=3 && n.includes(' '+last+' ')); }
+  else who=(code && raw.toUpperCase().includes(' '+code+' ')) || n.includes(' '+nrmT(me?me.loc||me.name:r.name)+' ');
+  if(!who) return false;
+  const ln=lineOfMarket(r.market);
+  if(ln!=null && r.kind!=='moneyline'){ const L=String(Math.abs(ln)).replace('.','\\.'); if(!new RegExp('(^|[^0-9.])[+-]?'+L+'([^0-9]|$)').test(raw)) return false; }
+  const sd=/\b(over|o)\s*\+?\d/i.test(t)?'O':/\b(under|u)\s*\+?\d/i.test(t)?'U':/\bover\b/i.test(t)?'O':/\bunder\b/i.test(t)?'U':'';
+  if(sd && r.side && sd!==r.side) return false;
+  return true; }
+function pkParlaysWith(r){ const from=ctDay(Date.now()-2*86400e3);
+  return logged.filter(b=>b.kind==='parlay' && b.parlay && (b.date||'')>=from && pkSegs(b).some(t=>pkSegHit(r,t))); }
 function pkBetTag(l){ const r=l&&l.r; if(!r) return ''; const out=[];
   if(r.prior) out.push('single $'+(+r.prior.stake||0).toFixed(2)+' on '+bookLabel(r.prior.book||'?'));
   else if(r.waitOrder) out.push('order waiting on '+bookLabel(r.book||'?'));
-  const from=ctDay(Date.now()-2*86400e3), me=GL_KINDS.test(r.kind||'')?giTeamFor(r,r.team||r.name):null, code=me?me.abbr:(/^[A-Z0-9]{2,5}$/.test(r.team||'')?r.team:null);
-  const ln=lineOfMarket(r.market), side=r.side==='O'?'over':r.side==='U'?'under':'';
-  logged.forEach(b=>{ if(b.kind!=='parlay' || !b.parlay || (b.date||'')<from) return;
-    const segs=Array.isArray(b.parlay.pk&&b.parlay.pk.legs) ? b.parlay.pk.legs.map(x=>[x.name,x.side==='O'?'Over':x.side==='U'?'Under':'',x.market].join(' ')) : String(b.parlay.legs||'').split(';');
-    const hit=segs.some(t=>{ const n=' '+nrmT(t)+' ';
-      const who=r.kind==='prop' ? n.includes(' '+nrmT(r.name)+' ') : (code && (' '+String(t).toUpperCase()+' ').includes(' '+code+' ')) || n.includes(' '+nrmT(me?me.loc||me.name:r.name)+' ');
-      if(!who) return false; if(ln!=null && r.kind!=='moneyline' && !new RegExp('(^|\\s)[+-]?'+String(Math.abs(ln)).replace('.','\\.')+'(\\s|$)').test(String(t))) return false; if(side && !n.includes(' '+side+' ')) return false; return true; });
-    if(hit) out.push('in your '+bookLabel(b.book||'?')+' parlay ('+(b.parlay.picks||segs.length)+' picks)'); });
+  pkParlaysWith(r).forEach(b=>out.push('in your '+bookLabel(b.book||'?')+' parlay ('+(b.parlay.picks||pkSegs(b).length)+' picks)'));
+  if(!r.prior && r.kind==='prop'){ const from=ctDay(Date.now()-2*86400e3), fam=statFam(statOfMarket(r.market));   // v4.19: a single you typed in (+ Add a bet), worded differently ("15.5 Rush Att")
+    const one=logged.find(b=>b.kind!=='parlay' && !b.sold && (b.date||'')>=from && statFam(statOfMarket(b.market))===fam && pkSegHit(r,[b.name,b.side==='O'?'Over':b.side==='U'?'Under':'',b.market].join(' ')));
+    if(one) out.push('single $'+(+one.stake||0).toFixed(2)+' on '+bookLabel(one.book||'?')); }
   return out.length ? ' <span class="tag t-warn pk-bet" title="You already have this pick">✓ you bet this: '+esc(out.join(' · '))+'</span>' : ''; }
 function pkWhere(l){   // v3.63 (Alonzo: "you give me the names, but not the sports or team"): sport · team · game · when
   const r=l.r||{}, tm=r.team?normAbbr(r.team):(GL_KINDS.test(r.kind||'')?glTeam(r):null), when=l.gi?giWhen(l.gi):'';

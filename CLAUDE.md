@@ -186,6 +186,11 @@
   the other team), or, when Kalshi's code is not ESPN's (BG for BGSU), the closer code in a market whose title names the school. Within 36 h it
   is this bet (`waitOrder`, ORDER WAITING); further apart `otherGameOrder` ("another game: this one is not placed"); the other team in this game
   `otherSideOrder`. The tag sits under the pick on the card and in the odds cell of the row. `tests/order-tag-test.js`.
+- Typed-in bets on the Parlays tab (v4.19, `pkSegs`, `pkSegHit`, `pkParlaysWith`; owner: "I made this bet and saved it manually but you don't
+  identify it as already bet on"): a parlay from Add a parlay (legs typed like "Mahomes O 1.5 TD, Bijan O 70.5 rush") counts like one logged from
+  the tab: legs split on ; , new line | " + "; same pick = last name (or team code / school) and line, and the side when written (O/Over/U/Under).
+  `pkNotLogged` leaves those picks out of entries and slips (as v4.06) and `pkBetTag` tags them; a single typed in with + Add a bet, worded
+  differently, is tagged too (same stat family). A parlay saved with no legs cannot be matched. `tests/manual-parlay-test.js`.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American
