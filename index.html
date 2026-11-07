@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.16</title>
+<title>0xBeta Screener v4.17</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1042,6 +1042,12 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 .kx-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px}
 .kx-b{display:flex; flex-direction:column; gap:1px; padding:6px 8px; border-radius:8px; background:var(--panel-2)}
 .kx-other{margin-top:8px; font-size:12.5px; font-weight:600; color:var(--warn)}   /* v4.15 */
+/* v4.17: orders waiting at your books, top of the Bet log */
+.orders-top{margin-top:8px; padding:8px 12px; border:1px dashed var(--warn); border-radius:10px; font-size:13px; color:var(--ink)}
+.orders-top[hidden]{display:none} .ot-err{color:var(--warn); font-weight:600}
+.log-orders h3{margin:0 0 4px; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--soft)}
+.log-orders .lo-row{display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 12px; padding:8px 0; border-top:1px solid var(--rule)}
+.log-orders .lo-what{font-weight:600; color:var(--ink)} .log-orders .lo-m{font-size:12.5px; color:var(--soft)}
 .kx-l{font-size:11.5px; color:var(--soft)} .kx-v{font-size:18px; color:var(--ink)} .kx-n{font-size:11.5px; color:var(--soft)}
 /* v4.07: money in play is grey: not won, not lost yet */
 .tb-inplay{color:var(--soft); font-weight:700}
@@ -1071,7 +1077,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.16</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.17</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1081,6 +1087,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
     <div class="head-btns"><button type="button" class="themer" id="layoutBtn"></button><button class="themer" id="themer" title="Dark mode" aria-label="Switch between light and dark mode">☾</button></div>
   </div>
   <div class="todaybar" id="todayBar" title="Today's games, per book — click for the Bet log"></div>
+  <div class="orders-top" id="ordersTop" hidden role="status"></div><!-- v4.17: orders waiting at your books -->
   <div class="pull-bar" id="pullBar" role="alert"></div>
   <div class="loadline loadbar">
     <span class="ll-k">BettingPros</span>
@@ -1614,6 +1621,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 <!-- ======================= LOG ======================= -->
 <div class="view" id="v-log">
 <div class="panel look-out" id="lookOut" hidden></div>   <!-- v3.57: bets not graded yet, automatically or by you -->
+<div class="panel log-orders" id="logOrders" hidden></div>   <!-- v4.17: orders waiting at your books (not bets until they fill) -->
 <!-- v2.63 -->
 <div class="panel">
   <h2>Bets by game day <span class="sub">counted on the day the game is played, not the day you logged it</span></h2>
@@ -1733,7 +1741,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 
 </div>
 <script>
-const SCREENER_VERSION='v4.16';
+const SCREENER_VERSION='v4.17';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -8465,8 +8473,33 @@ function makeTagHtml(r){
     const al=A.find(a=>a.o===o); if(al) h+='<span class="mk-sub pull">⚠ pull it — '+(al.level===3?'game started':'game in '+Math.max(0,Math.round(al.mins))+' min')+'</span>';
     return h; }).join('');
 }
+/* v4.17 (Alonzo: "I don't see them on my Bet log, so where are they?"): his three Kalshi orders had filled 0, so they were not bets and
+   only showed in the Board's Makes bar. The Bet log now lists every order still waiting at your books, with shares, limit, cost and the
+   game, and says plainly: not a bet until it fills; it moves into the log when it does; cancel it at the book to free the money. */
+function ordersErrText(){ const e=window._ordersErr; if(!e) return ''; if(typeof e==='string') return e;
+  return Object.entries(e).map(([k,v])=>({kalshi:'Kalshi',poly:'Polymarket US',novig:'Novig'})[k]+': '+v).join(' · '); }
+function renderOrdersTop(O,held){ const el=document.getElementById('ordersTop'); if(!el) return; const er=typeof window._ordersErr==='object'?ordersErrText():'';   // only a book's own error up here; a network blip shows in the Bet log only
+  if(!O.length && !er){ el.hidden=true; el.innerHTML=''; return; } el.hidden=false;
+  const by={}; O.forEach(o=>{ const n=({kalshi:'Kalshi',poly:'Polymarket US',novig:'Novig'})[o.book]||o.book; by[n]=(by[n]||0)+1; });
+  el.innerHTML=(O.length?'⏳ <b>'+O.length+' order'+(O.length===1?'':'s')+' waiting</b> at '+esc(Object.entries(by).map(([n,c])=>c+' '+n).join(', '))+(held>0?' · $'+held.toFixed(2)+' held':'')+' · not bets until they fill':'')+
+    (er?'<span class="ot-err">'+(O.length?' · ':'')+'⚠ Could not read your orders: '+esc(er)+'</span>':'')+' <button type="button" class="linkbtn" id="ordersTopGo">See them ›</button>'; }
+document.addEventListener('click',e=>{ if(!e.target.closest('#ordersTopGo')) return; const t=document.querySelector('.tab[data-view="v-log"]'); if(t) t.click(); setTimeout(()=>{ const b=document.getElementById('logOrders'); if(b && !b.hidden) b.scrollIntoView({block:'start'}); },60); });
+function renderLogOrders(){ const el=document.getElementById('logOrders'); if(!el) return;
+  const O=((myOrders&&myOrders.orders)||[]).filter(o=>o && o.action!=='sell'), er=ordersErrText();
+  const cost0=o=>o.price!=null&&o.qty!=null?Math.ceil((+o.price)*(+o.qty)*100-1e-6)/100:0; renderOrdersTop(O, O.reduce((t,o)=>t+cost0(o),0));
+  if(!O.length && er){ el.hidden=false; el.innerHTML='<h3>⏳ Waiting at your books</h3><div class="meta ot-err">⚠ Could not read your orders from the books: '+esc(er)+'. Orders you placed there do not show until this works.</div>'; return; }
+  if(!O.length){ el.hidden=true; el.innerHTML=''; return; }
+  const cost=o=>o.price!=null&&o.qty!=null?Math.ceil((+o.price)*(+o.qty)*100-1e-6)/100:0, held=O.reduce((t,o)=>t+cost(o),0);
+  el.hidden=false; el.innerHTML='<h3>⏳ Waiting at your books · '+O.length+' order'+(O.length===1?'':'s')+(held>0?' · $'+held.toFixed(2)+' held':'')+'</h3>'+
+    '<div class="meta">Not bets yet: nothing is bought until an order fills (Filled 0 on the book). A filled order goes into the Bet log within about a minute. To free the money, cancel it at the book.</div>'+
+    O.map((o,i)=>{ const L=fillLabel({bet:o.bet||{}, title:o.title, book:o.book, ref:o.ref}), filled=+o.filled||0;
+      return (i===0&&er?'<div class="meta ot-err">⚠ Could not read every book: '+esc(er)+'</div>':'')+'<div class="lo-row"><span>'+(bookLogo(({kalshi:'Kalshi',poly:'Polymarket US',novig:'Novig'})[o.book]||o.book)?logoTag(({kalshi:'Kalshi',poly:'Polymarket US',novig:'Novig'})[o.book]||o.book,'sm'):'')+' '+esc(({kalshi:'Kalshi',poly:'Polymarket US',novig:'Novig'})[o.book]||o.book||'')+'</span>'+
+        '<span class="lo-what">'+esc(o.side?(o.side==='no'?'NO · ':'YES · '):'')+esc(L.bet)+'</span>'+(o.title&&o.title!==L.bet?'<span class="lo-m">'+esc(o.title)+'</span>':'')+
+        '<span class="lo-m">'+(o.qty!=null?(+o.qty)+' shares':'')+(o.price!=null?' at '+Math.round(o.price*100)+'¢':'')+(o.price!=null&&o.qty!=null?' = $'+cost(o).toFixed(2):'')+(filled>0?' · '+filled+' filled':' · 0 filled')+'</span>'+
+        (L.when?'<span class="lo-m">game '+esc(L.when)+'</span>':'')+'</div>'; }).join(''); }
 function renderMakes(){
   try{ renderPullBar(); }catch(e){}
+  try{ renderLogOrders(); }catch(e){}   // v4.17
   document.querySelectorAll('.mk-slot').forEach(el=>{ const r=lastRows.find(x=>x.idx===+el.dataset.idx); const h=r?makeTagHtml(r):''; if(el.innerHTML!==h) el.innerHTML=h; });
   const bar=document.getElementById('makesBar'); if(!bar) return;
   const O=((myOrders&&myOrders.orders)||[]).filter(o=>o.action!=='sell'), onBoard=O.filter(o=>lastRows.some(r=>makesFor(r).includes(o))).length;
@@ -9271,7 +9304,7 @@ async function syncOrders(force){
   if(live.length!==posts.length){ posts=live; savePosts(); }
   if(!force && Date.now()-ordersAt<55000){ renderPosts(); renderMakes(); return; }
   ordersAt=Date.now();
-  try{ const res=await fetch(API_BASE+'/mine/orders',{headers:apiHeaders()}); if(res.ok){ const was=JSON.stringify(myOrders&&myOrders.orders||[]); myOrders=await res.json(); if(JSON.stringify(myOrders&&myOrders.orders||[])!==was && lastRows.length) refresh(); } }catch(e){}   // v4.14: a waiting order moves its bet to Already bet
+  try{ const res=await fetch(API_BASE+'/mine/orders',{headers:apiHeaders()}); window._ordersErr=res.ok?null:'the Worker answered '+res.status; if(res.ok){ const was=JSON.stringify(myOrders&&myOrders.orders||[]); myOrders=await res.json(); if(JSON.stringify(myOrders&&myOrders.orders||[])!==was && lastRows.length) refresh(); const E=myOrders&&myOrders.errors; window._ordersErr=E&&Object.keys(E).length?E:null; } }catch(e){ window._ordersErr='could not reach the Worker ('+(e&&e.message||e)+')'; }   // v4.14: a waiting order moves its bet to Already bet   // v4.17: and say why when orders cannot be read
   renderMakes();
   if(!posts.length){ renderPosts(); return; }
   try{   // the market now, for each post
