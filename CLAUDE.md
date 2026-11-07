@@ -147,6 +147,10 @@
   can do"): tick sports (All with games = a game in 24 hours, or None); the line shows sports × calls each against `_bpLeft`. Load (and
   Refresh) then run `loadApi(fresh, sport)` for each, soonest first; no game in 24 hours is skipped, and a sport that would go over the calls
   left is not loaded. While open, the one-sport menu is greyed; closed, Load works as before. `tests/bp-several-test.js`.
+- The board waits while you bet (v4.12, `boardEditorOpen`, `_boardPending`, `_boardForce`; owner: "if I press I bet this, do not move it",
+  "refreshes"): `render` called while an I bet this box is open on the board or a Place card only remembers the call; it runs once the box
+  is saved or closed (checked every 400 ms). A click or change of your own outside the box sets `_boardForce` for that tick, so sort,
+  filters, Parlay and other buttons still redraw. Save / Cancel must remove the editor before redrawing (they do). `tests/editor-stays-test.js`.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American
