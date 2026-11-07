@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.22</title>
+<title>0xBeta Screener v4.23</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1186,7 +1186,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.22</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.23</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1851,7 +1851,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 
 </div>
 <script>
-const SCREENER_VERSION='v4.22';
+const SCREENER_VERSION='v4.23';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2631,9 +2631,32 @@ function boardEditorOpen(){ return !!document.querySelector('#tbody tr.editor, #
 document.addEventListener('click', e=>{ if(e.target.closest && !e.target.closest('.editor')){ _boardForce=true; setTimeout(()=>{ _boardForce=false; },0); } }, true);
 document.addEventListener('change', e=>{ if(e.target.closest && !e.target.closest('.editor')){ _boardForce=true; setTimeout(()=>{ _boardForce=false; },0); } }, true);
 setInterval(()=>{ if(_boardPending && !boardEditorOpen()){ const a=_boardPending; _boardPending=null; render(a[0],a[1]); } }, 400);
+/* v4.23 (Alonzo: "when I am on the board it refreshes and the board goes up, so I lose the bet and have to scroll down again"): every
+   redraw empties the table and the cards and builds them again, so for a moment the page is shorter and the browser jumps up. Now the
+   card (or row) at the top of your screen is remembered before the redraw and put back at the same spot after it. */
+function boardAnchor(){ try{ if(document.body.dataset.view && document.body.dataset.view!=='v-board') return null;
+    const keyOf=el=>{ if(el.dataset && el.dataset.pck) return 'c:'+el.dataset.pck; const b=el.querySelector('[data-idx]'), r=b&&lastRows.find(x=>x.idx===+b.dataset.idx); return r?'r:'+pxKey(r):null; };
+    const all=[...document.querySelectorAll('#placeCards .sc-card, #tbody tr')].filter(el=>el.getBoundingClientRect().height>0);
+    const keyed=all.filter(e=>keyOf(e)), el=keyed.find(e=>e.getBoundingClientRect().top>=-4) || keyed.find(e=>e.getBoundingClientRect().bottom>8);   // the first bet whose top is on the screen (not a group heading)
+    if(el) return {k:keyOf(el), top:el.getBoundingClientRect().top, y:window.scrollY};
+  }catch(e){} return null; }
+function boardAnchorBack(A){ if(!A) return; try{
+    const keyOf=el=>{ if(el.dataset && el.dataset.pck) return 'c:'+el.dataset.pck; const b=el.querySelector('[data-idx]'), r=b&&lastRows.find(x=>x.idx===+b.dataset.idx); return r?'r:'+pxKey(r):null; };
+    const el=[...document.querySelectorAll('#placeCards .sc-card, #tbody tr')].find(e=>keyOf(e)===A.k);
+    if(el){ const d=el.getBoundingClientRect().top-A.top; if(Math.abs(d)>1) window.scrollBy(0,d); } else if(Math.abs(window.scrollY-A.y)>1) window.scrollTo(0,A.y);
+  }catch(e){} }
 function render(rows,cfg){
   if(boardEditorOpen() && !_boardForce){ _boardPending=[rows,cfg]; return; }   // v4.12: wait while you are placing a bet
   _boardPending=null;
+  const A=boardAnchor(); try{ return renderCore(rows,cfg); } finally { boardAnchorBack(A); if(A) window._bAnchor={A, t:Date.now()}; }   // v4.23: the board stays where you are
+}
+/* v4.23: after a redraw the photos, injury and weather tags fill in a moment later, so the cards above you grow again. Safari (iPhone, Mac)
+   does not hold the page still while that happens (Chrome does). For 4 seconds after a redraw, unless you scroll yourself, the card you
+   were looking at is put back each time the board changes size. */
+['wheel','touchstart','keydown','mousedown'].forEach(ev=>window.addEventListener(ev,()=>{ window._bUserT=Date.now(); },{passive:true, capture:true}));
+(function(){ if(typeof ResizeObserver!=='function') return; const ro=new ResizeObserver(()=>{ const x=window._bAnchor; if(x && Date.now()-x.t<4000 && !((window._bUserT||0)>x.t)) boardAnchorBack(x.A); });
+  ['placeCards','tbody'].forEach(id=>{ const el=document.getElementById(id); if(el) ro.observe(el); }); })();
+function renderCore(rows,cfg){
   window._pkRows=rows; try{ pkSetRows(rows); }catch(e){}   // v3.54: the Parlays tab picks from every row, passing or not
   const tb=document.getElementById('tbody'), empty=document.getElementById('emptyMsg');
   tb.innerHTML='';
