@@ -37,6 +37,7 @@ const runs = [
   ['On an iPhone the prefilled slip waits as a real link, so the book app opens; Mac unchanged', 'slip-app-test.js', []],
   ['Texas: a bet at a book you do not bet moves to your best book (board row or live Novig/Kalshi/Polymarket), screened at that price', 'texas-swap-test.js', []],
   ['Calendar: in play is never a loss; best and worst day, this month and ever, from real results only (Alonzo\'s November)', 'cal-worst-test.js', []],
+  ['v4.15: Kalshi on rows with full team names: exact game asked, the strip names it, an order on another game says not placed', 'kalshi-game-test.js', []],
   ['v4.14: a Kalshi order waiting (or a fill worded differently) moves its bet to Already bet, by market code and side', 'kalshi-placed-test.js', []],
   ['v4.13: the board Book menu: only the bets at one book (counts, remembered, All books)', 'board-book-test.js', []],
   ['v4.12: background redraws wait while I bet this is open (the box stays, the page does not move)', 'editor-stays-test.js', []],

@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.14</title>
+<title>0xBeta Screener v4.15</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1041,6 +1041,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 .kx-h{font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--soft); margin-bottom:6px}
 .kx-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px}
 .kx-b{display:flex; flex-direction:column; gap:1px; padding:6px 8px; border-radius:8px; background:var(--panel-2)}
+.kx-other{margin-top:8px; font-size:12.5px; font-weight:600; color:var(--warn)}   /* v4.15 */
 .kx-l{font-size:11.5px; color:var(--soft)} .kx-v{font-size:18px; color:var(--ink)} .kx-n{font-size:11.5px; color:var(--soft)}
 /* v4.07: money in play is grey: not won, not lost yet */
 .tb-inplay{color:var(--soft); font-weight:700}
@@ -1070,7 +1071,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.14</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.15</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1731,7 +1732,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 
 </div>
 <script>
-const SCREENER_VERSION='v4.14';
+const SCREENER_VERSION='v4.15';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2217,9 +2218,13 @@ function auditCore(rows,cfg){
     const prior = logged.find(L=>onBoard(L) && coreKey(L.name,L.market,sideOf(L))===coreKey(r.name,r.market,r.side))
                || logged.find(L=>onBoard(L) && glSame(L) && L.market===r.market)
                || (exQs.length ? logged.find(L=>onBoard(L) && !L.sold && L.fillRef && L.fillBook===exSrc && exHit({book:L.fillBook, ref:L.fillRef, side:L.fillSide, outcome:L.fillOutcome})) : null);   // v4.14
-    delete r.waitOrder;
-    if(!prior && exQs.length && myOrders && Array.isArray(myOrders.orders)){   // v4.14: placed at the book, not filled yet
-      const o=myOrders.orders.find(o=>o && o.book===exSrc && o.ref && exHit({book:o.book, ref:o.ref, side:o.side, outcome:o.outcome}));
+    delete r.waitOrder; delete r.otherGameOrder;
+    if(!prior && exSrc && myOrders && Array.isArray(myOrders.orders)){   // v4.15: also rows with no exchange price read yet   // v4.14: placed at the book, not filled yet
+      const o=myOrders.orders.find(o=>o && o.book===exSrc && o.action!=='sell' && ((o.ref && exHit({book:o.book, ref:o.ref, side:o.side, outcome:o.outcome})) || (o.bet && o.bet.kind!=='other' && (()=>{ try{ return betMatches(o.bet, r); }catch(e){ return false; } })())));   // v4.15: + what the order is
+      if(!o && GL_KINDS.test(r.kind||'') && r.kind!=='total'){   // v4.15: an order on the same team in ANOTHER game (another day): say this one is not placed
+        const me=giTeamFor(r, r.team||r.name), sch=me?nrm(me.loc||me.name).replace(/\bstate\b/g,'st'):'', rd=r.gameInfo&&r.gameInfo.startISO?Date.parse(r.gameInfo.startISO):NaN;
+        if(sch && !isNaN(rd)) r.otherGameOrder=myOrders.orders.find(o=>o && o.book===exSrc && o.action!=='sell' && o.title && (' '+nrm(o.title).replace(/\bstate\b/g,'st')+' ').includes(' '+sch+' ') && o.bet && o.bet.start && Math.abs(Date.parse(o.bet.start)-rd)>36*3600e3)||null;
+        if(r.otherGameOrder) r.flags.push(['warn','Your Kalshi order “'+(r.otherGameOrder.title||'')+'” is another game: this one is not placed']); }
       if(o){ r.waitOrder=o; r.flags.unshift(['dupe','ORDER WAITING on '+exNm+(o.qty!=null?': '+(+o.qty)+' shares':'')+(o.price!=null?' at '+Math.round(o.price*100)+'¢':'')+', not filled yet. It is placed: do not bet it again']); } }
     // v2.51: you already hold the OTHER side of this exact prop
     const otherSide = !prior && r.side && logged.find(L=>onBoard(L) && coreKey(L.name,L.market)===coreKey(r.name,r.market) && sideOf(L) && sideOf(L)!==r.side);
@@ -8191,13 +8196,25 @@ function suspectQ(q, fair, own, mkt){   // v3.02: judged against the MARKET (a r
 }
 function LIVE_BOOK(bk){ const k=String(bk||'').toLowerCase(); return /kalshi/.test(k)?'kalshi':/polymarket/.test(k)?'poly':/novig/.test(k)?'novig':null; }
 var liveQuotes={}, liveAt=0, liveBusy2=false;
+/* v4.15 (Alonzo: his three Kalshi orders were other games than the cards): rows from The Odds API name teams in full ("Texas Tech Red
+   Raiders @ Oklahoma State Cowboys"), so liveDesc found no team codes, the exchanges were never asked for that exact market, and "open slip"
+   opened Kalshi's home page, where the Oklahoma St. market on top was another game. The codes now come from ESPN's game (gameInfo.teams). */
+function giTeamsOf(b){ const T=(b&&b.gameInfo&&b.gameInfo.teams)||[], a=T.find(x=>x&&x.ha==='away'), h=T.find(x=>x&&x.ha==='home'); return a&&h&&a.abbr&&h.abbr?[a,h]:null; }
+function giTeamFor(b,name){ const AH=giTeamsOf(b), n=nrm(name); if(!AH||!n) return null;
+  return AH.find(x=>[x.loc&&x.nick?x.loc+' '+x.nick:'', x.name, x.loc, x.abbr].some(v=>v && (nrm(v)===n || n.startsWith(nrm(v)+' '))))||null; }
+function gameHintOf(b){ const AH=giTeamsOf(b), t=b&&((b.gameInfo&&b.gameInfo.startISO)||b.start), d=t?new Date(t):null;
+  const g=AH?(AH[0].loc||AH[0].name)+' at '+(AH[1].loc||AH[1].name):String((b&&(b.game||b.matchup))||'');
+  return g+(d&&!isNaN(d)?', '+d.toLocaleString('en-US',{timeZone:'America/Chicago',weekday:'short',month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'})+' CT':''); }
 function liveDesc(b){
   const src=LIVE_BOOK(b.book); if(!src || b.kind==='parlay') return null;
   const mk=String(b.market||'').match(/^([+-]?[\d.]+)\s+(.*)$/), line=mk?parseFloat(mk[1]):null, stat=mk?mk[2]:String(b.market||'');
-  const t=teamsOf(b.game)||teamsOf(b.matchup)||teamsOf(b.name); if(!t) return null;
+  const AH=giTeamsOf(b);   // v4.15
+  const t=teamsOf(b.game)||teamsOf(b.matchup)||teamsOf(b.name)||(AH?AH.map(x=>normAbbr(x.abbr)):null); if(!t) return null;
   const kind=GL_KINDS.test(b.kind||'')?b.kind:'prop';
-  return { id:String(b.id||b.key), book:src, sport:b.sport, kind, name:b.name, stat, line, side:(b.side||sideOf(b)||''), team:kind==='spread'||kind==='moneyline'?(glTeam(b)||normAbbr(b.team||b.name)):null,
-    away:t[0], home:t[1], start:b.start||null };
+  let tm=kind==='spread'||kind==='moneyline'?(glTeam(b)||normAbbr(b.team||b.name)):null;
+  if(tm && !/^[A-Z0-9]{2,5}$/.test(tm)){ const x=giTeamFor(b,b.team||b.name); if(x) tm=normAbbr(x.abbr); }   // v4.15: "Oklahoma State Cowboys" → OKST
+  return { id:String(b.id||b.key), book:src, sport:b.sport, kind, name:b.name, stat, line, side:(b.side||sideOf(b)||''), team:tm,
+    away:t[0], home:t[1], start:b.start||(b.gameInfo&&b.gameInfo.startISO)||null, awayName:AH?AH[0].loc||AH[0].name:null, homeName:AH?AH[1].loc||AH[1].name:null };
 }
 function liveTargets(){
   const now=Date.now();
@@ -8335,10 +8352,11 @@ function kalshiHowHtml(r){   // a full-width strip on the card: one box per thin
   const k=kalshiHow(r,st,r.offeredProb,mx); if(!k) return '';
   const box=(lbl,val,note)=>'<div class="kx-b"><span class="kx-l">'+lbl+'</span><b class="kx-v">'+val+'</b>'+(note?'<span class="kx-n">'+note+'</span>':'')+'</div>';
   return '<div class="kx-how" title="What to type on Kalshi for La Contadora\'s bet"><div class="kx-h">On Kalshi, enter</div><div class="kx-row">'+
-    box('1 · Press', k.btn, esc(k.what)+(k.underNote?' (NO on the Over = the Under)':''))+
+    box('1 · Press', k.btn, esc(k.what)+(k.underNote?' (NO on the Over = the Under)':'')+'<br>in '+esc(gameHintOf(r)))+   // v4.15: which game
     box('2 · Shares', k.shares.toFixed(2), 'not '+st.toFixed(2)+': that is the cost')+
     box('3 · Limit price', k.lim+'¢', 'La Contadora\'s most, never higher')+
-    box('Then check', 'Cost ≈ $'+k.cost.toFixed(2), 'Max payout $'+k.payout.toFixed(2))+'</div></div>'; }
+    box('Then check', 'Cost ≈ $'+k.cost.toFixed(2), 'Max payout $'+k.payout.toFixed(2))+'</div>'+
+    (r.otherGameOrder?'<div class="kx-other">⚠ Your Kalshi order “'+esc(r.otherGameOrder.title||r.otherGameOrder.ref||'')+'”'+(r.otherGameOrder.qty!=null?' ('+(+r.otherGameOrder.qty)+' at '+Math.round((r.otherGameOrder.price||0)*100)+'¢)':'')+' is another game. This one is not placed.</div>':'')+'</div>'; }   // v4.15
 // v3.07: your open Make orders (read-only, from the books) on the row they belong to — WAITING FOR TAKER
 function makesFor(r){
   const O=(myOrders&&myOrders.orders)||[]; if(!O.length || !r) return [];
@@ -8424,7 +8442,7 @@ function shopTagHtml(r){
   return h;
 }
 function rowAsBet(r){ return {id:'row'+r.idx, idx:r.idx, book:r.book, sport:r.sport, kind:r.kind, market:r.market, side:r.side, name:r.name, team:r.team, apiKey:r.apiKey,
-  game:r.game, matchup:r.matchup, start:(r.gameInfo&&r.gameInfo.startISO)||null, odds:r.offeredRaw, stake:r.stake}; }
+  game:r.game, matchup:r.matchup, start:(r.gameInfo&&r.gameInfo.startISO)||null, odds:r.offeredRaw, stake:r.stake, gameInfo:r.gameInfo||null}; }   // v4.15: + gameInfo (team codes, the game to look for)
 document.addEventListener('click', async e=>{
   const img=e.target.closest('img.blogo, .book, .pp-open'); if(!img) return;
   const host=img.closest('tr, .pcard'); if(!host) return;
@@ -8435,7 +8453,7 @@ document.addEventListener('click', async e=>{
   const src=LIVE_BOOK(obj.book) || (/draftkings/i.test(obj.book||'')?'dk':/prizepicks/i.test(obj.book||'')?'pp':null); if(!src) return;   // v4.04: PrizePicks opens too (its app or site; it has no prefilled slip)
   e.preventDefault(); e.stopPropagation();
   const w=isPhone()?null:slipWindow();   // open now (pop-up blockers), point it once we know where   // v4.04: not on a phone (see slipReady)
-  let url=BOOK_HOME[src];
+  let url=BOOK_HOME[src], miss=null;
   try{ if(src!=='dk' && src!=='pp'){ const q=await quoteFor(obj, obj.book);
     // v3.05: a book price far from the card's price means the book matched a different bet (a half, the other side of
     // the spread) — open the book's home page instead of a prefilled slip, and say why on the card
@@ -8443,18 +8461,20 @@ document.addEventListener('click', async e=>{
     if(q && q.ok && p0!=null && Math.abs(q.price-p0)>SLIP_GUARD){
       const note=host.querySelector('.pp-open'); if(note){ note.textContent='⚠ '+(BOOK_NAME[src]||'book')+' slip is '+(q.price*100).toFixed(1)+'%, the card says '+(p0*100).toFixed(1)+'% — not prefilled, check the market'; note.style.color='var(--out)'; }
       url=BOOK_HOME[src];
-    } else url=bookUrl(src, q, +obj.stake||0) || url; } }catch(_){}
-  if(isPhone()){ slipReady(url, src); return; }   // v4.04
+    } else url=bookUrl(src, q, +obj.stake||0) || url;
+    if(!(q && q.ok)){ miss=(BOOK_NAME[src]||'The book')+' did not find this exact game. Pick '+gameHintOf(obj)+', not another game of the same team';   // v4.15
+      const note=host.querySelector('.pp-open'); if(note){ note.textContent='⚠ '+miss; note.style.color='var(--warn)'; } } } }catch(_){}
+  if(isPhone()){ slipReady(url, src, miss); return; }   // v4.04
   if(w) w.location.href=url; else location.href=url;
 }, true);
 /* v4.04 (Alonzo: "when I press to prefill, open the app instead of the website"): an iPhone hands a link to an app (Novig, Kalshi,
    Polymarket, DraftKings) only when you tap the link itself. A tab the page opened and pointed at the slip after the price check
    always stayed in Safari. On a phone the slip now waits in a bar at the bottom as a real link: one tap opens the app. */
-function slipReady(url, src){ if(!url) return; let el=document.getElementById('slipGo');
+function slipReady(url, src, msg){ if(!url) return; let el=document.getElementById('slipGo');
   if(!el){ el=document.createElement('div'); el.id='slipGo'; el.className='slip-go'; el.setAttribute('role','status'); document.body.appendChild(el);
     el.addEventListener('click',e=>{ if(e.target.closest('.slip-go-x')){ el.hidden=true; return; } if(e.target.closest('a')) setTimeout(()=>{ el.hidden=true; },800); }); }
   const nm=BOOK_NAME[src]||(src==='dk'?'DraftKings':src==='pp'?'PrizePicks':'the book'), web=/^novigapp:\/\//.test(url)?url.replace(/^novigapp:\/\//,'https://novig.com/'):'';
-  el.innerHTML='<span class="slip-go-t">'+(src==='dk'||src==='pp'?esc(nm)+': no prefilled slip, find the bet in the app':esc(nm)+' slip is ready')+'</span><a class="slip-go-a" href="'+esc(url)+'">Open in '+esc(nm)+' ›</a>'+(web?'<a class="slip-go-w" href="'+esc(web)+'" target="_blank" rel="noopener">website</a>':'')+'<button type="button" class="slip-go-x" aria-label="Close">×</button>';
+  el.innerHTML='<span class="slip-go-t">'+(msg?'⚠ '+esc(msg):src==='dk'||src==='pp'?esc(nm)+': no prefilled slip, find the bet in the app':esc(nm)+' slip is ready')+'</span><a class="slip-go-a" href="'+esc(url)+'">Open in '+esc(nm)+' ›</a>'+(web?'<a class="slip-go-w" href="'+esc(web)+'" target="_blank" rel="noopener">website</a>':'')+'<button type="button" class="slip-go-x" aria-label="Close">×</button>';
   el.hidden=false; }
 // mark clickable logos
 const _markGo=()=>document.querySelectorAll('#logBody img.blogo, #tbody img.blogo, #placeCards img.blogo, #liveBody img.blogo').forEach(i=>{ if(/kalshi|polymarket|novig|draftkings|prizepicks/i.test(i.alt||'')){ i.classList.add('go'); i.title=(i.alt||'')+' — open this bet'; } });
@@ -8668,7 +8688,7 @@ function betMatches(fb, x, strictSport){
   if(fb.sport && x.sport && strictSport!==false && String(fb.sport).toUpperCase()!==String(x.sport).toUpperCase() && !/NCAA/.test(fb.sport+x.sport)) return false;
   const a=Date.parse(fb.start), b=Date.parse(startOf(x)); if(!isNaN(a) && !isNaN(b) && Math.abs(a-b)>36*3600e3) return false;
   const ln=lineOfMarket(x.market), sd=x.side||sideOf(x)||'';
-  const teamsOk=()=>{ const t=teamsOf(x.game||x.matchup||''); if(!t) return true;
+  const teamsOk=()=>{ const g=giTeamsOf(x), t=teamsOf(x.game||x.matchup||'')||(g?g.map(y=>normAbbr(y.abbr)):null); if(!t) return true;   // v4.15
     if(fb.away&&fb.home){ const s=[normAbbr(fb.away),normAbbr(fb.home)]; return s.includes(t[0]) && s.includes(t[1]); }
     if(fb.teamsCode){ const c=String(fb.teamsCode).toUpperCase(); return c.includes(t[0].slice(0,2)) || c.includes(t[1].slice(0,2)); }
     return true; };
@@ -8682,7 +8702,8 @@ function betMatches(fb, x, strictSport){
     return !fb.side || fb.side===sd;
   }
   if(kind==='total') return fb.line!=null && ln!=null && Math.abs(fb.line-ln)<0.01 && (!fb.side||fb.side===sd) && teamsOk();
-  const tm=glTeam(x)||normAbbr(x.team||x.name);
+  let tm=glTeam(x)||normAbbr(x.team||x.name);
+  if(tm && !/^[A-Z0-9]{2,5}$/.test(tm)){ const g=giTeamFor(x, x.team||x.name); if(g) tm=normAbbr(g.abbr); }   // v4.15: a full name (The Odds API) → ESPN's code
   const teamOk = fb.team ? normAbbr(fb.team)===tm : fb.teamName ? nrm(fb.teamName).includes(nrm(x.team||x.name)) || nrm(x.name).includes(nrm(fb.teamName)) : false;
   if(!teamOk || !teamsOk()) return false;
   if(kind==='spread') return fb.line!=null && ln!=null && Math.abs(fb.line-ln)<0.01;
