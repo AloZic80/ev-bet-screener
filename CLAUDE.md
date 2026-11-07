@@ -155,6 +155,11 @@
   books on the board with counts ("Kalshi · 2"), from the rows left after sport and duplicates; picking one shows only its bets (table and
   Place these). It matches `bookLabel(r.book)`, so a swapped row (v4.05) counts at the book it moved to. Separate from Settings' typed Book
   filter (`filterBook`). `tests/board-book-test.js`.
+- Placed at an exchange (v4.14, `exQs`, `r.waitOrder`; owner: "still seeing Kalshi slips I made on the board", three resting orders,
+  0 filled): in `auditCore` a Kalshi / Polymarket US / Novig row's own quotes (`_openQ`, `_shopQ`, `_altQ`, `_par`: ref + side) also match
+  a logged bet's `fillRef`/`fillSide` (a fill worded differently is still `prior`) and an order in `myOrders` (/mine/orders, read with
+  each fills check; `syncOrders` redraws when it changes): `r.waitOrder`, decision "ORDER WAITING n shares at x¢", Already bet group, no
+  stake, not in Place these, Sentinels or Parlays. Cancelled at the book: back in Place these. `tests/kalshi-placed-test.js`.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American

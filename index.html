@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.13</title>
+<title>0xBeta Screener v4.14</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1070,7 +1070,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.13</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.14</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1731,7 +1731,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 
 </div>
 <script>
-const SCREENER_VERSION='v4.13';
+const SCREENER_VERSION='v4.14';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2208,8 +2208,19 @@ function auditCore(rows,cfg){
     // v3.13: game lines also match by game + team code (the log may say "Sacramento State" where the board said "Hornets")
     const glSame = L => GL_KINDS.test(r.kind||'') && r.kind!=='total' && (L.kind||'')===(r.kind||'') && teamsOf(r.game) && gameKey(L.game)===gameKey(r.game) &&
       ((L.team && r.team && normAbbr(L.team)===normAbbr(r.team)) || String(L.name||'').toLowerCase()===String(r.name||'').toLowerCase());
+    /* v4.14 (Alonzo: "I am still seeing Kalshi slips I made on the board"): an exchange row also knows its market code from the prices the
+       app read for it (r._openQ, r._shopQ, r._altQ, r._par: ref + side). A bet logged from that book's fill keeps the same code (fillRef), so it
+       matches even when the book words the bet differently; and an order still waiting at that book (myOrders, /mine/orders) is placed too. */
+    const exSrc=LIVE_BOOK(r.book), exNm={kalshi:'Kalshi',poly:'Polymarket US',novig:'Novig'}[exSrc];
+    const exQs=exSrc?[r._openQ, r._shopQ&&r._shopQ[exNm], r._altQ&&r._altQ[exNm], r._par&&r._par[exSrc]].filter(q=>q&&q.ok&&q.src===exSrc&&q.ref):[];
+    const exHit=x=>exQs.some(q=>{ try{ return quoteMatchesFill(q,x); }catch(e){ return false; } });
     const prior = logged.find(L=>onBoard(L) && coreKey(L.name,L.market,sideOf(L))===coreKey(r.name,r.market,r.side))
-               || logged.find(L=>onBoard(L) && glSame(L) && L.market===r.market);
+               || logged.find(L=>onBoard(L) && glSame(L) && L.market===r.market)
+               || (exQs.length ? logged.find(L=>onBoard(L) && !L.sold && L.fillRef && L.fillBook===exSrc && exHit({book:L.fillBook, ref:L.fillRef, side:L.fillSide, outcome:L.fillOutcome})) : null);   // v4.14
+    delete r.waitOrder;
+    if(!prior && exQs.length && myOrders && Array.isArray(myOrders.orders)){   // v4.14: placed at the book, not filled yet
+      const o=myOrders.orders.find(o=>o && o.book===exSrc && o.ref && exHit({book:o.book, ref:o.ref, side:o.side, outcome:o.outcome}));
+      if(o){ r.waitOrder=o; r.flags.unshift(['dupe','ORDER WAITING on '+exNm+(o.qty!=null?': '+(+o.qty)+' shares':'')+(o.price!=null?' at '+Math.round(o.price*100)+'¢':'')+', not filled yet. It is placed: do not bet it again']); } }
     // v2.51: you already hold the OTHER side of this exact prop
     const otherSide = !prior && r.side && logged.find(L=>onBoard(L) && coreKey(L.name,L.market)===coreKey(r.name,r.market) && sideOf(L) && sideOf(L)!==r.side);
     // v2.56: same bet, but the line has moved since you took it (43.5 → 44.5)
@@ -2445,7 +2456,7 @@ function applyDayLimits(rows,cfg,slateDay){
     if(s>=cfg.sMin-1e-9){ r.stake=s; r.dayTrimmed=true; return true; }
     r.stake=0; delete r.contracts; r.flags.push(['warn',why]); return false;
   };
-  rows.filter(r=>r.stake>0 && !r.prior && !r.hiddenDup).sort((a,b)=>score(b)-score(a)).forEach(r=>{
+  rows.filter(r=>r.stake>0 && !r.prior && !r.waitOrder && !r.hiddenDup).sort((a,b)=>score(b)-score(a)).forEach(r=>{
     const day=rowDay(r,slateDay);
     if(r.longShot){
       const g=gameKey(r.game);
@@ -2516,7 +2527,7 @@ function render(rows,cfg){
   if(!pv && swc.only) shown=shown.filter(r=>isSweet(r,swc));
   // v2.62: three groups — bets to place, bets you already have, then everything to skip.
   // Your sort (or a column-header click) applies inside each group.
-  const grpOf=x=> x.prior ? 1 : isStarted(x) ? 3 : liveState(x)==='unconfirmed' ? 4 : (x.pass && x.stake>0 && !x.removed) ? 0 : 2;
+  const grpOf=x=> (x.prior||x.waitOrder) ? 1 : isStarted(x) ? 3 : liveState(x)==='unconfirmed' ? 4 : (x.pass && x.stake>0 && !x.removed) ? 0 : 2;
   shown.sort((a,b)=>{
     const ga=grpOf(a), gb=grpOf(b);
     if(ga!==gb) return ga-gb;
@@ -2598,7 +2609,7 @@ function render(rows,cfg){
     const started = r.gameInfo && (r.gameInfo.state==='in'||r.gameInfo.state==='post');
     // v2.61: anything you shouldn't place is greyed out (still readable on hover / with notes open)
     const isSkip = !r.prior && (!(r.stake>0) || r.removed || started || liveState(r)!=='open');   // v2.62: a game that already started can't be placed
-    tr.className = (r.pass?'':'out ') + (r.prior?'dupe':(r.corr?'corr':'')) + (started?' gameover':'') + (isSkip?' skiprow':'');
+    tr.className = (r.pass?'':'out ') + ((r.prior||r.waitOrder)?'dupe':(r.corr?'corr':'')) + (started?' gameover':'') + (isSkip?' skiprow':'');
     const gTag = !r.gameInfo ? '<span class="tag t-warn" title="ESPN didn\'t list this game in the next 4 days">game time not found</span>'
       : r.gameInfo.state==='post' ? '<span class="tag t-out">Final — '+esc(r.gameInfo.detail||'game over')+'</span>'
       : r.gameInfo.state==='in'   ? '<span class="tag t-warn">Live — started '+esc(giWhen(r.gameInfo))+'</span>'
@@ -3386,6 +3397,7 @@ function decisionHtml(r,cfg){
   // v2.58: several short lines under the decision
   const dl=(cls,txt,lines)=>'<div class="dec '+cls+'">'+txt+'</div><div class="meta dec-lines">'+lines.join('<br>')+'</div>';
   const has=re=>r.flags.some(f=>re.test(f[1]));
+  if(r.waitOrder && !r.prior){ const o=r.waitOrder; return dl('dec-done','ORDER WAITING', [(o.qty!=null?(+o.qty)+' shares':'order')+(o.price!=null?' at '+Math.round(o.price*100)+'¢':''), 'on '+esc(bookLabel(r.book)||'?')+', not filled']); }   // v4.14
   if(r.prior) return r.prior.sold ? d('dec-done','SOLD','cashed out')
     : dl('dec-done','ALREADY BET', [$(r.prior.stake||0)+' on', esc(bookLabel(r.prior.book)||'?')]);
   if(!r.pass) return d('dec-skip','SKIP', (r.flags.find(f=>f[0]==='out')||[,''])[1]);
@@ -7727,7 +7739,7 @@ function pkBest(legs,n){ const out=[], games=new Set();
    beats what every pick of a 2- to 6-pick entry needs to break even on the app and play you chose. The Sentinels re-check
    live prices first (that decides which bets stay single bets), then the board's Sentinels line links here. */
 let pkSentAt=0;
-function pkAlone(r){ return !!(r && r.pass && r.stake>0 && !r.prior && !r.removed && !r.moved && !r.glConflict); }   // the Place these test (isPlace)
+function pkAlone(r){ return !!(r && r.pass && r.stake>0 && !r.prior && !r.waitOrder && !r.removed && !r.moved && !r.glConflict); }   // the Place these test (isPlace)
 function pkSentBE(){ const pays=pkPays(pkState.app,pkState.play), be={}; Object.keys(pays).forEach(n=>{ be[n]=pkBreakEven(+n,pays[n]); }); return be; }
 function pkSentLegs(){ const be=pkSentBE(), need=Object.values(be).filter(x=>x!=null), floor=need.length?Math.min(...need):1;
   return pkLegs(window._pkRows||[]).filter(l=>pkPlayable(l) && !l.prior && l.p>=floor)
@@ -8452,7 +8464,7 @@ new MutationObserver(()=>_markGo()).observe(document.body,{childList:true,subtre
    Kalshi / Polymarket / Novig prices, including its own book when that's an exchange. The best price after fees
    becomes the row's price (better or worse), the board re-screens it, and rows that cross over are tagged:
    🔓 out of Skipping Jail · 🔒 sent to Skipping Jail. Fair value (cover %, consensus) stays from the last Pull. */
-const isPlace=r=>!!(r.pass && r.stake>0 && !r.prior && !r.removed && !r.moved && !r.glConflict);
+const isPlace=r=>!!(r.pass && r.stake>0 && !r.prior && !r.waitOrder && !r.removed && !r.moved && !r.glConflict);
 async function shopExchanges(){
   const btn=document.getElementById('shopBtn'), msg=document.getElementById('shopMsg'); if(!btn) return;
   const cfg=cfgRead(), have=cfg.books&&cfg.books.length?cfg.books:null;
@@ -9195,7 +9207,7 @@ async function syncOrders(force){
   if(live.length!==posts.length){ posts=live; savePosts(); }
   if(!force && Date.now()-ordersAt<55000){ renderPosts(); renderMakes(); return; }
   ordersAt=Date.now();
-  try{ const res=await fetch(API_BASE+'/mine/orders',{headers:apiHeaders()}); if(res.ok){ myOrders=await res.json(); } }catch(e){}
+  try{ const res=await fetch(API_BASE+'/mine/orders',{headers:apiHeaders()}); if(res.ok){ const was=JSON.stringify(myOrders&&myOrders.orders||[]); myOrders=await res.json(); if(JSON.stringify(myOrders&&myOrders.orders||[])!==was && lastRows.length) refresh(); } }catch(e){}   // v4.14: a waiting order moves its bet to Already bet
   renderMakes();
   if(!posts.length){ renderPosts(); return; }
   try{   // the market now, for each post
