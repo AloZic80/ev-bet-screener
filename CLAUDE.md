@@ -103,6 +103,11 @@
   v3.99: on a computer the tiles had `white-space:nowrap` (old `.tb-t` rule), so the longer lines ran into the next tile; they wrap now.
   Owner, 2026-11-06: "what you make for Phone mode also needs to look right in web browser mode". Check every layout change at
   phone (390) and computer widths (1000, 1280, 1960); `tests/money-test.js` checks the Today card at all four.
+- IN PLAY (v4.07, owner: "do not say lost, say IN PLAY and put it in grey, unless I already lost it"): `heldValue` counts a bet whose
+  game is playing as $0 (`d` = its stake in play); only settled bets are won or lost (replaces the v3.08/v3.98 "counts as gone" rule).
+  Today card: the pill is settled only (UP / DOWN), with a grey `.tb-pill.inplay` "IN PLAY $x"; worst (if everything playing loses) is
+  grey. Calendar: a day's colour and W/L come from settled bets only, with grey "▶ $x in play" and "⏳ $y to play" lines (`playingAmt`);
+  best/worst day and the chart use settled days only. Bets by game day: "$x in play" in grey.
 - Performance calendar (v4.00, `calDays`, `renderCal`): money on games not started is grey (`.cal-tp`, `toPlayAmt`), never green or red;
   a day with only unstarted games is a grey amount (`.cal-c.tp`) and is not a best or worst day. ▶ marks games playing (hidden on a phone).
 - Today card days (v4.01, `tbDay`, `.tb-day`): ‹ › step a day back or forward and "Today" comes back; the label shows the day
