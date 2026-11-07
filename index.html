@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.21</title>
+<title>0xBeta Screener v4.22</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1157,6 +1157,27 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 .sc-why .kx-how{margin:0}
 .sc-notes .tags{margin:0}
 .sc-more{display:flex; gap:8px}
+/* v4.22 (Alonzo: "on the Mac it is confusing, two boxes side by side; on a computer I prefer one per line, and side to side"): one card per
+   line everywhere; on a wide screen each card lays its parts out in a row: score | who and the game | the bet and the price | buttons,
+   with the tags and the Kalshi line under it and Why this play? across the bottom. Phones keep the stacked card. */
+#placeCards.sc-grid{grid-template-columns:1fr; container-type:inline-size; container-name:sclist}
+@container sclist (min-width:760px){
+  .pcard.sc-card{display:grid; grid-template-columns:minmax(150px,190px) minmax(240px,1.15fr) minmax(330px,1.5fr) auto; grid-template-areas:"top who bet act" "tags tags kx kx" "why why why why"; align-items:center; column-gap:6px}
+  .sc-card>.sc-top{grid-area:top; align-self:stretch; flex-wrap:wrap; align-content:center; gap:6px; padding:12px 6px 12px 16px}
+  .sc-card>.sc-top .sc-score{font-size:34px; flex-basis:100%}
+  .sc-why-b{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); column-gap:16px; align-items:start}
+  .sc-why-b>.sc-grid2{grid-column:1/-1}
+  .sc-why-b>.sc-chart{grid-row:span 3}
+  .sc-card>.sc-who{grid-area:who; flex-wrap:wrap; padding:12px 6px}
+  .sc-card>.sc-who .sc-game{flex:1 1 100%; flex-direction:row; flex-wrap:wrap; align-items:baseline; justify-content:flex-start; gap:0 8px; text-align:left; min-width:0}
+  .sc-card>.sc-tags{grid-area:tags; padding:0 16px 10px}
+  .sc-card>.sc-bet{grid-area:bet; margin:10px 0; border:1px solid var(--rule-2); border-radius:12px}
+  .sc-card>.sc-kx{grid-area:kx; padding:0 16px 10px 6px; justify-content:flex-end}
+  .sc-card>.sc-act{grid-area:act; flex-direction:column; align-items:stretch; padding:12px 16px 12px 8px}
+  .sc-card>.sc-act .pp-open{margin:0; text-align:center}
+  .sc-card>.sc-why{grid-area:why}
+  .sc-card>.editor{grid-column:1/-1}
+}
 </style>
 </head>
 <body>
@@ -1165,7 +1186,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.21</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.22</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1830,7 +1851,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 
 </div>
 <script>
-const SCREENER_VERSION='v4.21';
+const SCREENER_VERSION='v4.22';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3101,7 +3122,7 @@ function placeCardHtml(r,cfg,o){
   const lim=r.risk?'⚠ small on purpose':r.outlier?'outlier: capped':(r.capTrimmed||r.dayTrimmed)?'limited by your caps':r.longShot?'long shot: small':'';
   const mv=pxMove(r), mvTxt=mv&&Math.abs(mv.dp)>=0.01?'<span class="sc-pill mv '+(mv.dp<0?'good':'bad')+'" title="The price '+(mv.dp<0?'fell':'rose')+' from '+pp(mv.from)+' to '+pp(mv.to)+' in '+mv.mins+' min">'+(mv.dp<0?'↘':'↗')+' '+(mv.dp>0?'+':'−')+(Math.abs(mv.dp)*100).toFixed(1)+' pts</span>'
                       : mv&&mv.df!=null&&Math.abs(mv.df)>=0.015&&Math.abs(mv.dp)<0.005?'<span class="sc-pill mv good" title="The fair price moved '+(mv.df>0?'+':'−')+(Math.abs(mv.df)*100).toFixed(1)+' points in '+mv.mins+' min; '+esc(bk)+' has not moved">fair '+(mv.df>0?'↗':'↘')+' · '+esc(bk)+' behind</span>':'';
-  const warns=(r.flags||[]).filter(f=>f[0]==='warn' && !/ order (“|in this game)/.test(f[1])).map(f=>'<span class="tag t-warn">'+esc(f[1])+'</span>').join('');
+  const warns=(r.flags||[]).filter(f=>f[0]==='warn' && !/ order (“|in this game)/.test(f[1]) && !/^×\d+$/.test(f[1])).map(f=>'<span class="tag t-warn">'+esc(f[1])+'</span>').join('');
   const tags=orderTagHtml(r)+injTagHtml(r)+wxTagHtml(r)+(o.sweet?'<span class="sweet">🎯 SWEET SPOT</span>':'')+shopTagHtml(r)+warns+'<span class="mk-slot" data-idx="'+r.idx+'">'+makeTagHtml(r)+'</span>';
   const open=notesAll || scOpenSet().has(pxKey(r));
   const nS=r.stars==null?null:Math.max(0,Math.min(5,Math.round(r.stars)));
