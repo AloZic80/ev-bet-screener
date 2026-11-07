@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.08</title>
+<title>0xBeta Screener v4.09</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1024,6 +1024,12 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 .cal-tp{color:var(--soft); font-weight:600}
 .cal-c .v .cal-tp-s{display:block; font-size:11px}
 .cal-big .cal-tp{font-size:.6em}
+/* v4.09: what to type on Kalshi */
+.kx-how{margin:0 14px 12px; padding:10px 12px; border:1px solid var(--accent); border-radius:10px; text-align:left; white-space:normal}
+.kx-h{font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--soft); margin-bottom:6px}
+.kx-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px}
+.kx-b{display:flex; flex-direction:column; gap:1px; padding:6px 8px; border-radius:8px; background:var(--panel-2)}
+.kx-l{font-size:11.5px; color:var(--soft)} .kx-v{font-size:18px; color:var(--ink)} .kx-n{font-size:11.5px; color:var(--soft)}
 /* v4.07: money in play is grey: not won, not lost yet */
 .tb-inplay{color:var(--soft); font-weight:700}
 .tb-pill.inplay{color:var(--soft); background:transparent; border:1.5px solid var(--rule)}
@@ -1052,7 +1058,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.08</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.09</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1710,7 +1716,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 
 </div>
 <script>
-const SCREENER_VERSION='v4.08';
+const SCREENER_VERSION='v4.09';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2878,7 +2884,7 @@ function placeCardHtml(r,cfg,o){
       pcCell('Screener', decisionHtml(r,cfg)+'<div class="pc-btns"><button class="log sm bet-btn" data-idx="'+r.idx+'">'+(r.moved?'Add this line too':'I bet this')+'</button>'+
         '<button class="log sm parlay'+(inParlay(r)?' on':'')+' parlay-btn" data-idx="'+r.idx+'" title="Mark as used in a parlay">'+(inParlay(r)?'In parlay ✓':'Parlay')+'</button>'+
         '<button class="log sm share-btn" data-idx="'+r.idx+'" title="Send this bet to someone — with the same link the logo opens: the slip with the side, line and the screener stake filled in (they can change it). Your bankroll, EV and log do not go with it.">📤 Share</button></div>')+
-    '</div>'+
+    '</div>'+kalshiHowHtml(r)+   // v4.09: what to type on Kalshi, across the card
     (o.nTags?'<div class="pc-foot"><button class="ntog" data-nkey="'+esc(o.nKey)+'" aria-expanded="'+o.nOpen+'" title="Show or hide the notes for this bet"><span class="dot '+o.worst+'"></span>'+(o.nOpen?'▾ ':'▸ ')+o.nTags+' note'+(o.nTags===1?'':'s')+'</button>'+(o.nOpen?'<div class="tags">'+o.tags+'</div>':'')+'</div>':'')+
   '</div>';
 }
@@ -3009,8 +3015,8 @@ function openBetEditor(tr, r, opt){
       '<label title="The profit (your stake not included). When you type it, that is what the bet pays, fee or no fee. Leave Odds blank and this + Stake gives the odds.">To win $ <input class="eb-win-o" type="number" step="0.01" placeholder="optional" style="width:90px"></label></span>'+
     '<span class="pm-fields eb-pm">'+
       '<label>Cost $ <input class="eb-cost" type="number" step="0.01" placeholder="2.50"></label>'+
-      '<label>@ <input class="eb-pct" type="number" step="0.1" placeholder="62" style="width:60px">%</label>'+
-      '<label title="Type exactly what the slip says (what you get back if it wins: cost + profit; a number below the cost is read as profit). What you type stays — Cost + To win is the real deal, the @ % stays as the listed price.">To win $ <input class="eb-win" type="number" step="0.01" placeholder="3.93"></label>'+
+      '<label><span class="eb-pct-l">@</span> <input class="eb-pct" type="number" step="0.1" placeholder="62" style="width:60px"><span class="eb-pct-u">%</span></label>'+
+      '<label title="Type exactly what the slip says (what you get back if it wins: cost + profit; a number below the cost is read as profit). What you type stays — Cost + To win is the real deal, the @ % stays as the listed price."><span class="eb-win-l">To win $</span> <input class="eb-win" type="number" step="0.01" placeholder="3.93"></label>'+
       '<span class="pm-calc eb-calc"></span></span>'+
     (lateRow?'<label title="The game has started. Logging it after the fact? Set how it went and it is saved as graded by you.">Result <select class="eb-res-new"><option value="">Not settled yet</option><option value="win">Won</option><option value="loss">Lost</option><option value="push">Push / void</option></select></label>'+
       (late4?'<span class="meta eb-late" style="color:var(--warn)">Started over 4 hours ago, so it will not grade itself: set Result, or mark it later in the Bet log</span>':''):'')+   // v3.57
@@ -3180,6 +3186,8 @@ function openBetEditor(tr, r, opt){
   }
   ed.querySelectorAll('input,select').forEach(x=>{ x.addEventListener('input',showCheck); x.addEventListener('change',showCheck); });
   bookSel.addEventListener('change',bookDefault); modeSel.addEventListener('change',syncMode); bookDefault(); pmSync(null); showCheck();
+  { const kw=()=>{ const k=/kalshi/i.test(bookSel.value), t=(c,v)=>{ const e=ed.querySelector(c); if(e) e.textContent=v; }; t('.eb-pct-l', k?'Price':'@'); t('.eb-pct-u', k?'¢':'%'); t('.eb-win-l', k?'Max payout $':'To win $'); };   // v4.09: Kalshi's own words (Price in ¢ = %, Max payout = shares × $1)
+    bookSel.addEventListener('change',kw); kw(); }
   // v2.88: live exchange price for this bet on Kalshi / Polymarket / Novig — EV re-checked at that price
   { const liveEl=document.createElement('span'); liveEl.className='meta eb-live'; ed.querySelector('.eb-rec').after(liveEl);
     let tok=0, lastQ=null, pctTyped=false;
@@ -8210,6 +8218,25 @@ function pickPayHtml(r){
   return '<span class="pp ok" title="What the slip should show for $'+st.toFixed(2)+payTip+'">✓ '+show(p)+payTxt+'</span>'+
     '<span class="pp-sub">'+evTxt+(evTxt?' · ':'')+'OK up to '+show(mx)+'</span>'+open;
 }
+/* v4.09 (Alonzo: "so I do not get confused on what to put on Kalshi to get the bet La Contadora approved"): Kalshi asks for SHARES and a
+   LIMIT PRICE, not dollars. Typing the card's $1.62 as shares bought half the bet ($0.88). This says what to type, in Kalshi's words:
+   the button (YES / NO), Shares = the stake ÷ (limit price + Kalshi's fee), Limit price = La Contadora's most, in whole cents, rounded
+   down, and what Cost and Max payout should then read. Each share pays $1. */
+function kalshiHow(r,st,p,mx){ if(!(st>0) || !(mx>0)) return null; const fees=cfgRead().fees;
+  const lim=Math.floor(mx*100+1e-9); if(lim<1) return null; const L=lim/100, per=L*(1+feeRate('Kalshi',L,fees));
+  const shares=Math.floor(st/per*100+1e-6)/100, cost=+(shares*per).toFixed(2), side=r.side||'';
+  const what=GL_KINDS.test(r.kind||'') && r.kind!=='total' ? (r.team||r.name)+(r.kind==='spread'?' '+String(r.market||'').replace(/\s*Spread$/i,''):' wins') : (r.kind==='prop'?r.name+' ':'')+'Over '+String(r.market||'').replace(/^([+-]?[\d.]+)\s*/,'$1 ');
+  return {btn: side==='U'?'NO':'YES', what, shares, lim, cost, payout:shares, underNote: side==='U'}; }
+function kalshiHowHtml(r){   // a full-width strip on the card: one box per thing to type, in the order Kalshi asks
+  if(LIVE_BOOK(r.book)!=='kalshi' || r.fairProb==null || !(r.offeredProb>0 && r.offeredProb<1)) return '';
+  const st=+r.stake||0, mx=maxPriceFor(r.fairProb, r.book, cfgRead().eMin); if(!(st>0) || mx==null || r.offeredProb>mx+1e-9) return '';
+  const k=kalshiHow(r,st,r.offeredProb,mx); if(!k) return '';
+  const box=(lbl,val,note)=>'<div class="kx-b"><span class="kx-l">'+lbl+'</span><b class="kx-v">'+val+'</b>'+(note?'<span class="kx-n">'+note+'</span>':'')+'</div>';
+  return '<div class="kx-how" title="What to type on Kalshi for La Contadora\'s bet"><div class="kx-h">On Kalshi, enter</div><div class="kx-row">'+
+    box('1 · Press', k.btn, esc(k.what)+(k.underNote?' (NO on the Over = the Under)':''))+
+    box('2 · Shares', k.shares.toFixed(2), 'not '+st.toFixed(2)+': that is the cost')+
+    box('3 · Limit price', k.lim+'¢', 'La Contadora\'s most, never higher')+
+    box('Then check', 'Cost ≈ $'+k.cost.toFixed(2), 'Max payout $'+k.payout.toFixed(2))+'</div></div>'; }
 // v3.07: your open Make orders (read-only, from the books) on the row they belong to — WAITING FOR TAKER
 function makesFor(r){
   const O=(myOrders&&myOrders.orders)||[]; if(!O.length || !r) return [];
