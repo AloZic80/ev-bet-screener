@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.05</title>
+<title>0xBeta Screener v4.06</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1048,7 +1048,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.05</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.06</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1706,7 +1706,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 
 </div>
 <script>
-const SCREENER_VERSION='v4.05';
+const SCREENER_VERSION='v4.06';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -7560,6 +7560,16 @@ const pkDfsKey=(name,stat)=>nrm(name)+'|'+statFam(stat);
    board likes by itself: good alone (Place these), an outlier, a small-risk bet, or +EV alone. A slip must hit at least
    pkState.slipMinHit of the time (5% = 1 in 20 by default). Slips are ranked most likely to win first. */
 function pkComboOk(l){ return l.p*l.mult>1 && l.p>=(pkState.minPC!=null?pkState.minPC:0.20) && (pkState.goodOnly===false || l.good); }
+/* v4.06 (Alonzo: "I logged a parlay, yet it still shows as an option to bet"): Log this entry only remembered it until the page reloaded,
+   and its picks stayed in the pool. Now every pick already in a parlay in your Bet log (from the last 2 days) is already bet, like on the
+   Board: it leaves the entries, slips and pick lists, and the note says how many. */
+function pkLegKey(name,line,stat,side){ return [name, String(line||'')+' '+String(stat||''), side||''].map(x=>String(x).toLowerCase().replace(/\s+/g,' ').trim()).join('|'); }
+function pkLoggedLegKeys(){ const k=new Set(), from=ctDay(Date.now()-2*86400e3);
+  logged.forEach(b=>{ if(b.kind!=='parlay' || !b.parlay || !b.parlay.pk || !Array.isArray(b.parlay.pk.legs) || (b.date||'')<from) return;
+    b.parlay.pk.legs.forEach(l=>{ const m=String(l.market||'').match(/^([+-]?[\d.]+)\s*(.*)$/); k.add(pkLegKey(l.name, m?m[1]:'', m?m[2]:l.market, l.side)); }); });
+  return k; }
+function pkNotLogged(legs){ const k=pkLoggedLegKeys(); if(!k.size){ window._pkInLogged=0; return legs; }
+  const out=legs.filter(l=>!k.has(pkLegKey(l.name,l.line,l.stat,l.side))); window._pkInLogged=legs.length-out.length; return out; }
 function pkLegsPriced(rows,app){   // v3.59: a combo app: legs it offers on the board, at its price, its fee off each leg
   const m=new Map(), fees=cfgRead().fees;
   (rows||[]).forEach(r=>{ if(!(r.kind==='prop' || GL_KINDS.test(r.kind||''))) return; if(!bookIsMine(r.book, app)) return;
@@ -7573,7 +7583,7 @@ function pkLegsPriced(rows,app){   // v3.59: a combo app: legs it offers on the 
     const cur=m.get(leg.key); if(!cur || leg.p*leg.mult>cur.p*cur.mult) m.set(leg.key,leg); });
   return [...m.values()].sort((a,b)=>b.p-a.p); }   // v3.64: most likely first (was the biggest edge, which favoured longshots)
 function pkLegs(rows){ const app=pkState.app, m=new Map(), dk=PK_DFS.key[app];
-  if(pkPriced(app)) return pkLegsPriced(rows,app);   // v3.59
+  if(pkPriced(app)) return pkNotLogged(pkLegsPriced(rows,app));   // v3.59   // v4.06: not the picks you already logged
   const ownBook=b=>(app==='PrizePicks' && /prizepicks/i.test(b||'')) || (app==='Underdog' && /underdog/i.test(b||'') && !isPredBook(b));   // v3.59: Underdog's own rows too   // PrizePicks rows from BettingPros are its own lines; Pick6 has none there
   (rows||[]).forEach(r=>{ if(r.kind!=='prop') return; const p=r.blendProb!=null?r.blendProb:r.fairProb; if(!(p>0&&p<1)) return;
     const st=liveState(r); if(st==='started'||st==='closed') return;
@@ -7588,7 +7598,7 @@ function pkLegs(rows){ const app=pkState.app, m=new Map(), dk=PK_DFS.key[app];
       why: r.pass ? 'also a single bet on the board' : (out ? (/DFS pick/.test(out[1]) ? bookLabel(r.book)+' pick’em line' : out[1]) : 'below the board’s screens'), mkt:r.mktProb, model:r.fairProb};
     const rank=l=>(l.dfs==='own'?4:l.dfs==='unknown'?2:1)+(l.pref?0.5:0);   // the app's own line first, then unchecked, then the rest; DraftKings breaks ties for Pick6
     const cur=m.get(leg.key); if(!cur || rank(leg)>rank(cur) || (rank(leg)===rank(cur) && leg.p>cur.p)) m.set(leg.key,leg); });
-  return [...m.values()].sort((a,b)=>b.p-a.p); }
+  return pkNotLogged([...m.values()].sort((a,b)=>b.p-a.p)); }   // v4.06
 // legs that can go in an entry: the app's own line, or not looked up yet ("check line"); never one the app shows at another line or not at all
 const pkPlayable=l=>l.dfs==='own'||l.dfs==='unknown';
 // look up the app's lines for the games the best picks come from (at most 6 games; credits = games x 4 stats)
@@ -7756,6 +7766,7 @@ function renderParlays(){
     : !pkRows.length ? 'Nothing loaded yet. Load a board first: every prop on it that hasn’t started is a possible pick.'
     : (app==='PrizePicks' && !own ? 'No PrizePicks lines on this board. Turn on <b>PrizePicks</b> under Settings, Books you bet, and Load again: BettingPros then brings PrizePicks’ own lines. Until then, picks use sportsbook lines, so check each line in the app.' : '')
     + (app!=='PrizePicks' && !legs.some(l=>l.dfs==='own') ? 'BettingPros doesn’t carry Pick6 lines, so until you look them up these picks use sportsbook lines (DraftKings’ first). Check each line in Pick6, or press Get Pick6 lines.' : '');
+  if(window._pkInLogged) document.getElementById('pkNote').insertAdjacentHTML('beforeend',' <span class="pk-inlog">🔒 '+window._pkInLogged+' pick'+(window._pkInLogged===1?'':'s')+' already in an entry you logged '+(window._pkInLogged===1?'is':'are')+' left out, as on the Board.</span>');   // v4.06
   { const plan=pkDfsPlan(), el=document.getElementById('pkDfs');   // look up the app's own lines (NFL and NBA)
     if(el && !PK_DFS.key[app]) el.innerHTML='';   // v3.59: only for apps The Odds API lists lines for
     else if(el) el.innerHTML='<button type="button" class="log sm" id="pkDfsGo"'+(pkDfs.busy||!plan.length?' disabled':'')+'>Get '+esc(appName)+' lines</button> '+

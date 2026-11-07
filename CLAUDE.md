@@ -208,6 +208,9 @@
   the size's break-even + 1 point, rounded to 0.5 (PrizePicks Power 4-Leg 57%). Combos: each pick 40%, slip hits 20/10/5/3/2%
   for 2-6 legs. The note `#pkRec` says what is recommended and offers "use it" after the owner types their own.
   v3.92: on combo apps the pick'em boxes (Power/Flex `#pkPlay`, Picks from `#pkMinPL`) are hidden by a CSS rule; `hidden` alone lost to display:flex.
+- Logged entries (v4.06, `pkNotLogged`, `pkLoggedLegKeys`): a pick already in a parlay in the Bet log (last 2 days, `parlay.pk.legs`) is
+  already bet: `pkLegs` / `pkLegsPriced` leave it out of entries, slips and pick lists, and `#pkNote` says how many. Before, Log this entry
+  only remembered it in memory (`_pkLogged`) until a reload, and its picks stayed in the pool.
 - Every leg shows where it plays (`pkWhere`: sport · team · game · time) on the Sentinels' list, slip cards and the pick list.
 - **Get Pick6 lines** (and PrizePicks) calls the Worker's `/src/odds?src=oddsapi_events` and `src=oddsapi_props` (The Odds API,
   region `us_dfs`, JSON passed through unchanged; see `agent-notes/`). Only the games of the best NFL/NBA picks, at most 6 per press,
