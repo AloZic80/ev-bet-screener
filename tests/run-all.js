@@ -37,6 +37,7 @@ const runs = [
   ['On an iPhone the prefilled slip waits as a real link, so the book app opens; Mac unchanged', 'slip-app-test.js', []],
   ['Texas: a bet at a book you do not bet moves to your best book (board row or live Novig/Kalshi/Polymarket), screened at that price', 'texas-swap-test.js', []],
   ['Calendar: in play is never a loss; best and worst day, this month and ever, from real results only (Alonzo\'s November)', 'cal-worst-test.js', []],
+  ['v4.19: a parlay or single you typed in counts as already bet on the Parlays tab (however the legs are written)', 'manual-parlay-test.js', []],
   ['v4.18: the card says when you already have an order on that team (this game, another game, the other team)', 'order-tag-test.js', []],
   ['v4.17: orders waiting at your books: Bet log box, a line at the top, and the reason when they cannot be read', 'log-orders-test.js', []],
   ['v4.16: startup with bets from your books (full team names): the whole page loads (v4.15 stopped halfway)', 'startup-test.js', []],
