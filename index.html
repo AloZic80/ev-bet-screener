@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.07</title>
+<title>0xBeta Screener v4.08</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1043,7 +1043,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 .tb-day{padding:0 8px; height:22px; line-height:20px; border-radius:6px; border:1px solid var(--rule); background:transparent; color:var(--accent); font-size:14px; font-weight:700; cursor:pointer}
 .tb-day:hover{border-color:var(--accent)} .tb-day.tb-back{font-size:11px; letter-spacing:0}
 @media (max-width:900px){ .tb-day{min-height:32px; min-width:32px} }
-@media (max-width:640px){ .cal-c .v{font-size:10px; letter-spacing:-.02em; white-space:nowrap} .cal-c{padding:4px 2px} .cal-tp-w, .cal-pl{display:none} .cal-c .v .cal-tp-s{font-size:9px} }
+@media (max-width:640px){ .cal-c .v{font-size:10px; letter-spacing:-.02em; white-space:nowrap} .cal-c{padding:4px 2px} .cal-tp-w, .cal-pl, .cal-cur{display:none} .cal-c .v .cal-tp-s{font-size:9px} }   /* v4.08: + no $ in the day boxes */
 </style>
 </head>
 <body>
@@ -1052,7 +1052,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.07</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.08</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1710,7 +1710,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 
 </div>
 <script>
-const SCREENER_VERSION='v4.07';
+const SCREENER_VERSION='v4.08';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -8026,7 +8026,13 @@ function renderCal(){
   const mEl=document.getElementById('calMonthTot'); mEl.className='cal-big '+(tot.p>0.005?'up':tot.p<-0.005?'dn':''); mEl.textContent=usd(tot.p);
   document.getElementById('calSub').textContent=(calBook==='All'?'all books':calBook);
   document.getElementById('calFoot').innerHTML='<span>Days: <b>'+tot.up+' up · '+tot.dn+' down</b></span><span>Bets: <b>'+tot.n+'</b> · W–L'+(tot.pu?'–P':'')+' <b>'+tot.w+'–'+tot.l+(tot.pu?'–'+tot.pu:'')+'</b></span><span>Staked <b>$'+tot.st.toFixed(2)+'</b></span>'+
-    (isFinite(tot.best)?'<span>Best day <b style="color:var(--live)">'+usd(tot.best)+'</b> · worst <b style="color:var(--out)">'+usd(tot.worst)+'</b></span>':'');
+    (()=>{ /* v4.08 (Alonzo: "worst is only REAL DATA ... the worst day in history"): best and worst count settled bets only (money in play is not a loss), with their day; plus the worst day ever */
+      const dl=d=>new Date(d+'T12:00:00Z').toLocaleDateString('en-US',{weekday:'short',month:'numeric',day:'numeric',timeZone:'UTC'});
+      const pick=(keys,f)=>keys.filter(d=>days[d].settled).reduce((a,d)=>a==null||f(days[d].profit,days[a].profit)?d:a,null);
+      const all=Object.keys(days).filter(d=>d<=today), bD=pick(inMonth,(x,y)=>x>y), wD=pick(inMonth,(x,y)=>x<y), eB=pick(all,(x,y)=>x>y), eD=pick(all,(x,y)=>x<y);   // v4.08: + best and worst day ever
+      const col=v=>v>=0?'var(--live)':'var(--out)';
+      return (bD?'<span>Best day <b style="color:'+col(days[bD].profit)+'">'+usd(days[bD].profit)+'</b> <span class="meta">'+esc(dl(bD))+'</span> · worst <b style="color:'+col(days[wD].profit)+'">'+usd(days[wD].profit)+'</b> <span class="meta">'+esc(dl(wD))+'</span></span>':'')+
+        (eB?'<span>Ever: best <b style="color:'+col(days[eB].profit)+'">'+usd(days[eB].profit)+'</b> <span class="meta">'+esc(dl(eB))+'</span> · worst <b style="color:'+col(days[eD].profit)+'">'+usd(days[eD].profit)+'</b> <span class="meta">'+esc(dl(eD))+'</span></span>':''); })();
   document.querySelectorAll('.cal-seg button').forEach(b=>b.classList.toggle('on',b.dataset.v===calView));
   if(calView==='chart'){
     let run=0; const pts=[]; for(let d=1; d<=nd; d++){ const k=calMonth+'-'+String(d).padStart(2,'0'); const x=days[k]; const has=!!(x&&x.settled); /* v4.00 */ /* v4.07: settled only */ const v=has?x.profit:0; run+=v; pts.push({d,v,run,has,fut:k>today}); }
@@ -8050,8 +8056,9 @@ function renderCal(){
     let cls='cal-c', t='', v='--', n='';
     if(x){ cls+=' has';
       const ip=x.playingAmt||0;   // v4.07 (Alonzo: "say IN PLAY, in grey, unless I already lost it"): only settled bets are won or lost
-      if(x.settled){ v=usd(x.profit); if(x.profit>0.005){cls+=' w';t='W';} else if(x.profit<-0.005){cls+=' l';t='L';} }
-      else if(x.open){ cls+=' tp'; v='<span class="cal-tp" title="games playing or not started: not won or lost yet">$'+(ip+x.toPlayAmt).toFixed(2)+'</span>'; }   // v4.00 (Alonzo): grey, not red, not green
+      const cu=a=>(a>0.005?'+':a<-0.005?'−':'')+'<span class="cal-cur">$</span>'+Math.abs(a).toFixed(2);   // v4.08: the $ is dropped on a phone so +20.88 fits the day
+      if(x.settled){ v=cu(x.profit); if(x.profit>0.005){cls+=' w';t='W';} else if(x.profit<-0.005){cls+=' l';t='L';} }
+      else if(x.open){ cls+=' tp'; v='<span class="cal-tp" title="games playing or not started: not won or lost yet"><span class="cal-cur">$</span>'+(ip+x.toPlayAmt).toFixed(2)+'</span>'; }   // v4.00 (Alonzo): grey, not red, not green
       if(ip && x.settled) v+='<div class="cal-tp cal-tp-s" title="games playing: not won or lost yet"><span class="cal-tp-w">▶ </span>$'+ip.toFixed(2)+'<span class="cal-tp-w"> in play</span></div>';
       if(x.toPlayAmt && x.settled) v+='<div class="cal-tp cal-tp-s" title="games not started: not counted yet"><span class="cal-tp-w">⏳ </span>$'+x.toPlayAmt.toFixed(2)+'<span class="cal-tp-w"> to play</span></div>';
       n=x.n+' bet'+(x.n===1?'':'s')+(x.open&&x.settled?' · '+x.open+' open':x.open&&!x.settled?(x.playing?' in play':' to play'):''); }
