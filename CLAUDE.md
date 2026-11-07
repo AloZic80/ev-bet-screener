@@ -167,6 +167,15 @@
   order on the same school in another game (`r.otherGameOrder`, title match, more than 36 h apart) says "is another game. This one is not
   placed"; a slip the book cannot find says which game to pick (card note, phone bar). Kalshi's college codes are not checked against ESPN's
   (kalshi.com is not reachable from the build machine). `tests/kalshi-game-test.js`.
+- v4.16: Bet log › Bets you took › Download (`csvDays`, `logCsv`, `#csvDay`, `#csvDl`): All days or one game day, one row per bet, newest
+  first; profit is `betProfit` (settled only, free bets count winnings only), parlays keep their legs; UTF-8 mark for Excel. Parlays: Send the
+  Sentinels (`#pkSentGo`) is on combo apps too. `pkBetTag` on every leg list (Sentinels' picks, slip and entry cards, pick list): "✓ you bet
+  this: single $x on Book", "order waiting on Book", or "in your Book parlay (n picks)" (logged parlays of the last 2 days, `parlay.pk.legs` or
+  the book's text legs; name or team code, line and side must match). `tests/csv-parlay-tags-test.js`.
+- Startup order (v4.16 fix, `nrmT`, `tests/startup-test.js`): v4.15's `giTeamFor` called `nrm`, a `const` defined near line 8700. A bet from
+  the books with a full team name and ESPN's game made the Bet log call it during startup, before that line ran: "Cannot access 'nrm' before
+  initialization" stopped the page halfway (no board, Sources, budget or Today card; localStorage untouched). Code that can run at startup must
+  use function declarations (hoisted, like `nrmT`), never a `const`/`let` helper defined further down. The startup test loads data like Alonzo's.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American
