@@ -214,6 +214,12 @@
   line everywhere (`#placeCards.sc-grid` is the `sclist` container); from 760 px wide (`@container sclist (min-width:760px)`) each card is a
   grid row: score | who + kickoff/game | the bet bar | buttons, tags and the Kalshi line under it, Why this play? across (two columns inside:
   numbers and score left, chart right). The ×N game-count flag stays in the notes, not on the card.
+- The board keeps its place (v4.23, `boardAnchor`, `boardAnchorBack`, `renderCore`, `window._bAnchor`; owner: "it refreshes and the board goes up,
+  I lose the bet"): `render` now wraps `renderCore`; before it, the first bet whose top is on the screen (card `data-pck`, or a table row's
+  `pxKey`) and its position are remembered, and after it the page scrolls so that bet is back at the same spot. Photos, injury and weather tags
+  fill in a moment after each redraw and push the bets down again; Safari (iPhone, Mac) has no scroll anchoring, so a ResizeObserver on
+  `#placeCards` and `#tbody` re-applies the anchor for 4 s after a redraw unless you scrolled, tapped or typed since. `tests/board-scroll-test.js`
+  (also with `overflow-anchor:none`, as in Safari).
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American

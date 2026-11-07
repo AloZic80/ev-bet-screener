@@ -37,6 +37,7 @@ const runs = [
   ['On an iPhone the prefilled slip waits as a real link, so the book app opens; Mac unchanged', 'slip-app-test.js', []],
   ['Texas: a bet at a book you do not bet moves to your best book (board row or live Novig/Kalshi/Polymarket), screened at that price', 'texas-swap-test.js', []],
   ['Calendar: in play is never a loss; best and worst day, this month and ever, from real results only (Alonzo\'s November)', 'cal-worst-test.js', []],
+  ['v4.23: background refreshes keep the bet you are looking at in place (also like Safari, with tags filling in later)', 'board-scroll-test.js', []],
   ['v4.21: the Sentinels cards: short card, Why this play? (remembered), score, freshness, price chart; phone and Mac', 'sentinel-card-test.js', []],
   ['v4.20: your orders mark the same bet on a card at any book (and with no ESPN team codes)', 'order-anybook-test.js', []],
   ['v4.19: a parlay or single you typed in counts as already bet on the Parlays tab (however the legs are written)', 'manual-parlay-test.js', []],
