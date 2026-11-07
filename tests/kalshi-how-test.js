@@ -17,12 +17,17 @@ const ROWS=[row(), row({name:'Jaylen Brown',team:'BOS',game:'LAL @ BOS',matchup:
   await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1500);
   const R=await p.evaluate(()=>{ const r=lastRows.find(x=>x.kind==='moneyline'), cfg=cfgRead(), mx=maxPriceFor(r.fairProb,r.book,cfg.eMin), k=kalshiHow(r,+r.stake,r.offeredProb,mx);
-    const card=[...document.querySelectorAll('#placeCards .pcard, #tbody tr')].map(x=>x.innerText.replace(/\s+/g,' ')).find(t=>/On Kalshi/i.test(t) && /wins/.test(t))||'';
-    return {stake:+r.stake, mx, k, card, fee:feeRate('Kalshi',(k?k.lim:0)/100,cfg.fees)}; });
+    // v4.21: the card is short now: one line says what to type; the four steps, explained, open in Why this play?
+    const el=[...document.querySelectorAll('#placeCards .pcard')].find(x=>/M-OH/.test(x.textContent) && /On Kalshi/i.test(x.textContent));
+    const short=el?el.innerText.replace(/\s+/g,' '):'';
+    if(el){ const d=el.querySelector('details.sc-why'); if(d) d.open=true; }
+    const card=el?el.innerText.replace(/\s+/g,' '):'';
+    return {stake:+r.stake, mx, k, card, short, fee:feeRate('Kalshi',(k?k.lim:0)/100,cfg.fees)}; });
   const k=R.k, per=k?(k.lim/100)*(1+R.fee):0;
   check('the limit is La Contadora\'s most in whole cents, rounded down (OK up to '+(R.mx*100).toFixed(1)+'% → '+(k&&k.lim)+'¢)', k && k.lim===Math.floor(R.mx*100+1e-9) && k.lim/100<=R.mx, {lim:k&&k.lim, mx:R.mx});
   check('shares = the stake ÷ (limit + Kalshi\'s fee), so Cost comes out at the stake, not half of it', k && Math.abs(k.cost-R.stake)<=0.02 && Math.abs(k.shares-Math.floor(R.stake/per*100)/100)<1e-9 && k.shares>R.stake*1.7, {stake:R.stake, shares:k&&k.shares, cost:k&&k.cost});
-  check('the card says: On Kalshi, enter · Press YES · (the team) wins · Shares N (not the cost) · Limit price N¢ · Cost about $ · Max payout $', /On Kalshi, enter/i.test(R.card) && /1 · Press YES M-OH wins/.test(R.card) && new RegExp('2 · Shares '+k.shares.toFixed(2)+' not '+R.stake.toFixed(2)).test(R.card) && new RegExp('3 · Limit price '+k.lim+'¢').test(R.card) && /Max payout \$/.test(R.card), R.card.slice(0,400));
+  check('v4.21: the short card says what to type in one line: On Kalshi · YES · Shares N · Limit N¢ · Cost ≈ $ (the stake)', new RegExp('On Kalshi YES Shares '+k.shares.toFixed(2)+' Limit '+k.lim+'¢ Cost ≈ \\$'+k.cost.toFixed(2),'i').test(R.short) && !/On Kalshi, enter/i.test(R.short), R.short.slice(0,400));
+  check('Why this play? opened: On Kalshi, enter · Press YES · (the team) wins · Shares N (not the cost) · Limit price N¢ · Cost about $ · Max payout $', /On Kalshi, enter/i.test(R.card) && /1 · Press YES M-OH wins/.test(R.card) && new RegExp('2 · Shares '+k.shares.toFixed(2)+' not '+R.stake.toFixed(2)).test(R.card) && new RegExp('3 · Limit price '+k.lim+'¢').test(R.card) && /Max payout \$/.test(R.card), R.card.slice(0,400));
   const U=await p.evaluate(()=>{ const r=lastRows.find(x=>x.name==='Jaylen Brown'); const mx=maxPriceFor(r.fairProb,r.book,cfgRead().eMin); return kalshiHow(r,+r.stake||2,r.offeredProb,mx); });
   check('an Under is NO on the Over', U && U.btn==='NO' && /Over 24\.5 Points/.test(U.what), U);
   // I bet this → the form uses Kalshi's words
