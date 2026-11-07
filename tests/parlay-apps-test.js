@@ -77,6 +77,14 @@ const BOARD=[prop('Leg One','AAA','BBB',20,0.60),prop('Leg Two','CCC','DDD',21,0
   const n0=await p.evaluate(()=>logged.length); await p.click('#pkSlips .pk-log'); await p.waitForTimeout(250); await p.click('#pkSlips .pk-log',{force:true}).catch(()=>{}); await p.waitForTimeout(250);
   const lg2=await p.evaluate(n0=>({added:logged.length-n0, btn:document.querySelector('#pkSlips .pk-log').textContent, msg:(document.querySelector('#pkSlips .pk-logged-msg')||{}).textContent||''}),n0);
   check('Log this entry: saved once (a second press does nothing), and the slip itself says so with a link to the Bet log', lg2.added===1 && /Logged/.test(lg2.btn) && /Saved in the Bet log/.test(lg2.msg), lg2);
+  // v4.06 (Alonzo: "I logged a parlay, yet it still shows as an option to bet"): its picks are already bet now, even after a reload
+  const loggedLegs=await p.evaluate(()=>logged[logged.length-1].parlay.pk.legs.map(l=>l.name).sort());
+  const after=async()=>p.evaluate(()=>{ renderParlays(); return {slips:[...document.querySelectorAll('#pkSlips .pk-card')].map(c=>c.innerText), legs:pkLegs(window._pkRows).map(l=>l.name), note:document.getElementById('pkNote').textContent}; });
+  let af=await after();
+  check('v4.06: the picks of the entry you logged leave the pick list and every slip, and the note says so', loggedLegs.every(n=>!af.legs.includes(n)) && /already in an entry you logged/.test(af.note), {loggedLegs, legs:af.legs, note:af.note.slice(-90)});
+  await p.reload(); await p.waitForTimeout(1500); await p.evaluate(()=>{ const t=document.querySelector('.tab[data-view="v-parlay"]'); if(t) t.click(); }); await p.waitForTimeout(300);
+  af=await after();
+  check('v4.06: still left out after a reload (it comes from your Bet log)', loggedLegs.every(n=>!af.legs.includes(n)), af.legs);
   check('combos hide the payout table and Power/Flex', await p.evaluate(()=>document.querySelector('.pk-pays-box').hidden && document.getElementById('pkPlay').hidden), true);
   check('no page errors', errs.length===0, errs);
   console.log(`\n${pass} passed, ${fail} failed`); await b.close(); process.exit(fail?1:0);

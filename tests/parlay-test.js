@@ -78,6 +78,8 @@ const blend=(r,w)=>r.mktProb+w*(r.fairProb-r.mktProb);
   await p.click('#pkCards .pk-card:nth-child(3) .pk-log'); await p.waitForTimeout(300);
   const L=await p.evaluate(()=>logged[logged.length-1]);
   check('Log this entry: a 4-pick PrizePicks parlay in the Bet log, pays 10× the stake', (await p.evaluate(()=>logged.length))===n0+1 && L.kind==='parlay' && L.book==='PrizePicks' && L.parlay.picks===4 && Math.abs(L.parlay.pays.all-L.stake*10)<0.01 && L.odds==='+900' && L.parlay.pk.legs.length===4, {book:L.book,picks:L.parlay.picks,stake:L.stake,pays:L.parlay.pays,odds:L.odds});
+  // v4.06: a logged entry's picks leave the pool (already bet); the math checks below need them, so take the test entry back out
+  await p.evaluate(()=>{ logged.pop(); saveLog(); renderParlays(); }); await p.waitForTimeout(200);
   // Flex
   await p.click('#pkPlay button[data-v="flex"]'); await p.waitForTimeout(300);
   const f5=await p.$eval('#pkCards .pk-card:nth-child(3)',c=>({h:c.querySelector('.pk-h').innerText, ev:(c.querySelector('.pk-ev')||{}).textContent||''}));
