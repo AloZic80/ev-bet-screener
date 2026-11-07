@@ -181,6 +181,11 @@
   each order (book, YES/NO, what, market title, shares at the limit = cost rounded up like Kalshi's Cash, filled, game time), the money held and
   "not bets yet; a filled order goes into the Bet log". Under the Today card: "N orders waiting at … · $x held · See them ›". When /mine/orders
   fails or returns `errors`, both say "Could not read your orders: …" instead of showing nothing. `tests/log-orders-test.js`.
+- The order on the card (v4.18, `orderTagHtml`, `.ord-tag`, `r.otherSideOrder`; owner: "put the note on the bet that is technically still open,
+  I need an identifier so I will not bet twice"): in `auditCore` an order is matched to a game-line row by Kalshi's team code (`o.bet.team`, NO =
+  the other team), or, when Kalshi's code is not ESPN's (BG for BGSU), the closer code in a market whose title names the school. Within 36 h it
+  is this bet (`waitOrder`, ORDER WAITING); further apart `otherGameOrder` ("another game: this one is not placed"); the other team in this game
+  `otherSideOrder`. The tag sits under the pick on the card and in the odds cell of the row. `tests/order-tag-test.js`.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American

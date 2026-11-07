@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.17</title>
+<title>0xBeta Screener v4.18</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1043,6 +1043,8 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 .kx-b{display:flex; flex-direction:column; gap:1px; padding:6px 8px; border-radius:8px; background:var(--panel-2)}
 .kx-other{margin-top:8px; font-size:12.5px; font-weight:600; color:var(--warn)}   /* v4.15 */
 /* v4.17: orders waiting at your books, top of the Bet log */
+.ord-tag{display:block; margin:4px 0; padding:4px 8px; border-radius:8px; font-size:12px; font-weight:600; line-height:1.3; white-space:normal; color:var(--warn); background:var(--warn-bg); border:1px solid var(--warn)}   /* v4.18 */
+.ord-tag.dupe{color:var(--ink)}
 .orders-top{margin-top:8px; padding:8px 12px; border:1px dashed var(--warn); border-radius:10px; font-size:13px; color:var(--ink)}
 .orders-top[hidden]{display:none} .ot-err{color:var(--warn); font-weight:600}
 .log-orders h3{margin:0 0 4px; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--soft)}
@@ -1077,7 +1079,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.17</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.18</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1741,7 +1743,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 
 </div>
 <script>
-const SCREENER_VERSION='v4.17';
+const SCREENER_VERSION='v4.18';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2229,11 +2231,27 @@ function auditCore(rows,cfg){
                || (exQs.length ? logged.find(L=>onBoard(L) && !L.sold && L.fillRef && L.fillBook===exSrc && exHit({book:L.fillBook, ref:L.fillRef, side:L.fillSide, outcome:L.fillOutcome})) : null);   // v4.14
     delete r.waitOrder; delete r.otherGameOrder;
     if(!prior && exSrc && myOrders && Array.isArray(myOrders.orders)){   // v4.15: also rows with no exchange price read yet   // v4.14: placed at the book, not filled yet
-      const o=myOrders.orders.find(o=>o && o.book===exSrc && o.action!=='sell' && ((o.ref && exHit({book:o.book, ref:o.ref, side:o.side, outcome:o.outcome})) || (o.bet && o.bet.kind!=='other' && (()=>{ try{ return betMatches(o.bet, r); }catch(e){ return false; } })())));   // v4.15: + what the order is
-      if(!o && GL_KINDS.test(r.kind||'') && r.kind!=='total'){   // v4.15: an order on the same team in ANOTHER game (another day): say this one is not placed
-        const me=giTeamFor(r, r.team||r.name), sch=me?nrmT(me.loc||me.name).replace(/\bstate\b/g,'st'):'', rd=r.gameInfo&&r.gameInfo.startISO?Date.parse(r.gameInfo.startISO):NaN;
-        if(sch && !isNaN(rd)) r.otherGameOrder=myOrders.orders.find(o=>o && o.book===exSrc && o.action!=='sell' && o.title && (' '+nrmT(o.title).replace(/\bstate\b/g,'st')+' ').includes(' '+sch+' ') && o.bet && o.bet.start && Math.abs(Date.parse(o.bet.start)-rd)>36*3600e3)||null;
-        if(r.otherGameOrder) r.flags.push(['warn','Your Kalshi order “'+(r.otherGameOrder.title||'')+'” is another game: this one is not placed']); }
+      let o=myOrders.orders.find(o=>o && o.book===exSrc && o.action!=='sell' && ((o.ref && exHit({book:o.book, ref:o.ref, side:o.side, outcome:o.outcome})) || (o.bet && o.bet.kind!=='other' && (()=>{ try{ return betMatches(o.bet, r); }catch(e){ return false; } })())));   // v4.15: + what the order is
+      let o2=null; delete r.otherSideOrder;
+      if(!o && GL_KINDS.test(r.kind||'') && r.kind!=='total'){   // v4.15: an order on the same team in ANOTHER game: say this one is not placed
+        /* v4.18 (Alonzo: "put the note on the bet that is technically still open, I need an identifier so I will not bet twice"): an order on
+           this team is found by Kalshi's team code (o.bet.team) or the school in the market title. Within 36 h of this game it IS this bet
+           (ORDER WAITING, even when Kalshi's codes differ from ESPN's); further apart it is another game; the other team in this game is flagged too. */
+        const me=giTeamFor(r, r.team||r.name), sch=me?nrmT(me.loc||me.name).replace(/\bstate\b/g,'st'):'', code=me?normAbbr(me.abbr):(/^[A-Z0-9]{2,5}$/.test(r.team||'')?r.team:null), rd=r.gameInfo&&r.gameInfo.startISO?Date.parse(r.gameInfo.startISO):NaN;
+        const inTitle=x=>!!(sch && x.title && (' '+nrmT(x.title).replace(/\bstate\b/g,'st')+' ').includes(' '+sch+' '));
+        const AH=giTeamsOf(r), opp=AH&&me?normAbbr((AH.find(x=>x!==me)||{}).abbr||''):null, pre=(a,b)=>{ let k=0; while(k<a.length&&k<b.length&&a[k]===b[k]) k++; return k; };
+        const forTeam=x=>{ const t=x.bet&&x.bet.team?normAbbr(x.bet.team):null, no=x.side==='no';
+          if(code && t && (t===code || t===opp)) return (t===code)!==no;   // Kalshi's code is ESPN's
+          if(code && t && inTitle(x)) return (pre(t,code)>pre(t,opp||''))!==no;   // a different code (OKLST for OKST): the closer one, in a market that names this school
+          return inTitle(x) && !t; };
+        const near=x=>{ const t=x.bet&&x.bet.start?Date.parse(x.bet.start):NaN; return !isNaN(t) && !isNaN(rd) && Math.abs(t-rd)<=36*3600e3; };
+        const mineO=myOrders.orders.filter(x=>x && x.book===exSrc && x.action!=='sell');
+        o2=mineO.find(x=>forTeam(x) && near(x))||null;
+        if(!o2){ r.otherGameOrder=mineO.find(x=>forTeam(x) && !near(x) && x.bet && x.bet.start)||mineO.find(x=>inTitle(x) && !near(x) && x.bet && x.bet.start)||null;
+          r.otherSideOrder=mineO.find(x=>!forTeam(x) && (inTitle(x)||(code && x.bet && x.bet.teamsCode && String(x.bet.teamsCode).includes(code))) && near(x))||null; }
+        if(r.otherGameOrder) r.flags.push(['warn','Your Kalshi order “'+(r.otherGameOrder.title||'')+'” is another game: this one is not placed']);
+        if(r.otherSideOrder) r.flags.push(['warn','Your Kalshi order in this game is on the other team: “'+(r.otherSideOrder.title||'')+'”']); }
+      if(!o && o2) o=o2;
       if(o){ r.waitOrder=o; r.flags.unshift(['dupe','ORDER WAITING on '+exNm+(o.qty!=null?': '+(+o.qty)+' shares':'')+(o.price!=null?' at '+Math.round(o.price*100)+'¢':'')+', not filled yet. It is placed: do not bet it again']); } }
     // v2.51: you already hold the OTHER side of this exact prop
     const otherSide = !prior && r.side && logged.find(L=>onBoard(L) && coreKey(L.name,L.market)===coreKey(r.name,r.market) && sideOf(L) && sideOf(L)!==r.side);
@@ -2667,7 +2685,7 @@ function render(rows,cfg){
     cells.sport='<td><span class="sport s-'+esc(r.sport)+'">'+esc(r.sport)+'</span></td>';
     cells.market='<td style="text-align:center">'+mktCell+'</td>';
     cells.odds='<td style="text-align:center"><div class="odds-stack">'+(bookLogo(r.book)?logoTag(r.book):'<span class="meta">'+esc(bookLabel(r.book)||'book?')+'</span>')+
-        '<span>'+esc(fmtOdds(r.offeredRaw))+'</span>'+impTagHtml(r)+shopTagHtml(r)+maxTagHtml(r)+'<span class="mk-slot" data-idx="'+r.idx+'">'+makeTagHtml(r)+'</span></div></td>';
+        '<span>'+esc(fmtOdds(r.offeredRaw))+'</span>'+orderTagHtml(r)+impTagHtml(r)+shopTagHtml(r)+maxTagHtml(r)+'<span class="mk-slot" data-idx="'+r.idx+'">'+makeTagHtml(r)+'</span></div></td>';
     cells.cover='<td class="num">'+(r.fairProb==null?'—':'<span class="cover">'+pct(r.fairProb)+'</span>'+
         '<div class="meta">fair '+esc(fmtOdds(r.fairRaw))+'</div>'+
         (r.mktProb!=null?'<div class="meta" title="'+(r.mktSharp?'Market benchmark: BettingPros Market EV fair price, from the sharpest books':'Market benchmark: BettingPros consensus odds (mostly retail books), both sides devigged')+(r.logitGap!=null?' · logit gap '+(r.logitGap>=0?'+':'')+r.logitGap.toFixed(2):'')+'">mkt '+pct(r.mktProb)+(r.mktSharp?' <b>sharp</b>':'')+'</div>':''))+'</td>';
@@ -2932,7 +2950,7 @@ function placeCardHtml(r,cfg,o){
       '<div class="pc-mkt"><div class="pc-mt" title="'+esc(mname)+'">'+esc((line?line+' ':'')+shortStat(mname))+'</div>'+(cons?'<div class="pc-mo">'+esc(cons)+'</div>':'')+'</div>'+
       '<div class="pc-game">'+game+'</div></div>'+
     '<div class="pc-stats">'+
-      pcCell('Our pick','<div class="pc-big">'+esc(pick)+'</div><span class="pc-chip">'+esc(betNowOf(r))+' '+book+'</span>'+impTagHtml(r)+shopTagHtml(r)+pickPayHtml(r)+'<span class="mk-slot" data-idx="'+r.idx+'">'+makeTagHtml(r)+'</span>')+
+      pcCell('Our pick','<div class="pc-big">'+esc(pick)+'</div><span class="pc-chip">'+esc(betNowOf(r))+' '+book+'</span>'+orderTagHtml(r)+impTagHtml(r)+shopTagHtml(r)+pickPayHtml(r)+'<span class="mk-slot" data-idx="'+r.idx+'">'+makeTagHtml(r)+'</span>')+
       pcCell('Consensus','<div class="pc-big">'+esc(line||'—')+'</div><span class="pc-s">'+esc(cons||'—')+(r.mktProb!=null?' · mkt '+pct(r.mktProb):'')+'</span>')+
       pcCell('Projection','<div class="pc-big">'+(r.projValue!=null?(Math.round(r.projValue*10)/10):'—')+'</div><span class="pc-s">'+esc(mname)+'</span>')+
       pcCell('EV after fees','<div class="pc-big '+(r.net>0?'up':'down')+'">'+ev+'</div><span class="pc-s">'+(r.fairProb!=null?pct(r.fairProb)+' cover':'')+(bp?' · '+bp:'')+'</span>')+
@@ -8356,6 +8374,13 @@ function maxPriceFor(fair, book, eMin){
 /* v4.10 (Alonzo: "+230 on X, what does that mean in %? put a hint on the bet, so we know it is better to look elsewhere"):
    the price as the chance the book is charging for (+230 = 100 / 330 = 30.3%), green when it is at or under the most La Contadora
    lets you pay at this book (maxPriceFor, after its fee), amber "look elsewhere" when it is over: another book needs a lower %. */
+/* v4.18: the order you already have, on the card itself (under the pick) and on the table row */
+function orderTagHtml(r){ const t=o=>(o.qty!=null?(+o.qty)+' at ':'')+(o.price!=null?Math.round(o.price*100)+'¢':'')+', not filled', nm=bookLabel(r.book||'');
+  const day=o=>{ const d=o.bet&&o.bet.start?new Date(o.bet.start):null; return d&&!isNaN(d)?d.toLocaleDateString('en-US',{timeZone:'America/Chicago',weekday:'short',month:'numeric',day:'numeric'}):''; };
+  if(r.waitOrder) return '<span class="ord-tag dupe">⏳ ORDER WAITING on '+esc(nm)+': '+esc(t(r.waitOrder))+'. Already placed: do not bet it again</span>';
+  if(r.otherGameOrder){ const o=r.otherGameOrder; return '<span class="ord-tag">⏳ You have a '+esc(nm)+' order on this team: “'+esc(o.title||o.ref||'')+'”'+(day(o)?' ('+esc(day(o))+')':'')+', '+esc(t(o))+'. That is another game: this one is not placed</span>'; }
+  if(r.otherSideOrder){ const o=r.otherSideOrder; return '<span class="ord-tag">⚠ Your '+esc(nm)+' order in this game is on the other team: “'+esc(o.title||o.ref||'')+'”, '+esc(t(o))+'</span>'; }
+  return ''; }
 function impTagHtml(r){
   const p=r.offeredProb; if(!(p>0 && p<1)) return '';
   const cfg=cfgRead(), mx=r.fairProb!=null?maxPriceFor(r.fairProb, r.book, cfg.eMin):null, P=x=>(x*100).toFixed(1)+'%';
