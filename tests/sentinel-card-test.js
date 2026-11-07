@@ -77,8 +77,12 @@ const PX={[key('rui hachimura','4 5 rebounds','O',NOW+7*H)]:[[t-50,0.405,0.40],[
       const opened=await p.evaluate(async()=>{ let n=0; window.open=()=>{ n++; return {location:{}, closed:false}; }; const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>/Hachimura/.test(x.textContent)); c.querySelector('.sc-price').click(); await new Promise(r=>setTimeout(r,400)); return n; });
       check('tapping the price chip opens the slip at the book (Polymarket US)', opened===1 && /\bgo\b/.test(R.price), {opened, cls:R.price});
     }
-    const L=await p.evaluate(()=>{ const cs=[...document.querySelectorAll('#placeCards .sc-card')].map(c=>c.getBoundingClientRect()); const tops=new Set(cs.map(r=>Math.round(r.top))); return {n:cs.length, perRow:cs.length-tops.size+1, vw:document.documentElement.clientWidth, sw:document.documentElement.scrollWidth, right:Math.max(...cs.map(r=>r.right))}; });
-    check(W+' px: '+(W<600?'one card per row':'cards side by side')+', nothing runs off the screen', L.sw<=L.vw+1 && L.right<=L.vw+1 && (W<600 ? L.perRow===1 : L.perRow===2), L);
+    const L=await p.evaluate(()=>{ const cs=[...document.querySelectorAll('#placeCards .sc-card')], R=cs.map(c=>c.getBoundingClientRect()), tops=new Set(R.map(r=>Math.round(r.top)));
+      const c=cs[0], mid=e=>{ const r=c.querySelector(e).getBoundingClientRect(); return r.top+r.height/2; }, xs=['.sc-top','.sc-who','.sc-bet','.sc-act'].map(e=>Math.round(c.querySelector(e).getBoundingClientRect().left));
+      return {n:cs.length, perRow:cs.length-tops.size+1, vw:document.documentElement.clientWidth, sw:document.documentElement.scrollWidth, right:Math.max(...R.map(r=>r.right)),
+        row:Math.max(...['.sc-who','.sc-bet','.sc-act'].map(mid))-Math.min(...['.sc-who','.sc-bet','.sc-act'].map(mid)), lr:xs.every((x,i)=>i===0||x>xs[i-1])}; });
+    // v4.22 (Alonzo: "on a computer, one per line, and side to side"): one card per line everywhere; on a computer its parts sit in a row
+    check(W+' px: one card per line'+(W<600?'':', its parts side by side (score | who | the bet | buttons)')+', nothing runs off the screen', L.sw<=L.vw+1 && L.right<=L.vw+1 && L.perRow===1 && (W<600 || (L.lr && L.row<40)), L);
     check(W+' px: no page errors', !errs.length, errs);
     await ctx.close();
   }

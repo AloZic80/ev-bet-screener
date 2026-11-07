@@ -210,6 +210,10 @@
   `LS_CACHES`), per bet `[minute, price, fair]`, a point on a change or every 15 min, 40 points, 250 bets, 3 days; recorded at the end of
   `auditCore`. Cents for Kalshi / Polymarket, % for Novig and other % apps, odds for sportsbooks. Sort › Sentinel score. `tests/sentinel-card-test.js`;
   `tests/kalshi-how-test.js` reads the one line on the card, then opens Why this play? for the four steps.
+- v4.22 (owner: "on the Mac it is confusing, two boxes side by side; on a computer one per line, and side to side"): Place these is one card per
+  line everywhere (`#placeCards.sc-grid` is the `sclist` container); from 760 px wide (`@container sclist (min-width:760px)`) each card is a
+  grid row: score | who + kickoff/game | the bet bar | buttons, tags and the Kalshi line under it, Why this play? across (two columns inside:
+  numbers and score left, chart right). The ×N game-count flag stays in the notes, not on the card.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American
