@@ -24,6 +24,15 @@
 - Everything a user saves lives in their browser's localStorage under `mbev.*` keys (`mbev.log` bet log, `mbev.board`,
   `mbev.theme`, `mbev.layout`, ...), optionally synced to the Worker with a sync password.
 
+## The end game (owner, 2026-11-07)
+- For now a personal app for Alonzo and Augi. They love the math; keep replies about building, not advice.
+- Later, possibly an app for other people who may not know sports or betting at all. They only need to know a bet has an
+  **edge** (+EV): like flipping a coin at a price better than its true chance, many times. Any one bet can lose, and it is never
+  always a profit, but over enough bets the math says it is. So every change should keep it simple to follow:
+  find the edge (La Contadora), size the stake, say exactly what to type at the book (like the Kalshi strip), and track results
+  honestly (only settled bets win or lose; the Scorecard's 1,000-bet test shows whether the edge is real or luck so far).
+- Legal advice will be asked for before it is offered to anyone else.
+
 ## Data sources (behind the Worker unless noted)
 | Source | Used for |
 |---|---|
