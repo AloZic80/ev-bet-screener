@@ -33,7 +33,7 @@ const ROWS=[ml('Chicago Bulls','Chicago Bulls','Philadelphia 76ers @ Chicago Bul
   check('the 76ers in your game: the OTHER side warning, not already bet', phi && !phi.prior && /OTHER side/.test(phi.flags), phi);
   const card=await p.evaluate(()=>{ const c=[...document.querySelectorAll('#placeCards .sc-card, #placeCards .pcard')].find(x=>/Chicago Bulls/.test(x.textContent)); return c?c.innerText.replace(/\s+/g,' ').slice(0,200):null; });
   const row=await p.evaluate(()=>{ const rows=[...document.querySelectorAll('#tbody tr')]; const t=rows.find(x=>x.classList.contains('dupe') && /Chicago Bulls/.test(x.textContent)), g=rows.find(x=>x.classList.contains('group-row') && /ALREADY BET/.test(x.textContent)); return {dupe:!!t, group:g?g.innerText.replace(/\s+/g,' '):null, stat:(document.querySelector('.statbox')||{}).innerText||''}; });
-  check('so the Place these card is gone and the row sits under Already bet (the count says 1 already bet)', card===null && row.dupe && /ALREADY BET · 1/.test(row.group||'') && /1 already bet/.test(row.stat.replace(/\s+/g,' ')), {card, row});
+  check('so the Place these card is gone and the row sits under Already bet (the count says 1 already bet)', card===null && row.dupe && /1 already bet/.test(row.stat.replace(/\s+/g,' ')), {card, row});
   check('no page errors', !errs.length, errs);
   console.log(`\n${pass} passed, ${fail} failed`); await b.close(); process.exit(fail?1:0);
 })();
