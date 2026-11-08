@@ -17,6 +17,9 @@
   keep the record in the PR description. Still ask plainly before each publish.
 - Notes for the Project's agent or ChatGPT: the owner copy-pastes them into those chats. Always put the full text in the
   reply as one copy-paste block per note (say where it goes); the `agent-notes/` file is the record.
+- Para ChatGiPiTiTi (owner, 2026-11-08: "every time I ask something or something is changed, I can download that MD so I can ask my ChatGPT ...
+  name it Para ChatGiPiTiTi with version or date"): every build also gets `agent-notes/para-chatgipititi_<version>_<YYYY-MM-DD>.md`, a standalone
+  note for ChatGPT (what the app is, what was asked, what was built, the numbers, a question to check), sent to the owner as a file with the reply.
 - Reports: after each step, write one report in `agent-notes/` (`<topic>_<YYYY-MM-DD>_v<N>.md`, header with a `CC-` Ref, times in
   America/Chicago) and give it to the owner, who adds it to the claude.ai Project "Betting-for-Pros" (Project knowledge).
 - Prices come through the owner's Cloudflare Worker (`API_BASE`; a separate repo, `~/prop-bet-api` on the owner's Mac,
@@ -253,6 +256,13 @@
   longer marks CHI's game tomorrow. The OTHER-side warning (v3.13) also finds a logged bet with no game text on the other team of the row's game.
   Worker v3.42 (`novigBet`, PR not merged until the owner says so): a Novig fill carries `away`/`home` from the description ("PHI @ CHI"), so the
   logged bet gets its game. `tests/fill-prior-test.js` (fails on v4.24).
+- Hard stop (v4.27, in the bet editor's Save handler next to the v2.71 limit check; owner: "I want to be strict with myself ... build the Hard
+  Stop. I still have the option to go on, but at least it is there for me to say and think... ok, mejor no"): when the stake would take the bet's
+  game day past `cfg.dayMax` (`dayStats()[day].staked` + stake), the first press shows "🛑 Hard stop: today is at $48.00 of your $50.00 daily max;
+  this $3.00 makes $51.00. Mejor no?" and the button reads Save bet anyway (`saveBtn.dataset.hs`); the second press saves. Not on edits, settled
+  records or free bets. The day is `.eb-date`, else `gameDayOf(r)`, else today. The board already keeps rows past the max out of Place these
+  (v2.x "daily max reached"); this covers I bet this and + Add a bet. Novig and other % books: the stake is the Cost box (`.eb-cost`, pmMode).
+  `tests/hard-stop-test.js` (settings seeded as `saveCfg` writes them, with `cfgVer`, or the v2.53 migration turns a $500 bankroll into $1000).
 - Score ribbon: My games and bet risk (v4.26, `ssRiskMap`, `ssMine`, `ssBetSports`, `ssFillSel`, `ssTile(..., risk)`; owner, 11/8: "On the ESPN banner?
   ... option for My Games as well, or by sport that I am only betting; if the sport doesn't have a bet, it won't come out"): each game tile with an
   open bet of yours says "N bets risking $x" (ESPN's "1 Bet risking $1.26"; free bets count as bets, risk $0; settled and parlays are not in it).

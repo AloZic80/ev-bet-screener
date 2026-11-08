@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.26</title>
+<title>0xBeta Screener v4.27</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1221,7 +1221,7 @@ details.help.more{margin-top:10px}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.26</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.27</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1893,7 +1893,7 @@ details.help.more{margin-top:10px}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.26';
+const SCREENER_VERSION='v4.27';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3646,6 +3646,14 @@ function openBetEditor(tr, r, opt){
       ebSay('La Contadora: that\'s past today\'s '+(/outlier/.test(pastLim[1])?'outlier':'risk-bet')+' limit. Press Save bet anyway if it is your call.', true);
       return;
     }
+    /* v4.27 (Alonzo: "build the Hard Stop. I still have the option to go on, but at least it is there for me to say and think... ok, mejor no"):
+       past the daily max, the first press stops and says so (today's money, this stake, the total); a second press saves. Editing a bet,
+       a settled record and a free bet do not count. The day is the bet's game day (the daily max is per game day, like the Board's line). */
+    if(!opt.edit && !resNew && saveBtn.dataset.hs!=='1' && cfg.dayMax>0 && !(ed.querySelector('.eb-free')&&ed.querySelector('.eb-free').checked)){
+      const day=(ed.querySelector('.eb-date')&&ed.querySelector('.eb-date').value)||gameDayOf(r)||ctDay(Date.now()), used=((dayStats()[day]||{}).staked)||0;
+      if(used+stake>cfg.dayMax+1e-9){ saveBtn.dataset.hs='1';
+        ebSay('🛑 Hard stop: '+(day===ctDay(Date.now())?'today':day)+' is at $'+used.toFixed(2)+' of your $'+cfg.dayMax.toFixed(2)+' daily max; this $'+stake.toFixed(2)+' makes $'+(used+stake).toFixed(2)+'. Mejor no? Press Save bet anyway if it is your call.', true);
+        return; } }
     // v2.59: not worth it → say so, and only log it on a second press
     const v=valueCheck();
     if(v && v.level==='bad' && saveBtn.dataset.ok!=='1'){
