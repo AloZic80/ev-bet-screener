@@ -253,6 +253,12 @@
   longer marks CHI's game tomorrow. The OTHER-side warning (v3.13) also finds a logged bet with no game text on the other team of the row's game.
   Worker v3.42 (`novigBet`, PR not merged until the owner says so): a Novig fill carries `away`/`home` from the description ("PHI @ CHI"), so the
   logged bet gets its game. `tests/fill-prior-test.js` (fails on v4.24).
+- Score ribbon: My games and bet risk (v4.26, `ssRiskMap`, `ssMine`, `ssBetSports`, `ssFillSel`, `ssTile(..., risk)`; owner, 11/8: "On the ESPN banner?
+  ... option for My Games as well, or by sport that I am only betting; if the sport doesn't have a bet, it won't come out"): each game tile with an
+  open bet of yours says "N bets risking $x" (ESPN's "1 Bet risking $1.26"; free bets count as bets, risk $0; settled and parlays are not in it).
+  The menu lists 🎯 My games (`MINE`, the games with your open bets, from today's ESPN scoreboards) and ONLY the sports you have an open bet in,
+  rebuilt on every draw; `All sports` (`#ssAll`, `mbev.ssAll`) brings back the full league menu. `ssFillSel` keeps the chosen value when it
+  is still there, else My games. `tests/ribbon-risk-test.js`; `tests/ribbon-test.js` ticks All sports first.
 - Drop-downs (v4.25, `details.help`, `helpApply`, `mbev.help`; owner: "if you feel certain things can be, or are only needed with, a drop-down,
   then do"): the explanation on every tab (Live edges, Live bars, Moneylines, Lines, Add a bet, Parlays, Bets by game day, Bets you took,
   Scorecard stages, Is the model honest, CLV foot, Settings: sync, stakes, sports, sweet spot, Leagues, Parole) and the parlay legend are
