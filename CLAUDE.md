@@ -1,7 +1,7 @@
 # 0xBeta Screener: notes for Claude and other agents
 
 ## What this is
-- A sports-betting screener in one file: `index.html` (HTML, CSS and JavaScript, about 8,400 lines).
+- A sports-betting screener in one file: `index.html` (HTML, CSS and JavaScript, about 10,400 lines).
   `phone.html` only frames `index.html` at phone width (Settings > Layout > Phone on a computer). There is no build step.
 - Live at props.0xbeta.dev (see `CNAME`), served by GitHub Pages from `main`; merging a pull request is what deploys (about a minute).
   Claude Code may merge its own pull requests, but only after the owner says go. Before each merge ask plainly ("Publish v3.7x to props.0xbeta.dev now?")
@@ -238,6 +238,31 @@
 - Book chips (v4.24, `#bookChips`, `.bchip`, `boardBooks`, `mbev.boardBooks`; owner: "buttons so that I can only choose certain books to
   display, instead of All or just one"): a chip per book on the board with its count (logo when there is one), several on at once, All
   clears; the filter runs after sport and duplicates, before search. v4.13's `mbev.boardBook` carries over as one chip. `tests/board-book-test.js`.
+- Novig game lines travel together (v4.25, `LIVE_HEAVY_N`, `LE_GAMES_PER_CALL`; owner: "Yes, BUILD"): the fetch wrapper used to send each Novig
+  moneyline / spread / total as its own `/live` request (v3.16, the Worker's 45-call budget). The Worker reads a catalogue page once per request
+  (`once` memo in `live.js`) and both sides of a game share one book read, so heavy bets are now grouped by sport + start, up to 6 per request
+  (3 games, both sides: ~36 calls at worst on a cold cache); other bets stay together as before. `leScan` asks once per 3 games (both teams,
+  every exchange you bet) instead of 8 bets however they fell: a 30-game Saturday scan is ~20 requests, not ~80. A failed or busy exchange
+  answer is asked again after a minute (`M[id].at` is set 2 min back); an ok one is kept 3 min while ESPN is unchanged (v4.24). The polling
+  timers (fills, orders, live prices, live edges, sync) already run only while the page is visible; `tests/live-batch-test.js` checks it.
+- Already bet by team code (v4.25, `glTeamSame`, `sameTime`, `rCode`, `rTeams` in `auditCore`; owner, 11/8: a Novig "CHI Winner" fill placed at
+  11:07 AM, and at 2 PM the Sentinels card "Chicago Bulls · Moneyline · Novig +388" still said I bet this): a bet logged from a fill (`autoAddFromDesc`:
+  name = the team code, no game text) or typed in matched neither `coreKey` (the row says "Chicago Bulls") nor `glSame` (needs the game text).
+  Now a game line with the same kind and team code (ESPN's code for a full name, via `giTeamFor`), on the same game day or within 6 h, is the
+  same bet (a spread needs the same line); the price may differ. `coreKey` and `glSame` also require `sameTime` now, so a bet on CHI today no
+  longer marks CHI's game tomorrow. The OTHER-side warning (v3.13) also finds a logged bet with no game text on the other team of the row's game.
+  Worker v3.42 (`novigBet`, PR not merged until the owner says so): a Novig fill carries `away`/`home` from the description ("PHI @ CHI"), so the
+  logged bet gets its game. `tests/fill-prior-test.js` (fails on v4.24).
+- Drop-downs (v4.25, `details.help`, `helpApply`, `mbev.help`; owner: "if you feel certain things can be, or are only needed with, a drop-down,
+  then do"): the explanation on every tab (Live edges, Live bars, Moneylines, Lines, Add a bet, Parlays, Bets by game day, Bets you took,
+  Scorecard stages, Is the model honest, CLV foot, Settings: sync, stakes, sports, sweet spot, Leagues, Parole) and the parlay legend are
+  `<details class="help" data-help="id">`, closed to start; the ones you open are remembered per device (`toggle` listener, capture phase) and
+  put back by `helpApply` at startup and after the Scorecard and `#pkSent` redraw. Bet log: Download, ⬇ CSV and Check results stay on the panel;
+  Show as CSV, Grab closing lines, Back up, Restore and Delete every logged bet sit under "More" (`log-more`). On a phone (≤760 px) the board's
+  tick boxes (Only sweet spot, Show rejected, Only games I already bet, Show all notes) fold behind `#barMoreBtn` "Filters" (`.bar-more`,
+  `mbev.barMore`); ≤900 px the Today card's book tiles hide behind "by book" (`.tb-more` in the All card, `todaybar.tb-fold`, `mbev.tbBooks`;
+  the click is caught on `document` in capture phase so it does not open the Bet log). On a computer both are simply there. Chromium keeps a
+  layout box for the content of a closed `<details>`, so a visibility check in a test must also look for a closed `details` ancestor.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American

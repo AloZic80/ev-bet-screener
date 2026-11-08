@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.24</title>
+<title>0xBeta Screener v4.25</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1185,6 +1185,29 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
   .sc-card>.sc-why{grid-area:why}
   .sc-card>.editor{grid-column:1/-1}
 }
+/* v4.25 (Alonzo: "if you feel certain things can be, or are only needed with, a drop-down, then do"): the explanation on every tab, the Bet
+   log's once-a-month buttons and the legends fold into drop-downs; on a phone the board's tick boxes and the Today card's book tiles too */
+details.help{margin:8px 0 0}
+details.help>summary{list-style:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; color:var(--accent); padding:3px 0; min-height:28px}
+details.help>summary::-webkit-details-marker{display:none}
+details.help>summary::before{content:'▸'; font-size:11px}
+details.help[open]>summary::before{content:'▾'}
+details.help>summary .meta{font-weight:400}
+details.help>.hint,details.help>.meta,details.help>p,details.help>.row{margin-top:6px}
+details.help>.hint+.hint{margin-top:8px}
+details.help.more{margin-top:10px}
+.pk-legend details.help{display:inline-block; margin:0}
+.bar-more{display:contents}
+.bar-more-btn{display:none}
+.tb-more{display:none}
+@media (max-width:760px){
+  .bar-more-btn{display:inline-flex; align-items:center}
+  .bar-more:not(.open){display:none}
+}
+@media (max-width:900px){
+  .tb-more{display:inline-block; margin-top:8px; font:inherit; font-size:12px; font-weight:600; color:var(--accent); background:transparent; border:1px solid var(--rule); border-radius:14px; padding:4px 11px; cursor:pointer}
+  .todaybar.tb-fold>.tb-t:not(.all){display:none}
+}
 </style>
 </head>
 <body>
@@ -1193,7 +1216,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.24</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.25</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1308,11 +1331,14 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
       </select></label>
     <div class="book-chips" id="bookChips" role="group" aria-label="Books to show on the board" title="Tap the books you want to see. Several can be on at once; All shows every book. The number is how many bets each book has on the board."></div><!-- v4.24: chips, several at once (v4.13 had one menu) -->
     <input type="text" id="filterPlayer" class="bar-search" placeholder="Search player or team…" aria-label="Search player or team">
+    <button type="button" class="ghost sm bar-more-btn" id="barMoreBtn" aria-expanded="false" aria-controls="barMore" title="Only sweet spot, Show rejected, Only games I already bet, Show all notes">Filters ▾</button><!-- v4.25: on a phone the tick boxes fold behind this -->
+    <span class="bar-more" id="barMore">
     <label class="bar-check"><input type="checkbox" id="swOnly"> Only sweet spot</label>
     <label class="bar-check"><input type="checkbox" id="showRejects"> Show rejected</label>
     <label class="bar-check"><input type="checkbox" id="onlyMyGames"> Only games I already bet</label>
+    </span>
     <button type="button" class="ghost sm" id="shopBtn" title="La Contadora re-checks every bet on this board — passing and skipped — at live Kalshi, Polymarket US and Novig prices (no BettingPros calls). Fair value stays from your last Pull.">🦑 Send the Sentinels</button><span class="meta" id="shopMsg"></span>
-    <label class="bar-check"><input type="checkbox" id="notesAll"> Show all notes</label>
+    <span class="bar-more" id="barMore2"><label class="bar-check"><input type="checkbox" id="notesAll"> Show all notes</label></span><!-- v4.25 -->
     <label class="bar-check" title="Bets to place show as cards above the table (uncheck for table rows)"><input type="checkbox" id="cardsOn" checked> Cards</label>
   </div>
   <div class="filter-chips" id="filterChips" style="display:none"></div>
@@ -1385,7 +1411,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
     <span class="meta" id="abAskMsg"></span>
   </div>
   <div id="abVerdict" class="ab-verdict"></div>
-  <p class="hint" style="margin:8px 0 0">Copy what the app shows. <b>Odds</b> can be American (-110, +120), decimal (1.91) or a percentage (52.4%); <b>To win</b> is the profit, and when you type it, it's what the bet pays. Logging a bet that's already over? Set <b>Result</b> and it saves graded. Under <b>Model numbers</b>: <b>Cover %</b> decides PASS/FAIL (same as the board); <b>consensus</b> is the market check; <b>projection</b> is saved for reference. Left blank, the bet saves as <b>unchecked</b> and the next Load fills them in if BettingPros has the same player, stat and line. Pick the game from the list so ESPN can grade it.</p>
+  <details class="help" data-help="add-help"><summary>Help with the fields</summary><p class="hint" style="margin:8px 0 0">Copy what the app shows. <b>Odds</b> can be American (-110, +120), decimal (1.91) or a percentage (52.4%); <b>To win</b> is the profit, and when you type it, it's what the bet pays. Logging a bet that's already over? Set <b>Result</b> and it saves graded. Under <b>Model numbers</b>: <b>Cover %</b> decides PASS/FAIL (same as the board); <b>consensus</b> is the market check; <b>projection</b> is saved for reference. Left blank, the bet saves as <b>unchecked</b> and the next Load fills them in if BettingPros has the same player, stat and line. Pick the game from the list so ESPN can grade it.</p></details>   <!-- v4.25: a drop-down -->
   <div class="meta" id="abMsg" role="status" style="margin-top:6px"></div>
 </details>
 </div>
@@ -1423,7 +1449,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
   <h2>🌍 Leagues <span class="sub">which leagues have games in the next 3 days, from what your sources say. One tap loads the odds</span></h2>
   <div class="row lg-bar"><button type="button" class="ghost" id="lgScan">⟳ Check again</button><span class="meta" id="lgMsg" role="status"></span></div>
   <div id="lgBody"></div>
-  <p class="hint">Checking is free: ESPN's schedules, and The Odds API's own league and game lists once your Worker passes them through. <b>Load odds</b> uses The Odds API credits (about 1 per bet type, only when the league has games). <b>BettingPros board</b> uses your BettingPros calls. A league with no free schedule is listed as not checked: it may still have games, so Load odds finds out.</p>
+  <details class="help" data-help="leagues-how"><summary>What checking costs</summary><p class="hint">Checking is free: ESPN's schedules, and The Odds API's own league and game lists once your Worker passes them through. <b>Load odds</b> uses The Odds API credits (about 1 per bet type, only when the league has games). <b>BettingPros board</b> uses your BettingPros calls. A league with no free schedule is listed as not checked: it may still have games, so Load odds finds out.</p></details>   <!-- v4.25: a drop-down -->
 </div>
 </div>
 <div class="view" id="v-parlay">   <!-- v3.54: PrizePicks and DraftKings Pick6 entries -->
@@ -1451,14 +1477,14 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
   <div class="meta" id="pkMsg" role="status" style="margin-top:8px"></div>
   <h3 class="set-h">Picks <span class="meta" id="pkPoolN"></span></h3>
   <div class="scroll"><table class="pk-pool"><thead><tr><th><span class="sr-only">Add</span></th><th>Player</th><th>Pick</th><th class="num">Hits</th><th>Line from</th><th>Why it's here</th><th>Game</th></tr></thead><tbody id="pkPool"></tbody></table></div>
-  <p class="hint">How it's figured: each pick's chance is the board's own estimate (the market price, pulled toward BettingPros' model by your model weight in Settings). An entry adds up every way it can finish, all hit, and for Flex one or two misses, each with its exact chance. Break-even is the chance every pick would need for the entry to pay back what it costs. Suggested stakes use your Kelly fraction and edge haircut, kept between your smallest and largest bet. Picks are treated as independent, so keep one pick per game.</p>
+  <details class="help" data-help="pk-how"><summary>How it is figured</summary><p class="hint">How it's figured: each pick's chance is the board's own estimate (the market price, pulled toward BettingPros' model by your model weight in Settings). An entry adds up every way it can finish, all hit, and for Flex one or two misses, each with its exact chance. Break-even is the chance every pick would need for the entry to pay back what it costs. Suggested stakes use your Kelly fraction and edge haircut, kept between your smallest and largest bet. Picks are treated as independent, so keep one pick per game.</p></details>   <!-- v4.25: a drop-down -->
 </div>
 </div>
 <div class="view" id="v-parole">
 <div class="panel">
   <h2>🔓 Parole <span class="sub">🎣 fishing: you're the Maker — post La Contadora's bait price on Novig and see who bites. Only a bet once someone takes it.</span></h2>
   <div class="row" style="margin-top:0;gap:10px;align-items:center;flex-wrap:wrap"><button class="act" id="parScan">🔎 Check prices</button><span class="meta" id="parMsg"></span></div>
-  <p class="hint" style="margin:6px 0 10px">Only Jail reasons a price can fix get parole: below your floor or minimum, odds range, and outliers / risk-bet limit (the bait must then beat the market, at your minimum stake). One-per-player, game caps, the daily max, the outlier limit and started games stay in Jail. The screener never places anything.</p>
+  <details class="help" data-help="parole-how"><summary>Who gets parole</summary><p class="hint" style="margin:6px 0 10px">Only Jail reasons a price can fix get parole: below your floor or minimum, odds range, and outliers / risk-bet limit (the bait must then beat the market, at your minimum stake). One-per-player, game caps, the daily max, the outlier limit and started games stay in Jail. The screener never places anything.</p></details>   <!-- v4.25: a drop-down -->
   <div id="parList"></div>
 </div>
 </div>
@@ -1469,7 +1495,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
     <button class="ghost" id="leScan">🔴 Scan live games</button>
     <span id="leSum" aria-live="polite"></span><span class="meta" id="leStamp"></span>
   </div>
-  <p class="hint" style="margin:8px 0 0">The board's model is pre-game, so once a game starts it is stale; here the fair price is <b>ESPN's live win chance</b> (moneylines only). A price is marked <b>✓ edge</b> only with at least 3% edge after the fee, a chance between 8% and 92% (near the end one play decides it) and a price within 10 points of ESPN's (further off is a different or stale market). Each game shows when ESPN's number last changed; if it has not changed for 2 minutes while the game kept going, its edges are hidden (halftime and timeouts do not count). <b>The stale check needs about 2 minutes of watching a game</b> before it works: in the first 2 minutes after you open the app, a stale ESPN number can look fresh. In soccer, a quiet stretch with no goal can also show stale; that is on purpose, to be safe. <b>Leagues:</b> every football, basketball, hockey, baseball and soccer league ESPN covers, worldwide; one with nothing live is skipped for 10 minutes. Where ESPN has no live win chance (often soccer), Pinnacle alone is the fair price. <b>Pinnacle is asked only when you press Scan</b>, at most 40 times a day on this device (your pinnapi plan has a daily limit); Auto-refresh uses ESPN, which is free. <b>Pinnacle live:</b> once your Worker has it, Pinnacle's live price (vig removed) becomes the fair price and ESPN must agree; until then it is ESPN alone. <b>Prices move in seconds:</b> before you bet, check the app still sells it at or under <b>pay at most</b>. ESPN's number is a model too and cannot see injuries or who is on the field, so bet smaller than usual (half your normal stake is a fair start). With Auto-refresh on, the scan repeats every 30 seconds at most while this tab is open.</p>
+  <details class="help" data-help="live-edges"><summary>How Live edges works</summary><p class="hint" style="margin:8px 0 0">The board's model is pre-game, so once a game starts it is stale; here the fair price is <b>ESPN's live win chance</b> (moneylines only). A price is marked <b>✓ edge</b> only with at least 3% edge after the fee, a chance between 8% and 92% (near the end one play decides it) and a price within 10 points of ESPN's (further off is a different or stale market). Each game shows when ESPN's number last changed; if it has not changed for 2 minutes while the game kept going, its edges are hidden (halftime and timeouts do not count). <b>The stale check needs about 2 minutes of watching a game</b> before it works: in the first 2 minutes after you open the app, a stale ESPN number can look fresh. In soccer, a quiet stretch with no goal can also show stale; that is on purpose, to be safe. <b>Leagues:</b> every football, basketball, hockey, baseball and soccer league ESPN covers, worldwide; one with nothing live is skipped for 10 minutes. Where ESPN has no live win chance (often soccer), Pinnacle alone is the fair price. <b>Pinnacle is asked only when you press Scan</b>, at most 40 times a day on this device (your pinnapi plan has a daily limit); Auto-refresh uses ESPN, which is free. <b>Pinnacle live:</b> once your Worker has it, Pinnacle's live price (vig removed) becomes the fair price and ESPN must agree; until then it is ESPN alone. <b>Prices move in seconds:</b> before you bet, check the app still sells it at or under <b>pay at most</b>. ESPN's number is a model too and cannot see injuries or who is on the field, so bet smaller than usual (half your normal stake is a fair start). With Auto-refresh on, the scan repeats every 30 seconds at most while this tab is open.</p></details>   <!-- v4.25: a drop-down -->
   <div id="leBody" style="margin-top:8px"></div>
 </div>
 <div class="panel">
@@ -1479,7 +1505,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
     <label class="bar-check" title="Only while this tab is open and showing — ESPN only, no BettingPros calls">Auto-refresh <select id="liveEvery"><option value="0">Off</option><option value="15">every 15 s</option><option value="30">every 30 s</option><option value="60">every 60 s</option></select></label>
     <span class="meta" id="liveStamp"></span>
   </div>
-  <p class="hint" style="margin:8px 0 0">On each bar, <b>green</b> is where the stat needs to finish and <b>red</b> is where the bet loses. The white bar is where it is now; ▲ is the <b>projection</b> (stat so far + the line × the part of the game left — rough: it can't see injuries, blowouts or overtime). Win %, cover % and over % are ESPN's live numbers, for ESPN's line. A cash-out offer shows its <b>break-even %</b>: keep the bet only if you think it wins more often than that.</p>
+  <details class="help" data-help="live-bars"><summary>How to read the bars</summary><p class="hint" style="margin:8px 0 0">On each bar, <b>green</b> is where the stat needs to finish and <b>red</b> is where the bet loses. The white bar is where it is now; ▲ is the <b>projection</b> (stat so far + the line × the part of the game left — rough: it can't see injuries, blowouts or overtime). Win %, cover % and over % are ESPN's live numbers, for ESPN's line. A cash-out offer shows its <b>break-even %</b>: keep the bet only if you think it wins more often than that.</p></details>   <!-- v4.25: a drop-down -->
   <div id="liveBody" style="margin-top:12px"></div>
 </div>
 </div>
@@ -1501,7 +1527,6 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 </details>
 <details class="panel fold" id="syncPanel" open>
   <summary><h2>☁ Your bets on every device <span class="sub">phone, other PCs — locked with your own sync password</span></h2></summary>
-  <p class="hint">One copy of your bet log lives in your Cloudflare store. Any device with the screener passphrase <b>and</b> this password sees the same bets, baits and settings. Changes upload a few seconds after you make them; other devices pick them up when they open or come back to the page, and once a minute while it's open — Wi-Fi or cellular.</p>
   <div class="row" style="gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px">
     <input type="password" id="syncPw" aria-label="Sync password" placeholder="sync password" autocomplete="new-password" style="max-width:220px;padding:8px 10px;font-size:14px">
     <button class="act" id="syncOn">Turn on</button>
@@ -1509,8 +1534,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
     <button class="ghost" id="syncOff" disabled>Turn off here</button>
   </div>
   <div class="sync-status" id="syncStatus">Off on this device.</div>
-  <p class="hint" style="margin-top:8px"><b>Synced:</b> bet log, removed bets, parlay marks, Parole baits, which book fills are matched, your settings (bankroll, La Contadora's rules, fees) and the last board you loaded with its grading history. <b>Stays on each device:</b> the screener passphrase, this password, theme, team logos.</p>
-  <p class="hint" style="margin-top:4px"><b>First time:</b> on the Mac run <code>cd ~/prop-bet-api</code>, then <code>npx wrangler secret put SYNC_KEY</code> (type the password you picked — it never goes in chat or code), then <code>npx wrangler deploy</code>. Turn it on here on the PC first (its log becomes the cloud copy), then on the phone. Lost a device? Run the secret command again with a new password.</p>
+  <details class="help" data-help="sync"><summary>How sync works</summary><p class="hint">One copy of your bet log lives in your Cloudflare store. Any device with the screener passphrase <b>and</b> this password sees the same bets, baits and settings. Changes upload a few seconds after you make them; other devices pick them up when they open or come back to the page, and once a minute while it's open — Wi-Fi or cellular.</p><p class="hint" style="margin-top:8px"><b>Synced:</b> bet log, removed bets, parlay marks, Parole baits, which book fills are matched, your settings (bankroll, La Contadora's rules, fees) and the last board you loaded with its grading history. <b>Stays on each device:</b> the screener passphrase, this password, theme, team logos.</p><p class="hint" style="margin-top:4px"><b>First time:</b> on the Mac run <code>cd ~/prop-bet-api</code>, then <code>npx wrangler secret put SYNC_KEY</code> (type the password you picked — it never goes in chat or code), then <code>npx wrangler deploy</code>. Turn it on here on the PC first (its log becomes the cloud copy), then on the phone. Lost a device? Run the secret command again with a new password.</p></details>   <!-- v4.25: a drop-down (the three notes were always open) -->
   <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px"><button class="ghost sm" id="syncBak">Cloud backups…</button><span class="meta" id="syncBakList"></span></div>
 </details>
 <details class="panel fold" id="myBooksPanel">
@@ -1600,7 +1624,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
     <div class="field"><label for="dayMaxPct" title="Most you'll stake on one day's games — everything together: the API board, the pasted Market EV page and your exchange fills — as a % of bankroll. Feeling Lucky uses 15%. 0 turns it off.">Daily max % (everything)</label><input id="dayMaxPct" type="number" value="10" step="1" min="0"></div>
     <div class="field" style="display:none"><label for="dayMaxMevPct">(v3.10 paste max — no longer used)</label><input id="dayMaxMevPct" type="number" value="50" step="5" min="0"></div>
   </div>
-  <p class="hint" style="margin:12px 0 0"><b>One daily max for everything</b> (v3.11): the API board, the pasted Market EV page and exchange fills all count against the same %, so a big paste can't stack on top of the board. Stakes size off a blend: the market's no-vig price pulled toward BettingPros' number by the model weight (0.35 = mostly market). If there's no market price for a bet, the model number is used with the haircut. Bets on a game you already have money on are trimmed so the game stays under the per-game max.</p>
+  <details class="help" data-help="stake-how"><summary>How stakes are sized</summary><p class="hint" style="margin:12px 0 0"><b>One daily max for everything</b> (v3.11): the API board, the pasted Market EV page and exchange fills all count against the same %, so a big paste can't stack on top of the board. Stakes size off a blend: the market's no-vig price pulled toward BettingPros' number by the model weight (0.35 = mostly market). If there's no market price for a bet, the model number is used with the haircut. Bets on a game you already have money on are trimmed so the game stays under the per-game max.</p></details>   <!-- v4.25: a drop-down -->
 </details>
 
 <details class="panel fold" id="sportsPanel" open>
@@ -1612,12 +1636,12 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
     <span class="meta" id="bpSportsMsg"></span>
   </div>
   <div id="bpSportsOut" style="margin-top:8px"></div>
-  <p class="hint">The sport list is sorted by the next game (ESPN, free): sports playing soonest on top, off-season ones at the bottom marked <i>no games</i>. A load for a sport with no game in the next 24 hours is skipped so it doesn't spend calls (you can still load it anyway). Soccer is graded on regular time (90' + stoppage): extra time and penalties don't count, a draw loses a team's moneyline, and quarter-goal handicaps (±0.25 / ±0.75) are left for you to grade.</p>
+  <details class="help" data-help="sports-how"><summary>How the list is sorted, and soccer grading</summary><p class="hint">The sport list is sorted by the next game (ESPN, free): sports playing soonest on top, off-season ones at the bottom marked <i>no games</i>. A load for a sport with no game in the next 24 hours is skipped so it doesn't spend calls (you can still load it anyway). Soccer is graded on regular time (90' + stoppage): extra time and penalties don't count, a draw loses a team's moneyline, and quarter-goal handicaps (±0.25 / ±0.75) are left for you to grade.</p></details>   <!-- v4.25: a drop-down -->
 </details>
 
 <details class="panel fold" open>
   <summary><h2>Sweet spot &amp; outliers <span class="sub">what gets the 🎯 badge, what counts as an outlier, risk bets</span></h2></summary>
-  <p class="hint">The sweet spot only marks rows. The outlier and risk-bet settings change stakes: an outlier is capped at the minimum, and one that is also below the market is skipped unless it fits the risk-bet allowance.</p>
+  <details class="help" data-help="sweet-how"><summary>What these change</summary><p class="hint">The sweet spot only marks rows. The outlier and risk-bet settings change stakes: an outlier is capped at the minimum, and one that is also below the market is skipped unless it fits the risk-bet allowance.</p></details>   <!-- v4.25: a drop-down -->
   <div class="sweetbar">
     <label>Stars ≥ <input type="number" id="swStars" value="3" min="1" max="5" step="1"></label>
     <label>+EV <input type="number" id="swNetMin" value="2" step="0.5"> to <input type="number" id="swNetMax" aria-label="+EV up to (%)" value="10" step="0.5">%</label>
@@ -1695,7 +1719,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 <div class="view" id="v-money">
 <div class="panel">
   <h2>Moneylines</h2>
-  <p class="hint">Pulled straight from BettingPros' own odds API (not a paste) — real games, real books, their own cover-probability/EV numbers per line. NFL, NBA, NHL, NCAAF, MLB, NCAAB and WNBA (soccer on hold). Each load spends BettingPros calls — non-NFL sports use 1 extra for the game list.</p>
+  <details class="help" data-help="ml-about"><summary>About this board</summary><p class="hint">Pulled straight from BettingPros' own odds API (not a paste) — real games, real books, their own cover-probability/EV numbers per line. NFL, NBA, NHL, NCAAF, MLB, NCAAB and WNBA (soccer on hold). Each load spends BettingPros calls — non-NFL sports use 1 extra for the game list.</p></details>   <!-- v4.25: a drop-down -->
   <div class="row" style="margin-top:0">
     <select id="moneySport" style="font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--rule);border-radius:7px;background:var(--panel);color:var(--ink)">
       <option value="NFL">NFL</option><option value="NBA">NBA</option><option value="NHL">NHL</option>
@@ -1721,7 +1745,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 
 <div class="panel">
   <h2>Lines</h2>
-  <p class="hint">"Edge" is the real answer to "is this good value": a fair win probability with the vig stripped out, compared against what this specific book is offering. <b>Pinnacle</b> is the sharp reference (its line devigged, pulled via pinnapi.com); <b>Consensus</b> is the devigged average of every book we pull, and is the fallback when Pinnacle data isn't available. BettingPros' own EV/Cover % (its model's opinion) are shown for reference only.<br><br><b>Edges are net of fees</b>, using the same fee inputs as the Board tab (Kalshi's price-based curve, the rest as you've set them) — hover an edge to see its gross and fee. <b>Only games that haven't kicked off are shown.</b> Pinnacle's line is a pre-game line, and comparing it against live in-play prices produces fake edges (a game 80 minutes in once showed a 168% "edge"). Stale quotes are dropped automatically, and any edge over 10% is flagged with ⚠ — on a moneyline that's almost always a bad quote, so confirm the price on the book before betting.</p>
+  <details class="help" data-help="ml-edge"><summary>How edge is figured</summary><p class="hint">"Edge" is the real answer to "is this good value": a fair win probability with the vig stripped out, compared against what this specific book is offering. <b>Pinnacle</b> is the sharp reference (its line devigged, pulled via pinnapi.com); <b>Consensus</b> is the devigged average of every book we pull, and is the fallback when Pinnacle data isn't available. BettingPros' own EV/Cover % (its model's opinion) are shown for reference only.<br><br><b>Edges are net of fees</b>, using the same fee inputs as the Board tab (Kalshi's price-based curve, the rest as you've set them) — hover an edge to see its gross and fee. <b>Only games that haven't kicked off are shown.</b> Pinnacle's line is a pre-game line, and comparing it against live in-play prices produces fake edges (a game 80 minutes in once showed a 168% "edge"). Stale quotes are dropped automatically, and any edge over 10% is flagged with ⚠ — on a moneyline that's almost always a bad quote, so confirm the price on the book before betting.</p></details>   <!-- v4.25: a drop-down -->
   <div class="scroll"><table>
     <thead><tr>
       <th>Kickoff</th><th>Matchup</th><th>Team</th><th>Book</th><th class="num">Odds</th>
@@ -1747,16 +1771,19 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
     <tbody id="daysBody"></tbody>
     <tfoot id="daysFoot"></tfoot>
   </table></div>
-  <p class="hint" style="margin:8px 0 0">Profit counts settled bets (wins from your odds and stake, fees included; losses; sales; money lost cancelling), and every open bet as lost until it wins ("on the line"). <b>🔒 Spent</b> is the money on games played or playing, which you can't get back except by cashing out; <b>not started</b> you can still get out of, usually for a small loss.</p>   <!-- v3.67 -->
+  <details class="help" data-help="log-days"><summary>What counts here</summary><p class="hint" style="margin:8px 0 0">Profit counts settled bets (wins from your odds and stake, fees included; losses; sales; money lost cancelling), and every open bet as lost until it wins ("on the line"). <b>🔒 Spent</b> is the money on games played or playing, which you can't get back except by cashing out; <b>not started</b> you can still get out of, usually for a small loss.</p>   <!-- v3.67 --></details>   <!-- v4.25: a drop-down -->
 </div>
 
 <div class="panel">
   <h2>Bets you took</h2>
-  <p class="hint">Log a bet from the board, then come back after the game starts and enter where the line closed. Closing line value is the only thing that tells you whether an edge was real before you have hundreds of settled bets.</p>
+  <details class="help" data-help="log-took"><summary>Why closing lines matter</summary><p class="hint">Log a bet from the board, then come back after the game starts and enter where the line closed. Closing line value is the only thing that tells you whether an edge was real before you have hundreds of settled bets.</p></details>   <!-- v4.25: a drop-down -->
   <div class="row" style="margin-top:0">
-    <button class="ghost" id="csvBtn">Show as CSV</button>
     <label class="bar-item" title="Download your bets as a spreadsheet (CSV opens in Excel, Numbers and Google Sheets)">Download <select id="csvDay" class="bar-sel"><option value="">All days</option></select></label><button class="ghost" id="csvDl">⬇ CSV</button><!-- v4.16 -->
     <button class="ghost" id="checkResults">Check results</button>
+  </div>
+  <details class="help more" data-help="log-more"><summary>More <span class="meta">CSV text · closing lines · back up · restore · delete</span></summary><!-- v4.25: the buttons you press once a month, in a drop-down -->
+  <div class="row" style="margin-top:6px">
+    <button class="ghost" id="csvBtn">Show as CSV</button>
     <button class="ghost" id="grabClose" title="Best 5–15 minutes before the game starts. Uses 1 API call per game.">Grab closing lines</button>
     <span id="closeStatus" style="font-size:13px;color:var(--soft)"></span>
     <button class="ghost" id="backupLog" title="Downloads every bet, sold mark, parlay mark and graded pick as one file">Back up bet log</button>
@@ -1765,6 +1792,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
     <span id="backupStatus" style="font-size:13px;color:var(--soft)"></span>
     <button class="ghost" id="wipe">Delete every logged bet</button>
   </div>
+  </details>
   <textarea id="csvOut" style="display:none; margin-top:12px; min-height:120px" spellcheck="false" readonly></textarea>
 </div>
 
@@ -1829,7 +1857,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 <div class="stats" id="statCards"></div>
 <div class="panel">
   <h2>Is the model honest?</h2>
-  <p class="hint">What BettingPros' Cover % promised vs. how often those picks actually won — <b>on recommended bets only</b>, so it tests the screener's selection, not the model across every prop. Uses every pick on your boards that got graded when its game went final, plus your own graded bets (sold bets excluded). Rows under 100 picks are a first look, not a verdict.</p>
+  <details class="help" data-help="perf-honest"><summary>How this is measured</summary><p class="hint">What BettingPros' Cover % promised vs. how often those picks actually won — <b>on recommended bets only</b>, so it tests the screener's selection, not the model across every prop. Uses every pick on your boards that got graded when its game went final, plus your own graded bets (sold bets excluded). Rows under 100 picks are a first look, not a verdict.</p></details>   <!-- v4.25: a drop-down -->
   <div class="scroll"><table>
     <thead><tr><th>Model said</th><th class="num">Picks</th><th class="num">Wins</th><th class="num">Model avg</th><th class="num">Win rate</th><th class="num">Gap</th></tr></thead>
     <tbody id="calBody"></tbody>
@@ -1851,14 +1879,16 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
   <div class="empty" id="perfEmpty">Nothing to break down yet. Log some bets and enter their closing lines.</div>
 </div>
 <div class="foot">
+  <details class="help" data-help="perf-clv"><summary>About CLV and variance</summary>   <!-- v4.25: a drop-down -->
   <p>CLV here compares your price to the closing price on the same side, in implied-probability terms. It is not devigged, so a positive number is evidence rather than proof — but a screen that consistently beats the close is finding real prices, and one that does not is finding noise no matter what the EV column said.</p>
   <p>Expect a few hundred bets before any of this separates from variance.</p>
+  </details>
 </div>
 </div>
 
 </div>
 <script>
-const SCREENER_VERSION='v4.24';
+const SCREENER_VERSION='v4.25';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2341,9 +2371,22 @@ function auditCore(rows,cfg){
     const exSrc=LIVE_BOOK(r.book), exNm={kalshi:'Kalshi',poly:'Polymarket US',novig:'Novig'}[exSrc];
     const exQs=exSrc?[r._openQ, r._shopQ&&r._shopQ[exNm], r._altQ&&r._altQ[exNm], r._par&&r._par[exSrc]].filter(q=>q&&q.ok&&q.src===exSrc&&q.ref):[];
     const exHit=x=>exQs.some(q=>{ try{ return quoteMatchesFill(q,x); }catch(e){ return false; } });
-    const prior = logged.find(L=>onBoard(L) && coreKey(L.name,L.market,sideOf(L))===coreKey(r.name,r.market,r.side))
-               || logged.find(L=>onBoard(L) && glSame(L) && L.market===r.market)
-               || (exQs.length ? logged.find(L=>onBoard(L) && !L.sold && L.fillRef && L.fillBook===exSrc && exHit({book:L.fillBook, ref:L.fillRef, side:L.fillSide, outcome:L.fillOutcome})) : null);   // v4.14
+    /* v4.25 (Alonzo, 11/8: a Novig "CHI Winner" fill placed at 11:07 AM, and at 2 PM the Sentinels card "Chicago Bulls · Moneyline · Novig" still said
+       I bet this): a bet logged from a book's fill, or typed in, may carry only the team code and the kickoff (name "CHI", no game text), while
+       the board row says "Chicago Bulls" in "Philadelphia @ Chicago". coreKey and glSame (which needs the game text) both missed it. A game line
+       with the same kind and team code (ESPN's code for a full name), on the same game day or within 6 h, is the same bet; a spread needs the
+       same line too. The price can differ: it is still your bet. */
+    const rDay=r.gameInfo&&r.gameInfo.startISO?ctDay(Date.parse(r.gameInfo.startISO)):null;
+    const sameTime = L => { const a=Date.parse(startOf(L)), b=Date.parse(startOf(r)); if(!isNaN(a)&&!isNaN(b)) return Math.abs(a-b)<=6*3600e3; const d=gameDayOf(L); return !(rDay && d) || d===rDay; };   // v4.25: the same game, not the same bet tomorrow (both days known and apart → no)
+    let rCode=glTeam(r)||normAbbr(r.team||r.name); if(rCode && !/^[A-Z0-9]{2,5}$/.test(rCode)){ const g=giTeamFor(r, r.team||r.name); rCode=g?normAbbr(g.abbr):null; }   // v4.25: ESPN's code for a full name
+    const glTeamSame = L => { if(!GL_KINDS.test(r.kind||'') || r.kind==='total' || (L.kind||'')!==(r.kind||'') || !L.team || L.sold || !rCode) return false;
+      if(normAbbr(L.team)!==rCode) return false;
+      if(L.game && teamsOf(L.game) && teamsOf(r.game||'') && gameKey(L.game)!==gameKey(r.game)) return false;
+      return sameTime(L) && (r.kind!=='spread' || L.market===r.market); };
+    const prior = logged.find(L=>onBoard(L) && coreKey(L.name,L.market,sideOf(L))===coreKey(r.name,r.market,r.side) && sameTime(L))
+               || logged.find(L=>onBoard(L) && glSame(L) && L.market===r.market && sameTime(L))
+               || (exQs.length ? logged.find(L=>onBoard(L) && !L.sold && L.fillRef && L.fillBook===exSrc && exHit({book:L.fillBook, ref:L.fillRef, side:L.fillSide, outcome:L.fillOutcome})) : null)   // v4.14
+               || logged.find(L=>onBoard(L) && glTeamSame(L));   // v4.25
     delete r.waitOrder; delete r.otherGameOrder;
     /* v4.20 (Alonzo: "you have the Kalshi API, you should get my bets even if not filled and put an identifier on them"): orders were only
        checked against cards priced at that same exchange; the same team or player on a Novig, Bovada or other card got nothing. Now every
@@ -2384,9 +2427,10 @@ function auditCore(rows,cfg){
     if(moved){ r.moved=moved; r.movedCmp=lineCompare(moved, r);
       r.flags.push(['dupe','Same bet, different line: you have '+heldLabel(moved)+' ($'+(moved.stake||0).toFixed(2)+' on '+bookLabel(moved.book||'?')+') · this one is '+lineOnly({betnow:betNowOf(r)})+(r.movedCmp?' — '+r.movedCmp:'')]); }
     // v3.13: the OTHER team in a game you already have a side on
-    if(!prior && !moved && GL_KINDS.test(r.kind||'') && r.kind!=='total' && teamsOf(r.game)){
-      const opp=logged.find(L=>onBoard(L) && !L.sold && GL_KINDS.test(L.kind||'') && L.kind!=='total' && gameKey(L.game)===gameKey(r.game) &&
-        L.team && r.team && normAbbr(L.team)!==normAbbr(r.team) && !(L.result==='win'||L.result==='loss'||L.result==='push'));
+    const rTeams=(()=>{ const g=giTeamsOf(r); return g?g.map(y=>normAbbr(y.abbr)):teamsOf(r.game||''); })();   // v4.25: the game's two codes, from ESPN when the names are long
+    if(!prior && !moved && GL_KINDS.test(r.kind||'') && r.kind!=='total' && (teamsOf(r.game) || rTeams)){
+      const opp=logged.find(L=>onBoard(L) && !L.sold && GL_KINDS.test(L.kind||'') && L.kind!=='total' && (gameKey(L.game)===gameKey(r.game) || (!teamsOf(L.game||'') && rTeams && rTeams.includes(normAbbr(L.team||'')) && sameTime(L))) &&   // v4.25: a bet with no game text, on the other team of this game
+        L.team && (r.team||rCode) && normAbbr(L.team)!==(rCode||normAbbr(r.team)) && !(L.result==='win'||L.result==='loss'||L.result==='push'));
       if(opp){ r.otherSideOf=opp; r.flags.push(['warn','⚠ this is the OTHER side of your '+heldLabel(opp)+' — betting both sides usually just pays the fee twice']); } }
     // v2.61: you removed this exact bet
     if(!prior){ const rm=removedBets.filter(R=>onBoard(R) && coreKey(R.name,R.market,sideOf(R))===coreKey(r.name,r.market,r.side)).pop();
@@ -3075,6 +3119,20 @@ async function pcFillShots(){
    Startup-safe: function declarations and window storage only (see v4.16). */
 function scOpenSet(){ if(!window._scOpen){ let a=[]; try{ a=JSON.parse(localStorage.getItem('mbev.scOpen')||'[]')||[]; }catch(e){ a=[]; } window._scOpen=new Set(Array.isArray(a)?a:[]); } return window._scOpen; }
 function scOpenSave(){ try{ localStorage.setItem('mbev.scOpen', JSON.stringify([...scOpenSet()].slice(-60))); }catch(e){} }
+/* v4.25 (Alonzo: "if you feel certain things can be, or are only needed with, a drop-down, then do"): the explanations on every tab, the
+   Bet log's once-a-month buttons, the parlay and Scorecard legends are details.help drop-downs (closed to start; the ones you open are
+   remembered on this device in mbev.help). On a phone the board's tick boxes fold behind "Filters" (mbev.barMore) and the Today card's
+   book tiles behind "by book" (mbev.tbBooks); on a computer both stay open. */
+function helpOpenSet(){ if(!window._helpOpen){ let a=[]; try{ a=JSON.parse(localStorage.getItem('mbev.help')||'[]')||[]; }catch(e){ a=[]; } window._helpOpen=new Set(Array.isArray(a)?a:[]); } return window._helpOpen; }
+function helpOpenSave(){ try{ localStorage.setItem('mbev.help', JSON.stringify([...helpOpenSet()])); }catch(e){} }
+function helpApply(root){ const S=helpOpenSet(); (root||document).querySelectorAll('details.help[data-help]').forEach(d=>{ if(S.has(d.dataset.help) && !d.open) d.open=true; }); }
+function tbBooksOpen(){ try{ return localStorage.getItem('mbev.tbBooks')==='1'; }catch(e){ return false; } }
+function barMoreApply(){ let on=false; try{ on=localStorage.getItem('mbev.barMore')==='1'; }catch(e){} const b=document.getElementById('barMoreBtn'); document.querySelectorAll('.bar-more').forEach(x=>x.classList.toggle('open', on)); if(b){ b.setAttribute('aria-expanded', String(on)); b.textContent=on?'Filters ▴':'Filters ▾'; } }
+document.addEventListener('toggle', e=>{ const d=e.target; if(!d || !d.classList || !d.classList.contains('help') || !d.dataset.help) return; const S=helpOpenSet(); if(d.open) S.add(d.dataset.help); else S.delete(d.dataset.help); helpOpenSave(); }, true);
+document.addEventListener('click', e=>{ const t=e.target.closest && e.target.closest('.tb-more, #barMoreBtn'); if(!t) return;
+  if(t.id==='barMoreBtn'){ let on=false; try{ on=localStorage.getItem('mbev.barMore')==='1'; localStorage.setItem('mbev.barMore', on?'0':'1'); }catch(e){} barMoreApply(); return; }
+  e.stopPropagation(); e.preventDefault(); try{ localStorage.setItem('mbev.tbBooks', tbBooksOpen()?'0':'1'); }catch(e){} try{ renderTodayBar(); }catch(e){} }, true);   // capture: before the Today card's own click (which opens the Bet log)
+try{ helpApply(); barMoreApply(); }catch(e){}
 document.addEventListener('toggle', e=>{ const d=e.target; if(!d || !d.classList || !d.classList.contains('sc-why')) return; const k=d.dataset.pck||''; if(!k) return; const S=scOpenSet(); if(d.open) S.add(k); else S.delete(k); scOpenSave(); }, true);
 /* how fresh the price is: the last time a price for this bet was read (the load, a Sentinels check, the open-market check, line shopping) */
 function rowSeenAt(r){ const m=Math.max(Date.parse(r&&r.loadedAt)||0, +(r&&r._liveAt)||0, Date.parse(r&&r.shop&&r.shop.at)||0, +(r&&r.exOpen&&r.exOpen.at)||0); return m>0?m:null; }
@@ -5324,6 +5382,7 @@ function leTrack(x, now){ if(x.pr.homeWin==null){ x.age=null; x.stale=false; ret
    worldwide), your board's and your bets' leagues first. A league with no game in progress and none starting within 15 minutes
    is skipped for LE_QUIET, so a scan does not ask ESPN about 60 leagues every 30 seconds. More games are shown (LE_MAXG). */
 const LE_TEAM=/^(football|basketball|hockey|baseball|soccer)\//, LE_QUIET=600000, LE_MAXG=30, leQuiet=new Map();
+const LE_GAMES_PER_CALL=3;   // v4.25: games per /live call in a scan (both teams, every exchange you bet)
 function leSports(){ const s=new Set(); (lastRows||[]).forEach(r=>{ if(r.sport) s.add(r.sport); }); liveOpenBets().forEach(b=>{ if(b.sport) s.add(b.sport); }); LE_SPORTS.forEach(x=>s.add(x)); Object.keys(ESPN_MAP).forEach(x=>s.add(x));
   return [...s].filter(x=>ESPN_MAP[x] && LE_TEAM.test(ESPN_MAP[x])); }   // v3.76: every team league, no cap
 function leNet(fair, price, book){ const f=feeRate(book, price, cfgRead().fees, true); return ((fair/price-1)-f)/(1+f); }
@@ -5388,10 +5447,13 @@ async function leScan(manual){   // v3.76: manual = you pressed Scan (only then 
         if(d) jobs.push({gi, ha, ab, p, n, d}); })); });
     const Q={}, M={}; let err='', reused=0;
     const ask=jobs.filter(j=>{ const q=prevQ[j.d.id], m=prevM[j.d.id]; if(q && m && Math.abs((j.p==null?-9:j.p)-(m.p==null?-9:m.p))<0.01 && Date.now()-m.at<180000){ Q[j.d.id]=q; M[j.d.id]=m; reused++; return false; } return true; });
-    for(let i=0;i<ask.length;i+=8){ const chunk=ask.slice(i,i+8);
+    /* v4.25: one call per LE_GAMES_PER_CALL games (both teams, every exchange) instead of 8 bets however they fall, so a game's two Novig sides and the
+       games of one kickoff travel together (the fetch wrapper groups them). A failed or busy answer is asked again after a minute (kept 3 min before). */
+    const chunks=[]; { const byG={}; ask.forEach(j=>{ (byG[j.gi]=byG[j.gi]||[]).push(j); }); const G=Object.keys(byG); for(let i=0;i<G.length;i+=LE_GAMES_PER_CALL) chunks.push([].concat(...G.slice(i,i+LE_GAMES_PER_CALL).map(g=>byG[g]))); }
+    for(const chunk of chunks){
       try{ const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(chunk.map(j=>j.d))), {headers:apiHeaders()});
         if(!res.ok){ err='exchange check failed ('+res.status+')'; break; }
-        const R=((await res.json())||{}).results||{}; chunk.forEach(j=>{ if(R[j.d.id]){ Q[j.d.id]=R[j.d.id]; M[j.d.id]={p:j.p, at:Date.now()}; } });
+        const R=((await res.json())||{}).results||{}; chunk.forEach(j=>{ if(R[j.d.id]){ Q[j.d.id]=R[j.d.id]; M[j.d.id]={p:j.p, at:Date.now()-(R[j.d.id].ok?0:120000)}; } });
       }catch(e){ err='exchange check failed (no answer from the Worker)'; break; } }
     leData={at:Date.now(), gp, jobs, Q, M, err, reused, asked:ask.length}; leAt=Date.now(); lePaint();
   }catch(e){ box.innerHTML='<div class="empty" style="display:block">Live scan failed: '+esc(String(e&&e.message||e))+'</div>'; }
@@ -5580,6 +5642,7 @@ async function espnRefreshNow(btn){   // v2.85: manual ESPN refresh — scores, 
 var tbDay=null;   // v4.01: the day the Today card shows (null = today, and it follows the clock past midnight)
 function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding → to win   // v3.98 (Alonzo): played / playing / to play, in bets and in money, per day and per book
   const el=document.getElementById('todayBar'); if(!el) return;
+  el.classList.toggle('tb-fold', !tbBooksOpen());   // v4.25: on a phone the book tiles show only after "by book"
   const realToday=ctDay(Date.now()), today=tbDay||realToday, by={};   // v4.01 (Alonzo: "toggle between days, a button to go back and forth"): `today` is the day shown
   const blank=k=>({book:k,n:0,bet:0,free:0,won:0,lost:0,w:0,l:0,p:0,open:0,toWin:0,net:0,cancel:0,played:0,playing:0,toPlay:0,playedAmt:0,playingAmt:0,toPlayAmt:0});
   const at=k=>by[k]||(by[k]=blank(k));
@@ -5629,7 +5692,8 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
     (tot.playing?'<div class="tb-l2"><span class="tb-inplay">▶ IN PLAY '+usd(tot.playingAmt)+'</span> <span class="open">not won or lost yet</span></div>':'')+   // v4.07
     (tot.toPlay?'<div class="tb-l2"><span class="open">⏳ to play '+usd(tot.toPlayAmt)+': not counted yet</span></div>':'')+
     (tot.open?'<div class="tb-l2" title="best = every open bet wins · worst = every bet playing loses (games not started are not counted)">best '+sgn(best)+' · worst <span class="tb-inplay">'+(worst<0?'−':'')+usd(worst)+'</span></div>':'')+   // v4.07: worst is not a loss yet: grey
-    '<div class="tb-motto" title="Only settled bets count as won or lost; games playing are in play, games not started are not counted">Hope for the best, expect the worst.</div></div>';
+    '<div class="tb-motto" title="Only settled bets count as won or lost; games playing are in play, games not started are not counted">Hope for the best, expect the worst.</div>'+
+    '<button type="button" class="tb-more" aria-expanded="'+tbBooksOpen()+'" title="Show or hide the money per book (phone)">'+(tbBooksOpen()?'by book ▴':'by book ▾')+'</button></div>';   // v4.25
   el.innerHTML='<span class="tb-k"><span>'+lbl+' '+espnBtn+navBtns+'</span>'+lookChip()+'<b class="tb-tot">'+usd(tot.bet)+'</b><span class="tb-n">'+tot.n+' bet'+(tot.n===1?'':'s')+'</span>'+(tot.free?'<span class="tb-st" title="free bets: not your money">🎁 '+usd(tot.free)+' free</span>':'')+
     (tot.n?'<span class="tb-st" title="has a result">✓ '+tot.played+' played</span><span class="tb-st live" title="game started, no result yet">▶ '+tot.playing+' playing</span><span class="tb-st" title="game not started">⏳ '+tot.toPlay+' to play</span>':'')+
     (z(now)?'<span class="tb-pill even" title="Nothing won or lost yet">$0.00</span>':'<span class="tb-pill '+(now>0?'good':'bad')+'" title="Won − lost, on bets already settled">'+(now>0?'+':'−')+usd(now)+'</span>')+(tot.playingAmt?'<span class="tb-pill inplay" title="Games playing: not won or lost yet"><small>IN PLAY</small> '+usd(tot.playingAmt)+'</span>':'')+'</span>'+allCard+tiles;   // v4.07
@@ -5913,7 +5977,7 @@ function renderScorecard(){
   const sp=x=>(x>=0?'+':'−')+Math.abs(x*100).toFixed(1)+'%';
   let h='<div class="meta"><b>'+n.toLocaleString()+'</b> of <b>'+PROOF_N.toLocaleString()+'</b> settled bets <span title="Bets on the same game move together, so the ranges count each game once">(from '+nGames.toLocaleString()+' separate games)</span> · stage: <b>'+stage+'</b>'+(n<PROOF_N?' · '+(PROOF_N-n).toLocaleString()+' to go':'')+'</div>'+
     '<div class="sc-prog"><i style="width:'+Math.min(100,100*n/PROOF_N).toFixed(1)+'%"></i></div>'+
-    '<div class="meta">Under 100 = stories · 100–299 = directional · 300–999 = comparison · 1,000 = evidence. No raising stakes or claims to buyers before 1,000. Ranges re-draw whole games 10,000 times (same-game bets move together).</div>';
+    '<details class="help" data-help="sc-stages"><summary>What the stages mean</summary><div class="meta">Under 100 = stories · 100–299 = directional · 300–999 = comparison · 1,000 = evidence. No raising stakes or claims to buyers before 1,000. Ranges re-draw whole games 10,000 times (same-game bets move together).</div></details>';   // v4.25: a drop-down
   h+='<div class="sc-grid">'+
     '<div class="sc-box"><div class="k">Profit</div><div class="v '+(profit>=0?'pl-up':'pl-down')+'">'+money(profit,true)+'</div><div class="r">on '+money(staked)+' staked</div></div>'+
     '<div class="sc-box"><div class="k">ROI</div><div class="v">'+(roi==null?'—':sp(roi))+'</div>'+rng(roiB,sp)+'</div>'+
@@ -5954,7 +6018,7 @@ function renderScorecard(){
   const rs=researchState();
   if(rs.n) h+='<p class="meta" style="margin-top:10px">🔬 <b>Research Makes</b> (outliers at the minimum, kept out of everything above): '+rs.n+' taken · '+rs.nc+' with a closing price'+(rs.mean!=null?' · mean CLV '+sp(rs.mean):'')+(rs.hi90!=null?' · hopeful end '+sp(rs.hi90):'')+' · '+(rs.paused?'<b class="pl-down">paused</b> — '+esc(rs.why):rs.nc>=50?'running':'running — the stop check starts at 50 closes')+'.</p>';
   if(!n && !C.length) h+='<div class="empty" style="display:block">Nothing settled yet. Every bet that settles moves the bar.</div>';
-  el.innerHTML=h;
+  el.innerHTML=h; try{ helpApply(el); }catch(e){}   // v4.25: the stages drop-down stays as you left it
 }
 function renderPerf(){ try{ renderCal(); }catch(e){} try{ renderScorecard(); }catch(e){ console.error(e); }
   renderCalibration();
@@ -6263,6 +6327,7 @@ const API_BASE = 'https://api.0xbeta.dev';
    the other bets together, each Novig game line on its own (3 at a time), answers merged back as one. Every caller
    (Sentinels, open check, Parole, Share, open slip…) goes through this. Paid plan later: LIVE_SPLIT=false. */
 const LIVE_SPLIT=true;
+const LIVE_HEAVY_N=6;   // v4.25: Novig game lines per /live request when they share a league and kickoff (3 games, both sides: ~36 of the Worker's 45 calls at worst)
 /* v4.24 (Cloudflare: "exceeded its daily requests limit", 142k in a day; the chart peaked at 8,700 per 15 min on a college-football
    Saturday). Every call to the Worker is counted here by path and day (mbev.wk, shown on the Sources row), so the next spike has a name.
    When the Worker answers 429, or a 5xx that says the limit is reached, background polling pauses for 10 minutes (wkPaused): fills,
@@ -6309,7 +6374,12 @@ setInterval(()=>{ try{ wkChipPaint(); }catch(e){} }, 60000);
         const heavy=b=>b && b.book==='novig' && /^(moneyline|spread|total)$/.test(b.kind||'');
         const H=bets.filter(heavy);
         if(bets.length>1 && H.length){
-          const groups=[].concat(bets.length>H.length?[bets.filter(b=>!heavy(b))]:[], H.map(b=>[b])), outs=[];
+          /* v4.25: Novig game lines in the same league with the same kickoff read the same catalogue pages and, for both sides of a game, the same
+             book, and the Worker reads each page once per request (its `once` memo), so they travel together: up to LIVE_HEAVY_N per request, grouped
+             by sport + start. Before, each one was its own request (a Live edges scan on a 30-game Saturday was ~80 requests; now ~20). */
+          const byKey={}; H.forEach(b=>{ const k=String(b.sport||'')+'|'+String(b.start||''); (byKey[k]=byKey[k]||[]).push(b); });
+          const HG=[]; Object.keys(byKey).forEach(k=>{ const L=byKey[k]; for(let i=0;i<L.length;i+=LIVE_HEAVY_N) HG.push(L.slice(i,i+LIVE_HEAVY_N)); });
+          const groups=[].concat(bets.length>H.length?[bets.filter(b=>!heavy(b))]:[], HG), outs=[];
           for(let i=0;i<groups.length;i+=3) outs.push(...await Promise.all(groups.slice(i,i+3).map(g=>core(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(g)), init).then(r=>r.ok?r.json():null).catch(()=>null))));
           const results={}; let at=null; outs.forEach(o=>{ if(o){ Object.assign(results, o.results||{}); at=at||o.at; } });
           return new Response(JSON.stringify({at:at||new Date().toISOString(), results}), {status:200, headers:{'Content-Type':'application/json'}});
@@ -8108,7 +8178,7 @@ function pkSentHtml(pays,cfg,appName){
                                     : want+' picks does not pay with these picks. '+best.n+' picks grows your bankroll most.';
   return '<div class="pk-sent-h"><b>🦑 Good in a parlay</b><span class="meta">'+esc(when)+'</span><button type="button" class="ghost sm" id="pkSentGo">🦑 Send the Sentinels</button></div>'+
     '<div class="pk-be" role="list" aria-label="The chance every pick needs to break even, '+esc(appName+' '+play)+'">'+sizes.map(n=>'<button type="button" role="listitem" class="pk-be-i'+(n===4?' star':'')+(n===want?' pick':'')+'" data-n="'+n+'" aria-pressed="'+(n===want)+'" title="Show the '+n+'-pick entry">'+(n===4?'★ ':'')+n+' picks <b>'+(be[n]!=null?pct(be[n]):'n/a')+'</b></button>').join('')+'</div>'+   // v3.59: tap a size
-    '<div class="meta pk-legend">Each pick’s circles are the entry sizes it is strong enough for: <i class="pk-dot on">4</i> filled = its chance beats what that size needs; <i class="pk-dot">4</i> empty = not enough. The ring marks the size you picked ('+want+'). ★ 4 is your target.'+(best?' <button type="button" class="linkbtn pk-sent-jump">↓ See the best '+best.n+'-pick entry</button>':'')+'</div>'+   // v3.63
+    '<div class="meta pk-legend">'+(best?'<button type="button" class="linkbtn pk-sent-jump">↓ See the best '+best.n+'-pick entry</button> ':'')+'<details class="help" data-help="pk-legend"><summary>What the circles mean</summary><div class="meta">Each pick’s circles are the entry sizes it is strong enough for: <i class="pk-dot on">4</i> filled = its chance beats what that size needs; <i class="pk-dot">4</i> empty = not enough. The ring marks the size you picked ('+want+'). ★ 4 is your target.</div></details></div>'+   // v3.63; v4.25: the legend in a drop-down, the jump button stays out
     (S.length ? '<ul class="pk-sent-list">'+S.slice().sort((a,b)=>((b.fits.indexOf(want)>=0)-(a.fits.indexOf(want)>=0)) || b.p-a.p).slice(0,12).map(l=>{ const on=pkState.mine.indexOf(l.key)>=0;
         return '<li><div class="pk-sl-who c-who">'+avatarHtml(l.r,'r:'+l.r.idx)+'<div><b>'+esc(l.name)+'</b> <span class="meta">'+esc(pkPick(l))+'</span>'+pkBetTag(l)+'<div class="pk-where">'+esc(pkWhere(l))+'</div><div class="meta">'+(l.good?'<b class="pk-good">✓ good alone too</b> (a single bet on the board)':'alone: '+esc(l.alone))+'</div></div></div>'+
           '<div class="pk-sl-p" title="The chance it hits">'+pct(l.p)+'</div>'+
@@ -8259,7 +8329,7 @@ function renderParlays(){
   document.getElementById('pkCards').innerHTML=cards.map(([n,L,e])=> !L
       ? '<div class="pk-card empty"><div class="pk-h"><b>'+n+' picks</b><span class="meta">'+(priced?'odds multiplied':esc(pkPaysTxt(pays[n])))+'</span></div><div class="meta">Not enough picks '+(priced?'with an edge on '+esc(appName):'at '+pct(pkState.minP)+' or better')+(pkState.oneGame?' from different games':'')+'.</div></div>'
       : (window._pkCards['n'+n]={legs:L,e}, pkCard(n+' picks',L,e,'n'+n,n===bestN))).join('');
-  { const el=document.getElementById('pkSent'); if(el) el.innerHTML=pkSentHtml(pays,cfg,appName); }   // v3.57
+  { const el=document.getElementById('pkSent'); if(el){ el.innerHTML=pkSentHtml(pays,cfg,appName); try{ helpApply(el); }catch(e){} } }   // v3.57; v4.25: the legend drop-down stays as you left it
   { const el=document.getElementById('pkSlips'); if(el) el.innerHTML=pkSlipsHtml(legs,pays,cfg,app); }   // v3.61: ready-made slips
   avFillSoon();
   // your entry
