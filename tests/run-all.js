@@ -37,6 +37,7 @@ const runs = [
   ['On an iPhone the prefilled slip waits as a real link, so the book app opens; Mac unchanged', 'slip-app-test.js', []],
   ['Texas: a bet at a book you do not bet moves to your best book (board row or live Novig/Kalshi/Polymarket), screened at that price', 'texas-swap-test.js', []],
   ['Calendar: in play is never a loss; best and worst day, this month and ever, from real results only (Alonzo\'s November)', 'cal-worst-test.js', []],
+  ['v4.28: Sort › Math (edge first) is the default, the #1 MATH PICK card, the score colours in words', 'math-pick-test.js', []],
   ['v4.27: the hard stop: past the daily max, Save stops and says so; a second press is your call', 'hard-stop-test.js', []],
   ['v4.26: the score ribbon: My games, only the sports you bet in (All sports brings the rest back), each tile says what your open bets risk', 'ribbon-risk-test.js', []],
   ['v4.25: Novig game lines travel together (6 per request, by kickoff); a scan asks once per 3 games; busy answers retried in a minute; a hidden tab makes no calls; drop-downs (explanations, Bet log More, phone Filters and by book)', 'live-batch-test.js', []],

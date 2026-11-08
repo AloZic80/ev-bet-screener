@@ -28,7 +28,7 @@ const PX={[key('rui hachimura','4 5 rebounds','O',NOW+7*H)]:[[t-50,0.405,0.40],[
     await p.goto('http://app.test/'); await p.waitForTimeout(800);
     await p.evaluate(()=>{ const i=document.getElementById('books'); i.value='Novig, Polymarket US'; i.dispatchEvent(new Event('input',{bubbles:true})); }); await p.waitForTimeout(700);
     const card=n=>p.evaluate(n=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>x.textContent.includes(n)); if(!c) return null; const d=c.querySelector('details.sc-why'), r=c.getBoundingClientRect();
-      return {text:c.innerText.replace(/\s+/g,' '), score:+(c.querySelector('.sc-score')||{}).textContent, open:!!(d&&d.open), price:(c.querySelector('.sc-price')||{}).className, bet:!!c.querySelector('.sc-act .bet-btn'), w:Math.round(r.width), right:Math.round(r.right),
+      return {text:c.innerText.replace(/\s+/g,' '), score:parseInt((c.querySelector('.sc-score')||{}).textContent,10),   /* v4.28: the score is followed by its word */ open:!!(d&&d.open), price:(c.querySelector('.sc-price')||{}).className, bet:!!c.querySelector('.sc-act .bet-btn'), w:Math.round(r.width), right:Math.round(r.right),
         age:(c.querySelector('.sc-pill.age')||{}).className||'', mv:(c.querySelector('.sc-pill.mv')||{}).textContent||'', chart:!!c.querySelector('.sc-svg .l-p'), leg:(c.querySelector('.sc-leg')||{}).textContent||''}; }, n);
     const R=await card('Hachimura'), N=await card('Naz Reid');
     if(W===390){
@@ -69,7 +69,7 @@ const PX={[key('rui hachimura','4 5 rebounds','O',NOW+7*H)]:[[t-50,0.405,0.40],[
       await p.evaluate(()=>{ const c=document.querySelector('#placeCards .editor .eb-cancel'); if(c) c.click(); }); await p.waitForTimeout(500);
       // sort by the score
       await p.selectOption('#sortBy','score'); await p.waitForTimeout(400);
-      const order=await p.evaluate(()=>[...document.querySelectorAll('#placeCards .sc-card')].map(c=>+c.querySelector('.sc-score').textContent));
+      const order=await p.evaluate(()=>[...document.querySelectorAll('#placeCards .sc-card')].map(c=>parseInt(c.querySelector('.sc-score').textContent,10)));
       check('Sort › Sentinel score puts the highest score first', order.length===2 && order[0]>=order[1], order);
     }
     if(W===1280){

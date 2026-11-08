@@ -256,6 +256,14 @@
   longer marks CHI's game tomorrow. The OTHER-side warning (v3.13) also finds a logged bet with no game text on the other team of the row's game.
   Worker v3.42 (`novigBet`, PR not merged until the owner says so): a Novig fill carries `away`/`home` from the description ("PHI @ CHI"), so the
   logged bet gets its game. `tests/fill-prior-test.js` (fails on v4.24).
+- Math order and the #1 pick (v4.28, `mathKey`, `scWord`, `mathTop`, `.sc-mathtop`, `.sc-word`; owner: "still confused on the green, blue and school-bus
+  yellow. Tell me THIS one is what the math says to bet on. The sort, stars is not always the best bets, so what is it?"): one order for everything,
+  the edge after blending the market with the model (`blendNet`, what the stake is sized on), outliers last. The daily max is filled in it (it already
+  was), Sort › ✅ Math is now the default (`sortBy='math'`; Top bets by BettingPros stars is still in the menu), and the Place card with the highest
+  `mathKey` says "✅ #1 MATH PICK" whatever the sort. The Sentinel score keeps its colour and says it in a word: STRONG 75+ (green), GOOD 50-74 (blue),
+  THIN under 50 (yellow: still +EV, the smallest stakes). The Place these header says the math says bet every card, best first, to the daily max.
+  `mathTop` inlines the Place test because `isPlace` is a `const` defined further down (startup rule). Tests read the score with `parseInt`.
+  `tests/math-pick-test.js`.
 - Hard stop (v4.27, in the bet editor's Save handler next to the v2.71 limit check; owner: "I want to be strict with myself ... build the Hard
   Stop. I still have the option to go on, but at least it is there for me to say and think... ok, mejor no"): when the stake would take the bet's
   game day past `cfg.dayMax` (`dayStats()[day].staked` + stake), the first press shows "🛑 Hard stop: today is at $48.00 of your $50.00 daily max;

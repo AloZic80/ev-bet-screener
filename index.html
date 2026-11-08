@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.27</title>
+<title>0xBeta Screener v4.28</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1213,6 +1213,10 @@ details.help.more{margin-top:10px}
 .ss-risk{margin-top:4px; font-size:11.5px; font-weight:600; color:var(--soft); white-space:nowrap}
 .ss-all{display:flex; align-items:center; gap:4px; font-size:11.5px; color:var(--soft); white-space:nowrap; cursor:pointer}
 .ss-all input{width:13px; height:13px; accent-color:var(--accent); margin:0}
+/* v4.28: the score in words, and the #1 math pick */
+.sc-score{display:inline-flex; flex-direction:column; align-items:flex-start}
+.sc-word{font-family:inherit; font-size:10px; font-weight:800; letter-spacing:.08em; line-height:1.2; margin-top:2px}
+.sc-mathtop{align-self:flex-start; margin:0 0 6px; padding:3px 10px; border-radius:20px; font-size:11.5px; font-weight:800; letter-spacing:.04em; background:var(--live-bg); color:var(--live); border:1px solid var(--live)}
 </style>
 </head>
 <body>
@@ -1221,7 +1225,7 @@ details.help.more{margin-top:10px}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.27</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.28</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1314,7 +1318,7 @@ details.help.more{margin-top:10px}
   <!-- v2.62: one slim line of view controls; set-once settings live in the Settings tab -->
   <div class="board-bar">
     <label class="bar-item">Sort <select id="sortBy" class="bar-sel">
-        <option value="top" selected>Top bets (stars, then cover %)</option>
+        <option value="math" selected>✅ Math: best edge first</option><!-- v4.28 --><option value="top">Top bets (stars, then cover %)</option>
         <option value="score">Sentinel score (best first)</option><!-- v4.21 -->
         <option value="cover">Cover % (highest first)</option>
         <option value="educated">Educated guess (hit rate)</option>
@@ -1893,7 +1897,7 @@ details.help.more{margin-top:10px}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.27';
+const SCREENER_VERSION='v4.28';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2652,7 +2656,7 @@ function applyDayLimits(rows,cfg,slateDay){
   try{ ((myOrders&&myOrders.orders)||[]).forEach(o=>{ if(o.action==='sell' || o.price==null) return; const t=orderStart(o); if(t==null || t<Date.now()) return;
     const k=ctDay(t)+'|proj'; used[k]=(used[k]||0)+(+o.price||0)*(+o.qty||0); }); }catch(e){}
   // best first = edge after blending with the market; outliers (least trustworthy) go last
-  const score=r=>(r.outlier?-1:0)+(r.blendNet!=null?r.blendNet:(r.net!=null?r.net:-1));
+  const score=mathKey;   // v4.28: the same order as Sort › Math and the #1 math pick
   const take=(r,room,why)=>{
     if(r.stake<=room+1e-9) return true;
     let s=+Math.max(0,room).toFixed(2);
@@ -2811,6 +2815,7 @@ function renderCore(rows,cfg){
       if((b.fairProb||0)!==(a.fairProb||0)) return (b.fairProb||0)-(a.fairProb||0);
       return (b.stars==null?-1:b.stars)-(a.stars==null?-1:a.stars);
     }
+    if(sortBy==='math') return (mathKey(b)-mathKey(a)) || (sentScore(b).total-sentScore(a).total);   // v4.28
     if(sortBy==='score') return (sentScore(b).total-sentScore(a).total) || ((b.net||0)-(a.net||0));   // v4.21
     if(sortBy==='net') return (b.net||0)-(a.net||0);
     if(sortBy==='gross') return (b.gross||0)-(a.gross||0);
@@ -2827,6 +2832,7 @@ function renderCore(rows,cfg){
   const groupCount=[0,0,0,0,0]; shown.forEach(r=>groupCount[grpOf(r)]++);
   let lastGroup=-1;
   const cardsOn=boardCardsOn(), cardsHtml=[];   // v2.69
+  const mathTop=(shown||[]).filter(r=>r.pass && r.stake>0 && !r.prior && !r.waitOrder && !r.removed && !r.moved && !r.glConflict).reduce((a,r)=>!a||mathKey(r)>mathKey(a)?r:a, null);   // v4.28
   shown.forEach(r=>{
     const g=grpOf(r);
     if(g!==lastGroup && !(cardsOn && g===0)){
@@ -2859,7 +2865,7 @@ function renderCore(rows,cfg){
       : r.risk ? 'risk' : (r.flags.some(f=>f[0]==='warn'||f[0]==='corr') || (r.mktNet!=null&&r.mktNet<=0) || r.oddsApi===null) ? 'warn' : '';
     const nKey=String(r.apiKey||(r.name+'|'+r.market+'|'+(r.side||'')+'|'+r.book));
     const nOpen=notesAll || openNotes.has(nKey);
-    if(cardsOn && g===0){ cardsHtml.push(placeCardHtml(r,cfg,{tags,nTags,worst,nKey,nOpen,sweet:isSweet(r,swc)})); return; }   // v2.69
+    if(cardsOn && g===0){ cardsHtml.push(placeCardHtml(r,cfg,{tags,nTags,worst,nKey,nOpen,sweet:isSweet(r,swc),top:r===mathTop})); return; }   // v2.69; v4.28: top = the #1 math pick
     const kick = !r.gameInfo ? ''
       : r.gameInfo.state==='post' ? '<div class="kick final">Final — '+esc(r.gameInfo.detail||'game over')+'</div>'
       : r.gameInfo.state==='in'   ? '<div class="kick live">LIVE · started '+esc(giWhen(r.gameInfo))+'</div>'
@@ -2917,7 +2923,7 @@ function renderCore(rows,cfg){
 
   const pcBox=document.getElementById('placeCards');
   if(pcBox){
-    if(cardsOn && cardsHtml.length){ pcBox.classList.add('sc-grid'); pcBox.innerHTML='<div class="pc-head"><b>🦑 The Sentinels</b> · Place these · '+cardsHtml.length+'<span class="sc-sub">La Contadora approved each one. Tap Why this play? for the numbers.</span></div>'+cardsHtml.join(''); pcBox.style.display=''; pcFillShots(); }   // v3.57: ESPN photos   // v4.21: Sentinels cards in a grid
+    if(cardsOn && cardsHtml.length){ pcBox.classList.add('sc-grid'); pcBox.innerHTML='<div class="pc-head"><b>🦑 The Sentinels</b> · Place these · '+cardsHtml.length+'<span class="sc-sub">✅ The math says bet every card here: La Contadora approved each one. Best first on Sort › Math; bet down the list until your daily max. STRONG (green), GOOD (blue), THIN (yellow: still +EV, the smallest stakes).</span></div>'+cardsHtml.join(''); pcBox.style.display=''; pcFillShots(); }   // v3.57: ESPN photos   // v4.21: Sentinels cards in a grid
     else { pcBox.innerHTML=''; pcBox.style.display='none'; }
     avFillSoon();   // v3.57: and on the board's rows
     injFillSoon();   // v3.78: injury flags
@@ -3146,6 +3152,12 @@ function ageTxt(ms){ if(ms==null || !isFinite(ms)) return ''; const s=Math.max(0
    Edge (50): EV after fees, full at +6% or more. Market (30): the same bet against the market's own fair price after fees (r.mktNet): 20 at
    break-even, 30 at +4% or more, falling to 0 at -3%; x0.85 when the market price is consensus, not sharp; 8 when there is no market price.
    Fresh (20): full when the price was read in the last 3 minutes, 0 after 90 minutes. */
+/* v4.28 (Alonzo: "I am still confused on the green, blue and school-bus yellow. Tell me THIS one is what the math says to bet on. And the
+   sort, stars is not always the best bets, so what is it?"): one math order for everything. The edge after blending the market with the model
+   (blendNet, what the stake is sized on), outliers last. The daily max is filled in this order, Sort › Math uses it, and the first card in it
+   is "#1 MATH PICK". The score colour gets a word: STRONG (75+, green), GOOD (50-74, blue), THIN (under 50, yellow: still +EV, smallest stakes). */
+function mathKey(r){ return (r&&r.outlier?-1:0)+(r&&r.blendNet!=null?r.blendNet:(r&&r.net!=null?r.net:-1)); }
+function scWord(t){ return t>=75?'STRONG':t>=50?'GOOD':'THIN'; }
 function sentScore(r){ const net=r&&r.net!=null&&isFinite(r.net)?r.net:null, e=net==null?0:Math.round(50*Math.max(0,Math.min(1,net/0.06)));
   let m=8, mTxt='no market price to check it against';
   if(r && r.mktNet!=null && isFinite(r.mktNet)){ const x=r.mktNet; m=x>0?20+10*Math.min(1,x/0.04):20*Math.max(0,1+x/0.03); if(!r.mktSharp) m*=0.85; m=Math.round(m);
@@ -3249,7 +3261,8 @@ function placeCardHtml(r,cfg,o){
       '<div class="sc-more"><button class="log sm share-btn" data-idx="'+r.idx+'" title="Send this bet to someone, with the same link the logo opens: the slip with the side, line and the screener stake filled in (they can change it). Your bankroll, EV and log do not go with it.">📤 Share</button></div>'+
     '</div></details>';
   return '<div class="pcard sc-card" data-idx="'+r.idx+'" data-pck="'+esc(pxKey(r))+'">'+
-    '<div class="sc-top"><span class="sc-score '+scCls+'" title="Sentinel score: edge '+sc.e+'/50, market '+sc.m+'/30, fresh '+sc.f+'/20. Open Why this play? for the parts.">'+sc.total+'</span>'+
+    (o.top?'<div class="sc-mathtop" title="The best edge on the board right now (edge after blending the market with the model, what the stake is sized on). Bet the cards top to bottom on Sort › Math until your daily max.">✅ #1 MATH PICK</div>':'')+   // v4.28
+    '<div class="sc-top"><span class="sc-score '+scCls+'" title="Sentinel score: edge '+sc.e+'/50, market '+sc.m+'/30, fresh '+sc.f+'/20. Open Why this play? for the parts.">'+sc.total+'<small class="sc-word">'+scWord(sc.total)+'</small></span>'+
       '<span class="sc-pill ev" title="EV after fees at '+esc(bk)+'">'+logo+'<b class="'+(r.net>0?'up':'down')+'">'+(r.net==null?'—':(r.net>0?'+':'')+pct(r.net))+'</b></span>'+
       (sc.age!=null?'<span class="sc-pill age'+(sc.age>30*60e3?' old':'')+'" title="This price was read '+ageTxt(sc.age)+' ago'+(sc.age>30*60e3?'. Send the Sentinels for a fresh one.':'')+'">⏱ '+ageTxt(sc.age)+'</span>':'')+mvTxt+
       '</div>'+
@@ -6196,7 +6209,7 @@ async function run(){
 document.getElementById('run').addEventListener('click',run);
 
 // Global sort/filter state
-let sortBy = 'top';
+let sortBy = 'math';   // v4.28: was 'top' (BettingPros stars), which is not the math
 let colSort = null;   // v2.45: header-click sort key (overrides the dropdown until it changes)
 let colDir = 1;       // 1 = low→high / A→Z, -1 = high→low / Z→A
 function colVal(r,k){
