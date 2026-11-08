@@ -220,6 +220,24 @@
   fill in a moment after each redraw and push the bets down again; Safari (iPhone, Mac) has no scroll anchoring, so a ResizeObserver on
   `#placeCards` and `#tbody` re-applies the anchor for 4 s after a redraw unless you scrolled, tapped or typed since. `tests/board-scroll-test.js`
   (also with `overflow-anchor:none`, as in Safari).
+- Worker calls (v4.24; Cloudflare: "exceeded its daily requests limit", 142k in a day, 8,700 per 15 min on a college-football Saturday):
+  the cause was Live edges (`leScan`): both teams × three exchanges × up to 30 live games every 30 s, each Novig game line its own request
+  (`LIVE_SPLIT`, v3.16, needed on the free plan), and every call with the `x-screener-pass` header costs a CORS preflight (a second Worker
+  request). Now: the fetch wrapper counts every call by path and day (`mbev.wk`, `wkState`, the ⚡ chip on the Sources row with the top paths
+  on hover; amber at 30k, red at 50k); a 429, or a 5xx whose text says 1027 / exceeded / limit, pauses background polling 10 min (`wkPause`,
+  `wkPaused`: fills, orders, live prices, live edges, Parole, book swap, sync; your own presses still go). Cadences: fills and orders every
+  60 s while you use the page, 180 s when left open (`wkIdle`: no scroll, tap or key in 3 min, from v4.23's `_bUserT`); `fillAt` is set before
+  the read so a failing Worker is not asked every 20 s; live prices every 60 s when a bet kicks off within the hour, else 300 s (`liveEvery`);
+  live edges at least 60 s, only the exchanges in Books you bet, and a team is re-priced only when ESPN's number moved ≥ 1 point or its price
+  is over 3 min old (`leData.M`, "N prices kept from the last scan"). Cookie mode: when a Worker answer carries `x-auth-cookie: 1` (Worker
+  v3.41, PR not merged until the owner says so) and the page is on 0xbeta.dev, the passphrase goes as the `mbev_pass` cookie for `.0xbeta.dev`
+  with `credentials:'include'` and no header, so there is no preflight; a 401 in cookie mode goes back to the header and retries once
+  (`mbev.wkCookie`). Tests never run from 0xbeta.dev except `worker-calls-test.js`, which serves the page at props.0xbeta.dev for that check.
+  `tests/worker-calls-test.js`; `tests/math-audit-test.js` checks the arithmetic (odds ↔ chance, EV after fees, `maxPriceFor`, `kalshiHow`,
+  the Kelly stake, `betProfit`, `pkDist`/`pkEV`/`pkBreakEven`) against brute force inside the page.
+- Book chips (v4.24, `#bookChips`, `.bchip`, `boardBooks`, `mbev.boardBooks`; owner: "buttons so that I can only choose certain books to
+  display, instead of All or just one"): a chip per book on the board with its count (logo when there is one), several on at once, All
+  clears; the filter runs after sport and duplicates, before search. v4.13's `mbev.boardBook` carries over as one chip. `tests/board-book-test.js`.
 - Colours: light-mode text greens and amber are AA-checked (`--live`, `--neon`, `--warn`, `--gain`). Run the accessibility
   report after changing colours.
 - Editing a logged parlay (v3.85, `plEditOpen`, `plParseLegs`, `plDec`): the log's parlay row has edit: each leg (text and American

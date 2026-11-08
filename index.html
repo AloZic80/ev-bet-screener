@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.23</title>
+<title>0xBeta Screener v4.24</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -724,6 +724,13 @@ tr.skiprow:hover td>*, tr.skiprow.nopen td>*{opacity:1}
 .src-chip{font:inherit; font-size:12px; font-weight:700; padding:4px 10px; border-radius:999px; border:1px solid var(--rule); background:var(--panel); color:var(--ink); cursor:pointer}
 .src-chip.on{border-color:var(--live); color:var(--live)} .src-chip.off{opacity:.75; border-style:dashed}
 .src-chip small{font-weight:500; color:var(--soft)}
+/* v4.24: the books to show, as chips (several at once) */
+.book-chips{display:flex; flex-wrap:wrap; align-items:center; gap:6px; flex-basis:100%}
+.bchip{display:inline-flex; align-items:center; gap:5px; font:inherit; font-size:12.5px; font-weight:600; line-height:1.2; padding:5px 10px; border-radius:999px; border:1px solid var(--rule); background:var(--panel); color:var(--soft); cursor:pointer; user-select:none; -webkit-user-select:none}
+.bchip small{font-size:11.5px; font-weight:600; color:var(--dim)} .bchip .blogo{height:14px; width:auto; border-radius:3px} .bchip .pred-tag{display:none}
+.bchip.on{border-color:var(--accent); background:var(--accent-bg); color:var(--ink)} .bchip.on small{color:var(--accent)}
+.bchip:hover{border-color:var(--accent)} .bchip:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.src-chip.wk{cursor:help; border-color:var(--rule)} .src-chip.wk.low{border-color:var(--warn); color:var(--warn)} .src-chip.wk.out,.src-chip.wk.paused{border-color:var(--out); color:var(--out)}   /* v4.24 */
 .src-panel{margin:0 0 8px; padding:10px 12px; border:1px solid var(--rule); border-radius:10px; background:var(--panel); font-size:13px}
 .src-panel pre{max-height:220px; overflow:auto; font-size:11px; background:var(--page); padding:8px; border-radius:8px; white-space:pre-wrap; word-break:break-all}
 .src-panel code{font-size:12px}
@@ -1186,7 +1193,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.23</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.24</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1299,7 +1306,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
         <option value="WNBA">WNBA</option>
         <option value="MLS">MLS</option>
       </select></label>
-    <label class="bar-item" title="Only the bets at one book (Kalshi, Novig, ...). The number is how many bets each book has on the board.">Book <select id="boardBook" class="bar-sel"><option value="">All books</option></select></label><!-- v4.13 -->
+    <div class="book-chips" id="bookChips" role="group" aria-label="Books to show on the board" title="Tap the books you want to see. Several can be on at once; All shows every book. The number is how many bets each book has on the board."></div><!-- v4.24: chips, several at once (v4.13 had one menu) -->
     <input type="text" id="filterPlayer" class="bar-search" placeholder="Search player or team…" aria-label="Search player or team">
     <label class="bar-check"><input type="checkbox" id="swOnly"> Only sweet spot</label>
     <label class="bar-check"><input type="checkbox" id="showRejects"> Show rejected</label>
@@ -1851,7 +1858,7 @@ body[data-view]:not([data-view="v-board"]) .statbox{display:none!important}   /*
 
 </div>
 <script>
-const SCREENER_VERSION='v4.23';
+const SCREENER_VERSION='v4.24';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2265,7 +2272,7 @@ function swapBooks(rows,cfg){
 // live exchange prices for rows at books you do not bet: Kalshi / Polymarket US / Novig, the ones in your list, once per row
 var swapBusy=false;
 async function swapHunt(){
-  if(swapBusy) return; const cfg=cfgRead(); if(!cfg.books || !cfg.books.length) return;
+  if(swapBusy || wkPaused()) return; /* v4.24 */ const cfg=cfgRead(); if(!cfg.books || !cfg.books.length) return;
   const mine=b=>!!b && cfg.books.some(x=>bookIsMine(b,x)), exch=['Kalshi','Polymarket US','Novig'].filter(mine); if(!exch.length) return;
   const started=r=>r.gameInfo&&(r.gameInfo.state==='in'||r.gameInfo.state==='post');
   const todo=(lastRows||[]).filter(r=>!r._altAt && r.fairProb!=null && !r.prior && !started(r) && r.book && !mine(r.swap?r.swap.orig.book:r.book)).slice(0,60); if(!todo.length) return;
@@ -2675,11 +2682,13 @@ function renderCore(rows,cfg){
   if(!pv && cfg.hideStarted) shown=shown.filter(r=>!isStarted(r));   // pasted board shows everything that passed
   if(!pv && filterSport) shown=shown.filter(r=>r.sport===filterSport);
   shown=shown.filter(r=>!r.hiddenDup);   // v2.64: same bet from the API and the Market EV page — show one
-  { const sel=document.getElementById('boardBook'), bk=r=>bookLabel(r.book)||'?';   // v4.13 (Alonzo: "only choose by book: if I see Kalshi, I can choose Kalshi, Novig"): the books on the board, with counts
-    if(sel){ const cnt={}; shown.forEach(r=>{ cnt[bk(r)]=(cnt[bk(r)]||0)+1; }); const L=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]||a.localeCompare(b)); if(boardBook && !cnt[boardBook]) L.push(boardBook);
-      const h='<option value="">All books · '+shown.length+'</option>'+L.map(b=>'<option value="'+esc(b)+'">'+esc(b)+' · '+(cnt[b]||0)+'</option>').join('');
-      if(sel.innerHTML!==h) sel.innerHTML=h; sel.value=boardBook; }
-    if(boardBook) shown=shown.filter(r=>bk(r)===boardBook); }
+  { const box=document.getElementById('bookChips'), bk=r=>bookLabel(r.book)||'?';   // v4.13 (Alonzo: "only choose by book"); v4.24 (Alonzo: "buttons so I can choose certain books to display, instead of All or just one"): chips, several at once
+    const on=new Set(boardBooks), cnt={}; shown.forEach(r=>{ cnt[bk(r)]=(cnt[bk(r)]||0)+1; });
+    if(box){ const L=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]||a.localeCompare(b)); boardBooks.forEach(b=>{ if(!cnt[b]) L.push(b); });
+      const h='<button type="button" class="bchip'+(on.size?'':' on')+'" data-book="" aria-pressed="'+(!on.size)+'">All <small>'+shown.length+'</small></button>'+
+        L.map(b=>'<button type="button" class="bchip'+(on.has(b)?' on':'')+'" data-book="'+esc(b)+'" aria-pressed="'+on.has(b)+'">'+(bookLogo(b)?logoTag(b,'sm'):'')+esc(b)+' <small>'+(cnt[b]||0)+'</small></button>').join('');
+      if(box.innerHTML!==h) box.innerHTML=h; }
+    if(on.size) shown=shown.filter(r=>on.has(bk(r))); }
   shown=shown.filter(passesSearch);
   // v2.62: Settings-tab filters hide rows — say so above the table
   {
@@ -5368,25 +5377,30 @@ async function leScan(manual){   // v3.76: manual = you pressed Scan (only then 
       const ml=lePinnML(e); if(!ml) return; const sw=leTeamHit(lePinnSide(e,'home'),x.pr.A);
       x.pin={home:sw?ml.away:ml.home, away:sw?ml.home:ml.away, at:P.at}; });
     gp=gp.filter(x=>x.pr.homeWin!=null || x.pin);   // v3.76: a game needs ESPN's win chance or Pinnacle's price
-    const jobs=[];
+    /* v4.24: this scan was the Worker's biggest cost (both teams, three exchanges, up to 30 games, every 30 s, each Novig line its own
+       request). Now only the exchanges in Books you bet are asked, and a team is priced again only when ESPN's win chance moved a point
+       or more since its last price, or that price is over 3 minutes old; the rest is reused from the last scan. */
+    const have=(cfgRead().books||[]), exUse=LE_EX.filter(n=>!have.length || have.some(b=>bookIsMine(n,b)));
+    const prevQ=(leData&&leData.Q)||{}, prevM=(leData&&leData.M)||{}, jobs=[];
     gp.forEach((x,gi)=>{ const game=x.pr.aAb+' @ '+x.pr.hAb, start=x.g.ev.date||null;
-      [['away',x.pr.aAb,x.pr.awayWin],['home',x.pr.hAb,x.pr.homeWin]].forEach(([ha,ab,p])=>LE_EX.forEach(n=>{
+      [['away',x.pr.aAb,x.pr.awayWin],['home',x.pr.hAb,x.pr.homeWin]].forEach(([ha,ab,p])=>exUse.forEach(n=>{
         const d=liveDesc({id:'le:'+x.g.ev.id+':'+ab+':'+LIVE_BOOK(n), book:n, sport:x.g.sport, kind:'moneyline', market:'Moneyline', name:ab, team:ab, game, matchup:game, start});
         if(d) jobs.push({gi, ha, ab, p, n, d}); })); });
-    const Q={}; let err='';
-    for(let i=0;i<jobs.length;i+=8){ const chunk=jobs.slice(i,i+8);
+    const Q={}, M={}; let err='', reused=0;
+    const ask=jobs.filter(j=>{ const q=prevQ[j.d.id], m=prevM[j.d.id]; if(q && m && Math.abs((j.p==null?-9:j.p)-(m.p==null?-9:m.p))<0.01 && Date.now()-m.at<180000){ Q[j.d.id]=q; M[j.d.id]=m; reused++; return false; } return true; });
+    for(let i=0;i<ask.length;i+=8){ const chunk=ask.slice(i,i+8);
       try{ const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(chunk.map(j=>j.d))), {headers:apiHeaders()});
         if(!res.ok){ err='exchange check failed ('+res.status+')'; break; }
-        const R=((await res.json())||{}).results||{}; chunk.forEach(j=>{ if(R[j.d.id]) Q[j.d.id]=R[j.d.id]; });
+        const R=((await res.json())||{}).results||{}; chunk.forEach(j=>{ if(R[j.d.id]){ Q[j.d.id]=R[j.d.id]; M[j.d.id]={p:j.p, at:Date.now()}; } });
       }catch(e){ err='exchange check failed (no answer from the Worker)'; break; } }
-    leData={at:Date.now(), gp, jobs, Q, err}; leAt=Date.now(); lePaint();
+    leData={at:Date.now(), gp, jobs, Q, M, err, reused, asked:ask.length}; leAt=Date.now(); lePaint();
   }catch(e){ box.innerHTML='<div class="empty" style="display:block">Live scan failed: '+esc(String(e&&e.message||e))+'</div>'; }
   finally{ leBusy=false; if(btn) btn.disabled=false; }
 }
 function lePaint(){
   const box=document.getElementById('leBody'), tabN=document.getElementById('leTabN'), sum=document.getElementById('leSum'), stamp=document.getElementById('leStamp'); if(!box||!leData) return;
   const {gp, jobs, Q, err, at}=leData, pc=x=>(x*100).toFixed(1)+'%', ct=x=>(x*100).toFixed(1)+'¢';
-  stamp.textContent='· checked '+new Date(at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'})+(err?' · '+err:'')+
+  stamp.textContent='· checked '+new Date(at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'})+(err?' · '+err:'')+(leData.reused?' · '+leData.reused+' price'+(leData.reused===1?'':'s')+' kept from the last scan (ESPN unchanged)':'')+
     (lePinnState==='on'?' · Pinnacle live on':lePinnState==='off'?' · Pinnacle live: not on your Worker yet (ESPN only)':lePinnState==='cap'?' · Pinnacle live: today\'s '+LE_PINN_DAY+' used (ESPN only)':lePinnState==='wait'?' · Pinnacle live: press Scan to check it (Auto-refresh uses ESPN)':lePinnState?' · Pinnacle live: no answer (ESPN only)':'')+
     (lePinnState&&lePinnState!=='off'?' · '+lePinnUse().n+' of '+LE_PINN_DAY+' Pinnacle checks today':'');   // v3.74; v3.76: budget
   if(!gp.length){ box.innerHTML='<div class="empty" style="display:block">No games in progress right now. Scan again once a game starts.</div>'; sum.textContent=''; if(tabN) tabN.textContent=''; return; }
@@ -5415,7 +5429,7 @@ function lePaint(){
 }
 document.getElementById('leScan').addEventListener('click',()=>leScan(true));   // v3.76: a press may ask Pinnacle
 setInterval(()=>{ const sec=+((document.getElementById('liveEvery')||{}).value)||0, on=document.getElementById('v-live').classList.contains('on');   // v3.71: repeats with Auto-refresh, 30 s at most
-  if(leOn && sec>0 && on && document.visibilityState==='visible' && !leBusy && Date.now()-leAt>=Math.max(30,sec)*1000-300) leScan(); }, 1000);
+  if(leOn && sec>0 && on && document.visibilityState==='visible' && !leBusy && !wkPaused() && Date.now()-leAt>=Math.max(60,sec)*1000-300) leScan(); }, 1000);   // v4.24: a minute at least, and not while the Worker is paused
 /* ============ v2.71: ESPN score strip (free — no BettingPros calls) ============ */
 let ssLastRun=0, ssBusy=false;
 function ssTile(ev, sport, mine, lab){   // v3.77: lab = the league, on the ribbon's Top events and Live now
@@ -6103,7 +6117,7 @@ function paintSortArrows(){
   });
 }
 let filterSport = '';
-let boardBook = (()=>{ try{ return localStorage.getItem('mbev.boardBook')||''; }catch(e){ return ''; } })();   // v4.13: Book on the board, kept per device
+let boardBooks = (()=>{ try{ const a=JSON.parse(localStorage.getItem('mbev.boardBooks')||'null'); if(Array.isArray(a)) return a.filter(x=>typeof x==='string'); const one=localStorage.getItem('mbev.boardBook'); return one?[one]:[]; }catch(e){ return []; } })();   // v4.24: the books shown on the board (empty = all), kept per device; v4.13's one book carried over
 let showRejects = false;
 
 // Comprehensive filter state
@@ -6213,7 +6227,9 @@ document.querySelectorAll('#boardHead th.sortable').forEach(th=>th.addEventListe
   paintSortArrows(); rerenderWithFilters();
 }));
 document.getElementById('filterSport').addEventListener('change', (e)=>{ filterSport=e.target.value; rerenderWithFilters(); });
-document.getElementById('boardBook').addEventListener('change', (e)=>{ boardBook=e.target.value; try{ localStorage.setItem('mbev.boardBook',boardBook); }catch(err){} rerenderWithFilters(); });   // v4.13
+document.getElementById('bookChips').addEventListener('click', (e)=>{ const c=e.target.closest('.bchip'); if(!c) return; const b=c.dataset.book||'';   // v4.24: toggle a book; All clears
+  if(!b) boardBooks=[]; else { const i=boardBooks.indexOf(b); if(i>=0) boardBooks.splice(i,1); else boardBooks.push(b); }
+  try{ localStorage.setItem('mbev.boardBooks',JSON.stringify(boardBooks)); }catch(err){} rerenderWithFilters(); });
 document.getElementById('showRejects').addEventListener('change', (e)=>{ showRejects=e.target.checked; rerenderWithFilters(); });
 document.getElementById('onlyMyGames').addEventListener('change', e=>{ filterCorrOnly=e.target.checked; refresh(); });
 
@@ -6247,7 +6263,45 @@ const API_BASE = 'https://api.0xbeta.dev';
    the other bets together, each Novig game line on its own (3 at a time), answers merged back as one. Every caller
    (Sentinels, open check, Parole, Share, open slip…) goes through this. Paid plan later: LIVE_SPLIT=false. */
 const LIVE_SPLIT=true;
+/* v4.24 (Cloudflare: "exceeded its daily requests limit", 142k in a day; the chart peaked at 8,700 per 15 min on a college-football
+   Saturday). Every call to the Worker is counted here by path and day (mbev.wk, shown on the Sources row), so the next spike has a name.
+   When the Worker answers 429, or a 5xx that says the limit is reached, background polling pauses for 10 minutes (wkPaused): fills,
+   orders, live prices, live edges, Parole, the book swap and sync wait; your own presses still go through. Note: each call with the
+   passphrase header also costs a CORS preflight (OPTIONS), a second Worker request, so Cloudflare counts about twice this number.
+   Cookie mode removes the preflight: once the Worker says it accepts the passphrase as a cookie (x-auth-cookie: 1), the passphrase is
+   set as a cookie for .0xbeta.dev and sent with the request instead of the header (a simple request, no OPTIONS). A 401 in cookie
+   mode goes back to the header and retries once. */
+function wkDay(){ try{ return ctDay(Date.now()); }catch(e){ return new Date().toISOString().slice(0,10); } }
+function wkState(){ if(!window._wk){ let w=null; try{ w=JSON.parse(localStorage.getItem('mbev.wk')||'null'); }catch(e){} window._wk=(w&&w.d===wkDay())?w:{d:wkDay(), n:0, p:{}, pause:0, why:''}; } if(window._wk.d!==wkDay()) window._wk={d:wkDay(), n:0, p:{}, pause:0, why:''}; return window._wk; }
+function wkSave(){ try{ localStorage.setItem('mbev.wk', JSON.stringify(wkState())); }catch(e){} }
+function wkNote(path){ const w=wkState(); w.n++; w.p[path]=(w.p[path]||0)+1; if(w.n%5===0) wkSave(); if(!window._wkChipT || Date.now()-window._wkChipT>30000){ window._wkChipT=Date.now(); try{ wkChipPaint(); }catch(e){} } }
+function wkPause(ms, why){ const w=wkState(); w.pause=Date.now()+ms; w.why=why||''; wkSave(); try{ wkChipPaint(); }catch(e){} }
+function wkPaused(){ return wkState().pause>Date.now(); }
+function wkIdle(){ return !(window._bUserT>Date.now()-3*60e3); }   // no scroll, tap or key in 3 minutes: the page is being left open, not used
+function wkCookieHostOk(){ return /(^|\.)0xbeta\.dev$/.test(location.hostname); }
+function wkCookieOn(){ try{ return wkCookieHostOk() && localStorage.getItem('mbev.wkCookie')==='1'; }catch(e){ return false; } }
+function wkCookieSet(on){ try{ if(on) localStorage.setItem('mbev.wkCookie','1'); else localStorage.removeItem('mbev.wkCookie'); }catch(e){} }
+function wkChipHtml(){ const w=wkState(), top=Object.entries(w.p).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>k+' '+v).join(' · ');
+  const lvl=w.n>=50000?' out':w.n>=30000?' low':'', paused=w.pause>Date.now();
+  const tip='Calls this page made to your Worker today, by path: '+(top||'none yet')+'. Cloudflare counts about twice this (each call with the passphrase header has a preflight)'+(wkCookieOn()?' — cookie mode is on, so no preflight':'')+'. The free plan allows 100,000 a day.'+(paused?' Background checks are paused until '+new Date(w.pause).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+': '+w.why:'');
+  return '<span class="src-chip wk'+lvl+(paused?' paused':'')+'" data-src="worker" title="'+esc(tip)+'">⚡ Worker <small>'+w.n.toLocaleString()+' call'+(w.n===1?'':'s')+' today'+(paused?' · paused '+new Date(w.pause).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+'</small></span>'; }
+function wkChipPaint(){ const el=document.querySelector('#srcBar .src-chip.wk'); if(!el) return; const d=document.createElement('div'); d.innerHTML=wkChipHtml(); el.replaceWith(d.firstChild); }
+setInterval(()=>{ try{ wkChipPaint(); }catch(e){} }, 60000);
 (function(){ const F=window.fetch.bind(window);
+  const core=async function(u, init){
+    const s=String(u&&u.url||u); if(s.indexOf(API_BASE)!==0) return F(u, init);
+    let path='/'; try{ path=new URL(s).pathname; }catch(e){}
+    wkNote(path);
+    let I=init||{}, H=new Headers(I.headers||{}), cookie=false;
+    if(wkCookieOn() && H.has('x-screener-pass')){ let pass=''; try{ pass=localStorage.getItem('mbev.pass')||''; }catch(e){}
+      if(pass){ try{ document.cookie='mbev_pass='+encodeURIComponent(pass)+'; domain=.0xbeta.dev; path=/; secure; samesite=lax; max-age=31536000'; }catch(e){}
+        H.delete('x-screener-pass'); I=Object.assign({}, I, {headers:H, credentials:'include'}); cookie=true; } }
+    let res=await F(u, I);
+    if(cookie && res.status===401){ wkCookieSet(false); wkNote(path); res=await F(u, init); }   // the Worker no longer takes the cookie: back to the header
+    else if(!cookie && res.headers && res.headers.get('x-auth-cookie')==='1' && wkCookieHostOk()) wkCookieSet(true);
+    if(res.status===429) wkPause(10*60e3, 'the Worker answered 429 (too many requests)');
+    else if(res.status>=500){ let t=''; try{ t=await res.clone().text(); }catch(e){} if(/1027|exceeded|daily request|limit/i.test(t)) wkPause(10*60e3, 'the Worker said its daily limit is reached ('+res.status+')'); }
+    return res; };
   window.fetch=async function(u, init){
     try{ const s=String(u&&u.url||u);
       if(LIVE_SPLIT && s.indexOf(API_BASE+'/live?bets=')===0){
@@ -6256,11 +6310,11 @@ const LIVE_SPLIT=true;
         const H=bets.filter(heavy);
         if(bets.length>1 && H.length){
           const groups=[].concat(bets.length>H.length?[bets.filter(b=>!heavy(b))]:[], H.map(b=>[b])), outs=[];
-          for(let i=0;i<groups.length;i+=3) outs.push(...await Promise.all(groups.slice(i,i+3).map(g=>F(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(g)), init).then(r=>r.ok?r.json():null).catch(()=>null))));
+          for(let i=0;i<groups.length;i+=3) outs.push(...await Promise.all(groups.slice(i,i+3).map(g=>core(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(g)), init).then(r=>r.ok?r.json():null).catch(()=>null))));
           const results={}; let at=null; outs.forEach(o=>{ if(o){ Object.assign(results, o.results||{}); at=at||o.at; } });
           return new Response(JSON.stringify({at:at||new Date().toISOString(), results}), {status:200, headers:{'Content-Type':'application/json'}});
         } } }catch(e){}
-    return F(u, init); };
+    return core(u, init); };
 })();
 // Mirrors the Worker's BOOKS map (index.js) — lowercase keys, matched as
 // substrings against whatever the person typed in "Books you can bet", the
@@ -6451,6 +6505,7 @@ function paintSources(){
     return '<button type="button" class="src-chip '+(x.key?'on':'off')+'" data-src="'+esc(x.id)+'">'+esc(x.name)+(sub?' <small>'+esc(sub)+'</small>':'')+'</button>'; }).join('');
   const ou=window._opUsage; const opSub = ou && ou.limit ? ou.left+' left this month' : 'usage ?';
   el.insertAdjacentHTML('beforeend','<button type="button" class="src-chip on" data-src="oddspapi">OddsPapi <small>'+esc(opSub)+'</small></button>');
+  el.insertAdjacentHTML('beforeend', wkChipHtml());   // v4.24: calls to your Worker today
 }
 async function openSource(id){
   if(id==='oddspapi'){ openOddsPapi(); return; }
@@ -8542,9 +8597,10 @@ function liveTargets(){
   return logged.filter(b=>!b.sold && b.kind!=='parlay' && !(b.result==='win'||b.result==='loss'||b.result==='push') && LIVE_BOOK(b.book) &&
     (()=>{ const t=Date.parse(b.start); return isNaN(t) ? gameDayOf(b)>=ctDay(now) : t > now-5*3600e3 && t < now+72*3600e3; })());
 }
+function liveEvery(bets){ const now=Date.now(); return (bets||[]).some(b=>{ const t=Date.parse(b.start); return isNaN(t) || t-now<60*60e3; }) ? 60000 : 300000; }   // v4.24
 async function refreshLivePrices(force){
   if(liveBusy2) return; const list=liveTargets().map(b=>[b,liveDesc(b)]).filter(x=>x[1]); if(!list.length) return;
-  if(!force && Date.now()-liveAt<55000) return;
+  if(!force && (wkPaused() || Date.now()-liveAt<liveEvery(list.map(x=>x[0])))) return;   // v4.24: every minute near kickoff, every 5 otherwise
   liveBusy2=true;
   try{
     for(let i=0;i<list.length;i+=8){
@@ -9134,12 +9190,13 @@ function pendingAutoAdd(){ let changed=false;
   if(changed){ saveFills(); saveLog(); try{ renderLog(); renderPerf(); refresh(); }catch(e){} }
   return changed; }
 async function syncFills(force){
-  if(fillBusy || (!force && Date.now()-fillAt<55000)) return; fillBusy=true;
+  if(fillBusy || (!force && (wkPaused() || Date.now()-fillAt<(wkIdle()?180000:60000)))) return; fillBusy=true;   // v4.24: every minute while you use the page, every 3 when it is left open; paused when the Worker is over its limit
   try{ pendingAutoAdd(); }catch(e){}   // v3.90: what is already waiting, whatever the book answers
   try{
     // v2.95: one bet per order (partial fills merged), so always read the whole window
     let days=3; try{ if(localStorage.getItem('mbev.fillWide')==='1'){ days=14; localStorage.removeItem('mbev.fillWide'); } }catch(e){}
     try{ if(localStorage.getItem('mbev.fillV')!=='95'){ fillPending=[]; fillSeen={}; lsSafeSet('mbev.fillV','95'); } }catch(e){}   // v3.89: a failed write here wiped what you ignored on every read
+    fillAt=Date.now();   // v4.24: a failed read waits its turn too (before, a failing Worker was asked again every 20 s)
     const res=await fetch(API_BASE+'/mine/fills?since='+(Date.now()-days*86400e3), {headers:apiHeaders()});
     if(!res.ok) return;
     const j=await res.json(); fillAt=Date.now();
@@ -9579,7 +9636,7 @@ function autoAddFromPost(P,f){
 async function syncOrders(force){
   const live=posts.filter(P=>!P.start || Date.parse(P.start)+6*3600e3>Date.now());
   if(live.length!==posts.length){ posts=live; savePosts(); }
-  if(!force && Date.now()-ordersAt<55000){ renderPosts(); renderMakes(); return; }
+  if(!force && (wkPaused() || Date.now()-ordersAt<(wkIdle()?180000:60000))){ renderPosts(); renderMakes(); return; }   // v4.24
   ordersAt=Date.now();
   try{ const res=await fetch(API_BASE+'/mine/orders',{headers:apiHeaders()}); window._ordersErr=res.ok?null:'the Worker answered '+res.status; if(res.ok){ const was=JSON.stringify(myOrders&&myOrders.orders||[]); myOrders=await res.json(); if(JSON.stringify(myOrders&&myOrders.orders||[])!==was && lastRows.length) refresh(); const E=myOrders&&myOrders.errors; window._ordersErr=E&&Object.keys(E).length?E:null; } }catch(e){ window._ordersErr='could not reach the Worker ('+(e&&e.message||e)+')'; }   // v4.14: a waiting order moves its bet to Already bet   // v4.17: and say why when orders cannot be read
   renderMakes();
@@ -9717,7 +9774,7 @@ function paroleCandidates(){
     !(r.flags||[]).some(f=>PAROLE_NO.test(f[1]))).slice(0,48);
 }
 async function paroleScan(force){
-  if(parBusy || (!force && Date.now()-parAt<90000)) { renderParole(); return; }
+  if(parBusy || (!force && (wkPaused() || Date.now()-parAt<90000))) { renderParole(); return; }   // v4.24
   parBusy=true; const msg=document.getElementById('parMsg'); if(msg) msg.textContent='🔎 checking Novig (and the row\'s own exchange)…';
   try{
     const C=paroleCandidates(), jobs=[];
@@ -10089,6 +10146,7 @@ async function syncGetDoc(path){   // the doc and the head it belongs to (a safe
 async function syncNow(opts){
   opts=opts||{};
   if(!SY || !SY.on) return false;
+  if(wkPaused() && !opts.force) return false;   // v4.24: the Worker is over its limit, sync waits (a press still syncs)
   const joining=!(SY.meta && SY.meta.joined);   // this device's first exchange is always a join (also when it had to wait)
   if(SY.busy){ syncSoon(3000); return false; }
   if((typeof logBusy!=='undefined' && logBusy>0) || fillBusy){ syncSoon(4000); return false; }   // an async job is editing the log — in a moment
