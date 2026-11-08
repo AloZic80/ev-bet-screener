@@ -24,6 +24,7 @@ const SB={'basketball/nba':{events:[game('401','LAL','BOS',70,78,'in','3rd 5:12'
     const m=u.match(/sports\/(.+?)\/scoreboard/); if(m) return r.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(SB[m[1]]||{events:[]})});
     return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1500);
+  await p.check('#ssAll').catch(()=>{}); await p.waitForTimeout(500);   // v4.26: the full league menu is behind All sports
   const opts=await p.$$eval('#ssSport option',o=>o.map(x=>({v:x.value,t:x.textContent})));
   const has=v=>opts.some(o=>o.v===v);
   check('the menu has Top events, Live now, every league the app knows and more of ESPN', has('TOP') && has('ALL') && has('NFL') && has('UCL') && has('EREDIVISIE') && has('X:F1') && has('X:ATP') && has('X:UFCX') && has('X:PGA') && opts.length>=60, {n:opts.length, some:opts.slice(0,4)});

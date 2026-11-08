@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.25</title>
+<title>0xBeta Screener v4.26</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1208,6 +1208,11 @@ details.help.more{margin-top:10px}
   .tb-more{display:inline-block; margin-top:8px; font:inherit; font-size:12px; font-weight:600; color:var(--accent); background:transparent; border:1px solid var(--rule); border-radius:14px; padding:4px 11px; cursor:pointer}
   .todaybar.tb-fold>.tb-t:not(.all){display:none}
 }
+/* v4.26 (Alonzo, 11/8: "On the ESPN banner?"; "option for My Games ... or by sport that I am only betting"): each game tile says what your
+   open bets on it risk, and the menu lists 🎯 My games and only the sports you bet in (All sports brings back every league) */
+.ss-risk{margin-top:4px; font-size:11.5px; font-weight:600; color:var(--soft); white-space:nowrap}
+.ss-all{display:flex; align-items:center; gap:4px; font-size:11.5px; color:var(--soft); white-space:nowrap; cursor:pointer}
+.ss-all input{width:13px; height:13px; accent-color:var(--accent); margin:0}
 </style>
 </head>
 <body>
@@ -1216,7 +1221,7 @@ details.help.more{margin-top:10px}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.25</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.26</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1289,7 +1294,7 @@ details.help.more{margin-top:10px}
 
 <!-- v2.71: ESPN score strip (free — no BettingPros calls) -->
 <div class="scorestrip" id="scoreStrip">
-  <div class="ss-sel"><div class="ss-ctl"><button type="button" class="ss-ref" id="ssRef" aria-label="Refresh scores from ESPN" title="Refresh scores from ESPN now (no BettingPros calls)">⟳</button><span class="ss-at" id="ssAt"></span></div><select id="ssSport" title="Scores for…"><option>NFL</option><option>NCAAF</option><option>NBA</option><option>NCAAB</option><option>WNBA</option><option>NHL</option><option>MLB</option></select></div>
+  <div class="ss-sel"><div class="ss-ctl"><button type="button" class="ss-ref" id="ssRef" aria-label="Refresh scores from ESPN" title="Refresh scores from ESPN now (no BettingPros calls)">⟳</button><span class="ss-at" id="ssAt"></span></div><select id="ssSport" title="Scores for…"><option>NFL</option><option>NCAAF</option><option>NBA</option><option>NCAAB</option><option>WNBA</option><option>NHL</option><option>MLB</option></select><label class="ss-all" title="Show every league in the menu, not only the sports you bet in"><input type="checkbox" id="ssAll"> All sports</label></div>
   <div class="ss-games" id="ssGames"><div class="ss-empty">Loading scores…</div></div>
 </div>
 
@@ -1888,7 +1893,7 @@ details.help.more{margin-top:10px}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.25';
+const SCREENER_VERSION='v4.26';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -5494,7 +5499,7 @@ setInterval(()=>{ const sec=+((document.getElementById('liveEvery')||{}).value)|
   if(leOn && sec>0 && on && document.visibilityState==='visible' && !leBusy && !wkPaused() && Date.now()-leAt>=Math.max(60,sec)*1000-300) leScan(); }, 1000);   // v4.24: a minute at least, and not while the Worker is paused
 /* ============ v2.71: ESPN score strip (free — no BettingPros calls) ============ */
 let ssLastRun=0, ssBusy=false;
-function ssTile(ev, sport, mine, lab){   // v3.77: lab = the league, on the ribbon's Top events and Live now
+function ssTile(ev, sport, mine, lab, risk){   // v3.77: lab = the league, on the ribbon's Top events and Live now
   const st=(ev.status&&ev.status.type)||{}, comp=(ev.competitions&&ev.competitions[0])||{}, sit=comp.situation||{};
   const comps=compsOf(ev), a=comps.find(c=>c.homeAway==='away'), h=comps.find(c=>c.homeAway==='home'); if(!a||!h) return '';
   const val=c=>c&&c.score!=null?(typeof c.score==='object'?c.score.value:c.score):'';
@@ -5512,14 +5517,16 @@ function ssTile(ev, sport, mine, lab){   // v3.77: lab = the league, on the ribb
   else if(live && sport==='MLB' && sit.outs!=null) dd=(sit.balls!=null?esc(sit.balls+'-'+sit.strikes)+'<br>':'')+esc(sit.outs+' out'+(+sit.outs===1?'':'s'));
   return '<div class="ss-g'+(mine?' mine':'')+'" data-key="'+esc(sport+':'+ev.id)+'"'+(mine?' title="You have a bet in this game — open it in the Live tab"':'')+'>'+
     '<div class="ss-h"><span class="'+(live?'lv':post?'fin':'')+'">'+esc(when)+'</span><span>'+esc(lab?lab+(tv?' · '+tv:''):tv)+'</span></div>'+
-    '<div class="ss-b"><div class="ss-t">'+row(a)+row(h)+'</div>'+(dd?'<div class="ss-dd">'+dd+'</div>':'')+'</div></div>';
+    '<div class="ss-b"><div class="ss-t">'+row(a)+row(h)+'</div>'+(dd?'<div class="ss-dd">'+dd+'</div>':'')+'</div>'+(mine&&risk?'<div class="ss-risk">'+risk.n+' bet'+(risk.n===1?'':'s')+' risking $'+risk.amt.toFixed(2)+'</div>':'')+'</div>';   // v4.26
 }
 async function renderStrip(force){
   const box=document.getElementById('ssGames'), sel=document.getElementById('ssSport'); if(!box||!sel||ssBusy) return;
   ssBusy=true; ssLastRun=Date.now();
   { const at=document.getElementById('ssAt'); if(at) at.textContent='updated '+new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'}); }
   try{
-    const sport=sel.value; if(sport==='TOP'||sport==='ALL'){ await ssMulti(box, sport, force); return; }   // v3.77
+    ssFillSel(sel);   // v4.26: My games and the sports you bet in, as they are now
+    const sport=sel.value; if(sport==='MINE'){ await ssMine(box, force); return; }   // v4.26
+    if(sport==='TOP'||sport==='ALL'){ await ssMulti(box, sport, force); return; }   // v3.77
     if(sport.startsWith('X:')){ await ssExtra(box, sport.slice(2), force); return; }   // v3.77: F1, golf, tennis, UFC...
     if(force) delete scoreboardCache[sport];
     const evs=(await fetchScoreboard(sport))||[], today=ctDay(Date.now()), stOf=ev=>(ev.status&&ev.status.type&&ev.status.type.state)||'pre';
@@ -5527,9 +5534,8 @@ async function renderStrip(force){
     if(!list.length) list=evs.filter(ev=>stOf(ev)==='pre').slice(0,16);
     const rank=ev=>stOf(ev)==='in'?0:stOf(ev)==='pre'?1:2;
     list.sort((x,y)=>rank(x)-rank(y) || (rank(x)===2 ? Date.parse(y.date)-Date.parse(x.date) : Date.parse(x.date)-Date.parse(y.date)));
-    const mine=new Set();
-    liveOpenBets().filter(b=>b.sport===sport).forEach(b=>{ const ev=findGame(evs,b.game)||findGameAny(evs,b.game,b.name,b.matchup); if(ev) mine.add(String(ev.id)); });
-    box.innerHTML=list.length ? list.map(ev=>ssTile(ev,sport,mine.has(String(ev.id)))).join('') : '<div class="ss-empty">No '+esc(sport)+' games today.</div>';
+    const riskM=ssRiskMap(s=>s===sport?evs:[]);   // v4.26
+    box.innerHTML=list.length ? list.map(ev=>ssTile(ev,sport,riskM.has(sport+':'+ev.id),undefined,riskM.get(sport+':'+ev.id))).join('') : '<div class="ss-empty">No '+esc(sport)+' games today.</div>';
     box.dataset.live=list.some(ev=>stOf(ev)==='in')?'1':'';
     box.querySelectorAll('.ss-g.mine').forEach(t=>t.addEventListener('click',()=>{ liveScrollTo=t.dataset.key; const tab=document.querySelector('.tab[data-view="v-live"]'); if(tab) tab.click(); }));
   }catch(e){ box.innerHTML='<div class="ss-empty">Scores unavailable right now.</div>'; }
@@ -5575,11 +5581,40 @@ async function ssExtra(box, code, force){ const evs=await ssXFetch(code, force),
   const lab=(SS_EXTRA.find(r=>r[0]===code)||[])[1]||code;
   box.innerHTML=items.length?items.map(i=>ssXTile(i,lab)).join(''):'<div class="ss-empty">Nothing on ESPN for '+esc(lab)+' right now.</div>';
   box.dataset.live=live.length?'1':''; }
-function ssFillSel(sel){ const g={}; Object.keys(ESPN_MAP).forEach(c=>{ const k=String(ESPN_MAP[c]).split('/')[0]; (g[k]=g[k]||[]).push(c); });
+function ssFillAll(sel){ const g={}; Object.keys(ESPN_MAP).forEach(c=>{ const k=String(ESPN_MAP[c]).split('/')[0]; (g[k]=g[k]||[]).push(c); });
   const opt=c=>'<option value="'+esc(c)+'">'+esc(SPORT_NAMES[c]&&SPORT_NAMES[c]!==c?SPORT_NAMES[c]+' ('+c+')':c)+'</option>';
   sel.innerHTML='<option value="TOP">⭐ Top events (ESPN)</option><option value="ALL">🔴 Live now: every league</option>'+
     Object.keys(g).sort((x,y)=>(SS_GN[x]?0:1)-(SS_GN[y]?0:1)).map(k=>'<optgroup label="'+esc(SS_GN[k]||k)+'">'+g[k].map(opt).join('')+'</optgroup>').join('')+
     [...new Set(SS_EXTRA.map(r=>r[2]))].map(k=>'<optgroup label="'+esc(k)+'">'+SS_EXTRA.filter(r=>r[2]===k).map(r=>'<option value="X:'+esc(r[0])+'">'+esc(r[1])+'</option>').join('')+'</optgroup>').join(''); }
+/* v4.26 (Alonzo, 11/8: "option for My Games as well, or by sport that I am only betting ... if the sport doesn't have a bet, it won't come out"):
+   the ribbon menu lists 🎯 My games and only the sports you have an open bet in, rebuilt on every draw (a sport whose last bet settles drops out).
+   "All sports" (remembered on this device) brings back the full league menu. */
+function ssBetSports(){ return [...new Set(liveOpenBets().map(b=>b.sport).filter(s=>s && ESPN_MAP[s]))]; }
+function ssFillSel(sel){
+  const keep=sel.value; let all=false; try{ all=localStorage.getItem('mbev.ssAll')==='1'; }catch(e){}
+  const opt=c=>'<option value="'+esc(c)+'">'+esc(SPORT_NAMES[c]&&SPORT_NAMES[c]!==c?SPORT_NAMES[c]+' ('+c+')':c)+'</option>';
+  let h;
+  if(all){ const t=document.createElement('select'); ssFillAll(t); h=t.innerHTML; }
+  else h='<option value="TOP">⭐ Top events (ESPN)</option><option value="ALL">🔴 Live now: every league</option>'+ssBetSports().sort().map(opt).join('');
+  h='<option value="MINE">🎯 My games</option>'+h;
+  if(sel.dataset.sig!==h){ sel.innerHTML=h; sel.dataset.sig=h; }
+  sel.value=[...sel.options].some(o=>o.value===keep)?keep:'MINE';
+}
+/* v4.26: each game tile says what your open bets on it risk (ESPN's "1 Bet risking $1.26"). Open = no result, not sold, not a parlay (liveOpenBets);
+   a free bet counts as a bet but risks $0. Keyed sport:eventId, the same key as the tile's data-key. */
+function ssRiskMap(bySport){ const m=new Map(); liveOpenBets().forEach(b=>{ const evs=bySport(b.sport)||[]; const ev=findGame(evs,b.game)||findGameAny(evs,b.game,b.name,b.matchup); if(!ev) return;
+  const k=b.sport+':'+ev.id, x=m.get(k)||{n:0,amt:0}; x.n++; x.amt+=(b.free?0:(+b.stake||0)); m.set(k,x); }); return m; }
+async function ssMine(box, force){   // v4.26: every game with an open bet of yours, from ESPN's scoreboard for that league
+  const sports=ssBetSports();
+  if(force) sports.forEach(s=>{ delete scoreboardCache[s]; });
+  await Promise.all(sports.map(s=>fetchScoreboard(s).catch(()=>[])));
+  const risk=ssRiskMap(s=>scoreboardCache[s]||[]), list=[];
+  sports.forEach(s=>(scoreboardCache[s]||[]).forEach(ev=>{ const k=s+':'+ev.id; if(risk.has(k)) list.push({c:s, ev, k}); }));
+  list.sort((x,y)=>Date.parse(x.ev.date)-Date.parse(y.ev.date));
+  box.innerHTML=list.length ? list.map(x=>ssTile(x.ev,x.c,true,x.c,risk.get(x.k))).join('') : '<div class="ss-empty">None of your open bets is in a game ESPN lists today.</div>';
+  box.dataset.live=list.some(x=>(x.ev.status&&x.ev.status.type&&x.ev.status.type.state)==='in')?'1':'';
+  box.querySelectorAll('.ss-g.mine').forEach(t=>t.addEventListener('click',()=>{ liveScrollTo=t.dataset.key; const tab=document.querySelector('.tab[data-view="v-live"]'); if(tab) tab.click(); }));
+}
 async function ssTopEvents(){
   const r=await fetch('https://site.web.api.espn.com/apis/personalized/v2/scoreboard/header?region=us&lang=en&contentorigin=espn&tz=America%2FChicago',{cache:'no-store'});
   if(!r.ok) throw new Error('top events '+r.status);
@@ -5606,11 +5641,11 @@ async function ssMulti(box, mode, force){
   const all=[]; lgs.forEach(c=>(scoreboardCache[c]||[]).forEach(ev=>all.push({c,ev})));
   let list=all.filter(x=>stOf(x.ev)==='in');
   if(!list.length) list=all.filter(x=>stOf(x.ev)==='pre' && ctDay(Date.parse(x.ev.date))===today).sort((x,y)=>Date.parse(x.ev.date)-Date.parse(y.ev.date)).slice(0,30);
-  const mine=new Set(); liveOpenBets().forEach(b=>{ const evs=scoreboardCache[b.sport]||[]; const ev=findGame(evs,b.game)||findGameAny(evs,b.game,b.name,b.matchup); if(ev) mine.add(b.sport+':'+ev.id); });
+  const riskM=ssRiskMap(s=>scoreboardCache[s]||[]);   // v4.26
   const xs=[]; await Promise.all(SS_EXTRA.filter(r=>!(leQuiet.get('X:'+r[0])>Date.now())).map(async r=>{ const evs=await ssXFetch(r[0], force), its=[]; evs.forEach(ev=>its.push(...ssXItems(ev)));
     const lv=its.filter(i=>ssXState(i)==='in'); if(!lv.length && !its.some(i=>ssXState(i)==='pre' && Date.parse(i.c.date||i.ev.date)<=soon)) leQuiet.set('X:'+r[0], Date.now()+LE_QUIET); lv.forEach(i=>xs.push(ssXTile(i,r[1]))); }));   // v3.77: racing, golf, tennis, fights live too
   const note=mode==='TOP'?'<div class="ss-empty ss-note">ESPN top events did not answer · every league live now</div>':'';
-  box.innerHTML=note+(list.length||xs.length ? list.map(x=>ssTile(x.ev,x.c,mine.has(x.c+':'+x.ev.id),x.c)).join('')+xs.join('') : '<div class="ss-empty">No games in progress or left today in any league.</div>');
+  box.innerHTML=note+(list.length||xs.length ? list.map(x=>ssTile(x.ev,x.c,riskM.has(x.c+':'+x.ev.id),x.c,riskM.get(x.c+':'+x.ev.id))).join('')+xs.join('') : '<div class="ss-empty">No games in progress or left today in any league.</div>');
   box.dataset.live=(list.some(x=>stOf(x.ev)==='in')||xs.length)?'1':'';
   box.querySelectorAll('.ss-g.mine').forEach(t=>t.addEventListener('click',()=>{ liveScrollTo=t.dataset.key; const tab=document.querySelector('.tab[data-view="v-live"]'); if(tab) tab.click(); }));
 }
@@ -9977,9 +10012,11 @@ setTimeout(()=>{
   const sel=document.getElementById('ssSport'); if(!sel) return; ssFillSel(sel);   // v3.77: every league, Top events, Live now
   let v=null; try{ v=localStorage.getItem('mbev.ssSport'); }catch(e){}
   if(!v){ const c={}; liveOpenBets().forEach(b=>{ c[b.sport]=(c[b.sport]||0)+1; }); v=Object.keys(c).sort((x,y)=>c[y]-c[x])[0]||'NFL'; }
-  if(![...sel.options].some(o=>o.value===v)) v='NFL';
+  if(![...sel.options].some(o=>o.value===v)) v='MINE';   // v4.26: a sport with no bet is not in the menu
   sel.value=v;
   sel.addEventListener('change',()=>{ try{ localStorage.setItem('mbev.ssSport',sel.value); }catch(e){} renderStrip(false); });
+  const ac=document.getElementById('ssAll'); if(ac){ try{ ac.checked=localStorage.getItem('mbev.ssAll')==='1'; }catch(e){}   // v4.26
+    ac.addEventListener('change',()=>{ try{ localStorage.setItem('mbev.ssAll', ac.checked?'1':'0'); }catch(e){} ssFillSel(sel); renderStrip(false); }); }
   renderStrip(false);
   setInterval(()=>{ if(document.visibilityState!=='visible' || ssBusy) return;
     const box=document.getElementById('ssGames'), sec=+((document.getElementById('liveEvery')||{}).value)||60;
