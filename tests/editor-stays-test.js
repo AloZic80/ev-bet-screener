@@ -38,6 +38,7 @@ const ROWS=[row(), row({name:'Akron Zips',team:'AKR',game:'AKR @ KENT',matchup:'
     // your own tap outside the box still redraws: open again, then press Show rejected
     await p.evaluate(()=>{ const c=[...document.querySelectorAll('#placeCards .pcard')].find(x=>/AKR @ KENT/.test(x.textContent)); c.querySelector('.bet-btn').click(); }); await p.waitForTimeout(200);
     await p.evaluate(()=>{ const r=lastRows.find(x=>x.team==='AKR'); r.name='AKR NOW'; });
+    await p.evaluate(()=>{ const b=document.getElementById('barMoreBtn'); if(b && getComputedStyle(b).display!=='none' && b.getAttribute('aria-expanded')!=='true') b.click(); });   // v4.25: on a phone the tick boxes are behind Filters
     await p.click('#showRejects').catch(()=>{}); await p.waitForTimeout(400);
     const own=await p.evaluate(()=>/AKR NOW/.test(document.body.textContent));
     check(W+' px: a tap of your own outside the box (Show rejected) still redraws at once', own, own);
