@@ -330,6 +330,13 @@
   the market with the model) and + Add a bet. The screen floor still uses model net EV. Wording: THIN "still clears your estimated EV floor"; the Scorecard
   verdict says "evidence, not proof". `tests/blend-limit-test.js`. The doc names model / market / sizing chances, calls out rounding, the parlay independence
   assumption and the FanDuel Predicts fee (2% ÷ price of the stake).
+- One-tap slips on a phone (v4.42, `slipLinkFor`, `a.sc-price.sc-link`; owner: "my slips do not open when I press the icon to open the app, those links are
+  NOT working", then "APP link first and then https last"): on a phone the Place card's price chip is a real `<a href>` when the book's price is already
+  known on the row (`_openQ`, `_shopQ`, `_altQ` at that book, within 8 points of the card's price): Novig `novigapp://events/<outcome>/novig/<stake>`, Kalshi /
+  Polymarket US the market's https url, DraftKings / PrizePicks their home. One tap with no `await` before it, so iOS can hand it to the app. The capture
+  click handler lets `a.sc-link` through; for Novig it then shows the `#slipGo` bar with "website (if the app did not open)" (the https slip). Unknown
+  price: the tap checks it and shows the bar as before (app link first, website second). `slipLinkFor` is hoisted with its own maps (startup-safe).
+  `novigapp://` is still unconfirmed (novig.com cannot be read from the build machine). `tests/slip-onetap-test.js`; `tests/slip-app-test.js` unchanged.
 - Augi's screens on our engine, step 1 of 5: the Board (v4.34, `boardView`/`#boardView`/`mbev.boardView`, `.cv-legend-box`, `lnGet`/`lnSet`/`lnBtnHtml`/`.ln-ed`,
   `mbev.lineNotes`; owner: "What you recommend" → option 2, "BUILD"): Show menu next to Sort (All groups / Passing / Outliers only / Already bet / Skipped;
   Skipped also lists rejected rows without Show rejected), filtered after `grpOf`. Augi's cover legend (nine chips) in a `details.help` above the bar.

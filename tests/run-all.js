@@ -44,6 +44,7 @@ const runs = [
   ['v4.39: a prop you bet, worded by the book (Lekkerimäki, 1.5 Shots On Goal), is ALREADY BET on the board (Lekkerimaki, 1.5 Shots)', 'prop-prior-test.js', []],
   ['v4.40: Novig "2+ Yes" is Over 1.5 (even with Novig\'s line 2), and your book fills themselves mark the card ALREADY BET', 'novig-plus-test.js', []],
   ['v4.41: OK up to, the price tag, Kalshi\'s limit price and + Add a bet use the blend (what the stake is sized on), not the model alone', 'blend-limit-test.js', []],
+  ['v4.42: iPhone: the card\'s price chip is the slip link itself (Novig app link first, the website in the bar after), one tap', 'slip-onetap-test.js', []],
   ['v4.34: Augi\'s Board: the Show menu, the cover legend, your own note on each line', 'board-notes-test.js', []],
   ['v4.33: colour schemes (Green, Blue, Red, Purple, Graphite) in light and dark, all AA; remembered', 'palette-test.js', []],
   ['v4.31: Augi\'s 5-point cover bands (chips on the board and cards) and the Bet result study in Performance', 'cover-study-test.js', []],
