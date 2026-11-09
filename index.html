@@ -32,7 +32,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.44</title>
+<title>0xBeta Screener v4.45</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1378,6 +1378,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 a.sc-price.sc-link{text-decoration:none; color:inherit}
 /* v4.44: Watch bets panel */
 .ws-sum{font-size:14px; margin:2px 0} .ws-stage{margin:2px 0 8px} .ws-t td,.ws-t th{padding:5px 8px} .ws-line{font-size:13.5px; margin:6px 0}
+/* v4.45 Watch bets v2 */ .ws-h{font-size:14px; margin:14px 0 4px} .ws-head{line-height:1.5} .ws-verdict{color:var(--accent)} .ws-pol td:first-child{white-space:normal}
 </style>
 </head>
 <body>
@@ -1386,7 +1387,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.44</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.45</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2111,7 +2112,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 <div class="panel" id="watchPanel">   <!-- v4.44: Watch bets as shadow records: model vs market -->
   <h2>👀 Watch bets: model vs market <span class="sub">bets the model liked but the market-adjusted edge did not · saved once, graded, never bet</span></h2>
   <div id="watchStudy"></div>
-  <details class="help" data-help="watch-how"><summary>How this is figured</summary><p class="hint" style="margin:8px 0 0">Each Watch bet is saved once, the first time it shows (one per player or team, market, side and game day), with the price you were shown and the model, market and blend chances. After the game it is graded like your bets. It is <b>never</b> a bet: not in the Bet log, profit, ROI, the calendar or the daily max. The <b>Brier score</b> is the squared miss of a forecast (0 is perfect); lower wins. Market − model above zero means the model forecast these better. The 95% range is resampled by game, because props in the same game move together. Pushes are left out. This only covers the Watch region (where the model and the market disagree), not every bet. Under 100 graded it is descriptive only; around 1,000, if the model still beats both the market and the blend and the closing line agrees, it would be time to revisit the model weight (0.35) or the floor.</p></details>
+  <details class="help" data-help="watch-how"><summary>How this is figured</summary><p class="hint" style="margin:8px 0 0">Each Watch bet is saved once, the first time it shows (one per player or team, stat, side, exact line and game), with the price you were shown and the model, market and blend chances. That first snapshot is never changed. Later looks only note when the price or a forecast moved. After the game it is graded like your bets. It is <b>never</b> a bet: not in the Bet log, profit, ROI, the calendar or the daily max.</p><p class="hint">The <b>Brier score</b> is the squared miss of a forecast (0 is perfect); lower wins. The headline averages market − model inside each game, then across games, so a game with many props counts once; its 95% range comes from 5,000 resamples of games. Above zero means the model forecast these better. <b>Stages</b> need both counts: Directional at 100 bets in 50 games; Useful at 300 in 150 with the range clear of zero; Credible at 1,000 in 500, the range clear of zero and within ±0.005, and the closing line and ROI pointing the same way. "Materially" means the range starts beyond 0.001. These rules were set before any results.</p><p class="hint"><b>One pick per game</b>: 5 minutes before kickoff, the Watch bet with the highest conservative EV, at the price last seen. Seen within 30 minutes of kickoff it is a primary pick; 31 to 120 minutes, a stale fallback, kept apart; older or never, no pick. The app has to be open near kickoff (or have seen the price earlier), so this covers the games you looked at. <b>Closing prices</b> come free from Kalshi, Polymarket US and Novig in the last 10 minutes; sportsbook closes would cost credits, so they are not taken for Watch bets.</p></details>
 </div>
 <div class="panel">
   <h2>Where the edge is coming from</h2>
@@ -2132,7 +2133,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.44';
+const SCREENER_VERSION='v4.45';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -6405,7 +6406,7 @@ async function autoGradeLog(){
       b.result = g.push?'push':(g.won?'win':'loss'); changed++;
     }catch(e){ console.warn('grade', b&&b.name, e); } }
     if(changed){ saveLog(); renderLog(); renderPerf(); refresh(); }
-    try{ if(await watchGrade()) renderPerf(); }catch(e){}   // v4.44: shadow Watch records, graded the same way
+    try{ watchPolicyRun(); const wg=await watchGrade(); watchPrune(); if(wg) renderPerf(); }catch(e){}   // v4.44: shadow Watch records, graded the same way   // v4.45: the one pick per game first, sightings dropped once graded and synced
   }catch(e){}
   finally{ agBusy=false; logBusy--; }
 }
@@ -6582,46 +6583,194 @@ function renderScorecard(){
    not add more. After the game, autoGradeLog grades it with the same ESPN code as your bets. Performance › Watch bets compares the forecasts with Brier
    scores and log loss (paired, model vs market vs blend), a by-game bootstrap 95% range for the market − model difference, and a $1 simulated ROI at the
    shown price. Never counted in the Bet log, the Today card, the calendar, profit, ROI, the Scorecard or the daily max. */
+/* v4.45 (owner: "BUILD", after the rounds with ChatGPT in agent-notes/watch-v2-plan_2026-11-09_v1.md): Watch bets v2.
+   Key: sport, player or team, stat family (or game-line kind), side, exact line, and ESPN's event id (else the start). The first sighting is the
+   calibration snapshot, frozen and atomic (price, fee, model, market, blend, EV, time, version, device). Later sightings only add an audit entry when the
+   price or a forecast changed (`sig`); an unchanged one only moves `seen` (the last time it was seen before the cutoff, for freshness). One pick per game
+   (`watchPolicyRun`, `mbev.watchPol`): at 5 minutes before kickoff the highest conservative EV (actNet; ties within 0.0001 → fresher, higher blend,
+   shorter odds, key), primary when its last sighting is within 30 min of kickoff, `stale fallback` within 120, else "no qualifying pick"; made once and
+   never recomputed, from sightings before the cutoff only (also when the page opens later). Closing prices (`watchCloseScan`): Watch bets at Kalshi,
+   Polymarket US and Novig in the last 10 minutes before kickoff, policy picks first, 8 per /live request, at most 24 every 2 min; both sides (ask and
+   1 − bid) de-vigged; a missing close keeps its reason. Sync: `watch` and `wpol` collections; two copies of one record keep the earliest valid pre-start
+   snapshot whole (`watchMergeRec`), the other goes to `alt` (conflict when over 5 minutes apart); policy picks merge primary > fallback > none, then the
+   earliest. Device time for now (`tsrc:'device'`); a Worker time (`srv`) is preferred when it exists. After grading and syncing (7 days with sync off),
+   sightings are dropped (`watchPrune`). Stats are computed only when Performance is open: game-balanced market − model Brier with 5,000 game
+   resamples, stages by graded bets AND games, the verdict, two ROIs never mixed, exchange CLV with its coverage. */
 function watchAll(){ if(!window._watch){ try{ window._watch=JSON.parse(localStorage.getItem('mbev.watchObs')||'[]')||[]; }catch(e){ window._watch=[]; } } return window._watch; }
-function watchSave(){ const A=watchAll(); if(A.length>3000) A.splice(0, A.length-3000); try{ localStorage.setItem('mbev.watchObs', JSON.stringify(A)); }catch(e){} }
-function watchNote(rows){ const A=watchAll(); let add=0; const have=new Set(A.map(o=>o.k));
+function watchSave(){ const A=watchAll(); if(A.length>3000) A.splice(0, A.length-3000);
+  try{ localStorage.setItem('mbev.watchObs', JSON.stringify(A)); }catch(e){   // storage full: drop audit sightings of graded records, then try again
+    A.forEach(o=>{ if(o.result && o.sig){ o.nSig=Math.max(+o.nSig||0, o.sig.length); delete o.sig; } }); try{ localStorage.setItem('mbev.watchObs', JSON.stringify(A)); }catch(e2){} } }
+function watchPolAll(){ if(!window._wpol){ try{ window._wpol=JSON.parse(localStorage.getItem('mbev.watchPol')||'{}')||{}; }catch(e){ window._wpol={}; } } return window._wpol; }
+function watchPolSave(){ const P=watchPolAll(), K=Object.keys(P); if(K.length>3000) K.sort((a,b)=>Date.parse(P[a].start||0)-Date.parse(P[b].start||0)).slice(0,K.length-3000).forEach(k=>{ delete P[k]; });
+  try{ localStorage.setItem('mbev.watchPol', JSON.stringify(P)); }catch(e){} }
+function watchDev(){ let d=null; try{ d=localStorage.getItem('mbev.devId'); }catch(e){}   // a random id for this browser (names no one); not synced
+  if(!d){ d='d'+Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4); try{ localStorage.setItem('mbev.devId',d); }catch(e){} } return d; }
+function watchKeyOf(r){ const gl=/^(moneyline|spread|total)$/.test(r.kind||''), mk=String(r.market||'').match(/^([+-]?[\d.]+)\s+(.*)$/), line=mk?String(parseFloat(mk[1])):(r.line!=null?String(r.line):'');
+  let fam; if(gl) fam=String(r.kind); else { const t=mk?mk[2]:String(r.market||''); try{ fam=statFam(t); }catch(e){ fam=nrmT(t); } }
+  const gi=r.gameInfo||{}; return [r.sport||'', nrmT(r.name), fam, r.side||'', line, gi.eventId?'e'+gi.eventId:(gi.startISO||r.start||'')].join('|'); }
+function watchGk(o){ return (o.sport||'')+'|'+(o.ev?'e'+o.ev:(o.game||'')+'|'+(o.start||o.date||'')); }
+function watchNote(rows){ const A=watchAll(), now=Date.now(); let ch=0; const by=new Map(); A.forEach(o=>{ by.set(o.k,o); if(o.pk) by.set(o.pk,o); });
   (rows||[]).forEach(r=>{ if(!r || !r.watch || !(r.offeredProb>0 && r.offeredProb<1) || r.fairProb==null || r.mktProb==null) return;
-    const st=r.gameInfo&&r.gameInfo.startISO; if(st && Date.parse(st)<=Date.now()) return;   // only before the game
+    const st=r.gameInfo&&r.gameInfo.startISO, t0=st?Date.parse(st):NaN; if(!isNaN(t0) && t0<=now) return;   // only before the game
     if(r.gameInfo && r.gameInfo.state && r.gameInfo.state!=='pre') return;
-    let k; try{ k=pxKey(r); }catch(e){ return; } if(!k || have.has(k)) return; have.add(k);
-    A.push({k, at:new Date().toISOString(), ver:SCREENER_VERSION, sport:r.sport, kind:r.kind||'prop', name:r.name, team:r.team||null, market:r.market, side:r.side||'',
-      betnow:betNowOf(r), game:r.game||r.matchup||'', start:st||null, date:st?ctDay(Date.parse(st)):null, dateSet:!!st, book:r.book, price:+r.offeredProb.toFixed(4), fee:+(r.fee||0).toFixed(5),
-      model:+r.fairProb.toFixed(4), mkt:+r.mktProb.toFixed(4), blend:r.actProb!=null?+r.actProb.toFixed(4):null, net:+(r.net||0).toFixed(4), actNet:r.actNet!=null?+r.actNet.toFixed(4):null, result:null}); add++; });
-  if(add) watchSave(); return add; }
+    let k, pk; try{ k=watchKeyOf(r); pk=pxKey(r); }catch(e){ return; } if(!k) return;
+    const cur={price:+r.offeredProb.toFixed(4), fee:+(r.fee||0).toFixed(5), model:+r.fairProb.toFixed(4), mkt:+r.mktProb.toFixed(4), blend:r.actProb!=null?+r.actProb.toFixed(4):null, actNet:r.actNet!=null?+r.actNet.toFixed(4):null};
+    const pre=isNaN(t0) || now<t0-300e3;   // before the policy cutoff (5 minutes before kickoff)
+    let o=by.get(k)||by.get(pk);
+    if(o){ if(!pre || o.pruned) return;
+      const L=(o.sig&&o.sig.length)?o.sig[o.sig.length-1]:o;
+      const same=['price','fee','model','mkt','blend','actNet'].every(f=>(L[f]==null&&cur[f]==null) || (L[f]!=null && cur[f]!=null && Math.abs(L[f]-cur[f])<0.0005));
+      if(!same){ (o.sig=o.sig||[]).push(Object.assign({t:now, ver:SCREENER_VERSION}, cur)); if(o.sig.length>24) o.sig.splice(0, o.sig.length-24); o.nSig=(+o.nSig||0)+1; ch++; }
+      if(!o.seen || now-o.seen>=60e3 || !same){ o.seen=now; ch++; }
+      return; }
+    let ld=null; if(LIVE_BOOK(r.book)){ try{ const d=liveDesc(Object.assign(rowAsBet(r),{id:'w'})); if(d){ delete d.id; ld=d; } }catch(e){} }
+    o=Object.assign({k, pk, v:2, at:new Date(now).toISOString(), ver:SCREENER_VERSION, dev:watchDev(), devName:syncDev(), tz:new Date(now).getTimezoneOffset(), tsrc:'device',
+      sport:r.sport, kind:r.kind||'prop', name:r.name, team:r.team||null, market:r.market, side:r.side||'', betnow:betNowOf(r), game:r.game||r.matchup||'', ev:(r.gameInfo&&r.gameInfo.eventId)||null,
+      start:st||null, date:st?ctDay(t0):null, dateSet:!!st, book:r.book}, cur, {net:+(r.net||0).toFixed(4), result:null, seen:pre?now:null, nSig:0, ld});
+    if(!o.ld) delete o.ld; A.push(o); by.set(k,o); by.set(pk,o); ch++; });
+  if(ch) watchSave(); return ch; }
+function watchState(o){ const L=(o.sig&&o.sig.length)?o.sig[o.sig.length-1]:o;   // the price and forecasts as last seen before the cutoff
+  return {price:L.price, fee:L.fee, model:L.model, mkt:L.mkt, blend:L.blend, actNet:L.actNet, ver:L.ver||o.ver, seen:+o.seen||Date.parse(o.at)}; }
+function watchRank(a,b){ const ea=a.s.actNet==null?-9:a.s.actNet, eb=b.s.actNet==null?-9:b.s.actNet;
+  if(Math.abs(ea-eb)>=0.0001) return eb-ea; if(a.s.seen!==b.s.seen) return b.s.seen-a.s.seen;
+  const ba=+a.s.blend||0, bb=+b.s.blend||0; if(ba!==bb) return bb-ba; if(a.s.price!==b.s.price) return b.s.price-a.s.price; return a.o.k<b.o.k?-1:a.o.k>b.o.k?1:0; }
+function watchWhy(pool){ if(pool.length<2) return 'the only candidate'; const a=pool[0].s, b=pool[1].s, ea=a.actNet==null?-9:a.actNet, eb=b.actNet==null?-9:b.actNet;
+  if(Math.abs(ea-eb)>=0.0001) return 'highest conservative EV'; if(a.seen!==b.seen) return 'EV tie: the fresher price';
+  if((+a.blend||0)!==(+b.blend||0)) return 'EV tie: the higher blend chance'; if(a.price!==b.price) return 'EV tie: the shorter odds'; return 'full tie: the key, alphabetically'; }
+function watchPolicyRun(){ const A=watchAll(), P=watchPolAll(), now=Date.now(), G=new Map(); let n=0;
+  A.forEach(o=>{ const t=Date.parse(o.start||''); if(isNaN(t)) return; const gk=watchGk(o); if(!G.has(gk)) G.set(gk,{t,L:[]}); G.get(gk).L.push(o); });
+  G.forEach((g,gk)=>{ if(P[gk] || now<g.t-300e3 || now>g.t+30*86400e3) return;
+    const cut=g.t-300e3, C=g.L.map(o=>{ const s=watchState(o); return {o, s, age:g.t-s.seen}; }).filter(x=>x.s.seen<=cut && x.s.price>0 && x.s.price<1);
+    const P1=C.filter(x=>x.age<=30*60e3), P2=C.filter(x=>x.age>30*60e3 && x.age<=120*60e3), pool=P1.length?P1:P2;
+    const d={gk, at:new Date(now).toISOString(), dev:watchDev(), devName:syncDev(), tsrc:'device', start:new Date(g.t).toISOString(), cutoff:new Date(cut).toISOString(),
+      sport:g.L[0].sport, game:g.L[0].game||'', n:g.L.length, ver:SCREENER_VERSION};
+    if(!pool.length){ d.status='none'; d.why=C.length?'no price seen within 2 hours of kickoff':'nothing seen before the cutoff'; }
+    else { pool.sort(watchRank); const w=pool[0]; d.status=P1.length?'primary':'fallback'; d.k=w.o.k; d.why=watchWhy(pool); d.snap=Object.assign({}, w.s, {age:Math.round(w.age/60e3)}); }
+    P[gk]=d; n++; });
+  if(n) watchPolSave(); return n; }
+var watchCloseAt=0, watchCloseBusy=false;
+async function watchCloseScan(){ const now=Date.now(); if(watchCloseBusy || now-watchCloseAt<110e3) return 0; try{ if(wkPaused()) return 0; }catch(e){}
+  const P=watchPolAll(), A=watchAll().filter(o=>o.ld && !o.pruned && LIVE_BOOK(o.book) && (()=>{ const t=Date.parse(o.start||''); return !isNaN(t) && now<t && t-now<=10*60e3; })());
+  if(!A.length) return 0; watchCloseAt=now; watchCloseBusy=true; let n=0;
+  const pick=o=>{ const d=P[watchGk(o)]; return d&&d.k===o.k?0:1; }; A.sort((a,b)=>pick(a)-pick(b) || Date.parse(a.start)-Date.parse(b.start));
+  const L=A.slice(0,24);
+  try{ for(let i=0;i<L.length;i+=8){ const chunk=L.slice(i,i+8).map((o,j)=>[o, Object.assign({}, o.ld, {id:'wc'+i+'_'+j})]);
+      let R={}; try{ const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(chunk.map(x=>x[1]))),{headers:apiHeaders()}); if(!res.ok) break; R=((await res.json())||{}).results||{}; }catch(e){ break; }
+      chunk.forEach(([o,d])=>{ const q=R[d.id], t=Date.now(); o.closeTry=t;
+        if(q && q.ok && q.price>0 && q.price<1 && t<Date.parse(o.start)){ let bad=false; try{ bad=suspectQ(q,o.model,o.price,o.mkt); }catch(e){}
+          if(bad){ if(!o.close) o.closeWhy='price looks like a different market'; return; }
+          const opp=(q.bid>0 && q.bid<1)?1-q.bid:null; o.close={t, p:+q.price.toFixed(4), opp:opp!=null?+opp.toFixed(4):null, fair:opp!=null?+(q.price/(q.price+opp)).toFixed(4):null, src:q.src||LIVE_BOOK(o.book)}; delete o.closeWhy; n++; return; }
+        if(o.close) return; const note=String((q&&q.note)||''); o.closeWhy=!q?'no answer from '+bookLabel(o.book):/at your line|lists .* not your/i.test(note)?'line moved (not comparable)':(note?note.replace(/^(Kalshi|Polymarket|Novig):\s*/,'').slice(0,80):'no price'); }); } }
+  finally{ watchCloseBusy=false; }
+  watchSave(); return n; }
 async function watchGrade(){ const A=watchAll(), now=Date.now(); let n=0;
   for(const o of A){ try{
     if(o.result || !o.start || now<Date.parse(o.start)+5*3600e3 || now>Date.parse(o.start)+30*86400e3 || !ESPN_MAP[o.sport]) continue;
     const ev=await findBetGame(o); if(!ev) continue; const gi=gameStatusOf(ev); if(!gi || gi.state!=='post') continue;
     const gl=GL_KINDS.test(o.kind||''), box=gl?null:await fetchBoxscore(o.sport, gi.eventId, true), g=gl?gradeGameLine(o,ev):gradeBet(o, box);
-    if(!g) continue; o.result=g.push?'push':(g.won?'win':'loss'); o.gradedAt=new Date().toISOString(); n++;
+    if(!g) continue; o.result=g.push?'push':(g.won?'win':'loss'); o.gradedAt=new Date().toISOString(); o.gradedBy='espn'; n++;
   }catch(e){} }
   if(n) watchSave(); return n; }
-function watchStats(A){ const G=(A||watchAll()).filter(o=>(o.result==='win'||o.result==='loss') && o.model>0 && o.model<1 && o.mkt>0 && o.mkt<1);
+function watchSyncForm(o){ const x={}; Object.keys(o).forEach(f=>{ if(f!=='sig' && f!=='seen' && f!=='closeTry' && o[f]!==undefined) x[f]=o[f]; }); return x; }   // sightings stay on the device that saw them
+function watchPrune(){ const A=watchAll(), P=watchPolAll(), now=Date.now(); let st=null, n=0; try{ if(SY && SY.on && SY.meta) st=syncSt('watch'); }catch(e){}
+  A.forEach(o=>{ if(o.pruned || !o.result || !o.gradedAt) return; if(o.start && !P[watchGk(o)]) return;
+    const done=st ? !!(st.B[o.k] && st.B[o.k].q===syncQuick(watchSyncForm(o))) : now-Date.parse(o.gradedAt)>7*86400e3; if(!done) return;
+    o.first=o.at; o.last=new Date(+o.seen||Date.parse(o.at)).toISOString(); o.nSig=Math.max(+o.nSig||0, (o.sig||[]).length); delete o.sig; delete o.ld; delete o.closeTry; o.pruned=true; n++; });
+  if(n) watchSave(); return n; }
+function watchMergeRec(a,b){ if(a===b) return a;
+  const SN=['at','ver','book','price','fee','model','mkt','blend','net','actNet','dev','devName','tz','tsrc','srv'];
+  const ok=x=>!!x && x.price>0 && x.price<1 && x.model>0 && x.model<1 && x.mkt>0 && x.mkt<1 && !isNaN(Date.parse(x.at)) && !(x.start && Date.parse(x.at)>=Date.parse(x.start));
+  const tm=x=>Date.parse(x.srv||x.at), sg=x=>SN.filter(f=>f!=='srv').map(f=>JSON.stringify(x[f]==null?null:x[f])).join(',');
+  const first=ok(a)!==ok(b)?(ok(a)?a:b):tm(a)!==tm(b)?(tm(a)<tm(b)?a:b):(String(a.dev||'')<=String(b.dev||'')?a:b), other=first===a?b:a;
+  const m=Object.assign({}, other, first); SN.forEach(f=>{ if(first[f]===undefined) delete m[f]; else m[f]=first[f]; });   // the snapshot comes whole from one copy
+  const S=[].concat(a.alt||[], b.alt||[]); if(sg(other)!==sg(first)){ const s={}; SN.forEach(f=>{ if(other[f]!==undefined) s[f]=other[f]; }); S.push(s); }
+  const hs=new Set([sg(first)]), alt=[]; S.forEach(s=>{ const h=sg(s); if(hs.has(h)) return; hs.add(h); alt.push(s); }); alt.sort((x,y)=>tm(x)-tm(y) || String(x.dev||'').localeCompare(String(y.dev||'')));
+  if(alt.length){ m.alt=alt.slice(0,5); m.conflict=alt.some(s=>Math.abs(tm(s)-tm(first))>5*60e3); } else { delete m.alt; delete m.conflict; }
+  m.result=first.result||other.result||null; const gs=[a.gradedAt,b.gradedAt].filter(Boolean).sort(); if(gs.length) m.gradedAt=gs[0];
+  const cl=[a.close,b.close].filter(Boolean).sort((x,y)=>y.t-x.t)[0]; if(cl){ m.close=cl; delete m.closeWhy; } else if(a.closeWhy||b.closeWhy) m.closeWhy=a.closeWhy||b.closeWhy;
+  const sn=Math.max(+a.seen||0, +b.seen||0); if(sn) m.seen=sn; else delete m.seen;
+  m.nSig=Math.max(+a.nSig||0, +b.nSig||0);
+  if(a.pruned || b.pruned){ m.pruned=true; delete m.sig; delete m.ld; m.first=a.first||b.first||m.at; const ls=[a.last,b.last].filter(Boolean).sort(); m.last=ls.length?ls[ls.length-1]:m.at; }
+  else { const U=new Map(); [].concat(a.sig||[], b.sig||[]).forEach(s=>U.set(s.t+':'+s.price+':'+s.actNet, s)); if(U.size) m.sig=[...U.values()].sort((x,y)=>x.t-y.t).slice(-24); else delete m.sig; m.ld=a.ld||b.ld; if(!m.ld) delete m.ld; }
+  Object.keys(m).forEach(f=>{ if(m[f]===undefined) delete m[f]; }); return m; }
+function watchPut(p){ const by=new Map(watchAll().map(o=>[o.k,o])), out=[], again=[];
+  p.forEach(([id,v])=>{ const l=by.get(id); if(!l){ out.push(Object.assign({}, v)); return; } if(l===v){ out.push(l); return; }
+    const m=watchMergeRec(l, v); if(syncQuick(watchSyncForm(m))!==syncQuick(watchSyncForm(v))) again.push(id); out.push(m); });
+  window._watch=out; return again; }
+function watchPolBest(a,b){ const R={primary:0, fallback:1, none:2}, ra=R[a.status]==null?3:R[a.status], rb=R[b.status]==null?3:R[b.status];
+  if(ra!==rb) return ra<rb?a:b; const ta=Date.parse(a.at)||0, tb=Date.parse(b.at)||0; if(ta!==tb) return ta<tb?a:b; return String(a.dev||'')<=String(b.dev||'')?a:b; }
+function watchPolPut(p){ const P=watchPolAll(), out={}, again=[];
+  p.forEach(([gk,d])=>{ const l=P[gk]; if(!l || l===d || syncQuick(l)===syncQuick(d)){ out[gk]=l||d; return; }
+    const w=watchPolBest(l,d), x=w===l?d:l, m=Object.assign({}, w);
+    if(x.status!==w.status || x.k!==w.k){ m.conflict=true; m.other={status:x.status, k:x.k||null, dev:x.dev||null, at:x.at}; }
+    if(syncQuick(m)!==syncQuick(d)) again.push(gk); out[gk]=m; });
+  window._wpol=out; return again; }
+function watchRoiOf(price, fee, y){ const f=+fee||0; return y?(1/price-1-f)/(1+f):-1; }
+function watchBand(ms){ const h=+new Date(ms).toLocaleString('en-US',{hour:'numeric',hour12:false,timeZone:'America/Chicago'}); return h<12?'before noon':h<17?'noon to 5 PM':'5 PM or later'; }
+function watchStats(A, opts){ A=A||watchAll(); opts=opts||{}; const B=opts.boot||5000;
+  const G=A.filter(o=>(o.result==='win'||o.result==='loss') && o.model>0 && o.model<1 && o.mkt>0 && o.mkt<1);
   const br=(p,y)=>(p-y)*(p-y), ll=(p,y)=>-Math.log(Math.max(1e-6, y?p:1-p)), avg=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:null;
-  const rows=G.map(o=>{ const y=o.result==='win'?1:0, bl=o.blend>0&&o.blend<1?o.blend:o.mkt+0.35*(o.model-o.mkt), f=+o.fee||0, roi=y?(1/o.price-1-f)/(1+f):-1;
-    return {g:o.sport+'|'+(o.game||'')+'|'+(o.date||''), y, bm:br(o.model,y), bk:br(o.mkt,y), bb:br(bl,y), lm:ll(o.model,y), lk:ll(o.mkt,y), lb:ll(bl,y), roi}; });
-  const out={n:(A||watchAll()).length, graded:G.length, pushes:(A||watchAll()).filter(o=>o.result==='push').length, wins:rows.filter(x=>x.y).length,
+  const rows=G.map(o=>{ const y=o.result==='win'?1:0, bl=o.blend>0&&o.blend<1?o.blend:o.mkt+0.35*(o.model-o.mkt);
+    return {g:watchGk(o), y, bm:br(o.model,y), bk:br(o.mkt,y), bb:br(bl,y), lm:ll(o.model,y), lk:ll(o.mkt,y), lb:ll(bl,y), roi:watchRoiOf(o.price,o.fee,y)}; });
+  const byG=new Map(); rows.forEach(x=>{ if(!byG.has(x.g)) byG.set(x.g,[]); byG.get(x.g).push(x.bk-x.bm); }); const GM=[...byG.values()].map(avg);
+  const out={n:A.length, allGames:new Set(A.map(watchGk)).size, graded:G.length, pushes:A.filter(o=>o.result==='push').length, wins:rows.filter(x=>x.y).length,
     brier:{model:avg(rows.map(x=>x.bm)), market:avg(rows.map(x=>x.bk)), blend:avg(rows.map(x=>x.bb))}, logloss:{model:avg(rows.map(x=>x.lm)), market:avg(rows.map(x=>x.lk)), blend:avg(rows.map(x=>x.lb))},
-    d:avg(rows.map(x=>x.bk-x.bm)), roi:avg(rows.map(x=>x.roi)), games:new Set(rows.map(x=>x.g)).size, ci:null};
-  if(rows.length>=20){ const byG=new Map(); rows.forEach(x=>{ if(!byG.has(x.g)) byG.set(x.g,[]); byG.get(x.g).push(x.bk-x.bm); }); const Gs=[...byG.values()];
-    let seed=12345; const rnd=()=>{ seed=(seed*1103515245+12345)%2147483648; return seed/2147483648; }; const R=[];
-    for(let b=0;b<1000;b++){ let s=0,c=0; for(let i=0;i<Gs.length;i++){ const g=Gs[Math.floor(rnd()*Gs.length)]; g.forEach(v=>{ s+=v; c++; }); } R.push(c?s/c:0); }
-    R.sort((a,b)=>a-b); out.ci=[R[25],R[974]]; }
-  out.stage=out.graded<100?'Descriptive only: under 100 graded Watch bets':out.graded<300?'First directional read (100–299)':out.graded<1000?'Useful if the 95% range is clearly away from zero (300–999)':'Credible evidence (1,000+), if the closing line and ROI agree';
+    d:avg(GM), dBet:avg(rows.map(x=>x.bk-x.bm)), roi:avg(rows.map(x=>x.roi)), games:GM.length, ci:null, half:null, boot:B,
+    tsrc:A.some(o=>o.srv)?'Worker':'device', conflicts:A.filter(o=>o.conflict).length};
+  if(rows.length>=20 && GM.length>=2){ let seed=12345; const rnd=()=>{ seed=(seed*1103515245+12345)%2147483648; return seed/2147483648; }; const R=new Float64Array(B), K=GM.length;
+    for(let b=0;b<B;b++){ let s=0; for(let i=0;i<K;i++) s+=GM[Math.floor(rnd()*K)]; R[b]=s/K; }
+    R.sort(); out.ci=[R[Math.floor(0.025*B)], R[Math.ceil(0.975*B)-1]]; out.half=(out.ci[1]-out.ci[0])/2; }
+  // closing prices: exchange-priced Watch bets whose game has started
+  const now=Date.now(), EX=A.filter(o=>LIVE_BOOK(o.book) && o.start && Date.parse(o.start)<=now), CL=EX.filter(o=>o.close && o.close.fair>0 && o.close.fair<1 && o.close.t<Date.parse(o.start));
+  const miss={}; A.filter(o=>o.start && Date.parse(o.start)<=now && !(o.close&&o.close.fair)).forEach(o=>{ const w=!LIVE_BOOK(o.book)?'sportsbook price (no free close)':o.close?'one side only (no de-vig)':o.closeWhy?o.closeWhy:!o.ld?'saved before v4.45':o.closeTry?'no price':'app not open in the 10 minutes before kickoff'; miss[w]=(miss[w]||0)+1; });
+  const byX={}; CL.forEach(o=>{ const x=bookLabel(o.book); (byX[x]=byX[x]||[]).push(o.close.fair/o.price-1); });
+  out.clv={eligible:EX.length, captured:CL.length, rate:EX.length?CL.length/EX.length:null, mean:avg(CL.map(o=>o.close.fair/o.price-1)), byX:Object.entries(byX).map(([x,v])=>({x, n:v.length, mean:avg(v)})), miss};
+  // one pick per game: primary and stale fallback, never combined
+  const P=opts.pol||watchPolAll(), by=new Map(A.map(o=>[o.k,o])), D=Object.values(P);
+  const pol=st=>{ const L=D.filter(d=>d.status===st), Gd=L.map(d=>({d, o:by.get(d.k)})).filter(x=>x.o && (x.o.result==='win'||x.o.result==='loss') && x.d.snap && x.d.snap.price>0);
+    const grp=f=>{ const M={}; Gd.forEach(x=>{ const kk=f(x); (M[kk]=M[kk]||[]).push(x); }); return Object.entries(M).map(([kk,v])=>({k:kk, n:v.length, w:v.filter(x=>x.o.result==='win').length, roi:avg(v.map(x=>watchRoiOf(x.d.snap.price,x.d.snap.fee,x.o.result==='win')))})).sort((p,q)=>q.n-p.n); };
+    return {picks:L.length, graded:Gd.length, w:Gd.filter(x=>x.o.result==='win').length, roi:avg(Gd.map(x=>watchRoiOf(x.d.snap.price,x.d.snap.fee,x.o.result==='win'))),
+      bySport:grp(x=>x.d.sport||'?'), byBand:grp(x=>watchBand(Date.parse(x.d.start))), byDev:grp(x=>x.d.devName||'?')}; };
+  out.pol={eligible:D.length, primary:pol('primary'), fallback:pol('fallback'), none:D.filter(d=>d.status==='none').length, conflicts:D.filter(d=>d.conflict).length};
+  out.pol.rate=D.length?out.pol.primary.picks/D.length:null;
+  // stage: bets AND games, plus the 95% range
+  const N=out.graded, Gn=out.games, L=out.ci?out.ci[0]:null, U=out.ci?out.ci[1]:null, excl=out.ci&&(L>0||U<0), dir=L>0?1:U<0?-1:0;
+  const agree=out.clv.captured>=30 && out.roi!=null && out.clv.mean!=null && Math.sign(out.clv.mean)===dir && Math.sign(out.roi)===dir;
+  out.excl=!!excl; out.agree=agree;
+  out.stage=(N<100||Gn<50)?'Descriptive only: under 100 graded Watch bets or under 50 games':
+    (N>=1000 && Gn>=500 && excl && out.half<=0.005 && agree)?'Credible evidence: 1,000+ bets in 500+ games, the range clear of zero and tight (±0.005 or less), and the closing line and ROI agree':
+    (N>=300 && Gn>=150 && excl)?'Useful comparison: 300+ bets in 150+ games and the range clear of zero'+(N>=1000&&Gn>=500?' (not yet Credible: '+(out.half>0.005?'range wider than ±0.005':'closing line and ROI do not both agree')+')':''):
+    'Directional: 100+ bets in 50+ games'+(N>=300&&Gn>=150?' (the range still includes zero)':'');
+  out.verdict=!out.ci?'No verdict yet: the range starts at 20 graded':L>0.001?'Materially favors the model':L>0?'Statistically favors the model':U<-0.001?'Materially favors the market':U<0?'Statistically favors the market':'No verdict: the range includes zero';
   return out; }
-function renderWatchStudy(){ const el=document.getElementById('watchStudy'); if(!el) return; const S=watchStats(), f=x=>x==null?'—':x.toFixed(4), pc=x=>x==null?'—':(x>=0?'+':'−')+Math.abs(x*100).toFixed(1)+'%';
-  const who=S.d==null?'':S.ci&&S.ci[0]>0?'the model forecast better on these':S.ci&&S.ci[1]<0?'the market forecast better on these':S.d>0?'leaning model (not clear yet)':S.d<0?'leaning market (not clear yet)':'even';
-  el.innerHTML='<div class="ws-sum"><b>'+S.n+'</b> Watch bets saved · <b>'+S.graded+'</b> graded win or loss'+(S.pushes?' · '+S.pushes+' pushes left out':'')+' · '+S.games+' games</div>'+
+var _wsKey='', _wsHtml='';
+function renderWatchStudy(force){ const el=document.getElementById('watchStudy'); if(!el) return; const pv=document.getElementById('v-perf');
+  if(!force && !(pv && pv.classList.contains('on'))){ _wsKey=''; return; }   // computed only when Performance is open
+  const A=watchAll(), P=watchPolAll(), key=syncH32(A.map(o=>o.k+(o.result||'')+(o.close?'c':'')).join(',')+'|'+Object.keys(P).length+'|'+A.length+'|'+ctDay(Date.now()));
+  if(key===_wsKey && el.innerHTML){ return; } _wsKey=key;
+  const S=watchStats(A), f=x=>x==null?'—':(x>=0?'+':'−')+Math.abs(x).toFixed(4), f0=x=>x==null?'—':x.toFixed(4), pc=x=>x==null?'—':(x>=0?'+':'−')+Math.abs(x*100).toFixed(1)+'%', pr=x=>x==null?'—':Math.round(x*100)+'%';
+  const roiB=x=>x==null?'—':'<b class="'+(x>=0?'pl-up':'pl-down')+'">'+pc(x)+'</b>';
+  const polL=(t,o)=>'<tr><td>'+t+'</td><td class="num">'+o.picks+'</td><td class="num">'+o.graded+'</td><td class="num">'+o.w+'–'+(o.graded-o.w)+'</td><td class="num">'+roiB(o.roi)+'</td></tr>';
+  const grpT=(t,L)=>L.length?'<tr><th colspan="4">'+t+'</th></tr>'+L.map(x=>'<tr><td>'+esc(x.k)+'</td><td class="num">'+x.n+'</td><td class="num">'+x.w+'–'+(x.n-x.w)+'</td><td class="num">'+roiB(x.roi)+'</td></tr>').join(''):'';
+  const C=S.clv, Pp=S.pol;
+  el.innerHTML='<div class="ws-sum"><b>'+S.n+'</b> Watch bets · <b>'+S.allGames+'</b> games · '+S.graded+' graded win or loss in '+S.games+' games'+(S.pushes?' · '+S.pushes+' pushes left out':'')+'</div>'+
     '<div class="meta ws-stage">'+esc(S.stage)+'</div>'+
-    (S.graded?'<div class="scroll"><table class="ws-t"><thead><tr><th>Forecast</th><th class="num">Brier (lower is better)</th><th class="num">Log loss</th></tr></thead><tbody>'+
-      [['Model',S.brier.model,S.logloss.model],['Market',S.brier.market,S.logloss.market],['Blend (what La Contadora uses)',S.brier.blend,S.logloss.blend]].map(r=>'<tr><td>'+r[0]+'</td><td class="num">'+f(r[1])+'</td><td class="num">'+f(r[2])+'</td></tr>').join('')+'</tbody></table></div>'+
-      '<div class="ws-line">Market − model Brier: <b>'+(S.d==null?'—':(S.d>=0?'+':'−')+Math.abs(S.d).toFixed(4))+'</b>'+(S.ci?' (95% range '+S.ci[0].toFixed(4)+' to '+S.ci[1].toFixed(4)+', resampled by game)':' (range after 20 graded)')+(who?' · <b>'+esc(who)+'</b>':'')+'</div>'+
-      '<div class="ws-line">If each had been a $1 bet at the shown price: <b class="'+(S.roi>=0?'pl-up':'pl-down')+'">'+pc(S.roi)+'</b> ROI (not your money)</div>':'<div class="meta">No graded Watch bets yet. They are graded with your bets after their games.</div>');
+    (S.graded?'<div class="ws-line ws-head">Market − model Brier, game by game: <b>'+f(S.d)+'</b>'+(S.ci?' · 95% range '+f(S.ci[0])+' to '+f(S.ci[1])+' (±'+S.half.toFixed(4)+', '+S.boot.toLocaleString('en-US')+' resamples of '+S.games+' games)':' · range after 20 graded')+'<br><b class="ws-verdict">'+esc(S.verdict)+'</b></div>'+
+      '<div class="scroll"><table class="ws-t"><thead><tr><th>Forecast, every Watch bet weighted the same</th><th class="num">Brier (lower is better)</th><th class="num">Log loss</th></tr></thead><tbody>'+
+      [['Model',S.brier.model,S.logloss.model],['Market',S.brier.market,S.logloss.market],['Blend (what La Contadora uses)',S.brier.blend,S.logloss.blend]].map(r=>'<tr><td>'+r[0]+'</td><td class="num">'+f0(r[1])+'</td><td class="num">'+f0(r[2])+'</td></tr>').join('')+
+      '<tr><td>Market − model, bet by bet</td><td class="num">'+f(S.dBet)+'</td><td></td></tr></tbody></table></div>':'<div class="meta">No graded Watch bets yet. They are graded with your bets after their games.</div>')+
+    '<h3 class="ws-h">Two ROIs, never mixed (a $1 bet each, not your money)</h3>'+
+    '<div class="ws-line">All Watch bets, at the first price seen: '+roiB(S.roi)+' over '+S.graded+'</div>'+
+    '<div class="scroll"><table class="ws-t ws-pol"><thead><tr><th>One pick per game (5 min before kickoff)</th><th class="num">Picks</th><th class="num">Graded</th><th class="num">W–L</th><th class="num">ROI</th></tr></thead><tbody>'+
+      polL('Primary: price seen within 30 min',Pp.primary)+polL('Stale fallback: 31–120 min',Pp.fallback)+'<tr><td>No qualifying pick</td><td class="num">'+Pp.none+'</td><td></td><td></td><td></td></tr></tbody></table></div>'+
+    '<div class="meta">'+Pp.eligible+' games decided · primary capture rate '+pr(Pp.rate)+(Pp.conflicts?' · '+Pp.conflicts+' picks differed between devices (the primary or earliest kept)':'')+'. The sample is the games seen near kickoff, not every game.</div>'+
+    ((Pp.primary.graded||Pp.fallback.graded)?'<details class="help" data-help="watch-groups"><summary>Policy picks by sport, kickoff time and device</summary><div class="scroll"><table class="ws-t"><tbody>'+
+      grpT('Primary · by sport',Pp.primary.bySport)+grpT('Primary · kickoff (CT)',Pp.primary.byBand)+grpT('Primary · device',Pp.primary.byDev)+grpT('Stale fallback · by sport',Pp.fallback.bySport)+'</tbody></table></div></details>':'')+
+    '<h3 class="ws-h">Watch CLV on exchange-priced observations</h3>'+
+    '<div class="ws-line">'+C.eligible+' eligible · '+C.captured+' closes captured ('+pr(C.rate)+') · mean CLV '+(C.mean==null?'—':'<b class="'+(C.mean>=0?'pl-up':'pl-down')+'">'+pc(C.mean)+'</b>')+(C.byX.length?' · '+C.byX.map(x=>esc(x.x)+' '+x.n+' ('+pc(x.mean)+')').join(' · '):'')+'</div>'+
+    (Object.keys(C.miss).length?'<div class="meta">No close: '+Object.entries(C.miss).sort((a,b)=>b[1]-a[1]).map(([w,c])=>esc(w)+' '+c).join(' · ')+'</div>':'')+
+    '<div class="meta">Capture: your placed bets first (every book, in the Bet log), then free exchange closes for Watch bets, policy picks first, in the last 10 minutes before kickoff. Sportsbook Watch closes are not bought. Times: '+S.tsrc+' clocks'+(S.tsrc==='device'?' (no Worker time stamp yet)':'')+(S.conflicts?' · '+S.conflicts+' records seen differently on two devices (the earliest kept)':'')+'.</div>';
+  try{ helpApply(el); }catch(e){}
 }
 function renderPerf(){ try{ renderWatchStudy(); }catch(e){ console.error(e); }   // v4.44
    try{ renderCal(); }catch(e){} try{ renderScorecard(); }catch(e){ console.error(e); } try{ renderStudy(); }catch(e){ console.error(e); }   // v4.31
@@ -9339,7 +9488,7 @@ var logDayFilter=null;
     if(e.target.closest('#calPrev')||e.target.closest('#calNext')){ const [y,m]=calMonth.split('-').map(Number), d=new Date(Date.UTC(y,m-1+(e.target.closest('#calPrev')?-1:1),1)); calMonth=d.toISOString().slice(0,7); renderCal(); return; }
     const c=e.target.closest('.cal-c.has'); if(c){ logDayFilter=c.dataset.day; renderLog(); const t=document.querySelector('.tab[data-view="v-log"]'); if(t) t.click(); }
   });
-  const pt=document.querySelector('.tab[data-view="v-perf"]'); if(pt) pt.addEventListener('click',renderCal);
+  const pt=document.querySelector('.tab[data-view="v-perf"]'); if(pt){ pt.addEventListener('click',renderCal); pt.addEventListener('click',()=>{ try{ renderWatchStudy(true); }catch(e){ console.error(e); } }); }   // v4.45: Watch stats are computed when Performance opens
   setTimeout(renderCal,60);
 })();
 
@@ -9420,6 +9569,7 @@ function liveChipHtml(b){
   return '<span class="lv-chip '+(better?'up':worse?'dn':'')+'" title="'+esc(name+' now: '+(r.title||'')+' · '+(now*100).toFixed(1)+'¢'+(r.bid!=null?' (bid '+(r.bid*100).toFixed(1)+'¢)':'')+' · updated '+new Date(r.at||Date.now()).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'}))+'">now '+esc(am)+' · you '+esc(fmtOdds(b.odds))+(better?' ▲':worse?' ▼':'')+'</span>';
 }
 setInterval(()=>{ if(document.visibilityState==='visible') refreshLivePrices(false); }, 15000);
+setInterval(()=>{ if(document.visibilityState==='visible'){ try{ if(watchPolicyRun()) watchSave(); }catch(e){} watchCloseScan().catch(()=>{}); } }, 30000);   // v4.45: the one pick per game at its cutoff, Watch closing prices near kickoff
 setTimeout(()=>refreshLivePrices(true), 1500);
 
 /* ============ v2.90: open the bet on the book (click its logo) · line shopping across exchanges ============ */
@@ -10845,7 +10995,9 @@ function syncColls(){ return {
   removed:{list:()=>removedBets.filter(Boolean).map(b=>[(b.id||betIdentity(b))+'@'+(b.removedAt||''),b]), put:p=>{ removedBets=p.map(x=>x[1]); }, save:()=>saveRemoved()},
   posts:  {list:()=>posts.filter(p=>p&&p.id).map(p=>[p.id,p]), put:p=>{ posts=syncPutObjs(posts,p); }, save:()=>savePosts()},
   parlay: {list:()=>Object.entries(parlays||{}), put:p=>{ parlays=Object.fromEntries(p); }, save:()=>saveParlays()},
-  seen:   {list:()=>Object.entries(fillSeen||{}), put:p=>{ fillSeen=Object.fromEntries(p); }, save:()=>saveFills()} }; }
+  seen:   {list:()=>Object.entries(fillSeen||{}), put:p=>{ fillSeen=Object.fromEntries(p); }, save:()=>saveFills()},
+  watch:  {list:()=>watchAll().filter(o=>o&&o.k).map(o=>[o.k,watchSyncForm(o)]), put:p=>watchPut(p), save:()=>watchSave()},   // v4.45: Watch records on every device (sightings stay local)
+  wpol:   {list:()=>Object.entries(watchPolAll()), put:p=>watchPolPut(p), save:()=>watchPolSave()} }; }   // v4.45: the one pick per game
 // a save anywhere on the page lands here: note what changed, upload a few seconds later
 function syncTouched(){
   if(!SY || !SY.ready || !SY.on || SY.applying) return;
@@ -10894,8 +11046,9 @@ function syncMergeAll(R, join){
     const res=syncMergeColl(spec.list(), RC[c], RD[c], syncSt(c), join);
     if(res.push) push=true;
     if(c==='log'){ stat.fromCloud=res.n.added+res.n.took; stat.onlyHere=res.n.onlyHere; stat.deleted=res.n.gone; stat.merged=res.n.merged; stat.same=res.n.same; }
-    if(res.changed){ spec.put(res.out); changed=true;
-      const st=syncSt(c); spec.list().forEach(([id,v])=>{ st.H[id]=syncQuick(v); }); }   // what's here now is what the merge made — not a new edit
+    if(res.changed){ const again=spec.put(res.out); changed=true;
+      const st=syncSt(c); spec.list().forEach(([id,v])=>{ st.H[id]=syncQuick(v); });   // what's here now is what the merge made — not a new edit
+      if(Array.isArray(again) && again.length){ const t=Date.now(); again.forEach(id=>{ st.S[id]=t; }); push=true; } }   // v4.45: a Watch record or pick merged with this device's copy goes back up
   });
   if(syncDedupe()){ changed=true; push=true; }
   if(changed) Object.values(C).forEach(spec=>spec.save());

@@ -1,6 +1,6 @@
 # La Contadora: how the screener's EV calculator works
 
-This is the math behind every bet the 0xBeta Screener (props.0xbeta.dev) shows. Written 2026-11-09 for **v4.43**; revised after an outside math check.
+This is the math behind every bet the 0xBeta Screener (props.0xbeta.dev) shows. Written 2026-11-09 for **v4.43**, updated for v4.45; revised after an outside math check.
 
 The worked example is a real card from Alonzo's board: **Jonathan Lekkerimaki (VAN) Over 1.5 Shots, Novig -108, PHI @ VAN, 8:30 PM CT.**
 
@@ -94,6 +94,12 @@ Then the limits apply:
 - **Net EV ≥ 1.5% on the conservative chance** (v4.43; before, the model chance) and **gross EV ≤ 40%** on the model. Above 40% is almost always a wrong match, not a real edge.
 - **WATCH:** a bet the model clears but the conservative chance does not is listed in its own **Watch** group, never placed. It reads "WATCH · the model likes it (+3.7%), but with the market it is +0.2%, under your 1.5% floor". Show › 👀 Watch lists only these, which is useful to see whether the model or the market was right.
 - **Every Watch bet is saved once as a shadow record** (v4.44): the price you were shown and the model, market and blend chances. After the game it is graded like your bets. **Performance: Watch bets** compares the three forecasts with Brier scores (lower is better) and log loss, and gives a 95% range for "market minus model", resampled by game. It also shows what a $1 bet at the shown price would have returned. These records are never bets and never touch your money or your stats. Under 100 graded the comparison is descriptive only; around 1,000, if the model still beats both the market and the blend, the model weight or the floor can be revisited.
+- **Watch bets v2** (v4.45):
+  - **The headline** is market − model Brier averaged game by game (a game with many props counts once), with a 95% range from 5,000 resamples of games.
+  - **Stages need both bets and games:** Directional 100 / 50; Useful 300 / 150 with the range clear of zero; Credible 1,000 / 500, the range clear of zero and within ±0.005, and the closing line and ROI agreeing. "Materially" means the range starts beyond 0.001. These were fixed before any results.
+  - **One pick per game:** 5 minutes before kickoff, the highest conservative EV at the price last seen. Seen within 30 minutes of kickoff it is a primary pick; 31–120 minutes, a stale fallback, kept apart; older, no pick. Its ROI is never mixed with the all-Watch ROI.
+  - **Closing prices** for Watch bets come free from Kalshi, Polymarket US and Novig, both sides de-vigged, reported as "Watch CLV on exchange-priced observations" with its capture rate.
+  - **Phone and Mac** build one sample; the earliest complete pre-game copy of each record wins, taken whole.
 - With no market price there is no market check: the model alone decides, and the stake is capped at the smallest bet.
 - **Three levels:** clears the EV floor → passes every screen (odds, books, already bet, caps) → actionable at your limits (a stake of at least your smallest bet, room under the game cap and the daily max). Only all three make Place these.
 - Not started, and at a book in **Books you bet**. A bet at a book you can't use moves to your best book, or stays off.
@@ -152,4 +158,4 @@ The score is shown as a word: **STRONG** 75+, **GOOD** 50–74, **THIN** under 5
 
 `tests/math-audit-test.js` checks this arithmetic against brute force on every build: odds ↔ chance, EV after fees, the most you can pay, the Kalshi shares, the Kelly stake, profit, and the parlay math. `tests/blend-limit-test.js` checks that "OK up to" follows the blend. Every setting is in **Settings › Your rules at a glance**.
 
-*Revised 2026-11-09 after an outside math review: rounding called out, the three chances named, the parlay independence warning added, the FanDuel fee spelled out, "OK up to" moved to the blend (app v4.41), the THIN and 1,000-bet wording made statistical, and the EV floor moved to the conservative chance with model-only passes as WATCH (app v4.43).*
+*Revised 2026-11-09 after an outside math review: rounding called out, the three chances named, the parlay independence warning added, the FanDuel fee spelled out, "OK up to" moved to the blend (app v4.41), the THIN and 1,000-bet wording made statistical, and the EV floor moved to the conservative chance with model-only passes as WATCH (app v4.43); Watch bets v2 (app v4.45).*

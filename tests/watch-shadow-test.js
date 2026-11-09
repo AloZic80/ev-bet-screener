@@ -24,7 +24,7 @@ async function page(seed){
   // 1. recording
   let {b,p,errs}=await page(null);
   let W=await p.evaluate(()=>JSON.parse(localStorage.getItem('mbev.watchObs')||'[]'));
-  check('the Watch bet (Cuylle at 53.5%) is saved once, with the shown price and the model, market and blend chances; the placed one is not', W.length===1 && W[0].name==='Will Cuylle' && W[0].price===0.535 && W[0].model===0.5546 && W[0].mkt===0.526 && Math.abs(W[0].blend-0.536)<0.0005 && W[0].result===null && /NHL\|will cuylle\|/.test(W[0].k) && W[0].ver==='v4.44', W[0]);
+  check('the Watch bet (Cuylle at 53.5%) is saved once, with the shown price and the model, market and blend chances; the placed one is not', W.length===1 && W[0].name==='Will Cuylle' && W[0].price===0.535 && W[0].model===0.5546 && W[0].mkt===0.526 && Math.abs(W[0].blend-0.536)<0.0005 && W[0].result===null && /NHL\|will cuylle\|/.test(W[0].k) && /^v4\.(4[4-9]|[5-9]\d)$/.test(W[0].ver), W[0]);   // v4.45: the key also has the stat family, line and start
   await p.evaluate(()=>{ refresh(); refresh(); }); await p.waitForTimeout(200);
   W=await p.evaluate(()=>JSON.parse(localStorage.getItem('mbev.watchObs')||'[]'));
   check('redraws do not add copies (still 1)', W.length===1, W.length);
@@ -42,11 +42,11 @@ async function page(seed){
   const bm=mean(G.map(o=>br(o.model,y(o)))), bk=mean(G.map(o=>br(o.mkt,y(o)))), bb=mean(G.map(o=>br(o.blend,y(o)))), roi=mean(G.map(o=>y(o)?1/o.price-1:-1));
   check('7 saved (6 seeded + the board\'s own Watch bet), 4 graded win or loss (1 push and 2 pending left out), 3 games', S.n===7 && S.graded===4 && S.pushes===1 && S.games===3, {n:S.n,g:S.graded,p:S.pushes,games:S.games});
   check('Brier scores match a hand calculation (model, market, blend)', Math.abs(S.brier.model-bm)<1e-9 && Math.abs(S.brier.market-bk)<1e-9 && Math.abs(S.brier.blend-bb)<1e-6, [S.brier, bm, bk, bb]);
-  check('market − model Brier and the $1 ROI at the shown price match by hand', Math.abs(S.d-(bk-bm))<1e-9 && Math.abs(S.roi-roi)<1e-9, [S.d, bk-bm, S.roi, roi]);
+  check('market − model Brier bet by bet (v4.45: dBet; d is now game by game) and the $1 ROI at the shown price match by hand', Math.abs(S.dBet-(bk-bm))<1e-9 && Math.abs(S.roi-roi)<1e-9, [S.d, bk-bm, S.roi, roi]);
   check('under 100 graded: "Descriptive only", and no 95% range under 20', /^Descriptive only/.test(S.stage) && S.ci===null, S.stage);
   await p.evaluate(()=>document.querySelector('.tab[data-view="v-perf"]').click()); await p.waitForTimeout(400);
   const txt=await p.evaluate(()=>document.getElementById('watchStudy').innerText.replace(/\s+/g,' '));
-  check('Performance › Watch bets shows the counts, the stage, the three forecasts and the simulated ROI', /[67] Watch bets saved · 4 graded win or loss · 1 pushes left out · 3 games/.test(txt) && /Descriptive only/.test(txt) && /Model .*Market .*Blend/.test(txt) && /\$1 bet at the shown price/.test(txt), txt.slice(0,300));
+  check('Performance › Watch bets shows the counts, the stage, the three forecasts and the simulated ROI', /7 Watch bets · \d+ games · 4 graded win or loss in 3 games · 1 pushes left out/.test(txt) && /Descriptive only/.test(txt) && /Model .*Market .*Blend/.test(txt) && /\$1 bet each/.test(txt) && /All Watch bets, at the first price seen/.test(txt), txt.slice(0,300));
   // 4. the 95% range by game, with enough records
   const ci=await p.evaluate(()=>{ const A=[]; for(let i=0;i<60;i++){ const m=0.6, k=0.5, w=i%3!==0; A.push({k:'x'+i, sport:'NHL', game:'G'+(i%25), date:'2026-11-08', model:m, mkt:k, blend:k+0.35*(m-k), price:0.5, fee:0, result:w?'win':'loss'}); } return watchStats(A); });
   check('with 60 graded in 25 games: a 95% range around the mean difference, and the stage still descriptive', ci.ci && ci.ci[0]<=ci.d && ci.d<=ci.ci[1] && ci.graded===60, {d:ci.d, ci:ci.ci});
