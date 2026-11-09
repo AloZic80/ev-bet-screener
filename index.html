@@ -32,7 +32,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.39</title>
+<title>0xBeta Screener v4.40</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1382,7 +1382,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.39</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.40</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2123,7 +2123,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.39';
+const SCREENER_VERSION='v4.40';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2622,7 +2622,8 @@ function auditCore(rows,cfg){
                || logged.find(L=>onBoard(L) && propSame(L,r) && sameTime(L))   // v4.39: the same prop worded by the book (Lekkerimäki, Shots On Goal)
                || logged.find(L=>onBoard(L) && glSame(L) && L.market===r.market && sameTime(L))
                || (exQs.length ? logged.find(L=>onBoard(L) && !L.sold && L.fillRef && L.fillBook===exSrc && exHit({book:L.fillBook, ref:L.fillRef, side:L.fillSide, outcome:L.fillOutcome})) : null)   // v4.14
-               || logged.find(L=>onBoard(L) && glTeamSame(L));   // v4.25
+               || logged.find(L=>onBoard(L) && glTeamSame(L))   // v4.25
+               || fillPriorFor(r);   // v4.40: your book fills themselves, logged or not
     delete r.waitOrder; delete r.otherGameOrder;
     /* v4.20 (Alonzo: "you have the Kalshi API, you should get my bets even if not filled and put an identifier on them"): orders were only
        checked against cards priced at that same exchange; the same team or player on a Novig, Bovada or other card got nothing. Now every
@@ -4887,6 +4888,15 @@ function askRemove(anchorTr, bet, cols){
   });
 }
 function coreKey(name,market,side){ return [name,market,side||''].join('|').toLowerCase(); }
+/* v4.40 (Alonzo, 11/9, his Novig "Jonathan Lekkerimaki 2+ Yes · Shots On Goal" placed 1:07 PM, the card still bettable at 1:17): the board also checks
+   your book fills themselves (kept from each fills read, mbev.myFills, 3 days), not only the Bet log, so a fill still waiting in From your books, ignored,
+   or logged in other words still makes the card ALREADY BET. Same matching as fills to bets (betMatches: player, stat family, line, side, game). */
+function myFillsGet(){ if(!window._myFills){ try{ window._myFills=JSON.parse(localStorage.getItem('mbev.myFills')||'[]')||[]; }catch(e){ window._myFills=[]; } } return window._myFills; }
+function myFillsSet(A){ const cut=Date.now()-3*86400e3; window._myFills=(A||[]).filter(f=>!(f.ts>0) || f.ts>cut).slice(0,300); try{ localStorage.setItem('mbev.myFills', JSON.stringify(window._myFills)); }catch(e){} }
+function fillPriorFor(r){ const F=myFillsGet(); if(!F.length) return null;
+  const f=F.find(f=>{ if(f.sold || !f.bet) return false; try{ return betMatches(f.bet, r); }catch(e){ return false; } }); if(!f) return null;
+  const nm={kalshi:'Kalshi',poly:'Polymarket US',novig:'Novig'}[f.book]||f.book;
+  return {name:r.name, market:r.market, side:r.side, kind:r.kind, sport:r.sport, book:nm, odds:f.price>0&&f.price<1?fmtOdds(Math.round(americanOf(f.price))):'', stake:f.cost, fromFill:true, fillId:f.id}; }
 /* v4.39 (Alonzo, 11/9: "I made this bet but it still shows as bettable", Lekkerimaki Over 1.5 Shots on Novig): a bet logged from a book's fill keeps the
    book's own words ("Jonathan Lekkerimäki", "1.5 Shots On Goal") while the board says "Jonathan Lekkerimaki", "1.5 Shots", so coreKey (exact text)
    never matched and the card stayed in Place these. The same player prop is: same sport, same player (accents, case and a first initial ignored),
@@ -4896,7 +4906,8 @@ function propSame(L,r,anySide){ if(!L||!r) return false; const pk=k=>!k||k==='pr
   if(L.sport && r.sport && String(L.sport).toUpperCase()!==String(r.sport).toUpperCase()) return false;
   const a=nrmT(L.name), b=nrmT(r.name); if(!a||!b) return false;
   if(a!==b){ const x=a.split(' '), y=b.split(' '); if(x.length<2||y.length<2||x[x.length-1]!==y[y.length-1]||x[0][0]!==y[0][0]) return false; }
-  const la=lineOfMarket(L.market), lb=lineOfMarket(r.market); if(la==null||lb==null||Math.abs(la-lb)>0.01) return false;
+  const la=lineOfMarket(L.market), lb=lineOfMarket(r.market); if(la==null||lb==null) return false;
+  if(Math.abs(la-lb)>0.01 && !(L.autoFrom && Number.isInteger(la) && Math.abs(la-0.5-lb)<0.01 && (sideOf(L)||'O')==='O' && (r.side||'O')==='O')) return false;   // v4.40: Novig "2+" logged as 2 = Over 1.5
   if(!anySide && (sideOf(L)||'')!==(r.side||'')) return false;
   const sa=statOfMarket(L.market), sb=statOfMarket(r.market); let fa, fb;
   try{ fa=statFam(sa); fb=statFam(sb); }catch(e){ const z=t=>nrmT(t).replace(/\bshots? on goal\b|\bsog\b/g,'shots').replace(/s\b/g,''); fa=z(sa); fb=z(sb); }
@@ -6331,6 +6342,15 @@ async function autoGradeLog(){
       const t=Date.parse(b.start); if(!isNaN(t) && t>Date.now()){ delete b.result; changed++; } });
     logged.forEach(b=>{ if(b.fixSog94 || b.gradedBy==='manual' || b.gradedBy==='book' || b.sold || !(b.sport==='NHL'||b.sport==='MLS') || !/SHOT/i.test(b.market||'') || !/GOAL/i.test(b.market||'')) return; b.fixSog94=1;   // v3.94: graded as goals before; grade it again   // v3.95: only "Shots On Goal" (plain "Shots" was graded right)
       if(b.result==='win'||b.result==='loss'||b.result==='push'||b.result==='?'){ if(b.resultSrc && b.resultSrc!=='ESPN') return; delete b.result; delete b.why; changed++; } });
+    /* v4.40 (Alonzo, 11/9, Novig "Lekkerimaki 2+ Yes"): bets logged from a Novig fill before v4.40 could carry Novig's strike as the line ("2 Shots On Goal")
+       when the bet was "2+", which is Over 1.5. Once: the line becomes N−0.5 (Over), the old text goes in edits; an ESPN or automatic PUSH at N (exactly N)
+       is a WIN at N−0.5. Wins and losses stand (a loss at Over N with fewer than N is a loss at N−0.5 too); your own grades are never touched. */
+    logged.forEach(b=>{ if(b.fixPlus40) return; b.fixPlus40=1; if(b.autoFrom!=='novig' || (b.kind&&b.kind!=='prop') || (b.side&&b.side!=='O')) return;
+      const ln=lineOfMarket(b.market); if(ln==null || !Number.isInteger(ln) || ln<1) return;
+      (b.edits=b.edits||[]).push({at:new Date().toISOString(), before:{market:b.market}, note:'v4.40: Novig '+ln+'+ is Over '+(ln-0.5)});
+      b.market=(ln-0.5)+' '+statOfMarket(b.market); b.side='O'; if(b.betnow) b.betnow=String(b.betnow).replace(new RegExp('^(O\\s+)?'+ln+'\\b'),'O '+(ln-0.5));
+      if(b.result==='push' && b.gradedBy!=='manual'){ b.result='win'; }
+      changed++; });
     const redo94=b=>(b.fixSog94 || (lookOutWhy(b) && (gameDayOf(b)||b.date||'')>=ctDay(Date.now()-30*86400e3))) && ESPN_MAP[b.sport] && b.kind!=='parlay';   // v3.96 (Alonzo: "you have the dates they played and the ESPN api"): every bet in Look out from the last 30 days is graded too, not only the last 4 days   // v3.95 (Alonzo: "30 that were graded before but now they are not"): v3.94 cleared shots bets of every age, but only the last 4 days were graded again
     const open=logged.filter(b=>(recent(b)||redo94(b)) && !settled(b));
     if(!open.length && !undated.length){ if(changed){ saveLog(); renderLog(); renderPerf(); refresh(); } return; }
@@ -9778,7 +9798,7 @@ function prettyStat(t){ return us_(t).replace(/\s+/g,' ').trim().toLowerCase().r
 function normFillBet(f){   // Novig: "<Player> <line> <STAT_TYPE>" → player + stat (older Workers sent only the description)
   const b=f&&f.bet; if(!b || f.book!=='novig' || b.player || !b.desc) return f;
   const m=String(b.desc).match(/^\s*(.*?[A-Za-z].*?)\s+(\d+(?:\.\d+)?)(\+?)\s+([A-Za-z][A-Za-z0-9_ +&,]*)\s*$/);   // v3.34: "9+" lines too
-  if(m && !/@|\bvs\.?\b|\bat\b/i.test(m[1])){ b.kind='prop'; b.player=m[1].trim(); b.statText=us_(m[4]).trim(); if(b.line==null) b.line=m[3]?parseFloat(m[2])-0.5:parseFloat(m[2]); }
+  if(m && !/@|\bvs\.?\b|\bat\b/i.test(m[1])){ b.kind='prop'; b.player=m[1].trim(); b.statText=us_(m[4]).trim(); if(b.line==null || (m[3] && Math.abs(b.line-parseFloat(m[2]))<1e-9)) b.line=m[3]?parseFloat(m[2])-0.5:parseFloat(m[2]); if(m[3] && !b.side) b.side='O'; }   // v4.40: "2+ Yes" is Over 1.5, even when Novig also sends 2 as the line
   return f;
 }
 function comboFam(s){ const P=/\bpoints?\b|\bpts\b/i.test(s), R=/\brebounds?\b|\breb\b/i.test(s), A=/\bassists?\b|\bast\b/i.test(s);   // v3.02: any word order
@@ -9913,6 +9933,7 @@ async function syncFills(force){
           p.f.soldFor=r2((p.f.soldFor||0)+q-((+f.cost||0)+(+f.fee||0))*share); p.f.soldAt=f.ts; p.f.soldQty=(p.f.soldQty||0)+q; f.isSale=true; }
         if(left>1e-9) pos.push({f, left}); });
       (j.fills||[]).forEach(f=>{ if(f.isSale) sales.push(f); }); }
+    try{ const sig0=myFillsGet().map(x=>x.id+(x.sold?'s':'')).join(','); myFillsSet((j.fills||[]).filter(f=>f && f.action!=='sell' && !f.isSale && f.bet && f.bet.kind && f.bet.kind!=='other').map(f=>({id:f.id, book:f.book, bet:f.bet, price:+f.price||0, cost:+((+f.cost||0)+(+f.fee||0)).toFixed(2), ts:f.ts||null, sold:f.soldFor!=null && (+f.soldQty||0)>=(+f.qty||0)-1e-9}))); if(myFillsGet().map(x=>x.id+(x.sold?'s':'')).join(',')!==sig0) changed=true; }catch(e){}   // v4.40: a new fill redraws the board
     (j.fills||[]).slice().reverse().forEach(f=>{ try{   // oldest first; v3.90: one fill that fails cannot stop the others
       const key=f.book+':'+f.id, seen=fillSeen[key];
       { const LB=linkedTo(f); if(LB && notePlaced(LB,f)) changed=true; }   // v3.96: when it was placed
