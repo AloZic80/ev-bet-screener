@@ -289,6 +289,17 @@
   already in the log unticked (same id, or same name, market, O/U and game day; a parlay by day, stake and legs). Singles are saved as typed-in bets
   (`manual`, `dateSet`, O/U, odds from cost ÷ return, `srcType:'import'`, `imported`), parlays by `parlayRecord`. No result: graded like any typed bet.
   `tests/bet-calendar-test.js`.
+- Augi's screens, step 4 of 5: Parlay (v4.37, `pkRetRows`, `pkRetHtml`, `pkDraftText`, `pkCopyText`, `.pk-ret`, `.pk-copy`, `.pk-draft`; owner: "build"): every
+  entry card (`pkCard`: best for each size, ready-made slips, the Sentinels' picks, Your entry; the card carries `data-id`) shows what it pays for each way
+  it can finish in dollars at the stake typed (Flex: all hit, one miss, two misses = Augi's partial return; chances from `e.d`/`pkDist`, multiples from
+  `pkMult`), updated as you type (`input` on `.pk-stake`). Copy draft writes plain text (app, Power / Flex / combo, each pick with its chance and `pkWhere`,
+  the stake, each payout and chance, expected return, "Not placed"); the clipboard, else `execCommand('copy')`, else a read-only `.pk-draft` box to copy
+  by hand. Copying logs nothing. `tests/parlay-draft-test.js` (the test page is not https, so it stubs `navigator.clipboard`).
+- Custom colours (v4.37, `window.palCss` in the head script, `#palCustomCss`, `palCustomSet`, `palCustomHex`, `#palPick`, `#palGrid`, `mbev.palCustom`; owner:
+  "can I choose from a grid, not just those colours, like a colour wheel"): Settings › Layout › Colours › Custom: the device's own colour picker (wheel and grid on
+  Mac and iPhone) or a grid of 20 colours. `palCss(hex)` builds the light and dark token set from the hue (page, panels, rules tinted; `--brand` and `--accent`
+  toned darker or lighter step by step until white on the brand and accent on page, panel and `--accent-bg` pass 4.6:1), written before the first paint.
+  `tests/palette-test.js` checks nine awkward colours (yellow, cyan, magenta, lime, grey, black, white, brown, orange) in both themes.
 - Augi's screens on our engine, step 1 of 5: the Board (v4.34, `boardView`/`#boardView`/`mbev.boardView`, `.cv-legend-box`, `lnGet`/`lnSet`/`lnBtnHtml`/`.ln-ed`,
   `mbev.lineNotes`; owner: "What you recommend" → option 2, "BUILD"): Show menu next to Sort (All groups / Passing / Outliers only / Already bet / Skipped;
   Skipped also lists rejected rows without Show rejected), filtered after `grpOf`. Augi's cover legend (nine chips) in a `details.help` above the bar.

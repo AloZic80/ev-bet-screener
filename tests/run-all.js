@@ -39,6 +39,7 @@ const runs = [
   ['Calendar: in play is never a loss; best and worst day, this month and ever, from real results only (Alonzo\'s November)', 'cal-worst-test.js', []],
   ['v4.35: Augi\'s Game Hub on Live Games: games by sport and state, the gamecast, ESPN line, your bets, the board\'s props for that game', 'game-hub-test.js', []],
   ['v4.36: Augi\'s Bet log: the bet calendar, the day and its daily max, cover bands, Track by, import from a file', 'bet-calendar-test.js', []],
+  ['v4.37: Augi\'s Parlay: what each entry pays (Flex partial returns in $, with chances), Copy draft (places nothing)', 'parlay-draft-test.js', []],
   ['v4.34: Augi\'s Board: the Show menu, the cover legend, your own note on each line', 'board-notes-test.js', []],
   ['v4.33: colour schemes (Green, Blue, Red, Purple, Graphite) in light and dark, all AA; remembered', 'palette-test.js', []],
   ['v4.31: Augi\'s 5-point cover bands (chips on the board and cards) and the Bet result study in Performance', 'cover-study-test.js', []],
