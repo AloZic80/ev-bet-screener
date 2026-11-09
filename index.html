@@ -8,10 +8,31 @@
   var embed=/[?&]embed=phone(&|$)/.test(location.search), narrow=screen.width<700, de=document.documentElement;
   de.setAttribute('data-layout', embed?'embed':m);
   try{ de.setAttribute('data-palette', localStorage.getItem('mbev.palette')||'green'); }catch(e){ de.setAttribute('data-palette','green'); }   // v4.33: colour scheme, before the first paint
+  /* v4.37 (Alonzo: "can I choose from a grid, not just those colours, like a colour wheel"): Custom builds a whole light and dark scheme from one
+     colour (the hue, toned until every pair passes 4.5:1), as a <style id="palCustomCss">, before the first paint. */
+  window.palCss=function(hex){ function rgb(h){ h=String(h||'').replace('#',''); if(h.length===3) h=h.replace(/./g,'$&$&'); return [0,2,4].map(function(i){ return parseInt(h.substr(i,2),16)||0; }); }
+    function hsl(c){ var r=c[0]/255,g=c[1]/255,b=c[2]/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2,d=mx-mn,h=0,s=0; if(d){ s=d/(1-Math.abs(2*l-1)); h=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4; h*=60; if(h<0) h+=360; } return [h,s,l]; }
+    function hex2(h,s,l){ s=Math.max(0,Math.min(1,s)); l=Math.max(0,Math.min(1,l)); var c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2,r=0,g=0,b=0;
+      if(h<60){r=c;g=x;}else if(h<120){r=x;g=c;}else if(h<180){g=c;b=x;}else if(h<240){g=x;b=c;}else if(h<300){r=x;b=c;}else{r=c;b=x;}
+      return '#'+[r,g,b].map(function(v){ var t=Math.round((v+m)*255).toString(16); return t.length<2?'0'+t:t; }).join('').toUpperCase(); }
+    function lum(hx){ return rgb(hx).map(function(v){ v/=255; return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4); }).reduce(function(t,v,i){ return t+v*[.2126,.7152,.0722][i]; },0); }
+    function cr(a,b){ var A=lum(a),B=lum(b); return (Math.max(A,B)+.05)/(Math.min(A,B)+.05); }
+    var H=hsl(rgb(hex)), h=H[0], s=H[1], s1=Math.min(s,.85), sT=Math.min(s,.5)*.6, sD=Math.min(s,.5)*.45;
+    function tone(l0,step,ok){ var l=l0; for(var i=0;i<120;i++){ var c=hex2(h,s1,l); if(ok(c)) return c; l+=step; if(l<0||l>1) break; } return step<0?'#000000':'#FFFFFF'; }
+    var L={page:hex2(h,sT,.965),p2:hex2(h,sT,.982),rail:hex2(h,sT,.93),rule:hex2(h,sT,.88),rule2:hex2(h,sT,.915),abg:hex2(h,Math.min(s,.8),.95),ink:hex2(h,Math.min(s,.4),.11),soft:hex2(h,.12,.38),dim:hex2(h,.14,.32)};
+    L.brand=tone(Math.min(H[2],.5),-.01,function(c){ return cr('#FFFFFF',c)>=4.6 && cr(c,L.page)>=4.6 && cr(c,L.abg)>=4.6 && cr(c,'#FFFFFF')>=4.6; });
+    var D={page:hex2(h,sD,.055),panel:hex2(h,sD,.095),p2:hex2(h,sD,.12),rail:hex2(h,sD,.15),rule:hex2(h,sD,.25),rule2:hex2(h,sD,.19),abg:hex2(h,Math.min(s,.5),.15),ink:hex2(h,.25,.95),soft:hex2(h,.14,.7),tint:hex2(h,sD,.08)};
+    D.brand=tone(Math.min(H[2],.5),-.01,function(c){ return cr('#FFFFFF',c)>=4.6; });
+    D.accent=tone(Math.max(H[2],.55),.01,function(c){ return cr(c,D.panel)>=4.6 && cr(c,D.page)>=4.6 && cr(c,D.abg)>=4.6 && cr(c,D.p2)>=4.6; });
+    var css=':root[data-palette="custom"]:not([data-theme="dark"]){--brand:'+L.brand+'; --accent:'+L.brand+'; --accent-bg:'+L.abg+'; --page:'+L.page+'; --panel-2:'+L.p2+'; --rail:'+L.rail+'; --rule:'+L.rule+'; --rule-2:'+L.rule2+'; --ink:'+L.ink+'; --soft:'+L.soft+'; --dim:'+L.dim+'; --jetta:'+L.brand+'; --jetta-text:'+L.brand+'; --board-tint:'+L.p2+'}\n'+
+      ':root[data-palette="custom"][data-theme="dark"]{--brand:'+D.brand+'; --accent:'+D.accent+'; --accent-bg:'+D.abg+'; --page:'+D.page+'; --panel:'+D.panel+'; --panel-2:'+D.p2+'; --rail:'+D.rail+'; --rule:'+D.rule+'; --rule-2:'+D.rule2+'; --ink:'+D.ink+'; --soft:'+D.soft+'; --dim:'+D.soft+'; --jetta:'+D.brand+'; --jetta-text:'+D.accent+'; --board-tint:'+D.tint+'}\n'+
+      '.pal-seg [data-p="custom"] .pal-dot{background:'+String(hex).replace(/[^#0-9A-Fa-f]/g,'')+'}';
+    var el=document.getElementById('palCustomCss'); if(!el){ el=document.createElement('style'); el.id='palCustomCss'; (document.head||document.documentElement).appendChild(el); } el.textContent=css; return {L:L,D:D}; };
+  try{ var pc=localStorage.getItem('mbev.palCustom'); if(pc && /^#[0-9a-f]{6}$/i.test(pc)) window.palCss(pc); }catch(e){}
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.36</title>
+<title>0xBeta Screener v4.37</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1334,6 +1355,15 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 .lc-imp .row{display:flex; flex-wrap:wrap; gap:8px; align-items:flex-end; margin-top:6px} .lc-imp label.f{display:flex; flex-direction:column; font-size:11.5px; color:var(--soft); gap:2px} .lc-imp input[type=text],.lc-imp input[type=date],.lc-imp input[type=number]{font:inherit; font-size:14px; padding:6px 8px; border:1px solid var(--rule); border-radius:8px; background:var(--panel); color:var(--ink); max-width:170px}
 .lc-imp .lc-tk{display:flex; gap:8px; align-items:flex-start; font-size:13.5px} .lc-imp .lc-tk input{width:18px; height:18px; flex:none; margin-top:2px}
 @media (max-width:640px){ .lc-d{min-height:50px; padding:4px 3px} .lc-d small{font-size:10.5px; letter-spacing:-.2px} .lc-d small.lc-n,.lc-d .lc-w{display:none} .lc-band{grid-template-columns:1fr auto} .lc-band .lc-track{grid-column:1 / -1; order:3} }
+/* v4.37: Parlay, step 4: what each entry pays, Copy draft; Settings › Colours › Custom */
+.pk-ret{width:100%; border-collapse:collapse; margin:8px 0 2px; font-size:12.5px} .pk-ret td{padding:3px 4px; border-top:1px solid var(--rule-2,var(--rule))} .pk-ret td.num{text-align:right; font-variant-numeric:tabular-nums} .pk-ret .pk-ret-pay{font-weight:700} .pk-ret-lose td{color:var(--soft)}
+.pk-act .pk-copy{margin-left:6px} .pk-draft{display:block; width:100%; min-height:120px; margin-top:6px; font:12.5px/1.4 ui-monospace,Menlo,monospace; padding:8px; border:1px solid var(--rule); border-radius:8px; background:var(--panel); color:var(--ink)}
+.pal-custom{margin-top:10px; display:flex; flex-wrap:wrap; align-items:center; gap:10px}
+.pal-pick{display:inline-flex; align-items:center; gap:8px; font-size:13.5px} .pal-pick input[type=color]{width:52px; height:40px; padding:2px; border:1px solid var(--rule); border-radius:10px; background:var(--panel); cursor:pointer}
+.pal-grid{display:grid; grid-template-columns:repeat(10,28px); gap:6px} .pal-sw{width:28px; height:28px; border-radius:50%; border:2px solid var(--panel); box-shadow:0 0 0 1px var(--rule); cursor:pointer; padding:0} .pal-sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ink)}
+.pal-custom .meta{flex-basis:100%}
+.pal-seg{flex-wrap:wrap; max-width:100%; border-radius:14px; row-gap:2px}   /* six schemes wrap on a phone instead of pushing the page sideways */
+@media (max-width:640px){ .pal-grid{grid-template-columns:repeat(10,minmax(24px,1fr)); width:100%} .pal-sw{width:100%; height:auto; aspect-ratio:1} }
 </style>
 </head>
 <body>
@@ -1342,7 +1372,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.36</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.37</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1665,7 +1695,12 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
   <div class="ab-seg" id="layoutSeg" role="radiogroup" aria-label="Layout"><button type="button" role="radio" data-l="auto">Auto</button><button type="button" role="radio" data-l="phone">Phone</button><button type="button" role="radio" data-l="desktop">Desktop</button></div>
   <p class="hint" style="margin:10px 0 0">Auto picks the layout from your screen size. Phone shows the phone layout, even on a computer. Desktop shows the full layout, even on a phone. Saved on this device only.</p>
   <h3 class="set-h">Colours</h3>   <!-- v4.33 -->
-  <div class="ab-seg pal-seg" id="paletteSeg" role="radiogroup" aria-label="Colour scheme"><button type="button" role="radio" data-p="green"><i class="pal-dot"></i>Green</button><button type="button" role="radio" data-p="blue"><i class="pal-dot"></i>Blue</button><button type="button" role="radio" data-p="red"><i class="pal-dot"></i>Red</button><button type="button" role="radio" data-p="purple"><i class="pal-dot"></i>Purple</button><button type="button" role="radio" data-p="graphite"><i class="pal-dot"></i>Graphite</button></div>
+  <div class="ab-seg pal-seg" id="paletteSeg" role="radiogroup" aria-label="Colour scheme"><button type="button" role="radio" data-p="green"><i class="pal-dot"></i>Green</button><button type="button" role="radio" data-p="blue"><i class="pal-dot"></i>Blue</button><button type="button" role="radio" data-p="red"><i class="pal-dot"></i>Red</button><button type="button" role="radio" data-p="purple"><i class="pal-dot"></i>Purple</button><button type="button" role="radio" data-p="graphite"><i class="pal-dot"></i>Graphite</button><button type="button" role="radio" data-p="custom"><i class="pal-dot"></i>Custom</button></div>   <!-- v4.37: Custom -->
+  <div class="pal-custom" id="palCustom">   <!-- v4.37: any colour (the wheel or grid is your device's own colour picker) -->
+    <label class="pal-pick">Your colour <input type="color" id="palPick" value="#087B44" aria-label="Pick any colour for your scheme"></label>
+    <div class="pal-grid" id="palGrid" role="group" aria-label="Quick colours"></div>
+    <div class="meta" id="palMsg" role="status"></div>
+  </div>
   <p class="hint" style="margin:10px 0 0">A whole scheme for light and dark: page, panels, tabs and buttons. Green is Augi's. Wins stay green and losses red in every scheme. Saved on this device only.</p>
 </details>
 <details class="panel fold" id="syncPanel" open>
@@ -2062,7 +2097,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.36';
+const SCREENER_VERSION='v4.37';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -7993,8 +8028,20 @@ document.addEventListener('click',e=>{ const h=e.target.closest&&e.target.closes
 tabGroupPaint(document.querySelector('.tab.on'));
 /* v4.33 (Alonzo: "with an option to change the colour palette, in case I want blue, red, etc., but as a scheme"): Settings › Layout › Colours.
    html[data-palette] picks a full token set (light and dark) from the v4.33 CSS block; mbev.palette, this device only. */
-function palPaint(){ const v=document.documentElement.getAttribute('data-palette')||'green'; document.querySelectorAll('#paletteSeg [data-p]').forEach(b=>{ const on=b.dataset.p===v; b.classList.toggle('on',on); b.setAttribute('aria-checked',String(on)); }); }
-try{ document.getElementById('paletteSeg').addEventListener('click',e=>{ const b=e.target.closest('[data-p]'); if(!b) return; document.documentElement.setAttribute('data-palette', b.dataset.p); try{ localStorage.setItem('mbev.palette', b.dataset.p); }catch(x){} palPaint(); }); palPaint(); }catch(e){}
+function palPaint(){ const v=document.documentElement.getAttribute('data-palette')||'green'; document.querySelectorAll('#paletteSeg [data-p]').forEach(b=>{ const on=b.dataset.p===v; b.classList.toggle('on',on); b.setAttribute('aria-checked',String(on)); });
+  const pk=document.getElementById('palPick'), c=palCustomHex(); if(pk && c) pk.value=c.toLowerCase(); document.querySelectorAll('#palGrid button').forEach(b=>b.setAttribute('aria-pressed',String(v==='custom' && c && b.dataset.c.toUpperCase()===c.toUpperCase()))); }   // v4.37
+/* v4.37 (Alonzo: "can I choose from a grid, not just those colours you gave me, like a colour wheel"): Custom. Any colour from the device's own picker
+   (a wheel and a grid on the Mac and iPhone) or the quick grid; window.palCss (head script) builds the light and dark scheme from it, every pair 4.5:1. */
+function palCustomHex(){ try{ const c=localStorage.getItem('mbev.palCustom'); return c&&/^#[0-9a-f]{6}$/i.test(c)?c.toUpperCase():null; }catch(e){ return null; } }
+function palCustomSet(hex){ hex=String(hex||'').toUpperCase(); if(!/^#[0-9A-F]{6}$/.test(hex)) return; try{ window.palCss(hex); }catch(e){ return; }
+  try{ localStorage.setItem('mbev.palCustom',hex); localStorage.setItem('mbev.palette','custom'); }catch(e){}
+  document.documentElement.setAttribute('data-palette','custom'); palPaint(); const m=document.getElementById('palMsg'); if(m) m.textContent='Custom scheme from '+hex+': the tab colour and buttons are toned so text on them is easy to read, in light and dark.'; }
+try{ const G=['#B42318','#E4572E','#C2410C','#B45309','#A16207','#4D7C0F','#087B44','#0F766E','#0E7490','#0369A1','#1D4ED8','#4338CA','#6D28D9','#A21CAF','#BE185D','#9F1239','#7C2D12','#57534E','#374151','#111827'];
+  const g=document.getElementById('palGrid'); if(g) g.innerHTML=G.map(c=>'<button type="button" class="pal-sw" data-c="'+c+'" style="background:'+c+'" aria-label="Colour '+c+'" title="'+c+'"></button>').join('');
+  if(g) g.addEventListener('click',e=>{ const b=e.target.closest('.pal-sw'); if(b) palCustomSet(b.dataset.c); });
+  const pk=document.getElementById('palPick'); if(pk){ pk.addEventListener('input',()=>palCustomSet(pk.value)); pk.addEventListener('change',()=>palCustomSet(pk.value)); }
+  if(!document.getElementById('palCustomCss')) try{ window.palCss('#087B44'); }catch(e){} }catch(e){}
+try{ document.getElementById('paletteSeg').addEventListener('click',e=>{ const b=e.target.closest('[data-p]'); if(!b) return; if(b.dataset.p==='custom' && !palCustomHex()){ palCustomSet('#087B44'); return; } /* v4.37: Custom starts from green until you pick */ document.documentElement.setAttribute('data-palette', b.dataset.p); try{ localStorage.setItem('mbev.palette', b.dataset.p); }catch(x){} palPaint(); }); palPaint(); }catch(e){}
 /* v4.32 (Alonzo: "when I scroll up, the tab bar does not stay pinned down"): iPhone Safari can let a fixed bar that sits inside other page blocks
    slide with the page while it scrolls back up (the toolbar showing and hiding). The bar becomes a direct child of <body> and gets its own
    compositing layer (translateZ), the usual cure. Same buttons, same handlers. */
@@ -8741,18 +8788,38 @@ const pkPick=l=>l.label?l.label+' '+(l.price||''):(l.side==='U'?'Under ':'Over '
 function pkArr(app,pays,L,n){ return pkPriced(app) ? [L.reduce((x,l)=>x*l.mult,1)] : pays[n]; }   // v3.59: a combo pays its legs' odds multiplied
 const pkX=x=>String(+(+x).toFixed(2))+'x';   // 10 → 10x, 37.5 → 37.5x, 0.4 → 0.4x
 function pkPaysTxt(arr){ return 'pays '+pkX(arr[0])+(arr[1]?', '+pkX(arr[1])+' with one miss':'')+(arr[2]?', '+pkX(arr[2])+' with two':''); }
+/* v4.37 (Alonzo: "build", Augi's screens step 4 of 5: Parlay): Augi's slip draft on our entries. Every entry card (best for each size, ready-made
+   slips, the Sentinels' picks, Your entry) shows what it pays for each way it can finish, in dollars at the stake typed (Flex: all hit, one miss,
+   two misses; the chance of each from pkDist), and has Copy draft: the picks with where they play, the stake, the payouts and the chances as plain
+   text for a note, a chat or the app's search. Copying places nothing. The payouts are the app's table (Payouts), or the legs' odds multiplied. */
+function pkRetRows(e,stake){ const n=e.n, rows=[]; for(let k=n;k>=0;k--){ const m=pkMult(e.arr,n,k); if(!(m>0) && k<n) continue; rows.push({k, m, p:e.d[k]||0, pay:stake*m}); }
+  const lose=1-rows.reduce((t,r)=>t+(r.m>0?r.p:0),0); return {rows, lose}; }
+function pkRetHtml(e,stake){ if(!e||!e.arr) return ''; const R=pkRetRows(e,stake), n=e.n;
+  return '<table class="pk-ret" aria-label="What it pays"><tbody>'+R.rows.map(r=>'<tr><td>'+(r.k===n?'All '+n+' hit':r.k+' of '+n+' hit')+'</td><td class="num pk-ret-m">'+pkX(r.m)+'</td><td class="num pk-ret-pay" data-m="'+r.m+'">$'+r.pay.toFixed(2)+'</td><td class="num meta">'+pct(r.p)+'</td></tr>').join('')+
+    '<tr class="pk-ret-lose"><td>Less than that</td><td class="num">0x</td><td class="num">$0.00</td><td class="num meta">'+pct(R.lose)+'</td></tr></tbody></table>'; }
+function pkDraftText(id,stake){ const c=(window._pkCards||{})[id]; if(!c) return ''; const e=c.e, L=c.legs, n=L.length, app=pkState.app, R=pkRetRows(e,stake);
+  const kind=pkPriced(app)?'combo (the legs’ odds multiplied)':(pkState.play==='flex'?'Flex':'Power');
+  return [pkAppLabel(app)+' · '+kind+' · '+n+' picks · draft (check every line in the app)'].concat(
+    L.map((l,i)=>(i+1)+'. '+l.name+' '+pkPick(l)+' — '+pct(l.p)+' to hit · '+pkWhere(l)),
+    ['Stake $'+stake.toFixed(2)],
+    R.rows.map(r=>(r.k===n?'All '+n+' hit':r.k+' of '+n+' hit')+': $'+r.pay.toFixed(2)+' ('+pkX(r.m)+', '+pct(r.p)+' of the time)'),
+    ['Expected return '+(e.ev>=0?'+':'−')+(Math.abs(e.ev)*100).toFixed(1)+'%'+(e.be!=null?' · break-even '+pct(e.be)+' a pick':'')+' · picks average '+pct(e.avg),
+     'Not placed. Place it in the app, then press Log this entry.']).join('\n'); }
+function pkCopyText(txt,done){ const ok=()=>done(true), fb=()=>{ try{ const ta=document.createElement('textarea'); ta.value=txt; ta.setAttribute('readonly',''); ta.style.cssText='position:fixed;top:0;left:0;opacity:0'; document.body.appendChild(ta); ta.select(); const r=document.execCommand('copy'); ta.remove(); done(!!r); }catch(x){ done(false); } };
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok,fb); else fb(); }catch(x){ fb(); } }
 function pkCard(title,legs,e,id,best){
   const lo=0.45, hi=0.75, pos=x=>Math.max(0,Math.min(100,(x-lo)/(hi-lo)*100)).toFixed(1)+'%';
   const up=e.ev>0;
-  return '<div class="pk-card'+(best?' best':'')+(up?'':' neg')+'">'+
+  return '<div class="pk-card'+(best?' best':'')+(up?'':' neg')+'" data-id="'+id+'">'+   // v4.37: the card knows its entry (Copy draft, the payout table)
     '<div class="pk-h"><b>'+esc(title)+'</b><span class="meta">'+esc(pkPaysTxt(e.arr))+'</span></div>'+
     (best?'<div class="pk-best" title="Of these entries, this one grows your bankroll most at its suggested stake: the return weighed against how often it loses">Best for your bankroll</div>':'')+
     '<div class="pk-ev '+(up?'up':'down')+'">'+(up?'+':'−')+(Math.abs(e.ev)*100).toFixed(1)+'%<small> expected return</small></div>'+
     '<div class="pk-meter" role="img" aria-label="Picks average '+pct(e.avg)+', break-even '+(e.be!=null?pct(e.be):'n/a')+'"><i style="width:'+pos(e.avg)+'"></i>'+(e.be!=null?'<b style="left:'+pos(e.be)+'"></b>':'')+'</div>'+
     '<div class="meta">Picks average <b>'+pct(e.avg)+'</b>, break-even '+(e.be!=null?pct(e.be):'n/a')+'. All '+e.n+' hit '+pct(e.pAll)+' of the time'+(e.pAll>0?' (about 1 in '+Math.max(1,Math.round(1/e.pAll))+')':'')+'.</div>'+   // v3.64
     '<ul class="pk-legs">'+legs.map(l=>'<li><span>'+esc(l.name)+' <span class="meta">'+esc(pkPick(l))+'</span>'+pkBetTag(l)+(l.own?'':' <span class="pk-chk" title="This line is from '+esc(bookLabel(l.book))+'. Check the app has the same line.">check line</span>')+'<span class="pk-where">'+esc(pkWhere(l))+'</span></span><b>'+pct(l.p)+'</b></li>').join('')+'</ul>'+   // v3.63: sport, team, game
-    (up ? '<div class="pk-act"><label>Stake $ <input type="number" class="pk-stake" step="0.5" min="0" value="'+e.stake.toFixed(2)+'"></label>'+((window._pkLogged&&window._pkLogged.has(legs.map(l=>l.key).sort().join('+')))?'<button type="button" class="log sm pk-log pk-logged" data-id="'+id+'" disabled>✓ Logged</button> <span class="pk-logged-msg">In the Bet log. <button type="button" class="linkbtn pk-see-log">See it ›</button></span>':'<button type="button" class="log sm pk-log" data-id="'+id+'">Log this entry</button>')+'</div>'
-        : '<div class="meta"><b>Skip:</b> these picks are under break-even for this payout.</div>')+
+    pkRetHtml(e, up?e.stake:0)+   // v4.37: Augi's flex partial return, in dollars, for every way it can finish
+    (up ? '<div class="pk-act"><label>Stake $ <input type="number" class="pk-stake" step="0.5" min="0" value="'+e.stake.toFixed(2)+'"></label>'+'<button type="button" class="ghost sm pk-copy" data-id="'+id+'">📋 Copy draft</button>'+((window._pkLogged&&window._pkLogged.has(legs.map(l=>l.key).sort().join('+')))?'<button type="button" class="log sm pk-log pk-logged" data-id="'+id+'" disabled>✓ Logged</button> <span class="pk-logged-msg">In the Bet log. <button type="button" class="linkbtn pk-see-log">See it ›</button></span>':'<button type="button" class="log sm pk-log" data-id="'+id+'">Log this entry</button>')+'</div>'
+        : '<div class="meta"><b>Skip:</b> these picks are under break-even for this payout.</div><div class="pk-act"><button type="button" class="ghost sm pk-copy" data-id="'+id+'">📋 Copy draft</button></div>')+
   '</div>'; }
 function renderParlays(){
   const box=document.getElementById('pkPanel'); if(!box) return;
@@ -8833,6 +8900,11 @@ function pkLog(id,btn){ const c=(window._pkCards||{})[id]; if(!c) return; const 
     const p=e.target.closest('#pkPlay button'); if(p){ pkState.play=p.dataset.v; pkSave(); renderParlays(); return; }
     if(e.target.closest('#pkPayReset')){ if(pkState.pays&&pkState.pays[pkState.app]) delete pkState.pays[pkState.app][pkState.play]; pkSave(); renderParlays(); return; }
     const lg=e.target.closest('.pk-log'); if(lg){ if(!lg.disabled) pkLog(lg.dataset.id,lg); return; }
+    const cp=e.target.closest('.pk-copy'); if(cp){ const card=cp.closest('.pk-card'), inp=card&&card.querySelector('.pk-stake'), st=Math.max(0,parseFloat(inp&&inp.value)||0), txt=pkDraftText(cp.dataset.id,st), msg=document.getElementById('pkMsg');   // v4.37
+      card.querySelectorAll('.pk-draft').forEach(x=>x.remove());
+      pkCopyText(txt,ok=>{ cp.textContent=ok?'✓ Copied':'📋 Copy draft'; if(ok){ setTimeout(()=>{ cp.textContent='📋 Copy draft'; },2500); if(msg) msg.textContent='Draft copied. Nothing is placed: place it in the app, then Log this entry.'; }
+        else { const ta=document.createElement('textarea'); ta.className='pk-draft'; ta.readOnly=true; ta.value=txt; ta.setAttribute('aria-label','Your draft: select it and copy'); cp.closest('.pk-act').after(ta); ta.focus(); ta.select(); if(msg) msg.textContent='Copy was blocked here: the draft is in the box, select it and copy.'; } });
+      return; }
     if(e.target.closest('.pk-see-log')){ const t=document.querySelector('.tab[data-view="v-log"]'); if(t) t.click(); window.scrollTo(0,0); return; }   // v3.65
     if(e.target.closest('.pk-rec-use')){ pkApplyRec(); pkSave(); renderParlays(); pkBadge(); return; }   // v3.66
     if(e.target.closest('.pk-sent-jump')){ const c=document.querySelector('#pkSent .pk-sent-why'); if(c) c.scrollIntoView({block:'start'}); return; }   // v3.70
@@ -8844,6 +8916,8 @@ function pkLog(id,btn){ const c=(window._pkCards||{})[id]; if(!c) return; const 
       if(pkState.mine.indexOf(k)>=0) pkState.mine=pkState.mine.filter(x=>x!==k); else if(pkState.mine.length<6) pkState.mine.push(k); renderParlays(); return; }
     const sg=e.target.closest('#pkSentGo'); if(sg){ sg.disabled=true; sg.textContent='🦑 hunting…'; Promise.resolve(shopExchanges()).catch(()=>{}).then(()=>renderParlays()); return; }
     if(e.target.closest('#pkDfsGo')){ pkDfsFetch(); return; } });
+  box.addEventListener('input',e=>{ const t=e.target; if(!t.classList||!t.classList.contains('pk-stake')) return; const card=t.closest('.pk-card'); if(!card) return;   // v4.37: the payout table follows the stake you type
+    const st=Math.max(0,parseFloat(t.value)||0); card.querySelectorAll('.pk-ret-pay').forEach(c=>{ c.textContent='$'+(st*(+c.dataset.m)).toFixed(2); }); });
   box.addEventListener('change',e=>{ const t=e.target;
     if(t.id==='pkOneGame'){ pkState.oneGame=t.checked; pkSave(); renderParlays(); return; }
     if(t.id==='pkSlipRep'){ pkState.slipRepeat=t.checked; pkSave(); renderParlays(); return; }   // v3.61
