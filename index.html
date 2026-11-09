@@ -32,7 +32,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.40</title>
+<title>0xBeta Screener v4.41</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1382,7 +1382,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.40</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.41</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2123,7 +2123,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.40';
+const SCREENER_VERSION='v4.41';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3153,7 +3153,7 @@ function renderCore(rows,cfg){
 
   const pcBox=document.getElementById('placeCards');
   if(pcBox){
-    if(cardsOn && cardsHtml.length){ pcBox.classList.add('sc-grid'); pcBox.innerHTML='<div class="pc-head"><b>🦑 The Sentinels</b> · Place these · '+cardsHtml.length+'<span class="sc-sub">✅ The math says bet every card here: La Contadora approved each one. Best first on Sort › Math; bet down the list until your daily max. STRONG (green), GOOD (blue), THIN (yellow: still +EV, the smallest stakes).</span></div>'+cardsHtml.join(''); pcBox.style.display=''; pcFillShots(); }   // v3.57: ESPN photos   // v4.21: Sentinels cards in a grid
+    if(cardsOn && cardsHtml.length){ pcBox.classList.add('sc-grid'); pcBox.innerHTML='<div class="pc-head"><b>🦑 The Sentinels</b> · Place these · '+cardsHtml.length+'<span class="sc-sub">✅ The math says bet every card here: La Contadora approved each one. Best first on Sort › Math; bet down the list until your daily max. STRONG (green), GOOD (blue), THIN (yellow: still clears your estimated EV floor, with less edge, price confirmation or freshness; the smallest stakes).</span></div>'+cardsHtml.join(''); pcBox.style.display=''; pcFillShots(); }   // v3.57: ESPN photos   // v4.21: Sentinels cards in a grid
     else { pcBox.innerHTML=''; pcBox.style.display='none'; }
     avFillSoon();   // v3.57: and on the board's rows
     injFillSoon();   // v3.78: injury flags
@@ -3646,7 +3646,7 @@ function pxChartSvg(r,mx,bookName,fmt){ const A=pxSeries(r); if(A.length<2) retu
     '<div class="sc-leg"><span><i class="k-p"></i>'+esc(bookName)+' price</span>'+(fl?'<span><i class="k-f"></i>fair (La Contadora)</span>':'')+(mx>0?'<span><i class="k-mx"></i>OK to '+esc(fmt?fmt(mx):P(mx))+'</span>':'')+'</div>'; }
 /* what to type on Kalshi, in one line on the card (the four steps, explained, are in Why this play?) */
 function scKalshiLine(r){ if(LIVE_BOOK(r.book)!=='kalshi' || r.fairProb==null || !(r.offeredProb>0 && r.offeredProb<1)) return '';
-  const st=+r.stake||0, mx=maxPriceFor(r.fairProb, r.book, cfgRead().eMin); if(!(st>0) || mx==null || r.offeredProb>mx+1e-9) return '';
+  const st=+r.stake||0, mx=maxPriceFor(okProbR(r), r.book, cfgRead().eMin); if(!(st>0) || mx==null || r.offeredProb>mx+1e-9) return '';
   const k=kalshiHow(r,st,r.offeredProb,mx); if(!k) return '';
   return '<div class="sc-kx" title="What to type on Kalshi. The steps are explained in Why this play?"><span class="sc-kx-h">On Kalshi</span><span class="sc-kx-i"><b>'+k.btn+'</b></span><span class="sc-kx-i">Shares <b>'+k.shares.toFixed(2)+'</b></span><span class="sc-kx-i">Limit <b>'+k.lim+'¢</b></span><span class="sc-kx-i">Cost ≈ <b>$'+k.cost.toFixed(2)+'</b></span></div>'; }
 function placeCardHtml(r,cfg,o){
@@ -3668,7 +3668,7 @@ function placeCardHtml(r,cfg,o){
   const statTxt=r.kind==='moneyline'?'Moneyline':r.kind==='spread'?'Spread':r.kind==='total'?'Game total':mname;
   const gameTxt=away&&home?(away.loc||away.name||away.abbr)+' @ '+(home.loc||home.name||home.abbr):(r.game||r.matchup||'');
   const sc=sentScore(r), scCls=sc.total>=75?'hi':sc.total>=50?'mid':'lo';
-  const p=r.offeredProb, okP=p>0&&p<1, isX=!!LIVE_BOOK(r.book), mx=r.fairProb!=null?maxPriceFor(r.fairProb, r.book, cfg.eMin):null, over=okP && (mx==null || p>mx+1e-9);
+  const p=r.offeredProb, okP=p>0&&p<1, isX=!!LIVE_BOOK(r.book), mx=r.fairProb!=null?maxPriceFor(okProbR(r), r.book, cfg.eMin):null, over=okP && (mx==null || p>mx+1e-9);
   const st=+r.stake||0, fee=okP?feeRate(r.book,p,cfg.fees):0, pay=st>0&&okP?Math.floor(st/(p*(1+fee))*100+1e-6)/100:null;
   const isC=/kalshi|polymarket/i.test(r.book||''), isPB=isX || /predict|prophet|sporttrade/i.test(r.book||'');
   const pp=x=>isC?Math.round(x*100)+'¢':(x*100).toFixed(1)+'%', okTo=x=>isPB?pp(x):fmtOdds(Math.round(americanOf(x))), odds=okP?fmtOdds(Math.round(americanOf(p))):fmtOdds(r.offeredRaw);
@@ -4024,7 +4024,7 @@ function openBetEditor(tr, r, opt){
     const v=valueCheck(), el=ed.querySelector('.eb-check');
     saveBtnEl.dataset.ok='0';
     { const pr=priceNow(), P=x=>(x*100).toFixed(1)+'%', am=pr?Math.round(americanOf(pr.prob)):0;   // v4.10: the price as a % (+230 = 30.3%), and "look elsewhere" when it is not worth it here
-      const imp=pr?(pmMode()?P(pr.prob):fmtOdds(am)+' = '+P(pr.prob)):'', mx=v&&v.fairAt!=null?maxPriceFor(v.fairAt,bookSel.value,cfgRead().eMin):null;
+      const imp=pr?(pmMode()?P(pr.prob):fmtOdds(am)+' = '+P(pr.prob)):'', mx=v&&v.fairAt!=null?maxPriceFor(okProb(v.fairAt, r.mktProb!=null&&r.fairProb!=null?r.mktProb+(v.fairAt-r.fairProb):r.mktProb),bookSel.value,cfgRead().eMin):null;   // v4.41: the blend (moved with the line when the line moved)
       const tail=v&&v.level!=='ok'?(mx!=null&&pr&&pr.prob>mx?' · need ≤ '+P(mx):'')+' · look elsewhere':'';
       el.innerHTML = v ? '<span class="tag '+({bad:'t-out',warn:'t-warn',ok:'t-live'}[v.level])+'">'+esc((imp?imp+' · ':'')+v.msg+tail)+'</span>' : (imp?'<span class="tag" title="The chance this price charges for">'+esc(imp)+'</span>':''); }
     const rs=recStake(), re=ed.querySelector('.eb-rec');
@@ -4042,7 +4042,7 @@ function openBetEditor(tr, r, opt){
     const paint=()=>{
       if(!lastQ) return;
       const {book,q,others}=lastQ, cfg=cfgRead(), fair=r.fairProb;
-      const mx=fair!=null?maxPriceFor(fair, book, cfg.eMin):null;
+      const mx=fair!=null?maxPriceFor(okProb(fair, r.mktProb), book, cfg.eMin):null;   // v4.41: the blend
       const typed=parseFloat(pctIn.value), cur=pmMode()&&typed>0&&typed<100?typed/100:(q&&q.ok?q.price:null);
       let h='';
       if(q && q.ok){ const f=feeRate(book,q.price,cfg.fees), net=fair!=null?((fair/q.price-1)-f)/(1+f):null;
@@ -6524,8 +6524,8 @@ function renderScorecard(){
   // the verdict — and the honest read of a bad stretch (luck vs broken)
   let vc='', vt='';
   if(n>=PROOF_N){ const okR=roiB&&roiB.lo>0, okC=medB&&medB.lo25>0;
-    if(okR&&okC){ vc='good'; vt='✅ Passed the 1,000-bet test — profitable across the whole range and beating the close.'; }
-    else { vc='bad'; vt='❌ '+n+' bets in, not proven yet: '+(!okC?'median CLV range still touches zero':'')+(!okC&&!okR?' · ':'')+(!okR?'ROI range still includes losing':'')+'.'; } }
+    if(okR&&okC){ vc='good'; vt='✅ After 1,000+ bets, the profit range and the closing-line range are both above zero: good evidence of an edge (evidence, not proof).';   /* v4.41: statistical wording */ }
+    else { vc='bad'; vt='❌ '+n+' bets in, no clear evidence of an edge yet: '+(!okC?'median CLV range still touches zero':'')+(!okC&&!okR?' · ':'')+(!okR?'ROI range still includes losing':'')+'.'; } }
   else vt='Not yet — '+(PROOF_N-n).toLocaleString()+' more settled bets before raising stakes or claiming anything.';
   if(C.length>=30){
     const rec=C.slice().sort((a,b)=>String(b._day).localeCompare(a._day)).slice(0,100), rMed=medOf(rec);
@@ -9391,6 +9391,11 @@ async function quoteFor(obj, bookName){
   const j=await res.json(); const q=j&&j.results&&j.results[d.id]; if(q) liveQuotes[d.id]=q; return q||null;
 }
 /* v2.92: the most you can pay and still clear the EV floor after that book's fee (net EV falls as the price rises) */
+/* v4.41 (Alonzo: "Fix and build", after an outside math check: "OK up to" used the model's chance while the stake is sized on the blend, so a price
+   between the two was "OK" where La Contadora would size $0): every "OK up to", the price tag, max, the editor's check, + Add a bet and Kalshi's limit price
+   now use the conservative chance: the blend of the market toward the model (model weight), or the model when it is lower. No market price: the model. */
+function okProb(fair, mkt){ if(!(fair>0 && fair<1)) return null; if(!(mkt>0 && mkt<1)) return fair; let w=0.35; try{ w=cfgRead().mWeight; }catch(e){} return Math.min(fair, mkt+w*(fair-mkt)); }
+function okProbR(r){ return r?okProb(r.fairProb, r.mktProb):null; }
 function maxPriceFor(fair, book, eMin){
   if(!(fair>0 && fair<1)) return null;
   const cfg=cfgRead(), netAt=p=>{ const f=feeRate(book,p,cfg.fees); return ((fair/p-1)-f)/(1+f); };
@@ -9410,15 +9415,15 @@ function orderTagHtml(r){ const t=o=>(o.qty!=null?(+o.qty)+' at ':'')+(o.price!=
   return ''; }
 function impTagHtml(r){
   const p=r.offeredProb; if(!(p>0 && p<1)) return '';
-  const cfg=cfgRead(), mx=r.fairProb!=null?maxPriceFor(r.fairProb, r.book, cfg.eMin):null, P=x=>(x*100).toFixed(1)+'%';
+  const cfg=cfgRead(), mx=r.fairProb!=null?maxPriceFor(okProbR(r), r.book, cfg.eMin):null, P=x=>(x*100).toFixed(1)+'%';
   const over=r.fairProb!=null && (mx==null || p>mx+1e-9), ok=mx!=null && !over;
   const am=Math.round(americanOf(p)), how=am>0?'100 / ('+am+' + 100)':(-am)+' / ('+(-am)+' + 100)';
-  const tip=fmtOdds(am)+' means the book charges for a '+P(p)+' chance ('+how+').'+(r.fairProb!=null?' La Contadora puts it at '+P(r.fairProb)+(mx!=null?'; at '+bookLabel(r.book)+' you can pay up to '+P(mx)+' after its fee.':'; no price at '+bookLabel(r.book)+' clears your EV floor after its fee.'):'')+(over?' Look for a book whose price is a lower %.':'');
+  const tip=fmtOdds(am)+' means the book charges for a '+P(p)+' chance ('+how+').'+(r.fairProb!=null?' The model puts it at '+P(r.fairProb)+(r.mktProb!=null?', the market at '+P(r.mktProb)+', and La Contadora sizes on '+P(okProbR(r)):'')+(mx!=null?'; at '+bookLabel(r.book)+' you can pay up to '+P(mx)+' after its fee and still clear your floor on that.':'; no price at '+bookLabel(r.book)+' clears your EV floor after its fee.'):'')+(over?' Look for a book whose price is a lower %.':'');
   return '<span class="imp'+(ok?' ok':over?' over':'')+'" title="'+esc(tip)+'">'+P(p)+(ok?' · OK to '+P(mx):over?(mx!=null?' · need ≤ '+P(mx):'')+' · look elsewhere':'')+'</span>';
 }
 function maxTagHtml(r){
   if(r.fairProb==null) return '';
-  const cfg=cfgRead(), mx=maxPriceFor(r.fairProb, r.book, cfg.eMin); if(mx==null) return '';
+  const cfg=cfgRead(), mx=maxPriceFor(okProbR(r), r.book, cfg.eMin); if(mx==null) return '';
   const pctBook=PM_BOOK.test(r.book||'');
   return '<span class="meta max-pay" title="The most you can pay at '+esc(bookLabel(r.book))+' and still clear your '+pct(cfg.eMin)+' EV floor after its fee">max '+(pctBook?(mx*100).toFixed(1)+'%':esc(fmtOdds(Math.round(americanOf(mx)))))+'</span>';
 }
@@ -9426,7 +9431,7 @@ function maxTagHtml(r){
 // green ✓ when the price is at or under the most you can pay, red ✗ when it isn't
 function pickPayHtml(r){
   if(r.fairProb==null || !(r.offeredProb>0 && r.offeredProb<1)) return maxTagHtml(r);
-  const cfg=cfgRead(), p=r.offeredProb, mx=maxPriceFor(r.fairProb, r.book, cfg.eMin), pctBook=PM_BOOK.test(r.book||'');
+  const cfg=cfgRead(), p=r.offeredProb, mx=maxPriceFor(okProbR(r), r.book, cfg.eMin), pctBook=PM_BOOK.test(r.book||'');
   const f=feeRate(r.book,p,cfg.fees), st=+r.stake||0, pay=st>0?Math.floor(st/(p*(1+f))*100+1e-6)/100:null;
   const show=x=>pctBook?(x*100).toFixed(1)+'%':fmtOdds(Math.round(americanOf(x)));
   const net=r.net, evTxt=net!=null?'<b class="'+(net>=cfg.eMin?'up':net<0?'down':'')+'"'+(isFdp(r.book)?' title="FanDuel Predicts\' fee is a guess — approximate"':'')+'>'+(isFdp(r.book)?'~':'')+(net>=0?'+':'')+(net*100).toFixed(1)+'% EV</b>':'';
@@ -9451,7 +9456,7 @@ function kalshiHow(r,st,p,mx){ if(!(st>0) || !(mx>0)) return null; const fees=cf
   return {btn: side==='U'?'NO':'YES', what, shares, lim, cost, payout:shares, underNote: side==='U'}; }
 function kalshiHowHtml(r){   // a full-width strip on the card: one box per thing to type, in the order Kalshi asks
   if(LIVE_BOOK(r.book)!=='kalshi' || r.fairProb==null || !(r.offeredProb>0 && r.offeredProb<1)) return '';
-  const st=+r.stake||0, mx=maxPriceFor(r.fairProb, r.book, cfgRead().eMin); if(!(st>0) || mx==null || r.offeredProb>mx+1e-9) return '';
+  const st=+r.stake||0, mx=maxPriceFor(okProbR(r), r.book, cfgRead().eMin); if(!(st>0) || mx==null || r.offeredProb>mx+1e-9) return '';
   const k=kalshiHow(r,st,r.offeredProb,mx); if(!k) return '';
   const box=(lbl,val,note)=>'<div class="kx-b"><span class="kx-l">'+lbl+'</span><b class="kx-v">'+val+'</b>'+(note?'<span class="kx-n">'+note+'</span>':'')+'</div>';
   return '<div class="kx-how" title="What to type on Kalshi for La Contadora\'s bet"><div class="kx-h">On Kalshi, enter</div><div class="kx-row">'+
@@ -10031,7 +10036,7 @@ async function shareText(r){
     : r.kind==='total' ? side+' '+line+' total' : (r.name+' '+(r.market||''));
   const t=teamsOf(r.game||r.matchup||''), game=t?t[0]+' @ '+t[1]:(r.game||''), when=(r.gameInfo&&r.gameInfo.startISO)?whenCT(r.gameInfo.startISO):'';
   const em={NBA:'🏀',WNBA:'🏀',NCAAB:'🏀',NFL:'🏈',NCAAF:'🏈',NHL:'🏒',MLB:'⚾'}[String(r.sport||'').toUpperCase()]||'🎯';
-  const cfg=cfgRead(), pctBook=PM_BOOK.test(r.book||''), p=r.offeredProb, mx=r.fairProb!=null?maxPriceFor(r.fairProb, r.book, cfg.eMin):null;
+  const cfg=cfgRead(), pctBook=PM_BOOK.test(r.book||''), p=r.offeredProb, mx=r.fairProb!=null?maxPriceFor(okProbR(r), r.book, cfg.eMin):null;
   const show=x=>pctBook?(x*100).toFixed(1)+'%':fmtOdds(Math.round(americanOf(x)));
   let link='';
   const src=LIVE_BOOK(r.book);
@@ -10235,7 +10240,7 @@ function abUpdate94(){
       c.st=abStake({fair:fs, mkt:ms, p:c.p, fee:c.fee, book:c.book, outlier:c.out, outLimit:usedOut>=outN, game:f.game}); });
     const typed=cand.find(c=>c.typed), best=cand.filter(c=>c.st.s>0).sort((a,b)=>b.net-a.net)[0]||null;
     const lbl=c=>(c.side==='me'?me:opTxt)+' at '+esc(bookLabel(c.book))+' '+P94(c.p);
-    const mx=typed?maxPriceFor(fair, typed.book, cfg.eMin):null;
+    const mx=typed?maxPriceFor(okProb(fair, mkt), typed.book, cfg.eMin):null;   // v4.41: the blend
     if(typed && typed.st.s>0){
       level='ok'; head='🟢 BET $'+typed.st.s.toFixed(2)+' — '+SG94(typed.net)+' net';
       top.push('<b>'+lbl(typed)+'</b>'+(typed.st.n?' · '+typed.st.n+' contracts':'')+(typed.st.pctBank!=null?' · '+(typed.st.pctBank*100).toFixed(1)+'% of your $'+cfg.bank.toFixed(0)+' bankroll':''));
@@ -10255,7 +10260,7 @@ function abUpdate94(){
     } else if(cand.length){
       level='bad'; head='🔴 SKIP — nothing on the exchanges clears your floor';
       const bm=cand.slice().sort((a,b)=>b.net-a.net)[0]; top.push('Closest: '+lbl(bm)+' → '+SG94(bm.net)+' net');
-      const mxx=maxPriceFor(fair, bm.book, cfg.eMin); if(mxx!=null) top.push('Wait for '+P94(mxx)+' or better — or post that price yourself (📌 Make my own)');
+      const mxx=maxPriceFor(okProb(fair, mkt), bm.book, cfg.eMin);   /* v4.41: the blend */ if(mxx!=null) top.push('Wait for '+P94(mxx)+' or better — or post that price yourself (📌 Make my own)');
     } else { level='none'; head='Enter your price below'; top.push('Or press <b>🔎 What should I bet?</b> to check all three exchanges.'); }
     // all exchange prices, both sides
     const ex=cand.filter(c=>!c.typed);
