@@ -349,6 +349,22 @@
   Performance: Watch bets panel: counts, a stage (<100 descriptive, 100-299 directional, 300-999 useful if the range clears zero, 1,000+ credible), Brier and log
   loss for model, market and blend on graded wins and losses (pushes out), market minus model Brier with a 95% range from 1,000 by-game resamples (seeded, from
   20 graded), and a $1 ROI at the shown price. Never in the Bet log, profit, ROI, the calendar, the Today card or the daily max. `tests/watch-shadow-test.js`.
+- Watch bets v2 (v4.45, `watchKeyOf`, `watchGk`, `watchState`, `watchPolicyRun`/`watchRank`/`watchWhy`, `watchCloseScan`, `watchMergeRec`, `watchPut`/`watchPolPut`,
+  `watchSyncForm`, `watchPrune`, `watchStats(A,{boot,pol})`, `mbev.watchPol`, `mbev.devId`; owner: "BUILD", plan in `agent-notes/watch-v2-plan_2026-11-09_v1.md`, agreed with
+  ChatGPT over two rounds): the key is sport, player, `statFam` (or game-line kind), side, exact line and ESPN event id (else start); `pk` keeps v4.44's `pxKey`
+  so old records are not duplicated. The first sighting is the frozen calibration snapshot (with `dev`, `devName`, `tz`, `tsrc:'device'`); later sightings add to
+  `sig` only when the price or a forecast moved, otherwise only `seen` (last seen before the cutoff) moves. One pick per game, made once at 5 min before
+  kickoff from sightings before the cutoff (also retrospectively on the next load): highest `actNet` (ties within 0.0001 → fresher, higher blend, shorter odds,
+  key); primary if seen within 30 min of kickoff, `fallback` 31-120, else `none`; its `snap` is the price used for its ROI. Closes: Watch bets at Kalshi /
+  Polymarket US / Novig in the last 10 min before kickoff (`ld` = the `liveDesc` saved with the record), policy picks first, 8 per `/live`, 24 per 2 min, every
+  30 s timer while visible; fair = ask ÷ (ask + 1 − bid); `closeWhy` when missing. Sync: collections `watch` (without `sig`, `seen`, `closeTry`) and `wpol`;
+  `syncMergeAll` now stamps and pushes ids a `put` returns (the merge changed this device's copy). Two copies keep the earliest valid pre-start snapshot whole,
+  the other in `alt` (`conflict` over 5 min apart); picks: primary > fallback > none, then earliest, the other in `other`. Pruning after grading and syncing
+  (7 days with sync off) drops `sig` and `ld`, keeps `first`, `last`, `nSig`. Performance (only while it is open, cached): game-balanced market − model Brier with
+  5,000 seeded game resamples, `half` width; stages by bets AND games (100/50, 300/150 + range clear of 0, 1,000/500 + range clear + half ≤ 0.005 + CLV
+  (30+ closes) and All-Watch ROI pointing the verdict's way); verdict "Statistically" (L > 0) / "Materially" (L > 0.001); All-Watch ROI and the primary and
+  fallback ROIs never combined, by sport, kickoff band (CT) and device. A Worker time `srv` is preferred when present (not built in the Worker yet).
+  `tests/watch-v2-test.js`; `tests/watch-shadow-test.js` updated (`d` is game by game now, `dBet` bet by bet).
 - Augi's screens on our engine, step 1 of 5: the Board (v4.34, `boardView`/`#boardView`/`mbev.boardView`, `.cv-legend-box`, `lnGet`/`lnSet`/`lnBtnHtml`/`.ln-ed`,
   `mbev.lineNotes`; owner: "What you recommend" → option 2, "BUILD"): Show menu next to Sort (All groups / Passing / Outliers only / Already bet / Skipped;
   Skipped also lists rejected rows without Show rejected), filtered after `grpOf`. Augi's cover legend (nine chips) in a `details.help` above the bar.

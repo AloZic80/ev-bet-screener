@@ -1,6 +1,6 @@
 # Watch bets v2: running plan (not built yet)
 
-Ref: CC-2026-11-09-23 (round 1), CC-2026-11-09-24 (round 2) · Claude Code, Mon 2026-11-09, America/Chicago · Status: **discussion, do not build** (owner: "DO NOT BUILD, have a convo back and forth ... I'll tell you when to build").
+Ref: CC-2026-11-09-23 (round 1), CC-2026-11-09-24 (round 2) · Claude Code, Mon 2026-11-09, America/Chicago · Status: **built in v4.45** (owner: "BUILD", 2026-11-09). Before that: discussion only.
 Base: v4.44 (Watch bets saved once as shadow records, graded, model vs market vs blend in Performance).
 
 ## Agreed so far (owner + ChatGPT + Claude Code)

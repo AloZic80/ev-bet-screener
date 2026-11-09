@@ -47,6 +47,7 @@ const runs = [
   ['v4.42: iPhone: the card\'s price chip is the slip link itself (Novig app link first, the website in the bar after), one tap', 'slip-onetap-test.js', []],
   ['v4.43: the EV floor on the conservative chance (blend); model-only passes are WATCH, listed, not placed', 'floor-watch-test.js', []],
   ['v4.44: Watch bets saved once as shadow records, graded, compared (Brier, log loss, by-game range); never bets', 'watch-shadow-test.js', []],
+  ['v4.45: Watch bets v2: sightings, one pick per game, game-by-game headline, stages, exchange closes, two devices, pruning', 'watch-v2-test.js', []],
   ['v4.34: Augi\'s Board: the Show menu, the cover legend, your own note on each line', 'board-notes-test.js', []],
   ['v4.33: colour schemes (Green, Blue, Red, Purple, Graphite) in light and dark, all AA; remembered', 'palette-test.js', []],
   ['v4.31: Augi\'s 5-point cover bands (chips on the board and cards) and the Bet result study in Performance', 'cover-study-test.js', []],
