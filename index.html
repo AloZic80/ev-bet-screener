@@ -11,7 +11,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.35</title>
+<title>0xBeta Screener v4.36</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1317,6 +1317,23 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 .hub-head{display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 10px; margin-bottom:6px}
 .hub-line{font-size:13.5px; margin:4px 0} .hub-plays,.hub-list{margin:4px 0 0; padding-left:18px; font-size:13.5px} .hub-plays li,.hub-list li{margin:3px 0}
 .hub-dec{font-size:11px; padding:1px 7px; border-radius:99px; border:1px solid var(--rule)} .hub-dec.pass{color:var(--live); border-color:var(--live)} .hub-dec.prior{color:var(--out); border-color:var(--out)} .hub-dec.skip{color:var(--soft)}
+/* v4.36: Augi's Bet log, step 3: the bet calendar, the day, cover bands, track by, import */
+.lc-nav{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:4px 0 10px} .lc-nav b{min-width:140px; text-align:center}
+.lc-g{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px}
+.lc-dow{font-size:11px; font-weight:700; color:var(--soft); text-align:center; padding:2px 0}
+.lc-d{font:inherit; display:flex; flex-direction:column; align-items:flex-start; gap:1px; min-height:56px; padding:5px 6px; border:1px solid var(--rule); border-radius:10px; background:var(--panel); color:var(--ink); cursor:pointer; text-align:left; min-width:0; overflow:hidden}
+.lc-d b{font-size:12.5px} .lc-d small{font-size:11px; color:var(--soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%} .lc-d small.pl-up{color:var(--gain)} .lc-d small.pl-down{color:var(--loss)}
+.lc-d.today{border-color:var(--accent)} .lc-d[aria-pressed="true"]{outline:2px solid var(--accent); outline-offset:1px; background:var(--accent-bg)} .lc-d.fut{opacity:.8}
+.lc-sum{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:8px; margin:6px 0 10px}
+.lc-sum>div{padding:8px 10px; border:1px solid var(--rule); border-radius:10px; background:var(--panel); font-size:12.5px; color:var(--soft)} .lc-sum strong{display:block; font-size:17px; color:var(--ink); font-variant-numeric:tabular-nums} .lc-sum strong.pl-up{color:var(--gain)} .lc-sum strong.pl-down{color:var(--loss)} .lc-sum strong.lc-grey{color:var(--soft)}
+.lc-max{display:block; width:100%; height:10px; accent-color:var(--brand)} .lc-max-l{font-size:13px; margin:2px 0 4px}
+.lc-band{display:grid; grid-template-columns:minmax(150px,1.2fr) 2fr auto; align-items:center; gap:8px; margin:5px 0; font-size:12.5px}
+.lc-track{height:8px; border-radius:99px; background:var(--rule); overflow:hidden} .lc-fill{height:100%; background:var(--accent); border-radius:99px}
+.lc-band b{font-variant-numeric:tabular-nums; min-width:76px; text-align:right}
+.lc-imp{margin-top:8px; padding:8px 10px; border:1px solid var(--rule); border-radius:10px; background:var(--panel)}
+.lc-imp .row{display:flex; flex-wrap:wrap; gap:8px; align-items:flex-end; margin-top:6px} .lc-imp label.f{display:flex; flex-direction:column; font-size:11.5px; color:var(--soft); gap:2px} .lc-imp input[type=text],.lc-imp input[type=date],.lc-imp input[type=number]{font:inherit; font-size:14px; padding:6px 8px; border:1px solid var(--rule); border-radius:8px; background:var(--panel); color:var(--ink); max-width:170px}
+.lc-imp .lc-tk{display:flex; gap:8px; align-items:flex-start; font-size:13.5px} .lc-imp .lc-tk input{width:18px; height:18px; flex:none; margin-top:2px}
+@media (max-width:640px){ .lc-d{min-height:50px; padding:4px 3px} .lc-d small{font-size:10.5px; letter-spacing:-.2px} .lc-d small.lc-n,.lc-d .lc-w{display:none} .lc-band{grid-template-columns:1fr auto} .lc-band .lc-track{grid-column:1 / -1; order:3} }
 </style>
 </head>
 <body>
@@ -1325,7 +1342,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.35</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.36</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1889,6 +1906,28 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 <div class="view" id="v-log">
 <div class="panel look-out" id="lookOut" hidden></div>   <!-- v3.57: bets not graded yet, automatically or by you -->
 <div class="panel log-orders" id="logOrders" hidden></div>   <!-- v4.17: orders waiting at your books (not bets until they fill) -->
+<div class="panel" id="lcPanel">   <!-- v4.36: Augi's Bet log, step 3: his bet calendar, the day, cover bands, track by, import, on our log and math -->
+  <h2>Bet calendar <span class="sub">by game day · tap a day</span></h2>
+  <div class="lc-nav"><button type="button" class="ghost sm" id="lcPrev" aria-label="Previous month">‹</button><b id="lcTitle"></b><button type="button" class="ghost sm" id="lcNext" aria-label="Next month">›</button><button type="button" class="ghost sm" id="lcToday">Today</button></div>
+  <div id="lcCal" aria-label="Your bets and settled profit by game day"></div>
+  <h3 id="lcDayTitle" style="margin:12px 0 2px"></h3>
+  <div id="lcSum" class="lc-sum"></div>
+  <div id="lcMaxBox"><div class="lc-max-l" id="lcMaxL"></div><progress class="lc-max" id="lcMax" value="0" max="1"></progress></div>
+  <div class="row" style="margin-top:8px"><button type="button" class="ghost sm" id="lcShow">Show this day in Bets you took ›</button></div>
+  <h3 style="margin:14px 0 2px">Cover range breakdown <span class="meta" id="lcBandSub"></span></h3>
+  <div id="lcBands"></div>
+  <details class="help" data-help="lc-bands"><summary>What counts here</summary><p class="hint" style="margin:8px 0 0">Every single of that game day, plus each leg of a parlay built on the Parlays tab (they keep their chance). The band is our fair chance when you logged it (Augi's 5-point bands). Bets typed in with no cover, and parlays typed in by hand, are Unknown. A band is a label, not a rule: the bet was already OK by La Contadora, or your own call.</p></details>
+  <h3 style="margin:14px 0 4px">Track by <select id="lcPeriod" class="bar-sel" aria-label="Track by"><option value="day">Daily</option><option value="week">Weekly</option><option value="month">Monthly</option></select></h3>
+  <div class="scroll"><table class="days"><thead><tr><th>Game days</th><th class="num">Bets</th><th class="num">Pending</th><th class="num">W–L–P</th><th class="num">Staked</th><th class="num">Profit</th><th class="num">ROI</th></tr></thead><tbody id="lcPerf"></tbody></table></div>
+  <details class="help" data-help="lc-track"><summary>How these are counted</summary><p class="hint" style="margin:8px 0 0">By the day the game is played (Central time), weeks from Monday. Profit and ROI count settled bets only (wins with fees, losses, pushes, sales, money lost cancelling); bets still to play or in play are Pending, not lost. Free bets are not money staked and count their winnings only.</p></details>
+  <details class="help lc-impbox" data-help="lc-import"><summary>Import bets from a file</summary>
+    <p class="hint" style="margin:8px 0 0">An Odds Board bet-import file (JSON, the kind Augi's assistant makes from screenshots of your slips). Check each ticket's game day, book, cost and total return before saving. A ticket already in your log is left unticked. New ones start with no result and are graded like any bet you type in (ESPN, or Look out).</p>
+    <div class="row" style="margin-top:6px"><input type="file" id="lcFile" accept=".json,application/json" aria-label="Bet import file"></div>
+    <div class="meta" id="lcImpMsg" role="status" style="margin-top:6px"></div>
+    <div id="lcImpList"></div>
+    <div class="row" style="margin-top:6px"><button type="button" class="act" id="lcImpSave" hidden>Save the ticked tickets to my Bet log</button></div>
+  </details>
+</div>
 <!-- v2.63 -->
 <div class="panel">
   <h2>Bets by game day <span class="sub">counted on the day the game is played, not the day you logged it</span></h2>
@@ -2023,7 +2062,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.35';
+const SCREENER_VERSION='v4.36';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3307,6 +3346,120 @@ function renderStudy(){ const el=document.getElementById('studyRows'); if(!el) r
     return '<tr><td>'+(k?'<span class="cv-chip cv-'+k+'">'+cvNames()[k]+'</span> <span class="meta">'+cvRanges()[k]+'</span>':'<span class="meta">'+cvRanges()[0]+'</span>')+'</td><td class="num">'+g.n+'</td><td class="num">'+g.pend+'</td><td class="num">'+g.w+'–'+g.l+'–'+g.p+'</td><td class="num">'+(avg==null?'—':pc(avg))+'</td><td class="num">'+(hit==null?'—':pc(hit))+'</td><td class="num">'+(avg==null||hit==null?'—':(hit>=avg?'+':'−')+(Math.abs(hit-avg)*100).toFixed(1)+' pts')+'</td><td class="num '+(g.net>=0?'pl-up':'pl-down')+'">'+(g.money?usd(g.net):'—')+'</td></tr>'; }).join('')||'<tr><td colspan="8" class="meta">No singles in this range yet.</td></tr>';
   const graded=G.reduce((t,g)=>t+g.w+g.l,0), n=G.reduce((t,g)=>t+g.n,0), sm=document.getElementById('studySum');
   if(sm) sm.textContent=n+' singles · '+graded+' graded wins and losses'+(graded<30?' · early sample: small groups swing a lot, so do not change rules from this yet':' · a band whose hit rate stays below its average prediction over hundreds of bets is the model being too sure'); }
+/* v4.36 (Alonzo: "Build", Augi's screens step 3 of 5: the Bet log): Augi's bet calendar on our log. A month of game days (each: bets and the
+   settled profit, grey while only open bets), tap a day for its summary (bets, staked, settled profit, in play, to play, pending), the daily max
+   as a bar (cfg.dayMax, our version of his daily goal), his cover range breakdown for that day (singles, plus parlay legs from the Parlays tab),
+   his Track by Daily / Weekly / Monthly table (settled profit and ROI only, by game day), and his bet-import file (augi-bet-import v1), checked
+   ticket by ticket before it is saved. Our records, betProfit, heldValue and the 4-hour rule are unchanged. */
+var lcMonth=ctDay(Date.now()).slice(0,7), lcDay=ctDay(Date.now()), lcPeriod='day', lcRows=[];
+try{ lcPeriod=localStorage.getItem('mbev.lcPeriod')||'day'; }catch(e){}
+function lcUsd(v){ return (v>0.005?'+':v<-0.005?'−':'')+'$'+Math.abs(v).toFixed(2); }
+function lcWeekOf(d){ const t=new Date(d+'T12:00:00Z'); t.setUTCDate(t.getUTCDate()-(t.getUTCDay()+6)%7); return t.toISOString().slice(0,10); }
+function lcPeriodOf(d,k){ return !d?'':k==='month'?d.slice(0,7):k==='week'?lcWeekOf(d):d; }
+function lcStats(list){ const g={n:0,pend:0,w:0,l:0,p:0,staked:0,stSet:0,profit:0,settled:0};
+  list.forEach(b=>{ g.n++; const st=b.free?0:(+b.stake||0); g.staked+=st; const pr=betProfit(b);
+    if(b.sold){ g.settled++; } else if(b.result==='win') g.w++; else if(b.result==='loss') g.l++; else if(b.result==='push') g.p++;
+    if(pr==null){ g.pend++; return; } g.settled+=b.sold?0:1; g.profit+=pr; g.stSet+=st; });
+  return g; }
+function lcBands(day){ const C=Array(10).fill(0); let n=0;
+  logged.forEach(b=>{ if(gameDayOf(b)!==day) return;
+    if(b.kind==='parlay'){ const L=b.parlay&&b.parlay.pk&&b.parlay.pk.legs; if(Array.isArray(L)&&L.length) L.forEach(l=>{ C[cvBand(+l.p)]++; n++; });
+      else { const k=+(b.parlay&&b.parlay.picks)||0; C[0]+=k; n+=k; } return; }
+    C[cvBand(toProb(b.fair))]++; n++; });
+  return {C,n}; }
+function lcRender(){ const cal=document.getElementById('lcCal'); if(!cal) return;
+  const days=calDays('All'), today=ctDay(Date.now()), [Y,M]=lcMonth.split('-').map(Number), first=new Date(Date.UTC(Y,M-1,1)), nd=new Date(Date.UTC(Y,M,0)).getUTCDate();
+  document.getElementById('lcTitle').textContent=first.toLocaleDateString('en-US',{month:'long',year:'numeric',timeZone:'UTC'});
+  let h='<div class="lc-g">'+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>'<div class="lc-dow">'+d+'</div>').join('');
+  for(let i=0;i<first.getUTCDay();i++) h+='<span></span>';
+  for(let d=1; d<=nd; d++){ const k=lcMonth+'-'+String(d).padStart(2,'0'), x=days[k];
+    let n='', v='', lab=k+': no bets';
+    if(x){ n='<small class="lc-n">'+x.n+' bet'+(x.n===1?'':'s')+'</small>';
+      const open=(x.playingAmt||0)+(x.toPlayAmt||0);
+      if(x.settled) v='<small class="'+(x.profit>0.005?'pl-up':x.profit<-0.005?'pl-down':'')+'">'+(x.profit>0.005?'+':x.profit<-0.005?'−':'')+'<span class="cal-cur">$</span>'+Math.abs(x.profit).toFixed(2)+'</small>';   // the $ is dropped on a phone (v4.08's .cal-cur) so +12.50 fits
+      else if(x.open) v='<small title="games playing or not started: not won or lost yet"><span class="cal-cur">$</span>'+open.toFixed(2)+'<span class="lc-w"> open</span></small>';
+      lab=k+': '+x.n+' bets, '+(x.settled?'settled '+lcUsd(x.profit):'open, not settled'); }
+    h+='<button type="button" class="lc-d'+(k===today?' today':'')+(k>today?' fut':'')+'" data-day="'+k+'" aria-pressed="'+(k===lcDay)+'" aria-label="'+esc(lab)+'"><b>'+d+'</b>'+n+v+'</button>'; }
+  cal.innerHTML=h+'</div>';
+  const x=days[lcDay], ds=(dayStats()[lcDay])||null, cfg=cfgRead();
+  document.getElementById('lcDayTitle').textContent=new Date(lcDay+'T12:00:00Z').toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric',timeZone:'UTC'})+(lcDay===today?' · today':'');
+  const tile=(l,v,c)=>'<div>'+l+'<strong'+(c?' class="'+c+'"':'')+'>'+v+'</strong></div>';
+  document.getElementById('lcSum').innerHTML=x?
+    tile('Bets',x.n)+tile('Staked','$'+x.staked.toFixed(2))+tile('Settled profit',x.settled?lcUsd(x.profit):'—',x.settled?(x.profit>0.005?'pl-up':x.profit<-0.005?'pl-down':''):'lc-grey')+
+    tile('▶ In play','$'+(x.playingAmt||0).toFixed(2),'lc-grey')+tile('⏳ To play','$'+(x.toPlayAmt||0).toFixed(2),'lc-grey')+tile('Open bets',x.open,'lc-grey')
+    : tile('Bets',0)+tile('Staked','$0.00');
+  const used=ds?ds.staked:0, mx=+cfg.dayMax||0, bar=document.getElementById('lcMax');
+  document.getElementById('lcMaxL').innerHTML=mx>0?'<b>$'+used.toFixed(2)+'</b> of your $'+mx.toFixed(2)+' daily max'+(used>=mx-1e-9?' · <b>reached</b>':' · $'+(mx-used).toFixed(2)+' left'):'Daily max is off (Settings › Stakes)';
+  bar.hidden=!(mx>0); bar.max=mx>0?mx:1; bar.value=Math.min(used,mx>0?mx:1);
+  const B=lcBands(lcDay); document.getElementById('lcBandSub').textContent=B.n?'· '+B.n+' pick'+(B.n===1?'':'s'):'';
+  document.getElementById('lcBands').innerHTML=B.n?[1,2,3,4,5,6,7,8,9,0].map(k=>{ const c=B.C[k], pc=c/B.n*100; if(!c&&!k) return '';
+    return '<div class="lc-band"><span>'+(k?'<span class="cv-chip cv-'+k+'">'+cvNames()[k]+'</span> <span class="meta">'+cvRanges()[k]+'</span>':'<span class="meta">Unknown · '+cvRanges()[0]+'</span>')+'</span><div class="lc-track"><div class="lc-fill" style="width:'+pc.toFixed(1)+'%"></div></div><b>'+c+' · '+pc.toFixed(1)+'%</b></div>'; }).join('')
+    : '<div class="meta">No bets on this game day.</div>';
+  const sel=document.getElementById('lcPeriod'); if(sel.value!==lcPeriod) sel.value=lcPeriod;
+  const G=new Map(); logged.forEach(b=>{ const k=lcPeriodOf(gameDayOf(b),lcPeriod); if(!k) return; if(!G.has(k)) G.set(k,[]); G.get(k).push(b); });
+  const lost=new Map(); removedBets.forEach(b=>{ if(!(b.lost>0)) return; const k=lcPeriodOf(gameDayOf(b),lcPeriod); if(k) lost.set(k,(lost.get(k)||0)+b.lost); });
+  const keys=[...new Set([...G.keys(),...lost.keys()])].sort().reverse().slice(0,60);
+  const lbl=k=>lcPeriod==='month'?new Date(k+'-01T12:00:00Z').toLocaleDateString('en-US',{month:'long',year:'numeric',timeZone:'UTC'}):(lcPeriod==='week'?'Week of ':'')+new Date(k+'T12:00:00Z').toLocaleDateString('en-US',{weekday:'short',month:'numeric',day:'numeric',timeZone:'UTC'});
+  document.getElementById('lcPerf').innerHTML=keys.map(k=>{ const g=lcStats(G.get(k)||[]), lo=lost.get(k)||0, pr=g.profit-lo, roi=g.stSet>0?pr/g.stSet*100:null;
+    return '<tr><td>'+esc(lbl(k))+'</td><td class="num">'+g.n+'</td><td class="num">'+g.pend+'</td><td class="num">'+g.w+'–'+g.l+'–'+g.p+'</td><td class="num">$'+g.staked.toFixed(2)+'</td><td class="num '+(pr>0.005?'pl-up':pr<-0.005?'pl-down':'')+'">'+(g.n-g.pend||lo?lcUsd(pr):'—')+'</td><td class="num">'+(roi==null?'—':(roi>=0?'+':'−')+Math.abs(roi).toFixed(1)+'%')+'</td></tr>'; }).join('')||'<tr><td colspan="7" class="meta">No bets logged yet.</td></tr>';
+}
+/* the import: Augi's augi-bet-import v1 (singles and parlays with exact legs), read on this device only, never sent anywhere */
+function lcValidDay(d){ return typeof d==='string' && /^\d{4}-\d{2}-\d{2}$/.test(d) && new Date(d+'T12:00:00Z').toISOString().slice(0,10)===d; }
+function lcParse(doc){
+  if(!doc || doc.type!=='augi-bet-import' || doc.v!==1 || !Array.isArray(doc.singles) || !Array.isArray(doc.parlays) || doc.singles.length+doc.parlays.length>200) throw Error('Choose an Odds Board bet-import file (type augi-bet-import, version 1, up to 200 tickets).');
+  const str=(v,m)=>String(v==null?'':v).trim().slice(0,m||180), fid=str(doc.importId||'file',70);
+  const pick=p=>{ if(!p || !lcValidDay(p.day) || !str(p.player) || !str(p.market) || !['Over','Under'].includes(p.outcome) || p.point==null || p.point==='' || !isFinite(+p.point)) throw Error('A pick is missing its game day, player, stat, Over / Under or exact line.');
+    return {day:p.day, game:str(p.game), player:str(p.player), team:str(p.team,20), market:str(p.market), side:p.outcome==='Over'?'O':'U', point:+p.point, sport:str(p.sport,12).toUpperCase()}; };   // our bets keep O / U (+ Add a bet)
+  const tk=p=>{ if(!p || !(+p.stake>0) || !(+p.quotedPayout>+p.stake)) throw Error('Each ticket needs a cost and a total return bigger than the cost.');
+    const at=p.at&&!isNaN(Date.parse(p.at))?new Date(p.at).toISOString():(lcValidDay(p.placedDate)?p.placedDate+'T18:00:00.000Z':null);
+    return {stake:+(+p.stake).toFixed(2), ret:+(+p.quotedPayout).toFixed(2), at, note:str(p.note,600)}; };
+  const S=doc.singles.map((p,i)=>Object.assign({kind:'single', id:'imp-'+fid+'-s'+i, book:str(p.book)||'Other'}, pick(p), tk(p)));
+  const P=doc.parlays.map((p,i)=>{ if(!Array.isArray(p.legs) || p.legs.length<2 || p.legs.length>12) throw Error('A slip needs 2 to 12 exact legs.');
+    const L=p.legs.map(pick); return Object.assign({kind:'parlay', id:'imp-'+fid+'-p'+i, book:str(p.platform)||'Other', legs:L, day:L.map(l=>l.day).sort()[0]}, tk(p)); });
+  return {tickets:S.concat(P), notes:str(doc.notes,1500)};
+}
+function lcLegText(l){ return l.player+' '+l.side+' '+l.point+' '+l.market; }
+function lcHave(t){ return logged.some(b=>{ if(b.id===t.id) return true;
+  if(t.kind==='parlay') return b.kind==='parlay' && gameDayOf(b)===t.day && Math.abs((+b.stake||0)-t.stake)<0.005 && nrmT(b.parlay&&b.parlay.legs)===nrmT(t.legs.map(lcLegText).join('; '));
+  return b.kind!=='parlay' && gameDayOf(b)===t.day && nrmT(b.name)===nrmT(t.player) && String(b.side||'').charAt(0).toUpperCase()===t.side && nrmT(b.market)===nrmT(t.point+' '+t.market); }); }
+function lcRecord(t){ const ret=t.ret, odds=fmtOdds(Math.round(americanOf(t.stake/ret))), at=t.at||new Date().toISOString();
+  if(t.kind==='parlay'){ const r=parlayRecord({book:t.book, picks:t.legs.length, stake:t.stake, all:ret, legs:t.legs.map(lcLegText).join('; '), day:t.day});
+    r.id=t.id; r.dateSet=true; r.imported={file:t.id, note:t.note||undefined}; r.snap.at=at; r.snap.said={decision:'IMPORTED', onList:false}; return r; }
+  return { id:t.id, key:'import|'+t.id, date:t.day, dateSet:true, name:t.player, sport:t.sport||'', market:t.point+' '+t.market, side:t.side, betnow:t.side+' '+t.point+' '+odds,
+    book:t.book, game:t.game, team:t.team||null, odds, fair:'', stake:t.stake, kind:'prop', closing:'', srcType:'import', manual:true, start:null,
+    imported:{file:t.id, note:t.note||undefined}, snap:{at, screener:SCREENER_VERSION} }; }
+function lcImpPaint(){ const el=document.getElementById('lcImpList');
+  el.innerHTML=lcRows.map((t,i)=>{ const have=lcHave(t);
+    const what=t.kind==='parlay'?t.legs.length+'-pick parlay: '+t.legs.map(lcLegText).join('; '):t.player+' '+(t.side==='O'?'Over':'Under')+' '+t.point+' '+t.market+(t.game?' · '+t.game:'');
+    return '<div class="lc-imp" data-i="'+i+'"><label class="lc-tk"><input type="checkbox" class="lc-on"'+(have?'':' checked')+'><span>'+esc(what)+(have?' <span class="meta">· already in your log</span>':'')+'</span></label>'+
+      '<div class="row"><label class="f">Game day<input type="date" class="lc-day" value="'+esc(t.day)+'"></label><label class="f">Book<input type="text" class="lc-book" value="'+esc(t.book)+'"></label><label class="f">Cost $<input type="number" class="lc-st" step="0.01" min="0.01" value="'+t.stake+'"></label><label class="f">Total return $<input type="number" class="lc-ret" step="0.01" min="0.01" value="'+t.ret+'"></label></div>'+
+      (t.note?'<div class="meta" style="margin-top:4px">'+esc(t.note)+'</div>':'')+'</div>'; }).join('');
+  document.getElementById('lcImpSave').hidden=!lcRows.length; }
+document.addEventListener('click',e=>{ const t=e.target; if(!t.closest || !t.closest('#lcPanel')) return;
+  const d=t.closest('.lc-d'); if(d){ lcDay=d.dataset.day; lcRender(); return; }
+  if(t.closest('#lcPrev')||t.closest('#lcNext')){ const [y,m]=lcMonth.split('-').map(Number), n=new Date(Date.UTC(y,m-1+(t.closest('#lcPrev')?-1:1),1)); lcMonth=n.toISOString().slice(0,7); lcRender(); return; }
+  if(t.closest('#lcToday')){ lcDay=ctDay(Date.now()); lcMonth=lcDay.slice(0,7); lcRender(); return; }
+  if(t.closest('#lcShow')){ logDayFilter=lcDay; renderLog(); const f=document.getElementById('logFilter'); if(f) setTimeout(()=>f.scrollIntoView({block:'start',behavior:'smooth'}),50); return; }
+  if(t.closest('#lcImpSave')){ const msg=document.getElementById('lcImpMsg'); let add=0, skip=0; const out=[];
+    try{ document.querySelectorAll('#lcImpList .lc-imp').forEach(box=>{ const r=Object.assign({}, lcRows[+box.dataset.i]); if(!box.querySelector('.lc-on').checked){ skip++; return; }
+        const day=box.querySelector('.lc-day').value, book=box.querySelector('.lc-book').value.trim(), st=parseFloat(box.querySelector('.lc-st').value), ret=parseFloat(box.querySelector('.lc-ret').value);
+        if(!lcValidDay(day) || !book || !(st>0) || !(ret>st)) throw Error('check each ticked ticket: game day, book, a cost, and a total return bigger than the cost.');
+        r.book=book.slice(0,180); r.stake=+st.toFixed(2); r.ret=+ret.toFixed(2);
+        if(r.kind==='parlay'){ const sh=day!==r.day; r.day=day; if(sh) r.legs=r.legs.map(l=>Object.assign({},l,{day})); } else r.day=day;
+        if(logged.some(b=>b.id===r.id)){ skip++; return; } out.push(lcRecord(r)); });
+      out.forEach(b=>{ logged.push(b); add++; }); if(add){ saveLog(); renderLog(); try{ renderPerf(); }catch(_){} }
+      msg.textContent='Saved '+add+' ticket'+(add===1?'':'s')+' to your Bet log'+(skip?' · '+skip+' left out':'')+'. They have no result yet: Check results grades them, or Look out asks you.';
+      if(add){ lcRows=[]; lcImpPaint(); const f=document.getElementById('lcFile'); if(f) f.value=''; if(out[0]){ lcDay=gameDayOf(out[0])||lcDay; lcMonth=lcDay.slice(0,7); lcRender(); } }
+    }catch(err){ msg.textContent='Not saved: '+err.message; }
+    return; } });
+document.addEventListener('change',async e=>{ const t=e.target;
+  if(t && t.id==='lcPeriod'){ lcPeriod=t.value; try{ localStorage.setItem('mbev.lcPeriod',lcPeriod); }catch(_){} lcRender(); return; }
+  if(!t || t.id!=='lcFile') return; const msg=document.getElementById('lcImpMsg'); lcRows=[]; lcImpPaint();
+  try{ const f=t.files&&t.files[0]; if(!f) return; if(f.size>500000) throw Error('the file is too large (500 KB at most).');
+    const doc=lcParse(JSON.parse(await f.text())); lcRows=doc.tickets; lcImpPaint();
+    const n=lcRows.filter(r=>r.kind!=='parlay').length, have=lcRows.filter(lcHave).length;
+    msg.textContent=n+' single'+(n===1?'':'s')+' and '+(lcRows.length-n)+' parlay'+(lcRows.length-n===1?'':'s')+' read'+(have?' · '+have+' already in your log (unticked)':'')+'. Check them, then save.'+(doc.notes?' '+doc.notes:'');
+  }catch(err){ msg.textContent='Could not read the file: '+err.message; } });
 /* v4.34 (Alonzo: "BUILD", Augi's Board, step 1 of 5): a note of your own on each line, like Augi's Notes. Kept on this device (mbev.lineNotes) by
    the line (sport, player or team, market, side, game day: pxKey), so a rescan or another book's copy of the same line shows it too. The box is an
    .editor, so background redraws wait while you type (v4.12). */
@@ -4759,7 +4912,7 @@ function resultBadge(b){
 let logRenderLater=false;
 function logEditorOpen(){ return !!document.querySelector('#logBody tr.pl-ed, #logBody tr.editor'); }
 setInterval(()=>{ if(logRenderLater && !logEditorOpen()){ logRenderLater=false; try{ renderLog(); }catch(e){} } }, 1000);
-function renderLog(){ setTimeout(()=>{ try{ csvDays(); }catch(e){} },0);   // v4.16: the CSV day list follows the log
+function renderLog(){ setTimeout(()=>{ try{ csvDays(); }catch(e){} try{ lcRender(); }catch(e){ console.error(e); } },0);   // v4.16: the CSV day list follows the log   // v4.36: and the bet calendar
   if(logEditorOpen()){ logRenderLater=true; return; }   // v3.86
   const tb=document.getElementById('logBody'), empty=document.getElementById('logEmpty');
   tb.innerHTML='';
