@@ -279,6 +279,16 @@
   `gameInfo.eventId`, else both team codes) with La Contadora's decision (BET $x / ALREADY BET / STARTED / skip), a search box and See on Board
   (fills `#filterPlayer`). Summary via `fetchBoxscore` (cached). ESPN only, no Worker calls (Augi's hub spends Odds API credits per game for props;
   ours reads the board already loaded). Live games refresh every 30 s while the Live tab is open. `tests/game-hub-test.js`.
+- Augi's screens, step 3 of 5: the Bet log (v4.36, `#lcPanel` under Look out and the orders, `lcRender` (run by `renderLog`), `lcMonth`/`lcDay`, `lcBands`,
+  `lcStats`, `lcPeriod`/`mbev.lcPeriod`, import `lcParse`/`lcHave`/`lcRecord`/`lcImpPaint`; owner: "build"): his bet calendar by game day (`calDays`: settled
+  profit coloured, a day with only open bets "$x open" in grey); tap a day: bets, staked, settled profit, in play, to play, open, and the daily max as a bar
+  (`cfg.dayMax`, our version of his daily goal); "Show this day" sets `logDayFilter`. Cover range breakdown for the day: singles by `toProb(b.fair)`, legs of
+  parlays from the Parlays tab by `parlay.pk.legs[].p`, typed parlays Unknown (one per pick). Track by Daily / Weekly (from Monday) / Monthly: bets, pending,
+  W–L–P, staked, profit and ROI on settled bets only (`betProfit`, plus `removedBets` losses). Import (a `details.help`): his `augi-bet-import` v1 JSON
+  (singles and parlays with exact legs, 200 tickets, 500 KB), read on the device only; each ticket checked (game day, book, cost, total return > cost), one
+  already in the log unticked (same id, or same name, market, O/U and game day; a parlay by day, stake and legs). Singles are saved as typed-in bets
+  (`manual`, `dateSet`, O/U, odds from cost ÷ return, `srcType:'import'`, `imported`), parlays by `parlayRecord`. No result: graded like any typed bet.
+  `tests/bet-calendar-test.js`.
 - Augi's screens on our engine, step 1 of 5: the Board (v4.34, `boardView`/`#boardView`/`mbev.boardView`, `.cv-legend-box`, `lnGet`/`lnSet`/`lnBtnHtml`/`.ln-ed`,
   `mbev.lineNotes`; owner: "What you recommend" → option 2, "BUILD"): Show menu next to Sort (All groups / Passing / Outliers only / Already bet / Skipped;
   Skipped also lists rejected rows without Show rejected), filtered after `grpOf`. Augi's cover legend (nine chips) in a `details.help` above the bar.
