@@ -11,7 +11,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.33</title>
+<title>0xBeta Screener v4.34</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1298,6 +1298,13 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 .pal-dot{display:inline-block; width:12px; height:12px; border-radius:50%; border:1px solid rgba(0,0,0,.15)}
 .pal-seg [data-p="green"] .pal-dot{background:#087B44} .pal-seg [data-p="blue"] .pal-dot{background:#1D4ED8} .pal-seg [data-p="red"] .pal-dot{background:#B42318}
 .pal-seg [data-p="purple"] .pal-dot{background:#6D28D9} .pal-seg [data-p="graphite"] .pal-dot{background:#374151}
+/* v4.34: Augi's Board, step 1: the Show menu, the cover legend, your notes */
+.cv-legend-box{margin:4px 0 10px} .cv-legend{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px} .cv-legend .cv-chip{margin:0}
+.ln-text{margin:6px 0 0; padding:6px 10px; border-radius:8px; background:var(--accent-bg); color:var(--ink); font-size:12.5px; white-space:pre-wrap; overflow-wrap:anywhere}
+.sc-card>.ln-text{margin:8px 14px 0}
+.ln-btn.on{border-color:var(--accent); color:var(--accent)}
+.ln-btn.ln-sm{margin-top:6px; padding:3px 9px; font-size:11.5px}
+.ln-box{padding:10px 14px} .ln-box textarea{width:100%; min-height:72px; font:inherit; font-size:14px; padding:8px 10px; border:1px solid var(--rule); border-radius:8px; background:var(--panel); color:var(--ink)}
 </style>
 </head>
 <body>
@@ -1306,7 +1313,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.33</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.34</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1400,8 +1407,10 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
     <span class="contadora" id="contadora"></span>
   </div>
   <div class="today-line" id="todayLine"></div>
+  <details class="help cv-legend-box" data-help="cv-legend"><summary>Cover bands <span class="meta">the colour of each pick's chance</span></summary><div class="cv-legend"><span class="cv-chip cv-1">Long Shot · &lt;45%</span><span class="cv-chip cv-2">Feeling Lucky · 45–&lt;50%</span><span class="cv-chip cv-3">On the Line · 50–&lt;55%</span><span class="cv-chip cv-4">Slight Lean · 55–&lt;60%</span><span class="cv-chip cv-5">Lean · 60–&lt;65%</span><span class="cv-chip cv-6">Solid · 65–&lt;70%</span><span class="cv-chip cv-7">Strong · 70–&lt;75%</span><span class="cv-chip cv-8">Heavy Favorite · 75–&lt;80%</span><span class="cv-chip cv-9">High Cover · 80%+</span></div><p class="hint">A label for the chance only: La Contadora decides the bet and the stake, whatever the band.</p></details>   <!-- v4.34: Augi's legend -->
   <!-- v2.62: one slim line of view controls; set-once settings live in the Settings tab -->
   <div class="board-bar">
+    <label class="bar-item" title="What the board lists (Augi's review menu)">Show <select id="boardView" class="bar-sel"><option value="all">All groups</option><option value="pass">✅ Passing (Place these)</option><option value="outlier">Outliers only</option><option value="prior">Already bet</option><option value="skip">Skipped</option></select></label><!-- v4.34 -->
     <label class="bar-item">Sort <select id="sortBy" class="bar-sel">
         <option value="math" selected>✅ Math: best edge first</option><!-- v4.28 --><option value="top">Top bets (stars, then cover %)</option>
         <option value="score">Sentinel score (best first)</option><!-- v4.21 -->
@@ -1994,7 +2003,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.33';
+const SCREENER_VERSION='v4.34';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2818,7 +2827,7 @@ function renderCore(rows,cfg){
   const tb=document.getElementById('tbody'), empty=document.getElementById('emptyMsg');
   tb.innerHTML='';
   const passing=rows.filter(r=>r.pass);
-  let shown=showRejects?rows.slice():passing.slice();
+  let shown=(showRejects||boardView==='skip')?rows.slice():passing.slice();   // v4.34: Skipped also lists the rejected rows
   const isStarted=r=>{ const s=liveState(r); return s==='started'||s==='closed'; };
   // v2.86: two boards from one audit — ALREADY BET, one-per-player, game caps and the daily max are shared
   const pv=boardSrc==='paste';
@@ -2858,6 +2867,7 @@ function renderCore(rows,cfg){
   // v2.62: three groups — bets to place, bets you already have, then everything to skip.
   // Your sort (or a column-header click) applies inside each group.
   const grpOf=x=> (x.prior||x.waitOrder) ? 1 : isStarted(x) ? 3 : liveState(x)==='unconfirmed' ? 4 : (x.pass && x.stake>0 && !x.removed) ? 0 : 2;
+  if(boardView!=='all') shown=shown.filter(x=>{ const g=grpOf(x); return boardView==='pass'?g===0 : boardView==='outlier'?(g===0&&!!x.outlier) : boardView==='prior'?g===1 : g===2; });   // v4.34: Augi's Show menu
   shown.sort((a,b)=>{
     const ga=grpOf(a), gb=grpOf(b);
     if(ga!==gb) return ga-gb;
@@ -2979,6 +2989,7 @@ function renderCore(rows,cfg){
     const cells={};
     cells.name=
       '<td class="c-name"><div class="c-who">'+avatarHtml(r,'r:'+r.idx)+'<div><div class="pick">'+esc(r.name)+injTagHtml(r)+wxTagHtml(r)+'</div>'+   // v3.57: a picture; v3.78: injury flag
+        (lnGet(pxKey(r))?'<div class="ln-text">📝 '+esc(lnGet(pxKey(r)))+'</div>':'')+lnBtnHtml(r,true)+   // v4.34: your note
         (r.matchup?'<div class="meta">'+esc(r.matchup)+'</div>':'')+kick+
         (isSweet(r,swc)?'<span class="sweet" title="Inside your sweet-spot settings">🎯 SWEET SPOT</span>':'')+
         (nTags?'<div><button class="ntog" data-nkey="'+esc(nKey)+'" aria-expanded="'+nOpen+'" title="Show or hide the notes for this bet">'+
@@ -3276,6 +3287,25 @@ function renderStudy(){ const el=document.getElementById('studyRows'); if(!el) r
     return '<tr><td>'+(k?'<span class="cv-chip cv-'+k+'">'+cvNames()[k]+'</span> <span class="meta">'+cvRanges()[k]+'</span>':'<span class="meta">'+cvRanges()[0]+'</span>')+'</td><td class="num">'+g.n+'</td><td class="num">'+g.pend+'</td><td class="num">'+g.w+'–'+g.l+'–'+g.p+'</td><td class="num">'+(avg==null?'—':pc(avg))+'</td><td class="num">'+(hit==null?'—':pc(hit))+'</td><td class="num">'+(avg==null||hit==null?'—':(hit>=avg?'+':'−')+(Math.abs(hit-avg)*100).toFixed(1)+' pts')+'</td><td class="num '+(g.net>=0?'pl-up':'pl-down')+'">'+(g.money?usd(g.net):'—')+'</td></tr>'; }).join('')||'<tr><td colspan="8" class="meta">No singles in this range yet.</td></tr>';
   const graded=G.reduce((t,g)=>t+g.w+g.l,0), n=G.reduce((t,g)=>t+g.n,0), sm=document.getElementById('studySum');
   if(sm) sm.textContent=n+' singles · '+graded+' graded wins and losses'+(graded<30?' · early sample: small groups swing a lot, so do not change rules from this yet':' · a band whose hit rate stays below its average prediction over hundreds of bets is the model being too sure'); }
+/* v4.34 (Alonzo: "BUILD", Augi's Board, step 1 of 5): a note of your own on each line, like Augi's Notes. Kept on this device (mbev.lineNotes) by
+   the line (sport, player or team, market, side, game day: pxKey), so a rescan or another book's copy of the same line shows it too. The box is an
+   .editor, so background redraws wait while you type (v4.12). */
+function lnAll(){ if(!window._ln){ try{ window._ln=JSON.parse(localStorage.getItem('mbev.lineNotes')||'{}')||{}; }catch(e){ window._ln={}; } } return window._ln; }
+function lnGet(k){ const v=lnAll()[k]; return v&&v.t?v.t:''; }
+function lnSet(k,t){ const A=lnAll(); t=String(t||'').trim().slice(0,1500); if(t) A[k]={t, at:Date.now()}; else delete A[k];
+  const keys=Object.keys(A); if(keys.length>400) keys.sort((a,b)=>A[a].at-A[b].at).slice(0,keys.length-400).forEach(x=>delete A[x]);
+  try{ localStorage.setItem('mbev.lineNotes', JSON.stringify(A)); }catch(e){} }
+function lnBtnHtml(r,small){ const has=!!lnGet(pxKey(r)); return '<button type="button" class="log sm undo ln-btn'+(has?' on':'')+(small?' ln-sm':'')+'" data-pck="'+esc(pxKey(r))+'" aria-label="'+(has?'Edit your note':'Add a note')+' for '+esc(r.name||'')+'">📝 '+(has?'Note':'Notes')+'</button>'; }
+document.addEventListener('click',e=>{ const t=e.target; if(!t.closest) return;
+  const b=t.closest('.ln-btn'); if(b){ e.preventDefault(); const k=b.dataset.pck, host=b.closest('.sc-card')||b.closest('tr'); if(!host) return;
+    const old=document.querySelector('.ln-ed'); if(old){ old.remove(); }
+    const box='<div class="ln-box"><textarea class="ln-txt" maxlength="1500" aria-label="Your note" placeholder="Example: check the line in PrizePicks; lineup news at 6 PM">'+esc(lnGet(k))+'</textarea><div class="row" style="margin-top:6px"><button type="button" class="log sm ln-save">Save note</button> <button type="button" class="log sm undo ln-cancel">Cancel</button>'+(lnGet(k)?' <button type="button" class="log sm undo ln-del">Delete note</button>':'')+'</div></div>';
+    if(host.tagName==='TR'){ const tr=document.createElement('tr'); tr.className='editor ln-ed'; tr.dataset.pck=k; tr.innerHTML='<td colspan="'+host.children.length+'">'+box+'</td>'; host.after(tr); }
+    else { const d=document.createElement('div'); d.className='editor ln-ed'; d.dataset.pck=k; d.innerHTML=box; (host.querySelector('.sc-act')||host).after(d); }
+    const ta=document.querySelector('.ln-ed .ln-txt'); if(ta) ta.focus(); return; }
+  const ed=t.closest('.ln-ed'); if(!ed) return;
+  if(t.closest('.ln-save')||t.closest('.ln-del')){ lnSet(ed.dataset.pck, t.closest('.ln-del')?'':ed.querySelector('.ln-txt').value); ed.remove(); rerenderWithFilters(); }
+  else if(t.closest('.ln-cancel')){ ed.remove(); } });
 function mathKey(r){ return (r&&r.outlier?-1:0)+(r&&r.blendNet!=null?r.blendNet:(r&&r.net!=null?r.net:-1)); }
 function scWord(t){ return t>=75?'STRONG':t>=50?'GOOD':'THIN'; }
 function sentScore(r){ const net=r&&r.net!=null&&isFinite(r.net)?r.net:null, e=net==null?0:Math.round(50*Math.max(0,Math.min(1,net/0.06)));
@@ -3396,7 +3426,8 @@ function placeCardHtml(r,cfg,o){
       '<span class="sc-price book'+(over?' over':'')+(slip?' go':'')+'" role="button" tabindex="0" title="'+(slip?'Open this bet on '+esc(bk)+(st>0?' with $'+st.toFixed(2)+' filled':''):esc(bk))+(over?'. The price is over La Contadora’s most now: skip it or look elsewhere':'')+'">'+
         '<span class="scp-o">'+logo+'<b>'+esc(odds)+'</b></span><span class="scp-p">'+(okP?pp(p):'')+(over?' · over':'')+'</span></span></div>'+
     scKalshiLine(r)+
-    '<div class="sc-act"><button class="log sm bet-btn" data-idx="'+r.idx+'">'+(r.moved?'Add this line too':'I bet this')+'</button>'+
+    (lnGet(pxKey(r))?'<div class="ln-text" title="Your note on this line">📝 '+esc(lnGet(pxKey(r)))+'</div>':'')+   // v4.34: your note
+    '<div class="sc-act"><button class="log sm bet-btn" data-idx="'+r.idx+'">'+(r.moved?'Add this line too':'I bet this')+'</button>'+lnBtnHtml(r)+
       '<button class="log sm parlay'+(inParlay(r)?' on':'')+' parlay-btn" data-idx="'+r.idx+'" title="Mark as used in a parlay">'+(inParlay(r)?'In parlay ✓':'Parlay')+'</button>'+
       (slip?'<span class="pp-open" title="Open this bet on '+esc(bk)+(st>0?' with $'+st.toFixed(2)+' filled':'')+'">open slip ↗</span>':'')+'</div>'+
     why+
@@ -6355,6 +6386,7 @@ function paintSortArrows(){
 let filterSport = '';
 let boardBooks = (()=>{ try{ const a=JSON.parse(localStorage.getItem('mbev.boardBooks')||'null'); if(Array.isArray(a)) return a.filter(x=>typeof x==='string'); const one=localStorage.getItem('mbev.boardBook'); return one?[one]:[]; }catch(e){ return []; } })();   // v4.24: the books shown on the board (empty = all), kept per device; v4.13's one book carried over
 let showRejects = false;
+let boardView = (()=>{ try{ const v=localStorage.getItem('mbev.boardView'); return ['all','pass','outlier','prior','skip'].includes(v)?v:'all'; }catch(e){ return 'all'; } })();   // v4.34
 
 // Comprehensive filter state
 let filterPlayer = '';
@@ -6467,6 +6499,7 @@ document.getElementById('bookChips').addEventListener('click', (e)=>{ const c=e.
   if(!b) boardBooks=[]; else { const i=boardBooks.indexOf(b); if(i>=0) boardBooks.splice(i,1); else boardBooks.push(b); }
   try{ localStorage.setItem('mbev.boardBooks',JSON.stringify(boardBooks)); }catch(err){} rerenderWithFilters(); });
 document.getElementById('showRejects').addEventListener('change', (e)=>{ showRejects=e.target.checked; rerenderWithFilters(); });
+{ const bv=document.getElementById('boardView'); if(bv){ bv.value=boardView; bv.addEventListener('change',()=>{ boardView=bv.value; try{ localStorage.setItem('mbev.boardView',boardView); }catch(e){} rerenderWithFilters(); }); } }   // v4.34
 document.getElementById('onlyMyGames').addEventListener('change', e=>{ filterCorrOnly=e.target.checked; refresh(); });
 
 // Event listeners for advanced filters

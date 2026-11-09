@@ -272,6 +272,12 @@
   Performance › Bet result study (after Is the model honest?): singles only, by game day (All / This month / Last 7 days / Today): logged, pending,
   W–L–P, average prediction and hit rate on graded wins and losses only, difference in points, profit from `betProfit`. Our parlay legs are not
   graded one by one, so his "parlay legs" view is not here. His light colours were darkened a little for AA on 10.5 px text. `tests/cover-study-test.js`.
+- Augi's screens on our engine, step 1 of 5: the Board (v4.34, `boardView`/`#boardView`/`mbev.boardView`, `.cv-legend-box`, `lnGet`/`lnSet`/`lnBtnHtml`/`.ln-ed`,
+  `mbev.lineNotes`; owner: "What you recommend" → option 2, "BUILD"): Show menu next to Sort (All groups / Passing / Outliers only / Already bet / Skipped;
+  Skipped also lists rejected rows without Show rejected), filtered after `grpOf`. Augi's cover legend (nine chips) in a `details.help` above the bar.
+  A note of your own on each line: 📝 on cards (in `.sc-act`) and table rows (name cell), keyed by `pxKey` (sport, name, market, side, game day),
+  400 notes max, this device only; the box is an `.editor`, so redraws wait while you type; Save / Delete / Cancel remove it before redrawing.
+  Next steps agreed: 2 Live Games (Augi's Game Hub), 3 Bet log, 4 Parlay, 5 Settings. `tests/board-notes-test.js`.
 - iPhone pinned bar and colour schemes (v4.32, v4.33; owner: "when I scroll up, the tab bar does not stay pinned down"; "an option to change the colour
   palette, in case I want blue, red, etc., but as a scheme"): at startup `.tabs` is moved to be the FIRST child of `<body>` (not the last: tests and
   links pick the first `.tab[data-view="v-board"]`, which must be Board, not the hidden Pasted) and gets its own layer (`translateZ(0)`), the usual
