@@ -323,6 +323,13 @@
   in the fills list sets `changed`, so the board redraws. Once (`fixPlus40` in `autoGradeLog`): a bet logged from a Novig fill with an integer prop line N
   (Over) becomes N−0.5, the old text in `edits`; an automatic PUSH becomes WIN (exactly N ≥ N−0.5), wins and losses stand, manual grades are kept.
   `tests/novig-plus-test.js` (9 of 17 fail on v4.39).
+- "OK up to" on the blend (v4.41, `okProb(fair, mkt)`, `okProbR(r)` next to `maxPriceFor`; owner: "Fix and build", after an outside math check of
+  `docs/EV-CALCULATOR.md`): `maxPriceFor` was given the model chance (`r.fairProb`) while the stake is sized on the blend, so a price between the two was "OK"
+  where the stake was $0. Every caller now passes `okProb` = min(model, market + mWeight × (model − market)), the model alone when there is no market:
+  `impTagHtml`, `maxTagHtml`, `pickPayHtml`, the Place card (`mx`), `scKalshiLine` and the Kalshi strip (limit price), the bet editor's check (line moves shift
+  the market with the model) and + Add a bet. The screen floor still uses model net EV. Wording: THIN "still clears your estimated EV floor"; the Scorecard
+  verdict says "evidence, not proof". `tests/blend-limit-test.js`. The doc names model / market / sizing chances, calls out rounding, the parlay independence
+  assumption and the FanDuel Predicts fee (2% ÷ price of the stake).
 - Augi's screens on our engine, step 1 of 5: the Board (v4.34, `boardView`/`#boardView`/`mbev.boardView`, `.cv-legend-box`, `lnGet`/`lnSet`/`lnBtnHtml`/`.ln-ed`,
   `mbev.lineNotes`; owner: "What you recommend" → option 2, "BUILD"): Show menu next to Sort (All groups / Passing / Outliers only / Already bet / Skipped;
   Skipped also lists rejected rows without Show rejected), filtered after `grpOf`. Augi's cover legend (nine chips) in a `details.help` above the bar.
