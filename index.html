@@ -32,7 +32,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.41</title>
+<title>0xBeta Screener v4.42</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1374,6 +1374,8 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 .rg-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; margin-top:8px} .rg-g{padding:8px 10px; border:1px solid var(--rule); border-radius:12px; background:var(--panel)} .rg-g h3{margin:0 0 6px; font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--soft)}
 .rg-t{display:grid; grid-template-columns:1fr auto; gap:0 8px; padding:4px 0; border-top:1px solid var(--rule-2,var(--rule)); font-size:13px} .rg-t:first-of-type{border-top:0} .rg-t b{text-align:right; font-variant-numeric:tabular-nums} .rg-t small{grid-column:1 / -1; color:var(--soft); font-size:11.5px}
 .rg-panel h2 .cn-chip{margin-left:6px; vertical-align:middle}
+/* v4.42: the card's price chip as a link (phone) */
+a.sc-price.sc-link{text-decoration:none; color:inherit}
 </style>
 </head>
 <body>
@@ -1382,7 +1384,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.41</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.42</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2123,7 +2125,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.41';
+const SCREENER_VERSION='v4.42';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3721,8 +3723,9 @@ function placeCardHtml(r,cfg,o){
     '<div class="sc-tags">'+cvChipHtml(r.fairProb)+tags+'</div>'+   // v4.31: Augi's cover band
     '<div class="sc-bet"><div class="sc-pick">'+esc(pickTxt)+impTagHtml(r)+'</div>'+   // v4.10's line: the price as a %, OK to / look elsewhere, the math on hover
       '<div class="sc-money"><b>'+(st>0?'$'+st.toFixed(2):'—')+'</b><span>'+(pay!=null?(isX?'pays $'+pay.toFixed(2):'wins $'+Math.max(0,pay-st).toFixed(2)):'stake')+'</span>'+(lim?'<span class="sc-lim">'+esc(lim)+'</span>':'')+'</div>'+
-      '<span class="sc-price book'+(over?' over':'')+(slip?' go':'')+'" role="button" tabindex="0" title="'+(slip?'Open this bet on '+esc(bk)+(st>0?' with $'+st.toFixed(2)+' filled':''):esc(bk))+(over?'. The price is over La Contadora’s most now: skip it or look elsewhere':'')+'">'+
-        '<span class="scp-o">'+logo+'<b>'+esc(odds)+'</b></span><span class="scp-p">'+(okP?pp(p):'')+(over?' · over':'')+'</span></span></div>'+
+      (()=>{ const hl=slip?slipLinkFor(r,st):null;   // v4.42: one tap on a phone: the chip is a real link when the book's slip is already known
+        return (hl?'<a class="sc-price book go sc-link'+(over?' over':'')+'" href="'+esc(hl)+'"'+(/^https:/.test(hl)?' target="_blank" rel="noopener"':''):'<span class="sc-price book'+(over?' over':'')+(slip?' go':'')+'" role="button" tabindex="0"')+' title="'+(slip?'Open this bet on '+esc(bk)+(st>0?' with $'+st.toFixed(2)+' filled':''):esc(bk))+(over?'. The price is over La Contadora’s most now: skip it or look elsewhere':'')+'">'+
+        '<span class="scp-o">'+logo+'<b>'+esc(odds)+'</b></span><span class="scp-p">'+(okP?pp(p):'')+(over?' · over':'')+'</span>'+(hl?'</a>':'</span>'); })()+'</div>'+
     scKalshiLine(r)+
     (lnGet(pxKey(r))?'<div class="ln-text" title="Your note on this line">📝 '+esc(lnGet(pxKey(r)))+'</div>':'')+   // v4.34: your note
     '<div class="sc-act"><button class="log sm bet-btn" data-idx="'+r.idx+'">'+(r.moved?'Add this line too':'I bet this')+'</button>'+lnBtnHtml(r)+
@@ -9361,7 +9364,7 @@ const isPhone=()=>/iPhone|iPad|iPod|Android/i.test(navigator.userAgent||'');
 function bookUrl(src, q, amount){
   if(!q || (!q.ok && !q.outcome)) return BOOK_HOME[src]||null;
   if(src==='novig' && q.outcome){
-    if(isPhone()) return 'novigapp://events/'+encodeURIComponent(q.outcome)+'/novig'+(amount>0?'/'+(+amount).toFixed(2):'');
+    if(isPhone()) return 'novigapp://events/'+encodeURIComponent(q.outcome)+'/novig'+(amount>0?'/'+(+amount).toFixed(2):'');   // v4.42 (Alonzo: "APP link first and then https last"): the app link first on a phone; the bar adds the https slip
     return 'https://novig.com/events/'+encodeURIComponent(q.outcome)+'/novig'+(amount>0?'/'+(+amount).toFixed(2):'');
   }
   return q.url || BOOK_HOME[src] || null;
@@ -9394,6 +9397,19 @@ async function quoteFor(obj, bookName){
 /* v4.41 (Alonzo: "Fix and build", after an outside math check: "OK up to" used the model's chance while the stake is sized on the blend, so a price
    between the two was "OK" where La Contadora would size $0): every "OK up to", the price tag, max, the editor's check, + Add a bet and Kalshi's limit price
    now use the conservative chance: the blend of the market toward the model (model weight), or the model when it is lower. No market price: the model. */
+/* v4.42: the slip link for a card on a phone, known without waiting (the tap stays a real link tap, so iOS can hand it to the book's app). Novig:
+   https://novig.com/events/<outcome>/novig/<stake>; Kalshi / Polymarket US: the market's own url; DraftKings / PrizePicks: their home (no prefilled slip).
+   Only when the price the app read at that book is within 8 points of the card's price (else it may be another market: the tap then checks first).
+   Owner: "APP link first and then https last": Novig's chip is novigapp://; the tap also shows the bar with the website (https) in case the app did not open. */
+function slipLinkFor(r, st){ try{
+  if(!/iPhone|iPad|iPod|Android/i.test(navigator.userAgent||'') || !r) return null;
+  const b=String(r.book||'').toLowerCase(), src=/kalshi/.test(b)?'kalshi':/polymarket/.test(b)?'poly':/novig/.test(b)?'novig':null;
+  if(!src){ return /draftkings/.test(b)&&!/predict/.test(b)?'https://sportsbook.draftkings.com/':/prizepicks/.test(b)?'https://app.prizepicks.com/':null; }
+  const nm={kalshi:'Kalshi',poly:'Polymarket US',novig:'Novig'}[src];
+  const q=[r._openQ, r._shopQ&&r._shopQ[nm], r._altQ&&r._altQ[nm]].find(x=>x && x.ok && x.src===src && (src==='novig'?x.outcome:x.url));
+  if(!q || !(r.offeredProb>0) || Math.abs((+q.price||0)-r.offeredProb)>0.08) return null;
+  if(src==='novig') return 'novigapp://events/'+encodeURIComponent(q.outcome)+'/novig'+(st>0?'/'+(+st).toFixed(2):'');   // the app link first (Alonzo); the tap also shows the bar with the https slip
+  return /^https:\/\//.test(q.url)?q.url:null; }catch(e){ return null; } }
 function okProb(fair, mkt){ if(!(fair>0 && fair<1)) return null; if(!(mkt>0 && mkt<1)) return fair; let w=0.35; try{ w=cfgRead().mWeight; }catch(e){} return Math.min(fair, mkt+w*(fair-mkt)); }
 function okProbR(r){ return r?okProb(r.fairProb, r.mktProb):null; }
 function maxPriceFor(fair, book, eMin){
@@ -9578,6 +9594,7 @@ function rowAsBet(r){ return {id:'row'+r.idx, idx:r.idx, book:r.book, sport:r.sp
   game:r.game, matchup:r.matchup, start:(r.gameInfo&&r.gameInfo.startISO)||null, odds:r.offeredRaw, stake:r.stake, gameInfo:r.gameInfo||null}; }   // v4.15: + gameInfo (team codes, the game to look for)
 document.addEventListener('click', async e=>{
   const img=e.target.closest('img.blogo, .book, .pp-open'); if(!img) return;
+  { const lk=img.closest('a.sc-link[href]'); if(lk){ const h=lk.getAttribute('href'); if(/^novigapp:\/\//.test(h)) setTimeout(()=>{ try{ slipReady(h,'novig'); }catch(_){} },400); return; } }   // v4.42: a real slip link (phone): the tap opens it; for Novig the bar then offers the website too
   const host=img.closest('tr, .pcard'); if(!host) return;
   let obj=null;
   const kb=host.querySelector('button.kill[data-i]'); if(kb) obj=logged[+kb.dataset.i];
@@ -9607,7 +9624,7 @@ function slipReady(url, src, msg){ if(!url) return; let el=document.getElementBy
   if(!el){ el=document.createElement('div'); el.id='slipGo'; el.className='slip-go'; el.setAttribute('role','status'); document.body.appendChild(el);
     el.addEventListener('click',e=>{ if(e.target.closest('.slip-go-x')){ el.hidden=true; return; } if(e.target.closest('a')) setTimeout(()=>{ el.hidden=true; },800); }); }
   const nm=BOOK_NAME[src]||(src==='dk'?'DraftKings':src==='pp'?'PrizePicks':'the book'), web=/^novigapp:\/\//.test(url)?url.replace(/^novigapp:\/\//,'https://novig.com/'):'';
-  el.innerHTML='<span class="slip-go-t">'+(msg?'⚠ '+esc(msg):src==='dk'||src==='pp'?esc(nm)+': no prefilled slip, find the bet in the app':esc(nm)+' slip is ready')+'</span><a class="slip-go-a" href="'+esc(url)+'">Open in '+esc(nm)+' ›</a>'+(web?'<a class="slip-go-w" href="'+esc(web)+'" target="_blank" rel="noopener">website</a>':'')+'<button type="button" class="slip-go-x" aria-label="Close">×</button>';
+  el.innerHTML='<span class="slip-go-t">'+(msg?'⚠ '+esc(msg):src==='dk'||src==='pp'?esc(nm)+': no prefilled slip, find the bet in the app':esc(nm)+' slip is ready')+'</span><a class="slip-go-a" href="'+esc(url)+'">Open in '+esc(nm)+' ›</a>'+(web?'<a class="slip-go-w" href="'+esc(web)+'" target="_blank" rel="noopener">website (if the app did not open)</a>':'')+'<button type="button" class="slip-go-x" aria-label="Close">×</button>';
   el.hidden=false; }
 // mark clickable logos
 const _markGo=()=>document.querySelectorAll('#logBody img.blogo, #tbody img.blogo, #placeCards img.blogo, #liveBody img.blogo').forEach(i=>{ if(/kalshi|polymarket|novig|draftkings|prizepicks/i.test(i.alt||'')){ i.classList.add('go'); i.title=(i.alt||'')+' — open this bet'; } });
