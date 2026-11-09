@@ -32,7 +32,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.38</title>
+<title>0xBeta Screener v4.39</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1382,7 +1382,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.38</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.39</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2123,7 +2123,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.38';
+const SCREENER_VERSION='v4.39';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2619,6 +2619,7 @@ function auditCore(rows,cfg){
       if(L.game && teamsOf(L.game) && teamsOf(r.game||'') && gameKey(L.game)!==gameKey(r.game)) return false;
       return sameTime(L) && (r.kind!=='spread' || L.market===r.market); };
     const prior = logged.find(L=>onBoard(L) && coreKey(L.name,L.market,sideOf(L))===coreKey(r.name,r.market,r.side) && sameTime(L))
+               || logged.find(L=>onBoard(L) && propSame(L,r) && sameTime(L))   // v4.39: the same prop worded by the book (Lekkerimäki, Shots On Goal)
                || logged.find(L=>onBoard(L) && glSame(L) && L.market===r.market && sameTime(L))
                || (exQs.length ? logged.find(L=>onBoard(L) && !L.sold && L.fillRef && L.fillBook===exSrc && exHit({book:L.fillBook, ref:L.fillRef, side:L.fillSide, outcome:L.fillOutcome})) : null)   // v4.14
                || logged.find(L=>onBoard(L) && glTeamSame(L));   // v4.25
@@ -2654,7 +2655,7 @@ function auditCore(rows,cfg){
       if(!o && o2) o=o2;
       if(o){ r.waitOrder=o; r.flags.unshift(['dupe','ORDER WAITING on '+(({kalshi:'Kalshi',poly:'Polymarket US',novig:'Novig'})[o.book]||exNm)+(o.qty!=null?': '+(+o.qty)+' shares':'')+(o.price!=null?' at '+Math.round(o.price*100)+'¢':'')+', not filled yet. It is placed: do not bet it again']); } }
     // v2.51: you already hold the OTHER side of this exact prop
-    const otherSide = !prior && r.side && logged.find(L=>onBoard(L) && coreKey(L.name,L.market)===coreKey(r.name,r.market) && sideOf(L) && sideOf(L)!==r.side);
+    const otherSide = !prior && r.side && logged.find(L=>onBoard(L) && (coreKey(L.name,L.market)===coreKey(r.name,r.market) || (propSame(L,r,true) && sameTime(L))) && sideOf(L) && sideOf(L)!==r.side);   // v4.39: worded by the book too
     // v2.56: same bet, but the line has moved since you took it (43.5 → 44.5)
     const moved = !prior && logged.find(L=>onBoard(L) && !L.sold && String(L.name||'').toLowerCase()===String(r.name||'').toLowerCase() &&
       (L.kind||'')===(r.kind||'') && marketStem(L.market)===marketStem(r.market) && (sideOf(L)||'')===(r.side||'') && L.market!==r.market)
@@ -4886,6 +4887,22 @@ function askRemove(anchorTr, bet, cols){
   });
 }
 function coreKey(name,market,side){ return [name,market,side||''].join('|').toLowerCase(); }
+/* v4.39 (Alonzo, 11/9: "I made this bet but it still shows as bettable", Lekkerimaki Over 1.5 Shots on Novig): a bet logged from a book's fill keeps the
+   book's own words ("Jonathan Lekkerimäki", "1.5 Shots On Goal") while the board says "Jonathan Lekkerimaki", "1.5 Shots", so coreKey (exact text)
+   never matched and the card stayed in Place these. The same player prop is: same sport, same player (accents, case and a first initial ignored),
+   the same stat family (statFam: Shots = Shots On Goal = SOG), no period / power-play difference, the same line and the same side. Hoisted and
+   startup-safe (nrmT; statFam's table may not exist yet at startup, then a plain-words compare is used). */
+function propSame(L,r,anySide){ if(!L||!r) return false; const pk=k=>!k||k==='prop'; if(!pk(L.kind)||!pk(r.kind)) return false;
+  if(L.sport && r.sport && String(L.sport).toUpperCase()!==String(r.sport).toUpperCase()) return false;
+  const a=nrmT(L.name), b=nrmT(r.name); if(!a||!b) return false;
+  if(a!==b){ const x=a.split(' '), y=b.split(' '); if(x.length<2||y.length<2||x[x.length-1]!==y[y.length-1]||x[0][0]!==y[0][0]) return false; }
+  const la=lineOfMarket(L.market), lb=lineOfMarket(r.market); if(la==null||lb==null||Math.abs(la-lb)>0.01) return false;
+  if(!anySide && (sideOf(L)||'')!==(r.side||'')) return false;
+  const sa=statOfMarket(L.market), sb=statOfMarket(r.market); let fa, fb;
+  try{ fa=statFam(sa); fb=statFam(sb); }catch(e){ const z=t=>nrmT(t).replace(/\bshots? on goal\b|\bsog\b/g,'shots').replace(/s\b/g,''); fa=z(sa); fb=z(sb); }
+  if(!fa || fa!==fb) return false;
+  try{ if(!qualOK(sa,sb) || !qualOK(sb,sa)) return false; }catch(e){ if(nrmT(sa)!==nrmT(sb) && /period|quarter|half|1st|2nd|3rd|power/i.test(sa+' '+sb)) return false; }
+  return true; }
 // v3.13: is the new line better or worse than the one you hold? (spread: more points is better; Over: lower is better; Under: higher)
 function heldLabel(L){ return L.betnow ? lineOnly(L) : [L.name, sideOf(L)||'', L.market].filter(Boolean).join(' '); }
 function lineCompare(held, row){

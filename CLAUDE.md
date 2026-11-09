@@ -308,6 +308,12 @@
   busiest paths); Refresh asks only `/budget`, `/src/status` and `/oddspapi/usage`. Your rules at a glance (`#rulesGlance`, before Screens): every rule
   from `cfgRead()` in four groups (Screens, Stake sizing, Limits, Fees), redrawn on any input in Settings. Mode raises are included (cfgRead).
   `tests/settings-connect-test.js`. Option 2 (Augi's five screens on our engine) is complete with this step.
+- Already bet, player props worded by the book (v4.39, `propSame` next to `coreKey`, used in `auditCore`'s `prior` and `otherSide`; owner, 11/9: "I made this
+  bet but it still shows as bettable ... crucial fix", Lekkerimaki Over 1.5 Shots on Novig): `autoAddFromDesc` logs a fill in the book's words ("Jonathan
+  Lekkerimäki", "1.5 Shots On Goal"), the board says "Jonathan Lekkerimaki", "1.5 Shots", and `coreKey` compares exact text, so the card stayed in Place these.
+  `propSame(L, r, anySide)`: props only, same sport when both known, same player by `nrmT` (accents, case) or same last name and first initial, same line,
+  same side (unless anySide), same `statFam` (Shots = Shots On Goal = SOG) and no period / power-play / alt qualifier difference (`qualOK` both ways); with
+  `sameTime`. Hoisted and startup-safe: if `statFam`'s table is not defined yet it compares plain words. `tests/prop-prior-test.js` (fails on v4.38).
 - Augi's screens on our engine, step 1 of 5: the Board (v4.34, `boardView`/`#boardView`/`mbev.boardView`, `.cv-legend-box`, `lnGet`/`lnSet`/`lnBtnHtml`/`.ln-ed`,
   `mbev.lineNotes`; owner: "What you recommend" → option 2, "BUILD"): Show menu next to Sort (All groups / Passing / Outliers only / Already bet / Skipped;
   Skipped also lists rejected rows without Show rejected), filtered after `grpOf`. Augi's cover legend (nine chips) in a `details.help` above the bar.
