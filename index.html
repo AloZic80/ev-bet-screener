@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.30</title>
+<title>0xBeta Screener v4.31</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1267,6 +1267,15 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 .scorestrip .ss-sel{border-right:0; border-bottom:1px solid var(--rule); padding:8px 12px; gap:6px 12px; flex-wrap:wrap; flex-direction:row; justify-content:flex-start; align-items:center}
 .scorestrip .ss-sel select{order:-1; max-width:320px; min-width:200px}
 .scorestrip .ss-ctl{margin-bottom:0}
+/* v4.31: Augi's 5-point cover bands (his colours; light and dark) */
+.cv-chip{display:inline-block; margin:3px 0 0 4px; padding:1px 8px; border-radius:99px; font-size:10.5px; font-weight:800; white-space:nowrap; color:var(--cv); background:var(--cvb); border:1px solid color-mix(in srgb, var(--cv) 35%, transparent)}
+.sc-tags .cv-chip{margin:0}
+.cv-1{--cv:#AD4753;--cvb:#FFEDF0}.cv-2{--cv:#A1447F;--cvb:#FCEBF7}.cv-3{--cv:#8A5700;--cvb:#FFF2DA}.cv-4{--cv:#6E5F00;--cvb:#F8F5D9}.cv-5{--cv:#076A96;--cvb:#E5F5FC}
+.cv-6{--cv:#0A6B5C;--cvb:#E1F5F0}.cv-7{--cv:#117A40;--cvb:#E5F7ED}.cv-8{--cv:#25702A;--cvb:#EAF6E6}.cv-9{--cv:#4F45A6;--cvb:#EEEAFF}
+:root[data-theme="dark"] .cv-1{--cv:#FF9DA9;--cvb:#3E222A}:root[data-theme="dark"] .cv-2{--cv:#F4A8D7;--cvb:#38243A}:root[data-theme="dark"] .cv-3{--cv:#FFD08A;--cvb:#3B2D1A}
+:root[data-theme="dark"] .cv-4{--cv:#ECE18A;--cvb:#34321A}:root[data-theme="dark"] .cv-5{--cv:#80D5FA;--cvb:#153343}:root[data-theme="dark"] .cv-6{--cv:#80DFC9;--cvb:#173630}
+:root[data-theme="dark"] .cv-7{--cv:#86EDAA;--cvb:#173626}:root[data-theme="dark"] .cv-8{--cv:#B4ED8A;--cvb:#27391C}:root[data-theme="dark"] .cv-9{--cv:#C4B5FD;--cvb:#272344}
+#studyPanel td .cv-chip{margin:0 4px 0 0}
 </style>
 </head>
 <body>
@@ -1275,7 +1284,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.30</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.31</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1932,6 +1941,15 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
   <p id="calScore" style="margin:14px 0 0;font-size:13.5px"></p>
   <div class="empty" id="calEmpty">Nothing graded yet. Picks on your board get graded automatically once their games go final; your own bets get graded with Check results in the Bet log.</div>
 </div>
+<div class="panel" id="studyPanel">   <!-- v4.31: Augi's Bet result study, on our graded singles -->
+  <h2>Bet result study <span class="sub">5-point cover bands · did each band win as often as it said?</span></h2>
+  <div class="row" style="margin-top:0"><label class="bar-item">Game days <select id="studyScope" class="bar-sel"><option value="all">All</option><option value="month">This month</option><option value="week">Last 7 days</option><option value="day">Today</option></select></label><span class="meta" id="studySum" aria-live="polite"></span></div>
+  <div class="scroll"><table>
+    <thead><tr><th>Projected cover</th><th class="num">Logged</th><th class="num">Pending</th><th class="num">W–L–P</th><th class="num">Avg prediction</th><th class="num">Hit rate</th><th class="num">Difference</th><th class="num">Profit</th></tr></thead>
+    <tbody id="studyRows"></tbody>
+  </table></div>
+  <details class="help" data-help="study-how"><summary>How this is figured</summary><p class="hint">Singles only. Average prediction, hit rate and difference use graded wins and losses; pushes, sold and pending bets are left out. Difference is the hit rate minus the average prediction, in points. Profit is the settled money (betProfit: fees, boosts and free bets counted as in the Bet log). Game days, not the day the bet was placed. Small groups swing hard: read it after hundreds of bets, like the Scorecard.</p></details>
+</div>
 <div class="panel">
   <h2>Where the edge is coming from</h2>
   <p class="hint">Each row is only meaningful once it holds a few dozen bets. Below that, treat it as noise you are watching rather than a result.</p>
@@ -1951,7 +1969,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.30';
+const SCREENER_VERSION='v4.31';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2944,7 +2962,7 @@ function renderCore(rows,cfg){
     cells.market='<td style="text-align:center">'+mktCell+'</td>';
     cells.odds='<td style="text-align:center"><div class="odds-stack">'+(bookLogo(r.book)?logoTag(r.book):'<span class="meta">'+esc(bookLabel(r.book)||'book?')+'</span>')+
         '<span>'+esc(fmtOdds(r.offeredRaw))+'</span>'+orderTagHtml(r)+impTagHtml(r)+shopTagHtml(r)+maxTagHtml(r)+'<span class="mk-slot" data-idx="'+r.idx+'">'+makeTagHtml(r)+'</span></div></td>';
-    cells.cover='<td class="num">'+(r.fairProb==null?'—':'<span class="cover">'+pct(r.fairProb)+'</span>'+
+    cells.cover='<td class="num">'+(r.fairProb==null?'—':'<span class="cover">'+pct(r.fairProb)+'</span>'+cvChipHtml(r.fairProb)+   // v4.31: Augi's cover band
         '<div class="meta">fair '+esc(fmtOdds(r.fairRaw))+'</div>'+
         (r.mktProb!=null?'<div class="meta" title="'+(r.mktSharp?'Market benchmark: BettingPros Market EV fair price, from the sharpest books':'Market benchmark: BettingPros consensus odds (mostly retail books), both sides devigged')+(r.logitGap!=null?' · logit gap '+(r.logitGap>=0?'+':'')+r.logitGap.toFixed(2):'')+'">mkt '+pct(r.mktProb)+(r.mktSharp?' <b>sharp</b>':'')+'</div>':''))+'</td>';
     cells.stars='<td class="num">'+starsHtml(r.stars)+'</td>';
@@ -3210,6 +3228,29 @@ function ageTxt(ms){ if(ms==null || !isFinite(ms)) return ''; const s=Math.max(0
    sort, stars is not always the best bets, so what is it?"): one math order for everything. The edge after blending the market with the model
    (blendNet, what the stake is sized on), outliers last. The daily max is filled in this order, Sort › Math uses it, and the first card in it
    is "#1 MATH PICK". The score colour gets a word: STRONG (75+, green), GOOD (50-74, blue), THIN (under 50, yellow: still +EV, smallest stakes). */
+/* v4.31 (Alonzo: "Augi did some changes for stats that I would like to see on mine; his features with our math"): Augi's 5-point cover bands.
+   The predicted chance (our fair probability: r.fairProb on the board, toProb(b.fair) on a logged bet) gets a named band and colour:
+   Long Shot <45, Feeling Lucky 45-50, On the Line 50-55, Slight Lean 55-60, Lean 60-65, Solid 65-70, Strong 70-75, Heavy Favorite 75-80, High Cover 80+.
+   A chip on the board's Cover cell and on each Sentinels card; Performance › Bet result study compares each band's average prediction with how
+   often it really won (graded wins and losses only), with the money from betProfit. Labels only: no rule or stake changes. */
+function cvBand(p){ return !(p>=0&&p<=1)?0:p<.45?1:p<.50?2:p<.55?3:p<.60?4:p<.65?5:p<.70?6:p<.75?7:p<.80?8:9; }
+function cvNames(){ return ['Unknown','Long Shot','Feeling Lucky','On the Line','Slight Lean','Lean','Solid','Strong','Heavy Favorite','High Cover']; }
+function cvRanges(){ return ['no cover saved','<45%','45–<50%','50–<55%','55–<60%','60–<65%','65–<70%','70–<75%','75–<80%','80%+']; }
+function cvChipHtml(p){ const b=cvBand(p); return b?'<span class="cv-chip cv-'+b+'" title="Projected cover '+(p*100).toFixed(1)+'% · '+cvRanges()[b]+' (Augi\'s 5-point bands; a label, not a rule)">'+cvNames()[b]+'</span>':''; }
+function renderStudy(){ const el=document.getElementById('studyRows'); if(!el) return;
+  const scope=(document.getElementById('studyScope')||{}).value||'all', today=ctDay(Date.now()), d0=new Date(today+'T12:00:00');
+  const inScope=b=>{ const d=gameDayOf(b); if(scope==='all') return true; if(!d) return false; if(scope==='day') return d===today; if(scope==='month') return d.slice(0,7)===today.slice(0,7);
+    const dd=new Date(d+'T12:00:00'); return Math.abs(dd-d0)<7*864e5 && dd<=d0; };
+  const G=Array.from({length:10},()=>({n:0,pend:0,w:0,l:0,p:0,pred:0,g:0,net:0,money:0}));
+  logged.filter(b=>b.kind!=='parlay' && inScope(b)).forEach(b=>{ const p=toProb(b.fair), k=cvBand(p), g=G[k]; g.n++;
+    const r=b.sold?'sold':b.result; if(r==='win') g.w++; else if(r==='loss') g.l++; else if(r==='push') g.p++; else if(r!=='sold') g.pend++;
+    if((r==='win'||r==='loss') && k){ g.g++; g.pred+=p; }
+    const pr=betProfit(b); if(pr!=null){ g.net+=pr; g.money++; } });
+  const pc=x=>(x*100).toFixed(1)+'%', usd=x=>(x>=0?'+':'−')+'$'+Math.abs(x).toFixed(2);
+  el.innerHTML=[1,2,3,4,5,6,7,8,9,0].map(k=>{ const g=G[k]; if(!g.n) return ''; const dec=g.w+g.l, avg=g.g?g.pred/g.g:null, hit=dec?g.w/dec:null;
+    return '<tr><td>'+(k?'<span class="cv-chip cv-'+k+'">'+cvNames()[k]+'</span> <span class="meta">'+cvRanges()[k]+'</span>':'<span class="meta">'+cvRanges()[0]+'</span>')+'</td><td class="num">'+g.n+'</td><td class="num">'+g.pend+'</td><td class="num">'+g.w+'–'+g.l+'–'+g.p+'</td><td class="num">'+(avg==null?'—':pc(avg))+'</td><td class="num">'+(hit==null?'—':pc(hit))+'</td><td class="num">'+(avg==null||hit==null?'—':(hit>=avg?'+':'−')+(Math.abs(hit-avg)*100).toFixed(1)+' pts')+'</td><td class="num '+(g.net>=0?'pl-up':'pl-down')+'">'+(g.money?usd(g.net):'—')+'</td></tr>'; }).join('')||'<tr><td colspan="8" class="meta">No singles in this range yet.</td></tr>';
+  const graded=G.reduce((t,g)=>t+g.w+g.l,0), n=G.reduce((t,g)=>t+g.n,0), sm=document.getElementById('studySum');
+  if(sm) sm.textContent=n+' singles · '+graded+' graded wins and losses'+(graded<30?' · early sample: small groups swing a lot, so do not change rules from this yet':' · a band whose hit rate stays below its average prediction over hundreds of bets is the model being too sure'); }
 function mathKey(r){ return (r&&r.outlier?-1:0)+(r&&r.blendNet!=null?r.blendNet:(r&&r.net!=null?r.net:-1)); }
 function scWord(t){ return t>=75?'STRONG':t>=50?'GOOD':'THIN'; }
 function sentScore(r){ const net=r&&r.net!=null&&isFinite(r.net)?r.net:null, e=net==null?0:Math.round(50*Math.max(0,Math.min(1,net/0.06)));
@@ -3324,7 +3365,7 @@ function placeCardHtml(r,cfg,o){
       '<div class="pc-nm" title="'+esc(r.name)+'">'+esc(r.name)+(code&&code!==String(r.name||'').toUpperCase()?' <span class="sc-tm">'+esc(code)+'</span>':'')+'</div>'+
       '<div class="sc-stat" title="'+esc(mname)+'">'+esc(statTxt)+'</div></div>'+
       '<div class="sc-game"><b>'+esc(giWhen(gi)||'game time not found')+'</b><span>'+esc(gameTxt)+'</span></div></div>'+
-    '<div class="sc-tags">'+tags+'</div>'+
+    '<div class="sc-tags">'+cvChipHtml(r.fairProb)+tags+'</div>'+   // v4.31: Augi's cover band
     '<div class="sc-bet"><div class="sc-pick">'+esc(pickTxt)+impTagHtml(r)+'</div>'+   // v4.10's line: the price as a %, OK to / look elsewhere, the math on hover
       '<div class="sc-money"><b>'+(st>0?'$'+st.toFixed(2):'—')+'</b><span>'+(pay!=null?(isX?'pays $'+pay.toFixed(2):'wins $'+Math.max(0,pay-st).toFixed(2)):'stake')+'</span>'+(lim?'<span class="sc-lim">'+esc(lim)+'</span>':'')+'</div>'+
       '<span class="sc-price book'+(over?' over':'')+(slip?' go':'')+'" role="button" tabindex="0" title="'+(slip?'Open this bet on '+esc(bk)+(st>0?' with $'+st.toFixed(2)+' filled':''):esc(bk))+(over?'. The price is over La Contadora’s most now: skip it or look elsewhere':'')+'">'+
@@ -6126,7 +6167,7 @@ function renderScorecard(){
   if(!n && !C.length) h+='<div class="empty" style="display:block">Nothing settled yet. Every bet that settles moves the bar.</div>';
   el.innerHTML=h; try{ helpApply(el); }catch(e){}   // v4.25: the stages drop-down stays as you left it
 }
-function renderPerf(){ try{ renderCal(); }catch(e){} try{ renderScorecard(); }catch(e){ console.error(e); }
+function renderPerf(){ try{ renderCal(); }catch(e){} try{ renderScorecard(); }catch(e){ console.error(e); } try{ renderStudy(); }catch(e){ console.error(e); }   // v4.31
   renderCalibration();
   const withClose=logged.filter(b=>clv(b)!==null);
   const cards=document.getElementById('statCards');
@@ -7646,6 +7687,7 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   if(t.dataset.src && t.dataset.src!==boardSrc){ boardSrc=t.dataset.src; refresh(); }   // v2.86: Board (API) vs Pasted
 }));
 document.body.dataset.view=(document.querySelector('.view.on')||{}).id||'v-board';   // v4.02
+try{ document.getElementById('studyScope').addEventListener('change',()=>{ try{ renderStudy(); }catch(e){} }); }catch(e){}   // v4.31
 /* v4.29 (Alonzo, after seeing Augi's Odds Board: "I like his GUI, it is cleaner ... his 5 tabs"): Board, Live Games, Parlay, Bet log and Settings
    in the bar; Leagues, Parole and Moneylines in the row under Board, + Add a bet and Performance under Bet log. Every view and every tab button is
    the same as before (same data-view, same handler), so every link that opens a tab still works. body[data-group] says which row shows; the main
