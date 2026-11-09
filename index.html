@@ -32,7 +32,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.42</title>
+<title>0xBeta Screener v4.43</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1384,7 +1384,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.42</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.43</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1481,7 +1481,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
   <details class="help cv-legend-box" data-help="cv-legend"><summary>Cover bands <span class="meta">the colour of each pick's chance</span></summary><div class="cv-legend"><span class="cv-chip cv-1">Long Shot · &lt;45%</span><span class="cv-chip cv-2">Feeling Lucky · 45–&lt;50%</span><span class="cv-chip cv-3">On the Line · 50–&lt;55%</span><span class="cv-chip cv-4">Slight Lean · 55–&lt;60%</span><span class="cv-chip cv-5">Lean · 60–&lt;65%</span><span class="cv-chip cv-6">Solid · 65–&lt;70%</span><span class="cv-chip cv-7">Strong · 70–&lt;75%</span><span class="cv-chip cv-8">Heavy Favorite · 75–&lt;80%</span><span class="cv-chip cv-9">High Cover · 80%+</span></div><p class="hint">A label for the chance only: La Contadora decides the bet and the stake, whatever the band.</p></details>   <!-- v4.34: Augi's legend -->
   <!-- v2.62: one slim line of view controls; set-once settings live in the Settings tab -->
   <div class="board-bar">
-    <label class="bar-item" title="What the board lists (Augi's review menu)">Show <select id="boardView" class="bar-sel"><option value="all">All groups</option><option value="pass">✅ Passing (Place these)</option><option value="outlier">Outliers only</option><option value="prior">Already bet</option><option value="skip">Skipped</option></select></label><!-- v4.34 -->
+    <label class="bar-item" title="What the board lists (Augi's review menu)">Show <select id="boardView" class="bar-sel"><option value="all">All groups</option><option value="pass">✅ Passing (Place these)</option><option value="outlier">Outliers only</option><option value="prior">Already bet</option><option value="watch">👀 Watch (model only)</option><option value="skip">Skipped</option></select></label><!-- v4.34 -->
     <label class="bar-item">Sort <select id="sortBy" class="bar-sel">
         <option value="math" selected>✅ Math: best edge first</option><!-- v4.28 --><option value="top">Top bets (stars, then cover %)</option>
         <option value="score">Sentinel score (best first)</option><!-- v4.21 -->
@@ -2125,7 +2125,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.42';
+const SCREENER_VERSION='v4.43';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2561,7 +2561,7 @@ function auditCore(rows,cfg){
   rows.forEach(r=>{ gameCount[r.game]=(gameCount[r.game]||0)+1; });
   const slateDay=document.getElementById('slate').value;
   rows.forEach((r,idx)=>{
-    r.idx=idx; r.flags=[]; delete r.longShot; delete r.dayTrimmed; delete r.moved; delete r.removed; delete r.riskCand; delete r.risk; delete r.glConflict; delete r.glBest; delete r.prior; delete r.corr; delete r.contracts; delete r.gameInPlay; delete r.gameWeighted; delete r.samePlayer; delete r.capTrimmed;
+    r.idx=idx; r.flags=[]; delete r.watch; delete r.actNet; delete r.longShot; delete r.dayTrimmed; delete r.moved; delete r.removed; delete r.riskCand; delete r.risk; delete r.glConflict; delete r.glBest; delete r.prior; delete r.corr; delete r.contracts; delete r.gameInPlay; delete r.gameWeighted; delete r.samePlayer; delete r.capTrimmed;
     if(r.offeredProb===null||r.fairProb===null){
       r.flags.push(['out','odds unreadable']); r.gross=null; r.net=null; r.pass=false; r.stake=0; return;
     }
@@ -2580,7 +2580,13 @@ function auditCore(rows,cfg){
     const oMaxRow = (cfg.mevOddsMax && r.src==='paste:mev') ? Math.max(cfg.oMax, cfg.mevOddsMax) : cfg.oMax;
     if(r.amer<cfg.oMin||r.amer>oMaxRow) r.flags.push(['out','odds outside '+cfg.oMin+' to '+fmtOdds(oMaxRow)]);
     if(r.gross>cfg.eMax) r.flags.push(['out','gross EV over the ceiling']);
+    /* v4.43 (Alonzo: "build", after ChatGPT's review: the floor was checked on the model's chance while the stake and "OK up to" use the blend, so a row
+       could "pass" with a $0 stake and "look elsewhere"): the floor is now checked on the same conservative chance as the stake and OK up to (okProb: the
+       market pulled toward the model, or the model when lower). Model EV stays as r.net, a separate signal: a row the model passes but the conservative
+       chance does not is WATCH (its own group, not placed). No market price: the model alone, as before (stake capped at the minimum). */
+    r.actProb=okProbR(r); r.actNet=r.actProb!=null&&r.offeredProb>0?((r.actProb/r.offeredProb-1)-r.fee)/(1+r.fee):r.net;
     if(r.net<cfg.eMin) r.flags.push(['out','net EV under the floor']);
+    else if(r.mktProb!=null && r.actNet<cfg.eMin){ r.watch=true; r.flags.push(['out','WATCH · the model likes it ('+(r.net>=0?'+':'')+(r.net*100).toFixed(1)+'%), but with the market it is '+(r.actNet>=0?'+':'')+(r.actNet*100).toFixed(1)+'%, under your '+(cfg.eMin*100).toFixed(1)+'% floor']); }
     if(cfg.deriv&&r.kind==='derivative') r.flags.push(['out','quarter or half market']);
     if(cfg.prop&&r.kind==='prop'&&/NCAA/.test(r.sport)) r.flags.push(['out','college player prop']);
     if(cfg.dfs&&DFS.test(r.book)) r.flags.push(['out','DFS pick\u2019em, not a single bet: see Parlays']);
@@ -2951,7 +2957,7 @@ function renderCore(rows,cfg){
   const tb=document.getElementById('tbody'), empty=document.getElementById('emptyMsg');
   tb.innerHTML='';
   const passing=rows.filter(r=>r.pass);
-  let shown=(showRejects||boardView==='skip')?rows.slice():passing.slice();   // v4.34: Skipped also lists the rejected rows
+  let shown=(showRejects||boardView==='skip')?rows.slice():passing.concat(rows.filter(x=>x.watch && passing.indexOf(x)<0));   // v4.34: Skipped also lists the rejected rows   // v4.43: Watch rows are always listed (their own group)
   const isStarted=r=>{ const s=liveState(r); return s==='started'||s==='closed'; };
   // v2.86: two boards from one audit — ALREADY BET, one-per-player, game caps and the daily max are shared
   const pv=boardSrc==='paste';
@@ -2990,11 +2996,12 @@ function renderCore(rows,cfg){
   if(!pv && swc.only) shown=shown.filter(r=>isSweet(r,swc));
   // v2.62: three groups — bets to place, bets you already have, then everything to skip.
   // Your sort (or a column-header click) applies inside each group.
-  const grpOf=x=> (x.prior||x.waitOrder) ? 1 : isStarted(x) ? 3 : liveState(x)==='unconfirmed' ? 4 : (x.pass && x.stake>0 && !x.removed) ? 0 : 2;
-  if(boardView!=='all') shown=shown.filter(x=>{ const g=grpOf(x); return boardView==='pass'?g===0 : boardView==='outlier'?(g===0&&!!x.outlier) : boardView==='prior'?g===1 : g===2; });   // v4.34: Augi's Show menu
+  const grpOf=x=> (x.prior||x.waitOrder) ? 1 : isStarted(x) ? 3 : liveState(x)==='unconfirmed' ? 4 : (x.pass && x.stake>0 && !x.removed) ? 0 : x.watch ? 5 : 2;   // v4.43: 5 = Watch
+  const GRP_RANK=[0,1,3,4,5,2];   // v4.43: Place these, Already bet, Watch, Skip, Started, Can't confirm
+  if(boardView!=='all') shown=shown.filter(x=>{ const g=grpOf(x); return boardView==='pass'?g===0 : boardView==='outlier'?(g===0&&!!x.outlier) : boardView==='prior'?g===1 : boardView==='watch'?g===5 : g===2; });   // v4.43: + Watch   // v4.34: Augi's Show menu
   shown.sort((a,b)=>{
     const ga=grpOf(a), gb=grpOf(b);
-    if(ga!==gb) return ga-gb;
+    if(ga!==gb) return GRP_RANK[ga]-GRP_RANK[gb];   // v4.43: Watch after Already bet
     if(colSort){
       const va=colVal(a,colSort), vb=colVal(b,colSort);
       if(va==null && vb==null) return 0;
@@ -3059,8 +3066,8 @@ function renderCore(rows,cfg){
   lastShown=shown;
   renderTodayLine();
   const rb=document.getElementById('refreshApi'); if(rb) rb.disabled=!lastRows.some(x=>String(x.src||'').startsWith('api:'));
-  const GROUP_NAMES=['Place these','Already bet','Skip','Started, over or closed — can\'t bet','Can\'t confirm — check the app'];
-  const groupCount=[0,0,0,0,0]; shown.forEach(r=>groupCount[grpOf(r)]++);
+  const GROUP_NAMES=['Place these','Already bet','Skip','Started, over or closed — can\'t bet','Can\'t confirm — check the app','Watch · the model likes these, the edge with the market is too small: not placed'];   // v4.43
+  const groupCount=[0,0,0,0,0,0]; shown.forEach(r=>groupCount[grpOf(r)]++);
   let lastGroup=-1;
   const cardsOn=boardCardsOn(), cardsHtml=[];   // v2.69
   const mathTop=(shown||[]).filter(r=>r.pass && r.stake>0 && !r.prior && !r.waitOrder && !r.removed && !r.moved && !r.glConflict).reduce((a,r)=>!a||mathKey(r)>mathKey(a)?r:a, null);   // v4.28

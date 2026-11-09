@@ -337,6 +337,11 @@
   click handler lets `a.sc-link` through; for Novig it then shows the `#slipGo` bar with "website (if the app did not open)" (the https slip). Unknown
   price: the tap checks it and shows the bar as before (app link first, website second). `slipLinkFor` is hoisted with its own maps (startup-safe).
   `novigapp://` is still unconfirmed (novig.com cannot be read from the build machine). `tests/slip-onetap-test.js`; `tests/slip-app-test.js` unchanged.
+- EV floor on the conservative chance, and WATCH (v4.43, `r.actProb`, `r.actNet`, `r.watch` in `auditCore`; group 5 in `grpOf` with `GRP_RANK`, `#boardView` "watch";
+  owner: "build", after ChatGPT: "move the actionable screen floor to the same conservative chance used by OK up to and stake sizing"): `r.net` stays the model's EV;
+  `r.actNet` is EV on `okProbR(r)`. Floor: model under it → "net EV under the floor" (a skip); model over it but `actNet` under it (with a market price) → `r.watch`,
+  out flag "WATCH · the model likes it (+x%), but with the market it is +y%, under your z% floor". Watch rows are always listed (`shown` adds them even without Show
+  rejected), in their own group after Already bet and before Skip; Show › 👀 Watch lists only them. No market price: the model alone, as before. `tests/floor-watch-test.js`.
 - Augi's screens on our engine, step 1 of 5: the Board (v4.34, `boardView`/`#boardView`/`mbev.boardView`, `.cv-legend-box`, `lnGet`/`lnSet`/`lnBtnHtml`/`.ln-ed`,
   `mbev.lineNotes`; owner: "What you recommend" → option 2, "BUILD"): Show menu next to Sort (All groups / Passing / Outliers only / Already bet / Skipped;
   Skipped also lists rejected rows without Show rejected), filtered after `grpOf`. Augi's cover legend (nine chips) in a `details.help` above the bar.
