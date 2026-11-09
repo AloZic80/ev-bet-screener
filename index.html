@@ -7,10 +7,11 @@
 (function(){ var m='auto'; try{ m=localStorage.getItem('mbev.layout')||'auto'; }catch(e){}
   var embed=/[?&]embed=phone(&|$)/.test(location.search), narrow=screen.width<700, de=document.documentElement;
   de.setAttribute('data-layout', embed?'embed':m);
+  try{ de.setAttribute('data-palette', localStorage.getItem('mbev.palette')||'green'); }catch(e){ de.setAttribute('data-palette','green'); }   // v4.33: colour scheme, before the first paint
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.31</title>
+<title>0xBeta Screener v4.33</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1276,6 +1277,27 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 :root[data-theme="dark"] .cv-4{--cv:#ECE18A;--cvb:#34321A}:root[data-theme="dark"] .cv-5{--cv:#80D5FA;--cvb:#153343}:root[data-theme="dark"] .cv-6{--cv:#80DFC9;--cvb:#173630}
 :root[data-theme="dark"] .cv-7{--cv:#86EDAA;--cvb:#173626}:root[data-theme="dark"] .cv-8{--cv:#B4ED8A;--cvb:#27391C}:root[data-theme="dark"] .cv-9{--cv:#C4B5FD;--cvb:#272344}
 #studyPanel td .cv-chip{margin:0 4px 0 0}
+/* v4.32: the bottom bar on its own layer, so iPhone Safari keeps it pinned while scrolling back up */
+.tabs{-webkit-transform:translateZ(0); transform:translateZ(0); will-change:transform; -webkit-backface-visibility:hidden; backface-visibility:hidden}
+/* v4.33: colour schemes. --brand is the solid colour under white text (active tab, buttons in dark mode, the Safe button); --accent is text and
+   outlines. Wins stay green (--live, --gain) and losses red in every scheme. Each pair is AA-checked (tests/palette-test.js). */
+.tabs .tab.on,.tabs .tab.grp{background:var(--brand,#087B44)} .tabs .tab.on .tab-n,.tabs .tab.grp .tab-n{color:var(--brand,#087B44)}
+:root[data-theme="dark"] button.act,:root[data-theme="dark"] button.log:not(.parlay):not(.undo):not(.share-btn),
+:root[data-theme="dark"] .cal-seg button.on,:root[data-theme="dark"] .ab-seg button.on,:root[data-theme="dark"] .par-btn,
+:root[data-theme="dark"] .copy-big{background:var(--brand,#087B44); border-color:var(--brand,#087B44)}
+:root{--brand:#087B44}
+:root[data-palette="blue"]:not([data-theme="dark"]){--brand:#1D4ED8; --accent:#1D4ED8; --accent-bg:#EAF0FE; --page:#F3F6FC; --panel-2:#F7F9FE; --rail:#E8EEFA; --rule:#D9E1F0; --rule-2:#E5EBF6; --ink:#141C2B; --soft:#566177; --dim:#46516A; --jetta:#1D4ED8; --jetta-text:#1D4ED8; --board-tint:#F7F9FE}
+:root[data-palette="blue"][data-theme="dark"]{--brand:#1D4ED8; --accent:#8AB4FF; --accent-bg:#14213D; --page:#0A0F19; --panel:#121A29; --panel-2:#172133; --rail:#1C283D; --rule:#2A3852; --rule-2:#202C42; --ink:#EDF2FB; --soft:#9DAAC2; --dim:#9DAAC2; --jetta:#1D4ED8; --jetta-text:#8AB4FF; --board-tint:#0F1830}
+:root[data-palette="red"]:not([data-theme="dark"]){--brand:#B42318; --accent:#B42318; --accent-bg:#FDECEA; --page:#FBF4F3; --panel-2:#FEF8F7; --rail:#F8E9E7; --rule:#EEDCD9; --rule-2:#F4E6E4; --ink:#2A1614; --soft:#6E5754; --dim:#5E4744; --jetta:#B42318; --jetta-text:#B42318; --board-tint:#FEF8F7}
+:root[data-palette="red"][data-theme="dark"]{--brand:#B42318; --accent:#FF9F94; --accent-bg:#3A1A17; --page:#150D0C; --panel:#221514; --panel-2:#2A1A19; --rail:#331F1D; --rule:#4A2C29; --rule-2:#3A2321; --ink:#FBEFEE; --soft:#C2A6A2; --dim:#C2A6A2; --jetta:#B42318; --jetta-text:#FF9F94; --board-tint:#1E1110}
+:root[data-palette="purple"]:not([data-theme="dark"]){--brand:#6D28D9; --accent:#6D28D9; --accent-bg:#F1EBFE; --page:#F7F4FD; --panel-2:#FAF8FE; --rail:#EEE8FB; --rule:#E2DAF3; --rule-2:#EBE5F8; --ink:#1E1630; --soft:#625A75; --dim:#524A66; --jetta:#6D28D9; --jetta-text:#6D28D9; --board-tint:#FAF8FE}
+:root[data-palette="purple"][data-theme="dark"]{--brand:#6D28D9; --accent:#C8B6FF; --accent-bg:#272344; --page:#0F0C17; --panel:#1A1526; --panel-2:#211B30; --rail:#2A2240; --rule:#3B3157; --rule-2:#2E2645; --ink:#F3F0FB; --soft:#ADA4C4; --dim:#ADA4C4; --jetta:#6D28D9; --jetta-text:#C8B6FF; --board-tint:#15111F}
+:root[data-palette="graphite"]:not([data-theme="dark"]){--brand:#374151; --accent:#374151; --accent-bg:#EEF0F3; --page:#F4F5F7; --panel-2:#F8F9FA; --rail:#ECEEF1; --rule:#DDE1E6; --rule-2:#E7E9ED; --ink:#14171C; --soft:#5B6270; --dim:#4B5260; --jetta:#374151; --jetta-text:#374151; --board-tint:#F8F9FA}
+:root[data-palette="graphite"][data-theme="dark"]{--brand:#4B5563; --accent:#D1D5DB; --accent-bg:#1F2430; --page:#0D0F13; --panel:#161920; --panel-2:#1C2029; --rail:#232833; --rule:#333A47; --rule-2:#282E39; --ink:#F1F3F6; --soft:#A3AAB6; --dim:#A3AAB6; --jetta:#4B5563; --jetta-text:#D1D5DB; --board-tint:#12151B}
+.pal-seg button{display:inline-flex; align-items:center; gap:6px}
+.pal-dot{display:inline-block; width:12px; height:12px; border-radius:50%; border:1px solid rgba(0,0,0,.15)}
+.pal-seg [data-p="green"] .pal-dot{background:#087B44} .pal-seg [data-p="blue"] .pal-dot{background:#1D4ED8} .pal-seg [data-p="red"] .pal-dot{background:#B42318}
+.pal-seg [data-p="purple"] .pal-dot{background:#6D28D9} .pal-seg [data-p="graphite"] .pal-dot{background:#374151}
 </style>
 </head>
 <body>
@@ -1284,7 +1306,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.31</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.33</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1596,6 +1618,9 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
   <summary><h2>Layout <span class="sub">how the screener fits this device</span></h2></summary>
   <div class="ab-seg" id="layoutSeg" role="radiogroup" aria-label="Layout"><button type="button" role="radio" data-l="auto">Auto</button><button type="button" role="radio" data-l="phone">Phone</button><button type="button" role="radio" data-l="desktop">Desktop</button></div>
   <p class="hint" style="margin:10px 0 0">Auto picks the layout from your screen size. Phone shows the phone layout, even on a computer. Desktop shows the full layout, even on a phone. Saved on this device only.</p>
+  <h3 class="set-h">Colours</h3>   <!-- v4.33 -->
+  <div class="ab-seg pal-seg" id="paletteSeg" role="radiogroup" aria-label="Colour scheme"><button type="button" role="radio" data-p="green"><i class="pal-dot"></i>Green</button><button type="button" role="radio" data-p="blue"><i class="pal-dot"></i>Blue</button><button type="button" role="radio" data-p="red"><i class="pal-dot"></i>Red</button><button type="button" role="radio" data-p="purple"><i class="pal-dot"></i>Purple</button><button type="button" role="radio" data-p="graphite"><i class="pal-dot"></i>Graphite</button></div>
+  <p class="hint" style="margin:10px 0 0">A whole scheme for light and dark: page, panels, tabs and buttons. Green is Augi's. Wins stay green and losses red in every scheme. Saved on this device only.</p>
 </details>
 <details class="panel fold" id="syncPanel" open>
   <summary><h2>☁ Your bets on every device <span class="sub">phone, other PCs — locked with your own sync password</span></h2></summary>
@@ -1969,7 +1994,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.31';
+const SCREENER_VERSION='v4.33';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -7698,6 +7723,14 @@ function tabGroupPaint(t){ const g=(t&&t.dataset.group)||'board'; document.body.
   const sub=document.getElementById('subTabs'); if(sub) sub.hidden=!sub.querySelector('[data-group="'+g+'"]'); }
 document.addEventListener('click',e=>{ const h=e.target.closest&&e.target.closest('#subTabs .subhome'); if(!h) return; const t=document.querySelector('.tabs .tab[data-group="'+h.dataset.group+'"]'); if(t) t.click(); });
 tabGroupPaint(document.querySelector('.tab.on'));
+/* v4.33 (Alonzo: "with an option to change the colour palette, in case I want blue, red, etc., but as a scheme"): Settings › Layout › Colours.
+   html[data-palette] picks a full token set (light and dark) from the v4.33 CSS block; mbev.palette, this device only. */
+function palPaint(){ const v=document.documentElement.getAttribute('data-palette')||'green'; document.querySelectorAll('#paletteSeg [data-p]').forEach(b=>{ const on=b.dataset.p===v; b.classList.toggle('on',on); b.setAttribute('aria-checked',String(on)); }); }
+try{ document.getElementById('paletteSeg').addEventListener('click',e=>{ const b=e.target.closest('[data-p]'); if(!b) return; document.documentElement.setAttribute('data-palette', b.dataset.p); try{ localStorage.setItem('mbev.palette', b.dataset.p); }catch(x){} palPaint(); }); palPaint(); }catch(e){}
+/* v4.32 (Alonzo: "when I scroll up, the tab bar does not stay pinned down"): iPhone Safari can let a fixed bar that sits inside other page blocks
+   slide with the page while it scrolls back up (the toolbar showing and hiding). The bar becomes a direct child of <body> and gets its own
+   compositing layer (translateZ), the usual cure. Same buttons, same handlers. */
+try{ const tb=document.querySelector('.tabs'); if(tb && tb.parentNode!==document.body) document.body.insertBefore(tb, document.body.firstChild); }catch(e){}   // first in the page, so the tab order (Board before the hidden Pasted) stays
 function showBoardSrc(src){ const t=document.querySelector('.tab[data-src="'+src+'"]'); if(t) t.click(); }
 const NUMS=['oMin','oMax','eMin','eMax','devig','bank','kelly','shrink','sMin','sMax','mWeight','gameCapPct','dayGoal','dayMaxPct','dayMaxMevPct',
             'fKalshi','fProphet','fPoly','fNovig','fFliff','fBook','fFdp'];

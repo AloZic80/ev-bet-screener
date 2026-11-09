@@ -37,6 +37,9 @@ let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?
     const pin=await p.evaluate(()=>{ const t=document.querySelector('.tabs').getBoundingClientRect(), sel=document.getElementById('ssSport').getBoundingClientRect(), g=document.getElementById('ssGames').getBoundingClientRect();
       return {bottom:Math.round(t.bottom), vh:window.innerHeight, pos:getComputedStyle(document.querySelector('.tabs')).position, menuAbove:sel.bottom<=g.top+1}; });
     check(W+' px: v4.30: the five tabs stay pinned to the bottom of the screen while scrolling', pin.pos==='fixed' && Math.abs(pin.bottom-pin.vh)<=1, pin);
+    await p.mouse.wheel(0,-3000); await p.waitForTimeout(200);   // v4.32: and after scrolling back up to the top
+    const up=await p.evaluate(()=>{ const t=document.querySelector('.tabs'); return {bottom:Math.round(t.getBoundingClientRect().bottom), vh:window.innerHeight, parentIsBody:t.parentNode===document.body, y:Math.round(scrollY)}; });
+    check(W+' px: v4.32: scrolled back up, the bar is still at the bottom, and it sits directly in the page body (iPhone Safari)', Math.abs(up.bottom-up.vh)<=1 && up.parentIsBody, up);
     check(W+' px: v4.30: the ribbon menu (My games, Top events, NBA...) sits above the scores', pin.menuAbove, pin);
     check(W+' px: no page errors', !errs.length, errs);
     await ctx.close();
