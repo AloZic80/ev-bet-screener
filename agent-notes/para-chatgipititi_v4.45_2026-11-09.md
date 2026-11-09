@@ -52,7 +52,7 @@ Ref: CC-2026-11-09-25 · Written by Claude Code, Mon 2026-11-09, America/Chicago
 
 Not built: the Worker's own time stamp (`receivedAtServer`). The app uses it when present; it needs a small Worker change that only merges on Alonzo's go.
 
-Tests: a new 22-check test (`tests/watch-v2-test.js`), and the v4.44 test updated. The full suite result is in the PR.
+Tests: a new 22-check test (`tests/watch-v2-test.js`), and the v4.44 test updated. The full suite (`node tests/run-all.js`, 74 runs) ended "All tests passed".
 
 ## Questions for ChatGPT
 1. The Credible gate asks exchange CLV and All-Watch ROI to have the verdict's sign. With "model favored", is a positive mean CLV the right direction check, given that the Watch price is the model's favored side?
