@@ -272,6 +272,13 @@
   Performance › Bet result study (after Is the model honest?): singles only, by game day (All / This month / Last 7 days / Today): logged, pending,
   W–L–P, average prediction and hit rate on graded wins and losses only, difference in points, profit from `betProfit`. Our parlay legs are not
   graded one by one, so his "parlay legs" view is not here. His light colours were darkened a little for AA on 10.5 px text. `tests/cover-study-test.js`.
+- Augi's screens, step 2 of 5: Live Games, the Game Hub (v4.35, `#hubPanel` at the top of `v-live`, `hubState`/`mbev.hub`, `hubLoad`, `hubOpen`, `hubRows`,
+  `hubNoVig`, `hubState3`; owner: "Build"): sport buttons, Scheduled / Live / Final with counts, a day (`fetchScoreboardDay`), game cards with "N bets
+  risking $x" (`ssRiskMap`) and how many board props the game has. A game: score and status, ESPN's line from the summary's `pickcenter` with the vig
+  out, the last six plays (`plays`, or football `drives.current.plays`), your logged bets in it, and the board's props for that exact game (by
+  `gameInfo.eventId`, else both team codes) with La Contadora's decision (BET $x / ALREADY BET / STARTED / skip), a search box and See on Board
+  (fills `#filterPlayer`). Summary via `fetchBoxscore` (cached). ESPN only, no Worker calls (Augi's hub spends Odds API credits per game for props;
+  ours reads the board already loaded). Live games refresh every 30 s while the Live tab is open. `tests/game-hub-test.js`.
 - Augi's screens on our engine, step 1 of 5: the Board (v4.34, `boardView`/`#boardView`/`mbev.boardView`, `.cv-legend-box`, `lnGet`/`lnSet`/`lnBtnHtml`/`.ln-ed`,
   `mbev.lineNotes`; owner: "What you recommend" → option 2, "BUILD"): Show menu next to Sort (All groups / Passing / Outliers only / Already bet / Skipped;
   Skipped also lists rejected rows without Show rejected), filtered after `grpOf`. Augi's cover legend (nine chips) in a `details.help` above the bar.
