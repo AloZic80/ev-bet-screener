@@ -32,7 +32,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.37</title>
+<title>0xBeta Screener v4.38</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1364,6 +1364,16 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 .pal-custom .meta{flex-basis:100%}
 .pal-seg{flex-wrap:wrap; max-width:100%; border-radius:14px; row-gap:2px}   /* six schemes wrap on a phone instead of pushing the page sideways */
 @media (max-width:640px){ .pal-grid{grid-template-columns:repeat(10,minmax(24px,1fr)); width:100%} .pal-sw{width:100%; height:auto; aspect-ratio:1} }
+/* v4.38: Settings, step 5: Connect, API credits, rules at a glance */
+.cn-box{margin-top:12px; padding:10px 12px; border:1px solid var(--rule); border-radius:12px; background:var(--panel-2,var(--panel))} .cn-row{display:flex; flex-wrap:wrap; align-items:center; gap:8px} .cn-row code{font-size:13px; overflow-wrap:anywhere}
+.cn-chip{display:inline-block; font-size:11.5px; font-weight:600; padding:2px 9px; border-radius:99px; border:1px solid var(--rule); color:var(--soft); text-transform:none; letter-spacing:0} .cn-chip.bad{color:var(--warn); border-color:var(--warn)}
+.cn-status{margin-top:8px; padding:8px 10px; border-radius:8px; background:var(--panel); border:1px solid var(--rule); font-size:13.5px; overflow-wrap:anywhere} .cn-status.ok{border-color:var(--live); color:var(--ink)} .cn-status.bad{border-color:var(--out); color:var(--ink)}
+.cr-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:10px; margin-top:6px}
+.cr-card{padding:10px 12px; border:1px solid var(--rule); border-radius:12px; background:var(--panel)} .cr-card h3{margin:0 0 4px; font-size:13px} .cr-big{font-size:22px; font-weight:800; font-variant-numeric:tabular-nums} .cr-card.low{border-color:var(--warn)} .cr-card.out{border-color:var(--out)}
+.cr-lines{margin:6px 0 0; padding-left:16px; font-size:12px; color:var(--soft)}
+.rg-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; margin-top:8px} .rg-g{padding:8px 10px; border:1px solid var(--rule); border-radius:12px; background:var(--panel)} .rg-g h3{margin:0 0 6px; font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--soft)}
+.rg-t{display:grid; grid-template-columns:1fr auto; gap:0 8px; padding:4px 0; border-top:1px solid var(--rule-2,var(--rule)); font-size:13px} .rg-t:first-of-type{border-top:0} .rg-t b{text-align:right; font-variant-numeric:tabular-nums} .rg-t small{grid-column:1 / -1; color:var(--soft); font-size:11.5px}
+.rg-panel h2 .cn-chip{margin-left:6px; vertical-align:middle}
 </style>
 </head>
 <body>
@@ -1372,7 +1382,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.37</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.38</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1682,14 +1692,30 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 
 <div class="view" id="v-settings">
 <details class="panel fold" id="srcSettings" open>   <!-- v3.54: moved here from the header; v3.57: the sources went back to the main page, the passphrase stays -->
-  <summary><h2>Screener passphrase <span class="sub">your data sources are on the main page, under the BettingPros bar</span></h2></summary>
+  <summary><h2>Connect <span class="sub">your Worker and passphrase · test it for free</span></h2></summary>   <!-- v4.38: Augi's Connect screen -->
   <div class="row" id="passBox" style="display:flex;margin-top:4px">
     <input type="password" id="screenerPass" aria-label="Screener passphrase" placeholder="passphrase" style="max-width:220px" autocomplete="new-password">
     <button class="act" id="passSave" type="button" style="padding:7px 16px">Save</button>
     <span class="meta" id="passMsg" role="status"></span>
     <span class="hint" style="margin:0">Saved in this browser only. Must match the SCREENER_PASS secret on the Worker.</span>
   </div>
+  <div class="cn-box" id="cnBox">   <!-- v4.38 -->
+    <div class="cn-row"><span class="meta">Worker</span> <code id="cnHost"></code> <span class="cn-chip" id="cnPassChip"></span></div>
+    <div class="row" style="margin-top:8px"><button type="button" class="act" id="cnTest">Test connection (free)</button></div>
+    <div class="cn-status" id="cnStatus" role="status" aria-live="polite">Test asks your Worker which data sources have a key. It costs no BettingPros, Odds API or other provider call.</div>
+    <p class="hint" style="margin:6px 0 0">No API keys are typed here: every key stays a secret on the Worker in Cloudflare. The passphrase only unlocks your Worker.</p>
+  </div>
 </details>
+<details class="panel fold" id="credPanel" open>   <!-- v4.38: Augi's API credits page -->
+  <summary><h2>API credits &amp; usage <span class="sub">last reported, not a live poll · refresh is free</span></h2></summary>
+  <div class="cr-grid" id="crGrid"></div>
+  <div class="row" style="margin-top:10px"><button type="button" class="ghost sm" id="crRefresh">⟳ Refresh (free)</button> <span class="meta" id="crMsg" role="status"></span></div>
+</details>
+<div class="panel rg-panel" id="rulesGlance">   <!-- v4.38: Augi's rules layout: everything La Contadora uses, in one place -->
+  <h2>Your rules at a glance <span class="cn-chip">saved in this browser · no secrets</span></h2>
+  <div class="rg-grid" id="rgGrid"></div>
+  <p class="hint" style="margin:6px 0 0">Change any of them in Screens and Stake sizing below; this updates as you type. A mode (Safe, Feeling Lucky, Clairvoyant) can raise the Kelly fraction, game cap and daily max.</p>
+</div>
 <details class="panel fold" id="layoutPanel" open>   <!-- v3.54 -->
   <summary><h2>Layout <span class="sub">how the screener fits this device</span></h2></summary>
   <div class="ab-seg" id="layoutSeg" role="radiogroup" aria-label="Layout"><button type="button" role="radio" data-l="auto">Auto</button><button type="button" role="radio" data-l="phone">Phone</button><button type="button" role="radio" data-l="desktop">Desktop</button></div>
@@ -2097,7 +2123,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.37';
+const SCREENER_VERSION='v4.38';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -7817,6 +7843,58 @@ document.getElementById('clearBoard').addEventListener('click',()=>{
   lastRows=[]; try{ localStorage.removeItem(BOARD_KEY); }catch(e){}
   document.getElementById('savedNote').textContent=''; render([],cfgRead());
 });
+/* v4.38 (Alonzo: "Build", Augi's screens step 5 of 5: Settings): Augi's Connect card (the Worker, whether a passphrase is saved, Test connection: the
+   Worker's free /src/status, which lists the sources with a key and never calls a provider; 401 = the passphrase does not match), his API credits page
+   (each source's last reported allowance, from what the app already keeps: /budget, mbev.oaq, mbev.sbq, /oddspapi/usage, mbev.lePinn, mbev.wk; Refresh
+   asks only the free /budget, /src/status and /oddspapi/usage), and his rules layout: every rule La Contadora uses, in one card, live. */
+function cnPaint(){ const h=document.getElementById('cnHost'); if(!h) return; let pass=''; try{ pass=localStorage.getItem('mbev.pass')||''; }catch(e){}
+  h.textContent=String(API_BASE).replace(/^https?:\/\//,''); const c=document.getElementById('cnPassChip'); c.textContent=pass?'passphrase saved':'no passphrase yet'; c.classList.toggle('bad',!pass); }
+async function cnTest(){ const st=document.getElementById('cnStatus'), btn=document.getElementById('cnTest'); if(!st) return; cnPaint();
+  let pass=''; try{ pass=localStorage.getItem('mbev.pass')||''; }catch(e){}
+  if(!pass){ st.className='cn-status bad'; st.textContent='✗ Type the passphrase above and press Save first.'; return; }
+  btn.disabled=true; st.className='cn-status'; st.textContent='Testing…'; const t0=Date.now();
+  try{ const r=await fetch(API_BASE+'/src/status',{headers:apiHeaders(), cache:'no-store'}), ms=Date.now()-t0;
+    if(r.status===401){ st.className='cn-status bad'; st.textContent='✗ The Worker answered, but the passphrase does not match its SCREENER_PASS. Type it again and press Save.'; }
+    else if(!r.ok){ st.className='cn-status bad'; st.textContent='✗ The Worker answered '+r.status+'. Try again in a minute; if it stays, check the Worker in Cloudflare.'; }
+    else { const j=await r.json(), S=(j&&j.sources)||[]; srcInfo=S.length?S:srcInfo; try{ paintSources(); }catch(e){}
+      const on=S.filter(x=>x.key).map(x=>x.name), off=S.filter(x=>!x.key).map(x=>x.name);
+      st.className='cn-status ok'; st.textContent='✓ Connected in '+ms+' ms. Keys set: '+(on.join(', ')||'none')+(off.length?'. No key yet: '+off.join(', '):'')+'. No provider was called.'; }
+  }catch(e){ st.className='cn-status bad'; st.textContent='✗ Could not reach the Worker (offline, or the Worker is down).'; }
+  btn.disabled=false; crPaint(); }
+function crAgo(t){ if(!(t>0)) return ''; const m=Math.round((Date.now()-t)/60e3); return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' d ago'; }
+function crPaint(){ const el=document.getElementById('crGrid'); if(!el) return; const J=k=>{ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } };
+  const card=(name,big,sub,lines,lvl)=>'<div class="cr-card'+(lvl?' '+lvl:'')+'"><h3>'+esc(name)+'</h3><div class="cr-big">'+esc(big)+'</div><div class="meta">'+esc(sub)+'</div>'+(lines&&lines.length?'<ul class="cr-lines">'+lines.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+'</div>';
+  const keyOf=id=>{ const x=(srcInfo||[]).find(s=>s.id===id); return x?(x.key?'key set':'no key yet'):'not checked'; };
+  const B=(typeof lastBudget!=='undefined'&&lastBudget)||null, bl=B?(B.limit||50)-(B.used||0):window._bpLeft;
+  const oq=J('mbev.oaq'), sq=J('mbev.sbq'), ou=window._opUsage, lp=lePinnUse(), w=wkState(), top=Object.entries(w.p).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>k+' '+v.toLocaleString());
+  el.innerHTML=
+    card('BettingPros', bl!=null?bl+' left':'?', B?'of '+(B.limit||50)+' calls '+(B.window==='24h'?'in any 24 hours':'today')+' (Worker count)':'press Refresh', B&&B.used!=null?[B.used+' used']:[], bl!=null&&bl<=10?(bl<=0?'out':'low'):'')+
+    card('The Odds API', oq&&oq.left!=null?oq.left.toLocaleString()+' left':'?', oq&&oq.at?'credits, reported '+crAgo(oq.at):'shows after your first Odds API load', [keyOf('oddsapi')], oq&&oq.left!=null&&oq.left<50?'low':'')+
+    card('Sportsbook API', sq&&sq.left!=null&&sq.day===todayCT()?sq.left+' left':'?', sq&&sq.day===todayCT()?'of '+(sq.limit||150)+' today':'shows after your first load today', [keyOf('sbapi')], '')+
+    card('OddsPapi', ou&&ou.limit?ou.left+' left':'?', ou&&ou.limit?'of '+ou.limit+' this month':'press Refresh', ou&&ou.error?[String(ou.error)]:[], ou&&ou.limit&&ou.left<25?'low':'')+
+    card('Pinnacle live (pinnapi)', (LE_PINN_DAY-lp.n)+' left', 'of '+LE_PINN_DAY+' Scan presses today on this device', ['trial: 100 requests a day in all'], LE_PINN_DAY-lp.n<=5?'low':'')+
+    card('SportsGameOdds', keyOf('sgo'), '2,500 games a month on the free plan', [], '')+
+    card('Your Worker (Cloudflare)', w.n.toLocaleString()+' calls', 'today from this device · the free plan allows 100,000 a day (about 2 per call with the passphrase header)', (w.pause>Date.now()?['background checks paused until '+new Date(w.pause).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})]:[]).concat(top), w.n>=50000?'out':w.n>=30000?'low':'');
+}
+async function crRefresh(){ const m=document.getElementById('crMsg'); if(m) m.textContent='Refreshing…';
+  try{ await refreshBudget(); }catch(e){} try{ await loadSources(); }catch(e){}
+  crPaint(); if(m) m.textContent='Updated '+new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'. Nothing paid was called.'; }
+function rgPaint(){ const el=document.getElementById('rgGrid'); if(!el) return; let c; try{ c=cfgRead(); }catch(e){ return; }
+  const usd=x=>'$'+(+x).toFixed(2), od=x=>(x>0?'+':'')+x, F=c.fees||{};
+  const T=(k,v,n)=>'<div class="rg-t"><span>'+esc(k)+'</span><b>'+esc(v)+'</b>'+(n?'<small>'+esc(n)+'</small>':'')+'</div>';
+  el.innerHTML=
+    '<div class="rg-g"><h3>Screens</h3>'+T('Odds',od(c.oMin)+' to '+od(c.oMax))+T('Net EV floor',(c.eMin*100).toFixed(1)+'%','after fees')+T('Gross EV ceiling',(c.eMax*100).toFixed(0)+'%','higher is likely a wrong match')+T('Devig tolerance',(c.devig*100).toFixed(1)+'%')+
+      T('Books you bet',c.books.length?c.books.length+' books':'all books',c.books.slice(0,6).join(', ')+(c.books.length>6?'…':''))+'</div>'+
+    '<div class="rg-g"><h3>Stake sizing</h3>'+T('Bankroll',usd(c.bank))+T('Kelly',String(c.kelly),'× edge after a '+String(c.shrink)+' haircut')+T('Bets',usd(c.sMin)+' to '+usd(c.sMax))+T('Model weight',String(c.mWeight),'0 = market only, 1 = model only')+'</div>'+
+    '<div class="rg-g"><h3>Limits</h3>'+T('Per game',c.gameCapPct+'%',usd(c.gameCap))+T('Daily max',c.dayMaxPct+'%',c.dayMax>0?usd(c.dayMax)+' · the Hard stop asks past it':'off')+T('Daily bet goal',c.dayGoal?String(c.dayGoal):'off')+T('Mode',(MODES[c.mode]&&MODES[c.mode].label)||c.mode||'Safe')+'</div>'+
+    '<div class="rg-g"><h3>Fees</h3>'+T('Kalshi',F.kalshi+'% of price','× (1 − price)')+T('Polymarket US',F.poly+'% of price')+T('Novig',F.novig+'% extra','live: 6% × p × (1 − p)')+T('ProphetX',F.prophet+'% of stake')+T('Licensed books',F.book+'% of stake')+'</div>'; }
+try{ cnPaint(); crPaint(); rgPaint();
+  document.getElementById('cnTest').addEventListener('click',cnTest);
+  document.getElementById('crRefresh').addEventListener('click',crRefresh);
+  document.getElementById('passSave').addEventListener('click',()=>setTimeout(cnPaint,0));
+  const vs=document.getElementById('v-settings'); if(vs){ vs.addEventListener('input',()=>setTimeout(rgPaint,0)); vs.addEventListener('change',()=>setTimeout(rgPaint,0)); }
+  const st=document.querySelector('.tab[data-view="v-settings"]'); if(st) st.addEventListener('click',()=>setTimeout(()=>{ cnPaint(); crPaint(); rgPaint(); },0));
+}catch(e){ console.error(e); }
 /* passphrase */
 (function(){
   const inp=document.getElementById('screenerPass');

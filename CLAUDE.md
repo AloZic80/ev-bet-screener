@@ -300,6 +300,14 @@
   Mac and iPhone) or a grid of 20 colours. `palCss(hex)` builds the light and dark token set from the hue (page, panels, rules tinted; `--brand` and `--accent`
   toned darker or lighter step by step until white on the brand and accent on page, panel and `--accent-bg` pass 4.6:1), written before the first paint.
   `tests/palette-test.js` checks nine awkward colours (yellow, cyan, magenta, lime, grey, black, white, brown, orange) in both themes.
+- Augi's screens, step 5 of 5: Settings (v4.38, `cnPaint`, `cnTest`, `#cnBox`, `crPaint`, `crRefresh`, `#credPanel`, `rgPaint`, `#rulesGlance`; owner: "Build"):
+  the passphrase panel is now Connect: the Worker host (`API_BASE`), a chip (passphrase saved or not, never the value), and Test connection (free): the
+  Worker's `/src/status` (lists the sources with a key, calls no provider; 401 = passphrase does not match SCREENER_PASS), "Keys set / No key yet".
+  API credits & usage (`#credPanel`): a card per source from what the app already keeps (BettingPros `lastBudget`/`_bpLeft`, The Odds API `mbev.oaq`,
+  Sportsbook API `mbev.sbq`, OddsPapi `_opUsage`, Pinnacle live `lePinnUse()` of `LE_PINN_DAY`, SportsGameOdds key, your Worker `wkState()` with the
+  busiest paths); Refresh asks only `/budget`, `/src/status` and `/oddspapi/usage`. Your rules at a glance (`#rulesGlance`, before Screens): every rule
+  from `cfgRead()` in four groups (Screens, Stake sizing, Limits, Fees), redrawn on any input in Settings. Mode raises are included (cfgRead).
+  `tests/settings-connect-test.js`. Option 2 (Augi's five screens on our engine) is complete with this step.
 - Augi's screens on our engine, step 1 of 5: the Board (v4.34, `boardView`/`#boardView`/`mbev.boardView`, `.cv-legend-box`, `lnGet`/`lnSet`/`lnBtnHtml`/`.ln-ed`,
   `mbev.lineNotes`; owner: "What you recommend" → option 2, "BUILD"): Show menu next to Sort (All groups / Passing / Outliers only / Already bet / Skipped;
   Skipped also lists rejected rows without Show rejected), filtered after `grpOf`. Augi's cover legend (nine chips) in a `details.help` above the bar.
