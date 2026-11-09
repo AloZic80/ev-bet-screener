@@ -32,7 +32,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.43</title>
+<title>0xBeta Screener v4.44</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1376,6 +1376,8 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 .rg-panel h2 .cn-chip{margin-left:6px; vertical-align:middle}
 /* v4.42: the card's price chip as a link (phone) */
 a.sc-price.sc-link{text-decoration:none; color:inherit}
+/* v4.44: Watch bets panel */
+.ws-sum{font-size:14px; margin:2px 0} .ws-stage{margin:2px 0 8px} .ws-t td,.ws-t th{padding:5px 8px} .ws-line{font-size:13.5px; margin:6px 0}
 </style>
 </head>
 <body>
@@ -1384,7 +1386,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.43</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.44</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2106,6 +2108,11 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
   </table></div>
   <details class="help" data-help="study-how"><summary>How this is figured</summary><p class="hint">Singles only. Average prediction, hit rate and difference use graded wins and losses; pushes, sold and pending bets are left out. Difference is the hit rate minus the average prediction, in points. Profit is the settled money (betProfit: fees, boosts and free bets counted as in the Bet log). Game days, not the day the bet was placed. Small groups swing hard: read it after hundreds of bets, like the Scorecard.</p></details>
 </div>
+<div class="panel" id="watchPanel">   <!-- v4.44: Watch bets as shadow records: model vs market -->
+  <h2>👀 Watch bets: model vs market <span class="sub">bets the model liked but the market-adjusted edge did not · saved once, graded, never bet</span></h2>
+  <div id="watchStudy"></div>
+  <details class="help" data-help="watch-how"><summary>How this is figured</summary><p class="hint" style="margin:8px 0 0">Each Watch bet is saved once, the first time it shows (one per player or team, market, side and game day), with the price you were shown and the model, market and blend chances. After the game it is graded like your bets. It is <b>never</b> a bet: not in the Bet log, profit, ROI, the calendar or the daily max. The <b>Brier score</b> is the squared miss of a forecast (0 is perfect); lower wins. Market − model above zero means the model forecast these better. The 95% range is resampled by game, because props in the same game move together. Pushes are left out. This only covers the Watch region (where the model and the market disagree), not every bet. Under 100 graded it is descriptive only; around 1,000, if the model still beats both the market and the blend and the closing line agrees, it would be time to revisit the model weight (0.35) or the floor.</p></details>
+</div>
 <div class="panel">
   <h2>Where the edge is coming from</h2>
   <p class="hint">Each row is only meaningful once it holds a few dozen bets. Below that, treat it as noise you are watching rather than a result.</p>
@@ -2125,7 +2132,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.43';
+const SCREENER_VERSION='v4.44';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2871,6 +2878,7 @@ function auditCore(rows,cfg){
   }
   applyDayLimits(rows,cfg,slateDay);
   try{ rows.forEach(pxNote); }catch(e){}   // v4.21: price history for the Sentinels cards' chart
+  try{ watchNote(rows); }catch(e){}   // v4.44: Watch bets saved once as shadow records (never bets)
   return rows;
 }
 /* v2.65: daily limits, filled best-first (edge after the safety cut), counting what's already logged for
@@ -6397,6 +6405,7 @@ async function autoGradeLog(){
       b.result = g.push?'push':(g.won?'win':'loss'); changed++;
     }catch(e){ console.warn('grade', b&&b.name, e); } }
     if(changed){ saveLog(); renderLog(); renderPerf(); refresh(); }
+    try{ if(await watchGrade()) renderPerf(); }catch(e){}   // v4.44: shadow Watch records, graded the same way
   }catch(e){}
   finally{ agBusy=false; logBusy--; }
 }
@@ -6566,7 +6575,56 @@ function renderScorecard(){
   if(!n && !C.length) h+='<div class="empty" style="display:block">Nothing settled yet. Every bet that settles moves the bar.</div>';
   el.innerHTML=h; try{ helpApply(el); }catch(e){}   // v4.25: the stages drop-down stays as you left it
 }
-function renderPerf(){ try{ renderCal(); }catch(e){} try{ renderScorecard(); }catch(e){ console.error(e); } try{ renderStudy(); }catch(e){ console.error(e); }   // v4.31
+/* v4.44 (Alonzo, passing on ChatGPT: "record every Watch bet as a shadow observation, without counting it as a wager, stake, profit or loss";
+   "compare probability accuracy on the identical Watch sample"): when a row first enters WATCH (v4.43: the model passes the floor, the market-adjusted
+   chance does not), one frozen record is saved in mbev.watchObs: the bet (sport, kind, player or team, market, side, game, start), the shown price and fee,
+   the model, market and blend chances, actNet, the time and the version. One record per bet (pxKey: sport, name, market, side, game day); refreshes do
+   not add more. After the game, autoGradeLog grades it with the same ESPN code as your bets. Performance › Watch bets compares the forecasts with Brier
+   scores and log loss (paired, model vs market vs blend), a by-game bootstrap 95% range for the market − model difference, and a $1 simulated ROI at the
+   shown price. Never counted in the Bet log, the Today card, the calendar, profit, ROI, the Scorecard or the daily max. */
+function watchAll(){ if(!window._watch){ try{ window._watch=JSON.parse(localStorage.getItem('mbev.watchObs')||'[]')||[]; }catch(e){ window._watch=[]; } } return window._watch; }
+function watchSave(){ const A=watchAll(); if(A.length>3000) A.splice(0, A.length-3000); try{ localStorage.setItem('mbev.watchObs', JSON.stringify(A)); }catch(e){} }
+function watchNote(rows){ const A=watchAll(); let add=0; const have=new Set(A.map(o=>o.k));
+  (rows||[]).forEach(r=>{ if(!r || !r.watch || !(r.offeredProb>0 && r.offeredProb<1) || r.fairProb==null || r.mktProb==null) return;
+    const st=r.gameInfo&&r.gameInfo.startISO; if(st && Date.parse(st)<=Date.now()) return;   // only before the game
+    if(r.gameInfo && r.gameInfo.state && r.gameInfo.state!=='pre') return;
+    let k; try{ k=pxKey(r); }catch(e){ return; } if(!k || have.has(k)) return; have.add(k);
+    A.push({k, at:new Date().toISOString(), ver:SCREENER_VERSION, sport:r.sport, kind:r.kind||'prop', name:r.name, team:r.team||null, market:r.market, side:r.side||'',
+      betnow:betNowOf(r), game:r.game||r.matchup||'', start:st||null, date:st?ctDay(Date.parse(st)):null, dateSet:!!st, book:r.book, price:+r.offeredProb.toFixed(4), fee:+(r.fee||0).toFixed(5),
+      model:+r.fairProb.toFixed(4), mkt:+r.mktProb.toFixed(4), blend:r.actProb!=null?+r.actProb.toFixed(4):null, net:+(r.net||0).toFixed(4), actNet:r.actNet!=null?+r.actNet.toFixed(4):null, result:null}); add++; });
+  if(add) watchSave(); return add; }
+async function watchGrade(){ const A=watchAll(), now=Date.now(); let n=0;
+  for(const o of A){ try{
+    if(o.result || !o.start || now<Date.parse(o.start)+5*3600e3 || now>Date.parse(o.start)+30*86400e3 || !ESPN_MAP[o.sport]) continue;
+    const ev=await findBetGame(o); if(!ev) continue; const gi=gameStatusOf(ev); if(!gi || gi.state!=='post') continue;
+    const gl=GL_KINDS.test(o.kind||''), box=gl?null:await fetchBoxscore(o.sport, gi.eventId, true), g=gl?gradeGameLine(o,ev):gradeBet(o, box);
+    if(!g) continue; o.result=g.push?'push':(g.won?'win':'loss'); o.gradedAt=new Date().toISOString(); n++;
+  }catch(e){} }
+  if(n) watchSave(); return n; }
+function watchStats(A){ const G=(A||watchAll()).filter(o=>(o.result==='win'||o.result==='loss') && o.model>0 && o.model<1 && o.mkt>0 && o.mkt<1);
+  const br=(p,y)=>(p-y)*(p-y), ll=(p,y)=>-Math.log(Math.max(1e-6, y?p:1-p)), avg=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:null;
+  const rows=G.map(o=>{ const y=o.result==='win'?1:0, bl=o.blend>0&&o.blend<1?o.blend:o.mkt+0.35*(o.model-o.mkt), f=+o.fee||0, roi=y?(1/o.price-1-f)/(1+f):-1;
+    return {g:o.sport+'|'+(o.game||'')+'|'+(o.date||''), y, bm:br(o.model,y), bk:br(o.mkt,y), bb:br(bl,y), lm:ll(o.model,y), lk:ll(o.mkt,y), lb:ll(bl,y), roi}; });
+  const out={n:(A||watchAll()).length, graded:G.length, pushes:(A||watchAll()).filter(o=>o.result==='push').length, wins:rows.filter(x=>x.y).length,
+    brier:{model:avg(rows.map(x=>x.bm)), market:avg(rows.map(x=>x.bk)), blend:avg(rows.map(x=>x.bb))}, logloss:{model:avg(rows.map(x=>x.lm)), market:avg(rows.map(x=>x.lk)), blend:avg(rows.map(x=>x.lb))},
+    d:avg(rows.map(x=>x.bk-x.bm)), roi:avg(rows.map(x=>x.roi)), games:new Set(rows.map(x=>x.g)).size, ci:null};
+  if(rows.length>=20){ const byG=new Map(); rows.forEach(x=>{ if(!byG.has(x.g)) byG.set(x.g,[]); byG.get(x.g).push(x.bk-x.bm); }); const Gs=[...byG.values()];
+    let seed=12345; const rnd=()=>{ seed=(seed*1103515245+12345)%2147483648; return seed/2147483648; }; const R=[];
+    for(let b=0;b<1000;b++){ let s=0,c=0; for(let i=0;i<Gs.length;i++){ const g=Gs[Math.floor(rnd()*Gs.length)]; g.forEach(v=>{ s+=v; c++; }); } R.push(c?s/c:0); }
+    R.sort((a,b)=>a-b); out.ci=[R[25],R[974]]; }
+  out.stage=out.graded<100?'Descriptive only: under 100 graded Watch bets':out.graded<300?'First directional read (100–299)':out.graded<1000?'Useful if the 95% range is clearly away from zero (300–999)':'Credible evidence (1,000+), if the closing line and ROI agree';
+  return out; }
+function renderWatchStudy(){ const el=document.getElementById('watchStudy'); if(!el) return; const S=watchStats(), f=x=>x==null?'—':x.toFixed(4), pc=x=>x==null?'—':(x>=0?'+':'−')+Math.abs(x*100).toFixed(1)+'%';
+  const who=S.d==null?'':S.ci&&S.ci[0]>0?'the model forecast better on these':S.ci&&S.ci[1]<0?'the market forecast better on these':S.d>0?'leaning model (not clear yet)':S.d<0?'leaning market (not clear yet)':'even';
+  el.innerHTML='<div class="ws-sum"><b>'+S.n+'</b> Watch bets saved · <b>'+S.graded+'</b> graded win or loss'+(S.pushes?' · '+S.pushes+' pushes left out':'')+' · '+S.games+' games</div>'+
+    '<div class="meta ws-stage">'+esc(S.stage)+'</div>'+
+    (S.graded?'<div class="scroll"><table class="ws-t"><thead><tr><th>Forecast</th><th class="num">Brier (lower is better)</th><th class="num">Log loss</th></tr></thead><tbody>'+
+      [['Model',S.brier.model,S.logloss.model],['Market',S.brier.market,S.logloss.market],['Blend (what La Contadora uses)',S.brier.blend,S.logloss.blend]].map(r=>'<tr><td>'+r[0]+'</td><td class="num">'+f(r[1])+'</td><td class="num">'+f(r[2])+'</td></tr>').join('')+'</tbody></table></div>'+
+      '<div class="ws-line">Market − model Brier: <b>'+(S.d==null?'—':(S.d>=0?'+':'−')+Math.abs(S.d).toFixed(4))+'</b>'+(S.ci?' (95% range '+S.ci[0].toFixed(4)+' to '+S.ci[1].toFixed(4)+', resampled by game)':' (range after 20 graded)')+(who?' · <b>'+esc(who)+'</b>':'')+'</div>'+
+      '<div class="ws-line">If each had been a $1 bet at the shown price: <b class="'+(S.roi>=0?'pl-up':'pl-down')+'">'+pc(S.roi)+'</b> ROI (not your money)</div>':'<div class="meta">No graded Watch bets yet. They are graded with your bets after their games.</div>');
+}
+function renderPerf(){ try{ renderWatchStudy(); }catch(e){ console.error(e); }   // v4.44
+   try{ renderCal(); }catch(e){} try{ renderScorecard(); }catch(e){ console.error(e); } try{ renderStudy(); }catch(e){ console.error(e); }   // v4.31
   renderCalibration();
   const withClose=logged.filter(b=>clv(b)!==null);
   const cards=document.getElementById('statCards');

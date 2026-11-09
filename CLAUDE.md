@@ -342,6 +342,13 @@
   `r.actNet` is EV on `okProbR(r)`. Floor: model under it → "net EV under the floor" (a skip); model over it but `actNet` under it (with a market price) → `r.watch`,
   out flag "WATCH · the model likes it (+x%), but with the market it is +y%, under your z% floor". Watch rows are always listed (`shown` adds them even without Show
   rejected), in their own group after Already bet and before Skip; Show › 👀 Watch lists only them. No market price: the model alone, as before. `tests/floor-watch-test.js`.
+- Watch bets as shadow records (v4.44, `watchNote`, `watchAll`/`watchSave`, `watchGrade`, `watchStats`, `renderWatchStudy`, `#watchPanel`, `mbev.watchObs`; owner, passing
+  on ChatGPT: "record every Watch bet as a shadow observation, without counting it as a wager"): at the end of `auditCore` (next to `pxNote`) every `r.watch` row
+  before its game is saved ONCE by `pxKey` (sport, name, market, side, game day) with the shown price and fee, model / market / blend chances, `net`, `actNet`,
+  time and version (3,000 kept). `autoGradeLog` then runs `watchGrade` (same `findBetGame` then `gradeBet` / `gradeGameLine`; 5 h after the start, up to 30 days).
+  Performance: Watch bets panel: counts, a stage (<100 descriptive, 100-299 directional, 300-999 useful if the range clears zero, 1,000+ credible), Brier and log
+  loss for model, market and blend on graded wins and losses (pushes out), market minus model Brier with a 95% range from 1,000 by-game resamples (seeded, from
+  20 graded), and a $1 ROI at the shown price. Never in the Bet log, profit, ROI, the calendar, the Today card or the daily max. `tests/watch-shadow-test.js`.
 - Augi's screens on our engine, step 1 of 5: the Board (v4.34, `boardView`/`#boardView`/`mbev.boardView`, `.cv-legend-box`, `lnGet`/`lnSet`/`lnBtnHtml`/`.ln-ed`,
   `mbev.lineNotes`; owner: "What you recommend" → option 2, "BUILD"): Show menu next to Sort (All groups / Passing / Outliers only / Already bet / Skipped;
   Skipped also lists rejected rows without Show rejected), filtered after `grpOf`. Augi's cover legend (nine chips) in a `details.help` above the bar.
