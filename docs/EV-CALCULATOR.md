@@ -1,6 +1,6 @@
 # La Contadora: how the screener's EV calculator works
 
-This is the math behind every bet the 0xBeta Screener (props.0xbeta.dev) shows. Written 2026-11-09 for **v4.41**; revised after an outside math check.
+This is the math behind every bet the 0xBeta Screener (props.0xbeta.dev) shows. Written 2026-11-09 for **v4.43**; revised after an outside math check.
 
 The worked example is a real card from Alonzo's board: **Jonathan Lekkerimaki (VAN) Over 1.5 Shots, Novig -108, PHI @ VAN, 8:30 PM CT.**
 
@@ -16,7 +16,7 @@ The worked example is a real card from Alonzo's board: **Jonathan Lekkerimaki (V
 | **Market chance** | What the betting market says, vig removed | The consensus of several books | 52.6% |
 | **Sizing chance (the blend)** | The market pulled toward the model by your **model weight** (0.35) | `blend = market + 0.35 × (model − market)` | 52.6 + 0.35 × 2.86 = **53.60%** |
 
-The model and the market are **not independent confirmations** of each other. They often share information. The blend exists because the model alone is too sure of itself. Your stake, the "math" order and **OK up to** all use the blend. When a bet has no market price, the model chance is used, and the stake is capped at your smallest bet.
+The model and the market are **not independent confirmations** of each other. They often share information. The blend exists because the model alone is too sure of itself. **The EV floor, your stake, the "math" order and OK up to all use the same conservative chance:** the blend, or the model when that is lower. When a bet has no market price, the model chance is used, and the stake is capped at your smallest bet.
 
 The **price** is what the book charges, written as a chance:
 - Minus odds: `chance = −odds / (−odds + 100)`. For example, -108 → 108 / 208 = **51.92%**.
@@ -91,8 +91,10 @@ Then the limits apply:
 ## 5. What a bet must pass to be on the board
 
 - Odds between **-300 and +500**.
-- **Net EV ≥ 1.5%** (on the model chance) and **gross EV ≤ 40%**. Above 40% is almost always a wrong match, not a real edge.
-- A stake above $0 from the blend. A bet the model likes but the blend does not gets no stake and is not placed.
+- **Net EV ≥ 1.5% on the conservative chance** (v4.43; before, the model chance) and **gross EV ≤ 40%** on the model. Above 40% is almost always a wrong match, not a real edge.
+- **WATCH:** a bet the model clears but the conservative chance does not is listed in its own **Watch** group, never placed. It reads "WATCH · the model likes it (+3.7%), but with the market it is +0.2%, under your 1.5% floor". Show › 👀 Watch lists only these, which is useful to see whether the model or the market was right.
+- With no market price there is no market check: the model alone decides, and the stake is capped at the smallest bet.
+- **Three levels:** clears the EV floor → passes every screen (odds, books, already bet, caps) → actionable at your limits (a stake of at least your smallest bet, room under the game cap and the daily max). Only all three make Place these.
 - Not started, and at a book in **Books you bet**. A bet at a book you can't use moves to your best book, or stays off.
 - **Not already bet.** This is checked against your Bet log, your book fills (Novig, Kalshi, Polymarket US) and your open orders. Different wordings count as the same bet: "Lekkerimäki" = "Lekkerimaki", "Shots On Goal" = "Shots", "2+" = Over 1.5.
 
@@ -149,4 +151,4 @@ The score is shown as a word: **STRONG** 75+, **GOOD** 50–74, **THIN** under 5
 
 `tests/math-audit-test.js` checks this arithmetic against brute force on every build: odds ↔ chance, EV after fees, the most you can pay, the Kalshi shares, the Kelly stake, profit, and the parlay math. `tests/blend-limit-test.js` checks that "OK up to" follows the blend. Every setting is in **Settings › Your rules at a glance**.
 
-*Revised 2026-11-09 after an outside math review: rounding called out, the three chances named, the parlay independence warning added, the FanDuel fee spelled out, "OK up to" moved to the blend (app v4.41), and the THIN and 1,000-bet wording made statistical.*
+*Revised 2026-11-09 after an outside math review: rounding called out, the three chances named, the parlay independence warning added, the FanDuel fee spelled out, "OK up to" moved to the blend (app v4.41), the THIN and 1,000-bet wording made statistical, and the EV floor moved to the conservative chance with model-only passes as WATCH (app v4.43).*
