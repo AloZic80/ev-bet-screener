@@ -42,6 +42,7 @@ const runs = [
   ['v4.37: Augi\'s Parlay: what each entry pays (Flex partial returns in $, with chances), Copy draft (places nothing)', 'parlay-draft-test.js', []],
   ['v4.38: Augi\'s Settings: Connect with a free test, API credits and usage, your rules at a glance', 'settings-connect-test.js', []],
   ['v4.39: a prop you bet, worded by the book (Lekkerimäki, 1.5 Shots On Goal), is ALREADY BET on the board (Lekkerimaki, 1.5 Shots)', 'prop-prior-test.js', []],
+  ['v4.40: Novig "2+ Yes" is Over 1.5 (even with Novig\'s line 2), and your book fills themselves mark the card ALREADY BET', 'novig-plus-test.js', []],
   ['v4.34: Augi\'s Board: the Show menu, the cover legend, your own note on each line', 'board-notes-test.js', []],
   ['v4.33: colour schemes (Green, Blue, Red, Purple, Graphite) in light and dark, all AA; remembered', 'palette-test.js', []],
   ['v4.31: Augi\'s 5-point cover bands (chips on the board and cards) and the Bet result study in Performance', 'cover-study-test.js', []],

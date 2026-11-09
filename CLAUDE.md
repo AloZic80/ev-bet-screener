@@ -314,6 +314,15 @@
   `propSame(L, r, anySide)`: props only, same sport when both known, same player by `nrmT` (accents, case) or same last name and first initial, same line,
   same side (unless anySide), same `statFam` (Shots = Shots On Goal = SOG) and no period / power-play / alt qualifier difference (`qualOK` both ways); with
   `sameTime`. Hoisted and startup-safe: if `statFam`'s table is not defined yet it compares plain words. `tests/prop-prior-test.js` (fails on v4.38).
+- Novig "2+" and the fills check (v4.40, `normFillBet`, `propSame`, `myFillsGet`/`myFillsSet`/`fillPriorFor`, `mbev.myFills`; owner, 11/9: his Novig portfolio
+  "Jonathan Lekkerimaki 2+ Yes · Shots On Goal", $2.15 → $4.17, placed 1:07 PM, still bettable on the board at 1:17): the Worker cannot read "2+" as
+  "player line STAT", so it sends no player and Novig's strike (2) as the line; `normFillBet` only turned "2+" into 1.5 when no line came, so the bet was
+  logged as "2 Shots On Goal" and matched nothing (v4.39 alone did not fix it). Now "N+" is always Over N−0.5, and `propSame` also reads a book's logged
+  integer line N (Over) as N−0.5. And `auditCore`'s `prior` ends with `fillPriorFor(r)`: every buy fill from the last fills read (kept 3 days, not sold)
+  that `betMatches` the row makes it ALREADY BET at the fill's price, logged or not (waiting in From your books, ignored, or worded otherwise). A change
+  in the fills list sets `changed`, so the board redraws. Once (`fixPlus40` in `autoGradeLog`): a bet logged from a Novig fill with an integer prop line N
+  (Over) becomes N−0.5, the old text in `edits`; an automatic PUSH becomes WIN (exactly N ≥ N−0.5), wins and losses stand, manual grades are kept.
+  `tests/novig-plus-test.js` (9 of 17 fail on v4.39).
 - Augi's screens on our engine, step 1 of 5: the Board (v4.34, `boardView`/`#boardView`/`mbev.boardView`, `.cv-legend-box`, `lnGet`/`lnSet`/`lnBtnHtml`/`.ln-ed`,
   `mbev.lineNotes`; owner: "What you recommend" → option 2, "BUILD"): Show menu next to Sort (All groups / Passing / Outliers only / Already bet / Skipped;
   Skipped also lists rejected rows without Show rejected), filtered after `grpOf`. Augi's cover legend (nine chips) in a `details.help` above the bar.
