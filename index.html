@@ -11,7 +11,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.34</title>
+<title>0xBeta Screener v4.35</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1305,6 +1305,18 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 .ln-btn.on{border-color:var(--accent); color:var(--accent)}
 .ln-btn.ln-sm{margin-top:6px; padding:3px 9px; font-size:11.5px}
 .ln-box{padding:10px 14px} .ln-box textarea{width:100%; min-height:72px; font:inherit; font-size:14px; padding:8px 10px; border:1px solid var(--rule); border-radius:8px; background:var(--panel); color:var(--ink)}
+/* v4.35: Augi's Game Hub (Live Games) */
+.hub-sports{display:flex; flex-wrap:wrap; gap:6px}
+.hub-games{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:10px; margin-top:12px}
+.hub-card{font:inherit; text-align:left; display:flex; flex-direction:column; gap:3px; padding:10px 12px; border:1px solid var(--rule); border-radius:12px; background:var(--panel); color:var(--ink); cursor:pointer; min-height:44px}
+.hub-card:hover,.hub-card.on{border-color:var(--accent); background:var(--accent-bg)}
+.hub-t{display:flex; align-items:center; gap:7px} .hub-t img,.hub-t .nl{width:20px; height:20px; object-fit:contain; flex:none} .hub-t b{min-width:36px}
+.hub-nm{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--soft); font-size:12.5px} .hub-sc{font-weight:800; font-variant-numeric:tabular-nums}
+.hub-when{font-size:12px; color:var(--soft); font-weight:600} .hub-when.lv{color:var(--out)}
+.hub-game{margin-top:12px; padding:12px 14px; border:1px solid var(--accent); border-radius:12px; background:var(--panel)}
+.hub-head{display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 10px; margin-bottom:6px}
+.hub-line{font-size:13.5px; margin:4px 0} .hub-plays,.hub-list{margin:4px 0 0; padding-left:18px; font-size:13.5px} .hub-plays li,.hub-list li{margin:3px 0}
+.hub-dec{font-size:11px; padding:1px 7px; border-radius:99px; border:1px solid var(--rule)} .hub-dec.pass{color:var(--live); border-color:var(--live)} .hub-dec.prior{color:var(--out); border-color:var(--out)} .hub-dec.skip{color:var(--soft)}
 </style>
 </head>
 <body>
@@ -1313,7 +1325,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.34</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.35</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1592,6 +1604,14 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 </div>
 </div>
 <div class="view" id="v-live">
+<div class="panel" id="hubPanel">   <!-- v4.35: Augi's Game Hub, on our data (ESPN, free) -->
+  <h2>🏟️ Game Hub <span class="sub">every game by sport · scheduled, live or final · tap one for its gamecast, ESPN's line, your bets and the board's props for that exact game</span></h2>
+  <div class="hub-sports" id="hubSports" role="group" aria-label="Sport"></div>
+  <div class="row hub-bar" style="margin-top:8px"><div class="ab-seg" id="hubFilter" role="radiogroup" aria-label="Games to show"><button type="button" role="radio" data-f="scheduled">Scheduled</button><button type="button" role="radio" data-f="live">Live</button><button type="button" role="radio" data-f="final">Final</button></div>
+    <label class="bar-item">Day <input type="date" id="hubDate" class="bar-sel"></label><button type="button" class="ghost sm" id="hubRefresh" aria-label="Refresh the games from ESPN">⟳</button><span class="meta" id="hubMsg" aria-live="polite"></span></div>
+  <div id="hubGame" class="hub-game" hidden></div>
+  <div id="hubGames" class="hub-games"></div>
+</div>
 <div class="panel" id="lePanel">
   <h2>🔴 Live edges <span class="sub">games in progress: ESPN's live win chance against what Kalshi, Polymarket US and Novig sell each team at now</span></h2>
   <div class="row le-bar">
@@ -2003,7 +2023,7 @@ body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.34';
+const SCREENER_VERSION='v4.35';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3306,6 +3326,68 @@ document.addEventListener('click',e=>{ const t=e.target; if(!t.closest) return;
   const ed=t.closest('.ln-ed'); if(!ed) return;
   if(t.closest('.ln-save')||t.closest('.ln-del')){ lnSet(ed.dataset.pck, t.closest('.ln-del')?'':ed.querySelector('.ln-txt').value); ed.remove(); rerenderWithFilters(); }
   else if(t.closest('.ln-cancel')){ ed.remove(); } });
+/* v4.35 (Alonzo: "Build", Augi's screens step 2 of 5: Live Games): Augi's Game Hub on our data. Sport buttons, Scheduled / Live / Final, a day,
+   game cards (with "N bets risking $x" from v4.26 and how many board props the game has). Tap a game: the score and status, ESPN's line with the
+   vig taken out, the last plays, your bets in that game, and the board's props for that exact game with La Contadora's decision and a search box
+   (Augi's exact-game prop search). All from ESPN (free) and the board already loaded: no Worker calls. Live games refresh every 30 s while the
+   Live tab is open. Remembered: sport and filter (mbev.hub). */
+function hubState(){ if(!window._hub){ let o={}; try{ o=JSON.parse(localStorage.getItem('mbev.hub')||'{}')||{}; }catch(e){} window._hub={sport:o.sport||'NBA', f:o.f||'scheduled', day:null, ev:null, q:''}; } return window._hub; }
+function hubSave(){ const h=hubState(); try{ localStorage.setItem('mbev.hub', JSON.stringify({sport:h.sport, f:h.f})); }catch(e){} }
+function hubSportList(){ return ['NFL','NCAAF','NBA','NCAAB','WNBA','NHL','MLB','MLS','EPL'].filter(c=>ESPN_MAP[c]); }
+function hubState3(ev){ const s=(ev&&ev.status&&ev.status.type&&ev.status.type.state)||'pre'; return s==='in'?'live':s==='post'?'final':'scheduled'; }
+function hubTeams(ev){ const c=compsOf(ev), a=c.find(x=>x.homeAway==='away')||{}, h=c.find(x=>x.homeAway==='home')||{}; const t=x=>({ab:normAbbr((x.team||{}).abbreviation||''), name:(x.team||{}).displayName||(x.team||{}).name||'', score:x.score!=null?(typeof x.score==='object'?x.score.value:x.score):'', logo:(x.team||{}).logo||''}); return {a:t(a), h:t(h)}; }
+function hubRows(sport, ev){ const T=hubTeams(ev), want=[T.a.ab,T.h.ab].sort().join('-');
+  return (lastRows||[]).filter(r=>r.sport===sport && ((r.gameInfo&&String(r.gameInfo.eventId||'')===String(ev.id)) || (()=>{ const g=giTeamsOf(r); const codes=g?g.map(y=>normAbbr(y.abbr)):(teamsOf(r.game||'')||[]); return codes.length===2 && codes.slice().sort().join('-')===want; })())); }
+function hubPaintTop(){ const h=hubState(), sp=document.getElementById('hubSports'); if(!sp) return;
+  sp.innerHTML=hubSportList().map(c=>'<button type="button" class="bchip'+(c===h.sport?' on':'')+'" data-sp="'+esc(c)+'" aria-pressed="'+(c===h.sport)+'">'+esc(c)+'</button>').join('');
+  document.querySelectorAll('#hubFilter [data-f]').forEach(b=>{ const on=b.dataset.f===h.f; b.classList.toggle('on',on); b.setAttribute('aria-checked',String(on)); });
+  const d=document.getElementById('hubDate'); if(d && !d.value) d.value=h.day||ctDay(Date.now()); }
+async function hubLoad(force){ const h=hubState(), box=document.getElementById('hubGames'), msg=document.getElementById('hubMsg'); if(!box) return; hubPaintTop();
+  const day=(document.getElementById('hubDate')||{}).value||ctDay(Date.now()); h.day=day;
+  if(force){ try{ delete sbDayCache[h.sport+'|'+day]; }catch(e){} }
+  let evs=[]; try{ evs=await fetchScoreboardDay(h.sport, day); }catch(e){ evs=[]; }
+  const n={scheduled:0,live:0,final:0}; evs.forEach(ev=>n[hubState3(ev)]++);
+  document.querySelectorAll('#hubFilter [data-f]').forEach(b=>{ b.textContent=({scheduled:'Scheduled',live:'Live',final:'Final'})[b.dataset.f]+' · '+n[b.dataset.f]; });
+  const list=evs.filter(ev=>hubState3(ev)===h.f).sort((x,y)=>Date.parse(x.date)-Date.parse(y.date)), risk=ssRiskMap(s=>s===h.sport?evs:[]);
+  if(msg) msg.textContent='ESPN · '+new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  box.innerHTML=list.length?list.map(ev=>{ const T=hubTeams(ev), st=(ev.status&&ev.status.type)||{}, k=h.sport+':'+ev.id, rk=risk.get(k), props=hubRows(h.sport,ev).length;
+    const when=hubState3(ev)==='scheduled'?new Date(ev.date).toLocaleTimeString('en-US',{timeZone:'America/Chicago',hour:'numeric',minute:'2-digit'})+' CT':(st.shortDetail||st.detail||'');
+    const line=t=>'<div class="hub-t">'+(t.logo?'<img src="'+esc(t.logo)+'" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'">':'<span class="nl"></span>')+'<b>'+esc(t.ab)+'</b><span class="hub-nm">'+esc(t.name)+'</span>'+(hubState3(ev)!=='scheduled'?'<span class="hub-sc">'+esc(String(t.score))+'</span>':'')+'</div>';
+    return '<button type="button" class="hub-card'+(h.ev===String(ev.id)?' on':'')+'" data-ev="'+esc(String(ev.id))+'">'+line(T.a)+line(T.h)+'<div class="hub-when'+(hubState3(ev)==='live'?' lv':'')+'">'+esc(when)+'</div>'+
+      (rk?'<div class="ss-risk">'+rk.n+' bet'+(rk.n===1?'':'s')+' risking $'+rk.amt.toFixed(2)+'</div>':'')+(props?'<div class="meta">'+props+' prop'+(props===1?'':'s')+' on your board</div>':'')+'</button>'; }).join('')
+    :'<div class="empty" style="display:block">No '+esc(h.f)+' '+esc(h.sport)+' games on '+esc(day)+'.</div>';
+  window._hubEvs=evs; if(h.ev){ const ev=evs.find(x=>String(x.id)===h.ev); if(ev) hubOpen(ev, true); } }
+function hubNoVig(a,b){ const q=x=>{ x=+x; return !x?null:x<0?-x/(-x+100):100/(x+100); }; const pa=q(a), pb=q(b); return pa&&pb?[pa/(pa+pb), pb/(pa+pb)]:null; }
+async function hubOpen(ev, keep){ const h=hubState(), box=document.getElementById('hubGame'); if(!box) return; h.ev=String(ev.id);
+  document.querySelectorAll('#hubGames .hub-card').forEach(c=>c.classList.toggle('on', c.dataset.ev===h.ev));
+  const T=hubTeams(ev), st=(ev.status&&ev.status.type)||{}, sum=await fetchBoxscore(h.sport, ev.id, false)||{};
+  const pc=(sum.pickcenter&&sum.pickcenter[0])||null, ha=pc&&pc.homeTeamOdds, aa=pc&&pc.awayTeamOdds, nv=pc?hubNoVig(aa&&aa.moneyLine, ha&&ha.moneyLine):null;
+  const fmt=x=>x==null||x===''?'—':(+x>0?'+':'')+x, pc1=x=>(x*100).toFixed(1)+'%';
+  const lineH=pc?'<div class="hub-line"><b>ESPN line</b>'+(pc.provider&&pc.provider.name?' <span class="meta">('+esc(pc.provider.name)+')</span>':'')+': '+esc(T.a.ab)+' '+fmt(aa&&aa.moneyLine)+(nv?' <span class="meta">('+pc1(nv[0])+' no-vig)</span>':'')+' · '+esc(T.h.ab)+' '+fmt(ha&&ha.moneyLine)+(nv?' <span class="meta">('+pc1(nv[1])+' no-vig)</span>':'')+(pc.details?' · '+esc(pc.details):'')+(pc.overUnder!=null?' · total '+esc(String(pc.overUnder)):'')+'</div>':'<div class="meta">ESPN has no line for this game.</div>';
+  let plays=(sum.plays||[]).slice(-6).reverse();
+  if(!plays.length && sum.drives){ const cur=(sum.drives.current&&sum.drives.current.plays)||[]; plays=cur.slice(-6).reverse(); }
+  const playsH=plays.length?'<ol class="hub-plays">'+plays.map(pl=>'<li><span class="meta">'+esc(((pl.period&&pl.period.number)?'P'+pl.period.number+' ':'')+((pl.clock&&pl.clock.displayValue)||''))+'</span> '+esc(pl.text||pl.shortText||'')+'</li>').join('')+'</ol>':'<div class="meta">No plays yet.</div>';
+  const day=h.day||ctDay(Date.now()), mine=logged.filter(b=>b.sport===h.sport && b.kind!=='parlay' && (gameDayOf(b)===day || b.date===day) && (findGame([ev],b.game)||findGameAny([ev],b.game,b.name,b.matchup)));
+  const mineH=mine.length?'<ul class="hub-list">'+mine.map(b=>'<li><b>'+esc(b.name)+'</b> '+esc(b.betnow||((b.side?(b.side==='O'?'Over ':b.side==='U'?'Under ':''):'')+(b.market||'')))+' <span class="meta">'+esc(String(b.odds||''))+' · $'+(+b.stake||0).toFixed(2)+' · '+esc(bookLabel(b.book)||'')+'</span> '+(b.result==='win'?'<b class="pl-up">WON</b>':b.result==='loss'?'<b class="pl-down">LOST</b>':b.result==='push'?'<b>PUSH</b>':'<span class="meta">open</span>')+'</li>').join('')+'</ul>':'<div class="meta">No bets of yours in this game.</div>';
+  const rows=hubRows(h.sport, ev), q=(h.q||'').toLowerCase().trim(), shownR=rows.filter(r=>!q || (r.name+' '+r.market+' '+(r.book||'')).toLowerCase().includes(q));
+  const dec=r=>{ const ls=liveState(r); return r.prior||r.waitOrder?'<b class="hub-dec prior">ALREADY BET</b>':(ls==='started'||ls==='closed'||hubState3(ev)!=='scheduled')?'<span class="hub-dec skip">STARTED</span>':(r.pass&&r.stake>0)?'<b class="hub-dec pass">BET $'+(+r.stake).toFixed(2)+'</b>':'<span class="hub-dec skip">skip</span>'; };
+  const propsH='<div class="row" style="margin:6px 0"><input type="search" id="hubQ" class="bar-search" placeholder="Search this game: player, stat, book…" aria-label="Search this game" value="'+esc(h.q||'')+'"><span class="meta">'+shownR.length+' of '+rows.length+' on your board</span></div>'+
+    (rows.length?'<ul class="hub-list">'+shownR.slice(0,40).map(r=>'<li>'+dec(r)+' <b>'+esc(r.name)+'</b> '+esc((r.side==='O'?'Over ':r.side==='U'?'Under ':'')+(r.market||''))+' <span class="meta">'+esc(String(r.offeredRaw||''))+' · '+esc(bookLabel(r.book)||'')+(r.net!=null?' · EV '+(r.net>=0?'+':'')+(r.net*100).toFixed(1)+'%':'')+'</span>'+cvChipHtml(r.fairProb)+' <button type="button" class="linkbtn hub-see" data-name="'+esc(r.name)+'">See on Board ›</button></li>').join('')+'</ul>':'<div class="meta">This game has no props on your board. Load its sport on the Board first (BettingPros or another source).</div>');
+  box.hidden=false;
+  box.innerHTML='<div class="hub-head"><button type="button" class="linkbtn hub-close">‹ All games</button><b>'+esc(T.a.name||T.a.ab)+' '+esc(String(T.a.score))+' @ '+esc(T.h.name||T.h.ab)+' '+esc(String(T.h.score))+'</b> <span class="meta">'+esc(st.detail||st.shortDetail||'')+'</span></div>'+
+    lineH+'<h3 class="set-h">Last plays</h3>'+playsH+'<h3 class="set-h">Your bets in this game</h3>'+mineH+'<h3 class="set-h">Props on your board for this game</h3>'+propsH;
+  const qi=document.getElementById('hubQ'); if(qi && keep && document.activeElement && document.activeElement.id==='hubQ'){} }
+document.addEventListener('click',e=>{ const t=e.target; if(!t.closest) return;
+  const sp=t.closest('#hubSports [data-sp]'); if(sp){ const h=hubState(); h.sport=sp.dataset.sp; h.ev=null; document.getElementById('hubGame').hidden=true; hubSave(); hubLoad(); return; }
+  const f=t.closest('#hubFilter [data-f]'); if(f){ const h=hubState(); h.f=f.dataset.f; h.ev=null; document.getElementById('hubGame').hidden=true; hubSave(); hubLoad(); return; }
+  if(t.closest('#hubRefresh')){ hubLoad(true); return; }
+  const c=t.closest('#hubGames .hub-card'); if(c){ const ev=(window._hubEvs||[]).find(x=>String(x.id)===c.dataset.ev); if(ev){ hubOpen(ev); const g=document.getElementById('hubGame'); if(g) g.scrollIntoView({block:'start'}); } return; }
+  if(t.closest('#hubGame .hub-close')){ const h=hubState(); h.ev=null; document.getElementById('hubGame').hidden=true; document.querySelectorAll('#hubGames .hub-card').forEach(x=>x.classList.remove('on')); return; }
+  const see=t.closest('#hubGame .hub-see'); if(see){ const fp=document.getElementById('filterPlayer'); const bt=document.querySelector('.tabs .tab[data-view="v-board"]'); if(bt) bt.click(); if(fp){ fp.value=see.dataset.name; fp.dispatchEvent(new Event('input',{bubbles:true})); } return; }
+  if(t.closest('.tab[data-view="v-live"]')) setTimeout(()=>hubLoad(),0); });
+document.addEventListener('input',e=>{ if(e.target && e.target.id==='hubQ'){ const h=hubState(); h.q=e.target.value; const pos=e.target.selectionStart; const ev=(window._hubEvs||[]).find(x=>String(x.id)===h.ev); if(ev) hubOpen(ev,true).then(()=>{ const qi=document.getElementById('hubQ'); if(qi){ qi.focus(); try{ qi.setSelectionRange(pos,pos); }catch(x){} } }); }
+  if(e.target && e.target.id==='hubDate'){ const h=hubState(); h.ev=null; document.getElementById('hubGame').hidden=true; hubLoad(); } });
+setInterval(()=>{ try{ const h=hubState(); if(h.f==='live' && document.visibilityState==='visible' && document.getElementById('v-live').classList.contains('on')) hubLoad(true); }catch(e){} }, 30000);
 function mathKey(r){ return (r&&r.outlier?-1:0)+(r&&r.blendNet!=null?r.blendNet:(r&&r.net!=null?r.net:-1)); }
 function scWord(t){ return t>=75?'STRONG':t>=50?'GOOD':'THIN'; }
 function sentScore(r){ const net=r&&r.net!=null&&isFinite(r.net)?r.net:null, e=net==null?0:Math.round(50*Math.max(0,Math.min(1,net/0.06)));
