@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.29</title>
+<title>0xBeta Screener v4.30</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1255,6 +1255,18 @@ body[data-group="board"] .subtabs>[data-group="board"]:not([hidden]),body[data-g
   .subtabs>button{min-height:40px}
   .panel input:not([type=checkbox]):not([type=radio]),.panel select{min-height:44px}
 }
+/* v4.30 (Alonzo: "I do not like that the bar does not stay on the bottom, it is in the middle"; "on the ESPN ribbon, have the scoreboard under
+   where we can choose My games, Top events, NBA"): the five tabs are pinned to the bottom of the screen at every width (was: phones only), with
+   room left under the page; the ribbon's menu row sits on top and the scores run underneath it. */
+.tabs{position:fixed; left:0; right:0; bottom:0; top:auto; margin:0; z-index:60; border-radius:0; border:0; border-top:1px solid var(--rule);
+  box-shadow:0 -6px 18px rgba(16,24,40,.08); background:var(--panel); justify-content:center; gap:6px;
+  padding:6px max(12px, calc((100vw - 1320px) / 2)) calc(6px + env(safe-area-inset-bottom,0px))}
+.tabs .tab{flex:1 1 0; max-width:240px; min-width:0}
+body{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+.scorestrip{flex-direction:column}
+.scorestrip .ss-sel{border-right:0; border-bottom:1px solid var(--rule); padding:8px 12px; gap:6px 12px; flex-wrap:wrap; flex-direction:row; justify-content:flex-start; align-items:center}
+.scorestrip .ss-sel select{order:-1; max-width:320px; min-width:200px}
+.scorestrip .ss-ctl{margin-bottom:0}
 </style>
 </head>
 <body>
@@ -1263,7 +1275,7 @@ body[data-group="board"] .subtabs>[data-group="board"]:not([hidden]),body[data-g
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.29</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.30</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1340,7 +1352,7 @@ body[data-group="board"] .subtabs>[data-group="board"]:not([hidden]),body[data-g
 
 <!-- v2.71: ESPN score strip (free — no BettingPros calls) -->
 <div class="scorestrip" id="scoreStrip">
-  <div class="ss-sel"><div class="ss-ctl"><button type="button" class="ss-ref" id="ssRef" aria-label="Refresh scores from ESPN" title="Refresh scores from ESPN now (no BettingPros calls)">⟳</button><span class="ss-at" id="ssAt"></span></div><select id="ssSport" title="Scores for…"><option>NFL</option><option>NCAAF</option><option>NBA</option><option>NCAAB</option><option>WNBA</option><option>NHL</option><option>MLB</option></select><label class="ss-all" title="Show every league in the menu, not only the sports you bet in"><input type="checkbox" id="ssAll"> All sports</label></div>
+  <div class="ss-sel"><div class="ss-ctl"><button type="button" class="ss-ref" id="ssRef" aria-label="Refresh scores from ESPN" title="Refresh scores from ESPN now (no BettingPros calls)">⟳</button><span class="ss-at" id="ssAt"></span></div><select id="ssSport" title="Scores for…"><option>NFL</option><option>NCAAF</option><option>NBA</option><option>NCAAB</option><option>WNBA</option><option>NHL</option><option>MLB</option></select></div>
   <div class="ss-games" id="ssGames"><div class="ss-empty">Loading scores…</div></div>
 </div>
 
@@ -1939,7 +1951,7 @@ body[data-group="board"] .subtabs>[data-group="board"]:not([hidden]),body[data-g
 
 </div>
 <script>
-const SCREENER_VERSION='v4.29';
+const SCREENER_VERSION='v4.30';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -5654,12 +5666,8 @@ function ssFillAll(sel){ const g={}; Object.keys(ESPN_MAP).forEach(c=>{ const k=
    "All sports" (remembered on this device) brings back the full league menu. */
 function ssBetSports(){ return [...new Set(liveOpenBets().map(b=>b.sport).filter(s=>s && ESPN_MAP[s]))]; }
 function ssFillSel(sel){
-  const keep=sel.value; let all=false; try{ all=localStorage.getItem('mbev.ssAll')==='1'; }catch(e){}
-  const opt=c=>'<option value="'+esc(c)+'">'+esc(SPORT_NAMES[c]&&SPORT_NAMES[c]!==c?SPORT_NAMES[c]+' ('+c+')':c)+'</option>';
-  let h;
-  if(all){ const t=document.createElement('select'); ssFillAll(t); h=t.innerHTML; }
-  else h='<option value="TOP">⭐ Top events (ESPN)</option><option value="ALL">🔴 Live now: every league</option>'+ssBetSports().sort().map(opt).join('');
-  h='<option value="MINE">🎯 My games</option>'+h;
+  const keep=sel.value;   // v4.30 (Alonzo: "use how I had it, with all the sports available"): every league again, 🎯 My games on top
+  const t=document.createElement('select'); ssFillAll(t); const h='<option value="MINE">🎯 My games</option>'+t.innerHTML;
   if(sel.dataset.sig!==h){ sel.innerHTML=h; sel.dataset.sig=h; }
   sel.value=[...sel.options].some(o=>o.value===keep)?keep:'MINE';
 }
@@ -10089,8 +10097,7 @@ setTimeout(()=>{
   if(![...sel.options].some(o=>o.value===v)) v='MINE';   // v4.26: a sport with no bet is not in the menu
   sel.value=v;
   sel.addEventListener('change',()=>{ try{ localStorage.setItem('mbev.ssSport',sel.value); }catch(e){} renderStrip(false); });
-  const ac=document.getElementById('ssAll'); if(ac){ try{ ac.checked=localStorage.getItem('mbev.ssAll')==='1'; }catch(e){}   // v4.26
-    ac.addEventListener('change',()=>{ try{ localStorage.setItem('mbev.ssAll', ac.checked?'1':'0'); }catch(e){} ssFillSel(sel); renderStrip(false); }); }
+
   renderStrip(false);
   setInterval(()=>{ if(document.visibilityState!=='visible' || ssBusy) return;
     const box=document.getElementById('ssGames'), sec=+((document.getElementById('liveEvery')||{}).value)||60;

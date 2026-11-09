@@ -37,7 +37,7 @@ const runs = [
   ['On an iPhone the prefilled slip waits as a real link, so the book app opens; Mac unchanged', 'slip-app-test.js', []],
   ['Texas: a bet at a book you do not bet moves to your best book (board row or live Novig/Kalshi/Polymarket), screened at that price', 'texas-swap-test.js', []],
   ['Calendar: in play is never a loss; best and worst day, this month and ever, from real results only (Alonzo\'s November)', 'cal-worst-test.js', []],
-  ['v4.29: Augi\'s look and his five tabs (Board, Live Games, Parlay, Bet log, Settings), the rest in the row under theirs', 'tabs-test.js', []],
+  ['v4.30: the five tabs pinned to the bottom at every width; the ribbon menu above the scores, every sport again (in tabs-test and ribbon-risk-test)', 'tabs-test.js', []],
   ['v4.28: Sort › Math (edge first) is the default, the #1 MATH PICK card, the score colours in words', 'math-pick-test.js', []],
   ['v4.27: the hard stop: past the daily max, Save stops and says so; a second press is your call', 'hard-stop-test.js', []],
   ['v4.26: the score ribbon: My games, only the sports you bet in (All sports brings the rest back), each tile says what your open bets risk', 'ribbon-risk-test.js', []],

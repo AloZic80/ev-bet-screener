@@ -41,7 +41,7 @@ const serve=async ctx=>ctx.route('**/*',r=>{ const u=new URL(r.request().url());
     check('phone (Auto): phone layout, button offers desktop', st.w===390 && st.tabs==='fixed' && st.btn==='Show the desktop layout', st);
     await Promise.all([p.waitForNavigation(), p.tap('#layoutBtn')]); await p.waitForTimeout(1200);
     st=await p.evaluate(()=>({w:innerWidth, tabs:getComputedStyle(document.querySelector('.tabs')).position, btn:document.getElementById('layoutBtn').getAttribute('aria-label'), mode:localStorage.getItem('mbev.layout')}));
-    check('phone (Desktop): full 1280px layout, tabs not pinned to the bottom', st.w===1280 && st.tabs!=='fixed' && st.mode==='desktop', st);
+    check('phone (Desktop): full 1280px layout; v4.30: the tabs stay pinned to the bottom at every width (owner: "the bar does not stay on the bottom")', st.w===1280 && st.tabs==='fixed' && st.mode==='desktop', st);
     check('phone (Desktop): button offers the phone layout back', st.btn==='Show the phone layout', st.btn);
     await p.goto('http://app.test/phone.html'); await p.waitForTimeout(800);
     check('phone.html on a phone just opens the app', !p.url().endsWith('phone.html'), p.url());
