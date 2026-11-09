@@ -272,6 +272,14 @@
   Performance › Bet result study (after Is the model honest?): singles only, by game day (All / This month / Last 7 days / Today): logged, pending,
   W–L–P, average prediction and hit rate on graded wins and losses only, difference in points, profit from `betProfit`. Our parlay legs are not
   graded one by one, so his "parlay legs" view is not here. His light colours were darkened a little for AA on 10.5 px text. `tests/cover-study-test.js`.
+- iPhone pinned bar and colour schemes (v4.32, v4.33; owner: "when I scroll up, the tab bar does not stay pinned down"; "an option to change the colour
+  palette, in case I want blue, red, etc., but as a scheme"): at startup `.tabs` is moved to be the FIRST child of `<body>` (not the last: tests and
+  links pick the first `.tab[data-view="v-board"]`, which must be Board, not the hidden Pasted) and gets its own layer (`translateZ(0)`), the usual
+  cure for iPhone Safari letting a fixed bar slide while scrolling back up; not reproducible in Chromium. Colours: Settings › Layout › Colours
+  (`#paletteSeg`, `palPaint`, `html[data-palette]`, `mbev.palette`, set in the head script before the first paint; this device only): Green (Augi's,
+  default), Blue, Red, Purple, Graphite, each a full light and dark token set in the v4.33 CSS block. `--brand` is the solid colour under white
+  text (active tab, dark-mode buttons, Safe), `--accent` text and outlines; light rules use `:not([data-theme="dark"])` so they never beat the dark
+  ones. Wins (`--live`, `--gain`) stay green and losses red in every scheme. `tests/palette-test.js` checks all 10 for 4.5:1.
 - Bar at the bottom, ribbon menu on top (v4.30; owner: "I do not like that the bar does not stay on the bottom, it is in the middle"; "on the ESPN ribbon,
   have the scoreboard under where we can choose My games, Top events, NBA ... use how I had it, with all the sports available"): the five tabs are
   `position:fixed` at the bottom at every width (was phones ≤640 only; `body` keeps 76 px of room), `layout-test.js` now expects fixed on Desktop
