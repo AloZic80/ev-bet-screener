@@ -22,7 +22,7 @@ const LOG=[B('a',{stake:3}), B('b',{stake:2.5,book:'Kalshi'}), B('f',{stake:5,fr
   await p.goto('http://app.test/'); await p.waitForTimeout(1500);
   const tiles=()=>p.evaluate(()=>[...document.querySelectorAll('#ssGames .ss-g')].map(t=>({key:t.dataset.key, text:t.innerText.replace(/\s+/g,' ').trim(), right:Math.round(t.getBoundingClientRect().right), risk:(t.querySelector('.ss-risk')||{}).innerText||null, riskRight:(t.querySelector('.ss-risk')?Math.round(t.querySelector('.ss-risk').getBoundingClientRect().right):null)})));
   const menu=await p.$$eval('#ssSport option',o=>o.map(x=>x.value));
-  check('the menu lists 🎯 My games and only the sport you bet in (NBA), not NFL or the other leagues', menu.includes('MINE') && menu.includes('NBA') && !menu.includes('NFL') && !menu.includes('MLB'), menu.slice(0,8));
+  check('v4.30: the menu has 🎯 My games first and every sport again (NBA, NFL, MLB, Top events)', menu[0]==='MINE' && ['NBA','NFL','MLB','TOP'].every(v=>menu.includes(v)) && menu.length>=60, {first:menu[0], n:menu.length});
   let T=await tiles();
   const lal=T.find(t=>/LAL/.test(t.text)), mia=T.find(t=>/MIA/.test(t.text));
   check('the Lakers tile says what your open bets risk: 3 bets (one free) risking $5.50, not the settled bet and not the free $5', lal && lal.risk==='3 bets risking $5.50', lal&&lal.risk);
@@ -30,10 +30,6 @@ const LOG=[B('a',{stake:3}), B('b',{stake:2.5,book:'Kalshi'}), B('f',{stake:5,fr
   try{ await p.selectOption('#ssSport','MINE'); }catch(e){ console.log('  (no 🎯 My games choice: '+e.message.split('\n')[0]+')'); }
   await p.waitForTimeout(900); T=await tiles();
   check('🎯 My games lists only the games with your open bets (one tile, the Lakers game)', T.length===1 && /LAL/.test(T[0].text), T.map(t=>t.key));
-  await p.check('#ssAll'); await p.waitForTimeout(800);
-  const all=await p.$$eval('#ssSport option',o=>o.map(x=>x.value));
-  check('All sports brings back the full league menu (NFL, MLB, My games still first)', all.includes('NFL') && all.includes('MLB') && all[0]==='MINE', all.length);
-  await p.uncheck('#ssAll'); await p.waitForTimeout(500);
   await p.setViewportSize({width:390,height:844}); await p.waitForTimeout(300);
   T=await tiles();
   const l2=T.find(t=>/LAL/.test(t.text));

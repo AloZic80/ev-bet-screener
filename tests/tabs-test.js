@@ -33,6 +33,11 @@ let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?
     check(W+' px: Performance opens and Bet log stays lit', s.view==='v-perf' && s.lit.join()==='Bet log', {view:s.view, lit:s.lit});
     for(const v of ['v-live','v-parlay','v-settings']){ await p.click('.tabs .tab[data-view="'+v+'"]'); await p.waitForTimeout(150); s=await st();
       check(W+' px: '+v+' opens with no row under it', s.view===v && !s.sub.length, {view:s.view, sub:s.sub}); }
+    await p.evaluate(()=>window.scrollTo(0, document.documentElement.scrollHeight/2)); await p.waitForTimeout(150);
+    const pin=await p.evaluate(()=>{ const t=document.querySelector('.tabs').getBoundingClientRect(), sel=document.getElementById('ssSport').getBoundingClientRect(), g=document.getElementById('ssGames').getBoundingClientRect();
+      return {bottom:Math.round(t.bottom), vh:window.innerHeight, pos:getComputedStyle(document.querySelector('.tabs')).position, menuAbove:sel.bottom<=g.top+1}; });
+    check(W+' px: v4.30: the five tabs stay pinned to the bottom of the screen while scrolling', pin.pos==='fixed' && Math.abs(pin.bottom-pin.vh)<=1, pin);
+    check(W+' px: v4.30: the ribbon menu (My games, Top events, NBA...) sits above the scores', pin.menuAbove, pin);
     check(W+' px: no page errors', !errs.length, errs);
     await ctx.close();
   }

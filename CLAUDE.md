@@ -265,6 +265,11 @@
   accent #087B44 / dark #6EE3A4, ink #13271E, soft #5C7066, `--dim` #4A5D54, dark `--jetta` #087B44 so white text on the Safe button passes),
   the system font (`system-ui`), 12 px panels, 44 px inputs on a phone. A sub-row tab is hidden unless its group is open, so a test that opens
   one from another tab clicks it with `p.evaluate(()=>el.click())`. Our math, cards, Today card and data are unchanged. `tests/tabs-test.js`.
+- Bar at the bottom, ribbon menu on top (v4.30; owner: "I do not like that the bar does not stay on the bottom, it is in the middle"; "on the ESPN ribbon,
+  have the scoreboard under where we can choose My games, Top events, NBA ... use how I had it, with all the sports available"): the five tabs are
+  `position:fixed` at the bottom at every width (was phones ≤640 only; `body` keeps 76 px of room), `layout-test.js` now expects fixed on Desktop
+  too. The ribbon is a column: the menu row (select, ⟳, updated) on top, the scores under it. `ssFillSel` lists every league again with 🎯 My games
+  first; v4.26's "only the sports you bet in" menu and its All sports box (`#ssAll`, `mbev.ssAll`) are gone.
 - Math order and the #1 pick (v4.28, `mathKey`, `scWord`, `mathTop`, `.sc-mathtop`, `.sc-word`; owner: "still confused on the green, blue and school-bus
   yellow. Tell me THIS one is what the math says to bet on. The sort, stars is not always the best bets, so what is it?"): one order for everything,
   the edge after blending the market with the model (`blendNet`, what the stake is sized on), outliers last. The daily max is filled in it (it already
