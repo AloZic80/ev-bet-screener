@@ -265,6 +265,13 @@
   accent #087B44 / dark #6EE3A4, ink #13271E, soft #5C7066, `--dim` #4A5D54, dark `--jetta` #087B44 so white text on the Safe button passes),
   the system font (`system-ui`), 12 px panels, 44 px inputs on a phone. A sub-row tab is hidden unless its group is open, so a test that opens
   one from another tab clicks it with `p.evaluate(()=>el.click())`. Our math, cards, Today card and data are unchanged. `tests/tabs-test.js`.
+- Augi's cover bands and Bet result study (v4.31, `cvBand`, `cvNames`, `cvRanges`, `cvChipHtml`, `renderStudy`, `#studyPanel`, `#studyScope`, `.cv-chip .cv-1..9`;
+  owner: "Augi did some changes for stats ... I want his features, but with our math/settings"): his 5-point bands on our fair probability (board
+  `r.fairProb`, logged bet `toProb(b.fair)`): Long Shot <45, Feeling Lucky 45-50, On the Line 50-55, Slight Lean 55-60, Lean 60-65, Solid 65-70, Strong
+  70-75, Heavy Favorite 75-80, High Cover 80+. A chip in the board's Cover cell and the Sentinels card's tag line (a label: no rule or stake changes).
+  Performance › Bet result study (after Is the model honest?): singles only, by game day (All / This month / Last 7 days / Today): logged, pending,
+  W–L–P, average prediction and hit rate on graded wins and losses only, difference in points, profit from `betProfit`. Our parlay legs are not
+  graded one by one, so his "parlay legs" view is not here. His light colours were darkened a little for AA on 10.5 px text. `tests/cover-study-test.js`.
 - Bar at the bottom, ribbon menu on top (v4.30; owner: "I do not like that the bar does not stay on the bottom, it is in the middle"; "on the ESPN ribbon,
   have the scoreboard under where we can choose My games, Top events, NBA ... use how I had it, with all the sports available"): the five tabs are
   `position:fixed` at the bottom at every width (was phones ≤640 only; `body` keeps 76 px of room), `layout-test.js` now expects fixed on Desktop
