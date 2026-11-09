@@ -39,7 +39,7 @@ const LOG=[
   // v4.02 (Alonzo: "on the Performance tab we do not need the API info"): the BettingPros bar and Sources show on the Board only, and Results by day comes first
   const seen=()=>p.evaluate(()=>{ const v=sel=>{ const e=document.querySelector(sel); return !!e && e.getBoundingClientRect().height>0; }; return {bp:v('.loadbar'), src:v('#srcBar'), count:v('.statbox')}; });
   let sn=await seen(); check('v4.02: on the Board, the BettingPros bar, Sources and the board count are there', sn.bp && sn.src && sn.count, sn);
-  await p.click('.tab[data-view="v-perf"]'); await p.waitForTimeout(300); sn=await seen();
+  await p.evaluate(()=>document.querySelector('.tab[data-view="v-perf"]').click())   /* v4.29: under its main tab now */; await p.waitForTimeout(300); sn=await seen();
   const order=await p.evaluate(()=>{ const c=document.getElementById('calPanel'), s=document.getElementById('scorePanel'); return !!(c.compareDocumentPosition(s) & Node.DOCUMENT_POSITION_FOLLOWING); });
   check('v4.02: on Performance they are gone, and Results by day comes before the Scorecard', !sn.bp && !sn.src && !sn.count && order, {sn, order});
   for(const v of ['v-log','v-parlay','v-live','v-settings']){ await p.click('.tab[data-view="'+v+'"]'); await p.waitForTimeout(100); }
@@ -57,7 +57,7 @@ const LOG=[
   const ds=await p.evaluate(d=>{ const x=dayStats()[d]; return {staked:x.staked, profit:+x.profit.toFixed(2)}; }, DAY);
   check('Performance by day: staked leaves out the free bet; the not-started bet is not a loss', ds.staked===11.5 && ds.profit===10.5, ds);
   // v4.00 (Alonzo): the Performance calendar shows money on games not started in grey: not green, not red, not a worst day
-  await p.click('.tab[data-view="v-perf"]'); await p.waitForTimeout(400);
+  await p.evaluate(()=>document.querySelector('.tab[data-view="v-perf"]').click())   /* v4.29: under its main tab now */; await p.waitForTimeout(400);
   const cal=await p.evaluate(()=>{ const c=d=>{ const e=document.querySelector('.cal-c[data-day="'+d+'"]'); return e?{cls:e.className, v:e.querySelector('.v').innerText.replace(/\s+/g,' ')}:null; };
     return {today:c('2026-11-05'), tmrw:c('2026-11-06'), big:document.getElementById('calToday').innerText.replace(/\s+/g,' '), foot:document.getElementById('calFoot').innerText.replace(/\s+/g,' ')}; });
   check('calendar, today: +$10.50 (settled), then in grey ▶ $2.00 in play and ⏳ $4.00 to play', /\+\$10\.50/.test(cal.today.v) && /▶ \$2\.00 in play/.test(cal.today.v) && /⏳ \$4\.00 to play/.test(cal.today.v) && / w\b/.test(cal.today.cls), cal.today);

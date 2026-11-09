@@ -18,7 +18,7 @@ const LOG=[won('2026-11-01',9.39), lost('2026-11-02',9.54), won('2026-11-03',1.2
   await ctx.addInitScript(L=>{ try{ if(sessionStorage.getItem('s')) return; sessionStorage.setItem('s','1'); localStorage.clear(); localStorage.setItem('mbev.log',JSON.stringify(L)); }catch(e){} }, LOG);
   const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
   await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
-  await p.goto('http://app.test/'); await p.waitForTimeout(1200); await p.click('.tab[data-view="v-perf"]'); await p.waitForTimeout(400);
+  await p.goto('http://app.test/'); await p.waitForTimeout(1200); await p.evaluate(()=>document.querySelector('.tab[data-view="v-perf"]').click())   /* v4.29: under its main tab now */; await p.waitForTimeout(400);
   const c=await p.evaluate(()=>{ const cell=d=>{ const e=document.querySelector('.cal-c[data-day="'+d+'"]'); return {cls:e.className, v:e.querySelector('.v').innerText.replace(/\s+/g,' ')}; };
     return {fri:cell('2026-11-06'), big:document.getElementById('calToday').innerText.replace(/\s+/g,' '), month:document.getElementById('calMonthTot').innerText, foot:document.getElementById('calFoot').innerText.replace(/\s+/g,' ')}; });
   check('Fri 11/6 (playing, nothing settled): grey $34.84, not red, no L', !/ l\b| w\b/.test(c.fri.cls) && / tp\b/.test(c.fri.cls) && /\$34\.84/.test(c.fri.v), c.fri);

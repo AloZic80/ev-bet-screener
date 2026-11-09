@@ -10,7 +10,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.28</title>
+<title>0xBeta Screener v4.29</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1217,6 +1217,44 @@ details.help.more{margin-top:10px}
 .sc-score{display:inline-flex; flex-direction:column; align-items:flex-start}
 .sc-word{font-family:inherit; font-size:10px; font-weight:800; letter-spacing:.08em; line-height:1.2; margin-top:2px}
 .sc-mathtop{align-self:flex-start; margin:0 0 6px; padding:3px 10px; border-radius:20px; font-size:11.5px; font-weight:800; letter-spacing:.04em; background:var(--live-bg); color:var(--live); border:1px solid var(--live)}
+/* v4.29 (Alonzo: "I like his GUI, it is cleaner ... we can change it to my liking, but in his style ... his 5 tabs"): Augi's Odds Board look.
+   His greens and greys, the phone's own font, white rounded panels, small uppercase titles, a segmented tab bar with the active tab solid green,
+   44 px touch targets on a phone. Our math, cards and data are unchanged; only the paint and the tab layout move. */
+:root{
+  --page:#F2F8F4; --panel:#FFFFFF; --panel-2:#F7FBF8; --rail:#E9F3EC; --rule:#D8E8DD; --rule-2:#E6F0E9;
+  --ink:#13271E; --soft:#5C7066; --dim:#4A5D54; --accent:#087B44; --accent-bg:#E6F5EC;
+  --jetta:#087B44; --jetta-text:#087B44; --board-tint:#F7FBF8;
+}
+:root[data-theme="dark"]{
+  --page:#0C1510; --panel:#15241B; --panel-2:#1A2B21; --rail:#1F3327; --rule:#304B39; --rule-2:#24392B;
+  --ink:#F0F7F2; --soft:#A0B8A9; --dim:#A0B8A9; --accent:#6EE3A4; --accent-bg:#1D3C2B;
+  --jetta:#087B44; --jetta-text:#6EE3A4; --board-tint:#102018;   /* white text sits on --jetta (the Safe button): 5.6:1 */
+}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.head h1{font-weight:800; letter-spacing:-.035em}
+.panel{border-radius:12px; box-shadow:0 2px 9px rgba(8,13,22,.025)}
+.sc-score{font-family:inherit; font-weight:800}
+:root[data-theme="dark"] button.act,:root[data-theme="dark"] button.log:not(.parlay):not(.undo):not(.share-btn),
+:root[data-theme="dark"] .cal-seg button.on,:root[data-theme="dark"] .ab-seg button.on,:root[data-theme="dark"] .par-btn,
+:root[data-theme="dark"] .copy-big{background:#087B44; border-color:#087B44}
+/* the five tabs: his segmented bar */
+.tabs{gap:5px; padding:4px; background:var(--panel); border:1px solid var(--rule); border-radius:10px; margin-top:14px}
+.tabs .tab{flex:1 1 85px; text-align:center; padding:8px 14px; min-height:40px; border:0; border-radius:7px; color:var(--ink); font-weight:700; background:transparent}
+.tabs .tab.on,.tabs .tab.grp{background:#087B44; color:#fff}
+.tabs .tab.on .tab-n,.tabs .tab.grp .tab-n{background:#fff; color:#087B44}
+.tabs .tab:hover:not(.on):not(.grp){background:var(--accent-bg)}
+/* the row under Board and under Bet log */
+.subtabs{display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 2px}
+.subtabs[hidden]{display:none}
+.subtabs>button{display:none; font:inherit; font-size:13px; font-weight:700; padding:6px 13px; min-height:34px; border:1px solid var(--rule); border-radius:99px; background:var(--panel); color:var(--ink); cursor:pointer}
+body[data-group="board"] .subtabs>[data-group="board"]:not([hidden]),body[data-group="log"] .subtabs>[data-group="log"]:not([hidden]){display:inline-flex; align-items:center; gap:4px}
+.subtabs>button.on{background:var(--accent-bg); border-color:var(--accent); color:var(--accent)}
+@media (max-width:900px){
+  .tabs{border-radius:0; border-left:0; border-right:0; padding:4px 6px env(safe-area-inset-bottom,0px); gap:4px; overflow:visible}
+  .tabs .tab{flex:1 1 0; min-width:0; padding:10px 4px; min-height:44px; font-size:13px; border-top:0; white-space:normal; line-height:1.15}
+  .subtabs>button{min-height:40px}
+  .panel input:not([type=checkbox]):not([type=radio]),.panel select{min-height:44px}
+}
 </style>
 </head>
 <body>
@@ -1225,7 +1263,7 @@ details.help.more{margin-top:10px}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.28</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.29</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1281,19 +1319,23 @@ details.help.more{margin-top:10px}
   <div class="src-panel" id="srcPanel" style="display:none"></div>
 </div>
 
-<div class="tabs" role="tablist" aria-label="Sections">
-  <button class="tab on" role="tab" aria-selected="true" data-view="v-board" data-src="api">Board</button>
-  <button class="tab" role="tab" aria-selected="false" data-view="v-board" data-src="paste" hidden>Pasted <span class="tab-n" id="pasteTabN"></span></button>
-  <button class="tab" role="tab" aria-selected="false" data-view="v-leagues" title="Every league your sources have games for in the next 3 days">🌍 Leagues <span class="tab-n" id="lgTabN"></span></button>
-  <button class="tab" role="tab" aria-selected="false" data-view="v-parlay" title="PrizePicks and DraftKings Pick6 entries built from the board">Parlays <span class="tab-n" id="pkTabN"></span></button>
-  <button class="tab" role="tab" aria-selected="false" data-view="v-parole" title="Jail bets your own posted price would fix — Make orders on Novig">🔓 Parole <span class="tab-n" id="paroleTabN"></span></button>
-  <button class="tab" role="tab" aria-selected="false" data-view="v-add" title="Take a price or post your own — BET or SKIP and how much">+ Add a bet</button>
-  <button class="tab" role="tab" aria-selected="false" data-view="v-money">Moneylines</button>
-  <button class="tab" role="tab" aria-selected="false" data-view="v-log">Bet log <span class="tab-n look-n" id="logTabN"></span></button>
-  <button class="tab" role="tab" aria-selected="false" data-view="v-perf">Performance</button>
-  <button class="tab" role="tab" aria-selected="false" data-view="v-live">Live <span class="tab-n" id="leTabN"></span></button>
-  <button class="tab" role="tab" aria-selected="false" data-view="v-settings">Settings</button>
-  <button class="tab" role="tab" aria-selected="false" data-view="v-paste" hidden title="Paste a board from the BettingPros site — doesn't use the API">Paste a board</button>
+<div class="tabs" role="tablist" aria-label="Sections">   <!-- v4.29 (Alonzo: "his 5 tabs"): Augi's five; the rest sit in the row under their tab -->
+  <button class="tab on" role="tab" aria-selected="true" data-view="v-board" data-src="api" data-group="board">Board</button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-live" data-group="live">Live Games <span class="tab-n" id="leTabN"></span></button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-parlay" data-group="parlay" title="PrizePicks and DraftKings Pick6 entries built from the board">Parlay <span class="tab-n" id="pkTabN"></span></button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-log" data-group="log">Bet log <span class="tab-n look-n" id="logTabN"></span></button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-settings" data-group="settings">Settings</button>
+</div>
+<div class="subtabs" id="subTabs" role="tablist" aria-label="More in this tab">
+  <button type="button" class="subhome" data-group="board" data-home="v-board">Board</button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-board" data-src="paste" data-group="board" hidden>Pasted <span class="tab-n" id="pasteTabN"></span></button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-leagues" data-group="board" title="Every league your sources have games for in the next 3 days">🌍 Leagues <span class="tab-n" id="lgTabN"></span></button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-parole" data-group="board" title="Jail bets your own posted price would fix — Make orders on Novig">🔓 Parole <span class="tab-n" id="paroleTabN"></span></button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-money" data-group="board">Moneylines</button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-paste" data-group="board" hidden title="Paste a board from the BettingPros site — doesn't use the API">Paste a board</button>
+  <button type="button" class="subhome" data-group="log" data-home="v-log">Bet log</button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-add" data-group="log" title="Take a price or post your own — BET or SKIP and how much">+ Add a bet</button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-perf" data-group="log">Performance</button>
 </div>
 
 <!-- v2.71: ESPN score strip (free — no BettingPros calls) -->
@@ -1897,7 +1939,7 @@ details.help.more{margin-top:10px}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.28';
+const SCREENER_VERSION='v4.29';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -6006,7 +6048,7 @@ function scoreSet(list){
   const S=list.filter(b=>b.kind!=='parlay' && !b.research).map(b=>({b, _pl:betProfit(b), _st:b.free?0:(+b.stake||0), _clv:clv(b), _day:gameDayOf(b)}));   // v3.98: ROI on your own money: profit without the stake, free bets stake $0
   return {settled:S.filter(x=>x._pl!=null && x._st>0), withClose:S.filter(x=>x._clv!=null)};
 }
-function segLabel(n){ return n>=1000?'<span class="sc-tag ev">evidence</span>':n>=300?'<span class="sc-tag cmp">comparison</span>':n>=100?'<span class="sc-tag">exploratory</span>':'<span class="sc-tag" style="opacity:.6">too few</span>'; }
+function segLabel(n){ return n>=1000?'<span class="sc-tag ev">evidence</span>':n>=300?'<span class="sc-tag cmp">comparison</span>':n>=100?'<span class="sc-tag">exploratory</span>':'<span class="sc-tag" style="opacity:.72">too few</span>'; }
 var _rsCache=null;
 function researchState(){
   const k=logged.length+':'+logged.filter(b=>b.research).length+':'+logged.filter(b=>b.research&&b.closing).length;
@@ -7592,9 +7634,20 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
   t.classList.add('on'); document.getElementById(t.dataset.view).classList.add('on');
   document.body.dataset.view=t.dataset.view;   // v4.02: the BettingPros bar and Sources show on the Board only
+  tabGroupPaint(t);   // v4.29: Augi's five tabs, the rest in the row under theirs
   if(t.dataset.src && t.dataset.src!==boardSrc){ boardSrc=t.dataset.src; refresh(); }   // v2.86: Board (API) vs Pasted
 }));
 document.body.dataset.view=(document.querySelector('.view.on')||{}).id||'v-board';   // v4.02
+/* v4.29 (Alonzo, after seeing Augi's Odds Board: "I like his GUI, it is cleaner ... his 5 tabs"): Board, Live Games, Parlay, Bet log and Settings
+   in the bar; Leagues, Parole and Moneylines in the row under Board, + Add a bet and Performance under Bet log. Every view and every tab button is
+   the same as before (same data-view, same handler), so every link that opens a tab still works. body[data-group] says which row shows; the main
+   tab of the group stays lit (.grp) while one of its rows is open; a .subhome pill goes back to the group's main view. */
+function tabGroupPaint(t){ const g=(t&&t.dataset.group)||'board'; document.body.dataset.group=g;
+  document.querySelectorAll('.tabs .tab').forEach(x=>{ const on=x.dataset.group===g; x.classList.toggle('grp', on); x.setAttribute('aria-selected', String(on)); });
+  document.querySelectorAll('#subTabs .subhome').forEach(x=>x.classList.toggle('on', x.dataset.group===g && t===document.querySelector('.tabs .tab[data-group="'+g+'"]')));
+  const sub=document.getElementById('subTabs'); if(sub) sub.hidden=!sub.querySelector('[data-group="'+g+'"]'); }
+document.addEventListener('click',e=>{ const h=e.target.closest&&e.target.closest('#subTabs .subhome'); if(!h) return; const t=document.querySelector('.tabs .tab[data-group="'+h.dataset.group+'"]'); if(t) t.click(); });
+tabGroupPaint(document.querySelector('.tab.on'));
 function showBoardSrc(src){ const t=document.querySelector('.tab[data-src="'+src+'"]'); if(t) t.click(); }
 const NUMS=['oMin','oMax','eMin','eMax','devig','bank','kelly','shrink','sMin','sMax','mWeight','gameCapPct','dayGoal','dayMaxPct','dayMaxMevPct',
             'fKalshi','fProphet','fPoly','fNovig','fFliff','fBook','fFdp'];

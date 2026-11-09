@@ -12,7 +12,7 @@ let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?
   await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html});
     if(/espn\.com.*scoreboard/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1200);
-  await p.click('.tab[data-view="v-add"]'); await p.waitForTimeout(300); await p.selectOption('#abSport','NBA'); await p.waitForTimeout(800); await p.waitForSelector('#abHost .editor');
+  await p.evaluate(()=>document.querySelector('.tab[data-view="v-add"]').click())   /* v4.29: under its main tab now */; await p.waitForTimeout(300); await p.selectOption('#abSport','NBA'); await p.waitForTimeout(800); await p.waitForSelector('#abHost .editor');
   const books=await p.$$eval('#abHost .eb-book option',o=>o.map(x=>({v:x.value,t:x.textContent})));
   const has=v=>books.some(x=>x.v===v);
   check('+ Add a bet lists each one on its own', ['DraftKings','DraftKings Predictions','DraftKings Pick 6','FanDuel','FanDuel Predicts'].every(has), books.filter(x=>/draftkings|fanduel/i.test(x.v)));

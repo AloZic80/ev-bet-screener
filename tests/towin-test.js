@@ -23,7 +23,7 @@ let pass=0, fail=0; const check=(name,ok,got)=>{ ok?pass++:fail++; console.log((
     if(/espn\.com/.test(u) && /scoreboard/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'});
     return r.abort(); });   // BettingPros, Worker, CDNs, etc. blocked
   await p.goto('http://app.test/index.html'); await p.waitForTimeout(1000);
-  await p.click('.tab[data-view="v-add"]'); await p.waitForTimeout(500);
+  await p.evaluate(()=>document.querySelector('.tab[data-view="v-add"]').click())   /* v4.29: under its main tab now */; await p.waitForTimeout(500);
   await p.selectOption('#abSport','NBA'); await p.waitForTimeout(1500);
   console.log('game options:', JSON.stringify(await p.$$eval('#abGame option',o=>o.map(x=>x.textContent))));
   async function addBet(stake, towin){
