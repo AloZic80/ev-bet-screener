@@ -30,7 +30,7 @@ async function run(withList){
     if(/espn\.com/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'});
     return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1500);
-  await p.click('.tab[data-view="v-leagues"]'); await p.waitForTimeout(3500);
+  await p.evaluate(()=>document.querySelector('.tab[data-view="v-leagues"]').click())   /* v4.29: under its main tab now */; await p.waitForTimeout(3500);
   const st=await p.evaluate(()=>{ const rows=[...document.querySelectorAll('#lgBody > .lg-list .lg-row, #lgBody > ul .lg-row')].map(li=>({name:li.querySelector('.lg-who b').textContent, src:[...li.querySelectorAll('.lg-b')].map(x=>x.textContent), load:!!li.querySelector('.lg-load'), bp:!!li.querySelector('.lg-bp')}));
     const off=[...document.querySelectorAll('#lgBody .lg-off')].map(d=>({sum:d.querySelector('summary').textContent, names:[...d.querySelectorAll('.lg-who b')].map(b=>b.textContent).concat((d.querySelector('.lg-names')||{textContent:''}).textContent.split(' · ').filter(Boolean))}));
     return {rows, off, msg:document.getElementById('lgMsg').textContent, tab:document.getElementById('lgTabN').textContent}; });

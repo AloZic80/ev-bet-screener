@@ -27,7 +27,7 @@ const LOG=[B('save'), B('mark'), PL('pl'), PL('plwin',{date:'2026-11-03',result:
   check('a free parlay that missed: $0, saved even when you close the editor with Cancel', JSON.stringify(await pl('pl'))==='{"free":true,"pl":0}', await pl('pl'));
   await open('plwin'); await tick('.pl-free'); await p.evaluate(()=>document.querySelector('#logBody .pl-cancel').click()); await p.waitForTimeout(300);
   check('a free parlay that hit pays its winnings: $40 − $5 = $35 (the stake does not come back)', (await pl('plwin')).pl===35, await pl('plwin'));
-  await p.click('.tab[data-view="v-perf"]'); await p.waitForTimeout(400);
+  await p.evaluate(()=>document.querySelector('.tab[data-view="v-perf"]').click())   /* v4.29: under its main tab now */; await p.waitForTimeout(400);
   const c=await p.evaluate(()=>{ const e=document.querySelector('.cal-c[data-day="2026-11-02"]'); return {cls:e.className, v:e.querySelector('.v').textContent}; });
   check('Performance calendar, 11/2: not red ($0.00, no loss)', !/ l\b/.test(c.cls) && /\$0\.00/.test(c.v), c);
   await p.reload(); await p.waitForTimeout(1200);

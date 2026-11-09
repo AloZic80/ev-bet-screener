@@ -256,6 +256,15 @@
   longer marks CHI's game tomorrow. The OTHER-side warning (v3.13) also finds a logged bet with no game text on the other team of the row's game.
   Worker v3.42 (`novigBet`, PR not merged until the owner says so): a Novig fill carries `away`/`home` from the description ("PHI @ CHI"), so the
   logged bet gets its game. `tests/fill-prior-test.js` (fails on v4.24).
+- Augi's look and his five tabs (v4.29, `tabGroupPaint`, `#subTabs`, `.subhome`, `data-group`, `body[data-group]`; owner, after seeing Augi's Odds Board
+  (AugiM13/screener): "I like his GUI, it is cleaner ... we can change it to my liking, but in his style ... our settings and math ... his 5 tabs"):
+  the bar is Board, Live Games, Parlay, Bet log, Settings (his order, a segmented bar with the active tab solid #087B44; on a phone the fixed bottom
+  bar). The other views keep their tab buttons, `data-view` and handler, but sit in `#subTabs` under their group: Board → Leagues, Parole,
+  Moneylines (and the hidden Pasted / Paste a board); Bet log → + Add a bet, Performance. The group's main tab stays lit (`.grp`) while one of its
+  row's views is open; the `.subhome` pill goes back to the main view. His palette in the v4.29 CSS block (light and dark tokens: page #F2F8F4,
+  accent #087B44 / dark #6EE3A4, ink #13271E, soft #5C7066, `--dim` #4A5D54, dark `--jetta` #087B44 so white text on the Safe button passes),
+  the system font (`system-ui`), 12 px panels, 44 px inputs on a phone. A sub-row tab is hidden unless its group is open, so a test that opens
+  one from another tab clicks it with `p.evaluate(()=>el.click())`. Our math, cards, Today card and data are unchanged. `tests/tabs-test.js`.
 - Math order and the #1 pick (v4.28, `mathKey`, `scWord`, `mathTop`, `.sc-mathtop`, `.sc-word`; owner: "still confused on the green, blue and school-bus
   yellow. Tell me THIS one is what the math says to bet on. The sort, stars is not always the best bets, so what is it?"): one order for everything,
   the edge after blending the market with the model (`blendNet`, what the stake is sized on), outliers last. The daily max is filled in it (it already

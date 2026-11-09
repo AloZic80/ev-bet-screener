@@ -28,7 +28,7 @@ const BOARD=[{name:'Josh Allen',game:'BUF @ MIA',matchup:'BUF @ MIA',side:'O',sp
     if(/api\.0xbeta\.dev\/live\?/.test(u)){ live.push(decodeURIComponent(u.split('bets=')[1]||'')); return r.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{"results":{}}'}); }
     return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1500);
-  await p.click('.tab[data-view="v-add"]'); await p.waitForTimeout(400);
+  await p.evaluate(()=>document.querySelector('.tab[data-view="v-add"]').click())   /* v4.29: under its main tab now */; await p.waitForTimeout(400);
   // the entry choices offered
   await p.selectOption('#abSport','NBA'); await p.waitForTimeout(1500); await p.waitForSelector('#abHost .editor');
   const ui=await p.evaluate(()=>({modes:[...document.querySelectorAll('#abHost .eb-mode option')].map(o=>o.textContent), odds:document.querySelector('#abHost .eb-odds').placeholder,
@@ -84,7 +84,7 @@ const BOARD=[{name:'Josh Allen',game:'BUF @ MIA',matchup:'BUF @ MIA',side:'O',sp
   const asked=live.join(' ');
   check('Live tab asks the Worker for a live price on the open Novig bet', asked.includes(B.fut.id), live.length+' request(s)');
   // Performance calendar
-  await p.click('.tab[data-view="v-perf"]'); await p.waitForTimeout(600);
+  await p.evaluate(()=>document.querySelector('.tab[data-view="v-perf"]').click())   /* v4.29: under its main tab now */; await p.waitForTimeout(600);
   const cal=await p.evaluate(d=>{ const x=calDays('All'); return {y:x[d[0]]||null, two:x[d[1]]||null}; },[YDAY,TWO]);
   check('calendar, yesterday: 1 win, 1 loss, 1 still open; +$9.09 − $5 = +$4.09, the open $4 is in play, not lost (v4.07)', cal.y && cal.y.w===1 && cal.y.l===1 && cal.y.open===1 && Math.abs(cal.y.profit-4.09)<0.01 && cal.y.playingAmt===4, cal.y);
   check('calendar, two days ago: the typed bet you won, +$9.50', cal.two && cal.two.w===1 && Math.abs(cal.two.profit-9.5)<0.01, cal.two);

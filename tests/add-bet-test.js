@@ -16,7 +16,7 @@ const route=r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/'))
   check('Paste ▸ link hidden', await p.$eval('#pasteLink',e=>e.offsetParent===null), true);
   check('ESPN score strip still shown', await p.$eval('#scoreStrip',e=>e.offsetParent!==null && e.getBoundingClientRect().height>0), true);
   check('Today card: one-line empty state', await p.$eval('#todayBar',e=>!!e.querySelector('.tb-empty') && !e.querySelector('.tb-t')), await p.$eval('#todayBar',e=>e.innerText.replace(/\s+/g,' ')));
-  await p.click('.tab[data-view="v-add"]'); await p.waitForTimeout(400); await p.selectOption('#abSport','NBA'); await p.waitForTimeout(800);
+  await p.evaluate(()=>document.querySelector('.tab[data-view="v-add"]').click())   /* v4.29: under its main tab now */; await p.waitForTimeout(400); await p.selectOption('#abSport','NBA'); await p.waitForTimeout(800);
   async function add({game,team,teamFree,book,odds,stake,towin,result,date}){
     await p.selectOption('#abType','moneyline'); await p.fill('#abGameFree',game); await p.fill('#abDate',date||'2026-10-20'); await p.waitForTimeout(250);
     if(team) await p.selectOption('#abTeam',team); if(teamFree) await p.fill('#abTeamFree',teamFree);
