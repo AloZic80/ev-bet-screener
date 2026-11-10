@@ -1,6 +1,6 @@
 # La Contadora: how the screener's EV calculator works
 
-This is the math behind every bet the 0xBeta Screener (props.0xbeta.dev) shows. Written 2026-11-09 for **v4.43**, updated for v4.45; revised after an outside math check.
+This is the math behind every bet the 0xBeta Screener (props.0xbeta.dev) shows. Written 2026-11-09 for **v4.43**, updated for v4.45 and v4.50; revised after an outside math check.
 
 The worked example is a real card from Alonzo's board: **Jonathan Lekkerimaki (VAN) Over 1.5 Shots, Novig -108, PHI @ VAN, 8:30 PM CT.**
 
@@ -107,6 +107,43 @@ Then the limits apply:
 
 All of these are **estimates**. A bet that passes has an *estimated* edge, not a guaranteed one.
 
+## 5b. Modes, the sweet spot and ◎ PERFECTA (v4.50)
+
+**A mode never changes the best bets or their stakes.** It only adds its own group under them.
+
+| Mode | What it lists | Stake |
+|---|---|---|
+| 🛡️ Safe | The best bets: everything that passes section 5. | Section 4. |
+| 🍀 Feeling Lucky | Safe, plus **Just missed**: Watch bets whose conservative EV is 0% or better. | The smallest bet each, up to 5 a game day. |
+| 🔮 Clairvoyant | Feeling Lucky, plus **Hail Marys**: every long shot you could bet (+300 or longer, and touchdown, home-run or goal scorers from +200), math edge or not. | $1 each, up to 3 a game day. Back to Safe at midnight. |
+
+- Each Hail Mary says what the math thinks: "La Contadora gives 19.4%; +350 needs 22.2%". It says "✓ the math agrees" only when her EV is above zero.
+- Extras are real bets: they count in your day's money, and the Hard stop still asks past the daily max.
+- Extras are kept out of the Scorecard's 1,000-bet test, which only judges the best bets. **Performance › ◎ Rings and extras** keeps their own record.
+
+**🎯 Sweet spot** is only ever on a best bet, and is judged on the **conservative EV** (since v4.50; before, the model's own EV).
+
+**◎ PERFECTA** is a best bet that passes six checks:
+
+| # | Check | Passes when |
+|---|---|---|
+| 1 | Zone | the conservative chance is 50% to 75% |
+| 2 | Edge | the conservative EV is +4% to +12% (above 12% is usually a stale price or a wrong match) |
+| 3 | Room for error | the conservative chance is 2.5 points or more above the price after its fee |
+| 4 | Lined up | model ≥ market, and the market alone beats the price |
+| 5 | Fresh | the price was read in the last 10 minutes |
+| 6 | Clean | no warning note, injury, bad weather, outlier, capped stake, or a price up a point in the last hour |
+
+- **6 of 6:** a gold ring, a tinted card and "BET NOW". **5 of 6:** a thin ring that names the miss. The list is in "Why this play?".
+- The ring is a label. It never changes a stake.
+- **Example (6 of 6):** model 60%, market 58.5%, price 54% at Novig (no fee).
+  - Conservative chance = 58.5 + 0.35 × 1.5 = **59.0%** (in the zone).
+  - EV = 59.025 ÷ 54 − 1 = **+9.3%**.
+  - Room = 59.0 − 54.0 = **5.0 points**.
+  - Market alone: 58.5 ÷ 54 − 1 = +8.3%, so it is lined up.
+
+**🎟 Parlay leg:** a player prop with a 70%+ chance pays little alone (a fair price near −233 or shorter). On a pick'em app every pick pays the same, and a 4-pick PrizePicks Power entry (10×) needs about **56.2%** a pick (0.1 to the power ¼).
+
 ## 6. Parlays and pick'em (PrizePicks, Pick6, Underdog…)
 
 - Each pick's chance is its **blend**.
@@ -158,4 +195,4 @@ The score is shown as a word: **STRONG** 75+, **GOOD** 50–74, **THIN** under 5
 
 `tests/math-audit-test.js` checks this arithmetic against brute force on every build: odds ↔ chance, EV after fees, the most you can pay, the Kalshi shares, the Kelly stake, profit, and the parlay math. `tests/blend-limit-test.js` checks that "OK up to" follows the blend. Every setting is in **Settings › Your rules at a glance**.
 
-*Revised 2026-11-09 after an outside math review: rounding called out, the three chances named, the parlay independence warning added, the FanDuel fee spelled out, "OK up to" moved to the blend (app v4.41), the THIN and 1,000-bet wording made statistical, and the EV floor moved to the conservative chance with model-only passes as WATCH (app v4.43); Watch bets v2 (app v4.45).*
+*Revised 2026-11-09 after an outside math review: rounding called out, the three chances named, the parlay independence warning added, the FanDuel fee spelled out, "OK up to" moved to the blend (app v4.41), the THIN and 1,000-bet wording made statistical, and the EV floor moved to the conservative chance with model-only passes as WATCH (app v4.43); Watch bets v2 (app v4.45); modes, the sweet spot on the conservative EV and ◎ PERFECTA (app v4.50).*

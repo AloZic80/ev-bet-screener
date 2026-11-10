@@ -306,7 +306,7 @@
   API credits & usage (`#credPanel`): a card per source from what the app already keeps (BettingPros `lastBudget`/`_bpLeft`, The Odds API `mbev.oaq`,
   Sportsbook API `mbev.sbq`, OddsPapi `_opUsage`, Pinnacle live `lePinnUse()` of `LE_PINN_DAY`, SportsGameOdds key, your Worker `wkState()` with the
   busiest paths); Refresh asks only `/budget`, `/src/status` and `/oddspapi/usage`. Your rules at a glance (`#rulesGlance`, before Screens): every rule
-  from `cfgRead()` in four groups (Screens, Stake sizing, Limits, Fees), redrawn on any input in Settings. Mode raises are included (cfgRead).
+  from `cfgRead()` in four groups (Screens, Stake sizing, Limits, Fees), redrawn on any input in Settings. Mode raises are included (cfgRead). (v4.50: a mode no longer raises anything.)
   `tests/settings-connect-test.js`. Option 2 (Augi's five screens on our engine) is complete with this step.
 - Already bet, player props worded by the book (v4.39, `propSame` next to `coreKey`, used in `auditCore`'s `prior` and `otherSide`; owner, 11/9: "I made this
   bet but it still shows as bettable ... crucial fix", Lekkerimaki Over 1.5 Shots on Novig): `autoAddFromDesc` logs a fill in the book's words ("Jonathan
@@ -401,6 +401,41 @@
   game cap 2.5%, daily max 15%); Clairvoyant only adds long shots (`isLongShot`, `LONGSHOT`: +8% to +15% model EV, half size, $2 max). `modeNoteHtml` now
   counts them (`lastRows` long shots that pass, +8% to +15%, not started): "none on the board now clears +8%, so these are the same cards as Feeling Lucky",
   or in Feeling Lucky "Clairvoyant … only adds long shots: 1 on the board now would show there". `tests/same-player-test.js` (24 checks).
+- Modes as the owner means them, ◎ PERFECTA, 🎟 parlay legs (v4.50, `MODES`, `EXTRAS`, `RING`, `extrasAssign`, `extrasUsed`, `extrasKalshi`, `extraLine`, `extrasCardsHtml`,
+  `hmOpenMap`, `modeCountsPaint`, `modeNoteHtml`, `ringOf`/`ringDirt`/`ringAssign`/`ringRecheck`, `injKnown`/`wxKnown`, `ringChipHtml`, `legTagHtml`/`legNeed`, `tierTagHtml`,
+  `renderTiers`, `#tierPanel`; owner, 11/10: "Safe was meant for the best bets, Feeling Lucky are the ones that just missed it, but if I want to bet a few, it's fine. And
+  Clairvoyant are bets that are Hail Marys ... a dream of the Sports Gods"; "sweet spots will always be on the Safe bets"; "a circle around the bet ... BET NOW before it
+  changes"; "some that are just better to use as parlays"; then "build - and check everything again"; plan in `agent-notes/modes-perfecta-plan_2026-11-10_v1.md`):
+  - A mode no longer changes the best bets or their sizes. `MODES` only carries `lucky` / `hail`; `cfgRead` no longer raises Kelly, the game cap or the daily max, and
+    the looser Market EV limits (`mev*`) and `LONGSHOT` are gone. An `isLongShot` row never gets a stake ("long shot — only in 🔮 Clairvoyant mode, as a Hail Mary").
+    This replaces the v4.48 / v4.49 mode note.
+  - `extrasAssign` (end of `auditCore`, after `applyDayLimits`): `r.xc` is a candidate whatever the mode. 'hail' = `Math.round(r.amer)` ≥ `EXTRAS.hailOdds` (+300) or
+    `isLongShot`, with no 'out' flag other than WATCH / odds outside / net EV under the floor / gross EV over the ceiling. 'lucky' = `r.watch` with `actNet` ≥ 0 and no
+    other 'out' flag. Never: a best bet (`pass` and `stake` > 0), prior, order waiting, moved, removed, hidden duplicate, `glConflict`, the other side, a player you hold
+    a bet on (`r.samePlayerX`, extras included), a game-line axis you hold. In its mode it becomes `r.tier` with `r.xStake` (`cfg.sMin`, or $1 for a Hail Mary; Kalshi
+    in whole contracts, `r.xContracts`) until that game day has `EXTRAS.luckyDay` (5) / `EXTRAS.hailDay` (3) logged bets with that `tier`. `r.stake` stays 0 and
+    `r.pass` false, so Place these, the daily max, the Sentinels, Parlays and the #1 math pick never see an extra.
+  - A logged extra (`b.tier`) does not block a best bet: `r.samePlayer` and the one-side-per-game `held` check skip tier bets (the 🔗 same-game note still shows).
+  - The board: groups 6 (Just missed) and 7 (Hail Marys), `GRP_RANK=[0,3,5,6,7,4,1,2]`. Cards go under Place these (`extrasCardsHtml`); Hail Marys are grouped by game
+    in `details.hm-game`, and only the open games get their cards built (a `toggle` listener redraws). `placeCardHtml(r,cfg,{tier})`: strip `.sc-xtop`, an icon for
+    the score, La Contadora's EV on the pill, `.sc-xline` in the Kalshi line's place. Cards off: `.x-chip` and "🍀 JUST MISSED $x" / "🔮 HAIL MARY $x" in the table.
+    The default −300 to +500 Settings odds filter does not hide a Hail Mary; Only sweet spot does not hide extras. Each mode button shows what it would add (`.mode-n`).
+  - I bet this on an extra opens at its own stake (`st0`), says what the math thinks, and a Hail Mary the math dislikes needs a second press. `addToLog` saves
+    `tier` (`r.tier || r.xc`: what kind of bet it was, whatever the mode) and `snap.ring`; `saidOf` → JUST MISSED / HAIL MARY with `said.tier`; `dayStats().extra`
+    (not "against the screener"); the Bet log tags them (`tierTagHtml`).
+  - Records: `scoreSet` keeps `b.tier` bets out of the Scorecard (like research Makes) and says so; Performance › ◎ Rings and extras (`renderTiers`): best bets by
+    ring (6 of 6, 5 of 6, 4 or fewer), Just missed, Hail Marys. Money views (Today card, calendar, daily max, Hard stop) count extras like any bet.
+  - Sweet spot (`isSweet`): on `actNet` (La Contadora's EV), never on an extra. The odds range stays −150 to +150 (the owner gave no new one).
+  - ◎ PERFECTA (`RING`, best bets only): zone 50–75% (`actProb`), edge +4% to +12% (`actNet`), room ≥ 2.5 pts over the price after its fee, model ≥ market and
+    `mktNet` > 0, price read ≤ 10 min ago (`rowSeenAt`), clean (`ringDirt`: outlier, risk, no market, capped stake, any warn flag but ×N, injury from `injLoad`, bad
+    weather from `window._wxBad`, a price up ≥ 1 pt in the hour). 6 of 6: `.sc-perf` gold card, "◎ PERFECTA · BET NOW"; 5 of 6: `.sc-perf5`, the miss named; the list
+    is in Why this play? (`.sc-ringl`). `ringRecheck` runs every 30 s and after injuries or weather load, and redraws only when a ring changes. Show › ◎ Perfectas.
+  - 🎟 `r.leg`: a prop La Contadora gives 70%+ (`blendProb`); Show › 🎟 Parlay legs lists them all, passing or not.
+  - Also in v4.50: book chips are counted after every other filter (the block moved below the Show filter), so a chip's number is what you see; the Bet log's red
+    circle is on the number only (`.tab-alert .tab-n`, a "!" when empty); the "screener said x%" note is rounded; a prop with no number reads Yes / No; Show › Watch
+    is remembered.
+  - Not built: a manual same-player override with a combined cap (waits for measured correlations); the Worker time stamp; tier / ring columns in the CSV.
+  `tests/modes-perfecta-test.js` (43 checks); `tests/same-player-test.js` and `tests/fill-warn-test.js` updated.
 - Augi's screens on our engine, step 1 of 5: the Board (v4.34, `boardView`/`#boardView`/`mbev.boardView`, `.cv-legend-box`, `lnGet`/`lnSet`/`lnBtnHtml`/`.ln-ed`,
   `mbev.lineNotes`; owner: "What you recommend" → option 2, "BUILD"): Show menu next to Sort (All groups / Passing / Outliers only / Already bet / Skipped;
   Skipped also lists rejected rows without Show rejected), filtered after `grpOf`. Augi's cover legend (nine chips) in a `details.help` above the bar.

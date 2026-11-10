@@ -1,6 +1,6 @@
-# Modes, sweet spot and PERFECTA: running plan (not built yet)
+# Modes, sweet spot and PERFECTA: the plan (built in v4.50)
 
-Ref: CC-2026-11-10-06 · Claude Code, Tue 2026-11-10, America/Chicago · Status: **discussion; build on the owner's "build"**.
+Ref: CC-2026-11-10-06 · Claude Code, Tue 2026-11-10, America/Chicago · Status: **built in v4.50** (owner, 11/10: "build - and check everything again"). Before that: discussion.
 Base: v4.49 (being tested). Today the three modes show the same bets: Feeling Lucky and Clairvoyant only raise Kelly (0.33), the game cap (2.5%) and the daily max (15%). Clairvoyant also admits long shots with +8% to +15% model EV.
 
 ## A. Modes, as the owner means them (11/10)
@@ -35,3 +35,11 @@ Base: v4.49 (being tested). Today the three modes show the same bets: Feeling Lu
   - 5 of 6 get a thin ring that names the missing check.
 - **Parlay leg tag** (owner: "some that are just better to use as parlays, since they don't pay as much"): 70%+ favorites at −230 or shorter. They pay little alone, but on a pick'em app every pick pays the same, so a 72% pick against roughly 56% needed per pick is worth more there.
 - **Records:** logged bets keep the ring, and Performance compares ringed bets with the rest.
+
+## Built in v4.50: what was decided along the way
+- **Defaults kept as proposed:** 5 Just missed a day at the smallest bet; 3 Hail Marys a day at $1; +300 or longer. The name stays PERFECTA. The sweet spot's odds range stays −150 to +150.
+- **Long shots:** the old rule (TD, home-run and goal scorers from +200, only in Clairvoyant, $2 max) is folded into Hail Marys. A long shot is never a best bet.
+- **A +300 or longer bet La Contadora approves** stays a best bet, as before. Hail Marys are the long shots that are not best bets.
+- **The daily max is still one number for everything.** Extras are offered whatever the day's total, logged extras count in it, and the Hard stop asks past it.
+- **A held extra does not block a best bet** on the same player or game. It does block another extra on that player.
+- **The Market EV paste rows** lost their looser limits in Feeling Lucky / Clairvoyant, so the best bets are the same in every mode.
