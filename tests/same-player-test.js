@@ -72,6 +72,19 @@ async function run(log, rows, mode){ rows=rows||ROWS;   // v4.48: other boards a
     initial:samePlayerAs(P('J. Mason'),P('Jordan Mason')), accent:samePlayerAs(P('Jonathan Lekkerimäki'),P('Jonathan Lekkerimaki')), short:samePlayerAs(P('Jon Smith'),P('Jonathan Smith')),
     fake:samePlayerAs(P('Five Star','MIN'),P('Four Star','MIN')), allen:samePlayerAs(P('Josh Allen','BUF'),P('Josh Allen','JAX')), line:samePlayerAs({name:'Jordan Mason',kind:'spread'},P('Jordan Mason')) }; });
   check('v4.48: same player: J. Mason = Jordan Mason, accents, Jon = Jonathan; not Five Star / Four Star, not two Josh Allens on two teams, not a game line', nm.initial && nm.accent && nm.short && !nm.fake && !nm.allen && !nm.line, nm);
+  check('v4.49: Clairvoyant with no long shot on the board says these are the same cards as Feeling Lucky', /none on the board now clears \+8%, so these are the same cards as Feeling Lucky/i.test(head), head.slice(0,600));
   check('no page errors (4)', !errs.length, errs); await b.close();
+  ({b, p, st, cards, head, errs}=await run([], ROWS, 'lucky'));
+  check('v4.49: Feeling Lucky says Clairvoyant has the same limits and only adds long shots (none now: the same cards)', /Board mode: 🍀 Feeling Lucky\./i.test(head) && /Clairvoyant has the same limits and only adds long shots.*none on the board now, so it would show the same cards/i.test(head) && !/midnight/i.test(head), head.slice(0,600));
+  check('no page errors (5)', !errs.length, errs); await b.close();
+  // v4.49: with a long shot on the board (Anytime TD +250, model +10%), the two modes differ by exactly that card
+  const LS=prop('ls1','Long Shot Guy','MIN','Anytime TD','O',0.2857,0.3143,KO); LS.offeredRaw='+250'; LS.mktProb=0.30;
+  ({b, p, st, cards, head, errs}=await run([], ROWS.concat([LS]), 'clair'));
+  const lsC=cards.filter(t=>/Long Shot Guy/.test(t));
+  check('v4.49: Clairvoyant: "1 on the board now", and that card is tagged 🔮 LONG SHOT · Clairvoyant only', /long shots.*: 1 on the board now/i.test(head) && lsC.length===1 && /🔮 LONG SHOT · Clairvoyant only/.test(lsC[0]), {head:head.slice(-260), lsC:lsC.map(x=>x.slice(0,160))});
+  await b.close();
+  ({b, p, st, cards, head, errs}=await run([], ROWS.concat([LS]), 'lucky'));
+  check('v4.49: Feeling Lucky: the long shot is not a card, and the note says Clairvoyant would add 1', !cards.some(t=>/Long Shot Guy/.test(t)) && /1 on the board now would show there/i.test(head), head.slice(-260));
+  check('no page errors (6)', !errs.length, errs); await b.close();
   console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail?1:0);
 })();

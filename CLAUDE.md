@@ -390,6 +390,17 @@
   Clairvoyant: in a mode other than Safe the Place these header says "Board mode: … A mode, not a kind of bet: every card here is a normal bet. It raises
   today's limit to $75.00 (Safe: $50.00); you are at $52.15, so in Safe no more cards would show today", long shots are tagged 🔮 LONG SHOT · Clairvoyant only.
   `tests/same-player-test.js` (18 checks).
+- The books warning can be hidden (v4.49, `fillWarnState`, `#fillWarnX`, `.fw-x`, `mbev.fillWarnHid`, `.tab-alert`, `.fw-go`; owner, 11/10, about "Not read from Polymarket US:
+  Polymarket 429 error code: 1015": "it is great, but NO WAY to remove it. Perhaps circle the Bet log"): × hides the red bar until the kind of problem changes
+  (`worker`, `books:<which>`, `paused`, `stale`); while any problem lasts the Bet log tab has a red ring (inset box-shadow, the message on hover) and From your
+  books at the top of the Bet log says it with Check now ("nothing new could be read", never "all matched" then). Fixed → bar, ring and the hidden choice are
+  cleared, so the next problem shows. A failed read now redraws From your books too. Error text is tidied ("code: 1015 ." → "code: 1015.").
+  Cloudflare 1015 is Polymarket rate-limiting the Worker's address (Workers share addresses); a Worker back-off on Polymarket 429s would be a Worker change.
+  `tests/fill-warn-test.js` (15 checks).
+  Also v4.49 (owner: "WHY are the same bets on Feeling Lucky and Clairvoyant? It makes no sense."): the two modes have the same limits (`MODES`: Kelly 0.33,
+  game cap 2.5%, daily max 15%); Clairvoyant only adds long shots (`isLongShot`, `LONGSHOT`: +8% to +15% model EV, half size, $2 max). `modeNoteHtml` now
+  counts them (`lastRows` long shots that pass, +8% to +15%, not started): "none on the board now clears +8%, so these are the same cards as Feeling Lucky",
+  or in Feeling Lucky "Clairvoyant … only adds long shots: 1 on the board now would show there". `tests/same-player-test.js` (24 checks).
 - Augi's screens on our engine, step 1 of 5: the Board (v4.34, `boardView`/`#boardView`/`mbev.boardView`, `.cv-legend-box`, `lnGet`/`lnSet`/`lnBtnHtml`/`.ln-ed`,
   `mbev.lineNotes`; owner: "What you recommend" → option 2, "BUILD"): Show menu next to Sort (All groups / Passing / Outliers only / Already bet / Skipped;
   Skipped also lists rejected rows without Show rejected), filtered after `grpOf`. Augi's cover legend (nine chips) in a `details.help` above the bar.

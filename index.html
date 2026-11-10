@@ -32,7 +32,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.48</title>
+<title>0xBeta Screener v4.49</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1076,6 +1076,8 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 .ord-tag.dupe{color:var(--ink)}
 .orders-top{margin-top:8px; padding:8px 12px; border:1px dashed var(--warn); border-radius:10px; font-size:13px; color:var(--ink)}
 .orders-top[hidden]{display:none} .ot-err{color:var(--warn); font-weight:600}
+/* v4.49 */ .fw-x{margin-left:10px; min-width:32px; height:32px; padding:0 8px; border:1px solid var(--rule); background:var(--panel); color:var(--ink); border-radius:8px; font-size:18px; line-height:1; cursor:pointer; vertical-align:middle}
+.tabs .tab.tab-alert{box-shadow:inset 0 0 0 2px var(--loss,#B42318)} .fb-warn{margin:0 0 6px}
 /* v4.48 */ .sc-mode{display:block; margin-top:6px; padding:6px 10px; border-left:3px solid var(--accent); background:var(--accent-bg); color:var(--ink); border-radius:6px; font-size:13px}
 /* v4.46 */ .fill-warn{position:fixed; left:12px; right:12px; bottom:calc(84px + env(safe-area-inset-bottom,0px)); z-index:59; max-width:760px; margin:0 auto; background:var(--panel); border:1px solid var(--loss,#c0392b); box-shadow:0 4px 18px rgba(0,0,0,.18)} .fill-warn .ot-err{color:var(--loss,#c0392b)}   /* fixed above the tabs: it never moves the board while you bet (v4.12, v4.23) */
 .log-orders h3{margin:0 0 4px; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--soft)}
@@ -1389,7 +1391,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.48</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.49</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2136,7 +2138,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.48';
+const SCREENER_VERSION='v4.49';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -4978,9 +4980,12 @@ function samePlayerAs(L,r){ if(!L||!r) return false; const pk=k=>!k||k==='prop';
    quality"): Safe / Feeling Lucky / Clairvoyant are the board's mode, not a kind of bet. Said once on the Place these header, with today's limit next to Safe's. */
 function modeNoteHtml(){ try{ if(typeof betMode==='undefined' || betMode==='safe') return ''; const base=cfgReadBase(), cur=cfgRead(), M=MODES[betMode]||{};
   const safeMax=base.bank*base.dayMaxPct/100, max=cur.dayMax, st=+((dayStats()[ctDay(Date.now())]||{}).staked)||0;
+  let ls=0; try{ ls=(lastRows||[]).filter(r=>r && r.longShot && r.pass && !r.prior && r.net!=null && r.net>=LONGSHOT.minNet && r.net<LONGSHOT.review && liveState(r)!=='started').length; }catch(_){}   // v4.49: long shots Clairvoyant lets in
   return '<span class="sc-mode"><b>Board mode: '+esc(M.label||betMode)+'.</b> A mode, not a kind of bet: every card here is a normal bet. It raises today\'s limit to '+money(max)+' (Safe: '+money(safeMax)+')'+
-    (st>=safeMax && safeMax>0?'; you are at '+money(st)+', so in Safe no more cards would show today':'')+(M.longShots?'. Its own bets are the long shots (anytime TD, home run, goal at +200 or longer), marked 🔮 LONG SHOT':'')+
-    (betMode==='clair'?'. Back to Safe at midnight.':'.')+'</span>'; }catch(e){ return ''; } }
+    (st>=safeMax && safeMax>0?'; you are at '+money(st)+', so in Safe no more cards would show today':'')+
+    (M.longShots?'. Its own bets are the long shots (anytime TD, home run, goal at +200 or longer), marked 🔮 LONG SHOT'+(ls?': '+ls+' on the board now':': none on the board now clears +8%, so these are the same cards as Feeling Lucky')
+      :'. Clairvoyant has the same limits and only adds long shots (anytime TD, home run, goal at +200 or longer)'+(ls?': '+ls+' on the board now would show there':': none on the board now, so it would show the same cards'))+
+    (betMode==='clair'?'. Back to Safe at midnight.':'.')+'</span>'; }catch(e){ return ''; } }   // v4.49 (owner: "WHY are the same bets on Feeling Lucky and Clairvoyant?"): the two differ only by long shots; say how many there are now
 function playerBetLabel(L){ const sd=L&&(L.side||sideOf(L)); return [String((L&&L.name)||'').trim().split(/\s+/).slice(-1)[0], sd==='O'?'Over':sd==='U'?'Under':'', String((L&&L.market)||'').trim()].filter(Boolean).join(' '); }
 // v4.48: La Contadora's EV of a logged bet when you took it (its snapshot: model, market, the price you got, the fee); null when the book's fill saved none
 function heldActEv(L){ try{ const sn=(L&&L.snap)||{}, pr=toProb(L.odds); if(!(sn.model>0 && sn.model<1) || !(pr>0 && pr<1)) return null; const p=okProb(sn.model, sn.market), f=+(L.fee!=null?L.fee:sn.fee)||0; return p==null?null:((p/pr-1)-f)/(1+f); }catch(e){ return null; } }
@@ -10277,31 +10282,47 @@ async function syncFills(force){
     saveFills();
     if(changed){ saveLog(); renderLog(); renderPerf(); refresh(); }
     renderFromBooks(); syncOrders(); renderMyBooks();
-  }catch(e){ console.warn('syncFills', e); if(!window._fillOkAt || Date.now()-window._fillOkAt>5000) window._fillReadErr='could not reach the Worker ('+String(e&&e.message||e).slice(0,80)+')'; } finally{ fillBusy=false; try{ renderFillWarn(); }catch(_){} }   // v4.46
+  }catch(e){ console.warn('syncFills', e); if(!window._fillOkAt || Date.now()-window._fillOkAt>5000) window._fillReadErr='could not reach the Worker ('+String(e&&e.message||e).slice(0,80)+')'; } finally{ fillBusy=false; try{ renderFillWarn(); }catch(_){} try{ renderFromBooks(); }catch(_){} }   // v4.46   // v4.49: From your books says it too
 }
 /* v4.46 (owner, 11/10: "my bets are not getting picked up ... they still show at the board", "another one ... was NOT logged"): when the read of your
    books failed (Worker HTTP error or unreachable), nothing said so: no From your books, and Check my books now still said "all 3 books answered".
    Now a red bar (fixed just above the tabs, so it never moves the board) says your books were not read and why (or which book failed, for books in Books you bet; or background checks
    paused; or last read over 6 minutes ago), that a bet just placed may still show as bettable, with Check now. */
-function renderFillWarn(){ const el=document.getElementById('fillWarn'); if(!el) return; const tm=ms=>new Date(ms).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+/* v4.49 (owner, 11/10, about the red bar "Not read from Polymarket US: Polymarket 429 error code: 1015": "it is great, but NO WAY to remove it. Perhaps
+   circle the Bet log"): × hides it until the problem changes (`mbev.fillWarnHid` = its kind: worker, books:<which>, paused, stale); while a problem lasts the
+   Bet log tab has a red ring (`.tab-alert`, the message on hover) and From your books at the top of the Bet log says it, with Check now. Fixed → all cleared. */
+function fillWarnState(){ const tm=ms=>new Date(ms).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}), cl=v=>String(v).replace(/\s+([.,;:])/g,'$1').replace(/\s+/g,' ').trim().slice(0,100);
   let mine=[]; try{ mine=cfgRead().books||[]; }catch(_){}
   const use=k=>!mine.length || mine.some(b=>LIVE_BOOK(b)===k);
-  const e=window._fillReadErr||'', ok=window._fillOkAt||0, be=Object.entries(window._fillErrors||{}).filter(([k])=>use(k)).map(([k,v])=>(FILL_NAME[k]||k)+': '+String(v).slice(0,100)).join(' · ');
+  const e=window._fillReadErr||'', ok=window._fillOkAt||0, BE=Object.entries(window._fillErrors||{}).filter(([k])=>use(k)), be=BE.map(([k,v])=>(FILL_NAME[k]||k)+': '+cl(v)).join(' · ');
   let paused=false; try{ paused=wkPaused(); }catch(_){}
-  const msg=e?'Your books were not read'+(ok?' since '+tm(ok):'')+': '+e+'.':be?'Not read from '+be+'.':paused?'Background checks of your books are paused (the Worker is over its limit).':(ok && Date.now()-ok>6*60e3 && document.visibilityState==='visible')?'Your books were last read at '+tm(ok)+'.':'';
-  if(!msg){ el.hidden=true; el.innerHTML=''; return; } el.hidden=false;
-  el.innerHTML='<span class="ot-err">⚠ '+esc(msg)+'</span> A bet you just placed may still show as bettable: press <b>I bet this</b> on its card, or <b>+ Add a bet</b>. <button type="button" class="linkbtn" id="fillWarnGo">Check now</button>'; }
-document.addEventListener('click',async e=>{ const b=e.target.closest('#fillWarnGo'); if(!b) return; b.disabled=true; b.textContent='checking…'; try{ await syncFills(true); }finally{ try{ renderFillWarn(); }catch(_){} } });
+  const stale=!!(ok && Date.now()-ok>6*60e3 && document.visibilityState==='visible');
+  if(e) return {msg:'Your books were not read'+(ok?' since '+tm(ok):'')+': '+cl(e)+'.', sig:'worker'};
+  if(be) return {msg:'Not read from '+be+'.', sig:'books:'+BE.map(x=>x[0]).sort().join(',')};
+  if(paused) return {msg:'Background checks of your books are paused (the Worker is over its limit).', sig:'paused'};
+  if(stale) return {msg:'Your books were last read at '+tm(ok)+'.', sig:'stale'};
+  return {msg:'', sig:''}; }
+function renderFillWarn(){ const el=document.getElementById('fillWarn'); if(!el) return; const S=fillWarnState(), tab=document.querySelector('.tab[data-view="v-log"]');
+  let hid=''; try{ hid=localStorage.getItem('mbev.fillWarnHid')||''; }catch(_){}
+  if(tab){ tab.classList.toggle('tab-alert', !!S.msg); if(S.msg) tab.title='⚠ '+S.msg+' Open the Bet log to check.'; else tab.removeAttribute('title'); }
+  if(!S.msg){ el.hidden=true; el.innerHTML=''; if(hid){ try{ localStorage.removeItem('mbev.fillWarnHid'); }catch(_){} } return; }
+  if(hid===S.sig){ el.hidden=true; el.innerHTML=''; return; }   // hidden by you: the Bet log tab keeps its red ring until it is fixed
+  el.hidden=false;
+  el.innerHTML='<span class="ot-err">⚠ '+esc(S.msg)+'</span> A bet you just placed may still show as bettable: press <b>I bet this</b> on its card, or <b>+ Add a bet</b>. <button type="button" class="linkbtn" id="fillWarnGo">Check now</button>'+
+    '<button type="button" class="fw-x" id="fillWarnX" aria-label="Hide this message" title="Hide it until something changes; the Bet log tab keeps a red ring until it is fixed">×</button>'; }
+document.addEventListener('click',e=>{ if(!e.target.closest('#fillWarnX')) return; const S=fillWarnState(); try{ localStorage.setItem('mbev.fillWarnHid', S.sig||''); }catch(_){} renderFillWarn(); });   // v4.49
+document.addEventListener('click',async e=>{ const b=e.target.closest('#fillWarnGo, .fw-go'); if(!b) return; b.disabled=true; b.textContent='checking…'; try{ await syncFills(true); }finally{ try{ renderFillWarn(); }catch(_){} } });
 setInterval(()=>{ try{ renderFillWarn(); }catch(_){} }, 30000);
 function renderFromBooks(){
   const el=document.getElementById('fromBooks'); if(!el) return;
   try{ Object.assign(fillIgnored, JSON.parse(localStorage.getItem('mbev.fillIgnored')||'{}')||{}); }catch(e){}   // v3.94: what a sync brought in
   fillPending=fillPending.filter(f=>!fillIsIgnored(f));   // v3.89: an ignored fill never comes back, whatever re-listed it
   const err=window._fillErrors||{}, errTxt=Object.entries(err).map(([k,v])=>esc((FILL_NAME[k]||k)+': '+v)).join(' · ');
-  if(!fillPending.length && !errTxt){ el.style.display='none'; el.innerHTML=''; return; }
+  let fw={msg:''}; try{ fw=fillWarnState(); }catch(_){}   // v4.49: the red bar's message, also here
+  if(!fillPending.length && !errTxt && !fw.msg){ el.style.display='none'; el.innerHTML=''; return; }
   el.style.display='block';
-  el.innerHTML='<b>From your books</b> — '+(fillPending.length?fillPending.length+' bet'+(fillPending.length===1?'':'s')+' not matched to your log or board.':'all matched.')+
-    (errTxt?' <span class="meta">('+errTxt+')</span>':'')+
+  el.innerHTML=(fw.msg?'<div class="fb-warn"><span class="ot-err">⚠ '+esc(fw.msg)+'</span> <button type="button" class="linkbtn fw-go">Check now</button></div>':'')+'<b>From your books</b> — '+(fillPending.length?fillPending.length+' bet'+(fillPending.length===1?'':'s')+' not matched to your log or board.':(fw.msg?'nothing new could be read.':'all matched.'))+
+    (errTxt && !fw.msg?' <span class="meta">('+errTxt+')</span>':'')+   // v4.49: said once, above
     (fillPending.length?'<div class="copy-bar"><button type="button" class="copy-big" data-copy-fn="fromBooksText">📋 Copy this list</button></div><div class="fb-wrap"><table>'+fillPending.map((f,i)=>{ const L=fillLabel(f);
       return '<tr><td>'+(bookLogo(FILL_NAME[f.book])?logoTag(FILL_NAME[f.book],'sm'):esc(FILL_NAME[f.book]))+'</td>'+
       '<td><b>'+esc(L.bet)+'</b>'+(f._why?' <span class="meta tb-down">could not log it: '+esc(f._why)+'</span>':'')+(f.action==='sell'?' <b>(sold)</b>':'')+(f.soldFor!=null?' <span class="tag t-sold">SOLD $'+r2(f.soldFor).toFixed(2)+' ('+(r2(f.soldFor)-r2((+f.cost||0)+(+f.fee||0))>=0?'+':'−')+'$'+Math.abs(r2(f.soldFor)-r2((+f.cost||0)+(+f.fee||0))).toFixed(2)+')</span>':'')+'<div class="meta">'+esc([L.game,L.when].filter(Boolean).join(' · '))+'</div></td>'+
