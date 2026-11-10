@@ -32,7 +32,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.47</title>
+<title>0xBeta Screener v4.48</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1076,6 +1076,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 .ord-tag.dupe{color:var(--ink)}
 .orders-top{margin-top:8px; padding:8px 12px; border:1px dashed var(--warn); border-radius:10px; font-size:13px; color:var(--ink)}
 .orders-top[hidden]{display:none} .ot-err{color:var(--warn); font-weight:600}
+/* v4.48 */ .sc-mode{display:block; margin-top:6px; padding:6px 10px; border-left:3px solid var(--accent); background:var(--accent-bg); color:var(--ink); border-radius:6px; font-size:13px}
 /* v4.46 */ .fill-warn{position:fixed; left:12px; right:12px; bottom:calc(84px + env(safe-area-inset-bottom,0px)); z-index:59; max-width:760px; margin:0 auto; background:var(--panel); border:1px solid var(--loss,#c0392b); box-shadow:0 4px 18px rgba(0,0,0,.18)} .fill-warn .ot-err{color:var(--loss,#c0392b)}   /* fixed above the tabs: it never moves the board while you bet (v4.12, v4.23) */
 .log-orders h3{margin:0 0 4px; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--soft)}
 .log-orders .lo-row{display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 12px; padding:8px 0; border-top:1px solid var(--rule)}
@@ -1388,7 +1389,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.47</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.48</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2135,7 +2136,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.47';
+const SCREENER_VERSION='v4.48';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2782,7 +2783,8 @@ function auditCore(rows,cfg){
         else r.riskCand = true;
       }
       // v2.50: game cap — one bet per player, correlated bets count more, $10 is hard
-      if(r.samePlayer && !r.prior){ s=0; r.flags.push(['warn', r.samePlayerBet ? 'you already bet '+(L=>{ const sd=sideOf(L); return [String(L.name||'').trim().split(/\s+/).slice(-1)[0], sd==='O'?'Over':sd==='U'?'Under':'', String(L.market||'').trim()].filter(Boolean).join(' '); })(r.samePlayerBet)+' in this game: one bet per player (both move with the same game)' : 'already have a bet on this player — one per player']); }   // v4.47: says which bet
+      if(r.samePlayer && !r.prior){ s=0; const H=r.samePlayerBet, he=H?heldActEv(H):null, me=r.actNet!=null?r.actNet:r.net, sg=x=>(x>=0?'+':'')+pct(x);
+        r.flags.push(['warn', H ? 'PLAYER EXPOSURE · already hold '+playerBetLabel(H)+': no additional stake'+(he!=null && me!=null ? ' · this one '+(me>he+0.0001?'looks better':me<he-0.0001?'looks worse':'is about the same')+' ('+sg(me)+' vs '+sg(he)+' when you took yours)':'') : 'PLAYER EXPOSURE · already have a bet on this player: no additional stake']); }   // v4.47: says which bet   // v4.48: ChatGPT's wording, and better or worse than the one you hold (not added either way)
       else if(s>0 && r.gameInPlay){
         const room=Math.max(0, Math.min(cfg.gameCap-(r.gameWeighted||0), cfg.gameCap-r.gameInPlay));
         if(s>room){ s=room; r.capTrimmed=true; }
@@ -2824,7 +2826,7 @@ function auditCore(rows,cfg){
   // v2.56: a bet you already hold at another line gets no new stake
   rows.forEach(r=>{ if(r.moved && r.stake>0){ r.stake=0; delete r.contracts; } });
   // v2.61: say it once — drop the notes that repeat "you already have this bet"
-  rows.forEach(r=>{ if(r.moved) r.flags=r.flags.filter(f=>!/one per player|Same game as your/.test(f[1])); });
+  rows.forEach(r=>{ if(r.moved) r.flags=r.flags.filter(f=>!/one per player|Same game as your|PLAYER EXPOSURE · already/.test(f[1])); });   // v4.48: the new wording too
   // v2.55: game lines on the same game — moneyline/spread on either team are one bet "axis",
   // the total (Over/Under) is another. Two bets on one axis either cancel (opposite sides,
   // e.g. PIT −3.5 + NO +2.5 both lose on a 3-point PIT win) or double up the same outcome.
@@ -2864,6 +2866,22 @@ function auditCore(rows,cfg){
         r.flags.push(['corr',lab(best,r)+' is the better bet on this game ('+evTxt(best)+' vs '+evTxt(r)+') — skip this one']);
       });
     });
+  }
+  /* v4.48 (Alonzo, passing on ChatGPT: "keep one bet per player per game as the automatic default ... Before either is placed: keep the candidate with the highest
+     conservative actNet, with stake efficiency as the tie-breaker"): two or more props on the same player in the same game, none bet yet, each with a stake →
+     only the best keeps its stake (La Contadora's EV, ties within 0.0001 → the bigger stake, then the higher blend); the others say which one and by how much. */
+  {
+    const P=[], gid=r=>(r.gameInfo&&r.gameInfo.eventId)?'e'+r.gameInfo.eventId:(r.game?gameKey(r.game):'')+'|'+String((r.gameInfo&&r.gameInfo.startISO)||'').slice(0,13);
+    rows.forEach(r=>{ if(!(r.stake>0) || r.prior || r.samePlayer || r.glConflict || r.waitOrder || (r.kind && r.kind!=='prop')) return;
+      const k=gid(r), g=P.find(x=>x.k===k && samePlayerAs(x.L[0],r)); if(g) g.L.push(r); else P.push({k, L:[r]}); });
+    const ce=r=>r.actNet!=null?r.actNet:(r.net!=null?r.net:-1), evT=r=>{ const x=ce(r); return (x>=0?'+':'')+pct(x); };
+    P.forEach(g=>{ if(g.L.length<2) return;
+      g.L.sort((a,b)=>(Math.abs(ce(b)-ce(a))>=0.0001?ce(b)-ce(a):0) || ((b.stake||0)-(a.stake||0)) || ((b.blendProb||0)-(a.blendProb||0)));
+      const best=g.L[0]; best.glBest=(best.glBest||[]).concat(g.L.slice(1).map(playerBetLabel));
+      best.flags.push(['live','best bet on this player: '+g.L.slice(1).map(playerBetLabel).join(', ')+(g.L.length>2?' are':' is')+' skipped']);
+      g.L.slice(1).forEach(r=>{ r.glConflict={held:false, label:playerBetLabel(best), mine:evT(r), theirs:evT(best), bestIdx:best.idx, player:true};
+        r.stake=0; delete r.contracts;
+        r.flags.push(['corr','PLAYER EXPOSURE · '+playerBetLabel(best)+' is the better bet on this player ('+evT(best)+' vs '+evT(r)+'): one bet per player']); }); });
   }
   // v2.65: after risk bets are picked (below), long-shot and daily limits fill best-first
   // v2.52: risk bets — keep the N closest-to-market below-market outliers (minus ones already logged today)
@@ -3184,7 +3202,7 @@ function renderCore(rows,cfg){
 
   const pcBox=document.getElementById('placeCards');
   if(pcBox){
-    if(cardsOn && cardsHtml.length){ pcBox.classList.add('sc-grid'); pcBox.innerHTML='<div class="pc-head"><b>🦑 The Sentinels</b> · Place these · '+cardsHtml.length+'<span class="sc-sub">✅ The math says bet every card here: La Contadora approved each one. Best first on Sort › Math; bet down the list until your daily max. STRONG (green), GOOD (blue), THIN (yellow: still clears your estimated EV floor, with less edge, price confirmation or freshness; the smallest stakes).</span></div>'+cardsHtml.join(''); pcBox.style.display=''; pcFillShots(); }   // v3.57: ESPN photos   // v4.21: Sentinels cards in a grid
+    if(cardsOn && cardsHtml.length){ pcBox.classList.add('sc-grid'); pcBox.innerHTML='<div class="pc-head"><b>🦑 The Sentinels</b> · Place these · '+cardsHtml.length+'<span class="sc-sub">✅ The math says bet every card here: La Contadora approved each one. Best first on Sort › Math; bet down the list until your daily max. STRONG (green), GOOD (blue), THIN (yellow: still clears your estimated EV floor, with less edge, price confirmation or freshness; the smallest stakes).</span>'+modeNoteHtml()+'</div>'+cardsHtml.join(''); /* v4.48: the board mode, said apart from the cards */ pcBox.style.display=''; pcFillShots(); }   // v3.57: ESPN photos   // v4.21: Sentinels cards in a grid
     else { pcBox.innerHTML=''; pcBox.style.display='none'; }
     avFillSoon();   // v3.57: and on the board's rows
     injFillSoon();   // v3.78: injury flags
@@ -3710,7 +3728,7 @@ function placeCardHtml(r,cfg,o){
                       : mv&&mv.df!=null&&Math.abs(mv.df)>=0.015&&Math.abs(mv.dp)<0.005?'<span class="sc-pill mv good" title="The fair price moved '+(mv.df>0?'+':'−')+(Math.abs(mv.df)*100).toFixed(1)+' points in '+mv.mins+' min; '+esc(bk)+' has not moved">fair '+(mv.df>0?'↗':'↘')+' · '+esc(bk)+' behind</span>':'';
   const warns=(r.flags||[]).filter(f=>f[0]==='warn' && !/ order (“|in this game)/.test(f[1]) && !/^×\d+$/.test(f[1])).map(f=>'<span class="tag t-warn">'+esc(f[1])+'</span>').join('')
     +(r.flags||[]).filter(f=>f[0]==='corr').map(f=>'<span class="tag t-corr" title="You already have money on this game; bets in one game move together">🔗 '+esc(f[1])+'</span>').join('');   // v4.47: the same-game note was in the table only
-  const tags=orderTagHtml(r)+injTagHtml(r)+wxTagHtml(r)+(o.sweet?'<span class="sweet">🎯 SWEET SPOT</span>':'')+shopTagHtml(r)+warns+'<span class="mk-slot" data-idx="'+r.idx+'">'+makeTagHtml(r)+'</span>';
+  const tags=orderTagHtml(r)+injTagHtml(r)+wxTagHtml(r)+(r.longShot?'<span class="tag t-warn" title="Long shots (anytime TD, home run, goal at +200 or longer) only show in Clairvoyant mode, at half size, $2 max">🔮 LONG SHOT · Clairvoyant only</span>':'')+(o.sweet?'<span class="sweet">🎯 SWEET SPOT</span>':'')+shopTagHtml(r)+warns+'<span class="mk-slot" data-idx="'+r.idx+'">'+makeTagHtml(r)+'</span>';
   const open=notesAll || scOpenSet().has(pxKey(r));
   const nS=r.stars==null?null:Math.max(0,Math.min(5,Math.round(r.stars)));
   let cons=''; const ou=r.side==='O'||r.side==='U';
@@ -4948,11 +4966,24 @@ function propSame(L,r,anySide){ if(!L||!r) return false; const pk=k=>!k||k==='pr
   try{ if(!qualOK(sa,sb) || !qualOK(sb,sa)) return false; }catch(e){ if(nrmT(sa)!==nrmT(sb) && /period|quarter|half|1st|2nd|3rd|power/i.test(sa+' '+sb)) return false; }
   return true; }
 /* v4.47: the same player in the same game, whatever the stat (Mason rushing yards and Mason rushing attempts): props only, same sport when both known, same
-   name by nrmT or the same last name and first initial. Hoisted and startup-safe (nrmT is a function declaration). The caller checks the time (sameTime). */
+   name by nrmT or the same last name and a first name that agrees (an initial, or one the start of the other; v4.48), not on two different teams. Hoisted and startup-safe (nrmT is a function declaration). The caller checks the time (sameTime). */
 function samePlayerAs(L,r){ if(!L||!r) return false; const pk=k=>!k||k==='prop'; if(!pk(L.kind)||!pk(r.kind)) return false;
   if(L.sport && r.sport && String(L.sport).toUpperCase()!==String(r.sport).toUpperCase()) return false;
+  if(L.team && r.team && /^[A-Z]{2,4}$/.test(normAbbr(L.team)) && /^[A-Z]{2,4}$/.test(normAbbr(r.team)) && normAbbr(L.team)!==normAbbr(r.team)) return false;   // v4.48: two Josh Allens on two teams
   const a=nrmT(L.name), b=nrmT(r.name); if(!a||!b) return false; if(a===b) return true;
-  const x=a.split(' '), y=b.split(' '); return x.length>=2 && y.length>=2 && x[x.length-1]===y[y.length-1] && x[0][0]===y[0][0]; }
+  const x=a.split(' '), y=b.split(' '); if(x.length<2 || y.length<2 || x[x.length-1]!==y[y.length-1]) return false;
+  const f=x[0], g=y[0]; return f===g || ((f.length===1 || g.length===1) && f[0]===g[0]) || (f.length>=3 && g.length>=3 && (f.startsWith(g) || g.startsWith(f))); }   // v4.48: J. Mason = Jordan Mason, Jon = Jonathan; Five Star is not Four Star
+// v4.48: "Mason Over 62.5 Rushing Yards" (last name, Over / Under, the market)
+/* v4.48 (Alonzo: "82 STRONG, Sweet Spot, but it is under the Clairvoyant tag. I thought that was Hail Mary bets"; ChatGPT: "explicitly separate the mode from card
+   quality"): Safe / Feeling Lucky / Clairvoyant are the board's mode, not a kind of bet. Said once on the Place these header, with today's limit next to Safe's. */
+function modeNoteHtml(){ try{ if(typeof betMode==='undefined' || betMode==='safe') return ''; const base=cfgReadBase(), cur=cfgRead(), M=MODES[betMode]||{};
+  const safeMax=base.bank*base.dayMaxPct/100, max=cur.dayMax, st=+((dayStats()[ctDay(Date.now())]||{}).staked)||0;
+  return '<span class="sc-mode"><b>Board mode: '+esc(M.label||betMode)+'.</b> A mode, not a kind of bet: every card here is a normal bet. It raises today\'s limit to '+money(max)+' (Safe: '+money(safeMax)+')'+
+    (st>=safeMax && safeMax>0?'; you are at '+money(st)+', so in Safe no more cards would show today':'')+(M.longShots?'. Its own bets are the long shots (anytime TD, home run, goal at +200 or longer), marked 🔮 LONG SHOT':'')+
+    (betMode==='clair'?'. Back to Safe at midnight.':'.')+'</span>'; }catch(e){ return ''; } }
+function playerBetLabel(L){ const sd=L&&(L.side||sideOf(L)); return [String((L&&L.name)||'').trim().split(/\s+/).slice(-1)[0], sd==='O'?'Over':sd==='U'?'Under':'', String((L&&L.market)||'').trim()].filter(Boolean).join(' '); }
+// v4.48: La Contadora's EV of a logged bet when you took it (its snapshot: model, market, the price you got, the fee); null when the book's fill saved none
+function heldActEv(L){ try{ const sn=(L&&L.snap)||{}, pr=toProb(L.odds); if(!(sn.model>0 && sn.model<1) || !(pr>0 && pr<1)) return null; const p=okProb(sn.model, sn.market), f=+(L.fee!=null?L.fee:sn.fee)||0; return p==null?null:((p/pr-1)-f)/(1+f); }catch(e){ return null; } }
 // v3.13: is the new line better or worse than the one you hold? (spread: more points is better; Over: lower is better; Under: higher)
 function heldLabel(L){ return L.betnow ? lineOnly(L) : [L.name, sideOf(L)||'', L.market].filter(Boolean).join(' '); }
 function lineCompare(held, row){

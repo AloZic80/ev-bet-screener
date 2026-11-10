@@ -378,6 +378,18 @@
   same time (`sameTime`), a bet with no game text whose team is in the game, or the same player (`samePlayerAs`, hoisted: `nrmT` or last name + first initial,
   props only, same sport) at the same time. The warning names the bet ("you already bet Mason Over 62.5 Rushing Yards in this game: one bet per player"), and
   the Place card now shows 'corr' flags as 🔗 tags ("Same game as your Cook …"), which were in the table only. `tests/same-player-test.js`.
+- Player exposure and the board mode (v4.48, `playerBetLabel`, `heldActEv`, `modeNoteHtml`, `.sc-mode`, a same-player block after v2.55's one-side-per-game block;
+  owner, passing on ChatGPT: "keep one bet per player per game as the automatic default ... before either is placed, keep the candidate with the highest
+  conservative actNet ... show the other as PLAYER EXPOSURE ... still display whether the new candidate is better or worse ... separate the mode from card
+  quality"): two or more props on the same player in the same game, none bet yet → the best by `actNet` (ties within 0.0001 → bigger stake, then blend) keeps
+  its stake, the others get `glConflict` (`player:true`), stake 0, "PLAYER EXPOSURE · Mason Under 11.5 Rushing Attempts is the better bet on this player
+  (+5.9% vs +3.4%): one bet per player". A held one: "PLAYER EXPOSURE · already hold Mason Over 62.5 Rushing Yards: no additional stake · this one looks
+  better (+5.9% vs +3.2% when you took yours)" (`heldActEv`: `okProb` of the bet's snap model and market at its odds; none for a book fill without a snap).
+  `samePlayerAs` (v4.48): different known teams never match, and the first names must agree (an initial, or one the start of the other: Jon = Jonathan; Five
+  Star is not Four Star). Not built (ChatGPT: later, after measuring correlations): a manual override with a combined player cap. Safe / Feeling Lucky /
+  Clairvoyant: in a mode other than Safe the Place these header says "Board mode: … A mode, not a kind of bet: every card here is a normal bet. It raises
+  today's limit to $75.00 (Safe: $50.00); you are at $52.15, so in Safe no more cards would show today", long shots are tagged 🔮 LONG SHOT · Clairvoyant only.
+  `tests/same-player-test.js` (18 checks).
 - Augi's screens on our engine, step 1 of 5: the Board (v4.34, `boardView`/`#boardView`/`mbev.boardView`, `.cv-legend-box`, `lnGet`/`lnSet`/`lnBtnHtml`/`.ln-ed`,
   `mbev.lineNotes`; owner: "What you recommend" → option 2, "BUILD"): Show menu next to Sort (All groups / Passing / Outliers only / Already bet / Skipped;
   Skipped also lists rejected rows without Show rejected), filtered after `grpOf`. Augi's cover legend (nine chips) in a `details.help` above the bar.
