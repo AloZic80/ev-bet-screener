@@ -6,6 +6,15 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.56, the first build under the new rule (Claude Code and ChatGPT agreed the scope in writing, then the owner said "BUILD"): pick'em entries with a line not
+  checked in the app (`dfs:'unknown'`) are provisional (`pkProvisional`): "PROVISIONAL BEST · check that the app has this exact line", EV and stake "if every
+  line matches", and Log this entry asks once ("I checked: every line in the app matches"), saving `pk.lineVerifiedByUser`, `verifiedAt`, `unchecked`;
+  every pick'em entry shows `PK_SETTLE` and saves `pk.app`, `pk.pays`, `pk.settle:'plain-win-loss-v1'`. Model-only legs (`l.mo`) are out of `pkBest`,
+  ready-made slips and `pkSentLegs`; by hand they get a warning and the entry is never best. Book choice: `shopStale` (3 min, 90 s within 5 min of kickoff;
+  shopped claims only) shows "Price 4m old · best book no longer confirmed · Send the Sentinels", redrawn by the 30 s `ringRecheck` with no price reads;
+  in `shopExchanges` the 0.3-point margin is skipped when the row's own exchange could not be read (`r.shop.bypass`), and nothing readable gives
+  `r.shopNone` ("no price could be read · refresh prices"); `snap.shop` saves from, at, age, stale, bypass. `orderDiag` + a Settings card measure open
+  orders (matched, model-only, unmatched) without counting them. `tests/scope-v456-test.js` (17 checks; fails on v4.55), `sentinels-parlay-test` updated.
 - v4.55 (owner pasted ChatGPT's reply to v4.54; `pkProbOf`, `MODEL_ONLY`, `r.moN`, `snap.modelOnly`, `pk.policy`): a Parlay pick's chance is La Contadora's
   (`okProb`), not the blend: lower only when the model is below the market (56% vs 60% → 56%, was 58.6%); it feeds the filters, `pkDist`, EV, Kelly and ranking;
   a logged entry saves `pk.policy:'actProb-v2'`; old entries keep their chances. Model-only bets (`r.noMkt`): at most 5 a game day (counting logged

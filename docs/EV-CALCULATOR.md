@@ -179,6 +179,9 @@ All of these are **estimates**. A bet that passes has an *estimated* edge, not a
 
 ## 6. Parlays and pick'em (PrizePicks, Pick6, Underdog…)
 
+- **Lines not checked in the app** (v4.56): an entry with a pick whose line was not confirmed in the app is **provisional**. Its expected return and stake hold only if every line matches, and Log this entry asks you to confirm once.
+- **Settlement:** ties, DNPs and cancelled players follow the app's rules. The EV assumes every pick settles as a plain win or loss; a reboot or a smaller entry can change the payout.
+- **Model-only picks** (no market price) are never in a recommended entry or a ready-made slip. You can add one by hand; the entry then says so and is never called best.
 - Each pick's chance is **La Contadora's chance** (v4.55): the blend, or the model when the model is lower. Before v4.55 it was always the blend. Entries already logged keep the chances they were saved with.
 - An entry's value adds up every way it can finish: the chance of exactly k hits out of n (`pkDist`, a Poisson-binomial distribution) times what k hits pays.
 
