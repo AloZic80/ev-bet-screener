@@ -32,7 +32,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.45</title>
+<title>0xBeta Screener v4.46</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1076,6 +1076,7 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 .ord-tag.dupe{color:var(--ink)}
 .orders-top{margin-top:8px; padding:8px 12px; border:1px dashed var(--warn); border-radius:10px; font-size:13px; color:var(--ink)}
 .orders-top[hidden]{display:none} .ot-err{color:var(--warn); font-weight:600}
+/* v4.46 */ .fill-warn{border:1px solid var(--loss,#c0392b)} .fill-warn .ot-err{color:var(--loss,#c0392b)}
 .log-orders h3{margin:0 0 4px; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--soft)}
 .log-orders .lo-row{display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 12px; padding:8px 0; border-top:1px solid var(--rule)}
 .log-orders .lo-what{font-weight:600; color:var(--ink)} .log-orders .lo-m{font-size:12.5px; color:var(--soft)}
@@ -1387,7 +1388,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.45</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.46</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1398,6 +1399,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
   </div>
   <div class="todaybar" id="todayBar" title="Today's games, per book — click for the Bet log"></div>
   <div class="orders-top" id="ordersTop" hidden role="status"></div><!-- v4.17: orders waiting at your books -->
+  <div class="orders-top fill-warn" id="fillWarn" hidden role="alert"></div><!-- v4.46: your books were not read -->
   <div class="pull-bar" id="pullBar" role="alert"></div>
   <div class="loadline loadbar">
     <span class="ll-k">BettingPros</span>
@@ -2133,7 +2135,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.45';
+const SCREENER_VERSION='v4.46';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -10154,8 +10156,8 @@ async function syncFills(force){
     try{ if(localStorage.getItem('mbev.fillV')!=='95'){ fillPending=[]; fillSeen={}; lsSafeSet('mbev.fillV','95'); } }catch(e){}   // v3.89: a failed write here wiped what you ignored on every read
     fillAt=Date.now();   // v4.24: a failed read waits its turn too (before, a failing Worker was asked again every 20 s)
     const res=await fetch(API_BASE+'/mine/fills?since='+(Date.now()-days*86400e3), {headers:apiHeaders()});
-    if(!res.ok) return;
-    const j=await res.json(); fillAt=Date.now();
+    if(!res.ok){ let t=''; try{ t=String(await res.text()||'').replace(/\s+/g,' ').slice(0,120); }catch(_){} window._fillReadErr='the Worker answered HTTP '+res.status+(res.status===401?' (passphrase)':res.status===429?' (over its daily limit)':'')+(t?': '+t:''); return; }   // v4.46: said nowhere before
+    const j=await res.json(); fillAt=Date.now(); window._fillReadErr=''; window._fillOkAt=Date.now(); try{ if(wkPaused()){ const w=wkState(); w.pause=0; wkSave(); wkChipPaint(); } }catch(_){}   // v4.46: the Worker answered, so background checks go again
     (j.fills||[]).forEach(normFillBet);   // v3.01
     let changed=false;
     window._fillErrors=j.errors||{};
@@ -10226,8 +10228,22 @@ async function syncFills(force){
     saveFills();
     if(changed){ saveLog(); renderLog(); renderPerf(); refresh(); }
     renderFromBooks(); syncOrders(); renderMyBooks();
-  }catch(e){ console.warn('syncFills', e); } finally{ fillBusy=false; }
+  }catch(e){ console.warn('syncFills', e); if(!window._fillOkAt || Date.now()-window._fillOkAt>5000) window._fillReadErr='could not reach the Worker ('+String(e&&e.message||e).slice(0,80)+')'; } finally{ fillBusy=false; try{ renderFillWarn(); }catch(_){} }   // v4.46
 }
+/* v4.46 (owner, 11/10: "my bets are not getting picked up ... they still show at the board", "another one ... was NOT logged"): when the read of your
+   books failed (Worker HTTP error or unreachable), nothing said so: no From your books, and Check my books now still said "all 3 books answered".
+   Now a red line under the Today card says your books were not read and why (or which book failed, for books in Books you bet; or background checks
+   paused; or last read over 6 minutes ago), that a bet just placed may still show as bettable, with Check now. */
+function renderFillWarn(){ const el=document.getElementById('fillWarn'); if(!el) return; const tm=ms=>new Date(ms).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  let mine=[]; try{ mine=cfgRead().books||[]; }catch(_){}
+  const use=k=>!mine.length || mine.some(b=>LIVE_BOOK(b)===k);
+  const e=window._fillReadErr||'', ok=window._fillOkAt||0, be=Object.entries(window._fillErrors||{}).filter(([k])=>use(k)).map(([k,v])=>(FILL_NAME[k]||k)+': '+String(v).slice(0,100)).join(' · ');
+  let paused=false; try{ paused=wkPaused(); }catch(_){}
+  const msg=e?'Your books were not read'+(ok?' since '+tm(ok):'')+': '+e+'.':be?'Not read from '+be+'.':paused?'Background checks of your books are paused (the Worker is over its limit).':(ok && Date.now()-ok>6*60e3 && document.visibilityState==='visible')?'Your books were last read at '+tm(ok)+'.':'';
+  if(!msg){ el.hidden=true; el.innerHTML=''; return; } el.hidden=false;
+  el.innerHTML='<span class="ot-err">⚠ '+esc(msg)+'</span> A bet you just placed may still show as bettable: press <b>I bet this</b> on its card, or <b>+ Add a bet</b>. <button type="button" class="linkbtn" id="fillWarnGo">Check now</button>'; }
+document.addEventListener('click',async e=>{ const b=e.target.closest('#fillWarnGo'); if(!b) return; b.disabled=true; b.textContent='checking…'; try{ await syncFills(true); }finally{ try{ renderFillWarn(); }catch(_){} } });
+setInterval(()=>{ try{ renderFillWarn(); }catch(_){} }, 30000);
 function renderFromBooks(){
   const el=document.getElementById('fromBooks'); if(!el) return;
   try{ Object.assign(fillIgnored, JSON.parse(localStorage.getItem('mbev.fillIgnored')||'{}')||{}); }catch(e){}   // v3.94: what a sync brought in
@@ -10844,6 +10860,7 @@ setInterval(()=>{ if(document.visibilityState==='visible') syncFills(false); }, 
   const m=()=>document.getElementById('fillsMsg');
   const now=document.getElementById('fillsNow'), test=document.getElementById('fillsTest'), rst=document.getElementById('fillsReset'); if(!now) return;
   now.onclick=async()=>{ m().textContent='checking…'; await syncFills(true); const e=window._fillErrors||{};
+    if(window._fillReadErr){ m().textContent='could not read your books: '+window._fillReadErr; return; }   // v4.46: before, a failed read said "all 3 books answered"
     m().textContent=fillAt?('checked '+new Date(fillAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+(Object.keys(e).length?' · '+Object.entries(e).map(([k,v])=>(FILL_NAME[k]||k)+': '+v).join(' · '):' · all 3 books answered')+(fillPending.length?' · '+fillPending.length+' waiting in From your books':'')):'could not reach the Worker (deployed? passphrase set?)'; };
   test.onclick=async()=>{ const pre=document.getElementById('fillsRaw'); m().textContent='asking the books…';
     try{ const res=await fetch(API_BASE+'/mine/selftest',{headers:apiHeaders()}); const t=await res.text(); pre.style.display='block';

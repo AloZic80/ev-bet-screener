@@ -365,6 +365,12 @@
   (30+ closes) and All-Watch ROI pointing the verdict's way); verdict "Statistically" (L > 0) / "Materially" (L > 0.001); All-Watch ROI and the primary and
   fallback ROIs never combined, by sport, kickoff band (CT) and device. A Worker time `srv` is preferred when present (not built in the Worker yet).
   `tests/watch-v2-test.js`; `tests/watch-shadow-test.js` updated (`d` is game by game now, `dBet` bet by bet).
+- Books not read (v4.46, `renderFillWarn`, `#fillWarn`, `window._fillReadErr`, `window._fillOkAt`; owner, 11/10: "my bets are not getting picked up ... they still show
+  at the board", "another one ... was NOT logged"): `syncFills` returned quietly on a Worker HTTP error or a network failure, so nothing was logged or marked
+  ALREADY BET and nothing said why; Check my books now even said "all 3 books answered". Now a red line under the Today card (every tab) says your books were
+  not read and why (HTTP status, 401 passphrase, 429 daily limit), or names a book in Books you bet that failed on its own (`j.errors`), or says background
+  checks are paused, or the last good read is over 6 min old; with "press I bet this or + Add a bet" and Check now. A good read lifts a `wkPause`.
+  `tests/fill-warn-test.js`; `tests/worker-calls-test.js` updated (an answered press resumes polling).
 - Augi's screens on our engine, step 1 of 5: the Board (v4.34, `boardView`/`#boardView`/`mbev.boardView`, `.cv-legend-box`, `lnGet`/`lnSet`/`lnBtnHtml`/`.ln-ed`,
   `mbev.lineNotes`; owner: "What you recommend" → option 2, "BUILD"): Show menu next to Sort (All groups / Passing / Outliers only / Already bet / Skipped;
   Skipped also lists rejected rows without Show rejected), filtered after `grpOf`. Augi's cover legend (nine chips) in a `details.help` above the bar.
