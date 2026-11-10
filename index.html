@@ -32,7 +32,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.51</title>
+<title>0xBeta Screener v4.52</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1076,6 +1076,9 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 .ord-tag.dupe{color:var(--ink)}
 .orders-top{margin-top:8px; padding:8px 12px; border:1px dashed var(--warn); border-radius:10px; font-size:13px; color:var(--ink)}
 .orders-top[hidden]{display:none} .ot-err{color:var(--warn); font-weight:600}
+/* v4.52: the ⚡ signal pill, the record comparison */
+.sc-pill.sig{border-color:var(--rule); color:var(--soft)} .sc-pill.sig.good{color:var(--live); border-color:var(--live)}
+.tier-cmp{margin-top:10px; padding:8px 10px; border:1px solid var(--rule); border-radius:8px; font-size:13px; line-height:1.5}
 /* v4.50: the modes' extras (🍀 Just missed, 🔮 Hail Marys), ◎ PERFECTA, 🎟 parlay legs */
 :root{ --gold:#8A6200; --gold-bg:#FFF8E1; --gold-ink:#FFFFFF; --hail:#5B34B0; --hail-bg:#EFE8FB; }
 :root[data-theme="dark"]{ --gold:#F2C94C; --gold-bg:#2B2410; --gold-ink:#1D1600; --hail:#C9B5FF; --hail-bg:#2A2140; }
@@ -1417,7 +1420,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.51</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.52</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1518,7 +1521,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
     <label class="bar-item" title="What the board lists (Augi's review menu)">Show <select id="boardView" class="bar-sel"><option value="all">All groups</option><option value="pass">✅ Passing (Place these)</option><option value="perf">◎ Perfectas (6 of 6)</option><option value="legs">🎟 Parlay legs (70%+)</option><option value="outlier">Outliers only</option><option value="prior">Already bet</option><option value="watch">👀 Watch (model only)</option><option value="skip">Skipped</option></select></label><!-- v4.34 -->
     <label class="bar-item">Sort <select id="sortBy" class="bar-sel">
         <option value="math" selected>✅ Math: best edge first</option><!-- v4.28 --><option value="top">Top bets (stars, then cover %)</option>
-        <option value="score">Sentinel score (best first)</option><!-- v4.21 -->
+        <option value="score">Sentinel score (best first)</option><!-- v4.21 --><option value="signal">⚡ Signal: latest market move first</option><!-- v4.52 -->
         <option value="cover">Cover % (highest first)</option>
         <option value="educated">Educated guess (hit rate)</option>
         <option value="net">Net EV % (best first)</option>
@@ -2169,7 +2172,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.51';
+const SCREENER_VERSION='v4.52';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2491,7 +2494,7 @@ const MODES={
   clair: {label:'🔮 Clairvoyant',   hail:true},
 };
 const EXTRAS={luckyDay:5, hailDay:3, hailEach:1, hailOdds:300};   // v4.50
-const RING={pLo:0.50, pHi:0.75, evLo:0.04, evHi:0.12, room:0.025, freshMs:10*60e3, leg:0.70, legEv:0};   // v4.50: the ◎ PERFECTA checks, and the 🎟 parlay-leg chance   // v4.51: legEv, and the six checks are frozen as they are (ChatGPT, 11/10: "freeze whichever rule you choose before seeing results")
+const RING={pLo:0.50, pHi:0.75, evLo:0.04, evHi:0.12, room:0.025, freshMs:10*60e3, leg:0.70};   // v4.50: the ◎ PERFECTA checks, and the 🎟 parlay-leg chance   // v4.51: legEv, and the six checks are frozen as they are (ChatGPT, 11/10: "freeze whichever rule you choose before seeing results")
 let betMode='safe';
 (function(){ try{ const m=JSON.parse(localStorage.getItem('mbev.mode')||'null');
   if(m && MODES[m.mode]){ const today=new Date().toLocaleDateString('en-CA',{timeZone:'America/Chicago'});
@@ -3055,7 +3058,7 @@ function extraLine(r){ const P=x=>(x*100).toFixed(1)+'%', sg=x=>(x>=0?'+':'−')
    last 10 minutes; 6 clean, no warning note, injury, bad weather, outlier, capped stake, or a price that rose a point in the last hour.
    6 of 6: gold ring, tinted card, BET NOW. 5 of 6: a thin ring that names the miss. A label only: stakes stay La Contadora's.
    🎟 r.leg = a player prop she gives RING.leg (70%) or more: it pays little alone, and on a pick'em app every pick pays the same.
-   v4.51: and her own EV at its price is RING.legEv (0%) or better. */
+   v4.51: and her own EV at its price is 0% or better. v4.52: your normal floor (cfg.eMin), no outlier, a market price. */
 function injKnown(r){ try{ if(!r || r.kind!=='prop' || !r.name) return ''; const c=injLoad()[r.sport], x=c&&c.m?c.m[normName(r.name)]:null; return x && !/^probable$/i.test(x[0]) ? injLabel(x[0]) : ''; }catch(e){ return ''; } }
 function wxKey(r){ return r.sport+'|'+((r.gameInfo&&r.gameInfo.eventId)||'')+'|'+r.game; }
 function wxKnown(r){ try{ return (window._wxBad||{})[wxKey(r)]||''; }catch(e){ return ''; } }
@@ -3088,7 +3091,7 @@ function ringOf(r,cfg){ const P=x=>(x*100).toFixed(1)+'%', sg=x=>(x>=0?'+':'−'
   return {n:C.length-miss.length, of:C.length, checks:C, miss}; }
 function ringAssign(rows,cfg){ rows.forEach(r=>{ if(!r) return;
     if(r.pass && r.stake>0 && !r.prior && !r.waitOrder && !r.removed && !r.moved && !r.glConflict) r.ring=ringOf(r,cfg);   // Place these (isPlace is a const defined further down: startup rule)
-    r.leg=!!((!r.kind || r.kind==='prop') && (r.side==='O'||r.side==='U') && r.blendProb!=null && r.blendProb>=RING.leg-1e-9 && r.actNet!=null && r.actNet>=RING.legEv-1e-9 && !r.prior && !r.waitOrder && r.offeredProb>0 && liveState(r)==='open'); }); }   /* v4.51 (owner, passing on ChatGPT: "the PARLAY LEG tag should require acceptable standalone conservative EV, not merely a 70% chance"): her own EV at its price must be 0% or better */
+    r.leg=!!((!r.kind || r.kind==='prop') && (r.side==='O'||r.side==='U') && r.blendProb!=null && r.blendProb>=RING.leg-1e-9 && r.actNet!=null && r.actNet>=cfg.eMin-1e-9 && !r.outlier && !r.noMkt && !r.prior && !r.waitOrder && r.offeredProb>0 && liveState(r)==='open'); }); }   /* v4.51 (owner, passing on ChatGPT: "the PARLAY LEG tag should require acceptable standalone conservative EV, not merely a 70% chance"): her own EV at its price must clear your floor (v4.52: the normal floor, not 0%; no outlier, and a market price to check it against) */
 // the ring follows the clock (a price passes 10 minutes) and what loads after the board (injuries, weather): redraw only when a ring changes
 function ringRecheck(){ try{ if(document.visibilityState!=='visible') return;
     if(betMode==='clair'){ const m=JSON.parse(localStorage.getItem('mbev.mode')||'null'); if(m && m.day && m.day!==new Date().toLocaleDateString('en-CA',{timeZone:'America/Chicago'})){ setMode('safe'); return; } }   /* v4.51: "back to Safe at midnight" also with the page left open (it only happened on a reload) */ const v=document.body.dataset.view; if(v && v!=='v-board') return;
@@ -3099,7 +3102,7 @@ function ringChipHtml(r){ const R=r&&r.ring; if(!R || R.n<5) return ''; return R
     ? '<span class="ring-chip gold" title="◎ PERFECTA: all six checks pass. Open Why this play? on its card for the list.">◎ PERFECTA</span>'
     : '<span class="ring-chip" title="5 of 6 checks: '+esc(R.miss[0]||'')+'">◎ 5 of 6</span>'; }
 function legTagHtml(r){ if(!r || !r.leg) return ''; const need=legNeed();
-  return '<span class="leg-tag" title="La Contadora gives this '+(r.blendProb*100).toFixed(1)+'%, and at its own price it is not a losing bet for her ('+(r.actNet>=0?'+':'−')+Math.abs(r.actNet*100).toFixed(1)+'% after fees). It likely pays little alone (a fair price near '+esc(fmtOdds(Math.round(americanOf(r.blendProb))))+'). On a pick\'em app every pick pays the same, and a 4-pick PrizePicks Power entry needs about '+(need*100).toFixed(1)+'% a pick when the picks are independent: two from the same game move together. See the Parlays tab (check the app has this line).">🎟 PARLAY LEG</span>'; }
+  return '<span class="leg-tag" title="La Contadora gives this '+(r.blendProb*100).toFixed(1)+'%, and at its own price it clears your floor for her too ('+(r.actNet>=0?'+':'−')+Math.abs(r.actNet*100).toFixed(1)+'% after fees). It likely pays little alone (a fair price near '+esc(fmtOdds(Math.round(americanOf(r.blendProb))))+'). On a pick\'em app every pick pays the same, and a 4-pick PrizePicks Power entry needs about '+(need*100).toFixed(1)+'% a pick when the picks are independent: two from the same game move together. See the Parlays tab (check the app has this line).">🎟 PARLAY LEG</span>'; }
 
 /* ============ render board ============ */
 function esc(s){ return String(s===undefined||s===null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
@@ -3251,6 +3254,7 @@ function renderCore(rows,cfg){
     }
     if(sortBy==='math') return (mathKey(b)-mathKey(a)) || (sentScore(b).total-sentScore(a).total);   // v4.28
     if(sortBy==='score') return (sentScore(b).total-sentScore(a).total) || ((b.net||0)-(a.net||0));   // v4.21
+    if(sortBy==='signal'){ const k=x=>{ const g=sigPts(x).g; return g?(g.behind?1:0.25)*g.rise*(0.2+0.8*g.rec):-1; }; return (k(b)-k(a)) || (mathKey(b)-mathKey(a)); }   // v4.52: biggest, latest market move the book has not followed
     if(sortBy==='net') return (b.net||0)-(a.net||0);
     if(sortBy==='gross') return (b.gross||0)-(a.gross||0);
     if(sortBy==='odds') return Math.abs(a.offeredRaw||0)-Math.abs(b.offeredRaw||0);
@@ -3822,15 +3826,18 @@ function sentScore(r){ const net=r&&r.net!=null&&isFinite(r.net)?r.net:null, e=n
   if(r && r.mktNet!=null && isFinite(r.mktNet)){ const x=r.mktNet; m=x>0?20+10*Math.min(1,x/0.04):20*Math.max(0,1+x/0.03); if(!r.mktSharp) m*=0.85; m=Math.round(m);
     mTxt=(x>=0?'beats':'below')+' the '+(r.mktSharp?'sharp':'consensus')+' market price by '+(x>=0?'+':'')+(x*100).toFixed(1)+'% after fees'; }
   const at=rowSeenAt(r), age=at?Math.max(0,Date.now()-at):null, f=age==null?0:age<=3*60e3?20:age>=90*60e3?0:Math.round(20*(1-(age-3*60e3)/(87*60e3)));
-  return {total:Math.max(0,Math.min(100,e+m+f)), e, m, f, net, mTxt, age}; }
+  const sg=sigPts(r);   /* v4.52: up to +5 (sharp market) or +2 (consensus) when the market just moved this way and the book has not followed; a bet with no signal scores as before */
+  return {total:Math.max(0,Math.min(100,e+m+f+sg.s)), e, m, f, s:sg.s, sig:sg.g, net, mTxt, age}; }
 /* price history: one series per bet (sport, name, market, side, game day), [minute, price, fair], kept 3 days on this device (mbev.px,
    dropped first when the storage is full: LS_CACHES). A point is added when the price or the fair price changes, or every 15 minutes. */
 function pxKey(r){ return [r.sport||'', nrmT(r.name), nrmT(r.market), r.side||'', ((r.gameInfo&&r.gameInfo.startISO)||'').slice(0,10)].join('|'); }
 function pxAll(){ if(!window._pxS){ let s={}; try{ s=JSON.parse(localStorage.getItem('mbev.px')||'{}')||{}; }catch(e){ s={}; } window._pxS=(s&&typeof s==='object'&&!Array.isArray(s))?s:{}; } return window._pxS; }
 function pxNote(r){ if(!r || !(r.offeredProb>0 && r.offeredProb<1)) return; const S=pxAll(), k=pxKey(r), now=Math.floor(Date.now()/60000), A=Array.isArray(S[k])?S[k]:(S[k]=[]), L=A[A.length-1];
   const p=Math.round(r.offeredProb*1e4)/1e4, f=r.fairProb!=null&&isFinite(r.fairProb)?Math.round(r.fairProb*1e4)/1e4:null;
-  if(L && L[1]===p && L[2]===f && now-L[0]<15) return;
-  if(L && L[0]===now){ L[1]=p; L[2]=f; } else A.push([now,p,f]);
+  const k4=r.mktProb!=null&&isFinite(r.mktProb)?Math.round(r.mktProb*1e4)/1e4:null;   /* v4.52: the market's no-vig chance, for the ⚡ signal (sigMove) */
+  const k5=k4==null?null:(r.mktSharp?'s':'c');   /* 's' sharp (the pasted Market EV fair), 'c' consensus: a change of source is not a move */
+  if(L && L[1]===p && L[2]===f && (L[3]==null?null:L[3])===k4 && (L[4]||null)===k5 && now-L[0]<15) return;
+  if(L && L[0]===now){ L[1]=p; L[2]=f; L[3]=k4; L[4]=k5; } else A.push([now,p,f,k4,k5]);
   if(A.length>40) A.splice(0,A.length-40); window._pxDirty=true; }
 function pxSave(){ if(!window._pxDirty) return; window._pxDirty=false; const S=pxAll(), cut=Math.floor(Date.now()/60000)-3*1440;
   Object.keys(S).forEach(k=>{ const A=S[k]; if(!Array.isArray(A) || !A.length || A[A.length-1][0]<cut) delete S[k]; });
@@ -3838,6 +3845,27 @@ function pxSave(){ if(!window._pxDirty) return; window._pxDirty=false; const S=p
   try{ localStorage.setItem('mbev.px', JSON.stringify(S)); }catch(e){} }
 setInterval(pxSave, 30000); window.addEventListener('pagehide', pxSave); document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') pxSave(); });
 function pxSeries(r){ const A=pxAll()[pxKey(r)]; return Array.isArray(A)?A:[]; }
+/* v4.52 (owner, 11/10, showing OddsJam Momentum: "this is what the sentinels do or want them to do ... make sure it is doing the same", then "yes. Proceed"):
+   Momentum ranks a play by a SHARP book moving (the "signal drop": +120 to +100 is 4.5 points of chance), how long ago, and a slower book that has not followed.
+   sigMove reads the same thing from our history: the market's no-vig chance for this side. Rules (ChatGPT's review, 11/10, pasted by the owner):
+   - only points from the SAME market source as the latest one count ('s' sharp / 'c' consensus): a switch of source is not a move;
+   - scored against the lowest point of the last 2 hours (6 hours are kept as context); from 1 point of rise; at least two observations;
+   - no signal when the market was higher earlier in the 6 hours (a rebound after a bigger drop), when the latest load has no market number, or when the
+     latest point is over 2 hours old;
+   - behind = the book's price moved less than half as much AND the market has not come back more than half a point from its peak;
+   - "sampled" when the observations around the move are over 30 minutes apart: we only see what this device loaded, not the move itself.
+   Bonus (sigPts): 5 × min(1, rise ÷ 4 pts) × recency × source (1 sharp, 0.4 consensus: at most +2), only when behind. It never changes a decision or a stake. */
+function sigMove(r){ const S=pxSeries(r); if(S.length<2) return null; const now=S[S.length-1], clock=Math.floor(Date.now()/60000);
+  if(now[3]==null || !now[4] || clock-now[0]>120) return null;
+  const A=S.filter(x=>x[3]!=null && x[4]===now[4] && x[0]>=now[0]-360); if(A.length<2) return null;
+  let base=null; for(const x of A){ if(x===now || x[0]<now[0]-120) continue; if(!base || x[3]<base[3]) base=x; }
+  if(!base) return null; const rise=now[3]-base[3]; if(!(rise>=0.01-1e-9)) return null;
+  const bi=A.indexOf(base); let hiBefore=0, peak=now[3]; A.forEach((x,i)=>{ if(i<bi) hiBefore=Math.max(hiBefore,x[3]); else peak=Math.max(peak,x[3]); });
+  if(hiBefore>now[3]+0.005) return null;
+  let ai=A.length-1; for(let i=A.length-1;i>bi;i--){ if(A[i][3]>=now[3]-0.25*rise) ai=i; else break; }
+  const at=A[ai], gap=at[0]-A[ai-1][0], retr=peak-now[3]>0.005, dp=now[1]-base[1], mins=Math.max(0,clock-at[0]);
+  return {rise, from:base[3], to:now[3], mins, dp, retr, behind:dp<0.5*rise && !retr, sharp:now[4]==='s', sampled:gap>30, gap, rec:mins<=15?1:mins>=120?0:1-(mins-15)/105}; }
+function sigPts(r){ let g=null; try{ g=sigMove(r); }catch(e){} return {g, s:(g && g.behind)?Math.round(5*Math.min(1,g.rise/0.04)*g.rec*(g.sharp?1:0.4)):0}; }
 function pxMove(r){ const A=pxSeries(r); if(A.length<2) return null; const now=A[A.length-1], t0=now[0]-60; let b=A[0]; for(const x of A){ if(x[0]<=t0) b=x; else break; }
   if(b===now) return null; return {dp:now[1]-b[1], df:(now[2]!=null&&b[2]!=null)?now[2]-b[2]:null, mins:now[0]-b[0], from:b[1], to:now[1]}; }
 function pxTime(min){ return new Date(min*60000).toLocaleTimeString('en-US',{timeZone:'America/Chicago',hour:'numeric',minute:'2-digit'}); }
@@ -3889,6 +3917,7 @@ function placeCardHtml(r,cfg,o){
   const lim=X?((r.xContracts?r.xContracts+' contract'+(r.xContracts===1?'':'s')+' · ':'')+(X==='lucky'?'the smallest bet':'a Hail Mary')):r.risk?'⚠ small on purpose':r.outlier?'outlier: capped':(r.capTrimmed||r.dayTrimmed)?'limited by your caps':'';
   const mv=pxMove(r), mvTxt=mv&&Math.abs(mv.dp)>=0.01?'<span class="sc-pill mv '+(mv.dp<0?'good':'bad')+'" title="The price '+(mv.dp<0?'fell':'rose')+' from '+pp(mv.from)+' to '+pp(mv.to)+' in '+mv.mins+' min">'+(mv.dp<0?'↘':'↗')+' '+(mv.dp>0?'+':'−')+(Math.abs(mv.dp)*100).toFixed(1)+' pts</span>'
                       : mv&&mv.df!=null&&Math.abs(mv.df)>=0.015&&Math.abs(mv.dp)<0.005?'<span class="sc-pill mv good" title="The fair price moved '+(mv.df>0?'+':'−')+(Math.abs(mv.df)*100).toFixed(1)+' points in '+mv.mins+' min; '+esc(bk)+' has not moved">fair '+(mv.df>0?'↗':'↘')+' · '+esc(bk)+' behind</span>':'';
+  const sgm=X?null:sc.sig, sgWho=sgm&&sgm.sharp?'sharp market':'market', sgTxt=!sgm?'':'<span class="sc-pill sig'+(sgm.behind?' good':'')+'" title="The '+sgWho+' moved this way: its chance for this side went from '+(sgm.from*100).toFixed(1)+'% to '+(sgm.to*100).toFixed(1)+'%, seen '+ageTxt(sgm.mins*60e3)+' ago. '+(sgm.retr?'It has come back from its high since, so this is not counted.':sgm.behind?esc(bk)+' has not followed yet.':esc(bk)+' has already moved with it.')+(sgm.sampled?' Sampled: your loads around the move were '+ageTxt(sgm.gap*60e3)+' apart, so when it moved is not known.':'')+' Seen between your loads, not live.">⚡ '+sgWho+' +'+(sgm.rise*100).toFixed(1)+' pts · '+ageTxt(sgm.mins*60e3)+(sgm.sampled?' · sampled':'')+'</span>';
   const warns=(r.flags||[]).filter(f=>f[0]==='warn' && !/ order (“|in this game)/.test(f[1]) && !/^×\d+$/.test(f[1])).map(f=>'<span class="tag t-warn">'+esc(f[1])+'</span>').join('')
     +(r.flags||[]).filter(f=>f[0]==='corr').map(f=>'<span class="tag t-corr" title="You already have money on this game; bets in one game move together">🔗 '+esc(f[1])+'</span>').join('');   // v4.47: the same-game note was in the table only
   const tags=orderTagHtml(r)+injTagHtml(r)+wxTagHtml(r)+(o.sweet?'<span class="sweet">🎯 SWEET SPOT</span>':'')+legTagHtml(r)+shopTagHtml(r)+warns+'<span class="mk-slot" data-idx="'+r.idx+'">'+makeTagHtml(r)+'</span>';
@@ -3914,7 +3943,8 @@ function placeCardHtml(r,cfg,o){
       '<div class="sc-score-why"><div class="sc-h">Score '+sc.total+' of 100</div>'+
         bar('Edge',sc.e,50,sc.net==null?'no EV':(sc.net>=0?'+':'')+(sc.net*100).toFixed(1)+'% after fees (full at +6%)')+
         bar('Market',sc.m,30,esc(sc.mTxt))+
-        bar('Fresh',sc.f,20,sc.age==null?'price time unknown':'price read '+ageTxt(sc.age)+' ago (full under 3 min)')+'</div>'+
+        bar('Fresh',sc.f,20,sc.age==null?'price time unknown':'price read '+ageTxt(sc.age)+' ago (full under 3 min)')+
+        (sgm?bar('⚡ Signal',sc.s,5,'the '+sgWho+' moved +'+(sgm.rise*100).toFixed(1)+' pts this way, seen '+ageTxt(sgm.mins*60e3)+' ago'+(sgm.retr?'; it has come back from its high since, so no bonus':sgm.behind?'; '+esc(bk)+' has not followed (a bonus of up to 5 for a sharp market, 2 for the consensus: full at +4 pts within 15 min, 0 after 2 hours)':'; '+esc(bk)+' already moved with it, so no bonus')):'')+'</div>'+
       '<div class="sc-chart"><div class="sc-h">Price</div>'+(chart||'<div class="meta">The chart fills in from now on: each time the Sentinels or a load read this price, it is saved on this device for 3 days.</div>')+'</div>'+
       '<div class="sc-dec">'+decisionHtml(r,cfg)+'</div>'+
       (X?'<div class="sc-ringl"><div class="sc-h">'+(X==='lucky'?'🍀 Why it just missed':'🔮 What the math thinks')+'</div><ul><li>'+esc(XL.t)+'</li><li>'+esc(XL.short)+'</li><li>'+(X==='lucky'?'Not a best bet: the smallest bet, up to '+EXTRAS.luckyDay+' a day.':'A Hail Mary is your call, not the math’s: $'+EXTRAS.hailEach+', up to '+EXTRAS.hailDay+' a day.')+'</li></ul></div>'
@@ -3929,10 +3959,10 @@ function placeCardHtml(r,cfg,o){
                      :'<div class="sc-ringb" title="Five of the six Perfecta checks pass. The list is in Why this play?">◎ 5 of 6 · <b>'+esc(R.miss[0]||'')+'</b></div>'):'')+   // v4.50
     (o.top?'<div class="sc-mathtop" title="The best edge on the board right now (edge after blending the market with the model, what the stake is sized on). Bet the cards top to bottom on Sort › Math until your daily max.">✅ #1 MATH PICK</div>':'')+   // v4.28
     '<div class="sc-top">'+(X?'<span class="sc-score x" title="'+(X==='lucky'?'Just missed: not a best bet':'A Hail Mary: your call, not the math’s')+'">'+(X==='lucky'?'🍀':'🔮')+'<small class="sc-word">'+(X==='lucky'?'JUST MISSED':'HAIL MARY')+'</small></span>'
-      :'<span class="sc-score '+scCls+'" title="Sentinel score: edge '+sc.e+'/50, market '+sc.m+'/30, fresh '+sc.f+'/20. Open Why this play? for the parts.">'+sc.total+'<small class="sc-word">'+scWord(sc.total)+'</small></span>')+
+      :'<span class="sc-score '+scCls+'" title="Sentinel score: edge '+sc.e+'/50, market '+sc.m+'/30, fresh '+sc.f+'/20'+(sc.s?', signal +'+sc.s:'')+'. Open Why this play? for the parts.">'+sc.total+'<small class="sc-word">'+scWord(sc.total)+'</small></span>')+
       (X?'<span class="sc-pill ev" title="La Contadora’s EV after fees at '+esc(bk)+' (with the market). The model alone says '+(r.net==null?'—':(r.net>0?'+':'')+pct(r.net))+'">'+logo+'<b class="'+(r.actNet>0?'up':'down')+'">'+(r.actNet==null?'—':(r.actNet>0?'+':'')+pct(r.actNet))+'</b></span>'
         :'<span class="sc-pill ev" title="EV after fees at '+esc(bk)+'">'+logo+'<b class="'+(r.net>0?'up':'down')+'">'+(r.net==null?'—':(r.net>0?'+':'')+pct(r.net))+'</b></span>')+
-      (sc.age!=null?'<span class="sc-pill age'+(sc.age>30*60e3?' old':'')+'" title="This price was read '+ageTxt(sc.age)+' ago'+(sc.age>30*60e3?'. Send the Sentinels for a fresh one.':'')+'">⏱ '+ageTxt(sc.age)+'</span>':'')+mvTxt+
+      (sc.age!=null?'<span class="sc-pill age'+(sc.age>30*60e3?' old':'')+'" title="This price was read '+ageTxt(sc.age)+' ago'+(sc.age>30*60e3?'. Send the Sentinels for a fresh one.':'')+'">⏱ '+ageTxt(sc.age)+'</span>':'')+mvTxt+sgTxt+
       '</div>'+
     '<div class="sc-who">'+avatar+'<div class="sc-id"><div class="sc-sport">'+esc(r.sport)+'</div>'+
       '<div class="pc-nm" title="'+esc(r.name)+'">'+esc(r.name)+(code&&code!==String(r.name||'').toUpperCase()?' <span class="sc-tm">'+esc(code)+'</span>':'')+'</div>'+
@@ -6902,7 +6932,7 @@ function watchNote(rows){ const A=watchAll(), now=Date.now(); let ch=0; const by
     let ld=null; if(LIVE_BOOK(r.book)){ try{ const d=liveDesc(Object.assign(rowAsBet(r),{id:'w'})); if(d){ delete d.id; ld=d; } }catch(e){} }
     o=Object.assign({k, pk, v:2, at:new Date(now).toISOString(), ver:SCREENER_VERSION, dev:watchDev(), devName:syncDev(), tz:new Date(now).getTimezoneOffset(), tsrc:'device',
       sport:r.sport, kind:r.kind||'prop', name:r.name, team:r.team||null, market:r.market, side:r.side||'', betnow:betNowOf(r), game:r.game||r.matchup||'', ev:(r.gameInfo&&r.gameInfo.eventId)||null,
-      start:st||null, date:st?ctDay(t0):null, dateSet:!!st, book:r.book}, cur, {net:+(r.net||0).toFixed(4), result:null, seen:pre?now:null, nSig:0, ld});
+      start:st||null, date:st?ctDay(t0):null, dateSet:!!st, book:r.book}, cur, {net:+(r.net||0).toFixed(4), xc:r.xc||null, result:null, seen:pre?now:null, nSig:0, ld});   /* v4.52: xc = 'lucky' when it was a Just missed at first sight */
     if(!o.ld) delete o.ld; A.push(o); by.set(k,o); by.set(pk,o); ch++; });
   if(ch) watchSave(); return ch; }
 function watchState(o){ const L=(o.sig&&o.sig.length)?o.sig[o.sig.length-1]:o;   // the price and forecasts as last seen before the cutoff
@@ -7048,6 +7078,51 @@ function renderWatchStudy(force){ const el=document.getElementById('watchStudy')
     '<div class="meta">Capture: your placed bets first (every book, in the Bet log), then free exchange closes for Watch bets, policy picks first, in the last 10 minutes before kickoff. Sportsbook Watch closes are not bought. Times: '+S.tsrc+' clocks'+(S.tsrc==='device'?' (no Worker time stamp yet)':'')+(S.conflicts?' · '+S.conflicts+' records seen differently on two devices (the earliest kept)':'')+'.</div>';
   try{ helpApply(el); }catch(e){}
 }
+/* v4.52 (owner, passing on ChatGPT, 11/10: "compare groups using a game-clustered bootstrap ... report the interval for the difference, not merely separate
+   intervals ... CLV is the better early comparison ... show sport/market composition"; stages per group: under 100 bets or 50 games descriptive, 100-299 and
+   50-149 directional, 300+ and 150+ useful if the clustered interval excludes zero, 1,000 and 500 credible). A = Perfectas, B = the other ringed best bets;
+   settled singles. Games are resampled whole (every bet of a sampled game stays in), seeded, so the same log gives the same range. */
+function tierGk(b){ const gi=b.gameInfo||{}; if(gi.eventId) return 'e'+gi.eventId; let t=''; try{ const T=giTeamsOf(b); if(T) t=T.map(x=>normAbbr(x.abbr)).sort().join('-'); }catch(e){} return (b.sport||'')+'|'+(t||(b.game?gameKey(b.game):nrmT(b.name||'')))+'|'+gameDayOf(b); }
+function tierCmp(A,B,boot){ boot=boot||5000; const X=[];
+  [A,B].forEach((L,grp)=>L.forEach(b=>{ const pr=betProfit(b); if(pr==null) return; X.push({g:tierGk(b), grp, pr, st:b.free?0:(+b.stake||0), c:clv(b), sport:b.sport||'?', mk:String(b.market||'?').replace(/^[+-]?[\d.]+\s+/,'')||'?'}); }));
+  /* per game: profit, stake, CLV total and count for each group, added up once (a resample adds eight numbers a game, not every bet again) */
+  const by=new Map(); X.forEach(x=>{ let c=by.get(x.g); if(!c){ c=[0,0,0,0,0,0,0,0,0,0]; by.set(x.g,c); } const o=x.grp*4; c[o]+=x.pr; c[o+1]+=x.st; if(x.c!=null){ c[o+2]+=x.c; c[o+3]++; } c[8+x.grp]++; });
+  const C=[...by.values()], K=C.length, sum=L=>{ const t=[0,0,0,0,0,0,0,0]; L.forEach(c=>{ for(let i=0;i<8;i++) t[i]+=c[i]; }); return t; };
+  const dR=t=>(t[1]>0 && t[5]>0)?t[0]/t[1]-t[4]/t[5]:null, dC=t=>(t[3]>0 && t[7]>0)?t[2]/t[3]-t[6]/t[7]:null, T=sum(C);
+  const n=[0,1].map(g=>X.filter(x=>x.grp===g).length), games=[0,1].map(g=>C.filter(c=>c[8+g]>0).length), nc=[T[3],T[7]], gc=[0,1].map(g=>C.filter(c=>c[g*4+3]>0).length);
+  const mix=(g,key)=>{ const m={}; X.forEach(x=>{ if(x.grp===g) m[x[key]]=(m[x[key]]||0)+1; }); return Object.entries(m).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,3).map(([k,v])=>k+' '+Math.round(100*v/n[g])+'%').join(', '); };
+  const out={n, games, nc, dRoi:dR(T), dClv:dC(T), ciRoi:null, ciClv:null, whyRoi:'', whyClv:'', boot, mix:[0,1].map(g=>({sport:mix(g,'sport'), market:mix(g,'mk')}))};
+  const nb=Math.min(n[0],n[1]), ng=Math.min(games[0],games[1]);
+  out.stage=(nb<100||ng<50)?'descriptive':(nb<300||ng<150)?'directional':(nb<1000||ng<500)?'useful':'credible'; out.prelim=nb<30||ng<15;
+  /* games are resampled whole, inside three kinds (both groups in the game, Perfecta only, other only), so the make-up of a resample stays the same
+     (ChatGPT, 11/10). mulberry32: the generator used before left the exact range of a double and repeated after about 10,000 draws. */
+  const ST=[C.filter(c=>c[8]>0&&c[9]>0), C.filter(c=>c[8]>0&&!c[9]), C.filter(c=>!c[8]&&c[9]>0)];
+  let a=0x9E3779B9; const rnd=()=>{ a=(a+0x6D2B79F5)|0; let t=Math.imul(a^(a>>>15),1|a); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; };
+  const run=(d)=>{ const V=[]; for(let i=0;i<boot;i++){ const t=[0,0,0,0,0,0,0,0]; ST.forEach(S=>{ for(let j=0;j<S.length;j++){ const c=S[Math.floor(rnd()*S.length)]; for(let q=0;q<8;q++) t[q]+=c[q]; } }); const v=d(t); if(v!=null) V.push(v); }
+    if(V.length<boot*0.8) return null; V.sort((x,y)=>x-y); return [V[Math.floor(0.025*V.length)], V[Math.ceil(0.975*V.length)-1]]; };
+  if(nb<5 || K<4) out.whyRoi='it needs 5 settled bets in each group, over 4 games'; else { out.ciRoi=run(dR); if(!out.ciRoi) out.whyRoi='too few games hold bets of both groups for a range yet'; }
+  if(Math.min(nc[0],nc[1])<5 || Math.min(gc[0],gc[1])<2) out.whyClv='it needs 5 bets with a closing line in each group'; else { out.ciClv=run(dC); if(!out.ciClv) out.whyClv='too few games hold closing lines of both groups for a range yet'; }
+  return out; }
+function tierCmpHtml(S){ try{ const W0=watchAll(), ck=syncH32(S.map(b=>b.id+(b.result||'')+(b.closing||'')+(b.sold?'s':'')+(b.stake||'')).join(',')+'|'+W0.map(o=>o.k+(o.result||'')).join(',')+'|'+Object.keys(watchPolAll()).length);
+    if(window._tierCmpK===ck) return window._tierCmpH||'';   /* renderPerf runs after every save and grade: work it out again only when the bets, results, closes or Watch records changed */
+    const rg=b=>(b.snap&&b.snap.ring)||null, A=S.filter(b=>!b.tier && rg(b) && rg(b).n===(rg(b).of||6)), B=S.filter(b=>!b.tier && rg(b) && rg(b).n<(rg(b).of||6));
+    const c=tierCmp(A,B), pts=x=>(x>=0?'+':'−')+Math.abs(x*100).toFixed(1)+' pts', pc=x=>(x>=0?'+':'−')+Math.abs(x*100).toFixed(1)+'%', rng=(ci,why)=>ci?' (95% range '+pts(ci[0])+' to '+pts(ci[1])+', '+c.boot.toLocaleString('en-US')+' resamples of whole games)':' (no range yet: '+why+')';
+    const ST={descriptive:'descriptive only: under 100 bets or 50 games in a group', directional:'directional: 100 to 299 bets and 50 to 149 games', useful:'useful if the range excludes zero: 300+ bets and 150+ games', credible:'credible, subject to how narrow the range is: 1,000 bets and 500 games'};
+    let h='';
+    if(c.n[0] && c.n[1]) h+='<div class="tier-cmp"><b>◎ Perfecta minus the other best bets</b> <span class="meta">settled singles · '+c.n[0]+' against '+c.n[1]+' bets, '+c.games[0]+' and '+c.games[1]+' games</span>'+
+      '<div>ROI difference: '+(c.dRoi==null?'—':'<b>'+pts(c.dRoi)+'</b>'+rng(c.ciRoi,c.whyRoi))+'</div>'+
+      '<div>CLV difference (the better early read): '+(c.dClv==null?'— <span class="meta">needs closing lines in both groups ('+c.nc[0]+' and '+c.nc[1]+' so far)</span>':'<b>'+pts(c.dClv)+'</b>'+rng(c.ciClv,c.whyClv)+' <span class="meta">'+c.nc[0]+' and '+c.nc[1]+' with a close</span>')+'</div>'+
+      '<div>Stage: <b>'+ST[c.stage]+'</b>.'+(c.prelim?' <b>Extremely preliminary:</b> this only shows the method works, it is not evidence yet.':'')+'</div>'+
+      '<div class="meta">Mix · Perfectas: '+esc(c.mix[0].sport)+' · '+esc(c.mix[0].market)+' | others: '+esc(c.mix[1].sport)+' · '+esc(c.mix[1].market)+'. A different mix can explain a difference by itself. The six checks are frozen since v4.50 and are not retuned on these bets.</div></div>';
+    /* every Just-missed Watch bet, chosen or not: marked at first sight since v4.52 (xc); older records by her EV 0% or better and a price under Hail Mary odds */
+    const hp=100/(EXTRAS.hailOdds+100), W=watchAll().filter(o=>o && (o.xc?o.xc==='lucky':(o.actNet!=null && o.actNet>=0 && o.price>hp)));
+    if(W.length){ const P=watchPolAll(), ks=new Set(W.map(o=>o.k)), PW={}; Object.keys(P).forEach(k=>{ if(P[k] && ks.has(P[k].k)) PW[k]=P[k]; });
+      const w=watchStats(W,{boot:1000, pol:PW}), f3=x=>x==null?'—':x.toFixed(3), pr=w.pol&&w.pol.primary;
+      h+='<div class="tier-cmp"><b>🍀 Every Just-missed Watch bet, chosen or not</b> <span class="meta">$1 each · no selection by you</span>'+
+        '<div>At the price when first seen (the forecast is judged here; not always a price you could still get near kickoff): '+w.n+' seen, '+w.graded+' graded'+(w.graded?' ('+w.wins+' won) · ROI <b>'+pc(w.roi)+'</b> · Brier: model '+f3(w.brier.model)+', market '+f3(w.brier.market)+' · log loss: model '+f3(w.logloss.model)+', market '+f3(w.logloss.market):'')+'</div>'+
+        '<div>At the price 5 minutes before kickoff, one pick a game (what you could have done): '+(pr && pr.graded?pr.graded+' graded ('+pr.w+' won) · ROI <b>'+pc(pr.roi)+'</b>':'none graded yet <span class="meta">(a pick needs a sighting in the last 30 minutes before the game; the first price is never used in its place)</span>')+'</div>'+
+        '<div class="meta">Read this next to the 🍀 line above, which is only the ones you placed. A bet you placed is in both, counted once in each.</div></div>'; }
+    window._tierCmpK=ck; window._tierCmpH=h; return h; }catch(e){ console.error(e); return ''; } }
 function renderTiers(){ const el=document.getElementById('tierBody'); if(!el) return;   // v4.50
   /* v4.51 (owner, passing on ChatGPT: "the actual ROI represents Just-missed bets Alonzo chose to place, not all Just-missed opportunities ... add beside
      actual ROI: User-selected subset: results may reflect discretionary selection"): said on both extras rows. Every Watch bet, chosen or not, is in the
@@ -7062,7 +7137,7 @@ function renderTiers(){ const el=document.getElementById('tierBody'); if(!el) re
     G.map(([lab,f])=>{ const L=S.filter(f), g=lcStats(L), C=L.map(clv).filter(x=>x!=null), bt=C.filter(x=>x>0).length;
       return '<tr><td>'+lab+'</td><td class="num">'+(g.n||'—')+'</td><td class="num">'+(g.pend||'—')+'</td><td class="num">'+((g.w+g.l+g.p)?g.w+'–'+g.l+'–'+g.p:'—')+'</td><td class="num">'+(g.stSet?money(g.stSet):'—')+'</td>'+
         '<td class="num">'+(g.settled?'<b class="'+(g.profit>=0?'pl-up':'pl-down')+'">'+money(g.profit,true)+'</b>':'—')+'</td><td class="num">'+(g.stSet>0?sp(g.profit/g.stSet):'—')+'</td><td class="num">'+(C.length?Math.round(100*bt/C.length)+'% <span class="meta">('+bt+'/'+C.length+')</span>':'—')+'</td></tr>'; }).join('')+
-    '</tbody></table></div>'+(none?'<p class="meta" style="margin-top:6px">'+none+' other single'+(none===1?'':'s')+' (from your books, typed in, or before v4.50) have no ring recorded.</p>':''); }
+    '</tbody></table></div>'+tierCmpHtml(S)+(none?'<p class="meta" style="margin-top:6px">'+none+' other single'+(none===1?'':'s')+' (from your books, typed in, or before v4.50) have no ring recorded.</p>':''); }
 function renderPerf(){ try{ renderWatchStudy(); }catch(e){ console.error(e); }   // v4.44
    try{ renderTiers(); }catch(e){ console.error(e); }   // v4.50
    try{ renderCal(); }catch(e){} try{ renderScorecard(); }catch(e){ console.error(e); } try{ renderStudy(); }catch(e){ console.error(e); }   // v4.31

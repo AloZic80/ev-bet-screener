@@ -438,6 +438,24 @@
     is remembered.
   - Not built: a manual same-player override with a combined cap (waits for measured correlations); the Worker time stamp; tier / ring columns in the CSV.
   `tests/modes-perfecta-test.js` (46 checks); `tests/same-player-test.js` and `tests/fill-warn-test.js` updated.
+- ⚡ Signal, like OddsJam's Momentum (v4.52, `sigMove`, `sigPts`, `.sc-pill.sig`, Sort › ⚡ Signal; owner, 11/10, showing the Momentum ad: "this is what the
+  sentinels do or want them to do ... make sure it is doing the same", then "yes. Proceed"): Momentum ranks by a sharp book moving (+120 → +100 = 4.5 points),
+  how long ago, and a book that has not followed. `pxNote` now keeps the market's no-vig chance as a 4th number (`[minute, price, fair, market]`); `sigMove`
+  compares it with its lowest point in the last 6 hours: `rise` (shown from 1 point), `mins` since first seen near the new level, `behind` when the book's
+  price moved less than half as much. Card pill "⚡ market +4.5 pts · 20m" ("sharp market" when `r.mktSharp`), green when the book is behind; the Sentinel
+  score gets up to +5 for a sharp market, +2 for the consensus (full at +4 pts within 15 min, 0 after 2 hours, only when behind; no signal = the old
+  score), listed in Why this play?. After ChatGPT's review and the code review: each point also keeps which market it is (5th value 's' sharp / 'c'
+  consensus) and only same-source points count; scored on the last 2 hours (6 kept as context); no signal on a rebound after a bigger drop, with no
+  market number on the latest load, or when the latest point is over 2 hours old; a market that came back over half a point from its high is not
+  "behind"; "sampled" when the loads around the move are over 30 min apart. It never changes a decision or a stake. Not real time:
+  it sees only what this device loaded (a point per load or Sentinels run). Live would need the Worker to snapshot on a timer (a Worker change: ask first).
+  Not built: the market line on the price chart.
+- Reading the record (v4.52, `tierCmp`, `tierCmpHtml`, `.tier-cmp`, in Performance › ◎ Rings and extras; owner, passing on ChatGPT): Perfecta minus the other
+  ringed best bets as a difference, ROI and CLV, with a 95% range from 5,000 seeded resamples of whole games (mulberry32; games resampled inside three kinds: both groups, Perfecta only, other only;
+  from 5 settled bets a group over 4 games, the CLV range from 5 closes a group; "extremely preliminary" under 30 bets or 15 games; cached by content);
+  stage by the smaller group (under 100 bets or 50 games descriptive, then directional, 300/150 useful if the range excludes zero, 1,000/500 credible); the
+  top sports and markets of each group. Under it: every Just-missed Watch bet (`xc:'lucky'` saved on the Watch record since v4.52; older ones by `actNet` ≥ 0 and a price under
+  Hail Mary odds), chosen or not, as a $1 shadow record at two prices kept apart: when first seen, and the 5-minute-cutoff policy pick (`watchStats`), next to the 🍀 line that is only the ones placed. `tests/signal-record-test.js`.
 - Each mode lists only its own bets (v4.51, `modeFamOf`, `famIs` and `mN` in `renderCore`, `r.xFit`, `modeElse`, `modeEmptyText`, `modeCountsPaint(rows,mN)`; owner, 11/10:
   "they aren't supposed to be under the same either - show on Safe, Feeling Lucky, etc. only where they fit"). This replaces v4.50's stacking (Feeling Lucky =
   Safe's cards + Just missed, Clairvoyant = both + Hail Marys). `MODES.clair` no longer has `lucky`. The math is the same in every mode; only the list changes.
@@ -452,7 +470,7 @@
   - Cover bands: Augi's "Long Shot" (<45%) and "Feeling Lucky" (45–<50%) are **Unlikely** and **Coin Flip** (`cvNames`, the legend), so they do not share
     names with the modes. Not changed: the band "Strong" (70–75%) still shares a word with the Sentinel score's STRONG.
   - From ChatGPT's review (pasted by the owner): a Hail Mary says "Needs 22.2% · market 19.0% · La Contadora 19.4%" then "Math says −12.9% at this price"
-    (`extraLine`); 🎟 `r.leg` also needs `actNet` ≥ `RING.legEv` (0); Rings and extras marks the 🍀 / 🔮 lines "a user-selected subset". The six ◎ checks
+    (`extraLine`); 🎟 `r.leg` also needs `actNet` ≥ 0 (v4.52: ≥ your floor `cfg.eMin`, no outlier, a market price); Rings and extras marks the 🍀 / 🔮 lines "a user-selected subset". The six ◎ checks
     are frozen as they are (room stays 2.5 points); do not retune them on the bets used to judge them.
   - Also fixed: two Settings tooltips still said "Feeling Lucky uses 2.5% / 15%" (gone since v4.50).
   - From the review of this build: an order waiting or a moved line (`r.waitOrder`, `r.moved`) is always 'safe' (the do-not-bet-twice mark stays in the default

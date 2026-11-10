@@ -144,10 +144,10 @@ All of these are **estimates**. A bet that passes has an *estimated* edge, not a
   - Market alone: 58.5 ÷ 54 − 1 = +8.3%, so it is lined up.
 
 **🎟 Parlay leg:** a player prop with a 70%+ chance pays little alone (a fair price near −233 or shorter). On a pick'em app every pick pays the same, and a 4-pick PrizePicks Power entry (10×) needs about **56.2%** a pick (0.1 to the power ¼).
-- Since v4.51 the tag also needs the conservative EV at the prop's own price to be **0% or better** (a 76% prop at −400 is −5.0%: no tag).
+- The tag also needs the conservative EV at the prop's own price to clear **your normal floor** (1.5% by default; v4.51 used 0%), no outlier flag and a market price. A 76% prop at −400 is −5.0%: no tag.
 - The 56.2% assumes four independent picks. Two picks from the same game move together, so the real chance of the entry can be lower.
 
-**The six ◎ checks are frozen as of v4.50 (2026-11-10).** They will not be retuned on the same bets used to judge them.
+**The six ◎ checks are frozen as of v4.50 (2026-11-10).** They will not be retuned on the same bets used to judge them. Performance compares Perfectas with the other best bets as a difference (ROI and CLV) with a range from resampling whole games (v4.52).
 
 ## 6. Parlays and pick'em (PrizePicks, Pick6, Underdog…)
 
@@ -175,6 +175,13 @@ Fresh  = 20 under 3 minutes old, falling to 0 at 90 minutes
 ```
 
 The score is shown as a word: **STRONG** 75+, **GOOD** 50–74, **THIN** under 50. **THIN still clears the screener's estimated EV floor, but with weaker edge, price confirmation or freshness**, so it gets the smallest stakes. Estimated +EV is not guaranteed +EV.
+
+### The ⚡ signal (v4.52)
+- The app keeps the market's no-vig chance each time a bet is loaded. When that chance is **1 point or more above its lowest in the last 6 hours**, the card shows "⚡ market +4.5 pts · 20m".
+- **Bonus:** up to +5 on the score for a sharp market, +2 for the consensus, only when the book's price moved less than half as much and the market has not come back from its high. Bonus = 5 × min(1, rise ÷ 4 pts) × recency (1 within 15 min, falling to 0 at 2 hours) × source (1 sharp, 0.4 consensus).
+- The rise is measured against the lowest point of the last 2 hours. A rebound after a bigger drop, or a change of market source, is not a signal. The bonus never changes a decision or a stake.
+- **Example:** consensus market 45.5% → 50.0% (+4.5 pts) seen 20 min ago, book unchanged: 5 × 1 × (1 − 5 ÷ 105) × 0.4 = 1.9, rounded to **+2**. The same move in the sharp market: 4.8, rounded to **+5**.
+- It is not live: a move is seen only when the board is loaded or the Sentinels run.
 
 ## 8. Honest results
 
