@@ -6,7 +6,7 @@ Ref: CC-2026-11-10-14 · Written by Claude Code, Tue 2026-11-10, America/Chicago
 0xBeta Screener (props.0xbeta.dev) finds bets with an estimated edge (+EV) and sizes stakes with quarter Kelly on a halved edge. La Contadora judges every bet on `actProb = min(model, market + 0.35 × (model − market))` and the EV it gives after fees, `actNet`.
 
 ## How this build was approved
-You found two gaps in v4.56 (book-swap cards never expired; the Sentinels compared against the Pull book, not the book shown). We agreed the fix in writing, including your sportsbook adjustment, then Alonzo said "BUILD". Nothing outside that scope was built.
+You found two gaps in v4.56 (book-swap cards never expired; the Sentinels compared against the Pull book, not the book shown). We agreed the fix in writing, including your sportsbook adjustment, then Alonzo said "BUILD". After the first draft you added the floor condition for an unreadable exchange; I agreed, Alonzo confirmed the BUILD ("we had already said BUILD"), and it is in this version. Nothing outside that scope was built.
 
 ## What was built
 
@@ -16,7 +16,8 @@ The book **shown now** is the one to beat. The Pull book is kept only for the "w
 | The shown book's price | What happens |
 |---|---|
 | Fresh: an exchange read in this scan, or a sportsbook price the board loaded within 3 minutes (90 seconds within 5 minutes of kickoff) | Another fresh price needs 0.3 points more `actNet` |
-| An exchange that could not be read | The best fresh price takes its place, no 0.3. Saved as `exchange_unreadable` |
+| An exchange that could not be read | The best fresh price whose `actNet` clears the floor takes its place, no 0.3, even if it is worse than the last price seen. Saved as `exchange_unreadable` |
+| Exchange unreadable, fresh prices exist, none clears the floor | Nothing moves: "No current best book confirmed · shown exchange unavailable · fresh prices do not clear your floor". Saved as `exchange_unreadable_no_actionable_quote` |
 | A sportsbook price that is stale | The best fresh exchange price whose `actNet` clears the floor replaces it, no 0.3, even if it is worse than the stale price. Saved as `sportsbook_stale_unrefreshable`; the card adds "sportsbook price stale and not refreshable" |
 | Stale sportsbook and no fresh exchange price that clears the floor | Nothing moves: "No current best book confirmed · sportsbook price is stale · check the book manually" |
 | Nothing readable for an exchange row | Nothing moves: "no price could be read · refresh prices" |
@@ -40,17 +41,17 @@ Model 58%, market 56%: chance = min(0.58, 0.56 + 0.35 × 0.02) = **56.7%**. EV a
 - Shown book Novig 51.5% (+10.10%) against Kalshi 49.8% after its fee 0.07 × 0.502 = 3.51% (+9.99%): 0.11 points apart. Novig stays. Measured against the Pull book (Kalshi), v4.56 moved it back.
 
 ## Checked
-- New test `tests/book-choice-v457-test.js`: 24 checks. The v4.56 test was updated for the new reason code (`exchange_unreadable`).
+- New test `tests/book-choice-v457-test.js`: 27 checks. The v4.56 test was updated for the new reason code (`exchange_unreadable`).
 - The full suite result is in the PR.
 
-## Decisions I made inside the scope (please check)
-1. **Exchange unreadable:** the best fresh price takes its place even when it is worse than the unreadable book's last price, and with no floor condition (the re-screen judges it). v4.56 required it to beat the last price. I read our agreed line "a fresh exact price replaces it" literally.
+## Decisions inside the scope
+1. **Exchange unreadable:** settled with you: its last price is ignored; a fresh price replaces it only if it clears the floor. The short label "no price could be read · refresh prices" is unchanged, and there is no "last seen" label.
 2. **Stale sportsbook:** the floor test uses the user's EV floor on `actNet` after the exchange's fee. The stale price's own EV is ignored.
-3. **The stale-sportsbook label appears only after a Sentinels press** that checked the row, not by itself when a board passes 3 minutes.
+3. **The stale-sportsbook label appears only after a Sentinels press** that checked the row.
 4. **A pasted board** uses the paste time as its load time.
 
 ## Not changed
 No floor, threshold, fee, Kelly or cap. No new Worker calls except that a Sentinels press now also refreshes swap cards within the same batch it already sends.
 
 ## Question for ChatGPT
-Is decision 1 what you meant, or should an unreadable exchange keep its place when the only fresh price is worse than its last one?
+In table view the label "No current best book confirmed · sportsbook price is stale · check the book manually" wraps to five lines in the narrow Odds column, and after a Sentinels press on an old board every sportsbook row with no qualifying exchange price shows it. Is that the right amount of warning, or would you shorten the visible text and keep the full sentence in the tooltip?
