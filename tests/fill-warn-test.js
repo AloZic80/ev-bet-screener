@@ -28,9 +28,9 @@ let FILLS={status:500, body:'Internal error'};
   check('a book you bet (Novig) failing on its own is named: "Not read from Novig: 401 token expired"', !W.hidden && /Not read from Novig: 401 token expired/.test(W.txt), W.txt);
   // v4.49 (owner: "it is great, but NO WAY to remove it. Perhaps circle the Bet log"): × hides it until the problem changes; the Bet log tab keeps a red ring
   FILLS={status:200, body:{fills:[], settlements:[], errors:{novig:'429 error code: 1015 '}}}; await p.evaluate(async()=>{ await syncFills(true); }); W=await w();
-  const tab=()=>p.evaluate(()=>{ const t=document.querySelector('.tab[data-view="v-log"]'); return {ring:t.classList.contains('tab-alert'), title:t.title||'', shadow:getComputedStyle(t).boxShadow}; });
+  const tab=()=>p.evaluate(()=>{ const t=document.querySelector('.tab[data-view="v-log"]'), n=t.querySelector('.tab-n'), cs=getComputedStyle(n); return {ring:t.classList.contains('tab-alert'), title:t.title||'', shadow:cs.boxShadow, tabShadow:getComputedStyle(t).boxShadow, shown:cs.display!=='none', mark:getComputedStyle(n,'::before').content, txt:n.textContent}; });   // v4.50: the circle is on the number, not on the whole tab
   let T=await tab();
-  check('v4.49: no stray space before the period ("…code: 1015."), and the Bet log tab is ringed red with the message on hover', /Not read from Novig: 429 error code: 1015\. A bet/.test(W.txt) && T.ring && /Not read from Novig/.test(T.title) && /inset/.test(T.shadow), {txt:W.txt.slice(0,80), T});
+  check('v4.49: no stray space before the period ("…code: 1015."); v4.50 (owner: "just a circle on the number, not the word Bet log"): the red circle is on the Bet log number only (a "!" when there is no number), the tab itself has none, the message is on hover', /Not read from Novig: 429 error code: 1015\. A bet/.test(W.txt) && T.ring && /Not read from Novig/.test(T.title) && /rgb/.test(T.shadow) && !/inset/.test(T.shadow) && T.tabShadow==='none' && T.shown && T.txt==='' && /!/.test(T.mark), {txt:W.txt.slice(0,80), T});
   await p.evaluate(()=>document.getElementById('fillWarnX').click()); W=await w(); T=await tab();
   check('v4.49: × hides the bar; the ring on the Bet log tab stays', W.hidden && T.ring, {W, T:T.ring});
   await p.evaluate(async()=>{ await syncFills(true); renderFillWarn(); }); W=await w();
