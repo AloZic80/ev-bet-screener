@@ -1,6 +1,6 @@
 # Actionable EV: one number for every decision
 
-Status: active · Introduced: v4.41 (OK up to), v4.43 (floor), **v4.53 (stake, order, score, shown EV)**, **v4.54 (Make caps, best book, no-market score)** · Approved by: Alonzo (v4.41 "Fix and build", v4.43 "build"; v4.53: he pasted ChatGPT's "Yes—build it" in answer to "say build") · Last verified: 2026-11-10 (v4.53)
+Status: active · Introduced: v4.41 (OK up to), v4.43 (floor), **v4.53 (stake, order, score, shown EV)**, **v4.54 (Make caps, best book, no-market score)**, **v4.55 (Parlay picks, model-only caps)** · Approved by: Alonzo (v4.41 "Fix and build", v4.43 "build"; v4.53: he pasted ChatGPT's "Yes—build it" in answer to "say build") · Last verified: 2026-11-10 (v4.53)
 
 ## Rule
 `actProb = min(model, market + mWeight × (model − market))`; the model alone when there is no market price (`okProb`, `okProbR`). `mWeight` is 0.35 by default.
@@ -22,11 +22,14 @@ Stake = `kellyFor(cfg, actNet, price)` = bankroll × Kelly × (actNet × haircut
 | EV shown (card pill, table +EV, Live Games, Copy board, Sort › +EV) | `actNet`; the model's `net` is labelled Model EV | `placeCardHtml`, `renderCore`, `colVal` |
 | Sweet spot, ◎ ring, 🎟 leg (70% on `actProb` since v4.53's review), extras | `actProb` / `actNet` | `isSweet`, `ringOf`, `ringAssign`, `extrasAssign` |
 | + Add a bet with no market price | held to the smallest bet, like the board (v4.53) | `abStake` (`noMkt`) |
+| A Parlay pick's chance (filters, `pkDist`, EV, Kelly, ranking) | `actProb` (v4.55, saved with `pk.policy` = `actProb-v2`) | `pkProbOf`, `pkLegs`, `pkLegsPriced` |
+| Model-only bets (no market price) | smallest bet, at most 5 a game day and 1 a game, best `actNet` first (v4.55, `snap.modelOnly`) | `MODEL_ONLY`, `auditCore` |
+| Outlier Make | must also beat the market's breakeven (kept, v4.55 test) | Parole ladder |
+| Switching book | only for 0.3 points of `actNet` or more (kept, v4.55 test) | `shopExchanges`, `swapHunt` |
 
 New bets save `snap.act`, `snap.actNet`, `snap.policy` (`POLICY.math` = `act-v2`) and `snap.sent`. Old snapshots are never rewritten.
 
 ## Deliberately different (open questions, not bugs)
-- **The Parlays tab** prices each pick on the blend (`blendProb`), documented in section 6 of the EV doc. Moving it to `actProb` would change parlay stakes: not proposed.
 - **The outlier test** (gap and gross EV) stays on the model's numbers: it asks whether the model is far from the market, not what to bet.
 - **The score's cut-offs** (75 / 50) were not moved. Review them only on bets taken under one policy (300+ settled bets, 150+ games, clustered by game); never mix `v1` / `v2` / `v3` band records.
 - `actNet` already contains the market, and the score's Market part scores the market again: the two parts are correlated. A future score review, not this one.

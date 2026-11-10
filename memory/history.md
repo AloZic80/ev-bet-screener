@@ -6,6 +6,12 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.55 (owner pasted ChatGPT's reply to v4.54; `pkProbOf`, `MODEL_ONLY`, `r.moN`, `snap.modelOnly`, `pk.policy`): a Parlay pick's chance is La Contadora's
+  (`okProb`), not the blend: lower only when the model is below the market (56% vs 60% → 56%, was 58.6%); it feeds the filters, `pkDist`, EV, Kelly and ranking;
+  a logged entry saves `pk.policy:'actProb-v2'`; old entries keep their chances. Model-only bets (`r.noMkt`): at most 5 a game day (counting logged
+  `snap.modelOnly`) and 1 a game, best `actNet` first, then fresher, then shorter odds; decision "MODEL ONLY $1.00 · no market confirmation · n of 5 today";
+  skips say "model-only limit reached" / "model only: one a game". Kept on ChatGPT's advice, now tested: an outlier Make must beat the market; a book switch
+  needs 0.3 points of `actNet`. Not built: the freshness / liquidity tie-breakers and the "stale quote overrides 0.3" rule. `tests/model-only-parlay-test.js`.
 - v4.54 (owner: "Build v4.54 as well!!", ChatGPT's scope): Make price caps on `actProb` with the maker fee (`abMakeLadder`, Parole; "NO MAKE · no price clears your floor with
   the market"); a Make must clear the floor on `actNet` too; the Sentinels pick a book on `actNet` after its fee (`shopExchanges`, `swapHunt` `netAt`); no market price:
   Edge × 0.5 (max 25 + 8 + 20 = 53, GOOD, never STRONG; `POLICY.sent` = `v3-actNet-nomkt`) and `mathKey` − 0.5, so model-only bets come after market-checked ones.

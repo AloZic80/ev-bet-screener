@@ -129,6 +129,7 @@ Then the limits apply:
   - **Phone and Mac** build one sample; the earliest complete pre-game copy of each record wins, taken whole.
 - With no market price there is no market check: the model alone decides, and the stake is capped at the smallest bet.
 - **Three levels:** clears the EV floor → passes every screen (odds, books, already bet, caps) → actionable at your limits (a stake of at least your smallest bet, room under the game cap and the daily max). Only all three make Place these.
+- **Model-only bets** (no market price, v4.55): the smallest bet, at most **5 a game day** and **1 a game**, the best by La Contadora's EV first. They read "MODEL ONLY · no market confirmation · n of 5 today".
 - Not started, and at a book in **Books you bet**. A bet at a book you can't use moves to your best book, or stays off.
 - **Not already bet.** This is checked against your Bet log, your book fills (Novig, Kalshi, Polymarket US) and your open orders. Different wordings count as the same bet: "Lekkerimäki" = "Lekkerimaki", "Shots On Goal" = "Shots", "2+" = Over 1.5.
 
@@ -178,7 +179,7 @@ All of these are **estimates**. A bet that passes has an *estimated* edge, not a
 
 ## 6. Parlays and pick'em (PrizePicks, Pick6, Underdog…)
 
-- Each pick's chance is its **blend**.
+- Each pick's chance is **La Contadora's chance** (v4.55): the blend, or the model when the model is lower. Before v4.55 it was always the blend. Entries already logged keep the chances they were saved with.
 - An entry's value adds up every way it can finish: the chance of exactly k hits out of n (`pkDist`, a Poisson-binomial distribution) times what k hits pays.
 
 **Example:** PrizePicks Flex, 4 picks at 61%, 60%, 59% and 58.5%, $5 stake:

@@ -32,7 +32,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.54</title>
+<title>0xBeta Screener v4.55</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1420,7 +1420,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.54</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.55</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2172,7 +2172,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.54';
+const SCREENER_VERSION='v4.55';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2501,6 +2501,7 @@ const RING={pLo:0.50, pHi:0.75, evLo:0.04, evHi:0.12, room:0.025, freshMs:10*60e
    shown on the board. The model's own EV (r.net) is kept and labelled Model EV: a diagnostic, and still the first gate (under the floor = a plain skip).
    Before: the stake, the Math order and the game-line choice used the blend or the model, which is higher than okProb whenever the model is BELOW the
    market. POLICY is saved in each new bet's snapshot; old snapshots are never rewritten. */
+const MODEL_ONLY={day:5, game:1};   /* v4.55: bets with no market price, a game day and a game */
 const POLICY={math:'act-v2', sent:'v3-actNet-nomkt'};   /* v4.54: sent v3 = v2-actNet with the Edge halved when there is no market price. Never compare band records across policies. */
 let betMode='safe';
 (function(){ try{ const m=JSON.parse(localStorage.getItem('mbev.mode')||'null');
@@ -2623,7 +2624,7 @@ function auditCore(rows,cfg){
   rows.forEach(r=>{ gameCount[r.game]=(gameCount[r.game]||0)+1; });
   const slateDay=document.getElementById('slate').value;
   rows.forEach((r,idx)=>{
-    r.idx=idx; r.flags=[]; delete r.watch; delete r.actNet; delete r.longShot; delete r.dayTrimmed; delete r.moved; delete r.removed; delete r.riskCand; delete r.risk; delete r.glConflict; delete r.glBest; delete r.prior; delete r.corr; delete r.contracts; delete r.gameInPlay; delete r.gameWeighted; delete r.samePlayer; delete r.capTrimmed; delete r.samePlayerX; delete r.samePlayerBet; delete r.tier; delete r.xc; delete r.xFit; delete r.xCap; delete r.xStake; delete r.xContracts; delete r.xWhy; delete r.ring; delete r.leg;   /* v4.50 */   /* v4.51: xFit */
+    r.idx=idx; r.flags=[]; delete r.watch; delete r.actNet; delete r.longShot; delete r.dayTrimmed; delete r.moved; delete r.removed; delete r.riskCand; delete r.risk; delete r.glConflict; delete r.glBest; delete r.prior; delete r.corr; delete r.contracts; delete r.gameInPlay; delete r.gameWeighted; delete r.samePlayer; delete r.capTrimmed; delete r.samePlayerX; delete r.samePlayerBet; delete r.tier; delete r.xc; delete r.xFit; delete r.xCap; delete r.moN; delete r.moUsed; delete r.xStake; delete r.xContracts; delete r.xWhy; delete r.ring; delete r.leg;   /* v4.50 */   /* v4.51: xFit */
     if(r.offeredProb===null||r.fairProb===null){
       r.flags.push(['out','odds unreadable']); r.gross=null; r.net=null; r.pass=false; r.stake=0; return;
     }
@@ -2955,6 +2956,19 @@ function auditCore(rows,cfg){
           r.stake=0; delete r.contracts;
           r.flags.push(['warn','outlier limit reached ('+outN+' a day'+(usedOut?', '+usedOut+' already logged':'')+') — skip']); });
   }
+  /* v4.55 (owner, passing on ChatGPT: "cap them at five per game day ... one per game ... a distinct modelOnly policy tag"): a bet with no market price to
+     check it against (r.noMkt) is held to the smallest bet (v3.12), scores at most GOOD and comes after the market-checked bets (v4.54). Now also: at most
+     MODEL_ONLY.day a game day, counting the ones already logged (snap.modelOnly), and MODEL_ONLY.game a game; the best by her EV, then the fresher price,
+     then the shorter odds, keep their stake. Several model-only props in one game are one missing market repeated, not separate evidence. */
+  { const used={}, inGame={}, gid=r=>(r.gameInfo&&r.gameInfo.eventId)?'e'+r.gameInfo.eventId:(r.game?gameKey(r.game):'')+'|'+String((r.gameInfo&&r.gameInfo.startISO)||'').slice(0,13);
+    logged.forEach(b=>{ if(!b || b.sold || !(b.snap && b.snap.modelOnly)) return; const d=gameDayOf(b); used[d]=(used[d]||0)+1; });
+    rows.forEach(r=>{ if(r.noMkt) r.moUsed=used[rowDay(r,slateDay)]||0; });
+    rows.filter(r=>r.noMkt && r.stake>0 && !r.prior && !r.waitOrder)
+        .sort((a,b)=>((b.actNet||0)-(a.actNet||0)) || ((rowSeenAt(b)||0)-(rowSeenAt(a)||0)) || ((b.offeredProb||0)-(a.offeredProb||0)))
+        .forEach(r=>{ const d=rowDay(r,slateDay), g=gid(r), n=used[d]||0;
+          if((inGame[g]||0)>=MODEL_ONLY.game){ r.stake=0; delete r.contracts; r.flags.push(['warn','model only: one a game, and a better one is in this game']); return; }
+          if(n>=MODEL_ONLY.day){ r.stake=0; delete r.contracts; r.flags.push(['warn','model-only limit reached ('+MODEL_ONLY.day+' a day, no market confirmation) — skip']); return; }
+          used[d]=n+1; inGame[g]=(inGame[g]||0)+1; r.moN=n+1; }); }
   applyDayLimits(rows,cfg,slateDay);
   try{ extrasAssign(rows,cfg,slateDay); }catch(e){ console.error(e); }   // v4.50: 🍀 Just missed and 🔮 Hail Marys, after the best bets are final
   try{ rows.forEach(pxNote); }catch(e){}   // v4.21: price history for the Sentinels cards' chart
@@ -4497,6 +4511,7 @@ function decisionHtml(r,cfg){
     if(r.glBest) return dl('dec-bet','BET '+$(r.stake), ['best bet'].concat(r.glBest.map(x=>esc(x)+' skipped')));
     if(r.risk) return d('dec-risk','⚠ RISK '+$(r.stake),'outlier, below market — small on purpose');
     if(r.outlier) return d('dec-lim','OUTLIER '+$(r.stake),'capped at the minimum');
+    if(r.noMkt) return dl('dec-lim','MODEL ONLY '+$(r.stake), ['no market confirmation', (r.moN||1)+' of '+MODEL_ONLY.day+' today']);   /* v4.55 */
     if(r.capTrimmed) return d('dec-lim','LIMITED '+$(r.stake),'game cap');
     if(r.dayTrimmed) return d('dec-lim','LIMITED '+$(r.stake),'daily max');
     if(r.longShot) return d('dec-lim','LONG SHOT '+$(r.stake),'🔮 small on purpose');
@@ -4507,6 +4522,8 @@ function decisionHtml(r,cfg){
   if(has(/long shot — only in/)) return d('dec-skip','SKIP','long shot · 🔮 only');
   if(has(/long-shot limit|long shot under|long shot at/)) return d('dec-skip','SKIP','long-shot limit');
   if(has(/outlier limit reached/)) return d('dec-skip','SKIP','outlier limit reached');
+  if(has(/model-only limit reached/)) return d('dec-skip','SKIP','model-only limit ('+MODEL_ONLY.day+' a day)');
+  if(has(/^model only: one a game/)) return d('dec-skip','SKIP','model only: one a game');
   if(has(/risk-bet limit/)) return d('dec-skip','SKIP','risk-bet limit reached');
   if(has(/outlier and .* below market — skip/)) return d('dec-skip','SKIP','outlier, too far below market');
   if(has(/one per player/)) return d('dec-skip','SKIP','already on this player');
@@ -5314,7 +5331,7 @@ function addToLog(r){
       logitGap:r.logitGap!=null?+r.logitGap.toFixed(4):null, stars:r.stars!=null?r.stars:null, evModel:r.evModel||null,
       consensus:{bet_side:r.consOdds!=null?r.consOdds:null, other_side:r.consOtherOdds!=null?r.consOtherOdds:null},
       fee:r.fee!=null?+r.fee.toFixed(5):null, fees:Object.assign({},cfgRead().fees),
-      outlier:!!r.outlier, risk:!!r.risk, sizedAt:(()=>{ const q=r.noAct?null:okProb(r.actFair!==undefined?r.actFair:r.fairProb, r.actMkt!==undefined?r.actMkt:r.mktProb); return q!=null?+q.toFixed(4):null; })(),
+      outlier:!!r.outlier, risk:!!r.risk, modelOnly:r.noMkt?true:undefined, sizedAt:(()=>{ const q=r.noAct?null:okProb(r.actFair!==undefined?r.actFair:r.fairProb, r.actMkt!==undefined?r.actMkt:r.mktProb); return q!=null?+q.toFixed(4):null; })(),
       act:(()=>{ const q=r.noAct?null:okProb(r.actFair!==undefined?r.actFair:r.fairProb, r.actMkt!==undefined?r.actMkt:r.mktProb); return q!=null?+q.toFixed(4):null; })(), actNet:(()=>{ const a=r.noAct?null:actNetOf(r.actFair!==undefined?r.actFair:r.fairProb, r.actMkt!==undefined?r.actMkt:r.mktProb, r.offeredProb, r.fee); return a!=null?+a.toFixed(4):null; })(), policy:POLICY.math,   /* v4.53: La Contadora's chance and EV when you took it, and the math policy; older bets do not have these and are left as they are */
       sent:(()=>{ try{ if(!r.sentOk||r.tier||r.xc||r.fairProb==null) return undefined; const z=sentScore(r); return {t:z.total, t1:z.total1, e:z.e, m:z.m, f:z.f, s:z.s, pol:POLICY.sent}; }catch(e){ return undefined; } })(),   /* v4.53: the Sentinel score when you took it (t1 = what it was with the Edge on the model's EV) */
       ring: r.ring&&!(r.tier||r.xc) ? {n:r.ring.n, of:r.ring.of, miss:r.ring.miss.slice(0,3)} : undefined,   // v4.50: the ◎ Perfecta checks when you took it
@@ -9243,8 +9260,8 @@ document.getElementById('plAdd').addEventListener('click',()=>{
 });
 /* ============ v3.54: Parlays — PrizePicks and DraftKings Pick6 entries built from the board ============
    Pick'em pays a fixed multiple, so the price a sportsbook offers doesn't matter: only the chance each pick hits.
-   A leg's chance is the board's own sizing estimate (blendProb: the market price pulled toward the model by the model
-   weight). An entry's value adds every way it can finish: P(exactly k of n hit) is the Poisson-binomial distribution of
+   A leg's chance is La Contadora's chance (v4.55, pkProbOf: the market price pulled toward the model by the model
+   weight, or the model when it is lower; before v4.55 always the blend). An entry's value adds every way it can finish: P(exactly k of n hit) is the Poisson-binomial distribution of
    the legs' chances (legs treated as independent, which is why one pick per game is the default), times what k hits pays.
    Payouts are editable because they change, and Pick6's may differ from PrizePicks'. */
 const PK_DEFAULT={
@@ -9318,10 +9335,15 @@ function pkLoggedLegKeys(){ const k=new Set(), from=ctDay(Date.now()-2*86400e3);
 function pkNotLogged(legs){ const k=pkLoggedLegKeys();
   const out=legs.filter(l=>!k.has(pkLegKey(l.name,l.line,l.stat,l.side)) && !(l.r && (()=>{ try{ return pkParlaysWith(l.r).length>0; }catch(e){ return false; } })()));   // v4.19: + parlays you typed in
   window._pkInLogged=legs.length-out.length; return out; }
+/* v4.55 (owner, 11/10, passing on ChatGPT: "if actProb is La Contadora's trusted probability for singles, it should also be the probability used to estimate
+   a parlay's outcome distribution and Kelly stake"): a pick's chance on the Parlays tab is okProb = min(model, market + mWeight × (model − market)), the
+   same number as the board (it was the blend, higher when the model is below the market). It feeds the pick filters, pkDist, the EV, the Kelly stake and
+   the ranking; a logged entry saves it with policy 'actProb-v2'. Entries already logged keep the chances they were saved with. */
+function pkProbOf(r){ if(!r) return null; const q=r.actProb!=null?r.actProb:okProb(r.fairProb, r.mktProb); return q!=null?q:(r.blendProb!=null?r.blendProb:r.fairProb); }
 function pkLegsPriced(rows,app){   // v3.59: a combo app: legs it offers on the board, at its price, its fee off each leg
   const m=new Map(), fees=cfgRead().fees;
   (rows||[]).forEach(r=>{ if(!(r.kind==='prop' || GL_KINDS.test(r.kind||''))) return; if(!bookIsMine(r.book, app)) return;
-    const p=r.blendProb!=null?r.blendProb:r.fairProb, q=r.offeredProb; if(!(p>0&&p<1) || !(q>0&&q<1)) return;
+    const p=pkProbOf(r), q=r.offeredProb; if(!(p>0&&p<1) || !(q>0&&q<1)) return;   /* v4.55: La Contadora's chance (it was the blend) */
     const st=liveState(r); if(st==='started'||st==='closed') return;
     const mk=String(r.market||'').match(/^([+-]?[\d.]+)\s*(.*)$/), f=feeRate(r.book,q,fees)||0, mult=1/(q*(1+f));
     const leg={key:(r.name+'|'+r.market+'|'+(r.side||'')).toLowerCase(), r, p, name:r.name, line:mk?mk[1]:'', stat:mk?mk[2]:(r.market||''), side:r.side||'', book:r.book||'',
@@ -9333,7 +9355,7 @@ function pkLegsPriced(rows,app){   // v3.59: a combo app: legs it offers on the 
 function pkLegs(rows){ const app=pkState.app, m=new Map(), dk=PK_DFS.key[app];
   if(pkPriced(app)) return pkNotLogged(pkLegsPriced(rows,app));   // v3.59   // v4.06: not the picks you already logged
   const ownBook=b=>(app==='PrizePicks' && /prizepicks/i.test(b||'')) || (app==='Underdog' && /underdog/i.test(b||'') && !isPredBook(b));   // v3.59: Underdog's own rows too   // PrizePicks rows from BettingPros are its own lines; Pick6 has none there
-  (rows||[]).forEach(r=>{ if(r.kind!=='prop') return; const p=r.blendProb!=null?r.blendProb:r.fairProb; if(!(p>0&&p<1)) return;
+  (rows||[]).forEach(r=>{ if(r.kind!=='prop') return; const p=pkProbOf(r); if(!(p>0&&p<1)) return;   /* v4.55: La Contadora's chance (it was the blend) */
     const st=liveState(r); if(st==='started'||st==='closed') return;
     const mk=String(r.market||'').match(/^([+-]?[\d.]+)\s*(.*)$/); if(!mk) return;
     const out=(r.flags||[]).find(f=>f[0]==='out');
@@ -9611,7 +9633,7 @@ function pkLog(id,btn){ const c=(window._pkCards||{})[id]; if(!c) return; const 
   const first=L.map(l=>l.start).filter(Boolean).sort()[0];
   logged.push(parlayRecord({name:pkAppLabel(app)+(pkPriced(app)?' combo':'')+' · '+n+' picks', book:app, picks:n, stake:s, all:s*arr[0], m1:arr[1]?s*arr[1]:0, m2:arr[2]?s*arr[2]:0, day:ctDay(first?Date.parse(first):Date.now()),
     legs:L.map(l=>l.name+' '+pkPick(l)).join('; '), onList:e.ev>0,
-    pk:{play:pkState.play, ev:+e.ev.toFixed(4), pAll:+e.pAll.toFixed(4), legs:L.map(l=>({name:l.name, market:l.line+' '+l.stat, side:l.side, p:+l.p.toFixed(4), book:l.book, game:l.game, start:l.start}))}}));
+    pk:{play:pkState.play, policy:'actProb-v2', ev:+e.ev.toFixed(4), pAll:+e.pAll.toFixed(4), legs:L.map(l=>({name:l.name, market:l.line+' '+l.stat, side:l.side, p:+l.p.toFixed(4), book:l.book, game:l.game, start:l.start}))}}));
   saveLog(); renderLog(); renderPerf();
   msg.textContent='Logged: '+n+' picks on '+(app==='DraftKings Pick 6'?'Pick6':app)+', $'+s.toFixed(2)+'. Grade it in the Bet log with how many hit.';
   // v3.65 (Alonzo: "I press Log this entry and nothing happens"): say so on the slip itself, and one press logs it once
