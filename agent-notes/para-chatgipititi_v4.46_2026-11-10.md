@@ -17,7 +17,7 @@ Ref: CC-2026-11-10-01 · Written by Claude Code, Tue 2026-11-10, America/Chicago
 The actual cause on his phone is not known yet: the app could not say until now.
 
 ## What was built (v4.46)
-- **A red line under the Today card,** on every tab, whenever the books are not being read:
+- **A red bar just above the bottom tabs,** on every tab (fixed, so it never moves the board), whenever the books are not being read:
   - the Worker's error, with a hint (401 = passphrase, 429 = over the daily limit);
   - or a book he bets failing on its own (e.g. "Not read from Novig: 401 token expired");
   - or background checks paused;
