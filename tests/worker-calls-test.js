@@ -59,9 +59,9 @@ async function open(b, url, opts){
     const c0=hits.length; await p.clock.fastForward(5*60000); await p.waitForTimeout(400); const c1=hits.length;
     check('a 5xx that says "1027 … limit exceeded" pauses background checks 10 minutes: no calls in the next 5 min, the chip says paused', paused.paused && /paused/.test(paused.chip) && /limit/.test(paused.why) && c1===c0, {paused, c0, c1});
     await p.evaluate(()=>syncFills(true)); await p.waitForTimeout(300);
-    check('a press of your own (Check my books now) still goes through while paused', hits.length===c0+1 && hits[hits.length-1].p==='/mine/fills', hits.length-c0);
+    check('a press of your own (Check my books now) still goes through while paused; v4.46: when it is answered, background checks go again', hits.length>=c0+1 && hits[c0].p==='/mine/fills' && !(await p.evaluate(()=>wkPaused())), hits.slice(c0).map(h=>h.p));
     await p.clock.fastForward(6*60000); await p.waitForTimeout(600);
-    check('after the 10 minutes, polling resumes on its own', !(await p.evaluate(()=>wkPaused())) && hits.length>c0+1, hits.length-c0);
+    check('polling goes on (v4.46: from the answered press; before, after the 10 minutes)', !(await p.evaluate(()=>wkPaused())) && hits.length>c0+1, hits.length-c0);
     // 429 too
     S.fail={status:429, contentType:'application/json', body:'{"error":"rate"}'}; await p.evaluate(()=>syncFills(true)); await p.waitForTimeout(300); S.fail=null;
     check('a 429 pauses too', await p.evaluate(()=>wkPaused() && /429/.test(wkState().why)), true);
