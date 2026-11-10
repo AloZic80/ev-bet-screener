@@ -5,7 +5,7 @@ const path=require('path'); const INDEX=path.join(__dirname,'..','index.html');
 const { chromium } = require('playwright'); const fs=require('fs');
 const html=fs.readFileSync(process.argv[2]||INDEX,'utf8');
 let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?'PASS ':'FAIL ')+n+'  → '+JSON.stringify(got)); };
-const now=Date.now(), iso=ms=>new Date(ms).toISOString();
+const now=Date.parse('2026-11-10T19:00:00Z'), iso=ms=>new Date(ms).toISOString();   // v4.53: a fixed clock (1 PM in Chicago). It used the real time, and its games are dated "an hour ago": between midnight and 1 AM in Chicago that is yesterday, the ribbon rightly drops the not-started one, and the test failed for that hour every night.
 const DAY=new Date(now).toLocaleDateString('en-CA',{timeZone:'America/Chicago'});
 const team=(ha,ab,sc)=>({homeAway:ha, score:String(sc), team:{abbreviation:ab, displayName:ab, logo:''}});
 const game=(id,a,h,sa,sh,state,det)=>({id, date:iso(now-3600e3), status:{type:{state, shortDetail:det}}, competitions:[{competitors:[team('away',a,sa),team('home',h,sh)], situation:{}}]});
@@ -13,7 +13,7 @@ const SB={'basketball/nba':{events:[game('401','LAL','BOS',70,78,'in','3rd 5:12'
 const B=(id,o)=>Object.assign({id,key:id,name:'BOS',sport:'NBA',kind:'moneyline',market:'Moneyline',side:'',team:'BOS',game:'LAL @ BOS',matchup:'LAL @ BOS',book:'DraftKings',odds:'-110',offeredRaw:'-110',stake:3,date:DAY,dateSet:true,start:iso(now-3600e3),gameInfo:{state:'in',startISO:iso(now-3600e3),teams:[]}},o);
 const LOG=[B('a',{stake:3}), B('b',{stake:2.5,book:'Kalshi'}), B('f',{stake:5,free:true,book:'Bovada'}), B('s',{stake:4,result:'win',gradedBy:'manual',resultSrc:'you',manual:true})];
 (async()=>{
-  const b=await chromium.launch(); const ctx=await b.newContext({timezoneId:'America/Chicago', viewport:{width:1280,height:900}});
+  const b=await chromium.launch(); const ctx=await b.newContext({timezoneId:'America/Chicago', viewport:{width:1280,height:900}}); await ctx.clock.install({time:new Date(now)});
   await ctx.addInitScript(([L])=>{ try{ if(sessionStorage.getItem('seeded')) return; sessionStorage.setItem('seeded','1'); localStorage.clear(); localStorage.setItem('mbev.log',JSON.stringify(L)); localStorage.setItem('mbev.ssSport','NBA'); }catch(e){} }, [LOG]);
   const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
   await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html});

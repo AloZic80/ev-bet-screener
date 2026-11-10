@@ -6,6 +6,23 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.54 (owner: "Build v4.54 as well!!", ChatGPT's scope): Make price caps on `actProb` with the maker fee (`abMakeLadder`, Parole; "NO MAKE · no price clears your floor with
+  the market"); a Make must clear the floor on `actNet` too; the Sentinels pick a book on `actNet` after its fee (`shopExchanges`, `swapHunt` `netAt`); no market price:
+  Edge × 0.5 (max 25 + 8 + 20 = 53, GOOD, never STRONG; `POLICY.sent` = `v3-actNet-nomkt`) and `mathKey` − 0.5, so model-only bets come after market-checked ones.
+  Review fixes folded into v4.53 before it shipped: Kalshi rounding re-checked after a daily-max trim (`take()`), in `abStake` (via `kalshiFit`) and in `recStake`; + Add a
+  bet holds a no-market bet to the minimum; the other side's hint and the editor's live line on her chance; Settings › Net EV Min/Max filter on the +EV shown; the 🎟
+  leg's 70% on `actProb`; snapshots worked out from what is saved (`actFair`, `actMkt`, `noAct`; the score only for a bet taken from a card, `sentOk`); the Bet log's EV
+  cell shows `snap.actNet` with "model x%" under it; "Mean net EV" renamed "Mean model EV". `tests/ribbon-risk-test.js` runs on a fixed clock (it failed from midnight
+  to 1 AM Chicago). `tests/invariants-test.js` (35 checks).
+- One number for every decision (v4.53, `POLICY`, `actNetOf`, `kellyFor`, `sentScore` `e1`/`total1`, `snap.act`/`actNet`/`policy`/`sent`, `button.kill.remove`; owner, 11/10,
+  pasting ChatGPT's code review: "Yes—build it"): La Contadora's EV (`r.actNet`) now also drives the stake (`auditCore`, the editor's `recStake`, `abStake`), the
+  Math order and daily fill (`mathKey`), which bet of a game keeps its stake, the score's Edge and the EV shown (card pill, table +EV with "model x%" under it,
+  Live Games, Copy board, Sort › +EV). Before, the stake and the order used the blend: the same when the model is above the market, higher when it is below
+  (56% vs 60% at 52%: $8.59 → $5.21). After Kalshi's fee is rounded up per order, `actNet` is worked out again and re-checked (it was the model's EV only: a
+  row at +1.8% before and +1.3% after kept a $1.08 stake). + Add a bet: a price only the model likes is a SKIP ("with the market it is +0.2%, under your 1.5%
+  floor"; it said BET while "Pay up to" was below the price). The editor recommends $0 under the floor. Scores are lower for most bets (model +5.8%, hers +2.6%:
+  87 → 61); cut-offs unchanged. Bet log: the remove handler is bound to `button.kill.remove` (the old `kill:not(.sell):not(.edit)` also caught vs Pinnacle,
+  void and + ticket). Makes keep their own price cap. `tests/invariants-test.js` (29 checks, fails on v4.52). Rule: `memory/decisions/actionable-ev.md`.
 - Much of the HTML is built inside single-quoted JavaScript strings. An apostrophe in that text ("it's") ends the string and
   breaks the whole app. Write "it is", or `\'`.
 - Saving the bet log (v3.82, `saveLog` → `lsSafeSet`): if the browser storage is full, the app's caches (`LS_CACHES`: rosters, injuries,

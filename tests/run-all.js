@@ -52,6 +52,7 @@ const runs = [
   ['v4.47-v4.48: one bet per player in a game (from your books too; the best one before either is placed), PLAYER EXPOSURE, the board mode said apart', 'same-player-test.js', []],
   ['v4.50: modes as the owner means them (best bets / 🍀 Just missed / 🔮 Hail Marys), ◎ PERFECTA and BET NOW, 🎟 parlay legs, sweet spot on La Contadora’s EV, each kind on its own record', 'modes-perfecta-test.js', []],
   ['⚡ Signal (the market moved, the book has not) on the Sentinels; Perfecta vs the rest as a clustered difference; all Just-missed shadow', 'signal-record-test.js', []],
+  ['One number for every decision: stake, order, score and shown EV on La Contadora’s EV; Kalshi re-check; snapshots; Bet log remove', 'invariants-test.js', []],
   ['v4.34: Augi\'s Board: the Show menu, the cover legend, your own note on each line', 'board-notes-test.js', []],
   ['v4.33: colour schemes (Green, Blue, Red, Purple, Graphite) in light and dark, all AA; remembered', 'palette-test.js', []],
   ['v4.31: Augi\'s 5-point cover bands (chips on the board and cards) and the Bet result study in Performance', 'cover-study-test.js', []],
