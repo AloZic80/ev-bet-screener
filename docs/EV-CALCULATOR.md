@@ -1,6 +1,6 @@
 # La Contadora: how the screener's EV calculator works
 
-This is the math behind every bet the 0xBeta Screener (props.0xbeta.dev) shows. Written 2026-11-09 for **v4.43**, updated for v4.45 and v4.50; revised after an outside math check.
+This is the math behind every bet the 0xBeta Screener (props.0xbeta.dev) shows. Written 2026-11-09 for **v4.43**, updated for v4.45, v4.50, **v4.53** (one number for every decision) and **v4.54**; revised after outside math checks.
 
 The worked example is a real card from Alonzo's board: **Jonathan Lekkerimaki (VAN) Over 1.5 Shots, Novig -108, PHI @ VAN, 8:30 PM CT.**
 
@@ -14,9 +14,23 @@ The worked example is a real card from Alonzo's board: **Jonathan Lekkerimaki (V
 |---|---|---|---|
 | **Model chance** | The model's estimate of how often the bet wins | BettingPros' projection. With no projection, a sharp price with the vig removed (Pinnacle). The card's "Fair" tile shows it and says which. | 55.46% (shown as -125 / 55.5%) |
 | **Market chance** | What the betting market says, vig removed | The consensus of several books | 52.6% |
-| **Sizing chance (the blend)** | The market pulled toward the model by your **model weight** (0.35) | `blend = market + 0.35 × (model − market)` | 52.6 + 0.35 × 2.86 = **53.60%** |
+| **The blend** | The market pulled toward the model by your **model weight** (0.35) | `blend = market + 0.35 × (model − market)` | 52.6 + 0.35 × 2.86 = **53.60%** |
+| **La Contadora's chance (the conservative one)** | The blend, or the model when the model is lower | `min(model, blend)` | min(55.46, 53.60) = **53.60%** |
 
-The model and the market are **not independent confirmations** of each other. They often share information. The blend exists because the model alone is too sure of itself. **The EV floor, your stake, the "math" order and OK up to all use the same conservative chance:** the blend, or the model when that is lower. When a bet has no market price, the model chance is used, and the stake is capped at your smallest bet.
+The model and the market are **not independent confirmations** of each other. They often share information. The blend exists because the model alone is too sure of itself.
+
+**One number decides (v4.53).** La Contadora's chance, and the EV it gives after fees, drive every decision:
+- the EV floor;
+- "OK up to";
+- your stake;
+- the "math" order and which bets get the daily max first;
+- which of two bets on one game or one player keeps its stake;
+- the highest price you may post as a Make, and which book the Sentinels pick (v4.54);
+- the Edge part of the Sentinel score, and the green EV on the board.
+
+The model's own EV is still shown, as **Model EV**. It is a diagnostic and the first gate: a bet whose Model EV is under the floor is a plain skip.
+
+Before v4.53 the stake and the order used the blend. That is the same number when the model is above the market, and a **higher** one when the model is below it. When a bet has no market price, the model chance is used, and the stake is capped at your smallest bet.
 
 The **price** is what the book charges, written as a chance:
 - Minus odds: `chance = −odds / (−odds + 100)`. For example, -108 → 108 / 208 = **51.92%**.
@@ -29,7 +43,9 @@ gross EV = chance ÷ price − 1
 net EV   = (gross EV − fee) ÷ (1 + fee)          fee as a fraction of the stake
 ```
 
-**Example on the model chance:** 55.46 ÷ 51.92 − 1 = **+6.8%**, the green number on the card. From the rounded "-125" (55.56%) you would get +7.0%; the card uses the unrounded 55.46%.
+**Example on the model chance:** 55.46 ÷ 51.92 − 1 = **+6.8%**. That is the **Model EV**. From the rounded "-125" (55.56%) you would get +7.0%; the app uses the unrounded 55.46%.
+
+**Example on La Contadora's chance:** 53.60 ÷ 51.92 − 1 = **+3.2%**. Since v4.53 this is the green number on the card and in the board's +EV column; the Model EV is the small line under it and a tile in "Why this play?".
 
 Novig charges no fee before the game, so here net EV = gross EV.
 
@@ -64,23 +80,34 @@ A price of 53.5% passes the model's screen (+3.7% EV), but at the blend it is wo
 ## 4. How much to bet: quarter Kelly on half the edge
 
 ```
-blendNet = ((blend ÷ price − 1) − fee) ÷ (1 + fee)
-b        = 1 ÷ price − 1                               (what $1 wins)
-stake    = bankroll × Kelly × (blendNet × haircut) ÷ b
+her EV = ((La Contadora's chance ÷ price − 1) − fee) ÷ (1 + fee)
+b      = 1 ÷ price − 1                                 (what $1 wins)
+stake  = bankroll × Kelly × (her EV × haircut) ÷ b
 ```
 
 | Setting | Default |
 |---|---|
 | Kelly fraction | 0.25 (quarter Kelly) |
 | Edge haircut | 0.5 (the edge is halved first) |
-| Edge used | blendNet when there is a market price; otherwise net EV × haircut |
+| Edge used | La Contadora's EV (v4.53). With no market price that is the model's EV. |
 
 **Example (bankroll $500, unrounded inputs):**
 - blend 53.60% ÷ price 51.92% − 1 = **+3.23%**.
 - b = 1 ÷ 0.5192 − 1 = **0.926**.
 - stake = 500 × 0.25 × (3.23% × 0.5) ÷ 0.926 ≈ **$2.18**. The card shows **$2.17**: it uses Novig's exact price and the model's exact chance, a few hundredths away from the rounded inputs here.
 
-From the rounded figures in the outside check (55.56% and 52.6% → blend 53.64%, blendNet +3.30%), the same formula gives $2.23. The gap comes from the inputs, not the formula.
+From the rounded figures in the outside check (55.56% and 52.6% → blend 53.64%, +3.30%), the same formula gives $2.23. The gap comes from the inputs, not the formula.
+
+**Second example: the model is below the market** (the case v4.53 changed). Model 56%, market 60%, price 52% at Novig, bankroll $500:
+- blend = 60 + 0.35 × (56 − 60) = **58.6%**.
+- La Contadora's chance = min(56, 58.6) = **56%**.
+- her EV = 56 ÷ 52 − 1 = **+7.69%** (the blend alone would say +12.69%).
+- b = 1 ÷ 0.52 − 1 = **0.923**.
+- stake = 500 × 0.25 × (7.69% × 0.5) ÷ 0.923 = **$5.21**. Before v4.53 it was sized on the blend: $8.59.
+
+**Kalshi's fee is rounded up to the cent on each order.** After the stake is turned into whole contracts, her EV is worked out again with the fee really charged, and it must still clear the floor (v4.53; before, only the Model EV was re-checked). Example: 2 contracts at 52¢ cost $1.04 and the fee is 4¢, which is 3.85% of the stake, not the 3.36% of the formula. A bet at +1.8% before the rounding is +1.3% after it: under the floor, so it is skipped.
+
+**Makes (v4.54).** The highest price you may post is the one where La Contadora's EV, after the maker fee, still clears your floor. Example at Novig (no maker fee): model 55%, market 52.5%, her chance 53.375%, floor 1.5% → highest Make 53.375 ÷ 1.015 = **52.59%** (before v4.54 it was the model's 55 ÷ 1.015 = 54.19%). A Make stays half the Take stake. When no price clears the floor it says "NO MAKE".
 
 Then the limits apply:
 - **Largest bet** caps the stake. **Smallest bet** is a "don't bet below", never "bet at least".
@@ -152,7 +179,7 @@ All of these are **estimates**. A bet that passes has an *estimated* edge, not a
 ## 6. Parlays and pick'em (PrizePicks, Pick6, Underdog…)
 
 - Each pick's chance is its **blend**.
-- An entry's value adds up every way it can finish: the chance of exactly k hits out of n (`pkDist`, a Poisson-binomial) times what k hits pays.
+- An entry's value adds up every way it can finish: the chance of exactly k hits out of n (`pkDist`, a Poisson-binomial distribution) times what k hits pays.
 
 **Example:** PrizePicks Flex, 4 picks at 61%, 60%, 59% and 58.5%, $5 stake:
 - All 4 hit: $25.00, **12.63%** of the time.
@@ -169,10 +196,12 @@ All of these are **estimates**. A bet that passes has an *estimated* edge, not a
 ## 7. The Sentinel score (0–100)
 
 ```
-Edge   = 50 × min(1, EV ÷ 6%)
+Edge   = 50 × min(1, La Contadora's EV ÷ 6%)
 Market = 20 at break-even, 30 at +4%, 0 at −3% (× 0.85 for consensus; 8 with no market)
 Fresh  = 20 under 3 minutes old, falling to 0 at 90 minutes
 ```
+
+**Since v4.53 the Edge is on La Contadora's EV** (score policy `v2-actNet`; v4.54 `v3-actNet-nomkt`: with no market price the Edge counts half, so such a bet scores at most 25 + 8 + 20 = 53, GOOD, and is listed after the market-checked bets in the Math order); before, it was on the Model EV. For a bet whose model is above the market her EV is the smaller number, so most scores are lower than before: a bet with Model EV +5.8% and her EV +2.6% went from 87 to 61. The cut-offs did not move, so that a change of input is not hidden by a change of scale. Each new bet saves its score both ways, so the bets whose word changed can be counted later. Score records from different policies are never mixed.
 
 The score is shown as a word: **STRONG** 75+, **GOOD** 50–74, **THIN** under 50. **THIN still clears the screener's estimated EV floor, but with weaker edge, price confirmation or freshness**, so it gets the smallest stakes. Estimated +EV is not guaranteed +EV.
 
@@ -198,13 +227,13 @@ The score is shown as a word: **STRONG** 75+, **GOOD** 50–74, **THIN** under 5
 |---|---|
 | Odds ↔ chance | `toProb`, `americanOf` |
 | Fees | `feeRate` |
-| Model EV, blend, stake | `auditCore` (`r.gross`, `r.net`, `r.blendProb`, `r.blendNet`, stake) |
+| Model EV, La Contadora's EV, stake | `auditCore` (`r.gross`, `r.net`, `r.actProb`, `r.actNet`, stake); `actNetOf`, `kellyFor` (v4.53: the board, the editor and + Add a bet all size through these) |
 | Conservative chance (v4.41) | `okProb`, `okProbR` |
 | Most you can pay | `maxPriceFor` (given `okProb`) |
 | Parlay math | `pkDist`, `pkEV`, `pkBreakEven`, `pkKelly`, `pkEntry` |
 | Sentinel score | `sentScore` |
 | Already bet | `coreKey`, `propSame`, `fillPriorFor` |
 
-`tests/math-audit-test.js` checks this arithmetic against brute force on every build: odds ↔ chance, EV after fees, the most you can pay, the Kalshi shares, the Kelly stake, profit, and the parlay math. `tests/blend-limit-test.js` checks that "OK up to" follows the blend. Every setting is in **Settings › Your rules at a glance**.
+`tests/math-audit-test.js` checks this arithmetic against brute force on every build: odds ↔ chance, EV after fees, the most you can pay, the Kalshi shares, the Kelly stake, profit, and the parlay math. `tests/blend-limit-test.js` checks that "OK up to" follows the blend. `tests/invariants-test.js` (v4.53) checks that a staked bet always clears the floor on La Contadora's EV, costs no more than "OK up to", is sized and ordered on that EV, and still clears the floor after Kalshi's fee rounding. Every setting is in **Settings › Your rules at a glance**.
 
-*Revised 2026-11-09 after an outside math review: rounding called out, the three chances named, the parlay independence warning added, the FanDuel fee spelled out, "OK up to" moved to the blend (app v4.41), the THIN and 1,000-bet wording made statistical, and the EV floor moved to the conservative chance with model-only passes as WATCH (app v4.43); Watch bets v2 (app v4.45); modes, the sweet spot on the conservative EV and ◎ PERFECTA (app v4.50).*
+*Revised 2026-11-09 after an outside math review: rounding called out, the three chances named, the parlay independence warning added, the FanDuel fee spelled out, "OK up to" moved to the blend (app v4.41), the THIN and 1,000-bet wording made statistical, and the EV floor moved to the conservative chance with model-only passes as WATCH (app v4.43); Watch bets v2 (app v4.45); modes, the sweet spot on the conservative EV and ◎ PERFECTA (app v4.50); the stake, the order, the score's Edge and the shown EV on the conservative EV, and Kalshi's re-check after fee rounding (app v4.53).*

@@ -66,7 +66,8 @@
 - **A saved bet:** `addToLog` copies a fixed list of fields; a new field on a row must be added there or it is dropped. Never rewrite a bet's `snap`.
   Never swallow a log save error. Never clear saved results to force a regrade: grade first, replace only when the new grade exists.
 - **Already bet:** a bet the owner placed must never stay bettable on the board. When in doubt, mark it.
-- **The math:** one conservative chance, `min(model, market + 0.35 × (model − market))`, drives the EV floor and "OK up to". A label (ring, leg, band,
+- **The math:** one conservative chance, `min(model, market + 0.35 × (model − market))`, and the EV it gives (`actNet`) drive every decision: the floor,
+  "OK up to", the stake, the order, the score's Edge, the EV shown (v4.53), the highest Make price and the best book (v4.54). The model's own EV is a diagnostic. A label (ring, leg, band,
   score, signal) or a mode never changes a decision or a stake. The six ◎ checks are frozen. Do not change a floor, a threshold, a fee, Kelly or a cap
   without the owner's go in his own words; do not tune anything on the bets used to judge it; do not call a small sample evidence.
 - **Books:** exchange integrations are read-only. Keys stay as Worker secrets. Never print the passphrase. The Worker is merged only on the owner's go.

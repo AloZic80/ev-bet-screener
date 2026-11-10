@@ -11,7 +11,8 @@ description: Use when changing EV, fees, the blend, the conservative chance, Kel
 3. A change that moves a stake, a floor, a threshold or a fee needs the owner's go in his own words. Quote it in the PR.
 
 ## Rules that must hold
-- `actProb = min(model, market + mWeight × (model − market))`; the floor, OK up to, sweet spot, ring, leg and extras use it.
+- `actProb = min(model, market + mWeight × (model − market))` and `actNet` (the EV at it): **every** actionable number uses them: the floor, OK up to, the stake, the Math order, the score's Edge, the EV shown, sweet spot, ring, leg, extras. Size only through `actNetOf` and `kellyFor`. The model's `net` is Model EV: a diagnostic.
+- After any change, `node tests/invariants-test.js` must pass: a staked bet clears the floor on `actNet`, costs no more than OK up to, and still does after Kalshi's fee rounding.
 - A label (ring, leg, band, signal, score) never changes a decision or a stake.
 - A mode never changes the math.
 - The six ◎ checks are frozen. Never retune a threshold on the bets used to judge it.
@@ -28,5 +29,7 @@ description: Use when changing EV, fees, the blend, the conservative chance, Kel
 ## Mistakes already made
 - "OK up to" on the model while the stake used the blend (v4.41).
 - The floor on the model while the stake used the blend: bets that passed with a $0 stake (v4.43).
+- The stake and the order on the blend while the floor used the min: higher stakes when the model was below the market (fixed v4.53).
+- Kalshi's floor re-check after fee rounding on the model's EV only (fixed v4.53).
 - A random generator that repeated after 10,000 draws (v4.52): use mulberry32.
 - Counting the same evidence twice in the score: a signal overlaps Market and Fresh, so it is capped at +5 / +2.
