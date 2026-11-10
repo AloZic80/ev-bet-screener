@@ -32,7 +32,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.55</title>
+<title>0xBeta Screener v4.56</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1076,6 +1076,11 @@ thead th,thead th.num{white-space:normal; overflow-wrap:normal; vertical-align:b
 .ord-tag.dupe{color:var(--ink)}
 .orders-top{margin-top:8px; padding:8px 12px; border:1px dashed var(--warn); border-radius:10px; font-size:13px; color:var(--ink)}
 .orders-top[hidden]{display:none} .ot-err{color:var(--warn); font-weight:600}
+/* v4.56: pick'em provisional and model-only marks, the settlement note, a stale best-book claim */
+.pk-best.prov{background:var(--warn-bg,#FFF4D6); color:var(--warn); border-color:var(--warn)}
+.pk-mo, .shop-stale{display:inline-block; font-size:11.5px; font-weight:700; color:var(--warn); border:1px solid var(--warn); border-radius:6px; padding:0 5px; margin-left:4px}
+.pk-mo-warn{font-size:12.5px; color:var(--warn); margin:4px 0}
+.pk-settle{font-size:11.5px; margin-top:4px}
 /* v4.52: the ⚡ signal pill, the record comparison */
 .sc-pill.sig{border-color:var(--rule); color:var(--soft)} .sc-pill.sig.good{color:var(--live); border-color:var(--live)}
 .tier-cmp{margin-top:10px; padding:8px 10px; border:1px solid var(--rule); border-radius:8px; font-size:13px; line-height:1.5}
@@ -1420,7 +1425,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.55</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.56</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2172,7 +2177,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.55';
+const SCREENER_VERSION='v4.56';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3121,6 +3126,7 @@ function ringAssign(rows,cfg){ rows.forEach(r=>{ if(!r) return;
     r.leg=!!((!r.kind || r.kind==='prop') && (r.side==='O'||r.side==='U') && r.actProb!=null && r.actProb>=RING.leg-1e-9 && r.actNet!=null && r.actNet>=cfg.eMin-1e-9 && !r.outlier && !r.noMkt && !r.prior && !r.waitOrder && r.offeredProb>0 && liveState(r)==='open'); }); }   /* v4.51 (owner, passing on ChatGPT: "the PARLAY LEG tag should require acceptable standalone conservative EV, not merely a 70% chance"): her own EV at its price must clear your floor (v4.52: the normal floor, not 0%; no outlier, and a market price to check it against) */
 // the ring follows the clock (a price passes 10 minutes) and what loads after the board (injuries, weather): redraw only when a ring changes
 function ringRecheck(){ try{ if(document.visibilityState!=='visible') return;
+    { const n=(lastRows||[]).filter(r=>shopStale(r)).length; if(n!==(window._shopStaleN||0)){ window._shopStaleN=n; refresh(); return; } }   /* v4.56: a best-book claim ran out: redraw (no prices are read) */
     if(betMode==='clair'){ const m=JSON.parse(localStorage.getItem('mbev.mode')||'null'); if(m && m.day && m.day!==new Date().toLocaleDateString('en-CA',{timeZone:'America/Chicago'})){ setMode('safe'); return; } }   /* v4.51: "back to Safe at midnight" also with the page left open (it only happened on a reload) */ const v=document.body.dataset.view; if(v && v!=='v-board') return;
     const cfg=cfgRead(); if((lastRows||[]).some(r=>r && r.ring && ringOf(r,cfg).n!==r.ring.n)) refresh(); }catch(e){} }
 setInterval(ringRecheck, 30000);
@@ -5332,6 +5338,7 @@ function addToLog(r){
       consensus:{bet_side:r.consOdds!=null?r.consOdds:null, other_side:r.consOtherOdds!=null?r.consOtherOdds:null},
       fee:r.fee!=null?+r.fee.toFixed(5):null, fees:Object.assign({},cfgRead().fees),
       outlier:!!r.outlier, risk:!!r.risk, modelOnly:r.noMkt?true:undefined, sizedAt:(()=>{ const q=r.noAct?null:okProb(r.actFair!==undefined?r.actFair:r.fairProb, r.actMkt!==undefined?r.actMkt:r.mktProb); return q!=null?+q.toFixed(4):null; })(),
+      shop:r.shop&&!r.shop.same?{from:r.shop.orig.book, at:r.shop.at, age:Date.now()-Date.parse(r.shop.at), stale:!!shopStale(r), bypass:r.shop.bypass||undefined}:undefined,   /* v4.56: where the best book came from, its age when you took it, and why the 0.3-point rule was skipped */
       act:(()=>{ const q=r.noAct?null:okProb(r.actFair!==undefined?r.actFair:r.fairProb, r.actMkt!==undefined?r.actMkt:r.mktProb); return q!=null?+q.toFixed(4):null; })(), actNet:(()=>{ const a=r.noAct?null:actNetOf(r.actFair!==undefined?r.actFair:r.fairProb, r.actMkt!==undefined?r.actMkt:r.mktProb, r.offeredProb, r.fee); return a!=null?+a.toFixed(4):null; })(), policy:POLICY.math,   /* v4.53: La Contadora's chance and EV when you took it, and the math policy; older bets do not have these and are left as they are */
       sent:(()=>{ try{ if(!r.sentOk||r.tier||r.xc||r.fairProb==null) return undefined; const z=sentScore(r); return {t:z.total, t1:z.total1, e:z.e, m:z.m, f:z.f, s:z.s, pol:POLICY.sent}; }catch(e){ return undefined; } })(),   /* v4.53: the Sentinel score when you took it (t1 = what it was with the Edge on the model's EV) */
       ring: r.ring&&!(r.tier||r.xc) ? {n:r.ring.n, of:r.ring.of, miss:r.ring.miss.slice(0,3)} : undefined,   // v4.50: the ◎ Perfecta checks when you took it
@@ -8523,6 +8530,10 @@ async function cnTest(){ const st=document.getElementById('cnStatus'), btn=docum
   }catch(e){ st.className='cn-status bad'; st.textContent='✗ Could not reach the Worker (offline, or the Worker is down).'; }
   btn.disabled=false; crPaint(); }
 function crAgo(t){ if(!(t>0)) return ''; const m=Math.round((Date.now()-t)/60e3); return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' d ago'; }
+/* v4.56 (agreed scope: measure first, do not count against limits yet): open orders at your exchanges, from data already read (no Worker call). */
+function orderDiag(){ const O=((myOrders&&myOrders.orders)||[]).filter(o=>o && o.action!=='sell'), seen=new Set(); let mo=0;
+  (lastRows||[]).forEach(r=>{ const o=r.waitOrder; if(o && O.indexOf(o)>=0 && !seen.has(o)){ seen.add(o); if(r.noMkt) mo++; } });
+  return {open:O.length, matched:seen.size, modelOnly:mo, unmatched:O.length-seen.size}; }
 function crPaint(){ const el=document.getElementById('crGrid'); if(!el) return; const J=k=>{ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } };
   const card=(name,big,sub,lines,lvl)=>'<div class="cr-card'+(lvl?' '+lvl:'')+'"><h3>'+esc(name)+'</h3><div class="cr-big">'+esc(big)+'</div><div class="meta">'+esc(sub)+'</div>'+(lines&&lines.length?'<ul class="cr-lines">'+lines.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+'</div>';
   const keyOf=id=>{ const x=(srcInfo||[]).find(s=>s.id===id); return x?(x.key?'key set':'no key yet'):'not checked'; };
@@ -8535,6 +8546,7 @@ function crPaint(){ const el=document.getElementById('crGrid'); if(!el) return; 
     card('OddsPapi', ou&&ou.limit?ou.left+' left':'?', ou&&ou.limit?'of '+ou.limit+' this month':'press Refresh', ou&&ou.error?[String(ou.error)]:[], ou&&ou.limit&&ou.left<25?'low':'')+
     card('Pinnacle live (pinnapi)', (LE_PINN_DAY-lp.n)+' left', 'of '+LE_PINN_DAY+' Scan presses today on this device', ['trial: 100 requests a day in all'], LE_PINN_DAY-lp.n<=5?'low':'')+
     card('SportsGameOdds', keyOf('sgo'), '2,500 games a month on the free plan', [], '')+
+    (()=>{ const d=orderDiag(); return card('Open orders (measured only)', d.open+' open', d.matched+' matched to a board row, of them '+d.modelOnly+' model-only · '+d.unmatched+' unmatched', ['not counted against the model-only limit yet', 'unmatched: classification unknown'], ''); })()+   /* v4.56 */
     card('Your Worker (Cloudflare)', w.n.toLocaleString()+' calls', 'today from this device · the free plan allows 100,000 a day (about 2 per call with the passphrase header)', (w.pause>Date.now()?['background checks paused until '+new Date(w.pause).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})]:[]).concat(top), w.n>=50000?'out':w.n>=30000?'low':'');
 }
 async function crRefresh(){ const m=document.getElementById('crMsg'); if(m) m.textContent='Refreshing…';
@@ -9365,7 +9377,7 @@ function pkLegs(rows){ const app=pkState.app, m=new Map(), dk=PK_DFS.key[app];
     const leg={key:(r.name+'|'+mk[2]).toLowerCase(), r, p, name:r.name, line:mk[1], stat:mk[2], side:r.side||'O', book:r.book||'', own:dfs==='own', dfs, appLine:got!=null?got:null,
       pref:(app==='DraftKings Pick 6' && /draftkings/i.test(r.book||'') && !isPredBook(r.book))?1:0,
       game, start:(r.gameInfo&&r.gameInfo.startISO)||null, gi:r.gameInfo||null, prior:!!r.prior, sport:r.sport,
-      why: r.pass ? 'also a single bet on the board' : (out ? (/DFS pick/.test(out[1]) ? bookLabel(r.book)+' pick’em line' : out[1]) : 'below the board’s screens'), mkt:r.mktProb, model:r.fairProb};
+      why: r.pass ? 'also a single bet on the board' : (out ? (/DFS pick/.test(out[1]) ? bookLabel(r.book)+' pick’em line' : out[1]) : 'below the board’s screens'), mkt:r.mktProb, model:r.fairProb, mo:!!r.noMkt};   /* v4.56: mo = model only (no market price): never in a recommended entry */
     const rank=l=>(l.dfs==='own'?4:l.dfs==='unknown'?2:1)+(l.pref?0.5:0);   // the app's own line first, then unchecked, then the rest; DraftKings breaks ties for Pick6
     const cur=m.get(leg.key); if(!cur || rank(leg)>rank(cur) || (rank(leg)===rank(cur) && leg.p>cur.p)) m.set(leg.key,leg); });
   return pkNotLogged([...m.values()].sort((a,b)=>b.p-a.p)); }   // v4.06
@@ -9396,7 +9408,7 @@ async function pkDfsFetch(){ if(pkDfs.busy) return; const plan=pkDfsPlan(), app=
     pkDfs.msg='Looked up '+calls+' game'+(calls===1?'':'s')+(used?', about '+used+' credits':', no new credits (saved answers)')+(pkDfs.left!=null?', '+pkDfs.left+' left':'')+'.'+(miss.length?' Not found in the odds feed: '+miss.join(', ')+'.':'')+(found?'':' No lines came back.');
   }catch(err){ pkDfs.msg='Couldn’t look up lines: '+err.message; }
   finally{ pkDfs.busy=false; renderParlays(); } }
-function pkBest(legs,n){ const out=[], games=new Set();
+function pkBest(legs,n){ const out=[], games=new Set(); legs=(legs||[]).filter(l=>!l.mo);   /* v4.56: model-only picks are kept out of the recommended entries */
   if(pkPriced(pkState.app)){ for(const l of legs){ if(out.length===n) break; if(!pkComboOk(l)) continue; /* v3.64 */ const g=l.game||l.name.toUpperCase(); if(pkState.oneGame && games.has(g)) continue; out.push(l); games.add(g); } return out.length===n?out:null; }   // v3.59
   for(const l of legs){ if(out.length===n) break; if(l.p<pkState.minP) break; if(!pkPlayable(l)) continue; const g=l.game||l.name.toUpperCase();
     if(pkState.oneGame && games.has(g)) continue; out.push(l); games.add(g); }
@@ -9409,7 +9421,7 @@ let pkSentAt=0;
 function pkAlone(r){ return !!(r && r.pass && r.stake>0 && !r.prior && !r.waitOrder && !r.removed && !r.moved && !r.glConflict); }   // the Place these test (isPlace)
 function pkSentBE(){ const pays=pkPays(pkState.app,pkState.play), be={}; Object.keys(pays).forEach(n=>{ be[n]=pkBreakEven(+n,pays[n]); }); return be; }
 function pkSentLegs(){ const be=pkSentBE(), need=Object.values(be).filter(x=>x!=null), floor=need.length?Math.min(...need):1;
-  return pkLegs(window._pkRows||[]).filter(l=>pkPlayable(l) && !l.prior && l.p>=floor)
+  return pkLegs(window._pkRows||[]).filter(l=>pkPlayable(l) && !l.prior && !l.mo && l.p>=floor)   /* v4.56: no model-only picks */
     .map(l=>Object.assign(l,{fits:Object.keys(be).filter(n=>be[n]!=null && l.p>=be[n]-1e-9).map(Number),
       good:pkAlone(l.r), alone:pkAlone(l.r) ? '' : l.r.pass ? (l.r.stake>0?'held back by your limits':'no stake left today (caps)') : l.why})); }   // v3.62: props good alone are in too (Alonzo), marked
 function pkSentPick(S,n){ const out=[], games=new Set();
@@ -9463,7 +9475,7 @@ function pkPromoHtml(mine, arr){
 function pkSlipsHtml(legs,pays,cfg,app){
   const sizes=Object.keys(pays).map(Number).sort((a,b)=>a-b); if(!sizes.length) return '';
   const n=sizes.indexOf(pkState.slipN)>=0 ? pkState.slipN : (sizes.indexOf(4)>=0?4:sizes[0]), priced=pkPriced(app), rep=pkState.slipRepeat!==false;
-  const pool=legs.filter(l=>priced ? pkComboOk(l) : (l.p>=pkState.minP && pkPlayable(l))).slice(0,n+7), found=[], cur=[];
+  const pool=legs.filter(l=>!l.mo && (priced ? pkComboOk(l) : (l.p>=pkState.minP && pkPlayable(l)))).slice(0,n+7), found=[], cur=[];   /* v4.56: no model-only picks in ready-made slips */
   const minHit=priced?(pkState.slipMinHit!=null?pkState.slipMinHit:0.05):0;   // v3.64: no home-run slips
   const pick=start=>{ if(cur.length===n){ const L=cur.slice(), e=pkEntry(L,pkArr(app,pays,L,n),cfg); if(e.ev>0 && e.pAll>=minHit) found.push({L,e}); return; }
     for(let i=start;i<pool.length;i++){ const l=pool[i]; if(cur.some(c=>nrm(c.name)===nrm(l.name))) continue;
@@ -9543,7 +9555,7 @@ function pkRetHtml(e,stake){ if(!e||!e.arr) return ''; const R=pkRetRows(e,stake
     '<tr class="pk-ret-lose"><td>Less than that</td><td class="num">0x</td><td class="num">$0.00</td><td class="num meta">'+pct(R.lose)+'</td></tr></tbody></table>'; }
 function pkDraftText(id,stake){ const c=(window._pkCards||{})[id]; if(!c) return ''; const e=c.e, L=c.legs, n=L.length, app=pkState.app, R=pkRetRows(e,stake);
   const kind=pkPriced(app)?'combo (the legs’ odds multiplied)':(pkState.play==='flex'?'Flex':'Power');
-  return [pkAppLabel(app)+' · '+kind+' · '+n+' picks · draft (check every line in the app)'].concat(
+  return [pkAppLabel(app)+' · '+kind+' · '+n+' picks · draft (check every line in the app)'+(pkProvisional(L)?' · the EV holds only if every line matches':'')].concat(
     L.map((l,i)=>(i+1)+'. '+l.name+' '+pkPick(l)+' — '+pct(l.p)+' to hit · '+pkWhere(l)),
     ['Stake $'+stake.toFixed(2)],
     R.rows.map(r=>(r.k===n?'All '+n+' hit':r.k+' of '+n+' hit')+': $'+r.pay.toFixed(2)+' ('+pkX(r.m)+', '+pct(r.p)+' of the time)'),
@@ -9551,18 +9563,26 @@ function pkDraftText(id,stake){ const c=(window._pkCards||{})[id]; if(!c) return
      'Not placed. Place it in the app, then press Log this entry.']).join('\n'); }
 function pkCopyText(txt,done){ const ok=()=>done(true), fb=()=>{ try{ const ta=document.createElement('textarea'); ta.value=txt; ta.setAttribute('readonly',''); ta.style.cssText='position:fixed;top:0;left:0;opacity:0'; document.body.appendChild(ta); ta.select(); const r=document.execCommand('copy'); ta.remove(); done(!!r); }catch(x){ done(false); } };
   try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok,fb); else fb(); }catch(x){ fb(); } }
+/* v4.56 (owner, 11/10: "BUILD", after Claude Code and ChatGPT agreed the scope): a pick'em entry with a line not checked in the app ("unknown") is PROVISIONAL:
+   its EV and stake hold only if every line matches, and Log this entry asks once that you checked. Every pick'em entry says that ties, DNPs and cancelled
+   players follow the app's rules (the EV assumes plain wins and losses). A model-only pick can be added by hand, with a warning; the entry is never best. */
+const PK_SETTLE='Ties, DNPs and cancelled players follow this app’s rules, not sportsbook push rules. The EV shown assumes every pick settles as a plain win or loss; a reboot or a smaller entry can change the payout.';
+function pkProvisional(legs){ return !pkPriced(pkState.app) && (legs||[]).some(l=>l && l.dfs==='unknown'); }
 function pkCard(title,legs,e,id,best){
   const lo=0.45, hi=0.75, pos=x=>Math.max(0,Math.min(100,(x-lo)/(hi-lo)*100)).toFixed(1)+'%';
-  const up=e.ev>0;
+  const up=e.ev>0, prov=pkProvisional(legs), moL=(legs||[]).filter(l=>l.mo), ifm=prov?' if every line matches':'';
+  if(moL.length) best=false;
   return '<div class="pk-card'+(best?' best':'')+(up?'':' neg')+'" data-id="'+id+'">'+   // v4.37: the card knows its entry (Copy draft, the payout table)
     '<div class="pk-h"><b>'+esc(title)+'</b><span class="meta">'+esc(pkPaysTxt(e.arr))+'</span></div>'+
-    (best?'<div class="pk-best" title="Of these entries, this one grows your bankroll most at its suggested stake: the return weighed against how often it loses">Best for your bankroll</div>':'')+
-    '<div class="pk-ev '+(up?'up':'down')+'">'+(up?'+':'−')+(Math.abs(e.ev)*100).toFixed(1)+'%<small> expected return</small></div>'+
+    (best?(prov?'<div class="pk-best prov" title="The best of these entries only if the app has every line shown: check the lines marked check line">PROVISIONAL BEST · check that the app has this exact line</div>':'<div class="pk-best" title="Of these entries, this one grows your bankroll most at its suggested stake: the return weighed against how often it loses">Best for your bankroll</div>'):'')+
+    (moL.length?'<div class="pk-mo-warn" role="note">⚠ '+moL.map(l=>esc(l.name)).join(', ')+': model only, no market check. Not a recommended entry.</div>':'')+
+    '<div class="pk-ev '+(up?'up':'down')+'">'+(up?'+':'−')+(Math.abs(e.ev)*100).toFixed(1)+'%<small> expected return'+ifm+'</small></div>'+
     '<div class="pk-meter" role="img" aria-label="Picks average '+pct(e.avg)+', break-even '+(e.be!=null?pct(e.be):'n/a')+'"><i style="width:'+pos(e.avg)+'"></i>'+(e.be!=null?'<b style="left:'+pos(e.be)+'"></b>':'')+'</div>'+
     '<div class="meta">Picks average <b>'+pct(e.avg)+'</b>, break-even '+(e.be!=null?pct(e.be):'n/a')+'. All '+e.n+' hit '+pct(e.pAll)+' of the time'+(e.pAll>0?' (about 1 in '+Math.max(1,Math.round(1/e.pAll))+')':'')+'.</div>'+   // v3.64
     '<ul class="pk-legs">'+legs.map(l=>'<li><span>'+esc(l.name)+' <span class="meta">'+esc(pkPick(l))+'</span>'+pkBetTag(l)+(l.own?'':' <span class="pk-chk" title="This line is from '+esc(bookLabel(l.book))+'. Check the app has the same line.">check line</span>')+'<span class="pk-where">'+esc(pkWhere(l))+'</span></span><b>'+pct(l.p)+'</b></li>').join('')+'</ul>'+   // v3.63: sport, team, game
     pkRetHtml(e, up?e.stake:0)+   // v4.37: Augi's flex partial return, in dollars, for every way it can finish
-    (up ? '<div class="pk-act"><label>Stake $ <input type="number" class="pk-stake" step="0.5" min="0" value="'+e.stake.toFixed(2)+'"></label>'+'<button type="button" class="ghost sm pk-copy" data-id="'+id+'">📋 Copy draft</button>'+((window._pkLogged&&window._pkLogged.has(legs.map(l=>l.key).sort().join('+')))?'<button type="button" class="log sm pk-log pk-logged" data-id="'+id+'" disabled>✓ Logged</button> <span class="pk-logged-msg">In the Bet log. <button type="button" class="linkbtn pk-see-log">See it ›</button></span>':'<button type="button" class="log sm pk-log" data-id="'+id+'">Log this entry</button>')+'</div>'
+    (pkPriced(pkState.app)?'':'<div class="meta pk-settle">'+esc(PK_SETTLE)+'</div>')+
+    (up ? '<div class="pk-act"><label>Stake $'+(prov?' <small>(if every line matches)</small>':'')+' <input type="number" class="pk-stake" step="0.5" min="0" value="'+e.stake.toFixed(2)+'"></label>'+'<button type="button" class="ghost sm pk-copy" data-id="'+id+'">📋 Copy draft</button>'+((window._pkLogged&&window._pkLogged.has(legs.map(l=>l.key).sort().join('+')))?'<button type="button" class="log sm pk-log pk-logged" data-id="'+id+'" disabled>✓ Logged</button> <span class="pk-logged-msg">In the Bet log. <button type="button" class="linkbtn pk-see-log">See it ›</button></span>':'<button type="button" class="log sm pk-log" data-id="'+id+'">Log this entry</button>')+'</div>'
         : '<div class="meta"><b>Skip:</b> these picks are under break-even for this payout.</div><div class="pk-act"><button type="button" class="ghost sm pk-copy" data-id="'+id+'">📋 Copy draft</button></div>')+
   '</div>'; }
 function renderParlays(){
@@ -9618,7 +9638,7 @@ function renderParlays(){
   const full=mine.length>=6;
   document.getElementById('pkPool').innerHTML=legs.length ? legs.slice(0,80).map(l=>{ const on=pkState.mine.indexOf(l.key)>=0;
       return '<tr class="'+((priced?pkComboOk(l):l.p>=pkState.minP&&pkPlayable(l))?'':'pk-low')+'"><td><input type="checkbox" class="pk-pick" data-k="'+esc(l.key)+'" aria-label="Add '+esc(l.name)+' to your entry"'+(on?' checked':'')+((full&&!on)||(!pkPlayable(l)&&!on)?' disabled':'')+'></td>'+
-        '<td><div class="c-who">'+avatarHtml(l.r,'r:'+l.r.idx)+'<div><b>'+esc(l.name)+'</b>'+pkBetTag(l)+'</div></div></td>'+   // v4.16: was "already bet" (singles only)   // v3.57: a picture
+        '<td><div class="c-who">'+avatarHtml(l.r,'r:'+l.r.idx)+'<div><b>'+esc(l.name)+'</b>'+pkBetTag(l)+(l.mo?' <span class="pk-mo" title="No market price to check this chance against: it is the model alone">MODEL ONLY · no market check · excluded from recommended entries</span>':'')+'</div></div></td>'+   // v4.16: was "already bet" (singles only)   // v3.57: a picture
         '<td>'+esc(pkPick(l))+'</td>'+
         '<td class="num" title="Market '+(l.mkt!=null?pct(l.mkt):'n/a')+', model '+(l.model!=null?pct(l.model):'n/a')+'"><b class="'+((priced?pkComboOk(l):l.p>=pkState.minP)?'pk-ok':'')+'">'+pct(l.p)+'</b></td>'+
         '<td>'+(l.dfs==='own'?'<b>'+esc(appName)+'</b> ✓':l.dfs==='diff'?'<b class="pk-diff">'+esc(appName)+' has '+esc(String(l.appLine))+'</b> <span class="meta">board line is '+esc(l.line)+'</span>':l.dfs==='none'?'<span class="pk-diff">not on '+esc(appName)+'</span>':esc(bookLabel(l.book)||'?')+' <span class="meta">check the line</span>')+'</td>'+
@@ -9629,11 +9649,14 @@ function renderParlays(){
 function pkLog(id,btn){ const c=(window._pkCards||{})[id]; if(!c) return; const card=btn.closest('.pk-card'), inp=card&&card.querySelector('.pk-stake');
   const s=Math.round((parseFloat(inp&&inp.value)||0)*100)/100, msg=document.getElementById('pkMsg');
   if(!(s>0)){ msg.textContent='Enter a stake above $0.'; return; }
-  const app=pkState.app, L=c.legs, e=c.e, arr=e.arr, n=L.length;
+  const app=pkState.app, L=c.legs, e=c.e, arr=e.arr, n=L.length, prov=pkProvisional(L);
+  if(prov && btn.dataset.ok!=='1'){ btn.dataset.ok='1'; btn.textContent='I checked: every line in the app matches'; msg.textContent='Some lines were not checked in '+pkAppLabel(app)+' (marked check line). Open the app, check each one, then press the button again.'; return; }   /* v4.56 */
   const first=L.map(l=>l.start).filter(Boolean).sort()[0];
   logged.push(parlayRecord({name:pkAppLabel(app)+(pkPriced(app)?' combo':'')+' · '+n+' picks', book:app, picks:n, stake:s, all:s*arr[0], m1:arr[1]?s*arr[1]:0, m2:arr[2]?s*arr[2]:0, day:ctDay(first?Date.parse(first):Date.now()),
     legs:L.map(l=>l.name+' '+pkPick(l)).join('; '), onList:e.ev>0,
-    pk:{play:pkState.play, policy:'actProb-v2', ev:+e.ev.toFixed(4), pAll:+e.pAll.toFixed(4), legs:L.map(l=>({name:l.name, market:l.line+' '+l.stat, side:l.side, p:+l.p.toFixed(4), book:l.book, game:l.game, start:l.start}))}}));
+    pk:{play:pkState.play, policy:'actProb-v2', ev:+e.ev.toFixed(4), pAll:+e.pAll.toFixed(4), app, pays:arr.slice(), settle:pkPriced(app)?undefined:'plain-win-loss-v1',   /* v4.56: the app and payout table used, and the settlement assumption */
+      lineVerifiedByUser:prov?true:undefined, verifiedAt:prov?new Date().toISOString():undefined, unchecked:prov?L.filter(l=>l.dfs==='unknown').length:undefined, modelOnly:L.some(l=>l.mo)?L.filter(l=>l.mo).length:undefined,
+      legs:L.map(l=>({name:l.name, market:l.line+' '+l.stat, side:l.side, p:+l.p.toFixed(4), book:l.book, game:l.game, start:l.start, line:l.dfs||undefined, mo:l.mo||undefined}))}}));
   saveLog(); renderLog(); renderPerf();
   msg.textContent='Logged: '+n+' picks on '+(app==='DraftKings Pick 6'?'Pick6':app)+', $'+s.toFixed(2)+'. Grade it in the Bet log with how many hit.';
   // v3.65 (Alonzo: "I press Log this entry and nothing happens"): say so on the slip itself, and one press logs it once
@@ -10213,9 +10236,14 @@ function renderMakes(){
     (off.length?'<div class="mk-off">Not on this board: '+off.map(o=>esc(fillLabel({bet:o.bet||{}, title:o.title, book:o.book, ref:o.ref}).bet+' · '+(o.price*100).toFixed(1)+'% · $'+((+o.price||0)*(+o.qty||0)).toFixed(2)+' · '+(BOOK_NAME[o.book]||o.book))).join(' &nbsp;|&nbsp; ')+' — check the side and line on '+esc(off.map(o=>BOOK_NAME[o.book]||o.book).filter((v,i,a)=>a.indexOf(v)===i).join(' / '))+'</div>':'');
 }
 document.addEventListener('click', e=>{ if(!e.target.closest('#makesBar') || e.target.closest('.mk-ack')) return; const t=[...document.querySelectorAll('.mk-slot')].find(x=>x.textContent.trim() && x.offsetParent); if(t) t.scrollIntoView({behavior:'smooth', block:'center'}); });
+/* v4.56: a best-book claim (Send the Sentinels moved the bet to another book) holds 3 minutes, 90 seconds when the game starts within 5 minutes. After
+   that it says so; no price is read again by itself (no new Worker calls). Hoisted: the card and the timer call it. */
+function shopStale(r, now){ if(!r || !r.shop || r.shop.same || !r.shop.at) return null; now=now||Date.now(); const age=now-Date.parse(r.shop.at), ko=Date.parse((r.gameInfo&&r.gameInfo.startISO)||''), lim=(!isNaN(ko) && ko-now<=5*60e3)?90e3:3*60e3; return age>lim?{age, lim}:null; }
 function shopTagHtml(r){
   let h='';
   if(r.swap) h+='<span class="meta shop-was" title="'+esc(bookLabel(r.swap.orig.book))+' is not a book you bet: this is the same bet at '+esc(bookLabel(r.book))+', screened at its price">↪ for you: '+esc(bookLabel(r.book))+' (was '+esc(bookLabel(r.swap.orig.book))+' '+esc(fmtOdds(r.swap.orig.offeredRaw))+')</span> ';   // v4.05
+  { const st=shopStale(r); if(st) h+='<span class="shop-stale" title="Prices move: this best-book choice was made '+ageTxt(st.age)+' ago. Press Send the Sentinels to compare the books again.">Price '+ageTxt(st.age)+' old · best book no longer confirmed · Send the Sentinels</span> '; }   /* v4.56 */
+  if(r.shopNone && !r.shop) h+='<span class="shop-stale" title="No exchange could be read for this bet on the last scan">no price could be read · refresh prices</span> ';
   if(r.shop) h+='<span class="meta shop-was '+(r.offeredProb<r.shop.orig.offeredProb?'':'worse')+'" title="'+esc(r.shop.same?'Live '+bookLabel(r.book)+' price now (was '+fmtOdds(r.shop.orig.offeredRaw)+' at the Pull)':'Line shopping: '+bookLabel(r.book)+' beats '+bookLabel(r.shop.orig.book)+' after fees')+'">'+(r.shop.same?'live · was ':'was '+esc(bookLabel(r.shop.orig.book))+' ')+esc(fmtOdds(r.shop.orig.offeredRaw))+'</span>';
   if(r.freed) h+='<span class="jail free" title="Skipped at the Pull price, passes every screen at the live price">🔓 out of Skipping Jail</span>';
   if(r.jailed) h+='<span class="jail in" title="Passed at the Pull price, fails at the live price">🔒 Skipping Jail</span>';
@@ -10294,9 +10322,13 @@ async function shopExchanges(){
       let best = own ? {book:orig.book, p:Q[own].price, net:netAt(orig.book,Q[own].price), live:true}
                      : {book:orig.book, p:orig.offeredProb, net:netAt(orig.book,orig.offeredProb), live:false};
       if(have && !have.some(x=>bookIsMine(orig.book,x))) best.net=-Infinity;   // v4.05: a book you do not bet (DraftKings in Texas) never wins; your best one does
-      Object.entries(Q).forEach(([n,q])=>{ if(n===own) return; const nt=netAt(n,q.price); if(nt>best.net+0.003) best={book:n,p:q.price,net:nt,live:true}; });
+      /* v4.56: the 0.3-point margin only compares two prices read in this same scan. When the row's own exchange could not be read now, another
+         exact, readable price wins without it; when nothing could be read there is no winner ("refresh prices"). */
+      const ownEx=!!LIVE_BOOK(orig.book), curUnread=ownEx && !own, mg=curUnread?0:0.003, readable=Object.keys(Q).length;
+      Object.entries(Q).forEach(([n,q])=>{ if(n===own) return; const nt=netAt(n,q.price); if(nt>best.net+mg) best={book:n,p:q.price,net:nt,live:true}; });
+      delete r.shopNone; if(ownEx && !readable) r.shopNone=Date.now();
       const changed = best.book!==orig.book || Math.abs(best.p-orig.offeredProb)>1e-6;
-      if(changed){ repriced++; r.shop={orig, live:best.live, same:best.book===orig.book, at:new Date().toISOString()};
+      if(changed){ repriced++; r.shop={orig, live:best.live, same:best.book===orig.book, at:new Date().toISOString(), scan:Date.now(), quotes:readable, bypass:(curUnread && best.book!==orig.book)?'current book could not be read':undefined};
         r.book=best.book; r.offeredProb=best.p; r.offeredRaw=fmtOdds(Math.round(americanOf(best.p))); }
       else if(r.shop){ r.book=orig.book; r.offeredProb=orig.offeredProb; r.offeredRaw=orig.offeredRaw; delete r.shop; }
     });

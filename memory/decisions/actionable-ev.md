@@ -25,7 +25,10 @@ Stake = `kellyFor(cfg, actNet, price)` = bankroll × Kelly × (actNet × haircut
 | A Parlay pick's chance (filters, `pkDist`, EV, Kelly, ranking) | `actProb` (v4.55, saved with `pk.policy` = `actProb-v2`) | `pkProbOf`, `pkLegs`, `pkLegsPriced` |
 | Model-only bets (no market price) | smallest bet, at most 5 a game day and 1 a game, best `actNet` first (v4.55, `snap.modelOnly`) | `MODEL_ONLY`, `auditCore` |
 | Outlier Make | must also beat the market's breakeven (kept, v4.55 test) | Parole ladder |
-| Switching book | only for 0.3 points of `actNet` or more (kept, v4.55 test) | `shopExchanges`, `swapHunt` |
+| Switching book | only for 0.3 points of `actNet` or more, both read in the same scan; skipped when the row's own exchange could not be read; nothing readable = no winner (v4.56, `r.shop.bypass`, `r.shopNone`) | `shopExchanges`, `swapHunt` |
+| A best-book claim | holds 3 min, 90 s within 5 min of kickoff; then says so, no automatic re-read (v4.56) | `shopStale` |
+| Pick'em entries | model-only legs never in a recommended entry; unchecked lines make it provisional (confirm before logging); settlement note (v4.56) | `pkBest`, `pkProvisional`, `PK_SETTLE`, `pkLog` |
+| Model-only open orders | measured only (`orderDiag`), not counted against the limit (v4.56; review after about 30 days) | Settings › API credits & usage |
 
 New bets save `snap.act`, `snap.actNet`, `snap.policy` (`POLICY.math` = `act-v2`) and `snap.sent`. Old snapshots are never rewritten.
 

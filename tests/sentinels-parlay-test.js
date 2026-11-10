@@ -56,9 +56,13 @@ const BOARD=[
   await p.click('#pkSent .pk-sent-add[data-k="top leg|points"]'); await p.waitForTimeout(300);
   const mine=await p.evaluate(()=>({mine:pkState.mine, btn:document.querySelector('#pkSent .pk-sent-add[data-k="top leg|points"]').textContent}));
   check('+ Add puts it in Your entry', mine.mine.includes('top leg|points') && /In your entry/.test(mine.btn), mine);
+  const n0=await p.evaluate(()=>logged.length);
   await p.click('#pkSent .pk-log'); await p.waitForTimeout(300);
-  const lg=await p.evaluate(()=>{ const x=logged[logged.length-1]; return x?{kind:x.kind, book:x.book, picks:x.parlay&&x.parlay.picks}:null; });
-  check('Log this entry saves the 4-pick to the Bet log', lg && lg.kind==='parlay' && lg.picks===4 && lg.book==='PrizePicks', lg);
+  const ask=await p.evaluate(n=>({n:logged.length-n, btn:document.querySelector('#pkSent .pk-log').textContent, msg:document.getElementById('pkMsg').textContent}), n0);
+  check('v4.56: its lines were not checked in the app, so the first press logs nothing and asks: "I checked: every line in the app matches"', ask.n===0 && ask.btn==='I checked: every line in the app matches' && /were not checked in PrizePicks/.test(ask.msg), ask);
+  await p.click('#pkSent .pk-log'); await p.waitForTimeout(300);
+  const lg=await p.evaluate(()=>{ const x=logged[logged.length-1]; return x?{kind:x.kind, book:x.book, picks:x.parlay&&x.parlay.picks, pk:x.parlay&&x.parlay.pk&&{v:x.parlay.pk.lineVerifiedByUser, at:!!x.parlay.pk.verifiedAt, app:x.parlay.pk.app, pays:x.parlay.pk.pays, settle:x.parlay.pk.settle}}:null; });
+  check('the second press saves the 4-pick to the Bet log, with "you checked the lines" and when, the app, its payout table and the settlement assumption', lg && lg.kind==='parlay' && lg.picks===4 && lg.book==='PrizePicks' && lg.pk.v===true && lg.pk.at && lg.pk.app==='PrizePicks' && Array.isArray(lg.pk.pays) && lg.pk.pays.length>0 && lg.pk.settle==='plain-win-loss-v1', lg);
   await p.setViewportSize({width:390,height:844}); await p.waitForTimeout(300);
   const ph=await p.evaluate(()=>{ const el=document.getElementById('pkSent'), r=el.getBoundingClientRect(); return {left:r.left, right:r.right, w:innerWidth, overflow:document.documentElement.scrollWidth>innerWidth+1}; });
   check('phone: the section fits the screen', ph.left>=0 && ph.right<=ph.w+1 && !ph.overflow, ph);

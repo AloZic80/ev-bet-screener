@@ -54,6 +54,7 @@ const runs = [
   ['⚡ Signal (the market moved, the book has not) on the Sentinels; Perfecta vs the rest as a clustered difference; all Just-missed shadow', 'signal-record-test.js', []],
   ['One number for every decision: stake, order, score and shown EV on La Contadora’s EV; Kalshi re-check; snapshots; Bet log remove', 'invariants-test.js', []],
   ['Parlay picks on La Contadora’s chance; model-only bets five a day and one a game; outlier Makes and the 0.3-point book switch kept', 'model-only-parlay-test.js', []],
+  ['v4.56 agreed scope: provisional pick’em entries, settlement note, model-only legs out of recommended entries, stale best-book claims, unreadable-book switch, order counter', 'scope-v456-test.js', []],
   ['v4.34: Augi\'s Board: the Show menu, the cover legend, your own note on each line', 'board-notes-test.js', []],
   ['v4.33: colour schemes (Green, Blue, Red, Purple, Graphite) in light and dark, all AA; remembered', 'palette-test.js', []],
   ['v4.31: Augi\'s 5-point cover bands (chips on the board and cards) and the Bet result study in Performance', 'cover-study-test.js', []],
