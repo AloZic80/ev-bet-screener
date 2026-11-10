@@ -6,6 +6,10 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.58 (owner, phone: "buttons don't highlight anymore"): with Settings › Colour scheme › Custom on a dark colour (navy), `palCss` kept that
+  colour as the dark-mode `--brand`, so the chosen tab, the mode chips and Load were as dark as the page. Dark `--brand` must now also be 3:1 from
+  `--panel` and `--page` (lightened until it is, white text still 4.6:1). Not caused by v4.57. The built-in dark schemes other than green are
+  2.3 to 2.7:1 from the panel (not changed; reported). `tests/palette-test.js` checks it, with two navies added.
 - v4.57, agreed with ChatGPT then "BUILD" (11/10), closes two gaps ChatGPT found in v4.56. `bookPick(r, Q, cfg, now)` (pure, hoisted) is one Sentinels
   decision: the book shown now is the incumbent (the Pull book `shop.orig` is only the "was" label); fresh incumbent (an exchange read in this scan, or a
   sportsbook price whose `loadedAt` / `pasteAt` is inside `shopLim`: 3 min, 90 s within 5 min of kickoff) keeps the 0.3-point `actNet` margin; an exchange
