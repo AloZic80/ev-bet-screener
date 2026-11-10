@@ -9,12 +9,12 @@ New builds add their line at the top of the right section.
 - v4.57, agreed with ChatGPT then "BUILD" (11/10), closes two gaps ChatGPT found in v4.56. `bookPick(r, Q, cfg, now)` (pure, hoisted) is one Sentinels
   decision: the book shown now is the incumbent (the Pull book `shop.orig` is only the "was" label); fresh incumbent (an exchange read in this scan, or a
   sportsbook price whose `loadedAt` / `pasteAt` is inside `shopLim`: 3 min, 90 s within 5 min of kickoff) keeps the 0.3-point `actNet` margin; an exchange
-  that could not be read gives way to the best fresh price (`exchange_unreadable`); a stale sportsbook price gives way to the best fresh exchange price with
+  that could not be read gives way to the best fresh price with `actNet >= cfg.eMin` (`exchange_unreadable`; fresh prices but none clears it: `exchange_unreadable_no_actionable_quote`, nothing moves); a stale sportsbook price gives way to the best fresh exchange price with
   `actNet >= cfg.eMin` (`sportsbook_stale_unrefreshable`), else nothing moves and the card reads "No current best book confirmed · sportsbook price is stale ·
   check the book manually"; nothing readable = `nothing_readable`. The decision is kept on `r.shopChk` and saved by `shopSnap(r)` into `snap.shop.chk`
   (incumbent, challenger, p, actNet, age, readable, margin applied / bypassed, none). Book-swap cards: `r.swap.at` (the quote's `_at`), `shopStale` covers
   them, `swapBooks` keeps the shown swap book (`r._swapBook`) unless another is 0.3 better, and `shopExchanges` feeds a swap row's fresh quotes into
-  `r._altQ` (they were read once and never again). `tests/book-choice-v457-test.js` (24).
+  `r._altQ` (they were read once and never again). `tests/book-choice-v457-test.js` (27).
 - v4.56, the first build under the new rule (Claude Code and ChatGPT agreed the scope in writing, then the owner said "BUILD"): pick'em entries with a line not
   checked in the app (`dfs:'unknown'`) are provisional (`pkProvisional`): "PROVISIONAL BEST · check that the app has this exact line", EV and stake "if every
   line matches", and Log this entry asks once ("I checked: every line in the app matches"), saving `pk.lineVerifiedByUser`, `verifiedAt`, `unchecked`;

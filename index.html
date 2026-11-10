@@ -10245,7 +10245,7 @@ function shopStale(r, now){ if(!r) return null; const at=(r.shop && !r.shop.same
 /* v4.57 (agreed with ChatGPT, owner "BUILD" 11/10): one Sentinels decision for one row. The book shown now is the one to beat (the Pull book is kept only
    for the "was" label). Its price is fresh when it was read in this scan (an exchange) or the board loaded it within the limit (a sportsbook: 3 minutes,
    90 seconds within 5 minutes of the start). Fresh: another fresh price needs 0.3 points more of La Contadora's EV. An exchange that could not be read:
-   the best fresh price takes its place with no 0.3. A stale sportsbook price: a fresh exchange price that clears the floor replaces it with no 0.3.
+   the best fresh price that clears the floor takes its place with no 0.3. A stale sportsbook price: a fresh exchange price that clears the floor replaces it with no 0.3.
    Nothing fresh: no winner, nothing moves. Pure: it reads the row and the quotes and returns the decision. Hoisted. */
 function bookPick(r, Q, cfg, now){
   const orig=r.shop?r.shop.orig:{book:r.book, offeredRaw:r.offeredRaw, offeredProb:r.offeredProb}, lim=shopLim(r,now), names=Object.keys(Q||{});
@@ -10259,7 +10259,7 @@ function bookPick(r, Q, cfg, now){
   const top=C.reduce((a,c)=>(!a || c.net>a.net)?c:a, null);
   let win=null, margin='applied', bypass, none;
   if(inc.readable) win=(top && top.net>inc.net+0.003)?top:inc;
-  else if(curEx){ margin='bypassed'; if(top){ win=top; bypass='exchange_unreadable'; } else none='nothing_readable'; }   /* its last price is not a price: the best fresh one takes its place */
+  else if(curEx){ margin='bypassed'; const ok=C.filter(c=>c.net>=cfg.eMin-1e-9).reduce((a,c)=>(!a || c.net>a.net)?c:a, null); if(ok){ win=ok; bypass='exchange_unreadable'; } else if(C.length){ none='exchange_unreadable_no_actionable_quote'; bypass=none; } else none='nothing_readable'; }   /* its last price is not a price: the best fresh one that clears the floor takes its place (the floor: agreed with ChatGPT after the first v4.57 draft) */
   else { margin='bypassed'; const ok=C.filter(c=>c.ex && c.net>=cfg.eMin-1e-9).reduce((a,c)=>(!a || c.net>a.net)?c:a, null); if(ok){ win=ok; bypass='sportsbook_stale_unrefreshable'; } else none='sportsbook_stale'; }
   return {orig, inc, ch:(win && win!==inc)?win:top, win, margin, bypass, none, quotes:names.length, lim};
 }
@@ -10275,7 +10275,8 @@ function shopTagHtml(r){
   { const st=shopStale(r); if(st) h+='<span class="shop-stale" title="Prices move: this best-book choice was made '+ageTxt(st.age)+' ago. Press Send the Sentinels to compare the books again.">Price '+ageTxt(st.age)+' old · best book no longer confirmed · Send the Sentinels</span> '; }   /* v4.56 */
   { const c=r.shopChk, st=shopStale(r);   /* v4.57: the last scan found no fresh price to confirm the book shown */
     if(c && c.none==='nothing_readable' && !st) h+='<span class="shop-stale" title="No exchange could be read for this bet on the last scan">no price could be read · refresh prices</span> ';
-    else if(c && c.none==='sportsbook_stale' && !st) h+='<span class="shop-stale" title="The '+esc(bookLabel(r.book))+' price is from the board, loaded '+esc(c.inc.age!=null?ageTxt(c.inc.age):'a while')+' before the scan, and no exchange had a fresh price that clears your floor. Refresh the board to read it again, or look at the book.">No current best book confirmed · sportsbook price is stale · check the book manually</span> '; }
+    else if(c && c.none==='sportsbook_stale' && !st) h+='<span class="shop-stale" title="The '+esc(bookLabel(r.book))+' price is from the board, loaded '+esc(c.inc.age!=null?ageTxt(c.inc.age):'a while')+' before the scan, and no exchange had a fresh price that clears your floor. Refresh the board to read it again, or look at the book.">No current best book confirmed · sportsbook price is stale · check the book manually</span> ';
+    else if(c && c.none==='exchange_unreadable_no_actionable_quote' && !st) h+='<span class="shop-stale" title="'+esc(bookLabel(r.book))+' could not be read on the last scan, and no other fresh price clears your floor">No current best book confirmed · shown exchange unavailable · fresh prices do not clear your floor</span> '; }
   if(r.shop) h+='<span class="meta shop-was '+(r.offeredProb<r.shop.orig.offeredProb?'':'worse')+'" title="'+esc(r.shop.same?'Live '+bookLabel(r.book)+' price now (was '+fmtOdds(r.shop.orig.offeredRaw)+' at the Pull)':'Line shopping: '+bookLabel(r.book)+' beats '+bookLabel(r.shop.orig.book)+' after fees')+'">'+(r.shop.same?'live · was ':'was '+esc(bookLabel(r.shop.orig.book))+' ')+esc(fmtOdds(r.shop.orig.offeredRaw))+(r.shop.bypass==='sportsbook_stale_unrefreshable'?' · sportsbook price stale and not refreshable':'')+'</span>';   /* v4.57 */
   if(r.freed) h+='<span class="jail free" title="Skipped at the Pull price, passes every screen at the live price">🔓 out of Skipping Jail</span>';
   if(r.jailed) h+='<span class="jail in" title="Passed at the Pull price, fails at the live price">🔒 Skipping Jail</span>';

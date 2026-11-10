@@ -1,6 +1,6 @@
 // node tests/book-choice-v457-test.js — v4.57, the scope Claude Code and ChatGPT agreed and the owner approved ("BUILD", 11/10):
 // Send the Sentinels compares against the book SHOWN NOW (the Pull book is only the "was" label); a fresh shown price keeps the 0.3-point margin;
-// an exchange that could not be read gives way to the best fresh price; a stale sportsbook price (board loaded over 3 minutes ago, 90 s within 5 minutes
+// an exchange that could not be read gives way to the best fresh price that clears the floor; a stale sportsbook price (board loaded over 3 minutes ago, 90 s within 5 minutes
 // of the start) gives way to a fresh exchange price that clears the floor; nothing fresh = no winner; a book-swap card expires like a best-book claim;
 // a bet saves both books, their ages, their EV, the margin and the reason. Every expected number is worked here by hand, not with the page's functions.
 const path=require('path'); const INDEX=path.join(__dirname,'..','index.html');
@@ -54,14 +54,21 @@ const near=(a,b)=>Math.abs(a-b)<1e-6;
   check('no page errors (sportsbook)', !S.errs.length, S.errs); await S.ctx.close();
   // ================= the book shown is the one to beat, not the Pull book =================
   const kN=ev(0.515), kK=ev(0.498,kf(0.498));
-  let step=1; S=await open(b, [prop('k','Kal Row','Points',0.52,1,'Kalshi',60e3)], 'Novig, Kalshi, Bovada', (kind,idx,bk)=>{ if(kind!=='shop') return null; if(step===1) return bk==='novig'?0.515:null; if(step===2) return bk==='novig'?0.515:bk==='kalshi'?0.498:null; if(step===3) return bk==='kalshi'?0.498:null; return null; });
+  let step=1; S=await open(b, [prop('k','Kal Row','Points',0.52,1,'Kalshi',60e3)], 'Novig, Kalshi, Bovada', (kind,idx,bk)=>{ if(kind!=='shop') return null; if(step===1) return bk==='novig'?0.515:null; if(step===2) return bk==='novig'?0.515:bk==='kalshi'?0.498:null; if(step===3) return bk==='kalshi'?0.498:null; if(step===5) return bk==='novig'?0.56:null; return null; });
+  const floor2=await S.p.evaluate(()=>cfgRead().eMin);
   await S.p.evaluate(async()=>{ await shopExchanges(); }); v=await look(S);
   check('scan 1: Kalshi (the Pull book) cannot be read, Novig 51.5% can: the bet moves to Novig (exchange_unreadable)', v.k.book==='Novig' && near(v.k.price,0.515) && v.k.shop.bypass==='exchange_unreadable' && v.k.shop.from==='Kalshi', v.k);
   step=2; await S.p.evaluate(async()=>{ await shopExchanges(); }); v=await look(S);
   check('by hand: Novig 51.5% gives EV '+(kN*100).toFixed(2)+'%; Kalshi 49.8% after its fee ('+(kf(0.498)*100).toFixed(2)+'%) gives '+(kK*100).toFixed(2)+'%: '+((kN-kK)*100).toFixed(2)+' points apart, inside 0.3 either way', Math.abs(kN-kK)<0.003 && kN>kK, {kN, kK});
   check('scan 2: both read. Novig is the book shown, so it is the one to beat and Kalshi is not 0.3 points better: it stays at Novig (measured against the Pull book, Kalshi, it went back)', v.k.book==='Novig' && near(v.k.price,0.515) && v.k.chk.inc==='Novig' && v.k.chk.ch==='Kalshi' && v.k.chk.margin==='applied' && near(v.k.chk.incNet,kN) && near(v.k.chk.chNet,kK) && v.k.shop.from==='Kalshi' && /was Kalshi/.test(v.k.tag), v.k);
   step=3; await S.p.evaluate(async()=>{ await shopExchanges(); }); v=await look(S);
-  check('scan 3: Novig (shown) cannot be read, Kalshi can: the fresh Kalshi 49.8% takes its place although it is 0.11 points lower; back at the Pull book, it shows as its live price', v.k.book==='Kalshi' && near(v.k.price,0.498) && v.k.shop && v.k.shop.same===true && v.k.chk.bypass==='exchange_unreadable' && v.k.chk.margin==='bypassed' && v.k.chk.inc==='Novig' && v.k.chk.incReadable===false, v.k);
+  check('scan 3: Novig (shown) cannot be read, Kalshi can: the fresh Kalshi 49.8% takes its place although it is 0.11 points lower (it clears the floor); back at the Pull book, it shows as its live price', v.k.book==='Kalshi' && near(v.k.price,0.498) && v.k.shop && v.k.shop.same===true && v.k.chk.bypass==='exchange_unreadable' && v.k.chk.margin==='bypassed' && v.k.chk.inc==='Novig' && v.k.chk.incReadable===false, v.k);
+  step=5; await S.p.evaluate(async()=>{ await shopExchanges(); }); v=await look(S);
+  const kLow=ev(0.56);
+  check('by hand: Novig 56% gives EV '+(kLow*100).toFixed(2)+'%, under the floor', kLow<floor2 && kLow>0, {kLow, floor2});
+  check('scan 3b: Kalshi (shown) cannot be read and the only fresh price, Novig 56%, does not clear the floor: nothing moves, "No current best book confirmed · shown exchange unavailable · fresh prices do not clear your floor", saved as exchange_unreadable_no_actionable_quote', v.k.book==='Kalshi' && near(v.k.price,0.498) && v.k.chk.none==='exchange_unreadable_no_actionable_quote' && v.k.chk.bypass==='exchange_unreadable_no_actionable_quote' && v.k.chk.ch==='Novig' && near(v.k.chk.chNet,kLow) && /No current best book confirmed · shown exchange unavailable · fresh prices do not clear your floor/.test(v.k.tag), v.k);
+  const sk=await S.p.evaluate(()=>{ const r=lastRows.find(x=>x.apiKey==='k'); return shopSnap(r); });
+  check('what a bet would save then: the reason, no winner, and the Novig price that fell short', sk && sk.bypass==='exchange_unreadable_no_actionable_quote' && sk.chk.none==='exchange_unreadable_no_actionable_quote' && sk.chk.challenger.book==='Novig' && sk.chk.incumbent.readable===false, sk);
   step=4; await S.p.evaluate(async()=>{ await shopExchanges(); }); v=await look(S);
   check('scan 4: nothing can be read: no winner, nothing moves, "no price could be read · refresh prices"', v.k.book==='Kalshi' && near(v.k.price,0.498) && v.k.chk.none==='nothing_readable' && /no price could be read · refresh prices/.test(v.k.tag), v.k);
   check('no page errors (shown book)', !S.errs.length, S.errs); await S.ctx.close();
