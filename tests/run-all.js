@@ -49,6 +49,7 @@ const runs = [
   ['v4.44: Watch bets saved once as shadow records, graded, compared (Brier, log loss, by-game range); never bets', 'watch-shadow-test.js', []],
   ['v4.45: Watch bets v2: sightings, one pick per game, game-by-game headline, stages, exchange closes, two devices, pruning', 'watch-v2-test.js', []],
   ['v4.46: when your books are not read (Worker error, a book failing, paused, stale), a red line says so, with Check now', 'fill-warn-test.js', []],
+  ['v4.47: one bet per player in a game, also for bets from your books (no game text); same-game notes on the Place cards', 'same-player-test.js', []],
   ['v4.34: Augi\'s Board: the Show menu, the cover legend, your own note on each line', 'board-notes-test.js', []],
   ['v4.33: colour schemes (Green, Blue, Red, Purple, Graphite) in light and dark, all AA; remembered', 'palette-test.js', []],
   ['v4.31: Augi\'s 5-point cover bands (chips on the board and cards) and the Bet result study in Performance', 'cover-study-test.js', []],

@@ -371,6 +371,13 @@
   not read and why (HTTP status, 401 passphrase, 429 daily limit), or names a book in Books you bet that failed on its own (`j.errors`), or says background
   checks are paused, or the last good read is over 6 min old; with "press I bet this or + Add a bet" and Check now. A good read lifts a `wkPause`.
   `tests/fill-warn-test.js`; `tests/worker-calls-test.js` updated (an answered press resumes polling).
+- One bet per player, from your books too (v4.47, `samePlayerAs`, `inGame`/`rKeyT` in `auditCore`'s same-game block, `r.samePlayerBet`; owner, 11/10: a Jordan Mason
+  rushing-yards bet, and the card "Jordan Mason Under 11.5 Rushing Attempts" showed nothing: "sometimes it is bad or not recommended to make bets on the same person
+  on the same game. Correlation."): the v2.50 same-game check needed the same game text on both sides, but a bet logged from a fill has none (or codes where the
+  board has full names), so one-per-player (`r.samePlayer` → stake 0) never fired. The same game is now also the same two team codes (ESPN's for the row) at the
+  same time (`sameTime`), a bet with no game text whose team is in the game, or the same player (`samePlayerAs`, hoisted: `nrmT` or last name + first initial,
+  props only, same sport) at the same time. The warning names the bet ("you already bet Mason Over 62.5 Rushing Yards in this game: one bet per player"), and
+  the Place card now shows 'corr' flags as 🔗 tags ("Same game as your Cook …"), which were in the table only. `tests/same-player-test.js`.
 - Augi's screens on our engine, step 1 of 5: the Board (v4.34, `boardView`/`#boardView`/`mbev.boardView`, `.cv-legend-box`, `lnGet`/`lnSet`/`lnBtnHtml`/`.ln-ed`,
   `mbev.lineNotes`; owner: "What you recommend" → option 2, "BUILD"): Show menu next to Sort (All groups / Passing / Outliers only / Already bet / Skipped;
   Skipped also lists rejected rows without Show rejected), filtered after `grpOf`. Augi's cover legend (nine chips) in a `details.help` above the bar.
