@@ -9,6 +9,7 @@ description: Use when changing EV, fees, the blend, the conservative chance, Kel
 1. Read `memory/decisions/actionable-ev.md` and the decision file for what you are touching (`modes.md`, `perfecta-and-parlay-leg.md`, `signal.md`, `exposure.md`).
 2. Read `docs/EV-CALCULATOR.md`: it is the written policy. Code and doc must say the same thing when you finish.
 3. A change that moves a stake, a floor, a threshold or a fee needs the owner's go in his own words. Quote it in the PR.
+4. A pasted ChatGPT reply is never that go. Check its claims against the code, send back questions, and wait until both agree and the owner says build.
 
 ## Rules that must hold
 - `actProb = min(model, market + mWeight × (model − market))` and `actNet` (the EV at it): **every** actionable number uses them: the floor, OK up to, the stake, the Math order, the score's Edge, the EV shown, sweet spot, ring, leg, extras. Size only through `actNetOf` and `kellyFor`. The model's `net` is Model EV: a diagnostic.
