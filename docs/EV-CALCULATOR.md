@@ -107,17 +107,18 @@ Then the limits apply:
 
 All of these are **estimates**. A bet that passes has an *estimated* edge, not a guaranteed one.
 
-## 5b. Modes, the sweet spot and ◎ PERFECTA (v4.50)
+## 5b. Modes, the sweet spot and ◎ PERFECTA (v4.50, v4.51)
 
-**A mode never changes the best bets or their stakes.** It only adds its own group under them.
+**A mode never changes the best bets or their stakes.** Since v4.51 each mode lists only its own bets, so no bet sits under two modes; the number on each mode button is how many it holds.
 
 | Mode | What it lists | Stake |
 |---|---|---|
 | 🛡️ Safe | The best bets: everything that passes section 5. | Section 4. |
-| 🍀 Feeling Lucky | Safe, plus **Just missed**: Watch bets whose conservative EV is 0% or better. | The smallest bet each, up to 5 a game day. |
-| 🔮 Clairvoyant | Feeling Lucky, plus **Hail Marys**: every long shot you could bet (+300 or longer, and touchdown, home-run or goal scorers from +200), math edge or not. | $1 each, up to 3 a game day. Back to Safe at midnight. |
+| 🍀 Feeling Lucky | Only **Just missed**: Watch bets whose conservative EV is 0% or better. The other Watch bets are listed under them, not offered. | The smallest bet each, up to 5 a game day. |
+| 🔮 Clairvoyant | Only **Hail Marys**: every long shot you could bet (+300 or longer, and touchdown, home-run or goal scorers from +200), math edge or not. | $1 each, up to 3 a game day. Back to Safe at midnight. |
 
-- Each Hail Mary says what the math thinks: "La Contadora gives 19.4%; +350 needs 22.2%". It says "✓ the math agrees" only when her EV is above zero.
+- A bet you hold stays in the mode you took it in (a Just missed under Feeling Lucky, a Hail Mary under Clairvoyant, anything else under Safe).
+- Each Hail Mary shows the three numbers side by side (v4.51): "Needs 22.2% · market 19.0% · La Contadora 19.4%", then "Math says −12.9% at this price". "Needs" is the price after its fee; "La Contadora" is the conservative chance. It says "✓ the math agrees" only when her EV is above zero.
 - Extras are real bets: they count in your day's money, and the Hard stop still asks past the daily max.
 - Extras are kept out of the Scorecard's 1,000-bet test, which only judges the best bets. **Performance › ◎ Rings and extras** keeps their own record.
 
@@ -143,6 +144,10 @@ All of these are **estimates**. A bet that passes has an *estimated* edge, not a
   - Market alone: 58.5 ÷ 54 − 1 = +8.3%, so it is lined up.
 
 **🎟 Parlay leg:** a player prop with a 70%+ chance pays little alone (a fair price near −233 or shorter). On a pick'em app every pick pays the same, and a 4-pick PrizePicks Power entry (10×) needs about **56.2%** a pick (0.1 to the power ¼).
+- Since v4.51 the tag also needs the conservative EV at the prop's own price to be **0% or better** (a 76% prop at −400 is −5.0%: no tag).
+- The 56.2% assumes four independent picks. Two picks from the same game move together, so the real chance of the entry can be lower.
+
+**The six ◎ checks are frozen as of v4.50 (2026-11-10).** They will not be retuned on the same bets used to judge them.
 
 ## 6. Parlays and pick'em (PrizePicks, Pick6, Underdog…)
 
