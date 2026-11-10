@@ -5139,12 +5139,17 @@ function extrasCardsHtml(L,H,cfg){ let h=''; const U=extrasUsed(), today=ctDay(D
         return '<details class="hm-game" data-hm="'+esc(g.k)+'"'+(open?' open':'')+'><summary><b>'+esc(g.r.sport||'')+' · '+esc(name)+'</b> <span class="meta">'+esc(giWhen(gi)||'')+' · '+g.L.length+' long shot'+(g.L.length===1?'':'s')+(best?' · up to '+esc(fmtOdds(Math.round(best))):'')+(agree?' · ✓ the math agrees on '+agree:'')+'</span></summary>'+
           (open?g.L.map(x=>placeCardHtml(x.r,cfg,x.o)).join(''):'')+'</details>'; }).join(''); }
   return h; }
-document.addEventListener('toggle', e=>{ const d=e.target; if(!d || !d.classList || !d.classList.contains('hm-game')) return; hmOpenMap()[d.dataset.hm]=d.open; if(d.open && !d.querySelector('.sc-card')) refresh(); }, true);
+document.addEventListener('click', e=>{ const sm=e.target.closest && e.target.closest('details.hm-game > summary'); if(!sm) return; const d=sm.parentElement, willOpen=!d.open;   // your own tap (or Enter on it): remembered until the page reloads
+  hmOpenMap()[d.dataset.hm]=willOpen; if(willOpen && !d.querySelector('.sc-card')){ e.preventDefault(); refresh(); } });   // a closed game has no cards built yet: redraw with it open
 function modeCountsPaint(rows){ const pv=boardSrc==='paste', ok=r=>r && r.xc && !r.hiddenDup && (pv?isPasteRow(r):!isPasteRow(r)), nL=rows.filter(r=>ok(r)&&r.xc==='lucky').length, nH=rows.filter(r=>ok(r)&&r.xc==='hail').length;
   const set=(m,t,tip)=>{ const b=document.querySelector('#modeBar button[data-mode="'+m+'"]'); if(!b) return; let n=b.querySelector('.mode-n'); if(!n){ n=document.createElement('small'); n.className='mode-n'; b.appendChild(n); } n.textContent=t; b.title=tip; };
   set('safe','', 'The best bets: everything La Contadora approves. The same cards and stakes in every mode.');
   set('lucky', nL?' +'+nL:'', 'Safe, plus the bets that just missed the floor ('+nL+' on the board now): the smallest bet each, up to '+EXTRAS.luckyDay+' a day.');
-  set('clair', (nL||nH)?' +'+(nL+nH):'', 'Feeling Lucky, plus Hail Marys: long shots, math edge or not ('+nH+' on the board now), $'+EXTRAS.hailEach+' each, up to '+EXTRAS.hailDay+' a day. Back to Safe at midnight.'); }
+  set('clair', (nL||nH)?' +'+(nL+nH):'', 'Feeling Lucky, plus Hail Marys: long shots, math edge or not ('+nH+' on the board now), $'+EXTRAS.hailEach+' each, up to '+EXTRAS.hailDay+' a day. Back to Safe at midnight.');
+  const c=document.getElementById('contadora'); if(!c) return; if(betMode==='safe'){ c.innerHTML=CONTADORA.safe||''; return; }
+  const U=extrasUsed(), today=ctDay(Date.now()), tL=rows.filter(r=>ok(r)&&r.tier==='lucky').length, tH=rows.filter(r=>ok(r)&&r.tier==='hail').length, uL=U.lucky[today]||0, uH=U.hail[today]||0;
+  c.innerHTML=(CONTADORA[betMode]||'')+' <span class="mode-info">· 🍀 '+(tL?tL+' just missed on the board':nL?'no more today ('+EXTRAS.luckyDay+' a day)':'none just missed right now')+(uL?', '+uL+' of '+EXTRAS.luckyDay+' used today':'')+
+    (betMode==='clair'?' · 🔮 '+(tH?tH+' Hail Mary'+(tH===1?'':'s')+' on the board':nH?'no more today ('+EXTRAS.hailDay+' a day)':'no long shots right now')+(uH?', '+uH+' of '+EXTRAS.hailDay+' used today':''):'')+'</span>'; }
 function playerBetLabel(L){ const sd=L&&(L.side||sideOf(L)); return [String((L&&L.name)||'').trim().split(/\s+/).slice(-1)[0], sd==='O'?'Over':sd==='U'?'Under':'', String((L&&L.market)||'').trim()].filter(Boolean).join(' '); }
 // v4.48: La Contadora's EV of a logged bet when you took it (its snapshot: model, market, the price you got, the fee); null when the book's fill saved none
 function heldActEv(L){ try{ const sn=(L&&L.snap)||{}, pr=toProb(L.odds); if(!(sn.model>0 && sn.model<1) || !(pr>0 && pr<1)) return null; const p=okProb(sn.model, sn.market), f=+(L.fee!=null?L.fee:sn.fee)||0; return p==null?null:((p/pr-1)-f)/(1+f); }catch(e){ return null; } }
