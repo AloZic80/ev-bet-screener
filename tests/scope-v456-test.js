@@ -57,7 +57,7 @@ async function open(b, rows, extra){ const ctx=await b.newContext({timezoneId:'A
   await S.p.evaluate(async()=>{ await shopExchanges(); });
   const sh=await S.p.evaluate(()=>Object.fromEntries(lastRows.map(r=>[r.apiKey,{book:r.book, price:r.offeredProb, shop:r.shop?{bypass:r.shop.bypass||null, same:r.shop.same, from:r.shop.orig.book}:null, none:!!r.shopNone, tag:shopTagHtml(r).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim()}])));
   const her=(q,p,f)=>((q/p-1)-f)/(1+f), q=Math.min(0.58,0.56+0.35*0.02);
-  check('Kalshi could not be read for Kal Row, Novig could: it moves to Novig at 51.5% although that is only '+((her(q,0.515,0)-her(q,0.52,0.07*0.48))*100).toFixed(2)+' points better than the Pull price, and it says why ("current book could not be read")', sh.k1.book==='Novig' && Math.abs(sh.k1.price-0.515)<1e-9 && sh.k1.shop && sh.k1.shop.bypass==='current book could not be read', sh.k1);
+  check('Kalshi could not be read for Kal Row, Novig could: it moves to Novig at 51.5% although that is only '+((her(q,0.515,0)-her(q,0.52,0.07*0.48))*100).toFixed(2)+' points better than the Pull price, and it saves why (exchange_unreadable)', sh.k1.book==='Novig' && Math.abs(sh.k1.price-0.515)<1e-9 && sh.k1.shop && sh.k1.shop.bypass==='exchange_unreadable', sh.k1);
   check('Nov Row: both read in the same scan; Kalshi’s cheaper 51.8% loses after its fee, so it stays at Novig with no bypass', sh.n1.book==='Novig' && !(sh.n1.shop && sh.n1.shop.bypass), sh.n1);
   check('Nobody Row: no exchange answered for it: no winner, it says "no price could be read · refresh prices"', sh.z1.book==='Kalshi' && sh.z1.none && /no price could be read · refresh prices/.test(sh.z1.tag), sh.z1);
   const nCalls=S.calls.length;
@@ -68,7 +68,7 @@ async function open(b, rows, extra){ const ctx=await b.newContext({timezoneId:'A
     return {far60:!!shopStale(mk(60*60e3,100e3)), near100:!!shopStale(mk(4*60e3,100e3)), near80:!!shopStale(mk(4*60e3,80e3)), same:!!shopStale({shop:{same:true, at:new Date(now-600e3).toISOString()}})}; });
   check('within 5 minutes of kickoff the claim lasts 90 seconds (100 s old: stale; 80 s: not); an hour before, 100 s is still fine; a same-book live price makes no best-book claim', !kick.far60 && kick.near100 && !kick.near80 && !kick.same, kick);
   const saved=await S.p.evaluate(()=>{ const r=lastRows.find(x=>x.apiKey==='k1'); addToLog(Object.assign({},r,{stake:1})); return logged[logged.length-1].snap.shop; });
-  check('a bet taken from it saves where the best book came from, its age, that it was stale, and why the 0.3 points were skipped', saved && saved.from==='Kalshi' && saved.stale===true && saved.age>=200e3 && saved.bypass==='current book could not be read', saved);
+  check('a bet taken from it saves where the best book came from, its age, that it was stale, and why the 0.3 points were skipped', saved && saved.from==='Kalshi' && saved.stale===true && saved.age>=200e3 && saved.bypass==='exchange_unreadable', saved);
   check('no page errors (books)', !S.errs.length, S.errs); await S.ctx.close();
   // ================= open orders: measured only =================
   S=await open(b, [prop('mo1','Model Only','Points',0.52,0.58,null,12,'Kalshi'), prop('mk1','With Market','Points',0.52,0.58,0.56,13,'Kalshi')]);

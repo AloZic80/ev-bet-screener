@@ -32,7 +32,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.56</title>
+<title>0xBeta Screener v4.57</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1425,7 +1425,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.56</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.57</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2177,7 +2177,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.56';
+const SCREENER_VERSION='v4.57';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2591,17 +2591,19 @@ function audit(rows,cfg){ _obMemo=new Map(); try{ return auditCore(rows,cfg); } 
 function swapBooks(rows,cfg){
   if(!cfg.books || !cfg.books.length) return;
   const mine=b=>!!b && cfg.books.some(x=>bookIsMine(b,x));
-  rows.forEach(r=>{ if(r.swap){ r.book=r.swap.orig.book; r.offeredProb=r.swap.orig.offeredProb; r.offeredRaw=r.swap.orig.offeredRaw; delete r.swap; } delete r.swapHid; });
+  rows.forEach(r=>{ if(r.swap){ r._swapBook=r.book; /* v4.57: the book shown now is the one to beat */ r.book=r.swap.orig.book; r.offeredProb=r.swap.orig.offeredProb; r.offeredRaw=r.swap.orig.offeredRaw; delete r.swap; } delete r.swapHid; });
   const byKey=new Map();
   rows.forEach(r=>{ if(r.fairProb==null || !mine(r.book) || !(r.offeredProb>0)) return; const k=r.sport+'|'+coreKey(r.name,r.market,r.side); (byKey.get(k)||byKey.set(k,[]).get(k)).push(r); });
   rows.forEach(r=>{ if(r.fairProb==null || !r.book || mine(r.book) || r.prior) return;
     const netAt=(book,p)=>{ const f=feeRate(book,p,cfg.fees), a=actNetOf(r.fairProb, r.mktProb, p, f); return a!=null?a:((r.fairProb/p-1)-f)/(1+f); };   /* v4.54: books are compared on La Contadora's EV after each one's fee (it was the model's) */
     let best=null;
     (byKey.get(r.sport+'|'+coreKey(r.name,r.market,r.side))||[]).forEach(q=>{ if(q===r || (r.game && q.game && gameKey(q.game)!==gameKey(r.game))) return; const n=netAt(q.book,q.offeredProb); if(!best || n>best.net) best={net:n, row:q, book:q.book}; });
-    Object.entries(r._altQ||{}).forEach(([n,q])=>{ if(!mine(n) || !(q.price>0 && q.price<1)) return; const nt=netAt(n,q.price); if(!best || nt>best.net+0.003) best={net:nt, book:n, p:q.price}; });
+    /* v4.57: among the live prices the best one wins, and the book shown now keeps its place unless another is 0.3 points better (it was the first one read) */
+    { let bq=null, inc=null; Object.entries(r._altQ||{}).forEach(([n,q])=>{ if(!mine(n) || !(q.price>0 && q.price<1)) return; const c={net:netAt(n,q.price), book:n, p:q.price, at:+q._at||+r._altAt||null}; if(n===r._swapBook) inc=c; if(!bq || c.net>bq.net) bq=c; });
+      if(inc && bq.net<=inc.net+0.003) bq=inc; if(bq && (!best || bq.net>best.net+0.003)) best=bq; }
     if(!best) return;
     if(best.row){ r.hiddenDup=true; r.swapHid=best.book; return; }   // that bet is already on the board at your book
-    r.swap={orig:{book:r.book, offeredProb:r.offeredProb, offeredRaw:r.offeredRaw}};
+    r.swap={orig:{book:r.book, offeredProb:r.offeredProb, offeredRaw:r.offeredRaw}, at:best.at};   /* v4.57: when that price was read: the swap expires like a best-book claim */
     r.book=best.book; r.offeredProb=best.p; r.offeredRaw=fmtOdds(Math.round(americanOf(best.p))); });
 }
 // live exchange prices for rows at books you do not bet: Kalshi / Polymarket US / Novig, the ones in your list, once per row
@@ -2617,7 +2619,7 @@ async function swapHunt(){
   try{ for(let i=0;i<jobs.length;i+=8){ const chunk=jobs.slice(i,i+8);
       const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(chunk.map(x=>x[2]))), {headers:apiHeaders()}); if(!res.ok) break;
       const R=((await res.json())||{}).results||{};
-      chunk.forEach(([r,n,d,o])=>{ const q=R[d.id]; if(!q||!q.ok) return; if(suspectQ(q,r.fairProb,o.offeredProb,r.mktProb)) return; liveQuotes[d.id]=q; (r._altQ=r._altQ||{})[n]=q; got++; r._liveAt=Date.now(); }); } }   // v4.21: fresh
+      chunk.forEach(([r,n,d,o])=>{ const q=R[d.id]; if(!q||!q.ok) return; if(suspectQ(q,r.fairProb,o.offeredProb,r.mktProb)) return; liveQuotes[d.id]=q; q._at=Date.now(); /* v4.57 */ (r._altQ=r._altQ||{})[n]=q; got++; r._liveAt=Date.now(); }); } }   // v4.21: fresh
   catch(e){} finally{ swapBusy=false; }
   if(got) refresh();
 }
@@ -5338,7 +5340,7 @@ function addToLog(r){
       consensus:{bet_side:r.consOdds!=null?r.consOdds:null, other_side:r.consOtherOdds!=null?r.consOtherOdds:null},
       fee:r.fee!=null?+r.fee.toFixed(5):null, fees:Object.assign({},cfgRead().fees),
       outlier:!!r.outlier, risk:!!r.risk, modelOnly:r.noMkt?true:undefined, sizedAt:(()=>{ const q=r.noAct?null:okProb(r.actFair!==undefined?r.actFair:r.fairProb, r.actMkt!==undefined?r.actMkt:r.mktProb); return q!=null?+q.toFixed(4):null; })(),
-      shop:r.shop&&!r.shop.same?{from:r.shop.orig.book, at:r.shop.at, age:Date.now()-Date.parse(r.shop.at), stale:!!shopStale(r), bypass:r.shop.bypass||undefined}:undefined,   /* v4.56: where the best book came from, its age when you took it, and why the 0.3-point rule was skipped */
+      shop:shopSnap(r),   /* v4.56: where the best book came from, its age when you took it, and why the 0.3-point rule was skipped; v4.57: both books, their ages and EV, and book-swap cards */
       act:(()=>{ const q=r.noAct?null:okProb(r.actFair!==undefined?r.actFair:r.fairProb, r.actMkt!==undefined?r.actMkt:r.mktProb); return q!=null?+q.toFixed(4):null; })(), actNet:(()=>{ const a=r.noAct?null:actNetOf(r.actFair!==undefined?r.actFair:r.fairProb, r.actMkt!==undefined?r.actMkt:r.mktProb, r.offeredProb, r.fee); return a!=null?+a.toFixed(4):null; })(), policy:POLICY.math,   /* v4.53: La Contadora's chance and EV when you took it, and the math policy; older bets do not have these and are left as they are */
       sent:(()=>{ try{ if(!r.sentOk||r.tier||r.xc||r.fairProb==null) return undefined; const z=sentScore(r); return {t:z.total, t1:z.total1, e:z.e, m:z.m, f:z.f, s:z.s, pol:POLICY.sent}; }catch(e){ return undefined; } })(),   /* v4.53: the Sentinel score when you took it (t1 = what it was with the Edge on the model's EV) */
       ring: r.ring&&!(r.tier||r.xc) ? {n:r.ring.n, of:r.ring.of, miss:r.ring.miss.slice(0,3)} : undefined,   // v4.50: the ◎ Perfecta checks when you took it
@@ -10238,13 +10240,44 @@ function renderMakes(){
 document.addEventListener('click', e=>{ if(!e.target.closest('#makesBar') || e.target.closest('.mk-ack')) return; const t=[...document.querySelectorAll('.mk-slot')].find(x=>x.textContent.trim() && x.offsetParent); if(t) t.scrollIntoView({behavior:'smooth', block:'center'}); });
 /* v4.56: a best-book claim (Send the Sentinels moved the bet to another book) holds 3 minutes, 90 seconds when the game starts within 5 minutes. After
    that it says so; no price is read again by itself (no new Worker calls). Hoisted: the card and the timer call it. */
-function shopStale(r, now){ if(!r || !r.shop || r.shop.same || !r.shop.at) return null; now=now||Date.now(); const age=now-Date.parse(r.shop.at), ko=Date.parse((r.gameInfo&&r.gameInfo.startISO)||''), lim=(!isNaN(ko) && ko-now<=5*60e3)?90e3:3*60e3; return age>lim?{age, lim}:null; }
+function shopLim(r, now){ const ko=Date.parse((r&&r.gameInfo&&r.gameInfo.startISO)||''); return (!isNaN(ko) && ko-now<=5*60e3)?90e3:3*60e3; }
+function shopStale(r, now){ if(!r) return null; const at=(r.shop && !r.shop.same && r.shop.at)?Date.parse(r.shop.at):(r.swap && r.swap.at)?+r.swap.at:null; /* v4.57: a book-swap card expires too */ if(!at) return null; now=now||Date.now(); const age=now-at, lim=shopLim(r,now); return age>lim?{age, lim}:null; }
+/* v4.57 (agreed with ChatGPT, owner "BUILD" 11/10): one Sentinels decision for one row. The book shown now is the one to beat (the Pull book is kept only
+   for the "was" label). Its price is fresh when it was read in this scan (an exchange) or the board loaded it within the limit (a sportsbook: 3 minutes,
+   90 seconds within 5 minutes of the start). Fresh: another fresh price needs 0.3 points more of La Contadora's EV. An exchange that could not be read:
+   the best fresh price that clears the floor takes its place with no 0.3. A stale sportsbook price: a fresh exchange price that clears the floor replaces it with no 0.3.
+   Nothing fresh: no winner, nothing moves. Pure: it reads the row and the quotes and returns the decision. Hoisted. */
+function bookPick(r, Q, cfg, now){
+  const orig=r.shop?r.shop.orig:{book:r.book, offeredRaw:r.offeredRaw, offeredProb:r.offeredProb}, lim=shopLim(r,now), names=Object.keys(Q||{});
+  const netAt=(book,p)=>{ const f=feeRate(book,p,cfg.fees), a=actNetOf(r.fairProb, r.mktProb, p, f); return a!=null?a:((r.fairProb/p-1)-f)/(1+f); };
+  const cur=r.book, curEx=!!LIVE_BOOK(cur), ownN=curEx?names.find(n=>LIVE_BOOK(n)===LIVE_BOOK(cur)):null, la=Date.parse(r.loadedAt)||((String(r.src||'').startsWith('paste') && pasteAt)?+pasteAt:NaN) /* a pasted row: when it was pasted */, sbAge=isNaN(la)?null:now-la, sbFresh=sbAge!=null && sbAge<=lim;
+  const C=names.filter(n=>n!==ownN).map(n=>({book:LIVE_BOOK(n)===LIVE_BOOK(orig.book)?orig.book:n, p:Q[n].price, net:netAt(n,Q[n].price), age:0, live:true, ex:true}));
+  if(curEx && !LIVE_BOOK(orig.book) && sbFresh) C.push({book:orig.book, p:orig.offeredProb, net:netAt(orig.book,orig.offeredProb), age:sbAge, live:false, ex:false});   /* the Pull sportsbook can win the bet back while its price is fresh */
+  const seen=+(r.shop&&r.shop.scan)||+r._liveAt||la||null;
+  const inc=curEx ? (ownN?{book:cur, p:Q[ownN].price, net:netAt(cur,Q[ownN].price), age:0, live:true, ex:true, readable:true}:{book:cur, p:r.offeredProb, net:netAt(cur,r.offeredProb), age:seen?now-seen:null, live:false, ex:true, readable:false})
+                  : {book:cur, p:r.offeredProb, net:netAt(cur,r.offeredProb), age:sbAge, live:false, ex:false, readable:sbFresh};
+  const top=C.reduce((a,c)=>(!a || c.net>a.net)?c:a, null);
+  let win=null, margin='applied', bypass, none;
+  if(inc.readable) win=(top && top.net>inc.net+0.003)?top:inc;
+  else if(curEx){ margin='bypassed'; const ok=C.filter(c=>c.net>=cfg.eMin-1e-9).reduce((a,c)=>(!a || c.net>a.net)?c:a, null); if(ok){ win=ok; bypass='exchange_unreadable'; } else if(C.length){ none='exchange_unreadable_no_actionable_quote'; bypass=none; } else none='nothing_readable'; }   /* its last price is not a price: the best fresh one that clears the floor takes its place (the floor: agreed with ChatGPT after the first v4.57 draft) */
+  else { margin='bypassed'; const ok=C.filter(c=>c.ex && c.net>=cfg.eMin-1e-9).reduce((a,c)=>(!a || c.net>a.net)?c:a, null); if(ok){ win=ok; bypass='sportsbook_stale_unrefreshable'; } else none='sportsbook_stale'; }
+  return {orig, inc, ch:(win && win!==inc)?win:top, win, margin, bypass, none, quotes:names.length, lim};
+}
+/* v4.57: what a bet saves about its book choice: both books, how old each price was, whether each could be read, La Contadora's EV at each, whether
+   the 0.3 points applied or were skipped and why, and the Pull book apart. Hoisted: addToLog calls it. */
+function shopSnap(r){ const moved=!!(r.shop && !r.shop.same), c=r.shopChk; if(!moved && !r.swap && !c) return undefined; const now=Date.now(), at=moved?r.shop.at:(r.swap&&r.swap.at)?new Date(+r.swap.at).toISOString():undefined, st=shopStale(r,now);
+  const side=x=>x?{book:x.book, p:+(+x.p).toFixed(4), actNet:(x.net!=null && isFinite(x.net))?+x.net.toFixed(4):null, age:x.age!=null?Math.round(x.age):null, readable:x.readable!==undefined?!!x.readable:true, live:!!x.live}:undefined;
+  return {from:moved?r.shop.orig.book:r.swap?r.swap.orig.book:(c&&c.orig)||undefined, swap:r.swap?true:undefined, at, age:at?now-Date.parse(at):undefined, stale:!!st, bypass:(moved&&r.shop.bypass)||(c&&c.bypass)||undefined,
+    chk:c?{at:new Date(c.at).toISOString(), age:now-c.at, incumbent:side(c.inc), challenger:side(c.ch), margin:c.margin, none:c.none||undefined}:undefined}; }
 function shopTagHtml(r){
   let h='';
   if(r.swap) h+='<span class="meta shop-was" title="'+esc(bookLabel(r.swap.orig.book))+' is not a book you bet: this is the same bet at '+esc(bookLabel(r.book))+', screened at its price">↪ for you: '+esc(bookLabel(r.book))+' (was '+esc(bookLabel(r.swap.orig.book))+' '+esc(fmtOdds(r.swap.orig.offeredRaw))+')</span> ';   // v4.05
   { const st=shopStale(r); if(st) h+='<span class="shop-stale" title="Prices move: this best-book choice was made '+ageTxt(st.age)+' ago. Press Send the Sentinels to compare the books again.">Price '+ageTxt(st.age)+' old · best book no longer confirmed · Send the Sentinels</span> '; }   /* v4.56 */
-  if(r.shopNone && !r.shop) h+='<span class="shop-stale" title="No exchange could be read for this bet on the last scan">no price could be read · refresh prices</span> ';
-  if(r.shop) h+='<span class="meta shop-was '+(r.offeredProb<r.shop.orig.offeredProb?'':'worse')+'" title="'+esc(r.shop.same?'Live '+bookLabel(r.book)+' price now (was '+fmtOdds(r.shop.orig.offeredRaw)+' at the Pull)':'Line shopping: '+bookLabel(r.book)+' beats '+bookLabel(r.shop.orig.book)+' after fees')+'">'+(r.shop.same?'live · was ':'was '+esc(bookLabel(r.shop.orig.book))+' ')+esc(fmtOdds(r.shop.orig.offeredRaw))+'</span>';
+  { const c=r.shopChk, st=shopStale(r);   /* v4.57: the last scan found no fresh price to confirm the book shown */
+    if(c && c.none==='nothing_readable' && !st) h+='<span class="shop-stale" title="No exchange could be read for this bet on the last scan">no price could be read · refresh prices</span> ';
+    else if(c && c.none==='sportsbook_stale' && !st) h+='<span class="shop-stale" title="The '+esc(bookLabel(r.book))+' price is from the board, loaded '+esc(c.inc.age!=null?ageTxt(c.inc.age):'a while')+' before the scan, and no exchange had a fresh price that clears your floor. Refresh the board to read it again, or look at the book.">No current best book confirmed · sportsbook price is stale · check the book manually</span> ';
+    else if(c && c.none==='exchange_unreadable_no_actionable_quote' && !st) h+='<span class="shop-stale" title="'+esc(bookLabel(r.book))+' could not be read on the last scan, and no other fresh price clears your floor">No current best book confirmed · shown exchange unavailable · fresh prices do not clear your floor</span> '; }
+  if(r.shop) h+='<span class="meta shop-was '+(r.offeredProb<r.shop.orig.offeredProb?'':'worse')+'" title="'+esc(r.shop.same?'Live '+bookLabel(r.book)+' price now (was '+fmtOdds(r.shop.orig.offeredRaw)+' at the Pull)':'Line shopping: '+bookLabel(r.book)+' beats '+bookLabel(r.shop.orig.book)+' after fees')+'">'+(r.shop.same?'live · was ':'was '+esc(bookLabel(r.shop.orig.book))+' ')+esc(fmtOdds(r.shop.orig.offeredRaw))+(r.shop.bypass==='sportsbook_stale_unrefreshable'?' · sportsbook price stale and not refreshable':'')+'</span>';   /* v4.57 */
   if(r.freed) h+='<span class="jail free" title="Skipped at the Pull price, passes every screen at the live price">🔓 out of Skipping Jail</span>';
   if(r.jailed) h+='<span class="jail in" title="Passed at the Pull price, fails at the live price">🔒 Skipping Jail</span>';
   return h;
@@ -10311,24 +10344,19 @@ async function shopExchanges(){
       const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(chunk.map(x=>x[2]))), {headers:apiHeaders()});
       if(!res.ok){ msg.textContent='exchange check failed ('+res.status+')'; break; }
       const R=((await res.json())||{}).results||{};
-      chunk.forEach(([r,n,d])=>{ const q=R[d.id]; if(!q||!q.ok) return; if(suspectQ(q,r.fairProb,r.offeredProb,r.mktProb)){ (r._suspect=r._suspect||{})[n]=q; return; } matched++; liveQuotes[d.id]=q; (r._shopQ=r._shopQ||{})[n]=q; r._liveAt=Date.now(); });   // v4.21: fresh
+      chunk.forEach(([r,n,d])=>{ const q=R[d.id]; if(!q||!q.ok) return; if(suspectQ(q,r.fairProb,r.swap?r.swap.orig.offeredProb:r.offeredProb /* v4.57: like swapHunt */,r.mktProb)){ (r._suspect=r._suspect||{})[n]=q; return; } matched++; liveQuotes[d.id]=q; (r._shopQ=r._shopQ||{})[n]=q; r._liveAt=Date.now(); });   // v4.21: fresh
     }
     let repriced=0;
+    const now=Date.now(), mineBk=b=>!have || have.some(x=>bookIsMine(b,x));
     rows.forEach(r=>{
-      const orig=r.shop?r.shop.orig:{book:r.book, offeredRaw:r.offeredRaw, offeredProb:r.offeredProb};
-      const netAt=(book,p)=>{ const f=feeRate(book,p,cfg.fees), a=actNetOf(r.fairProb, r.mktProb, p, f); return a!=null?a:((r.fairProb/p-1)-f)/(1+f); };   /* v4.54: books are compared on La Contadora's EV after each one's fee (it was the model's) */
-      const Q=r._shopQ||{}, own=Object.keys(Q).find(n=>LIVE_BOOK(n)===LIVE_BOOK(orig.book));
-      // baseline: the row's own book — its live price when it's an exchange, else the Pull's price (DraftKings etc.)
-      let best = own ? {book:orig.book, p:Q[own].price, net:netAt(orig.book,Q[own].price), live:true}
-                     : {book:orig.book, p:orig.offeredProb, net:netAt(orig.book,orig.offeredProb), live:false};
-      if(have && !have.some(x=>bookIsMine(orig.book,x))) best.net=-Infinity;   // v4.05: a book you do not bet (DraftKings in Texas) never wins; your best one does
-      /* v4.56: the 0.3-point margin only compares two prices read in this same scan. When the row's own exchange could not be read now, another
-         exact, readable price wins without it; when nothing could be read there is no winner ("refresh prices"). */
-      const ownEx=!!LIVE_BOOK(orig.book), curUnread=ownEx && !own, mg=curUnread?0:0.003, readable=Object.keys(Q).length;
-      Object.entries(Q).forEach(([n,q])=>{ if(n===own) return; const nt=netAt(n,q.price); if(nt>best.net+mg) best={book:n,p:q.price,net:nt,live:true}; });
-      delete r.shopNone; if(ownEx && !readable) r.shopNone=Date.now();
+      /* v4.57: a row at a book you do not bet (a book-swap card): the fresh prices replace the ones read once, and swapBooks picks among your books at the re-screen below */
+      if(r.swap || !mineBk(r.book)){ delete r.shopChk; delete r.shopNone; if(r._shopQ){ Object.values(r._shopQ).forEach(q=>{ q._at=now; }); r._altQ=Object.assign({}, r._shopQ); r._altAt=now; repriced++; }
+        if(r.shop){ if(!r.swap){ r.book=r.shop.orig.book; r.offeredProb=r.shop.orig.offeredProb; r.offeredRaw=r.shop.orig.offeredRaw; } delete r.shop; } return; }
+      const d=bookPick(r, r._shopQ||{}, cfg, now), orig=d.orig, best=d.win;
+      r.shopChk={at:now, inc:d.inc, ch:d.ch, margin:d.margin, bypass:d.bypass, none:d.none, orig:orig.book}; delete r.shopNone; if(d.none==='nothing_readable') r.shopNone=now;
+      if(!best) return;   /* no winner: nothing moves, the card says so */
       const changed = best.book!==orig.book || Math.abs(best.p-orig.offeredProb)>1e-6;
-      if(changed){ repriced++; r.shop={orig, live:best.live, same:best.book===orig.book, at:new Date().toISOString(), scan:Date.now(), quotes:readable, bypass:(curUnread && best.book!==orig.book)?'current book could not be read':undefined};
+      if(changed){ repriced++; r.shop={orig, live:best.live, same:best.book===orig.book, at:new Date(now).toISOString(), scan:now, quotes:d.quotes, bypass:(d.bypass && best!==d.inc)?d.bypass:undefined};
         r.book=best.book; r.offeredProb=best.p; r.offeredRaw=fmtOdds(Math.round(americanOf(best.p))); }
       else if(r.shop){ r.book=orig.book; r.offeredProb=orig.offeredProb; r.offeredRaw=orig.offeredRaw; delete r.shop; }
     });
