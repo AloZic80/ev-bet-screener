@@ -65,10 +65,10 @@ async function run(log, rows, mode){ rows=rows||ROWS;   // v4.48: other boards a
   check('v4.48: one Mason card in Place these, and Jefferson (another player) keeps his', cards.filter(t=>/Jordan Mason/.test(t)).length===1 && cards.some(t=>/Justin Jefferson/.test(t)), cards.map(t=>t.slice(0,80)));
   check('v4.48: Safe mode: no mode note on Place these', !/Board mode/.test(head), head.slice(0,200));
   check('no page errors (3)', !errs.length, errs); await b.close();
-  // v4.50: the modes changed meaning (Safe = best bets; Feeling Lucky adds Just missed; Clairvoyant adds Hail Marys): tests/modes-perfecta-test.js.
-  // What stays here: the name matching, and that a mode other than Safe says the best bets are the same.
+  // v4.50: the modes changed meaning; v4.51: each mode lists only its own bets (Safe the best bets, Feeling Lucky the ones that just missed,
+  // Clairvoyant the Hail Marys): tests/modes-perfecta-test.js. What stays here: the name matching, and that a mode other than Safe has no Place these.
   let p; ({b, p, st, cards, head, errs}=await run([], ROWS, 'clair'));
-  check('v4.50: Clairvoyant on: the Place these header says these are the best bets, the same cards and stakes as in Safe, and what the mode adds is listed apart', /Board mode: 🔮 Clairvoyant\. These are the best bets, the same cards and the same stakes as in Safe\./i.test(head) && /listed apart, under them: 🍀 Just missed and 🔮 Hail Marys\. Back to Safe at midnight\./i.test(head), head.slice(-330));
+  check('v4.51: Clairvoyant on: the best bets are not listed here (no Place these, no "Board mode" note): only the Hail Marys header, with none on this board, and the mode line says where the best bets are', !/Board mode/.test(head) && !/Place these/i.test(head) && /HAIL MARYS · 0/i.test(head) && /No long shot on the board right now/.test(head) && !cards.length && await p.evaluate(()=>/Your 3 best bets are under 🛡️ Safe/.test(document.getElementById('contadora').textContent) && lastRows.filter(r=>r.stake>0).length===3), head.slice(-330));
   const nm=await p.evaluate(()=>{ const P=(n,t)=>({name:n, team:t||null, kind:'prop', sport:'NFL'}); return {
     initial:samePlayerAs(P('J. Mason'),P('Jordan Mason')), accent:samePlayerAs(P('Jonathan Lekkerimäki'),P('Jonathan Lekkerimaki')), short:samePlayerAs(P('Jon Smith'),P('Jonathan Smith')),
     fake:samePlayerAs(P('Five Star','MIN'),P('Four Star','MIN')), allen:samePlayerAs(P('Josh Allen','BUF'),P('Josh Allen','JAX')), line:samePlayerAs({name:'Jordan Mason',kind:'spread'},P('Jordan Mason')) }; });

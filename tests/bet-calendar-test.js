@@ -7,7 +7,7 @@ const html=fs.readFileSync(process.argv[2]||INDEX,'utf8');
 let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?'PASS ':'FAIL ')+n+'  → '+JSON.stringify(got)); };
 const NOW=Date.parse('2026-11-09T18:00:00Z'), H=3600e3, iso=ms=>new Date(ms).toISOString();
 const B=(id,day,fair,odds,stake,result,start)=>Object.assign({id,key:id,name:'Player '+id,sport:'NBA',kind:'prop',market:'10.5 Points',side:'O',book:'Novig',odds,offeredRaw:odds,stake,fair,date:day,dateSet:true,start,snap:{at:iso(NOW-30*H)}},result?{result,gradedBy:'manual',resultSrc:'you',manual:true}:{});
-// Mon 11/9: a Lean (60%) win at +150 $10 → +$15, a Lean loss $10 → −$10, a Long Shot (40%) $5 not started, a 2-pick parlay $2 (legs 58%, 72%) not started.
+// Mon 11/9: a Lean (60%) win at +150 $10 → +$15, a Lean loss $10 → −$10, an Unlikely (40%; "Long Shot" before v4.51) $5 not started, a 2-pick parlay $2 (legs 58%, 72%) not started.
 // Sun 11/8: a win at +200 $5 → +$10.
 const PL={id:'pl1',kind:'parlay',date:'2026-11-09',dateSet:true,start:null,name:'Parlay · 2 picks',sport:'PARLAY',market:'2-pick parlay',book:'Kalshi',odds:'+250',fair:'',stake:2,result:'pending',closing:'',
   parlay:{picks:2,legs:'Player x O 20.5 Points; Player y O 5.5 Assists',pays:{all:7,m1:0,m2:0},hits:null,payout:null,pk:{legs:[{name:'Player x',p:.58},{name:'Player y',p:.72}]}},snap:{at:iso(NOW-H)}};
@@ -43,7 +43,7 @@ async function run(width){
   const bands=await p.evaluate(()=>[...document.querySelectorAll('#lcBands .lc-band')].map(r=>r.innerText.replace(/\s+/g,' ').trim()));
   const band=n=>bands.find(x=>x.startsWith(n))||'';
   check('cover bands for 11/9: 5 picks (3 singles + 2 parlay legs)', (await p.textContent('#lcBandSub'))==='· 5 picks', await p.textContent('#lcBandSub'));
-  check('Lean 2 · 40.0%, Long Shot 1 · 20.0%, Slight Lean 1 · 20.0%, Strong 1 · 20.0%', /2 · 40\.0%$/.test(band('Lean')) && /1 · 20\.0%$/.test(band('Long Shot')) && /1 · 20\.0%$/.test(band('Slight Lean')) && /1 · 20\.0%$/.test(band('Strong')), bands);
+  check('Lean 2 · 40.0%, Unlikely 1 · 20.0% (v4.51: the band was "Long Shot"), Slight Lean 1 · 20.0%, Strong 1 · 20.0%', /2 · 40\.0%$/.test(band('Lean')) && /1 · 20\.0%$/.test(band('Unlikely')) && !band('Long Shot') && /1 · 20\.0%$/.test(band('Slight Lean')) && /1 · 20\.0%$/.test(band('Strong')), bands);
   check('nine bands listed (Unknown left out when it is 0)', bands.length===9, bands.length);
   const perf=()=>p.evaluate(()=>[...document.querySelectorAll('#lcPerf tr')].map(tr=>[...tr.children].map(td=>td.innerText.trim()).join('|')));
   let rows=await perf();

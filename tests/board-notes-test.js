@@ -32,7 +32,7 @@ const LOG=[{id:'p1',key:'p1',name:'Anthony Edwards',sport:'NBA',kind:'prop',mark
       check('the Show choice is remembered after a reload', await p.$eval('#boardView',e=>e.value)==='skip', null);
       await view('all');
       const leg=await p.evaluate(()=>[...document.querySelectorAll('.cv-legend .cv-chip')].map(c=>c.textContent));
-      check('the cover legend has Augi\'s nine bands, Long Shot to High Cover', leg.length===9 && /^Long Shot/.test(leg[0]) && /^High Cover/.test(leg[8]), leg);
+      check('the cover legend has Augi\'s nine bands, Unlikely to High Cover (v4.51: "Long Shot" and "Feeling Lucky" are Unlikely and Coin Flip, so they do not share names with the modes)', leg.length===9 && /^Unlikely/.test(leg[0]) && /^Coin Flip/.test(leg[1]) && /^High Cover/.test(leg[8]), leg);
     }
     // a note on a card
     await p.evaluate(()=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>/Naz Reid/.test(x.textContent)); c.querySelector('.ln-btn').click(); }); await p.waitForTimeout(200);

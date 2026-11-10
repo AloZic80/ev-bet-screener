@@ -438,6 +438,29 @@
     is remembered.
   - Not built: a manual same-player override with a combined cap (waits for measured correlations); the Worker time stamp; tier / ring columns in the CSV.
   `tests/modes-perfecta-test.js` (46 checks); `tests/same-player-test.js` and `tests/fill-warn-test.js` updated.
+- Each mode lists only its own bets (v4.51, `modeFamOf`, `famIs` and `mN` in `renderCore`, `r.xFit`, `modeElse`, `modeEmptyText`, `modeCountsPaint(rows,mN)`; owner, 11/10:
+  "they aren't supposed to be under the same either - show on Safe, Feeling Lucky, etc. only where they fit"). This replaces v4.50's stacking (Feeling Lucky =
+  Safe's cards + Just missed, Clairvoyant = both + Hail Marys). `MODES.clair` no longer has `lucky`. The math is the same in every mode; only the list changes.
+  - `modeFamOf(r)` → 'safe' | 'lucky' | 'hail', every row in exactly one: a bet you hold by `prior.tier` (anything else 'safe', whatever the price did since);
+    a candidate by `r.xc`; whatever passes every screen 'safe'; of the rest, long shots 'hail', Watch rows 'lucky', other rejects 'safe'. So Safe has no Watch
+    group any more (Show › 👀 Watch in Safe says they are under Feeling Lucky), and a held 🍀 / 🔮 bet shows as ALREADY BET in its own mode (listed even when
+    its row fails a screen).
+  - `extrasAssign` works out the offer whatever the mode (`r.xFit`) and gives `r.tier` / `r.xStake` / `r.xWhy` only in the row's own mode. The number on each
+    mode button is how many bets it holds (`mN.safe` = group 0, `mN.lucky` / `mN.hail` = `xFit`), counted after sport, search, Settings, sweet spot and book
+    chips, so it is what you see there. `#contadora` says where the other bets are ("Your 5 best bets are under 🛡️ Safe · …"); a mode's card header shows
+    even with nothing to offer ("No more today" when the day's count is used); `#emptyMsg` is mode-aware. Show › Passing = the mode's bets to place.
+  - Cover bands: Augi's "Long Shot" (<45%) and "Feeling Lucky" (45–<50%) are **Unlikely** and **Coin Flip** (`cvNames`, the legend), so they do not share
+    names with the modes. Not changed: the band "Strong" (70–75%) still shares a word with the Sentinel score's STRONG.
+  - From ChatGPT's review (pasted by the owner): a Hail Mary says "Needs 22.2% · market 19.0% · La Contadora 19.4%" then "Math says −12.9% at this price"
+    (`extraLine`); 🎟 `r.leg` also needs `actNet` ≥ `RING.legEv` (0); Rings and extras marks the 🍀 / 🔮 lines "a user-selected subset". The six ◎ checks
+    are frozen as they are (room stays 2.5 points); do not retune them on the bets used to judge them.
+  - Also fixed: two Settings tooltips still said "Feeling Lucky uses 2.5% / 15%" (gone since v4.50).
+  - From the review of this build: an order waiting or a moved line (`r.waitOrder`, `r.moved`) is always 'safe' (the do-not-bet-twice mark stays in the default
+    mode); a held 🔮 bet past +500 is not hidden by the default odds filter; a best bet your daily max or game cap left with no stake stays Safe's (not a
+    $1 Hail Mary past the limit); `r.xCap` marks "the day's count is used"; Show › 👀 Watch also lists Just missed; Clairvoyant goes back to Safe at
+    midnight with the page left open (`ringRecheck`); the Live Games hub's See on Board opens the mode that lists the bet (`data-fam`).
+  - Owner, 11/10: "wait for the para-chatgipititi after you build the last one and put all in that one": no v4.51 note on its own; the next one covers it.
+  `tests/modes-perfecta-test.js` (rewritten, 66 checks); `tests/same-player-test.js`, `bet-calendar-test.js`, `board-notes-test.js`, `cover-study-test.js` updated.
 - Augi's screens on our engine, step 1 of 5: the Board (v4.34, `boardView`/`#boardView`/`mbev.boardView`, `.cv-legend-box`, `lnGet`/`lnSet`/`lnBtnHtml`/`.ln-ed`,
   `mbev.lineNotes`; owner: "What you recommend" → option 2, "BUILD"): Show menu next to Sort (All groups / Passing / Outliers only / Already bet / Skipped;
   Skipped also lists rejected rows without Show rejected), filtered after `grpOf`. Augi's cover legend (nine chips) in a `details.help` above the bar.

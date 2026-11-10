@@ -27,8 +27,11 @@ const ROWS=[row('lek','Jonathan Lekkerimaki','VAN',0.519,0.5546,0.526),   // ble
   const cards=await p.evaluate(()=>[...document.querySelectorAll('#placeCards .sc-card')].map(c=>c.textContent.match(/Lekkerimaki|Cuylle|Pettersson|Hughes/)?.[0]));
   check('Place these: Lekkerimaki and Pettersson only (no Cuylle)', cards.includes('Lekkerimaki') && cards.includes('Pettersson') && !cards.includes('Cuylle') && !cards.includes('Hughes'), cards);
   await p.uncheck('#cardsOn'); await p.waitForTimeout(300);
+  const safeG=await p.evaluate(()=>({g:[...document.querySelectorAll('#tbody tr.group-row')].map(g=>g.innerText.replace(/\s+/g,' ').trim()), cu:/Cuylle/.test(document.getElementById('tbody').textContent)}));
+  check('v4.51: Safe lists only the best bets: no Watch group and no Cuylle (he is under Feeling Lucky)', !safeG.g.some(g=>/^Watch|JUST MISSED/i.test(g)) && !safeG.cu, safeG);
+  await p.evaluate(()=>setMode('lucky')); await p.waitForTimeout(300);
   const groups=await p.evaluate(()=>[...document.querySelectorAll('#tbody tr.group-row')].map(g=>g.innerText.replace(/\s+/g,' ').trim()));
-  check('the board lists a Watch group (after Place these, before Skip) with Cuylle', /^Watch · the model likes these/i.test(groups.find(g=>/^Watch/i.test(g))||'') && (groups.findIndex(g=>/^Skip/i.test(g))<0 || groups.findIndex(g=>/^Watch/i.test(g))<groups.findIndex(g=>/^Skip/i.test(g))) && groups.findIndex(g=>/^Watch/i.test(g))>groups.findIndex(g=>/^Place these/i.test(g)), groups);
+  check('v4.51: Feeling Lucky lists him, as 🍀 Just missed (his EV with the market is +0.2%, 0% or better), and no Place these there', groups.length===1 && /JUST MISSED/i.test(groups[0]) && await p.evaluate(()=>/Cuylle/.test(document.getElementById('tbody').textContent) && !/Lekkerimaki/.test(document.getElementById('tbody').textContent)), groups);
   await p.selectOption('#boardView','watch'); await p.waitForTimeout(300);
   const only=await p.evaluate(()=>[...document.querySelectorAll('#tbody tr:not(.group-row)')].map(t=>t.textContent.match(/Lekkerimaki|Cuylle|Pettersson|Hughes/)?.[0]).filter(Boolean));
   check('Show › 👀 Watch lists only the watch rows (Cuylle)', only.length===1 && only[0]==='Cuylle', only);
