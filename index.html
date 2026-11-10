@@ -32,7 +32,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.46</title>
+<title>0xBeta Screener v4.47</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1388,7 +1388,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.46</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.47</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2135,7 +2135,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.46';
+const SCREENER_VERSION='v4.47';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2708,7 +2708,17 @@ function auditCore(rows,cfg){
     } else {
       /* Not the same bet, but the same game — you already have exposure there. */
       const slate = document.getElementById('slate').value;
-      const same = logged.filter(L=>!L.sold && L.game && r.game && gameKey(L.game)===gameKey(r.game) && onBoard(L));
+      /* v4.47 (Alonzo, 11/10: a Jordan Mason rushing-yards bet, and the Sentinels card "Jordan Mason Under 11.5 Rushing Attempts" showed nothing; "sometimes it is
+         bad or not recommended to make bets on the same person on the same game. Correlation."): this check needed the same game text on both sides, but a bet
+         logged from a book's fill usually has none (or codes, "BUF @ MIN", where the board says "Buffalo Bills @ Minnesota Vikings"), so one-per-player never
+         fired. Now the same game is also: the same two team codes (ESPN's for the row) at the same time, a bet with no game text whose team is in this game,
+         or the same player (samePlayerAs: accents, case and a first initial ignored) at the same time. */
+      const rKeyT = rTeams && rTeams.length===2 ? rTeams.map(normAbbr).sort().join('-') : null;
+      const inGame = L => { if(L.game && r.game && gameKey(L.game)===gameKey(r.game)) return true;
+        const lt=teamsOf(L.game||''); if(lt && rKeyT && lt.map(normAbbr).sort().join('-')===rKeyT && sameTime(L)) return true;
+        if(!lt && L.team && rTeams && rTeams.includes(normAbbr(L.team)) && sameTime(L)) return true;
+        return samePlayerAs(L,r) && sameTime(L); };
+      const same = logged.filter(L=>!L.sold && L.kind!=='parlay' && onBoard(L) && inGame(L));   // v4.47
       if(same.length){
         r.corr = same.length;
         const inPlay = same.reduce((t,b)=>t+(b.stake||0),0);
@@ -2721,7 +2731,8 @@ function auditCore(rows,cfg){
           if(L.team && r.team && L.team===r.team && L.side && r.side) w = L.side===r.side ? 1.5 : 0.75;
           return t+(L.stake||0)*w;
         },0);
-        r.samePlayer = same.some(L=>nm(L.name)===nm(r.name));
+        r.samePlayer = same.some(L=>nm(L.name)===nm(r.name) || samePlayerAs(L,r));   // v4.47: worded by the book too (Lekkerimäki, a first initial)
+        r.samePlayerBet = r.samePlayer ? same.find(L=>nm(L.name)===nm(r.name) || samePlayerAs(L,r)) : null;   // v4.47
         const last=n=>String(n||'').trim().split(/\s+/).slice(-1)[0];
         const who = same.length===1 ? 'your '+last(same[0].name)+' '+String(same[0].betnow||same[0].market).replace(/\s+[+-]\d+$/,'')
                                     : same.length+' of your bets';
@@ -2771,7 +2782,7 @@ function auditCore(rows,cfg){
         else r.riskCand = true;
       }
       // v2.50: game cap — one bet per player, correlated bets count more, $10 is hard
-      if(r.samePlayer && !r.prior){ s=0; r.flags.push(['warn','already have a bet on this player — one per player']); }
+      if(r.samePlayer && !r.prior){ s=0; r.flags.push(['warn', r.samePlayerBet ? 'you already bet '+(L=>{ const sd=sideOf(L); return [String(L.name||'').trim().split(/\s+/).slice(-1)[0], sd==='O'?'Over':sd==='U'?'Under':'', String(L.market||'').trim()].filter(Boolean).join(' '); })(r.samePlayerBet)+' in this game: one bet per player (both move with the same game)' : 'already have a bet on this player — one per player']); }   // v4.47: says which bet
       else if(s>0 && r.gameInPlay){
         const room=Math.max(0, Math.min(cfg.gameCap-(r.gameWeighted||0), cfg.gameCap-r.gameInPlay));
         if(s>room){ s=room; r.capTrimmed=true; }
@@ -3697,7 +3708,8 @@ function placeCardHtml(r,cfg,o){
   const lim=r.risk?'⚠ small on purpose':r.outlier?'outlier: capped':(r.capTrimmed||r.dayTrimmed)?'limited by your caps':r.longShot?'long shot: small':'';
   const mv=pxMove(r), mvTxt=mv&&Math.abs(mv.dp)>=0.01?'<span class="sc-pill mv '+(mv.dp<0?'good':'bad')+'" title="The price '+(mv.dp<0?'fell':'rose')+' from '+pp(mv.from)+' to '+pp(mv.to)+' in '+mv.mins+' min">'+(mv.dp<0?'↘':'↗')+' '+(mv.dp>0?'+':'−')+(Math.abs(mv.dp)*100).toFixed(1)+' pts</span>'
                       : mv&&mv.df!=null&&Math.abs(mv.df)>=0.015&&Math.abs(mv.dp)<0.005?'<span class="sc-pill mv good" title="The fair price moved '+(mv.df>0?'+':'−')+(Math.abs(mv.df)*100).toFixed(1)+' points in '+mv.mins+' min; '+esc(bk)+' has not moved">fair '+(mv.df>0?'↗':'↘')+' · '+esc(bk)+' behind</span>':'';
-  const warns=(r.flags||[]).filter(f=>f[0]==='warn' && !/ order (“|in this game)/.test(f[1]) && !/^×\d+$/.test(f[1])).map(f=>'<span class="tag t-warn">'+esc(f[1])+'</span>').join('');
+  const warns=(r.flags||[]).filter(f=>f[0]==='warn' && !/ order (“|in this game)/.test(f[1]) && !/^×\d+$/.test(f[1])).map(f=>'<span class="tag t-warn">'+esc(f[1])+'</span>').join('')
+    +(r.flags||[]).filter(f=>f[0]==='corr').map(f=>'<span class="tag t-corr" title="You already have money on this game; bets in one game move together">🔗 '+esc(f[1])+'</span>').join('');   // v4.47: the same-game note was in the table only
   const tags=orderTagHtml(r)+injTagHtml(r)+wxTagHtml(r)+(o.sweet?'<span class="sweet">🎯 SWEET SPOT</span>':'')+shopTagHtml(r)+warns+'<span class="mk-slot" data-idx="'+r.idx+'">'+makeTagHtml(r)+'</span>';
   const open=notesAll || scOpenSet().has(pxKey(r));
   const nS=r.stars==null?null:Math.max(0,Math.min(5,Math.round(r.stars)));
@@ -4935,6 +4947,12 @@ function propSame(L,r,anySide){ if(!L||!r) return false; const pk=k=>!k||k==='pr
   if(!fa || fa!==fb) return false;
   try{ if(!qualOK(sa,sb) || !qualOK(sb,sa)) return false; }catch(e){ if(nrmT(sa)!==nrmT(sb) && /period|quarter|half|1st|2nd|3rd|power/i.test(sa+' '+sb)) return false; }
   return true; }
+/* v4.47: the same player in the same game, whatever the stat (Mason rushing yards and Mason rushing attempts): props only, same sport when both known, same
+   name by nrmT or the same last name and first initial. Hoisted and startup-safe (nrmT is a function declaration). The caller checks the time (sameTime). */
+function samePlayerAs(L,r){ if(!L||!r) return false; const pk=k=>!k||k==='prop'; if(!pk(L.kind)||!pk(r.kind)) return false;
+  if(L.sport && r.sport && String(L.sport).toUpperCase()!==String(r.sport).toUpperCase()) return false;
+  const a=nrmT(L.name), b=nrmT(r.name); if(!a||!b) return false; if(a===b) return true;
+  const x=a.split(' '), y=b.split(' '); return x.length>=2 && y.length>=2 && x[x.length-1]===y[y.length-1] && x[0][0]===y[0][0]; }
 // v3.13: is the new line better or worse than the one you hold? (spread: more points is better; Over: lower is better; Under: higher)
 function heldLabel(L){ return L.betnow ? lineOnly(L) : [L.name, sideOf(L)||'', L.market].filter(Boolean).join(' '); }
 function lineCompare(held, row){
