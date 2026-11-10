@@ -78,7 +78,7 @@ A player prop with a conservative-blend chance of 70% or more gets "PARLAY LEG".
 - **The Bet log's red circle** is on the number only.
 
 ## Checked
-- A new test file with 43 checks covers the modes, the caps, the ring, the sweet spot, the parlay tag, the records and four screen widths.
+- A new test file with 46 checks covers the modes, the caps, the ring, the sweet spot, the parlay tag, the records and four screen widths.
 - Text contrast of the new colours passes WCAG AA in all five colour schemes, light and dark.
 - The full suite result is in the PR.
 

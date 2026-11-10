@@ -417,9 +417,11 @@
     `r.pass` false, so Place these, the daily max, the Sentinels, Parlays and the #1 math pick never see an extra.
   - A logged extra (`b.tier`) does not block a best bet: `r.samePlayer` and the one-side-per-game `held` check skip tier bets (the 🔗 same-game note still shows).
   - The board: groups 6 (Just missed) and 7 (Hail Marys), `GRP_RANK=[0,3,5,6,7,4,1,2]`. Cards go under Place these (`extrasCardsHtml`); Hail Marys are grouped by game
-    in `details.hm-game`, and only the open games get their cards built (a `toggle` listener redraws). `placeCardHtml(r,cfg,{tier})`: strip `.sc-xtop`, an icon for
+    in `details.hm-game`, and only the open games get their cards built (a click on a closed game's summary redraws with it open; `hmOpenMap` remembers your taps
+    until a reload; more than 6 long shots start closed, a search opens them). `placeCardHtml(r,cfg,{tier})`: strip `.sc-xtop`, an icon for
     the score, La Contadora's EV on the pill, `.sc-xline` in the Kalshi line's place. Cards off: `.x-chip` and "🍀 JUST MISSED $x" / "🔮 HAIL MARY $x" in the table.
-    The default −300 to +500 Settings odds filter does not hide a Hail Mary; Only sweet spot does not hide extras. Each mode button shows what it would add (`.mode-n`).
+    The default −300 to +500 Settings odds filter does not hide a Hail Mary; Only sweet spot does not hide extras. Each mode button shows what it would add (`.mode-n`),
+    and `#contadora` says what is on the board for the mode and how many of the day's count are used (`modeCountsPaint`).
   - I bet this on an extra opens at its own stake (`st0`), says what the math thinks, and a Hail Mary the math dislikes needs a second press. `addToLog` saves
     `tier` (`r.tier || r.xc`: what kind of bet it was, whatever the mode) and `snap.ring`; `saidOf` → JUST MISSED / HAIL MARY with `said.tier`; `dayStats().extra`
     (not "against the screener"); the Bet log tags them (`tierTagHtml`).
@@ -435,7 +437,7 @@
     circle is on the number only (`.tab-alert .tab-n`, a "!" when empty); the "screener said x%" note is rounded; a prop with no number reads Yes / No; Show › Watch
     is remembered.
   - Not built: a manual same-player override with a combined cap (waits for measured correlations); the Worker time stamp; tier / ring columns in the CSV.
-  `tests/modes-perfecta-test.js` (43 checks); `tests/same-player-test.js` and `tests/fill-warn-test.js` updated.
+  `tests/modes-perfecta-test.js` (46 checks); `tests/same-player-test.js` and `tests/fill-warn-test.js` updated.
 - Augi's screens on our engine, step 1 of 5: the Board (v4.34, `boardView`/`#boardView`/`mbev.boardView`, `.cv-legend-box`, `lnGet`/`lnSet`/`lnBtnHtml`/`.ln-ed`,
   `mbev.lineNotes`; owner: "What you recommend" → option 2, "BUILD"): Show menu next to Sort (All groups / Passing / Outliers only / Already bet / Skipped;
   Skipped also lists rejected rows without Show rejected), filtered after `grpOf`. Augi's cover legend (nine chips) in a `details.help` above the bar.
