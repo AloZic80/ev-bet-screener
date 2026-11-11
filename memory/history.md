@@ -6,6 +6,38 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.61 (owner: "I had already said build", after a six-reviewer recheck of v4.57 found 12 real issues): book-swap cards follow the unreadable rule
+  (the shown swap book's last quote stays in `_altQ` marked `_unread`; the incumbent is `_swapInc`, the book shown when the last press started; a fresh
+  price replaces it only if it clears `cfg.eMin`, else `r.swapNone`); a card moved to Kalshi that fails the floor after the fee rounding is decided again
+  without Kalshi (`shopChk.skip='kalshi_fee_rounding'`, swap: `_swapSkip`); `r.priceAt` (kept in KEEP_FIELDS) = when a cached answer was fetched
+  (BettingPros `meta.fetched_at`, Sportsbook API `x-sb-at`; SportsGameOdds and The Odds API saved answers: 'unknown' = not fresh), read by `bookPick`;
+  the unread incumbent's age comes from `shop.scan` or the board, never `_liveAt`; a press's "none" result wins over the age label; "live" only while
+  the last press read it ("last read 20m ago"); tooltips name the bypass and `r.shop.from`; `swapBooks` resets before its empty-books return;
+  a failed /live request leaves the unasked rows untouched and keeps the error on screen; "repriced" = book or price really changed.
+  Then, same version (owner: "You can decide if you think it's the best thing to do", "Ok fix it and build"): `rowSeenAt` (the card's age pill, the ◎
+  fresh check, the score's Fresh) reads `priceAt` when set and `swap.at`; `shopExchanges` no longer bumps `_liveAt` for every quote: `decide` sets it
+  only when the winner is a live-read price, so reading Novig does not make a Bovada price new; `srcFetch` returns `at` (the Worker's `x-src-at`, kept
+  on its saved answers), so SportsGameOdds and The Odds API saved answers carry their real time; OddsPapi rows are `priceAt:'unknown'` (the Worker
+  caches each game 15 min with no time; `g.at` is used if it ever sends one). A second review (4 reviewers, 20 findings, all accepted) also gave:
+  `r.shop.from` only when the book changed and `r.shop.kept` (tooltip "was read again ... keeps its place"); the Kalshi second pass says
+  `exchange_unreadable_no_actionable_quote`, not `nothing_readable` (swap: when `_swapSkip` is not empty); a failed or thrown /live request restores the
+  unasked rows' `_shopQ` and 🔓/🔒 (`r._was`) and does not stamp `pkSentAt`; the swap tooltip names the unreadable book, `snap.shop.swapFrom`;
+  `swapBooks` drops `shopChk` when it makes a swap card; "live · was" becomes "read 5m ago · was" after `shopLim` (`shopSameOld`); `barSumPaint`
+  skips Sport / Sweet spot / My games on the pasted board and reads `boardBooks`; `#shopMsg` keeps its place on a phone; `aria-controls` lists all.
+  A third review (3 reviewers, 13 confirmed, 1 medium) then gave: `decide` deletes `_liveAt` when the winner is not a live price (a Pull sportsbook
+  that wins the card back is as old as the board), `swapHunt` no longer sets `_liveAt` (a swap card's age is `swap.at`), `bookPick`'s `seen` is
+  `max(shop.scan, _liveAt)` else the board; `rowSeenAt` no longer counts `exOpen.at` (the open-market check leaves the card's price as it was);
+  tooltips: `unreadLater` for a moved card, "was read again 2m ago and kept its place"; a failed scan gives unasked rows no new 🔓/🔒 and drops a
+  restored tag that is no longer true; the Kalshi re-decision loops up to 4 rounds (each only takes cards off Kalshi); the age pill says "Paste the
+  board again" for pasted rows; `ringRecheck` compares `shopStaleSig()` with the one saved at the last draw (it compared a count).
+  A last short check (2 reviewers) found two low points in that redraw: the signature is now saved in `ringRecheck` before `refresh()` (a draw held
+  back by an open editor was asked for on every tick) and at the start of `renderCore`, before the cards are built.
+  `tests/book-choice-v461-test.js` (74, fails on v4.60), `tests/phone-filters-test.js` (22).
+- v4.60 (owner, phone: "I think this can be on a drop down?", "Also this", "For now only on phone"): under 760 px the board bar shows only the search
+  box, Filters and Send the Sentinels (CSS `order`); Show, Sort, Sport, the book chips, the tick boxes, Show all notes and Cards fold behind Filters
+  (`.board-bar.bar-open`, the same `mbev.barMore` switch). `barSumPaint` (hoisted, reads the page and localStorage only) names what hides bets on the
+  button ("Filters · Novig · Sweet spot ▾", 3 or more: "3 on"). A computer is unchanged. `tests/phone-filters-test.js` (19); live-batch-test now
+  expects Cards folded on a phone.
 - v4.59 (owner: "I want to be able to search by sacks"): `passesSearch` also matches `r.market` and `shortStat(r.market)`; placeholder "Search player, team or stat…". `tests/search-stat-test.js` (7).
 - v4.58 (owner, phone: "buttons don't highlight anymore"): with Settings › Colour scheme › Custom on a dark colour (navy), `palCss` kept that
   colour as the dark-mode `--brand`, so the chosen tab, the mode chips and Load were as dark as the page. Dark `--brand` must now also be 3:1 from

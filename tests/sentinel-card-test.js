@@ -69,6 +69,7 @@ const PX={[key('rui hachimura','4 5 rebounds','O',NOW+7*H)]:[[t-50,0.405,0.40],[
       check('I bet this opens its box under the card\'s buttons', await p.evaluate(()=>!!document.querySelector('#placeCards .sc-card .sc-act + .editor')), true);
       await p.evaluate(()=>{ const c=document.querySelector('#placeCards .editor .eb-cancel'); if(c) c.click(); }); await p.waitForTimeout(500);
       // sort by the score
+      await p.evaluate(()=>{ const b=document.getElementById('barMoreBtn'); if(b && getComputedStyle(b).display!=='none' && b.getAttribute('aria-expanded')!=='true') b.click(); }); await p.waitForTimeout(150);   // v4.60: on a phone Sort is behind Filters
       await p.selectOption('#sortBy','score'); await p.waitForTimeout(400);
       const order=await p.evaluate(()=>[...document.querySelectorAll('#placeCards .sc-card')].map(c=>parseInt(c.querySelector('.sc-score').textContent,10)));
       check('Sort › Sentinel score puts the highest score first', order.length===2 && order[0]>=order[1], order);
