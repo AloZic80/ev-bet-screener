@@ -6,6 +6,11 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.66 (owner: "I want to be able to click on the betting range ... or tell on the log which ones are classified as unlikely, coin flip, etc, but after
+  the bet or on the log"): `logBandOf(b)` (the band from the fair odds saved with the bet; none saved = 0, "no band") and `logBandChip(b)` on every single
+  in the Bet log; `logBandFilter` shows one band with "N bets · W–L–P · won X% vs Y% expected · ±$"; the Bet result study's bands are buttons that open
+  the log on that band. Bug fixed: `toProb('')` is null and `cvBand(null)` gave band 1, so a bet with no fair odds was counted in the study as Unlikely
+  at 0% expected. `tests/log-bands-test.js` (15).
 - v4.65 (owner, phone, the "51 pass · of 2223 · 2172 skipped · 2 already bet" box: "I'm sure you can accommodate the top info somewhere else or
   abbreviate"): under 760 px the box is one line inside itself (`#sbFoldBtn`): "Board 51 of 2,223 pass · 2 already bet ▾" (already bet in the alert's
   red, so it is never hidden), closed every time the app opens (`window._sbOpen`). `tests/phone-header-test.js` (22).
