@@ -58,15 +58,21 @@ const txt=(p,id)=>p.evaluate(id=>document.getElementById(id).textContent.replace
   await p.reload(); await p.waitForTimeout(1500);
   v=await seen(p,IN);
   check('the app opened again: both closed', IN.every(id=>v[id]===false) && await p.evaluate(()=>document.getElementById('bpFoldBtn').getAttribute('aria-expanded')==='false' && document.getElementById('srcFoldBtn').getAttribute('aria-expanded')==='false'), v);
+  // v4.67: the ESPN scores box is one line too, on every tab (the box shows on every tab)
+  v=await seen(p,['ssFoldBtn','scoreStrip']); const ssT=await txt(p,'ssFoldBtn');
+  check('phone (v4.67): the ESPN scores box is one line, "Scores NFL · … ▾", the box folded away', v.ssFoldBtn && v.scoreStrip===false && /^Scores\s*\S/.test(ssT) && /▾$/.test(ssT), {v, ssT});
+  await p.click('#ssFoldBtn'); await p.waitForTimeout(150);
+  check('a tap opens the scores box', (await seen(p,['scoreStrip'])).scoreStrip===true, null);
+  await p.click('#ssFoldBtn'); await p.waitForTimeout(100);
   await p.evaluate(()=>{ document.querySelector('.tab[data-view="v-log"]').click(); }); await p.waitForTimeout(200);
-  v=await seen(p,['bpFoldBtn','srcFoldBtn']);
-  check('on the Bet log tab neither line shows (as the panels did not before)', v.bpFoldBtn===false && v.srcFoldBtn===false, v);
+  v=await seen(p,['bpFoldBtn','srcFoldBtn','ssFoldBtn']);
+  check('on the Bet log tab the BettingPros and Sources lines do not show (as the panels did not before); the Scores line does (the box shows on every tab)', v.bpFoldBtn===false && v.srcFoldBtn===false && v.ssFoldBtn===true, v);
   await p.evaluate(()=>{ document.querySelector('.tab[data-view="v-board"]').click(); }); await p.waitForTimeout(200);
   const over=await p.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
   check('phone: no sideways scroll', over<=0, over);
   check('no page errors (phone)', !errs.length, errs); await ctx.close();
   for(const W of [1000,1280,1960]){ ({ctx,p,errs}=await open(b,W));
-    v=await seen(p,['bpFoldBtn','srcFoldBtn','sbFoldBtn','bpLoadbar','apiSport','loadApi','srcLine','count']);
-    check(W+' px: unchanged: no fold lines, the BettingPros panel, the source chips and the count box show as before', v.bpFoldBtn===false && v.srcFoldBtn===false && v.sbFoldBtn===false && v.bpLoadbar && v.apiSport && v.loadApi && v.srcLine && v.count, v);
+    v=await seen(p,['bpFoldBtn','srcFoldBtn','sbFoldBtn','ssFoldBtn','bpLoadbar','apiSport','loadApi','srcLine','count','scoreStrip']);
+    check(W+' px: unchanged: no fold lines, the BettingPros panel, the source chips, the count box and the scores box show as before', v.bpFoldBtn===false && v.srcFoldBtn===false && v.sbFoldBtn===false && v.ssFoldBtn===false && v.bpLoadbar && v.apiSport && v.loadApi && v.srcLine && v.count && v.scoreStrip, v);
     check('no page errors ('+W+')', !errs.length, errs); await ctx.close(); }
   await b.close(); console.log('\n'+pass+' passed, '+fail+' failed'); process.exit(fail?1:0); })();

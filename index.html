@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.66</title>
+<title>0xBeta Screener v4.67</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1447,12 +1447,14 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
   .head:not(.bp-open) .loadbar, .head:not(.bp-open) #apiStatus, .head:not(.bp-open) #apiWeekHint{display:none !important}
   .head:not(.src-open) .srcline, .head:not(.src-open) #srcPanel{display:none !important}
   .head:not(.tb-open) #todayBar{display:none !important}   /* v4.64 (Alonzo, phone, the Today card: "Even this") */
+  body:not(.ss-open) #scoreStrip{display:none !important}   /* v4.67 (owner: "Yes to all"): the ESPN scores box too */
+  #ssFoldBtn{margin:12px 0 4px} .hd-fold .hf-live{color:var(--live); font-weight:700}
   /* v4.65 (Alonzo, phone, the "51 pass · of 2223 · 2172 skipped · 2 already bet" box: "accommodate the top info somewhere else or abbreviate"): one line inside the box */
   .statbox>#sbFoldBtn{margin:0; padding:2px 0; border:0; background:transparent; flex-basis:100%}
   .head:not(.sb-open) .statbox>.board-score, .head:not(.sb-open) .statbox>.sb-rest{display:none !important}
   .hd-fold .hf-bad{color:var(--out); font-weight:700}
   .hd-fold .hf-look{color:var(--warn); font-weight:700}
-  body[data-view]:not([data-view="v-board"]) .hd-fold{display:none !important}
+  body[data-view]:not([data-view="v-board"]) .hd-fold:not(#ssFoldBtn){display:none !important}   /* the scores box shows on every tab, so its line does too */
 }
 </style>
 </head>
@@ -1462,7 +1464,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.66</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.67</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1543,6 +1545,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 </div>
 
 <!-- v2.71: ESPN score strip (free — no BettingPros calls) -->
+<button type="button" class="hd-fold" id="ssFoldBtn" aria-expanded="false" aria-controls="scoreStrip">Scores ▾</button><!-- v4.67: on a phone the scores box opens from this line -->
 <div class="scorestrip" id="scoreStrip">
   <div class="ss-sel"><div class="ss-ctl"><button type="button" class="ss-ref" id="ssRef" aria-label="Refresh scores from ESPN" title="Refresh scores from ESPN now (no BettingPros calls)">⟳</button><span class="ss-at" id="ssAt"></span></div><select id="ssSport" title="Scores for…"><option>NFL</option><option>NCAAF</option><option>NBA</option><option>NCAAB</option><option>WNBA</option><option>NHL</option><option>MLB</option></select></div>
   <div class="ss-games" id="ssGames"><div class="ss-empty">Loading scores…</div></div>
@@ -2218,7 +2221,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 
 </div>
 <script>
-const SCREENER_VERSION='v4.66';
+const SCREENER_VERSION='v4.67';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3713,14 +3716,18 @@ function hdFoldPaint(){ const h=document.querySelector('.head'); if(!h) return; 
     const fmt=x=>String(x).replace(/\B(?=(\d{3})+(?!\d))/g,',');
     sb.setAttribute('aria-expanded', String(sbo)); sb.title=(sbo?'Close':'Open')+' the board count: how many pass, how many were skipped and why, bets you already have';
     sb.innerHTML='<span class="hf-k">Board</span><span class="hf-sum">'+(m?'<b>'+esc(n)+'</b> of '+esc(fmt(m[1].replace(/,/g,'')))+' pass':esc((n?n+' · ':'')+note))+(alShown?' · <span class="hf-bad">'+esc(al)+'</span>':'')+'</span><span class="hf-ar">'+(sbo?'▴':'▾')+'</span>'; }
+  const ss=document.getElementById('ssFoldBtn'), sso=!!window._ssOpen; document.body.classList.toggle('ss-open', sso);   /* v4.67: "SCORES · NFL · 3 live · 1 yours", or "no games" */
+  if(ss){ const sel=document.getElementById('ssSport'), sp=(sel && sel.selectedIndex>=0)?sel.options[sel.selectedIndex].textContent.replace(/\s+/g,' ').trim():'', G=[...document.querySelectorAll('#ssGames .ss-g')], live=G.filter(g=>g.querySelector('.ss-h .lv')).length, mine=G.filter(g=>g.classList.contains('mine')).length, emp=txt('#ssGames .ss-empty');
+    ss.setAttribute('aria-expanded', String(sso)); ss.title=(sso?'Close':'Open')+' the ESPN scores (free, no BettingPros calls)';
+    ss.innerHTML='<span class="hf-k">Scores</span><span class="hf-sum">'+esc(sp)+(G.length?' · '+G.length+' game'+(G.length===1?'':'s')+(live?' · <span class="hf-live">'+live+' live</span>':'')+(mine?' · '+mine+' yours':''):(emp?' · '+esc(emp):''))+'</span><span class="hf-ar">'+(sso?'▴':'▾')+'</span>'; }
   const t=document.getElementById('tbFoldBtn');   /* v4.64 (Alonzo, phone, the Today card: "Even this"): the day, its record, what is in play, and bets to check */
   if(t){ const kk=document.querySelector('#todayBar .tb-k>span'), day=kk?((kk.firstChild && kk.firstChild.nodeType===3)?kk.firstChild.textContent:kk.textContent).replace(/\s+/g,' ').trim():'TODAY';
     const rec=txt('#todayBar .tb-t.all .tb-l1 .open'), tot=txt('#todayBar .tb-k .tb-tot'), n=txt('#todayBar .tb-k .tb-n'), inPlay=txt('#todayBar .tb-t.all .tb-inplay').replace(/^▶\s*IN PLAY\s*/i,''), look=txt('#todayBar .tb-look'), none=!!document.querySelector('#todayBar .tb-empty');
     const bits=[]; if(none) bits.push('no bets'); else { if(tot) bits.push(tot+(n?' · '+n:'')); if(rec) bits.push(rec); if(inPlay) bits.push(inPlay+' in play'); }
     t.setAttribute('aria-expanded', String(to)); t.title=(to?'Close':'Open')+' the day’s card: played, won and lost, in play, best and worst, by book';
     t.innerHTML='<span class="hf-k">'+esc(day||'TODAY')+'</span><span class="hf-sum">'+esc(bits.join(' · '))+(look?' · <span class="hf-look">'+esc(look)+'</span>':'')+'</span><span class="hf-ar">'+(to?'▴':'▾')+'</span>'; } }
-document.addEventListener('click', e=>{ const t=e.target && e.target.closest && e.target.closest('#bpFoldBtn, #srcFoldBtn, #tbFoldBtn, #sbFoldBtn'); if(!t) return; if(t.id==='bpFoldBtn') window._bpOpen=!window._bpOpen; else if(t.id==='tbFoldBtn') window._tbOpen=!window._tbOpen; else if(t.id==='sbFoldBtn') window._sbOpen=!window._sbOpen; else window._srcOpen=!window._srcOpen; hdFoldPaint(); });
-try{ const mo=new MutationObserver(()=>{ hdFoldPaint(); }); ['savedNote','srcBar','apiSport','todayBar','count','countNote','alerts'].forEach(id=>{ const el=document.getElementById(id); if(el) mo.observe(el,{childList:true, subtree:true, characterData:true, attributes:id==='alerts', attributeFilter:id==='alerts'?['style']:undefined}); }); const sp=document.getElementById('apiSport'); if(sp) sp.addEventListener('change', hdFoldPaint); }catch(e){}
+document.addEventListener('click', e=>{ const t=e.target && e.target.closest && e.target.closest('#bpFoldBtn, #srcFoldBtn, #tbFoldBtn, #sbFoldBtn, #ssFoldBtn'); if(!t) return; if(t.id==='bpFoldBtn') window._bpOpen=!window._bpOpen; else if(t.id==='tbFoldBtn') window._tbOpen=!window._tbOpen; else if(t.id==='sbFoldBtn') window._sbOpen=!window._sbOpen; else if(t.id==='ssFoldBtn') window._ssOpen=!window._ssOpen; else window._srcOpen=!window._srcOpen; hdFoldPaint(); });
+try{ const mo=new MutationObserver(()=>{ hdFoldPaint(); }); ['savedNote','srcBar','apiSport','todayBar','count','countNote','alerts','ssGames','ssSport'].forEach(id=>{ const el=document.getElementById(id); if(el) mo.observe(el,{childList:true, subtree:true, characterData:true, attributes:id==='alerts', attributeFilter:id==='alerts'?['style']:undefined}); }); const sp=document.getElementById('apiSport'); if(sp) sp.addEventListener('change', hdFoldPaint); }catch(e){}
 try{ localStorage.removeItem('mbev.barMore'); }catch(e){}   // v4.62: the old remembered "open" is dropped
 try{ helpApply(); barPhonePlace(); barMoreApply(); hdFoldPaint(); }catch(e){}
 try{ const mq=window.matchMedia && window.matchMedia('(max-width:760px)'); if(mq){ if(mq.addEventListener) mq.addEventListener('change', barPhonePlace); else if(mq.addListener) mq.addListener(barPhonePlace); } }catch(e){}
@@ -8984,14 +8991,17 @@ function csvDays(){ const sel=document.getElementById('csvDay'); if(!sel) return
   if(sel.innerHTML!==h){ sel.innerHTML=h; sel.value=D[cur]?cur:''; } }
 function logCsv(day){
   const q=s=>{ s=s===undefined||s===null?'':String(s); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
-  const head=['game day','placed','bet','pick','sport','type','book','odds','implied %','stake $','free bet','result','profit $','fair %','EV after fees %','closing','CLV %','game','kickoff (CT)','legs'];
+  const head=['game day','placed','bet','pick','sport','type','book','odds','implied %','stake $','free bet','result','profit $','fair %','EV after fees %','closing','CLV %','game','kickoff (CT)','legs','stat','mode','source','band','La Contadora EV %'];   // v4.67 (owner: "Yes to all"): the stat (sacks showed as "O 0.5"), the mode, where it came from, its cover band, and her EV when taken (the EV column is the model’s)
   const rows=logged.map((b,i)=>({b,i,d:gameDayOf(b)||b.date||''})).filter(x=>!day||x.d===day).sort((a,b)=>(b.d.localeCompare(a.d))||(b.i-a.i)).map(({b,d})=>{
     const p=toProb(b.odds), pr=betProfit(b), c=clv(b), st=b.start||(b.gameInfo&&b.gameInfo.startISO);
     const res=b.sold?'sold':b.result==='win'?'win':b.result==='loss'?'loss':b.result==='push'?'push':'open';
     return [d, (()=>{ const t=loggedAtOf(b); return isNaN(t)?'':new Date(t).toLocaleString('en-US',{timeZone:'America/Chicago'}); })(), b.name, b.betnow||[(b.side==='O'?'Over':b.side==='U'?'Under':''),b.market].join(' ').trim(), b.sport, b.kind,
       bookLabel(b.book||''), b.odds, p!=null?(p*100).toFixed(1):'', (+b.stake||0).toFixed(2), b.free?'yes':'', res, pr!=null?pr.toFixed(2):'',
       b.fair!=null?b.fair:(b.fairProb!=null?(b.fairProb*100).toFixed(1):''), b.net!=null?(b.net*100).toFixed(2):'', b.closing||'', c!==null?(c*100).toFixed(2):'',
-      b.game||b.matchup||'', st?new Date(st).toLocaleString('en-US',{timeZone:'America/Chicago'}):'', b.kind==='parlay'&&b.parlay?String(b.parlay.legs||''):''].map(q).join(','); });
+      b.game||b.matchup||'', st?new Date(st).toLocaleString('en-US',{timeZone:'America/Chicago'}):'', b.kind==='parlay'&&b.parlay?String(b.parlay.legs||''):'',
+      b.kind==='parlay'?'':(b.market||''), b.tier==='lucky'?'Feeling Lucky (just missed)':b.tier==='hail'?'Clairvoyant (Hail Mary)':(b.kind==='parlay'?'':'Safe'),
+      (()=>{ const d=document.createElement('div'); d.innerHTML=srcTagCore(b); return d.textContent.trim(); })(), (()=>{ const k=logBandOf(b); return k==null?'':k?cvNames()[k]:'no cover saved'; })(),
+      (b.snap&&b.snap.actNet!=null)?(b.snap.actNet*100).toFixed(2):''].map(q).join(','); });
   return '\ufeff'+[head.join(','),...rows].join('\r\n'); }
 document.getElementById('csvDay').addEventListener('focus',csvDays); document.getElementById('csvDay').addEventListener('pointerdown',csvDays);
 document.getElementById('csvDl').addEventListener('click',()=>{ csvDays(); const day=document.getElementById('csvDay').value;
