@@ -59,6 +59,7 @@ const runs = [
   ['v4.59: the board search also finds a stat ("sack" finds Defense Sacks and Defensive Sacks)', 'search-stat-test.js', []],
   ['v4.60/v4.62: on a phone the Today’s games line, Cover bands, Show, Sort, Sport, the book chips, the tick boxes and Cards fold behind Filters, which names what is on', 'phone-filters-test.js', []],
   ['v4.63: on a phone the BettingPros panel and the Sources panel are one line each, closed when the app opens', 'phone-header-test.js', []],
+  ['v4.64: on a phone the Today card is one line (day, bet, record, in play, to check), closed when the app opens', 'phone-today-test.js', []],
   ['v4.61: the recheck fixes: swap cards follow the unreadable rule, no move to a Kalshi price failing the floor after rounding, cached prices are not fresh, labels after a press, failed requests', 'book-choice-v461-test.js', []],
   ['v4.34: Augi\'s Board: the Show menu, the cover legend, your own note on each line', 'board-notes-test.js', []],
   ['v4.33: colour schemes (Green, Blue, Red, Purple, Graphite) in light and dark, all AA; remembered', 'palette-test.js', []],

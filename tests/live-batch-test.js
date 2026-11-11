@@ -93,12 +93,16 @@ const heavyOk=(live,n)=>live.filter(g=>g.some(b=>b.book==='novig'&&/^(moneyline|
     check('phone: the board tick boxes are folded behind "Filters ▾"; Send the Sentinels stays (v4.60, owner: Cards folds too)', (await vis('#barMoreBtn'))===true && (await vis('#swOnly'))===false && (await vis('#notesAll'))===false && (await vis('#shopBtn'))===true && (await vis('#cardsOn'))===false, null);
     await p.click('#barMoreBtn'); await p.waitForTimeout(150);
     check('a tap opens them (Only sweet spot, Show rejected, Only games I already bet, Show all notes, and since v4.60 Cards)', (await vis('#swOnly'))===true && (await vis('#showRejects'))===true && (await vis('#onlyMyGames'))===true && (await vis('#notesAll'))===true && (await vis('#cardsOn'))===true, null);
+    { const tf=await p.evaluate(()=>{ const f=document.getElementById('tbFoldBtn'); return f?{line:f.getBoundingClientRect().height>0, card:document.getElementById('todayBar').getBoundingClientRect().height>0}:null; });
+      check('phone (v4.64): the Today card is one line until tapped', !tf || (tf.line && !tf.card), tf);
+      if(tf){ await p.click('#tbFoldBtn'); await p.waitForTimeout(150); } }
     check('phone: the Today card shows the day and All; the book tiles wait behind "by book ▾"', (await vis('#todayBar .tb-t.all'))===true && (await vis('#todayBar .tb-t:not(.all)'))===false && (await vis('#todayBar .tb-more'))===true, null);
     await p.click('#todayBar .tb-more'); await p.waitForTimeout(200);
     const after=await p.evaluate(()=>({tiles:[...document.querySelectorAll('#todayBar .tb-t:not(.all)')].filter(t=>t.getBoundingClientRect().height>0).length, log:document.getElementById('v-log').classList.contains('on'), btn:(document.querySelector('#todayBar .tb-more')||{}).textContent}));
     check('"by book" shows the tiles and does not open the Bet log (the card itself does)', after.tiles>=1 && !after.log && /▴/.test(after.btn), after);
     await p.evaluate(()=>{ document.querySelector('.tab[data-view="v-live"]').click(); document.querySelector('details.help[data-help="live-edges"] summary').click(); }); await p.waitForTimeout(200);
     await p.reload(); await p.waitForTimeout(1200);
+    await p.evaluate(()=>{ const f=document.getElementById('tbFoldBtn'); if(f && f.getBoundingClientRect().height>0) f.click(); }); await p.waitForTimeout(150);   // v4.64: the Today card itself starts closed; by book is still remembered inside it
     const mem=await p.evaluate(()=>({help:[...document.querySelectorAll('details.help[open]')].map(d=>d.dataset.help), filters:document.getElementById('barMoreBtn').getAttribute('aria-expanded'), tiles:[...document.querySelectorAll('#todayBar .tb-t:not(.all)')].filter(t=>t.getBoundingClientRect().height>0).length}));
     check('after a reload the ones you opened are still open (How Live edges works, by book) and nothing else; Filters starts closed again (v4.62, owner: "this needs to be all on a drop down")', mem.help.join()==='live-edges' && mem.filters==='false' && mem.tiles>=1, mem);
     await p.evaluate(()=>{ document.querySelector('.tab[data-view="v-log"]').click(); }); await p.waitForTimeout(300);

@@ -6,6 +6,9 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.64 (owner, phone, a screenshot of the Today card: "Even this"): under 760 px the Today card is one line (`#tbFoldBtn`), closed every time the app
+  opens (`window._tbOpen`); `hdFoldPaint` writes "TODAY · $10.50 · 4 bets · 1–1 · $2.00 in play ▾" (another day: its label; no bets: "no bets"; bets to
+  check in orange). `.head.tb-open` shows the card; by book stays remembered inside it. `tests/phone-today-test.js` (15); live-batch-test opens the line.
 - v4.63 (owner, phone, screenshot of the BettingPros and Sources panels: "make them cleaner as well. I don't need to have them open all the time.
   Because the my bets will be all the way to the bottom"): under 760 px each panel is one line (`#bpFoldBtn`, `#srcFoldBtn`, `.hd-fold`), closed every
   time the app opens (`window._bpOpen`, `window._srcOpen`, not saved); `hdFoldPaint` (hoisted, reads the page; a MutationObserver on #savedNote, #srcBar,

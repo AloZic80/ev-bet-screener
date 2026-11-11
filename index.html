@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.63</title>
+<title>0xBeta Screener v4.64</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1440,6 +1440,8 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
   .hd-fold .hf-ar{flex:none}
   .head:not(.bp-open) .loadbar, .head:not(.bp-open) #apiStatus, .head:not(.bp-open) #apiWeekHint{display:none !important}
   .head:not(.src-open) .srcline, .head:not(.src-open) #srcPanel{display:none !important}
+  .head:not(.tb-open) #todayBar{display:none !important}   /* v4.64 (Alonzo, phone, the Today card: "Even this") */
+  .hd-fold .hf-look{color:var(--warn); font-weight:700}
   body[data-view]:not([data-view="v-board"]) .hd-fold{display:none !important}
 }
 </style>
@@ -1450,7 +1452,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.63</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.64</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1459,6 +1461,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
     </div>
     <div class="head-btns"><button type="button" class="themer" id="layoutBtn"></button><button class="themer" id="themer" title="Dark mode" aria-label="Switch between light and dark mode">☾</button></div>
   </div>
+  <button type="button" class="hd-fold" id="tbFoldBtn" aria-expanded="false" aria-controls="todayBar">Today ▾</button><!-- v4.64: on a phone the Today card opens from this line -->
   <div class="todaybar" id="todayBar" title="Today's games, per book — click for the Bet log"></div>
   <div class="orders-top" id="ordersTop" hidden role="status"></div><!-- v4.17: orders waiting at your books -->
   <div class="orders-top fill-warn" id="fillWarn" hidden role="alert"></div><!-- v4.46: your books were not read -->
@@ -2204,7 +2207,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.63';
+const SCREENER_VERSION='v4.64';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3685,7 +3688,7 @@ function barPhonePlace(){ try{ const bar=document.querySelector('.board-panel .b
 /* v4.63 (Alonzo, phone: "And these, make them cleaner as well. I don't need to have them open all the time"): the BettingPros panel and the Sources panel
    are one line each on a phone. The line says what is loaded (and "saved board, not live" when it is), or what the sources have left; a tap opens it.
    Open or closed lasts only while the page stays open. Reads the page only; hoisted. */
-function hdFoldPaint(){ const h=document.querySelector('.head'); if(!h) return; const bo=!!window._bpOpen, so=!!window._srcOpen; h.classList.toggle('bp-open', bo); h.classList.toggle('src-open', so);
+function hdFoldPaint(){ const h=document.querySelector('.head'); if(!h) return; const bo=!!window._bpOpen, so=!!window._srcOpen, to=!!window._tbOpen; h.classList.toggle('bp-open', bo); h.classList.toggle('src-open', so); h.classList.toggle('tb-open', to);
   const b=document.getElementById('bpFoldBtn'), s=document.getElementById('srcFoldBtn'), txt=sel=>{ const e=document.querySelector(sel); return e?e.textContent.replace(/\s+/g,' ').trim():''; };
   if(b){ let sp=''; try{ const sel=document.getElementById('apiSport'); sp=(sel && sel.selectedIndex>=0)?sel.options[sel.selectedIndex].textContent.replace(/\s+/g,' ').trim():''; }catch(e){}
     const notLive=/not live/i.test(txt('#savedNote'));
@@ -3693,9 +3696,15 @@ function hdFoldPaint(){ const h=document.querySelector('.head'); if(!h) return; 
     b.innerHTML='<span class="hf-k">BettingPros</span><span class="hf-sum">'+esc(sp)+(notLive?' · <span class="hf-warn">not live</span>':'')+'</span><span class="hf-ar">'+(bo?'▴':'▾')+'</span>'; }
   if(s){ const bp=txt('#srcBar .src-chip[data-src="bettingpros"] small').replace(/ today$/,''), wk=txt('#srcBar .src-chip.wk small').replace(/ today$/,''), wkEl=document.querySelector('#srcBar .src-chip.wk'), warn=!!(wkEl && /\b(low|out|paused)\b/.test(wkEl.className));
     s.setAttribute('aria-expanded', String(so)); s.title=(so?'Close':'Open')+' the Sources panel (BettingPros, Pinnacle, SportsGameOdds, Sportsbook API, The Odds API, OddsPapi, Worker)';
-    s.innerHTML='<span class="hf-k">Sources</span><span class="hf-sum">'+(bp?'BettingPros '+esc(bp):'')+(bp&&wk?' · ':'')+(wk?'<span class="'+(warn?'hf-warn':'')+'">Worker '+esc(wk)+'</span>':'')+'</span><span class="hf-ar">'+(so?'▴':'▾')+'</span>'; } }
-document.addEventListener('click', e=>{ const t=e.target && e.target.closest && e.target.closest('#bpFoldBtn, #srcFoldBtn'); if(!t) return; if(t.id==='bpFoldBtn') window._bpOpen=!window._bpOpen; else window._srcOpen=!window._srcOpen; hdFoldPaint(); });
-try{ const mo=new MutationObserver(()=>{ hdFoldPaint(); }); ['savedNote','srcBar','apiSport'].forEach(id=>{ const el=document.getElementById(id); if(el) mo.observe(el,{childList:true, subtree:true, characterData:true}); }); const sp=document.getElementById('apiSport'); if(sp) sp.addEventListener('change', hdFoldPaint); }catch(e){}
+    s.innerHTML='<span class="hf-k">Sources</span><span class="hf-sum">'+(bp?'BettingPros '+esc(bp):'')+(bp&&wk?' · ':'')+(wk?'<span class="'+(warn?'hf-warn':'')+'">Worker '+esc(wk)+'</span>':'')+'</span><span class="hf-ar">'+(so?'▴':'▾')+'</span>'; }
+  const t=document.getElementById('tbFoldBtn');   /* v4.64 (Alonzo, phone, the Today card: "Even this"): the day, its record, what is in play, and bets to check */
+  if(t){ const kk=document.querySelector('#todayBar .tb-k>span'), day=kk?((kk.firstChild && kk.firstChild.nodeType===3)?kk.firstChild.textContent:kk.textContent).replace(/\s+/g,' ').trim():'TODAY';
+    const rec=txt('#todayBar .tb-t.all .tb-l1 .open'), tot=txt('#todayBar .tb-k .tb-tot'), n=txt('#todayBar .tb-k .tb-n'), inPlay=txt('#todayBar .tb-t.all .tb-inplay').replace(/^▶\s*IN PLAY\s*/i,''), look=txt('#todayBar .tb-look'), none=!!document.querySelector('#todayBar .tb-empty');
+    const bits=[]; if(none) bits.push('no bets'); else { if(tot) bits.push(tot+(n?' · '+n:'')); if(rec) bits.push(rec); if(inPlay) bits.push(inPlay+' in play'); }
+    t.setAttribute('aria-expanded', String(to)); t.title=(to?'Close':'Open')+' the day’s card: played, won and lost, in play, best and worst, by book';
+    t.innerHTML='<span class="hf-k">'+esc(day||'TODAY')+'</span><span class="hf-sum">'+esc(bits.join(' · '))+(look?' · <span class="hf-look">'+esc(look)+'</span>':'')+'</span><span class="hf-ar">'+(to?'▴':'▾')+'</span>'; } }
+document.addEventListener('click', e=>{ const t=e.target && e.target.closest && e.target.closest('#bpFoldBtn, #srcFoldBtn, #tbFoldBtn'); if(!t) return; if(t.id==='bpFoldBtn') window._bpOpen=!window._bpOpen; else if(t.id==='tbFoldBtn') window._tbOpen=!window._tbOpen; else window._srcOpen=!window._srcOpen; hdFoldPaint(); });
+try{ const mo=new MutationObserver(()=>{ hdFoldPaint(); }); ['savedNote','srcBar','apiSport','todayBar'].forEach(id=>{ const el=document.getElementById(id); if(el) mo.observe(el,{childList:true, subtree:true, characterData:true}); }); const sp=document.getElementById('apiSport'); if(sp) sp.addEventListener('change', hdFoldPaint); }catch(e){}
 try{ localStorage.removeItem('mbev.barMore'); }catch(e){}   // v4.62: the old remembered "open" is dropped
 try{ helpApply(); barPhonePlace(); barMoreApply(); hdFoldPaint(); }catch(e){}
 try{ const mq=window.matchMedia && window.matchMedia('(max-width:760px)'); if(mq){ if(mq.addEventListener) mq.addEventListener('change', barPhonePlace); else if(mq.addListener) mq.addListener(barPhonePlace); } }catch(e){}
