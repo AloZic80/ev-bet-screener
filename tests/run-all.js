@@ -59,6 +59,7 @@ const runs = [
   ['v4.59: the board search also finds a stat ("sack" finds Defense Sacks and Defensive Sacks)', 'search-stat-test.js', []],
   ['v4.68: Kalshi stays put on repeated presses; long-shot moneylines 3 a day at the smallest bet; moneyline gap research; tickets vs outcomes; typed Cover %; 4 CSV columns', 'scope-v468-test.js', []],
   ['v4.69: which logged moneyline counts toward the 3 long-shot moneylines a day (saved chance, board reading before you placed it, model fair or paid price), saved with its source', 'lsml-class-test.js', []],
+  ['v4.70: the bet-import file, version 2 (game lines, settled tickets, free bets, text parlays, fixes to logged bets) and Polymarket wins after the fee', 'import-v2-test.js', []],
   ['v4.60/v4.62: on a phone the Today’s games line, Cover bands, Show, Sort, Sport, the book chips, the tick boxes and Cards fold behind Filters, which names what is on', 'phone-filters-test.js', []],
   ['v4.63: on a phone the BettingPros panel and the Sources panel are one line each, closed when the app opens', 'phone-header-test.js', []],
   ['v4.64: on a phone the Today card is one line (day, bet, record, in play, to check), closed when the app opens', 'phone-today-test.js', []],
