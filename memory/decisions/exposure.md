@@ -15,4 +15,4 @@ Tests: `tests/same-player-test.js`, `tests/hard-stop-test.js`.
 - A moneyline where La Contadora's chance is under 45%: needs a market price, the smallest bet, at most 3 a game day and 1 a game, in every mode (🍀 and 🔮 use the same 3). Logged bets and matched waiting orders count.
 - A moneyline where the model is more than 8 points above the market: research only (👀 Watch, no stake, kept out of the scorecard if logged). Spreads and totals are not affected.
 - Test: `tests/scope-v468-test.js`.
-
+- v4.69: which logged moneyline counts toward the 3: La Contadora's chance saved with the bet; else the board's reading of that exact bet from before you placed it and before kickoff; else the model's fair chance or the price you paid under 45% (+123 or longer). A 45%+ answer from the first two stops there. The source is saved on the bet (`lsmlCls`). Test: `tests/lsml-class-test.js`.
