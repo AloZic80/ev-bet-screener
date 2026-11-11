@@ -6,6 +6,15 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.61 (owner: "I had already said build", after a six-reviewer recheck of v4.57 found 12 real issues): book-swap cards follow the unreadable rule
+  (the shown swap book's last quote stays in `_altQ` marked `_unread`; the incumbent is `_swapInc`, the book shown when the last press started; a fresh
+  price replaces it only if it clears `cfg.eMin`, else `r.swapNone`); a card moved to Kalshi that fails the floor after the fee rounding is decided again
+  without Kalshi (`shopChk.skip='kalshi_fee_rounding'`, swap: `_swapSkip`); `r.priceAt` (kept in KEEP_FIELDS) = when a cached answer was fetched
+  (BettingPros `meta.fetched_at`, Sportsbook API `x-sb-at`; SportsGameOdds and The Odds API saved answers: 'unknown' = not fresh), read by `bookPick`;
+  the unread incumbent's age comes from `shop.scan` or the board, never `_liveAt`; a press's "none" result wins over the age label; "live" only while
+  the last press read it ("last read 20m ago"); tooltips name the bypass and `r.shop.from`; `swapBooks` resets before its empty-books return;
+  a failed /live request leaves the unasked rows untouched and keeps the error on screen; "repriced" = book or price really changed.
+  `tests/book-choice-v461-test.js` (36, fails 17 on v4.60). Not changed: `rowSeenAt` (ring and score freshness) still reads `loadedAt`.
 - v4.60 (owner, phone: "I think this can be on a drop down?", "Also this", "For now only on phone"): under 760 px the board bar shows only the search
   box, Filters and Send the Sentinels (CSS `order`); Show, Sort, Sport, the book chips, the tick boxes, Show all notes and Cards fold behind Filters
   (`.board-bar.bar-open`, the same `mbev.barMore` switch). `barSumPaint` (hoisted, reads the page and localStorage only) names what hides bets on the
