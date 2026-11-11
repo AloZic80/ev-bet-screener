@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.68</title>
+<title>0xBeta Screener v4.69</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1464,7 +1464,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.68</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.69</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2221,7 +2221,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 
 </div>
 <script>
-const SCREENER_VERSION='v4.68';
+const SCREENER_VERSION='v4.69';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3034,6 +3034,7 @@ function auditCore(rows,cfg){
      smallest bet, at most LSML.day a game day and LSML.game a game. Counted: logged bets of that game day (open, settled, sold, void) and orders waiting at
      a book that match a board row; the best by her EV keep their place. The 🍀 and 🔮 extras use the same allowance (extrasAssign). */
   { const used={}, inGame={}, gk=(d,g)=>d+'|'+(g?gameKey(g):''), seenO=new Set();
+    try{ lsmlSave(); }catch(e){ console.error(e); }   /* v4.69: each moneyline bet keeps how it was classified */
     logged.forEach(b=>{ if(!lsmlBet(b)) return; const d=gameDayOf(b)||b.date||''; used[d]=(used[d]||0)+1; const g=gk(d,b.game||b.matchup); inGame[g]=(inGame[g]||0)+1; });
     rows.forEach(r=>{ if(!lsmlRow(r) || !r.waitOrder || seenO.has(r.waitOrder)) return; seenO.add(r.waitOrder); const d=rowDay(r,slateDay); used[d]=(used[d]||0)+1; const g=gk(d,r.game); inGame[g]=(inGame[g]||0)+1; });
     rows.forEach(r=>{ if(lsmlRow(r) && r.noMkt && !r.prior){ r.stake=0; delete r.contracts; r.pass=false; r.flags.push(['out','LONG-SHOT ML · no market price: not offered in any mode']); } });
@@ -3110,7 +3111,30 @@ function applyDayLimits(rows,cfg,slateDay){
    Logged extras are real bets: they count in the day's money and the Hard stop still asks past the daily max. */
 /* v4.68: a long-shot moneyline: a board row, or a logged bet (her chance saved with it; older bets: the model's fair price, which is never under hers) */
 function lsmlRow(r){ return !!(r && r.kind==='moneyline' && r.actProb!=null && r.actProb<LSML.below-1e-9); }
-function lsmlBet(b){ if(!b || b.kind!=='moneyline') return false; const p=(b.snap && b.snap.act!=null)?+b.snap.act:toProb(b.fair); return p!=null && p>0 && p<LSML.below-1e-9; }
+function lsmlBet(b){ const c=lsmlClass(b); return !!(c && c.lsml); }   /* v4.69: by lsmlClass */
+/* v4.69 (agreed with ChatGPT, owner "BUILD" 11/11): which logged moneyline is a long shot for the 3 a day, first answer wins:
+   1. snapshot_act: La Contadora's chance saved with the bet (45% or more: not a long shot, and nothing below is asked);
+   2. pregame_board_act: the latest board reading of this exact bet (same game day, team, market and line, side) seen at or before the time the
+      book says you placed it (placedAt) and before kickoff; her chance from that reading's model and market. Saved on the bet (lsmlCls), because
+      readings are kept 3 days. A later reading never counts; no placedAt or no kickoff: skipped;
+   3. the model's fair chance under 45% OR the price you paid under 45% (+123 or longer): counted for exposure. Only the price alone says
+      "inferred from paid price · no forecast snapshot". */
+function lsmlClass(b){ if(!b || b.kind!=='moneyline') return null; const ok=x=>x!=null && isFinite(x) && x>0 && x<1, lo=x=>x<LSML.below-1e-9;
+  const a=b.snap && b.snap.act!=null ? +b.snap.act : null; if(ok(a)) return {src:'snapshot_act', p:a, lsml:lo(a)};
+  const C=b.lsmlCls; if(C && C.src==='pregame_board_act' && ok(+C.p)) return {src:C.src, p:+C.p, obsAt:C.obsAt, lsml:lo(+C.p)};
+  const pl=Date.parse(b.placedAt), ko=Date.parse(b.start);
+  if(!isNaN(pl) && !isNaN(ko) && pl<ko){ let A=null; try{ A=pxAll()[pxKey({sport:b.sport, name:b.name, market:b.market, side:b.side||'', gameInfo:{startISO:b.start}})]; }catch(e){}
+    if(Array.isArray(A)){ let best=null; A.forEach(x=>{ const t=x[0]*60000; if(t<=pl && t<ko && ok(x[2])) best=x; });
+      if(best){ const q=okProb(best[2], best[3]); if(ok(q)) return {src:'pregame_board_act', p:+q.toFixed(4), obsAt:new Date(best[0]*60000).toISOString(), lsml:lo(q)}; } } }
+  const f=toProb(b.fair), pp=toProb(b.odds), fl=ok(f) && lo(f), pl2=ok(pp) && lo(pp);
+  return {src:fl&&pl2?'model_fair_and_paid_price':fl?'model_fair_fallback':pl2?'paid_price_inferred':(ok(f)||ok(pp))?'not_long_shot':'unknown', p:ok(f)?f:ok(pp)?pp:null, paid:ok(pp)?pp:null, lsml:fl||pl2}; }
+function lsmlSave(){ let ch=0; logged.forEach(b=>{ const c=lsmlClass(b); if(!c) return; const o=b.lsmlCls;
+    if(o && o.src===c.src && Math.abs((+o.p||0)-(+c.p||0))<1e-6) return; b.lsmlCls={src:c.src, p:c.p!=null?+(+c.p).toFixed(4):null, obsAt:c.obsAt||undefined, at:new Date().toISOString(), ver:SCREENER_VERSION}; ch++; });
+  if(ch){ saveLog(); setTimeout(()=>{ try{ renderLog(); }catch(e){} },0); } return ch; }   /* v4.69: the Bet log shows the new tag */
+function lsmlChip(b){ const c=lsmlClass(b); if(!c || !c.lsml) return ''; const pc=x=>(x*100).toFixed(1)+'%';
+  const t={snapshot_act:'La Contadora '+pc(c.p)+' when you took it', pregame_board_act:'board before you placed it: La Contadora '+pc(c.p), model_fair_fallback:'model '+pc(c.p)+' · not La Contadora’s chance',
+    model_fair_and_paid_price:'model '+pc(c.p)+' and the price you paid '+pc(c.paid), paid_price_inferred:'inferred from paid price · no forecast snapshot'}[c.src]||'';
+  return ' <span class="meta lsml-tag" title="Counts toward the 3 long-shot moneylines a game day">LONG-SHOT ML · '+esc(t)+'</span>'; }
 function extrasUsed(){ const U={lucky:{}, hail:{}}; logged.forEach(b=>{ if(!b || !U[b.tier]) return; const d=gameDayOf(b); U[b.tier][d]=(U[b.tier][d]||0)+1; }); return U; }
 function extrasKalshi(r,s,cfg,atLeast){ const x=r.offeredProb, rate=cfg.fees.kalshi/100, F=N=>Math.ceil(rate*N*x*(1-x)*100-1e-9)/100;
   if(atLeast){ const N=Math.max(1,Math.ceil((s-1e-9)/x)); return {N, stake:+(N*x+F(N)).toFixed(2)}; }   // Just missed: not under the smallest bet
@@ -5574,7 +5598,7 @@ function renderLog(){ setTimeout(()=>{ try{ csvDays(); }catch(e){} try{ lcRender
     }
     tr.innerHTML=
       '<td class="meta" style="white-space:nowrap">'+esc(b.date)+'<div class="meta">bet '+esc(betTimeTxt(b))+'</div>'+(b.start?'':'<div class="meta" style="color:var(--warn)">game time unknown</div>')+playedHtml(b)+whyHtml(b)+'</td>'+
-      '<td><div class="c-who">'+avatarHtml(b,'b:'+i)+'<div><div class="pick">'+esc(b.name)+'</div><div class="meta" style="color:var(--ink)" title="'+esc(b.betnow||'')+'">'+esc(betLabel(b))+' <span class="meta">'+esc(fmtOdds(b.odds))+'</span></div>'+srcTagHtml(b)+logBandChip(b)+(b.free?' <span class="tag eb-freetag" title="Free bet: not your money. A loss costs $0.">🎁 free bet</span>':'')+(b.paidReal?' <span class="meta" title="The winnings you typed: what the book really paid">paid as typed</span>':'')+(b.lostAmt>=0&&b.result==="loss"?' <span class="meta">lost $'+(+b.lostAmt).toFixed(2)+' (typed)</span>':'')+liveChipHtml(b)+fillDiffHtml(b,i)+
+      '<td><div class="c-who">'+avatarHtml(b,'b:'+i)+'<div><div class="pick">'+esc(b.name)+'</div><div class="meta" style="color:var(--ink)" title="'+esc(b.betnow||'')+'">'+esc(betLabel(b))+' <span class="meta">'+esc(fmtOdds(b.odds))+'</span></div>'+srcTagHtml(b)+logBandChip(b)+lsmlChip(b)+(b.free?' <span class="tag eb-freetag" title="Free bet: not your money. A loss costs $0.">🎁 free bet</span>':'')+(b.paidReal?' <span class="meta" title="The winnings you typed: what the book really paid">paid as typed</span>':'')+(b.lostAmt>=0&&b.result==="loss"?' <span class="meta">lost $'+(+b.lostAmt).toFixed(2)+' (typed)</span>':'')+liveChipHtml(b)+fillDiffHtml(b,i)+
       '<div class="meta">'+(bookLogo(b.book)||isPredBook(b.book)?logoTag(b.book,'sm')+' ':'')+'<span class="book">'+esc(bookLabel(b.book))+'</span></div></div></div></td>'+   // v3.57: PREDICTS tag on prediction apps without a logo too (FanDuel Predicts); a picture
       '<td><span class="sport s-'+esc(b.sport)+'">'+esc(b.sport)+'</span></td>'+
       '<td class="num">'+esc(fmtOdds(b.odds))+'</td>'+

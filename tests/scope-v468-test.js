@@ -95,7 +95,7 @@ async function open(b, o){ const ctx=await b.newContext({timezoneId:'America/Chi
       await p.fill('#logBody tr.editor .eb-cover', val); await p.click('#logBody tr.editor .eb-save'); await p.waitForTimeout(350); };
     await edit('m1','61'); await edit('m2','58');
     let L=await p.evaluate(()=>Object.fromEntries(logged.map(b=>[b.id,{cover:b.cover||null, hist:(b.coverHist||[]).map(x=>x.p), band:logBandOf(b)}])));
-    check('m1, typed 61% three hours... five hours before its game: saved as 0.61, before the start, typed by you, with the app version and policy; band Lean', L.m1.cover && L.m1.cover.p===0.61 && L.m1.cover.pre===true && L.m1.cover.src==='typed_by_user' && L.m1.cover.app==='v4.68' && L.m1.cover.policy==='act-v2' && L.m1.cover.gameStart===iso(NOW+5*H) && L.m1.band===5, L.m1);
+    check('m1, typed 61% five hours before its game: saved as 0.61, before the start, typed by you, with the app version and policy; band Lean', L.m1.cover && L.m1.cover.p===0.61 && L.m1.cover.pre===true && L.m1.cover.src==='typed_by_user' && /^v4\.\d+$/.test(L.m1.cover.app) && L.m1.cover.policy==='act-v2' && L.m1.cover.gameStart===iso(NOW+5*H) && L.m1.band===5, L.m1);
     check('m2, typed 58% after its game started: saved as after the start (pre false); band Slight Lean, shown', L.m2.cover && L.m2.cover.p===0.58 && L.m2.cover.pre===false && L.m2.band===4, L.m2);
     const chip=await p.evaluate(()=>{ const i=logged.findIndex(x=>x.id==='m2'); return logBandChip(logged[i]); });
     check('m2 chip says "added after the game started: shown, not judged"', /Cover you typed 58\.0% · added after the game started: shown, not judged/.test(chip), chip);
