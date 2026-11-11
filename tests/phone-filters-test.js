@@ -47,6 +47,15 @@ const pos=(p,ids)=>p.evaluate(ids=>Object.fromEntries(ids.map(id=>{ const r=docu
   await p.reload(); await p.waitForTimeout(1300);
   t=await p.evaluate(()=>document.getElementById('barMoreBtn').textContent.trim());
   check('after a reload the button still names what stays on (the books and the sweet spot are remembered; the sport is not)', /^Filters · (Novig · Sweet spot|2 on) ▾$/.test(t), t);
+  // v4.61: the pasted board does not use Sport, Only sweet spot or Only games I already bet, so the button does not name them there
+  const pv=await p.evaluate(()=>{ const s=document.getElementById('filterSport'); s.value='NFL'; s.dispatchEvent(new Event('change',{bubbles:true})); const api=document.getElementById('barMoreBtn').textContent.trim(); showBoardSrc('paste'); barSumPaint(); const paste=document.getElementById('barMoreBtn').textContent.trim(); showBoardSrc('api'); barSumPaint(); return {api, paste, back:document.getElementById('barMoreBtn').textContent.trim()}; });
+  check('on the pasted board the button names only what that board filters on: "Filters · 3 on ▾" becomes "Filters · Novig ▾", and comes back', pv.api==='Filters · 3 on ▾' && pv.paste==='Filters · Novig ▾' && pv.back==='Filters · 3 on ▾', pv);
+  const old=await p.evaluate(()=>{ const keep=boardBooks.slice(); boardBooks.length=0; boardBooks.push('Bovada','Novig'); barSumPaint(); const t=document.getElementById('barMoreBtn').title; boardBooks.length=0; keep.forEach(x=>boardBooks.push(x)); barSumPaint(); return t; });
+  check('the books named are the ones the board is really showing (not only what was saved)', /2 books/.test(old), old);
+  await p.click('#barMoreBtn'); await p.waitForTimeout(150);
+  const sm=await p.evaluate(()=>{ document.getElementById('shopMsg').textContent='🦑 Sentinels are back'; const y=id=>Math.round(document.getElementById(id).getBoundingClientRect().top); return {btn:y('shopBtn'), msg:y('shopMsg'), show:y('boardView'), ctl:document.getElementById('barMoreBtn').getAttribute('aria-controls')}; });
+  check('opened: the Sentinels’ status line stays right under its button, above Show; and the button names everything it opens', sm.msg>=sm.btn && sm.msg<sm.show && /boardView/.test(sm.ctl) && /cardsOn/.test(sm.ctl), sm);
+  await p.click('#barMoreBtn'); await p.waitForTimeout(150);
   const over=await p.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
   check('phone: no sideways scroll', over<=0, over);
   check('no page errors (phone)', !errs.length, errs); await ctx.close();

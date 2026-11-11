@@ -14,7 +14,17 @@ New builds add their line at the top of the right section.
   the unread incumbent's age comes from `shop.scan` or the board, never `_liveAt`; a press's "none" result wins over the age label; "live" only while
   the last press read it ("last read 20m ago"); tooltips name the bypass and `r.shop.from`; `swapBooks` resets before its empty-books return;
   a failed /live request leaves the unasked rows untouched and keeps the error on screen; "repriced" = book or price really changed.
-  `tests/book-choice-v461-test.js` (36, fails 17 on v4.60). Not changed: `rowSeenAt` (ring and score freshness) still reads `loadedAt`.
+  Then, same version (owner: "You can decide if you think it's the best thing to do", "Ok fix it and build"): `rowSeenAt` (the card's age pill, the ◎
+  fresh check, the score's Fresh) reads `priceAt` when set and `swap.at`; `shopExchanges` no longer bumps `_liveAt` for every quote: `decide` sets it
+  only when the winner is a live-read price, so reading Novig does not make a Bovada price new; `srcFetch` returns `at` (the Worker's `x-src-at`, kept
+  on its saved answers), so SportsGameOdds and The Odds API saved answers carry their real time; OddsPapi rows are `priceAt:'unknown'` (the Worker
+  caches each game 15 min with no time; `g.at` is used if it ever sends one). A second review (4 reviewers, 20 findings, all accepted) also gave:
+  `r.shop.from` only when the book changed and `r.shop.kept` (tooltip "was read again ... keeps its place"); the Kalshi second pass says
+  `exchange_unreadable_no_actionable_quote`, not `nothing_readable` (swap: when `_swapSkip` is not empty); a failed or thrown /live request restores the
+  unasked rows' `_shopQ` and 🔓/🔒 (`r._was`) and does not stamp `pkSentAt`; the swap tooltip names the unreadable book, `snap.shop.swapFrom`;
+  `swapBooks` drops `shopChk` when it makes a swap card; "live · was" becomes "read 5m ago · was" after `shopLim` (`shopSameOld`); `barSumPaint`
+  skips Sport / Sweet spot / My games on the pasted board and reads `boardBooks`; `#shopMsg` keeps its place on a phone; `aria-controls` lists all.
+  `tests/book-choice-v461-test.js` (55, fails on v4.60), `tests/phone-filters-test.js` (22).
 - v4.60 (owner, phone: "I think this can be on a drop down?", "Also this", "For now only on phone"): under 760 px the board bar shows only the search
   box, Filters and Send the Sentinels (CSS `order`); Show, Sort, Sport, the book chips, the tick boxes, Show all notes and Cards fold behind Filters
   (`.board-bar.bar-open`, the same `mbev.barMore` switch). `barSumPaint` (hoisted, reads the page and localStorage only) names what hides bets on the

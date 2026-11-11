@@ -160,7 +160,7 @@ All of these are **estimates**. A bet that passes has an *estimated* edge, not a
 | 2 | Edge | the conservative EV is +4% to +12% (above 12% is usually a stale price or a wrong match) |
 | 3 | Room for error | the conservative chance is 2.5 points or more above the price after its fee |
 | 4 | Lined up | model ≥ market, and the market alone beats the price |
-| 5 | Fresh | the price was read in the last 10 minutes |
+| 5 | Fresh | the price the card shows was read in the last 10 minutes (a saved board answer counts from when it was fetched; reading another book does not count) |
 | 6 | Clean | no warning note, injury, bad weather, outlier, capped stake, or a price up a point in the last hour |
 
 - **6 of 6:** a gold ring, a tinted card and "BET NOW". **5 of 6:** a thin ring that names the miss. The list is in "Why this play?".
@@ -202,7 +202,7 @@ All of these are **estimates**. A bet that passes has an *estimated* edge, not a
 ```
 Edge   = 50 × min(1, La Contadora's EV ÷ 6%)
 Market = 20 at break-even, 30 at +4%, 0 at −3% (× 0.85 for consensus; 8 with no market)
-Fresh  = 20 under 3 minutes old, falling to 0 at 90 minutes
+Fresh  = 20 under 3 minutes old, falling to 0 at 90 minutes (the age of the price the card shows, as in check 5)
 ```
 
 **Since v4.53 the Edge is on La Contadora's EV** (score policy `v2-actNet`; v4.54 `v3-actNet-nomkt`: with no market price the Edge counts half, so such a bet scores at most 25 + 8 + 20 = 53, GOOD, and is listed after the market-checked bets in the Math order); before, it was on the Model EV. For a bet whose model is above the market her EV is the smaller number, so most scores are lower than before: a bet with Model EV +5.8% and her EV +2.6% went from 87 to 61. The cut-offs did not move, so that a change of input is not hidden by a change of scale. Each new bet saves its score both ways, so the bets whose word changed can be counted later. Score records from different policies are never mixed.

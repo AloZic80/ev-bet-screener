@@ -2,6 +2,8 @@
 // a book-swap card follows the same rule as any card when its book cannot be read; a card is not moved to a Kalshi price that fails the floor after
 // Kalshi's fee rounding; a cached board answer is not a fresh price; the last press's result wins over the age label; "live" only while it was read;
 // the saved age of an unread price; clearing Books I bet undoes swaps; a failed request leaves the unasked bets alone; true tooltips; a true count.
+// And the price's age on the card, the ◎ fresh check and the score (owner: "You can decide if you think it's the best thing to do", "Ok fix it and build"):
+// a saved answer counts from when it was fetched, and only a read of the book the card shows makes its price new.
 // Every expected number is worked here by hand, not with the page's functions.
 const path=require('path'); const INDEX=path.join(__dirname,'..','index.html');
 const { chromium } = require('playwright'); const fs=require('fs');
@@ -23,12 +25,14 @@ async function open(b, rows, books, live, extra){ const ctx=await b.newContext({
     if(/\/live\?/.test(u)){ S.calls++; const bets=JSON.parse(decodeURIComponent(u.split('bets=')[1])); if(S.fail && S.fail(bets)) return r.fulfill({status:500,contentType:'application/json',body:'{"error":"boom"}'});
       const R={}; bets.forEach(d=>{ const [kind,idx,bk]=d.id.split(':'); const pr=S.live&&S.live(kind,+idx,bk); if(pr) R[d.id]={ok:true, price:pr, bid:pr-0.02, at:Date.now()}; }); return r.fulfill({contentType:'application/json',body:JSON.stringify({results:R})}); }
     if(/\/props\?/.test(u) && extra && extra.props) return r.fulfill({contentType:'application/json',body:JSON.stringify(extra.props())});
+    if(/\/src\/odds\?/.test(u) && extra && extra.sgo) return r.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-expose-headers':'x-src-quota, x-src-cached, x-src-at','x-src-cached':'1','x-src-at':extra.sgoAt},body:JSON.stringify(extra.sgo)});
     if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1300); return S; }
 const press=async S=>{ await S.p.evaluate(async()=>{ await shopExchanges(); }); await S.p.waitForTimeout(250); };
 const look=(S,key)=>S.p.evaluate(k=>{ const r=lastRows.find(x=>x.apiKey===k); return {book:r.book, price:r.offeredProb, pass:!!r.pass, stake:r.stake, flags:(r.flags||[]).map(f=>f[1]), shop:r.shop?{bypass:r.shop.bypass||null, same:!!r.shop.same, from:r.shop.from||null, orig:r.shop.orig.book}:null,
   chk:r.shopChk?{inc:r.shopChk.inc&&r.shopChk.inc.book, incAge:r.shopChk.inc&&r.shopChk.inc.age, incReadable:r.shopChk.inc&&r.shopChk.inc.readable, bypass:r.shopChk.bypass||null, none:r.shopChk.none||null, skip:r.shopChk.skip||null, margin:r.shopChk.margin}:null,
-  swap:r.swap?{from:r.swap.orig.book, at:r.swap.at, bypass:r.swap.bypass||null}:null, swapNone:r.swapNone||null, stale:!!shopStale(r),
+  swap:r.swap?{from:r.swap.orig.book, at:r.swap.at, bypass:r.swap.bypass||null, was:r.swap.from||null}:null, swapNone:r.swapNone||null, stale:!!shopStale(r),
+  seenAge:(t=>t?Date.now()-t:null)(rowSeenAt(r)), fresh:(x=>x?{ok:x.ok, t:x.t}:null)(ringOf(r,cfgRead()).checks.find(c=>c.k==='fresh')), snap:shopSnap(r)||null,
   tag:shopTagHtml(r).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim(), titles:[...shopTagHtml(r).matchAll(/title="([^"]*)"/g)].map(m=>m[1]), msg:(document.getElementById('shopMsg')||{}).textContent||''}; }, key);
 const near=(a,b)=>Math.abs(a-b)<1e-6;
 (async()=>{
@@ -44,15 +48,21 @@ const near=(a,b)=>Math.abs(a-b)<1e-6;
     alt={kalshi:0.56};
     check('by hand: Kalshi 56% after its fee is EV '+(ev(0.56,kf(0.56))*100).toFixed(2)+'%, under the floor', ev(0.56,kf(0.56))<floor, null);
     await press(S); v=await look(S,'s');
+    check('and its price is not called fresh because Kalshi answered: it is as old as the Novig read (about 1 second here, not 0), and 4 minutes later it will say 4 minutes', v.seenAge!=null && v.seenAge>=500 && v.fresh && /price read/.test(v.fresh.t), {seenAge:v.seenAge, fresh:v.fresh});
     check('press: Novig cannot be read and the only fresh price (Kalshi 56%) is under the floor: the card stays at Novig 51.5%, "No current best book confirmed · shown exchange unavailable · fresh prices do not clear your floor" (v4.57 moved it to Kalshi and jailed it)', v.book==='Novig' && near(v.price,0.515) && v.swapNone==='exchange_unreadable_no_actionable_quote' && /No current best book confirmed · shown exchange unavailable · fresh prices do not clear your floor/.test(v.tag) && !/Send the Sentinels/.test(v.tag), v);
     alt={}; await press(S); await S.p.clock.fastForward(4*60e3); await S.p.waitForTimeout(400); v=await look(S,'s');
     check('press with nothing readable, 4 minutes later: still Novig 51.5%, "no price could be read · refresh prices", and not "Send the Sentinels" (the press was just made)', v.book==='Novig' && near(v.price,0.515) && v.swapNone==='nothing_readable' && /no price could be read · refresh prices/.test(v.tag) && !/Send the Sentinels/.test(v.tag), v);
+    check('after that press the Novig price is 4 minutes old on the card too (the ◎ fresh check counts from when Novig was read)', v.seenAge>=4*60e3 && v.seenAge<5*60e3, {seenAge:v.seenAge, fresh:v.fresh});
+    alt={kalshi:0.5405};   /* clears the floor at Kalshi’s listed fee, fails it after the fee is rounded up on 2 contracts (worked by hand in the Kalshi section) */
+    await press(S); v=await look(S,'s');
+    check('press: Novig cannot be read; Kalshi 54.05% fails the floor after its fee rounding: the card stays at Novig 51.5% and says "shown exchange unavailable · fresh prices do not clear your floor", not "no price could be read" (a price was read)', v.book==='Novig' && near(v.price,0.515) && v.swapNone==='exchange_unreadable_no_actionable_quote' && /shown exchange unavailable · fresh prices do not clear your floor/.test(v.tag) && !/no price could be read/.test(v.tag) && v.snap && v.snap.skip==='kalshi_fee_rounding', v);
     alt={poly:0.53};
     check('by hand: Polymarket US 53% after its fee is EV '+(ev(0.53,pf(0.53))*100).toFixed(2)+'%, over the floor', ev(0.53,pf(0.53))>=floor, null);
     await press(S); v=await look(S,'s');
     check('press: Novig still cannot be read, Polymarket US 53% clears the floor: the card moves there, with no 0.3 points, saved as exchange_unreadable', v.book==='Polymarket US' && near(v.price,0.53) && v.swap.bypass==='exchange_unreadable' && v.swap.from==='DraftKings' && !v.swapNone, v);
     const sv=await S.p.evaluate(()=>shopSnap(lastRows.find(x=>x.apiKey==='s')));   /* what addToLog saves (not logged here: a logged bet would mark the card already bet) */
-    check('a bet taken from it saves the reason (exchange_unreadable) and that it was a swap from DraftKings', sv && sv.bypass==='exchange_unreadable' && sv.swap===true && sv.from==='DraftKings', sv);
+    check('a bet taken from it saves the reason (exchange_unreadable), that it was a swap from DraftKings, and the book that could not be read (Novig)', sv && sv.bypass==='exchange_unreadable' && sv.swap===true && sv.from==='DraftKings' && sv.swapFrom==='Novig', sv);
+    check('its tooltip says so: "Novig could not be read on the last scan; Polymarket US is the best fresh price that clears your floor"', v.titles.some(t=>/Novig could not be read on the last scan; Polymarket US is the best fresh price that clears your floor/.test(t)), v.titles);
     const pn=ev(0.53,pf(0.53)), nIn=Q/(1+pn+0.0015), nOut=Q/(1+pn+0.006);
     check('by hand: next to Polymarket US 53% (EV '+(pn*100).toFixed(3)+'%), Novig at '+(nIn*100).toFixed(3)+'% is 0.15 points better and Novig at '+(nOut*100).toFixed(3)+'% is 0.6 points better', near(ev(nIn)-pn,0.0015) && near(ev(nOut)-pn,0.006), null);
     alt={poly:0.53, novig:nIn}; await press(S); v=await look(S,'s');
@@ -71,15 +81,28 @@ const near=(a,b)=>Math.abs(a-b)<1e-6;
     await press(S); v=await look(S,'k');
     check('press: Novig cannot be read; the card is not left at Kalshi failing the floor after the rounding: it shows Polymarket US 54.1% (v4.57 moved it to Kalshi and jailed it)', v.book==='Polymarket US' && near(v.price,0.541) && v.chk.skip==='kalshi_fee_rounding' && v.shop && v.shop.bypass==='exchange_unreadable' && !v.flags.some(f=>/after Kalshi fee rounding/.test(f)), v);
     check('no page errors (Kalshi)', !S.errs.length, S.errs); await S.ctx.close(); }
+  { S=await open(b, [prop('k2','Kal Only','Points',0.53,1,'Novig',60e3)], 'Novig, Kalshi, Polymarket, Bovada', (k,i,bk)=>bk==='kalshi'?0.5405:null);
+    await press(S); v=await look(S,'k2');
+    check('the same with Kalshi the only book that answers: the card stays at Novig 53% and says "No current best book confirmed · shown exchange unavailable · fresh prices do not clear your floor", not "no price could be read"; saved as exchange_unreadable_no_actionable_quote with the Kalshi skip', v.book==='Novig' && near(v.price,0.53) && v.chk.none==='exchange_unreadable_no_actionable_quote' && v.chk.skip==='kalshi_fee_rounding' && /shown exchange unavailable · fresh prices do not clear your floor/.test(v.tag) && !/no price could be read/.test(v.tag), v);
+    check('no page errors (Kalshi only)', !S.errs.length, S.errs); await S.ctx.close(); }
   // ================= 3: a cached board answer =================
   { const P=(fromCache)=>({props:[{player:'Cache Guy', game:'A1 @ H1', side:'over', line:20.5, market:'Points', book:'BetMGM', odds:-108, prob:0.58, mkt_prob:0.56, rating:4, ev_model:'projection', proj:22, team:'A1'}], _meta:fromCache?{from_cache:true, fetched_at:iso(NOW-20*60e3)}:{}});
-    let cacheOn=true; S=await open(b, [], 'Novig, Kalshi, Polymarket, BetMGM', (k,i,bk)=>bk==='novig'?0.522:null, {props:()=>P(cacheOn)});
+    const SGO={data:[{eventID:'E1', status:{startsAt:iso(KO), started:false, cancelled:false}, teams:{home:{teamID:'H', names:{short:'H1', long:'H1 Team'}}, away:{teamID:'A', names:{short:'A1', long:'A1 Team'}}}, players:{P1:{name:'Sgo Guy', teamID:'A'}},
+      odds:{o1:{oddID:'o1', statID:'points', statEntityID:'P1', periodID:'game', betTypeID:'ou', sideID:'over', fairOdds:'-138', fairOverUnder:'20.5', byBookmaker:{betmgm:{odds:'-108', overUnder:'20.5', available:true}}}}}]};
+    let cacheOn=true; S=await open(b, [], 'Novig, Kalshi, Polymarket, BetMGM', (k,i,bk)=>bk==='novig'?0.522:null, {props:()=>P(cacheOn), sgo:SGO, sgoAt:iso(NOW-7*60e3)});
+    const sg=await S.p.evaluate(async()=>{ document.body.insertAdjacentHTML('beforeend','<div id="sgoTestBox" style="display:none"><select id="sgoSport"><option value="NBA" selected>NBA</option></select><select id="sgoN"><option value="10" selected>10</option></select><input type="checkbox" id="sgoProps" checked><input type="checkbox" id="sgoGl" checked></div>');
+      await loadOddsSrc('sgo'); const r=lastRows.find(x=>x.name==='Sgo Guy'); const out=r?{priceAt:r.priceAt, age:Date.now()-rowSeenAt(r), fresh:ringOf(r,cfgRead()).checks.find(c=>c.k==='fresh').t}:null; lastRows=lastRows.filter(x=>x.name!=='Sgo Guy'); refresh(); return out; });
+    check('a SportsGameOdds answer the Worker had saved 7 minutes ago: the bet keeps that time (the Worker sends it), so the card says the price is 7 minutes old', sg && sg.priceAt===iso(NOW-7*60e3) && sg.age>=7*60e3 && sg.age<8*60e3 && /price read 7m ago/.test(sg.fresh), sg);
+    const op=await S.p.evaluate(()=>{ const g=at=>({startTime:new Date(Date.now()+3600e3).toISOString(), away:'AAA', home:'BBB', at, books:{'bovada.lv':{'45.5':{Over:1.9,Under:1.9}}}, sharp:{'45.5':{Over:0.5,Under:0.5}}}); return [opToRows([g()],'NFL').rows.map(r=>r.priceAt), opToRows([g('2026-11-11T18:50:00Z')],'NFL').rows.map(r=>r.priceAt)]; });
+    check('OddsPapi totals (the Worker keeps each game 15 minutes and does not say when it was read) carry no time: "unknown"; a time on the game is used if one is sent', op[0].length===2 && op[0].every(x=>x==='unknown') && op[1].length===2 && op[1].every(x=>x==='2026-11-11T18:50:00.000Z'), op);
     const floor=await S.p.evaluate(()=>cfgRead().eMin);
     check('by hand: Novig 52.2% (EV '+(ev(0.522)*100).toFixed(2)+'%) is worse than BetMGM −108 (52%, EV '+(ev(0.52)*100).toFixed(2)+'%) and clears the floor', ev(0.522)<ev(0.52) && ev(0.522)>=floor, null);
     const load=async()=>{ await S.p.evaluate(async()=>{ window._loadAnyway='NBA'; await loadApi(false,'NBA'); }); await S.p.waitForTimeout(300); return S.p.evaluate(gi=>{ const r=lastRows.find(x=>x.name==='Cache Guy'); if(!r) return null; r.apiKey='cg'; r.gameInfo=gi; refresh(); return r.apiKey; }, GI(1)); };   /* the ESPN stub has no games: the test gives the row its game */
     await load(); v=await look(S,'cg');
     const kept=await S.p.evaluate(()=>slimRow(lastRows.find(x=>x.name==='Cache Guy')).priceAt);
     check('Load answered from the Worker’s cache (fetched 20 minutes ago): the board keeps that time, and saving the board keeps it too', !!kept && Math.abs(Date.parse(kept)-(NOW-20*60e3))<5000, kept);
+    v=await look(S,'cg');
+    check('the card itself says the price is 20 minutes old: the ◎ fresh check reads "price 20m old: re-check" (it said "fresh: price read 0s ago")', v.seenAge>=19.9*60e3 && v.seenAge<21*60e3 && v.fresh && v.fresh.ok===false && /price 20m old: re-check/.test(v.fresh.t), {seenAge:v.seenAge, fresh:v.fresh});
     await press(S); v=await look(S,'cg');
     check('press: the BetMGM price is 20 minutes old, so it is stale: the fresh Novig price that clears the floor replaces it, saved as sportsbook_stale_unrefreshable, its age about 20 minutes (v4.57 called it fresh)', v.book==='Novig' && v.shop && v.shop.bypass==='sportsbook_stale_unrefreshable' && v.chk.incAge>=19.9*60e3 && v.chk.incAge<21*60e3, v);
     check('its tooltip says why, not "Novig beats BetMGM"', v.titles.some(t=>/The BetMGM price on the board was too old and cannot be read again here; Novig is the best fresh price that clears your floor/.test(t)) && !v.titles.some(t=>/Line shopping/.test(t)), v.titles);
@@ -102,9 +125,25 @@ const near=(a,b)=>Math.abs(a-b)<1e-6;
   { let live={kalshi:0.498}; S=await open(b, [prop('l','Live Row','Points',0.52,1,'Kalshi',60e3)], 'Novig, Kalshi, Polymarket, Bovada', (k,i,bk)=>live[bk]||null);
     await press(S); v=await look(S,'l');
     check('press: Kalshi reads 49.8%: "live · was −108"', v.book==='Kalshi' && near(v.price,0.498) && v.shop.same && /live · was -108/.test(v.tag), v.tag);
-    await S.p.clock.fastForward(20*60e3); await S.p.waitForTimeout(300); live={}; await press(S); v=await look(S,'l');
+    await S.p.clock.fastForward(5*60e3); await S.p.waitForTimeout(300); v=await look(S,'l');
+    check('5 minutes later, with no new press, it no longer says "live": "read 5m ago · was −108", and the tooltip says to send the Sentinels to read it again', /read 5m ago · was -108/.test(v.tag) && !/live · was/.test(v.tag) && v.titles.some(t=>/Kalshi price read 5m ago \(was -108 at the Pull\)\. Send the Sentinels to read it again/.test(t)), {tag:v.tag, titles:v.titles});
+    await S.p.clock.fastForward(15*60e3); await S.p.waitForTimeout(300); live={}; await press(S); v=await look(S,'l');
     check('20 minutes later Kalshi cannot be read: it no longer says "live": "last read 20m ago · was −108", and the tooltip says the last scan could not read it', /last read 20m ago · was -108/.test(v.tag) && !/live · was/.test(v.tag) && v.titles.some(t=>/read 20m ago; the last scan could not read it/.test(t)), {tag:v.tag, titles:v.titles});
     check('no page errors (live)', !S.errs.length, S.errs); await S.ctx.close(); }
+  // ================= freshness: only a read of the book shown makes its price new (owner: "Ok fix it and build") =================
+  { const rows=[prop('f','Old Bovada','Points',0.52,1,'Bovada',12*60e3), prop('g','Old Kalshi','Rebounds',0.52,2,'Kalshi',12*60e3), prop('h','Kept Row','Assists',0.52,3,'Bovada',60e3)];
+    S=await open(b, rows, 'Novig, Kalshi, Polymarket, Bovada', (k,i,bk)=>i===0?(bk==='novig'?0.56:null):i===1?(bk==='kalshi'?0.52:null):(bk==='novig'?0.515:null));
+    v=await look(S,'f');
+    check('before any press: a Bovada price loaded 12 minutes ago fails the ◎ fresh check ("price 12m old: re-check")', v.fresh && v.fresh.ok===false && /price 12m old: re-check/.test(v.fresh.t), v.fresh);
+    await press(S); v=await look(S,'f');
+    check('press: Novig answers for that bet (56%, under the floor) but Bovada itself was not read: the card stays at Bovada, says the sportsbook price is stale, and the ◎ fresh check still says "price 12m old: re-check" (it said "fresh: price read 0s ago")', v.book==='Bovada' && v.chk.none==='sportsbook_stale' && v.fresh.ok===false && /price 12m old: re-check/.test(v.fresh.t) && v.seenAge>=12*60e3, {fresh:v.fresh, seenAge:v.seenAge, tag:v.tag});
+    v=await look(S,'g');
+    check('a Kalshi bet whose own price was read again (the same 52%) is fresh: "fresh: price read … ago"', v.book==='Kalshi' && v.fresh.ok===true && v.seenAge<5000, {fresh:v.fresh, seenAge:v.seenAge});
+    v=await look(S,'h');
+    check('Kept Row moved from a fresh Bovada to Novig 51.5% (1.06 points better): tooltip "Line shopping: Novig beats Bovada after fees", and its price is fresh', v.book==='Novig' && v.titles.some(t=>/Line shopping: Novig beats Bovada after fees/.test(t)) && v.fresh.ok===true, {titles:v.titles, fresh:v.fresh});
+    await press(S); v=await look(S,'h');
+    check('press again, same prices: Novig keeps its place; the tooltip says "Novig was read again on the last scan and keeps its place", not "Novig beats Novig"', v.book==='Novig' && v.titles.some(t=>/Novig was read again on the last scan and keeps its place: no other fresh price is 0\.3 points better after fees \(the Pull price was Bovada -108\)/.test(t)) && !v.titles.some(t=>/beats Novig/.test(t)), v.titles);
+    check('no page errors (freshness)', !S.errs.length, S.errs); await S.ctx.close(); }
   // ================= 8: a failed request =================
   { const rows=[prop('a','Row A','Points',0.52,1,'Novig',60e3), prop('b2','Row B','Rebounds',0.52,2,'Novig',60e3), prop('c','Row C','Assists',0.52,3,'Novig',60e3)];
     S=await open(b, rows, 'Novig, Kalshi, Polymarket', (k,i,bk)=>({novig:0.52, kalshi:0.47, poly:0.53})[bk]||null);
@@ -113,6 +152,11 @@ const near=(a,b)=>Math.abs(a-b)<1e-6;
     check('the second request fails: the bet whose price was not asked (Row C) stays exactly as it was, no move and no "could not be read" (v4.57 moved it with no 0.3)', c.book==='Novig' && near(c.price,0.52) && !c.shop && !c.chk, c);
     check('the error stays on screen: "exchange check failed (500) · 1 bet not checked, left as it was"', /exchange check failed \(500\) · 1 bet not checked, left as it was/.test(c.msg), c.msg);
     check('the bets that were read are decided as usual (Row A: Kalshi 47% is far better, it moves)', a.book==='Kalshi' && near(a.price,0.47), a);
+    check('the count covers only the bets that were checked: 6 live prices (Row C’s two half-read prices are not counted or kept)', /\b6 live prices/.test(c.msg) && await S.p.evaluate(()=>!lastRows.find(x=>x.apiKey==='c')._shopQ), c.msg);
+    S.fail=null; await press(S); const c1=await look(S,'c'); const st0=await S.p.evaluate(()=>({sent:pkSentAt, q:Object.keys(lastRows.find(x=>x.apiKey==='c')._shopQ||{}).sort().join()}));
+    check('a press that works: Row C moves to Kalshi 47% and the Parlays tab is stamped', c1.book==='Kalshi' && near(c1.price,0.47) && /Kalshi/.test(st0.q) && st0.sent>0, {book:c1.book, st0});
+    await S.p.clock.fastForward(60e3); S.fail=bets=>bets.length===1; await press(S); const c2=await look(S,'c'); const st1=await S.p.evaluate(()=>({sent:pkSentAt, q:Object.keys(lastRows.find(x=>x.apiKey==='c')._shopQ||{}).sort().join()}));
+    check('then a press whose second request fails: Row C stays at Kalshi 47% with the prices read for it before (they were wiped), and the Parlays tab is not stamped "checked at live prices" again', c2.book==='Kalshi' && near(c2.price,0.47) && st1.q===st0.q && st1.q.length>0 && st1.sent===st0.sent, {c2:c2.book, st0, st1});
     check('no page errors (failed request)', !S.errs.length, S.errs); await S.ctx.close(); }
   await b.close();
   console.log('\n'+pass+' passed, '+fail+' failed'); process.exit(fail?1:0);
