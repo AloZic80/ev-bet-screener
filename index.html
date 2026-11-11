@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.59</title>
+<title>0xBeta Screener v4.60</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1419,6 +1419,13 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 /* v4.44: Watch bets panel */
 .ws-sum{font-size:14px; margin:2px 0} .ws-stage{margin:2px 0 8px} .ws-t td,.ws-t th{padding:5px 8px} .ws-line{font-size:13.5px; margin:6px 0}
 /* v4.45 Watch bets v2 */ .ws-h{font-size:14px; margin:14px 0 4px} .ws-head{line-height:1.5} .ws-verdict{color:var(--accent)} .ws-pol td:first-child{white-space:normal}
+/* v4.60 (Alonzo, phone: "I think this can be on a drop down?", "Also this", "For now only on phone"): on a phone Show, Sort, Sport, the book chips,
+   the tick boxes, Show all notes and Cards fold behind Filters; the search box, Filters and Send the Sentinels stay out, in that order. A computer is unchanged. */
+.bar-sum{font-weight:600}
+@media (max-width:760px){
+  .board-panel .board-bar:not(.bar-open)>.bar-item, .board-panel .board-bar:not(.bar-open)>.book-chips, .board-panel .board-bar:not(.bar-open)>.bar-check{display:none}
+  .board-panel .board-bar>.bar-search{order:-3} .board-panel .board-bar>.bar-more-btn{order:-2} .board-panel .board-bar>#shopBtn{order:-1}
+}
 </style>
 </head>
 <body>
@@ -1427,7 +1434,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.59</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.60</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2179,7 +2186,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.59';
+const SCREENER_VERSION='v4.60';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3443,6 +3450,7 @@ function renderCore(rows,cfg){
   if(dupes) bits.push('<span class="alert dupe">'+dupes+' already bet</span>');
   // v2.89: "N picks in games you already bet" moved to a checkbox by the board filters; rows still say "same game as …"
   { const cb=document.getElementById('onlyMyGames'); if(cb){ cb.checked=filterCorrOnly; const lab=cb.closest('label'); if(lab) lab.title=corrs+' pick'+(corrs===1?'':'s')+' in games you already bet'; } }
+  try{ barSumPaint(); }catch(e){}   // v4.60: the Filters button follows what the board shows
   alertBar.innerHTML=bits.join('');
 
   alertBar.style.display = bits.length?'flex':'none';
@@ -3622,7 +3630,18 @@ function helpOpenSet(){ if(!window._helpOpen){ let a=[]; try{ a=JSON.parse(local
 function helpOpenSave(){ try{ localStorage.setItem('mbev.help', JSON.stringify([...helpOpenSet()])); }catch(e){} }
 function helpApply(root){ const S=helpOpenSet(); (root||document).querySelectorAll('details.help[data-help]').forEach(d=>{ if(S.has(d.dataset.help) && !d.open) d.open=true; }); }
 function tbBooksOpen(){ try{ return localStorage.getItem('mbev.tbBooks')==='1'; }catch(e){ return false; } }
-function barMoreApply(){ let on=false; try{ on=localStorage.getItem('mbev.barMore')==='1'; }catch(e){} const b=document.getElementById('barMoreBtn'); document.querySelectorAll('.bar-more').forEach(x=>x.classList.toggle('open', on)); if(b){ b.setAttribute('aria-expanded', String(on)); b.textContent=on?'Filters ▴':'Filters ▾'; } }
+function barMoreApply(){ let on=false; try{ on=localStorage.getItem('mbev.barMore')==='1'; }catch(e){} const b=document.getElementById('barMoreBtn'); document.querySelectorAll('.bar-more').forEach(x=>x.classList.toggle('open', on)); { const bar=b&&b.closest('.board-bar'); if(bar) bar.classList.toggle('bar-open', on); }   /* v4.60: on a phone the whole bar folds behind Filters */ if(b){ b.setAttribute('aria-expanded', String(on)); barSumPaint(); } }
+/* v4.60: the Filters button says what is hiding bets, so a filter folded away on a phone is not forgotten ("Filters · Novig · Sweet spot ▾").
+   Read from the page and this browser only (it runs at startup, before the board's own variables exist). Hoisted. */
+function barSumPaint(){ const b=document.getElementById('barMoreBtn'); if(!b) return; const on=b.getAttribute('aria-expanded')==='true', n=[];
+  try{ const V={pass:'Passing',perf:'Perfectas',legs:'Parlay legs',outlier:'Outliers',prior:'Already bet',watch:'Watch',skip:'Skipped'}, v=(document.getElementById('boardView')||{}).value; if(V[v]) n.push(V[v]); }catch(e){}
+  try{ const v=(document.getElementById('filterSport')||{}).value; if(v) n.push(v); }catch(e){}
+  try{ const a=JSON.parse(localStorage.getItem('mbev.boardBooks')||'[]'); if(Array.isArray(a) && a.length) n.push(a.length===1?String(a[0]):a.length+' books'); }catch(e){}
+  [['swOnly','Sweet spot'],['onlyMyGames','My games'],['showRejects','Rejected shown']].forEach(([id,t])=>{ const c=document.getElementById(id); if(c && c.checked) n.push(t); });
+  const sum=!n.length?'':n.length<=2?n.join(' · '):n.length+' on';
+  b.innerHTML='<span>Filters'+(sum?' · <span class="bar-sum">'+esc(sum)+'</span>':'')+(on?' ▴':' ▾')+'</span>';   /* one span: the button is a flex box on a phone, which would drop the spaces between pieces */ b.title=(n.length?'On: '+n.join(', ')+'. ':'')+'Show, Sort, Sport, books, Only sweet spot, Show rejected, Only games I already bet, Show all notes, Cards'; }
+document.addEventListener('change', e=>{ if(e.target && e.target.closest && e.target.closest('.board-panel .board-bar')) barSumPaint(); });
+document.addEventListener('click', e=>{ if(e.target && e.target.closest && e.target.closest('#bookChips')) setTimeout(barSumPaint,0); });
 document.addEventListener('toggle', e=>{ const d=e.target; if(!d || !d.classList || !d.classList.contains('help') || !d.dataset.help) return; const S=helpOpenSet(); if(d.open) S.add(d.dataset.help); else S.delete(d.dataset.help); helpOpenSave(); }, true);
 document.addEventListener('click', e=>{ const t=e.target.closest && e.target.closest('.tb-more, #barMoreBtn'); if(!t) return;
   if(t.id==='barMoreBtn'){ let on=false; try{ on=localStorage.getItem('mbev.barMore')==='1'; localStorage.setItem('mbev.barMore', on?'0':'1'); }catch(e){} barMoreApply(); return; }

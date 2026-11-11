@@ -6,6 +6,11 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.60 (owner, phone: "I think this can be on a drop down?", "Also this", "For now only on phone"): under 760 px the board bar shows only the search
+  box, Filters and Send the Sentinels (CSS `order`); Show, Sort, Sport, the book chips, the tick boxes, Show all notes and Cards fold behind Filters
+  (`.board-bar.bar-open`, the same `mbev.barMore` switch). `barSumPaint` (hoisted, reads the page and localStorage only) names what hides bets on the
+  button ("Filters · Novig · Sweet spot ▾", 3 or more: "3 on"). A computer is unchanged. `tests/phone-filters-test.js` (19); live-batch-test now
+  expects Cards folded on a phone.
 - v4.59 (owner: "I want to be able to search by sacks"): `passesSearch` also matches `r.market` and `shortStat(r.market)`; placeholder "Search player, team or stat…". `tests/search-stat-test.js` (7).
 - v4.58 (owner, phone: "buttons don't highlight anymore"): with Settings › Colour scheme › Custom on a dark colour (navy), `palCss` kept that
   colour as the dark-mode `--brand`, so the chosen tab, the mode chips and Load were as dark as the page. Dark `--brand` must now also be 3:1 from
