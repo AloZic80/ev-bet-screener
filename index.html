@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.70</title>
+<title>0xBeta Screener v4.71</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1464,7 +1464,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.70</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.71</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2221,7 +2221,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 
 </div>
 <script>
-const SCREENER_VERSION='v4.70';
+const SCREENER_VERSION='v4.71';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3941,7 +3941,7 @@ function lcRecord(t){ const ret=t.ret, odds=fmtOdds(Math.round(americanOf(t.stak
     book:t.book, game:t.game, team:t.team||null, odds, fair:'', stake:t.stake, kind:k, closing:'', srcType:'import', manual:true, start:null,
     imported:{file:t.id, note:t.note||undefined}, snap:{at, screener:SCREENER_VERSION} }; }
   if(t.free) r.free=true;   /* v4.70: settled as the book shows it */
-  if(t.result){ lcSetResult(r, t.result, t.profit); r.gradedBy='import'; }
+  if(t.result){ lcSetResult(r, t.result, t.profit); r.gradedBy='import'; r.accountingSource='import'; }
   return r; }
 /* v4.70: a result and the money as the book shows it: a win keeps its profit as typed winnings; a sale is what came back; a smaller loss is what was lost */
 function lcSetResult(b, res, profit){ const st=b.free?0:(+b.stake||0); delete b.sold; delete b.lostAmt; delete b.towin; delete b.paidReal;
@@ -3957,7 +3957,7 @@ function lcFixDone(b, f){ const s=f.set, near=(a,c)=>Math.abs((+a||0)-(+c||0))<0
 function lcFixApply(b, f){ const s=f.set, before={stake:b.stake, odds:b.odds, result:b.result, towin:b.towin, lostAmt:b.lostAmt, free:!!b.free, sold:b.sold||null};
   if(s.stake!=null) b.stake=s.stake; if(s.odds) b.odds=s.odds; if(s.free!=null){ if(s.free) b.free=true; else delete b.free; }
   if(s.result) lcSetResult(b, s.result, s.profit!=null?s.profit:(s.result==='loss'?-(+b.stake||0):0)); else if(s.profit!=null && b.result==='win'){ b.towin=s.profit; b.paidReal=true; }
-  if(s.result) b.gradedBy='import';
+  if(s.result) b.gradedBy='import'; if(s.stake!=null || s.odds || s.profit!=null) b.accountingSource='import';   /* v4.71: linkFill leaves it alone */
   (b.edits=b.edits||[]).push({at:new Date().toISOString(), before, note:'import fix'+(f.note?': '+f.note:'')}); }
 function lcImpPaint(){ const el=document.getElementById('lcImpList');
   el.innerHTML=lcRows.map((t,i)=>{ const have=lcHave(t);
@@ -10892,6 +10892,7 @@ function linkFill(b,f){   // you saved it already — link, and flag differences
   b.fills=(b.fills||[]).filter(id=>!ids.includes(id)).concat(f.id);
   if(had.length){ b.fillQty=+f.qty||0; b.fillCost=stake; }   // re-read of the same order: replace, don't add
   else { b.fillQty=(b.fillQty||0)+(+f.qty||0); b.fillCost=+(((b.fillCost||0)+stake)).toFixed(2); }
+  if(b.accountingSource==='import' || b.accountingSource==='user'){ delete b.fillDiff; return; }   /* v4.71: a stake and odds you corrected (import fix) are never put back by a re-read of the book's fills */
   if(b.autoFrom){ b.stake=b.fillCost; if(f.price) b.odds=fmtOdds(Math.round(americanOf(f.price))); delete b.fillDiff; return; }
   const mine=toProb(b.odds), px=f.price;
   if(mine==null || (px && Math.abs(px-mine)>0.006) || Math.abs(b.fillCost-(+b.stake||0))>0.06) b.fillDiff={price:px||mine, stake:b.fillCost, fee:+f.fee||0, at:f.ts};
