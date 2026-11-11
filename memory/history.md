@@ -10,6 +10,9 @@ New builds add their line at the top of the right section.
   the Today's games line (#todayLine) and Cover bands (.cv-legend-box) outside. `barPhonePlace` (hoisted; runs at startup and on a matchMedia change)
   moves them into the board bar on a phone, first among what Filters opens, and back above the bar on a computer. `tests/phone-filters-test.js` (24).
   Lesson: when the owner points at a screenshot, everything in it is the scope; ask if a part looks out of place, do not leave it out.
+  Same version (owner, with a screenshot of his phone showing everything open: "Did I not say this needs to be all on a drop down?"): his phone had
+  remembered Filters as open (mbev.barMore from v4.25). Filters now starts closed every time the app opens (`window._barOpen`, not saved) and the
+  old key is removed at startup. live-batch-test now expects Filters closed after a reload.
 - v4.61 (owner: "I had already said build", after a six-reviewer recheck of v4.57 found 12 real issues): book-swap cards follow the unreadable rule
   (the shown swap book's last quote stays in `_altQ` marked `_unread`; the incumbent is `_swapInc`, the book shown when the last press started; a fresh
   price replaces it only if it clears `cfg.eMin`, else `r.swapNone`); a card moved to Kalshi that fails the floor after the fee rounding is decided again

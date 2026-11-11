@@ -3642,7 +3642,7 @@ function helpOpenSet(){ if(!window._helpOpen){ let a=[]; try{ a=JSON.parse(local
 function helpOpenSave(){ try{ localStorage.setItem('mbev.help', JSON.stringify([...helpOpenSet()])); }catch(e){} }
 function helpApply(root){ const S=helpOpenSet(); (root||document).querySelectorAll('details.help[data-help]').forEach(d=>{ if(S.has(d.dataset.help) && !d.open) d.open=true; }); }
 function tbBooksOpen(){ try{ return localStorage.getItem('mbev.tbBooks')==='1'; }catch(e){ return false; } }
-function barMoreApply(){ let on=false; try{ on=localStorage.getItem('mbev.barMore')==='1'; }catch(e){} const b=document.getElementById('barMoreBtn'); document.querySelectorAll('.bar-more').forEach(x=>x.classList.toggle('open', on)); { const bar=b&&b.closest('.board-bar'); if(bar) bar.classList.toggle('bar-open', on); }   /* v4.60: on a phone the whole bar folds behind Filters */ if(b){ b.setAttribute('aria-expanded', String(on)); barSumPaint(); } }
+function barMoreApply(){ const on=!!window._barOpen;   /* v4.62 (Alonzo: "this needs to be all on a drop down"): Filters starts closed every time the app opens; open or closed lasts only while the page stays open (it was remembered in mbev.barMore, so a phone that once opened it kept showing everything) */ const b=document.getElementById('barMoreBtn'); document.querySelectorAll('.bar-more').forEach(x=>x.classList.toggle('open', on)); { const bar=b&&b.closest('.board-bar'); if(bar) bar.classList.toggle('bar-open', on); }   /* v4.60: on a phone the whole bar folds behind Filters */ if(b){ b.setAttribute('aria-expanded', String(on)); barSumPaint(); } }
 /* v4.60: the Filters button says what is hiding bets, so a filter folded away on a phone is not forgotten ("Filters · Novig · Sweet spot ▾").
    Read from the page and this browser only (it runs at startup, before the board's own variables exist). Hoisted. */
 function barSumPaint(){ const b=document.getElementById('barMoreBtn'); if(!b) return; const on=b.getAttribute('aria-expanded')==='true', n=[];
@@ -3659,7 +3659,7 @@ document.addEventListener('change', e=>{ if(e.target && e.target.closest && e.ta
 document.addEventListener('click', e=>{ if(e.target && e.target.closest && e.target.closest('#bookChips')) setTimeout(barSumPaint,0); });
 document.addEventListener('toggle', e=>{ const d=e.target; if(!d || !d.classList || !d.classList.contains('help') || !d.dataset.help) return; const S=helpOpenSet(); if(d.open) S.add(d.dataset.help); else S.delete(d.dataset.help); helpOpenSave(); }, true);
 document.addEventListener('click', e=>{ const t=e.target.closest && e.target.closest('.tb-more, #barMoreBtn'); if(!t) return;
-  if(t.id==='barMoreBtn'){ let on=false; try{ on=localStorage.getItem('mbev.barMore')==='1'; localStorage.setItem('mbev.barMore', on?'0':'1'); }catch(e){} barMoreApply(); return; }
+  if(t.id==='barMoreBtn'){ window._barOpen=!window._barOpen; barMoreApply(); return; }   // v4.62: not remembered
   e.stopPropagation(); e.preventDefault(); try{ localStorage.setItem('mbev.tbBooks', tbBooksOpen()?'0':'1'); }catch(e){} try{ renderTodayBar(); }catch(e){} }, true);   // capture: before the Today card's own click (which opens the Bet log)
 /* v4.62 (Alonzo: "what's on the screenshot should all be in a drop down because I don't need to see it all the time"): on a phone the Today's games line
    and Cover bands move into the board bar, first among what Filters opens; on a computer they go back above the bar, where they always were. Hoisted. */
@@ -3667,6 +3667,7 @@ function barPhonePlace(){ try{ const bar=document.querySelector('.board-panel .b
     const phone=!!(window.matchMedia && window.matchMedia('(max-width:760px)').matches);
     if(phone){ if(tl.parentNode!==bar || cv.parentNode!==bar){ bar.insertBefore(cv, bar.firstChild); bar.insertBefore(tl, bar.firstChild); } }
     else if(tl.parentNode===bar || cv.parentNode===bar){ bar.parentNode.insertBefore(tl, bar); bar.parentNode.insertBefore(cv, bar); } }catch(e){} }
+try{ localStorage.removeItem('mbev.barMore'); }catch(e){}   // v4.62: the old remembered "open" is dropped
 try{ helpApply(); barPhonePlace(); barMoreApply(); }catch(e){}
 try{ const mq=window.matchMedia && window.matchMedia('(max-width:760px)'); if(mq){ if(mq.addEventListener) mq.addEventListener('change', barPhonePlace); else if(mq.addListener) mq.addListener(barPhonePlace); } }catch(e){}
 document.addEventListener('toggle', e=>{ const d=e.target; if(!d || !d.classList || !d.classList.contains('sc-why')) return; const k=d.dataset.pck||''; if(!k) return; const S=scOpenSet(); if(d.open) S.add(k); else S.delete(k); scOpenSave(); }, true);

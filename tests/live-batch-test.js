@@ -100,7 +100,7 @@ const heavyOk=(live,n)=>live.filter(g=>g.some(b=>b.book==='novig'&&/^(moneyline|
     await p.evaluate(()=>{ document.querySelector('.tab[data-view="v-live"]').click(); document.querySelector('details.help[data-help="live-edges"] summary').click(); }); await p.waitForTimeout(200);
     await p.reload(); await p.waitForTimeout(1200);
     const mem=await p.evaluate(()=>({help:[...document.querySelectorAll('details.help[open]')].map(d=>d.dataset.help), filters:document.getElementById('barMoreBtn').getAttribute('aria-expanded'), tiles:[...document.querySelectorAll('#todayBar .tb-t:not(.all)')].filter(t=>t.getBoundingClientRect().height>0).length}));
-    check('after a reload the ones you opened are still open (How Live edges works, Filters, by book) and nothing else', mem.help.join()==='live-edges' && mem.filters==='true' && mem.tiles>=1, mem);
+    check('after a reload the ones you opened are still open (How Live edges works, by book) and nothing else; Filters starts closed again (v4.62, owner: "this needs to be all on a drop down")', mem.help.join()==='live-edges' && mem.filters==='false' && mem.tiles>=1, mem);
     await p.evaluate(()=>{ document.querySelector('.tab[data-view="v-log"]').click(); }); await p.waitForTimeout(300);
     const lg={csv:await vis('#csvDl'), chk:await vis('#checkResults'), wipe:await vis('#wipe'), bak:await vis('#backupLog')};
     check('Bet log: Download, ⬇ CSV and Check results are on the panel; Show as CSV, Grab closing lines, Back up, Restore and Delete wait under "More"', lg.csv===true && lg.chk===true && lg.wipe===false && lg.bak===false, lg);

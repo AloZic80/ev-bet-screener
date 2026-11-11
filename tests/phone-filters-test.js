@@ -46,7 +46,11 @@ const pos=(p,ids)=>p.evaluate(ids=>Object.fromEntries(ids.map(id=>{ const r=docu
   await p.click('#barMoreBtn'); await p.waitForTimeout(150);
   v=await seen(p,IDS); t=await p.evaluate(()=>document.getElementById('barMoreBtn').textContent.trim());
   check('closed again: all folded, and the button still says what is on: "Filters · 3 on ▾"', IDS.every(id=>v[id]===false) && t==='Filters · 3 on ▾', {t,v});
+  await p.click('#barMoreBtn'); await p.waitForTimeout(150);   /* left open, as on the owner's phone */
+  await p.evaluate(()=>{ localStorage.setItem('mbev.barMore','1'); });   /* and the old remembered "open" from before v4.62 */
   await p.reload(); await p.waitForTimeout(1300); await p.evaluate(()=>{ const c=document.querySelector('.board-panel .cv-legend-box'); if(c) c.id='cvLegendT'; });
+  v=await seen(p,IDS);
+  check('Filters left open, then the app opened again: it starts closed, everything folded (v4.62: it remembered "open", so the owner’s phone kept showing everything)', IDS.every(id=>v[id]===false) && await p.evaluate(()=>document.getElementById('barMoreBtn').getAttribute('aria-expanded')==='false' && localStorage.getItem('mbev.barMore')===null), v);
   t=await p.evaluate(()=>document.getElementById('barMoreBtn').textContent.trim());
   check('after a reload the button still names what stays on (the books and the sweet spot are remembered; the sport is not)', /^Filters · (Novig · Sweet spot|2 on) ▾$/.test(t), t);
   // v4.61: the pasted board does not use Sport, Only sweet spot or Only games I already bet, so the button does not name them there
