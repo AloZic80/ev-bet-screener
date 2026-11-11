@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.71</title>
+<title>0xBeta Screener v4.72</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1464,7 +1464,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.71</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.72</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2221,7 +2221,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 
 </div>
 <script>
-const SCREENER_VERSION='v4.71';
+const SCREENER_VERSION='v4.72';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -5651,7 +5651,7 @@ function renderLog(){ setTimeout(()=>{ try{ csvDays(); }catch(e){} try{ lcRender
     }
     tr.innerHTML=
       '<td class="meta" style="white-space:nowrap">'+esc(b.date)+'<div class="meta">bet '+esc(betTimeTxt(b))+'</div>'+(b.start?'':'<div class="meta" style="color:var(--warn)">game time unknown</div>')+playedHtml(b)+whyHtml(b)+'</td>'+
-      '<td><div class="c-who">'+avatarHtml(b,'b:'+i)+'<div><div class="pick">'+esc(b.name)+'</div><div class="meta" style="color:var(--ink)" title="'+esc(b.betnow||'')+'">'+esc(betLabel(b))+' <span class="meta">'+esc(fmtOdds(b.odds))+'</span></div>'+srcTagHtml(b)+logBandChip(b)+lsmlChip(b)+(b.free?' <span class="tag eb-freetag" title="Free bet: not your money. A loss costs $0.">🎁 free bet</span>':'')+(b.paidReal?' <span class="meta" title="The winnings you typed: what the book really paid">paid as typed</span>':'')+(b.lostAmt>=0&&b.result==="loss"?' <span class="meta">lost $'+(+b.lostAmt).toFixed(2)+' (typed)</span>':'')+liveChipHtml(b)+fillDiffHtml(b,i)+
+      '<td><div class="c-who">'+avatarHtml(b,'b:'+i)+'<div><div class="pick">'+esc(b.name)+'</div><div class="meta" style="color:var(--ink)" title="'+esc(b.betnow||'')+'">'+esc(betLabel(b))+' <span class="meta">'+esc(fmtOdds(b.odds))+'</span></div>'+srcTagHtml(b)+logBandChip(b)+lsmlChip(b)+(b.free?' <span class="tag eb-freetag" title="Free bet: not your money. A loss costs $0.">🎁 free bet</span>':'')+(b.paidReal?' <span class="meta" title="The winnings you typed: what the book really paid">paid as typed</span>':'')+(b.lostAmt>=0&&b.result==="loss"?' <span class="meta">lost $'+(+b.lostAmt).toFixed(2)+' (typed)</span>':'')+liveChipHtml(b)+fillDiffHtml(b,i)+nvFillNote(b)+
       '<div class="meta">'+(bookLogo(b.book)||isPredBook(b.book)?logoTag(b.book,'sm')+' ':'')+'<span class="book">'+esc(bookLabel(b.book))+'</span></div></div></div></td>'+   // v3.57: PREDICTS tag on prediction apps without a logo too (FanDuel Predicts); a picture
       '<td><span class="sport s-'+esc(b.sport)+'">'+esc(b.sport)+'</span></td>'+
       '<td class="num">'+esc(fmtOdds(b.odds))+'</td>'+
@@ -6876,8 +6876,28 @@ function evOkFor(b, ev){
   if(b.dateSet && b.date && ctDay(t)===b.date) return true;   // v3.97 (Alonzo: "you already know it lost"): its game day was set (by you, the form or the book): a game played that day is its game, even when the bet was saved days later (Saquon 11/1, logged 11/5)
   return t >= at-4*3600e3;
 }
+/* v4.72 (agreed with ChatGPT, owner "BUILD" 11/11; Commanders-Rams Under 44.5 was graded from Broncos-Panthers): a Novig game total is graded
+   only from the one ESPN game that has Novig's own teams at Novig's kickoff (within 90 minutes), full game only. That game's ESPN id is then frozen
+   (b.espnEv) and used on every later run. No teams, no kickoff, a part-game market, no game or two games: no grade, "NOVIG EVENT MISMATCH · review".
+   Never by the line, the price or loose text. */
+function nvGated(b){ return !!(b && b.kind==='total' && (b.fillBook==='novig' || b.autoFrom==='novig')); }
+function nvPick(b, evs){ evs=evs||[];
+  if(b.espnEv){ const ev=evs.find(e=>e && String(e.id)===String(b.espnEv)); return ev?{ev}:{wait:1}; }
+  const why=r=>{ b.nvReview=r; return {review:r}; };
+  if(b.nvPart) return why('a part-game market');
+  const T=teamsOf(b.game), t0=Date.parse(b.start);
+  if(!T) return why('Novig did not name the teams');
+  if(isNaN(t0)) return why('no kickoff time from Novig');
+  const C=evs.filter(e=>{ const cs=compsOf(e); if(cs.length!==2 || Math.abs(Date.parse(e.date)-t0)>90*60e3) return false;
+    const ab=cs.map(c=>normAbbr((c.team&&c.team.abbreviation)||'')); return T.every(t=>ab.includes(t)); });
+  if(C.length!==1) return why(C.length?'more than one game matches':'no ESPN game has these teams at this time');
+  b.espnEv=String(C[0].id); delete b.nvReview; return {ev:C[0], fresh:1}; }
+function nvReviewText(b){ return b && b.nvReview ? 'NOVIG EVENT MISMATCH · review ('+b.nvReview+')' : ''; }
 async function findBetGame(b){
   const today=ctDay(Date.now()), gl=GL_KINDS.test(b.kind||'');
+  if(nvGated(b)){ const t0=Date.parse(b.start), d0=isNaN(t0)?(gameDayOf(b)||today):ctDay(t0), evs=[];   /* v4.72 */
+    for(const d of [d0, dayPlus(d0,-1), dayPlus(d0,1)]) evs.push(...((await fetchScoreboardDay(b.sport, d))||[]));
+    const seen=new Set(), U=evs.filter(e=>e && !seen.has(e.id) && seen.add(e.id)); const r=nvPick(b, U); return r.ev||null; }
   let days;
   if(b.start && !isNaN(Date.parse(b.start))) days=[gameDayOf(b)];
   else { const from=gameDayOf(b)||today; days=[from, dayPlus(from,1), dayPlus(from,2), today].filter((d,i,a)=>a.indexOf(d)===i).sort(); }   // v2.85: upcoming days too (Monday night)
@@ -6915,7 +6935,7 @@ function srcTagCore(b){   // v2.86: where the bet came from
   const m={api:['API','from an API load'], paste:['paste','from a pasted Cheat Sheet'], mev:['paste · sharp','from a pasted Market EV page'], manual:['by hand','from + Add a bet']};
   let t=b.manual?m.manual:m[b.srcType];
   if(b.made) return '<span class="src-tag" title="Your posted price — someone took it'+(b.research?' · research Make: kept out of the scorecard':'')+'">'+(b.research?'🔬 ':'')+(b.parole?'🐟 catch':'made')+(b.rung?' · rung '+b.rung:'')+' · '+esc(({kalshi:'Kalshi',poly:'Polymarket',novig:'Novig'}[b.autoFrom]||bookLabel(b.book)))+'</span>';
-  if(b.autoFrom) t=['auto · '+({kalshi:'Kalshi',poly:'Polymarket',novig:'Novig'}[b.autoFrom]||b.autoFrom), 'automatically from your '+b.autoFrom+' fill'+(t?' (board row: '+t[1]+')':'')];
+  if(b.autoFrom) t=['auto · '+({kalshi:'Kalshi',poly:'Polymarket',novig:'Novig'}[b.autoFrom]||b.autoFrom), 'automatically from your '+b.autoFrom+' fill'+(t?' (board row: '+t[1]+')':'')+((nvFillState(b)||{}).k==='unknown'?' · fill completeness unknown: closed-order history unavailable':'')];   /* v4.72 */
   if(!t) return '';
   return '<span class="src-tag" title="Saved '+t[1]+'">'+t[0]+'</span>'; }
 /* v3.35: when the bet was made (or first saved here), and why a bet is still "?" */
@@ -6963,7 +6983,7 @@ async function autoGradeLog(){
     // v2.85: graded, but its game hasn't started yet → that grade came from the wrong game
     logged.forEach(b=>{ if(b.sold || !b.start || !(b.result==='win'||b.result==='loss'||b.result==='push')) return;
       const t=Date.parse(b.start); if(!isNaN(t) && t>Date.now()){ delete b.result; changed++; } });
-    logged.forEach(b=>{ if(b.fixSog94 || b.gradedBy==='manual' || b.gradedBy==='book' || b.sold || !(b.sport==='NHL'||b.sport==='MLS') || !/SHOT/i.test(b.market||'') || !/GOAL/i.test(b.market||'')) return; b.fixSog94=1;   // v3.94: graded as goals before; grade it again   // v3.95: only "Shots On Goal" (plain "Shots" was graded right)
+    logged.forEach(b=>{ if(b.fixSog94 || b.gradedBy==='manual' || b.gradedBy==='import' || b.gradedBy==='book' || b.sold || !(b.sport==='NHL'||b.sport==='MLS') || !/SHOT/i.test(b.market||'') || !/GOAL/i.test(b.market||'')) return; b.fixSog94=1;   // v3.94: graded as goals before; grade it again   // v3.95: only "Shots On Goal" (plain "Shots" was graded right)
       if(b.result==='win'||b.result==='loss'||b.result==='push'||b.result==='?'){ if(b.resultSrc && b.resultSrc!=='ESPN') return; delete b.result; delete b.why; changed++; } });
     /* v4.40 (Alonzo, 11/9, Novig "Lekkerimaki 2+ Yes"): bets logged from a Novig fill before v4.40 could carry Novig's strike as the line ("2 Shots On Goal")
        when the bet was "2+", which is Over 1.5. Once: the line becomes N−0.5 (Over), the old text goes in edits; an ESPN or automatic PUSH at N (exactly N)
@@ -6995,7 +7015,7 @@ async function autoGradeLog(){
         const old=findGame(E,b.game)||findGameAny(E,b.game);
         if(old && !isNaN(at) && Date.parse(old.date)<at-5*3600e3){ b.wrongGame18=b.game; b.game=''; changed++; }
         continue; }
-      const gi=gameStatusOf(ev); if(!gi){ const S0=settlementFor(b); if(S0){ setFromSettlement(b,S0); changed++; continue; } if(!b.why || b.why.reason!=='game not found on ESPN'){ b.why={at:Date.now(), reason:'game not found on ESPN', market:b.market||''}; changed++; } continue; }
+      const gi=gameStatusOf(ev); if(!gi){ const S0=settlementFor(b); if(S0){ setFromSettlement(b,S0); changed++; continue; } const rsn=nvReviewText(b)||'game not found on ESPN'; if(!b.why || b.why.reason!==rsn){ b.why={at:Date.now(), reason:rsn, market:b.market||''}; changed++; } continue; }   /* v4.72: a Novig total that cannot be matched says so */
       // v2.80: keep the real start time and teams, so the bet counts on the day the game is played
       if(gi.startISO && b.start!==gi.startISO){ b.start=gi.startISO; changed++; }
       if(!teamsOf(b.game)){ const a=gi.teams.find(t=>t.ha==='away'), h=gi.teams.find(t=>t.ha==='home'); if(a&&h){ b.game=a.abbr+' @ '+h.abbr; changed++; } }
@@ -9238,11 +9258,13 @@ async function checkResultsRun(){
   await Promise.all(sports.map(fetchScoreboard));
   for(const b of logged){
     if(b.sold || b.kind==='parlay') continue;   // a cashed-out bet keeps its sale result; parlays are graded by hand
-    if(b.gradedBy==='manual') continue;   // v3.84 (Alonzo: "I press Check results again, they come back"): your own result wins here too
+    if(b.gradedBy==='manual' || b.gradedBy==='import') continue;   // v3.84 (Alonzo: "I press Check results again, they come back"): your own result wins here too   /* v4.72: and an imported one */
     const had=/^(win|loss|push)$/.test(b.result||'') ? b.result : null;   // v3.84: a settled result is not erased when ESPN cannot grade it
     const gl=GL_KINDS.test(b.kind||'');
-    let ev=findGame(scoreboardCache[b.sport], b.game);
-    if(!ev && gl) ev=findGameAny(scoreboardCache[b.sport], b.game, b.name);   // v2.59: "NO-PIT" style games
+    let ev;
+    if(nvGated(b)) ev=nvPick(b, scoreboardCache[b.sport]).ev||null;   /* v4.72: a Novig total only from its own verified game */
+    else { ev=findGame(scoreboardCache[b.sport], b.game);
+    if(!ev && gl) ev=findGameAny(scoreboardCache[b.sport], b.game, b.name); }   // v2.59: "NO-PIT" style games
     const gi=gameStatusOf(ev);
     if(!gi){ continue; }
     if(gi.state!=='post'){ if(!had) b.result='pending'; continue; }   // v3.84: had
@@ -10732,6 +10754,17 @@ async function huntForFills(list){   // price the board rows on just the books t
   }
   return true;
 }
+/* v4.72 (agreed with ChatGPT, owner "BUILD" 11/11): Novig fill completeness, as far as the app can know it. Only open orders are read, so: an open
+   order behind this bet that is partly filled says so (the stake is what was bought; the rest is not bought yet and is shown apart). Anything else
+   is "unknown": never called wrong or understated. A corrected (imported) bet says nothing. */
+function nvFillState(b){ if(!b || b.fillBook!=='novig' || b.accountingSource==='import' || b.accountingSource==='user') return null;
+  const O=((typeof myOrders!=='undefined'&&myOrders&&myOrders.orders)||[]).filter(o=>o && o.book==='novig' && (b.nvOrders||[]).includes(String(o.id)));
+  const o=O.find(x=>x.qty>0 && x.filled!=null && x.filled<x.qty);
+  if(o) return {k:'open_partial', bought:+(+b.stake||0).toFixed(2), open:+((o.qty-o.filled)*(+o.price||0)).toFixed(2)};
+  return {k:'unknown'}; }
+function nvFillNote(b){ const s=nvFillState(b); if(!s) return '';
+  if(s.k==='open_partial') return '<div class="meta nv-fill" style="color:var(--warn)">Open order, partly filled · $'+s.bought.toFixed(2)+' bought · the rest is not bought yet ($'+s.open.toFixed(2)+' still open)</div>';
+  return ''; }   /* unknown: said in the "auto · Novig" tag's tooltip, not on every row */
 function fillDiffHtml(b,i){
   if(!b.fillDiff) return (b.fills&&b.fills.length)?'<span class="fills-at" title="Matched to your '+esc(bookLabel(b.book))+' fill">✓ matches '+esc(bookLabel(b.book))+'</span>':'';
   const d=b.fillDiff;
@@ -10883,7 +10916,9 @@ function postForFill(f){
   return f.bet ? posts.find(P=>P.src===f.book && betMatches(f.bet,{kind:P.kind, sport:P.sport, name:P.name, market:P.market, side:P.side, team:P.team, game:P.game, start:P.start}))||null : null;
 }
 function notePlaced(b,f){ const t=f&&f.ts!=null?(typeof f.ts==='number'?f.ts:Date.parse(f.ts)):NaN; if(isNaN(t)) return false; const o=Date.parse(b.placedAt); if(!isNaN(o) && o<=t) return false; b.placedAt=new Date(t).toISOString(); return true; }   // v3.96
-function noteFillRef(b,f){ b.fillBook=f.book; b.fillRef=f.ref||b.fillRef||null; b.fillSide=f.side||b.fillSide||null; b.fillOutcome=f.outcome||b.fillOutcome||null; }
+function noteFillRef(b,f){ b.fillBook=f.book; b.fillRef=f.ref||b.fillRef||null; b.fillSide=f.side||b.fillSide||null; b.fillOutcome=f.outcome||b.fillOutcome||null;
+  if(f.book==='novig'){ const fb=f.bet||{}; if(fb.eventId) b.nvEvent=String(fb.eventId); if(fb.part) b.nvPart=String(fb.part);   /* v4.72: Novig's event (provenance), a part-game market, and the orders behind the fills */
+    const os=[].concat(f.order||[], f.orders||[]).filter(Boolean).map(String); if(os.length) b.nvOrders=[...new Set((b.nvOrders||[]).concat(os))]; } }
 function linkFill(b,f){   // you saved it already — link, and flag differences
   noteFillRef(b,f); notePlaced(b,f);   // v3.96
   const stake=+((+f.cost||0)+(+f.fee||0)).toFixed(2);
@@ -10982,7 +11017,7 @@ async function syncFills(force){
         const c=logged.filter(b=>!b.sold && !b.fillRef && LIVE_BOOK(b.book)===st.book && b.result!=='win' && b.result!=='loss' && betMatches(st.bet,b));
         if(c.length===1){ bets=c; noteFillRef(c[0],{book:st.book, ref:st.ref, side:st.side||null}); changed=true; } }
       bets.forEach(b=>{
-        if(b.gradedBy==='manual') return;   // v3.38: your own result wins
+        if(b.gradedBy==='manual' || b.gradedBy==='import') return;   // v3.38: your own result wins   /* v4.72: and an imported one */
         let res=null;
         if(st.book==='kalshi'){ const r=String(st.result||''); res = r==='void'||r==='scalar' ? 'push' : (r==='yes'||r==='no') ? (r===(b.fillSide||st.side||'yes')?'win':'loss') : null; }
         else if(st.book==='poly'){
