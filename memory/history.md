@@ -6,6 +6,24 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.65 (owner, phone, the "51 pass · of 2223 · 2172 skipped · 2 already bet" box: "I'm sure you can accommodate the top info somewhere else or
+  abbreviate"): under 760 px the box is one line inside itself (`#sbFoldBtn`): "Board 51 of 2,223 pass · 2 already bet ▾" (already bet in the alert's
+  red, so it is never hidden), closed every time the app opens (`window._sbOpen`). `tests/phone-header-test.js` (22).
+- v4.64 (owner, phone, a screenshot of the Today card: "Even this"): under 760 px the Today card is one line (`#tbFoldBtn`), closed every time the app
+  opens (`window._tbOpen`); `hdFoldPaint` writes "TODAY · $10.50 · 4 bets · 1–1 · $2.00 in play ▾" (another day: its label; no bets: "no bets"; bets to
+  check in orange). `.head.tb-open` shows the card; by book stays remembered inside it. `tests/phone-today-test.js` (15); live-batch-test opens the line.
+- v4.63 (owner, phone, screenshot of the BettingPros and Sources panels: "make them cleaner as well. I don't need to have them open all the time.
+  Because the my bets will be all the way to the bottom"): under 760 px each panel is one line (`#bpFoldBtn`, `#srcFoldBtn`, `.hd-fold`), closed every
+  time the app opens (`window._bpOpen`, `window._srcOpen`, not saved); `hdFoldPaint` (hoisted, reads the page; a MutationObserver on #savedNote, #srcBar,
+  #apiSport) writes "BettingPros · NBA · tomorrow · not live ▾" and "Sources · BettingPros 37 left · Worker 631 calls ▾". `.head.bp-open` /
+  `.head.src-open` show the panels. A computer is unchanged. `tests/phone-header-test.js` (19); bp-several-test opens the line first on a phone.
+- v4.62 (owner: "Did I not say that what's on the screenshot should all be in a drop down because I don't need to see it all the time?"): v4.60 had left
+  the Today's games line (#todayLine) and Cover bands (.cv-legend-box) outside. `barPhonePlace` (hoisted; runs at startup and on a matchMedia change)
+  moves them into the board bar on a phone, first among what Filters opens, and back above the bar on a computer. `tests/phone-filters-test.js` (24).
+  Lesson: when the owner points at a screenshot, everything in it is the scope; ask if a part looks out of place, do not leave it out.
+  Same version (owner, with a screenshot of his phone showing everything open: "Did I not say this needs to be all on a drop down?"): his phone had
+  remembered Filters as open (mbev.barMore from v4.25). Filters now starts closed every time the app opens (`window._barOpen`, not saved) and the
+  old key is removed at startup. live-batch-test now expects Filters closed after a reload.
 - v4.61 (owner: "I had already said build", after a six-reviewer recheck of v4.57 found 12 real issues): book-swap cards follow the unreadable rule
   (the shown swap book's last quote stays in `_altQ` marked `_unread`; the incumbent is `_swapInc`, the book shown when the last press started; a fresh
   price replaces it only if it clears `cfg.eMin`, else `r.swapNone`); a card moved to Kalshi that fails the floor after the fee rounding is decided again
