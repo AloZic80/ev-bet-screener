@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.72</title>
+<title>0xBeta Screener v4.73</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1464,7 +1464,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.72</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.73</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1650,6 +1650,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
     <div class="field"><label for="abType">Type</label><select id="abType"><option value="prop">Player prop</option><option value="spread">Spread</option><option value="total">Game total</option><option value="moneyline">Moneyline</option></select></div>
     <div class="field ab-wide"><label for="abGame">Game</label><select id="abGame"><option value="">loading…</option></select><input id="abGameFree" type="text" aria-label="Game, typed in" placeholder="Not listed? Type it: TOR @ UTA" style="margin-top:4px" autocomplete="off"></div>
     <div class="field"><label for="abDate">Game date</label><input id="abDate" type="date"></div>
+    <div class="field ab-placed"><label for="abPlaced" title="When you placed the bet at the book (your time). Optional. Lets the 3-a-day long-shot moneyline check use the board as it was before you bet.">Placed at</label><input id="abPlaced" type="datetime-local"><button type="button" class="ghost sm" id="abPlacedNow" title="Saves this moment as the time you placed it">Placed now</button></div><!-- v4.73 -->
     <div class="field ab-prop"><label for="abPlayer">Player</label><input id="abPlayer" type="text" placeholder="as the app spells it" autocomplete="off"></div>
     <div class="field ab-team"><label for="abTeam">Team</label><select id="abTeam"></select><input id="abTeamFree" type="text" placeholder="e.g. LAL" autocomplete="off" style="display:none"></div>
     <div class="field ab-prop"><label for="abStat">Stat</label><input id="abStat" type="text" list="abStats" placeholder="e.g. Passing Yards" autocomplete="off"><datalist id="abStats"></datalist></div>
@@ -2221,7 +2222,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 
 </div>
 <script>
-const SCREENER_VERSION='v4.72';
+const SCREENER_VERSION='v4.73';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3909,6 +3910,7 @@ function lcParse(doc){
     if(!(st>0) || !(ret>st)) throw Error('Each ticket needs a cost and a total return bigger than the cost (or, in version 2, its American odds).');
     const at=p.at&&!isNaN(Date.parse(p.at))?new Date(p.at).toISOString():(lcValidDay(p.placedDate)?p.placedDate+'T18:00:00.000Z':null);
     const o={stake:+st.toFixed(2), ret:+ret.toFixed(2), at, note:str(p.note,600)};
+    if(v2 && p.placedAt && !isNaN(Date.parse(p.placedAt))) o.placedAt=new Date(p.placedAt).toISOString();   /* v4.73: only a time the file gives */
     if(v2){ if(p.free) o.free=true; const r=str(p.result,8);
       if(r){ if(!['win','loss','push','sold'].includes(r)) throw Error('A result must be win, loss, push or sold.'); const pr=num(p.profit);
         if((r==='win'||r==='sold') && pr==null) throw Error('A '+r+' needs its profit.'); o.result=r; o.profit=pr==null?(r==='loss'?(o.free?0:-o.stake):0):+pr.toFixed(2); } }
@@ -3941,6 +3943,7 @@ function lcRecord(t){ const ret=t.ret, odds=fmtOdds(Math.round(americanOf(t.stak
     book:t.book, game:t.game, team:t.team||null, odds, fair:'', stake:t.stake, kind:k, closing:'', srcType:'import', manual:true, start:null,
     imported:{file:t.id, note:t.note||undefined}, snap:{at, screener:SCREENER_VERSION} }; }
   if(t.free) r.free=true;   /* v4.70: settled as the book shows it */
+  if(t.placedAt) placedSet(r, t.placedAt, 'ticket_import');   /* v4.73 */
   if(t.result){ lcSetResult(r, t.result, t.profit); r.gradedBy='import'; r.accountingSource='import'; }
   return r; }
 /* v4.70: a result and the money as the book shows it: a win keeps its profit as typed winnings; a sale is what came back; a smaller loss is what was lost */
@@ -4388,6 +4391,7 @@ function openBetEditor(tr, r, opt){
     (lateRow?'<label title="The game has started. Logging it after the fact? Set how it went and it is saved as graded by you.">Result <select class="eb-res-new"><option value="">Not settled yet</option><option value="win">Won</option><option value="loss">Lost</option><option value="push">Push / void</option></select></label>'+
       (late4?'<span class="meta eb-late" style="color:var(--warn)">Started over 4 hours ago, so it will not grade itself: set Result, or mark it later in the Bet log</span>':''):'')+   // v3.57
     (opt.edit?'<label title="The day the game is played. Change it if you picked the wrong one.">Game day <input class="eb-date" type="date" value="'+esc(gameDayOf(opt.edit)||opt.edit.date||'')+'"></label>':'')+   // v3.88: the date can be fixed when editing
+    (opt.edit?(opt.edit.placedAtSource==='book_fill'?'<span class="meta" title="The time the book says you placed it">Placed '+esc(new Date(opt.edit.placedAt).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}))+' (book)</span>':'<label title="When you placed it at the book (your time). Optional.">Placed at <input class="eb-placed" type="datetime-local" value="'+esc(placedLocalVal(opt.edit.placedAt))+'"></label>'):'')+   /* v4.73 */
     (opt.edit && opt.edit.kind!=='parlay'?'<label title="Optional. The chance you saw for this bet (for example on BettingPros). It gives the bet its cover band when no fair odds were saved. Typed before the game: it counts in the hit rate and calibration. Typed after the game started: shown only.">Cover % <input class="eb-cover" type="number" step="0.1" min="1" max="99" placeholder="optional" style="width:70px" value="'+(opt.edit.cover&&+opt.edit.cover.p>0?(+opt.edit.cover.p*100).toFixed(1):'')+'"></label>':'')+   /* v4.68 */
     (opt.edit?'<span class="eb-money"><b class="eb-money-h">Real money</b>'+   // v3.98 (Alonzo: "I want to have the real total amounts I get back"): boosts, free bets, what the book really paid
       '<label class="bar-check" title="A free bet (bonus bet) is not your money: if it loses you lose $0, if it wins you get the winnings. It does not count as money you staked."><input type="checkbox" class="eb-free"'+(opt.edit.free?' checked':'')+'> 🎁 Free bet</label>'+
@@ -4685,6 +4689,7 @@ function openBetEditor(tr, r, opt){
       if(extra.towin>0) L.towin=extra.towin; else if(!L.paidReal && (L.stake!==+(+before.stake||0).toFixed(2) || L.odds!==before.odds)) delete L.towin;   // v3.54: a new To win replaces the old one; a new stake or odds drops a stale one   // v3.98: not what the book really paid
       ebMoneyApply(ed,L,before);   // v3.98: Real money   // v4.03: one helper, also used by the result buttons
       coverApply(L, ed.querySelector('.eb-cover'), before, Date.now());   /* v4.68 */
+      { const pi=ed.querySelector('.eb-placed'); if(pi && pi.value!==placedLocalVal(L.placedAt)){ const pr=placedRead(pi); if(pr && pr.err){ ebSay&&ebSay(pr.err); return; } if(pr) placedSet(L, pr.iso, pr.src, pr.tz); } }   /* v4.73 */
       if(gross!=null){ L.gross=gross; L.net=net; }
       if(extra.market) L.market=extra.market;
       L.betnow=betNowOf({market:L.market, side:L.side||sideOf(L)||'', offeredRaw:odds});
@@ -10110,6 +10115,7 @@ function fillManualFromRow(L, r){   // next Load: an unchecked manual bet picks 
   $ab('abType').addEventListener('change',abFields);
   $ab('abGame').addEventListener('change',()=>{ if($ab('abGameFree')) $ab('abGameFree').value=''; abFields(); });   // v3.54: a game picked from the list replaces a typed one
   $ab('abGameFree').addEventListener('input',abFields);   // v3.54
+  $ab('abPlacedNow').addEventListener('click',()=>{ const i=$ab('abPlaced'), now=Date.now(); i.dataset.at=new Date(now).toISOString(); i.value=placedLocalVal(i.dataset.at); i.dataset.v=i.value; });   /* v4.73: the moment you press it */
   $ab('addBetPanel').addEventListener('input',e=>{ if(!e.target.closest('.editor')) { abUpdate(); const s=$ab('abHost').querySelector('.eb-stake'); if(s) s.dispatchEvent(new Event('change')); } else setTimeout(()=>{ abUpdate(); const s=$ab('abHost').querySelector('.eb-stake'); if(s && e.target!==s) s.dispatchEvent(new Event('change')); },0); });
   $ab('addBetPanel').addEventListener('change',e=>{ if(e.target.closest('.editor')) setTimeout(abUpdate,0); });
   let loaded=false;
@@ -10120,6 +10126,7 @@ function fillManualFromRow(L, r){   // next Load: an unchecked manual bet picks 
       const L=logged[logged.length-1];
       L.manual=true; L.srcType='manual';
       if(abR){ if(abR.projValue!=null) L.proj=abR.projValue; if(abR.team) L.team=abR.team; if(L.snap) L.snap.outlier=!!abR.outlier; }
+      { const pr=placedRead($ab('abPlaced')); if(pr && !pr.err) placedSet(L, pr.iso, pr.src, pr.tz); const pi=$ab('abPlaced'); pi.value=''; delete pi.dataset.at; delete pi.dataset.v; }   /* v4.73 */
       if(abR && abR._result){ L.result=abR._result; L.gradedBy='manual'; L.resultSrc='you'; delete L.why; gradeRemember(L); $ab('abResult').value=''; }   // v3.54: a bet that's already over saves graded
       saveLog(); renderLog(); renderPerf(); renderTodayBar();
       $ab('abMsg').innerHTML='<b>Saved:</b> '+esc(L.name)+' — '+esc(betLabel(L))+' · $'+(+L.stake||0).toFixed(2)+' on '+esc(bookLabel(L.book))+(L.result?' · <b>'+({win:'WON',loss:'LOST',push:'PUSH'}[L.result]||'')+'</b>'+(L.result==='win'&&betProfit(L)!=null?' +$'+betProfit(L).toFixed(2):''):'')+(L.net==null?' · <span class="meta">unchecked until the next Load</span>':'');
@@ -10915,7 +10922,25 @@ function postForFill(f){
   const old=postForFillRef(f); if(old) return old;
   return f.bet ? posts.find(P=>P.src===f.book && betMatches(f.bet,{kind:P.kind, sport:P.sport, name:P.name, market:P.market, side:P.side, team:P.team, game:P.game, start:P.start}))||null : null;
 }
-function notePlaced(b,f){ const t=f&&f.ts!=null?(typeof f.ts==='number'?f.ts:Date.parse(f.ts)):NaN; if(isNaN(t)) return false; const o=Date.parse(b.placedAt); if(!isNaN(o) && o<=t) return false; b.placedAt=new Date(t).toISOString(); return true; }   // v3.96
+function notePlaced(b,f){ const t=f&&f.ts!=null?(typeof f.ts==='number'?f.ts:Date.parse(f.ts)):NaN; if(isNaN(t)) return false; const o=Date.parse(b.placedAt);
+  if(b.placedAtSource!=='book_fill' && b.placedAt) return placedSet(b, new Date(t).toISOString(), 'book_fill');   /* v4.73: the book's own time replaces one you typed */
+  if(!isNaN(o) && o<=t){ if(!b.placedAtSource) b.placedAtSource='book_fill'; return false; } b.placedAt=new Date(t).toISOString(); b.placedAtSource='book_fill'; return true; }   // v3.96
+/* v4.73 (agreed with ChatGPT, owner "Build then" 11/11): when you placed a bet, with where that time came from: book_fill (the book's own fill
+   time, never replaced by anything weaker), ticket_import (a time the import file gives), placed_now (the moment you pressed Placed now, not the
+   save), user_entered (typed, your local time, with your time zone kept). A change keeps the old time in the bet's edits. Never the app's save,
+   edit or sync time. The long-shot moneyline check (lsmlClass) uses it to read the board as it was before you bet. */
+function placedSet(b, iso, src, tz){ if(!b || !iso || isNaN(Date.parse(iso))) return false;
+  if(b.placedAtSource==='book_fill' && src!=='book_fill') return false;
+  if(b.placedAt===iso && b.placedAtSource===src) return false;
+  if(b.placedAt) (b.edits=b.edits||[]).push({at:new Date().toISOString(), before:{placedAt:b.placedAt, placedAtSource:b.placedAtSource||null}, note:'placed time ('+src+')'});
+  b.placedAt=new Date(iso).toISOString(); b.placedAtSource=src; if(tz) b.placedTz=tz; else delete b.placedTz;
+  if(b.lsmlCls && b.lsmlCls.src==='pregame_board_act') delete b.lsmlCls;   // classified again from the new time
+  return true; }
+function placedLocalVal(iso){ const t=Date.parse(iso); if(isNaN(t)) return ''; const d=new Date(t), z=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+'T'+z(d.getHours())+':'+z(d.getMinutes()); }
+function placedRead(inp){ if(!inp) return null; const tz=(()=>{ try{ return Intl.DateTimeFormat().resolvedOptions().timeZone||null; }catch(e){ return null; } })();
+  if(inp.dataset.at && inp.value===inp.dataset.v) return {iso:inp.dataset.at, src:'placed_now', tz};
+  if(!inp.value) return null; const t=new Date(inp.value).getTime(); if(isNaN(t)) return null;
+  if(t>Date.now()+5*60e3) return {err:'the placed time is in the future'}; return {iso:new Date(t).toISOString(), src:'user_entered', tz}; }
 function noteFillRef(b,f){ b.fillBook=f.book; b.fillRef=f.ref||b.fillRef||null; b.fillSide=f.side||b.fillSide||null; b.fillOutcome=f.outcome||b.fillOutcome||null;
   if(f.book==='novig'){ const fb=f.bet||{}; if(fb.eventId) b.nvEvent=String(fb.eventId); if(fb.part) b.nvPart=String(fb.part);   /* v4.72: Novig's event (provenance), a part-game market, and the orders behind the fills */
     const os=[].concat(f.order||[], f.orders||[]).filter(Boolean).map(String); if(os.length) b.nvOrders=[...new Set((b.nvOrders||[]).concat(os))]; } }
