@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.62</title>
+<title>0xBeta Screener v4.63</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1429,6 +1429,19 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
   .board-panel .board-bar:not(.bar-open)>#todayLine, .board-panel .board-bar:not(.bar-open)>.cv-legend-box{display:none}
   .board-panel .board-bar>#todayLine, .board-panel .board-bar>.cv-legend-box{flex-basis:100%; margin:0}
 }
+/* v4.63 (Alonzo, phone: "And these, make them cleaner as well. I don't need to have them open all the time. Because the my bets will be all the way to the
+   bottom"): on a phone the BettingPros panel and the Sources panel are each one line that opens on a tap, closed every time the app opens. A computer is unchanged. */
+.hd-fold{display:none}
+@media (max-width:760px){
+  .hd-fold{display:flex; align-items:center; gap:10px; width:100%; margin-top:10px; padding:10px 14px; border:1px solid var(--rule); border-radius:12px; background:var(--panel); color:var(--ink); font:inherit; font-size:13.5px; font-weight:600; text-align:left; cursor:pointer}
+  .hd-fold .hf-k{font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--soft); flex:none}
+  .hd-fold .hf-sum{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500; color:var(--soft)}
+  .hd-fold .hf-warn{color:var(--warn); font-weight:600}
+  .hd-fold .hf-ar{flex:none}
+  .head:not(.bp-open) .loadbar, .head:not(.bp-open) #apiStatus, .head:not(.bp-open) #apiWeekHint{display:none !important}
+  .head:not(.src-open) .srcline, .head:not(.src-open) #srcPanel{display:none !important}
+  body[data-view]:not([data-view="v-board"]) .hd-fold{display:none !important}
+}
 </style>
 </head>
 <body>
@@ -1437,7 +1450,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.62</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.63</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1450,7 +1463,8 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
   <div class="orders-top" id="ordersTop" hidden role="status"></div><!-- v4.17: orders waiting at your books -->
   <div class="orders-top fill-warn" id="fillWarn" hidden role="alert"></div><!-- v4.46: your books were not read -->
   <div class="pull-bar" id="pullBar" role="alert"></div>
-  <div class="loadline loadbar">
+  <button type="button" class="hd-fold" id="bpFoldBtn" aria-expanded="false" aria-controls="bpLoadbar apiStatus">BettingPros ▾</button><!-- v4.63: on a phone the panel opens from this line -->
+  <div class="loadline loadbar" id="bpLoadbar">
     <span class="ll-k">BettingPros</span>
     <select id="apiSport" title="Sport">
       <option value="MLB">MLB</option><option value="NFL">NFL</option><option value="NCAAF">NCAAF</option><option value="NBA">NBA</option>
@@ -1490,7 +1504,8 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
   </div>
   <div id="apiStatus" class="ll-status" role="status"></div>
   <p class="hint" id="apiWeekHint" style="display:none;margin:4px 2px 0">NFL/NCAAF are organized by week. Week auto-fills from ESPN; leave it blank to let BettingPros use the current week.</p>
-  <div class="loadline srcline"><div class="src-bar" id="srcBar" title="Your data sources — each has its own key and allowance"></div></div>   <!-- v3.57: back on the main page (Settings in v3.54–v3.56) -->
+  <button type="button" class="hd-fold" id="srcFoldBtn" aria-expanded="false" aria-controls="srcLine srcPanel">Sources ▾</button><!-- v4.63 -->
+  <div class="loadline srcline" id="srcLine"><div class="src-bar" id="srcBar" title="Your data sources — each has its own key and allowance"></div></div>   <!-- v3.57: back on the main page (Settings in v3.54–v3.56) -->
   <div class="src-panel" id="srcPanel" style="display:none"></div>
 </div>
 
@@ -2189,7 +2204,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.62';
+const SCREENER_VERSION='v4.63';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3667,8 +3682,22 @@ function barPhonePlace(){ try{ const bar=document.querySelector('.board-panel .b
     const phone=!!(window.matchMedia && window.matchMedia('(max-width:760px)').matches);
     if(phone){ if(tl.parentNode!==bar || cv.parentNode!==bar){ bar.insertBefore(cv, bar.firstChild); bar.insertBefore(tl, bar.firstChild); } }
     else if(tl.parentNode===bar || cv.parentNode===bar){ bar.parentNode.insertBefore(tl, bar); bar.parentNode.insertBefore(cv, bar); } }catch(e){} }
+/* v4.63 (Alonzo, phone: "And these, make them cleaner as well. I don't need to have them open all the time"): the BettingPros panel and the Sources panel
+   are one line each on a phone. The line says what is loaded (and "saved board, not live" when it is), or what the sources have left; a tap opens it.
+   Open or closed lasts only while the page stays open. Reads the page only; hoisted. */
+function hdFoldPaint(){ const h=document.querySelector('.head'); if(!h) return; const bo=!!window._bpOpen, so=!!window._srcOpen; h.classList.toggle('bp-open', bo); h.classList.toggle('src-open', so);
+  const b=document.getElementById('bpFoldBtn'), s=document.getElementById('srcFoldBtn'), txt=sel=>{ const e=document.querySelector(sel); return e?e.textContent.replace(/\s+/g,' ').trim():''; };
+  if(b){ let sp=''; try{ const sel=document.getElementById('apiSport'); sp=(sel && sel.selectedIndex>=0)?sel.options[sel.selectedIndex].textContent.replace(/\s+/g,' ').trim():''; }catch(e){}
+    const notLive=/not live/i.test(txt('#savedNote'));
+    b.setAttribute('aria-expanded', String(bo)); b.title=(bo?'Close':'Open')+' the BettingPros panel (sport, bet type, Load, Refresh, Save, Copy, Open, Clear)';
+    b.innerHTML='<span class="hf-k">BettingPros</span><span class="hf-sum">'+esc(sp)+(notLive?' · <span class="hf-warn">not live</span>':'')+'</span><span class="hf-ar">'+(bo?'▴':'▾')+'</span>'; }
+  if(s){ const bp=txt('#srcBar .src-chip[data-src="bettingpros"] small').replace(/ today$/,''), wk=txt('#srcBar .src-chip.wk small').replace(/ today$/,''), wkEl=document.querySelector('#srcBar .src-chip.wk'), warn=!!(wkEl && /\b(low|out|paused)\b/.test(wkEl.className));
+    s.setAttribute('aria-expanded', String(so)); s.title=(so?'Close':'Open')+' the Sources panel (BettingPros, Pinnacle, SportsGameOdds, Sportsbook API, The Odds API, OddsPapi, Worker)';
+    s.innerHTML='<span class="hf-k">Sources</span><span class="hf-sum">'+(bp?'BettingPros '+esc(bp):'')+(bp&&wk?' · ':'')+(wk?'<span class="'+(warn?'hf-warn':'')+'">Worker '+esc(wk)+'</span>':'')+'</span><span class="hf-ar">'+(so?'▴':'▾')+'</span>'; } }
+document.addEventListener('click', e=>{ const t=e.target && e.target.closest && e.target.closest('#bpFoldBtn, #srcFoldBtn'); if(!t) return; if(t.id==='bpFoldBtn') window._bpOpen=!window._bpOpen; else window._srcOpen=!window._srcOpen; hdFoldPaint(); });
+try{ const mo=new MutationObserver(()=>{ hdFoldPaint(); }); ['savedNote','srcBar','apiSport'].forEach(id=>{ const el=document.getElementById(id); if(el) mo.observe(el,{childList:true, subtree:true, characterData:true}); }); const sp=document.getElementById('apiSport'); if(sp) sp.addEventListener('change', hdFoldPaint); }catch(e){}
 try{ localStorage.removeItem('mbev.barMore'); }catch(e){}   // v4.62: the old remembered "open" is dropped
-try{ helpApply(); barPhonePlace(); barMoreApply(); }catch(e){}
+try{ helpApply(); barPhonePlace(); barMoreApply(); hdFoldPaint(); }catch(e){}
 try{ const mq=window.matchMedia && window.matchMedia('(max-width:760px)'); if(mq){ if(mq.addEventListener) mq.addEventListener('change', barPhonePlace); else if(mq.addListener) mq.addListener(barPhonePlace); } }catch(e){}
 document.addEventListener('toggle', e=>{ const d=e.target; if(!d || !d.classList || !d.classList.contains('sc-why')) return; const k=d.dataset.pck||''; if(!k) return; const S=scOpenSet(); if(d.open) S.add(k); else S.delete(k); scOpenSave(); }, true);
 /* how fresh the price is: the last time a price for this bet was read (the load, a Sentinels check, the open-market check, line shopping) */

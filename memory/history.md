@@ -6,6 +6,11 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.63 (owner, phone, screenshot of the BettingPros and Sources panels: "make them cleaner as well. I don't need to have them open all the time.
+  Because the my bets will be all the way to the bottom"): under 760 px each panel is one line (`#bpFoldBtn`, `#srcFoldBtn`, `.hd-fold`), closed every
+  time the app opens (`window._bpOpen`, `window._srcOpen`, not saved); `hdFoldPaint` (hoisted, reads the page; a MutationObserver on #savedNote, #srcBar,
+  #apiSport) writes "BettingPros · NBA · tomorrow · not live ▾" and "Sources · BettingPros 37 left · Worker 631 calls ▾". `.head.bp-open` /
+  `.head.src-open` show the panels. A computer is unchanged. `tests/phone-header-test.js` (19); bp-several-test opens the line first on a phone.
 - v4.62 (owner: "Did I not say that what's on the screenshot should all be in a drop down because I don't need to see it all the time?"): v4.60 had left
   the Today's games line (#todayLine) and Cover bands (.cv-legend-box) outside. `barPhonePlace` (hoisted; runs at startup and on a matchMedia change)
   moves them into the board bar on a phone, first among what Filters opens, and back above the bar on a computer. `tests/phone-filters-test.js` (24).
