@@ -3145,7 +3145,7 @@ function ringAssign(rows,cfg){ rows.forEach(r=>{ if(!r) return;
     r.leg=!!((!r.kind || r.kind==='prop') && (r.side==='O'||r.side==='U') && r.actProb!=null && r.actProb>=RING.leg-1e-9 && r.actNet!=null && r.actNet>=cfg.eMin-1e-9 && !r.outlier && !r.noMkt && !r.prior && !r.waitOrder && r.offeredProb>0 && liveState(r)==='open'); }); }   /* v4.51 (owner, passing on ChatGPT: "the PARLAY LEG tag should require acceptable standalone conservative EV, not merely a 70% chance"): her own EV at its price must clear your floor (v4.52: the normal floor, not 0%; no outlier, and a market price to check it against) */
 // the ring follows the clock (a price passes 10 minutes) and what loads after the board (injuries, weather): redraw only when a ring changes
 function ringRecheck(){ try{ if(document.visibilityState!=='visible') return;
-    { if(shopStaleSig()!==(window._shopStaleSig||'')){ refresh(); return; } }   /* v4.56: a best-book claim ran out: redraw (no prices are read) */
+    { const sig=shopStaleSig(); if(sig!==(window._shopStaleSig||'')){ window._shopStaleSig=sig; refresh(); return; } }   /* v4.56: a best-book claim ran out: redraw (no prices are read); v4.61: saved here before the redraw, so a draw held back by an open editor is asked for once, not on every tick */
     if(betMode==='clair'){ const m=JSON.parse(localStorage.getItem('mbev.mode')||'null'); if(m && m.day && m.day!==new Date().toLocaleDateString('en-CA',{timeZone:'America/Chicago'})){ setMode('safe'); return; } }   /* v4.51: "back to Safe at midnight" also with the page left open (it only happened on a reload) */ const v=document.body.dataset.view; if(v && v!=='v-board') return;
     const cfg=cfgRead(); if((lastRows||[]).some(r=>r && r.ring && ringOf(r,cfg).n!==r.ring.n)) refresh(); }catch(e){} }
 setInterval(ringRecheck, 30000);
@@ -3193,6 +3193,7 @@ function render(rows,cfg){
 (function(){ if(typeof ResizeObserver!=='function') return; const ro=new ResizeObserver(()=>{ const x=window._bAnchor; if(x && Date.now()-x.t<4000 && !((window._bUserT||0)>x.t)) boardAnchorBack(x.A); });
   ['placeCards','tbody'].forEach(id=>{ const el=document.getElementById(id); if(el) ro.observe(el); }); })();
 function renderCore(rows,cfg){
+  try{ window._shopStaleSig=shopStaleSig(); }catch(e){}   // v4.61: what this draw is about to show as out of date, taken before the cards are built (a claim that runs out during the draw costs one more redraw, never a missed one)
   window._pkRows=rows; try{ pkSetRows(rows); }catch(e){}   // v3.54: the Parlays tab picks from every row, passing or not
   const tb=document.getElementById('tbody'), empty=document.getElementById('emptyMsg');
   tb.innerHTML='';
@@ -3459,7 +3460,6 @@ function renderCore(rows,cfg){
   // v2.89: "N picks in games you already bet" moved to a checkbox by the board filters; rows still say "same game as …"
   { const cb=document.getElementById('onlyMyGames'); if(cb){ cb.checked=filterCorrOnly; const lab=cb.closest('label'); if(lab) lab.title=corrs+' pick'+(corrs===1?'':'s')+' in games you already bet'; } }
   try{ barSumPaint(); }catch(e){}   // v4.60: the Filters button follows what the board shows
-  try{ window._shopStaleSig=shopStaleSig(); }catch(e){}   // v4.61: what this draw shows as out of date (ringRecheck redraws when that changes)
   alertBar.innerHTML=bits.join('');
 
   alertBar.style.display = bits.length?'flex':'none';

@@ -30,7 +30,9 @@ New builds add their line at the top of the right section.
   tooltips: `unreadLater` for a moved card, "was read again 2m ago and kept its place"; a failed scan gives unasked rows no new 🔓/🔒 and drops a
   restored tag that is no longer true; the Kalshi re-decision loops up to 4 rounds (each only takes cards off Kalshi); the age pill says "Paste the
   board again" for pasted rows; `ringRecheck` compares `shopStaleSig()` with the one saved at the last draw (it compared a count).
-  `tests/book-choice-v461-test.js` (73, fails on v4.60), `tests/phone-filters-test.js` (22).
+  A last short check (2 reviewers) found two low points in that redraw: the signature is now saved in `ringRecheck` before `refresh()` (a draw held
+  back by an open editor was asked for on every tick) and at the start of `renderCore`, before the cards are built.
+  `tests/book-choice-v461-test.js` (74, fails on v4.60), `tests/phone-filters-test.js` (22).
 - v4.60 (owner, phone: "I think this can be on a drop down?", "Also this", "For now only on phone"): under 760 px the board bar shows only the search
   box, Filters and Send the Sentinels (CSS `order`); Show, Sort, Sport, the book chips, the tick boxes, Show all notes and Cards fold behind Filters
   (`.board-bar.bar-open`, the same `mbev.barMore` switch). `barSumPaint` (hoisted, reads the page and localStorage only) names what hides bets on the

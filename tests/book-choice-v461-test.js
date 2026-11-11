@@ -159,6 +159,12 @@ const near=(a,b)=>Math.abs(a-b)<1e-6;
     check('press 1: Kalshi 47% takes the bet from a fresh Bovada 52%; the card’s price was read just now', v.book==='Kalshi' && near(v.price,0.47) && v.seenAge<5000, {book:v.book, seenAge:v.seenAge});
     await S.p.clock.fastForward(60e3); kal=0.60; await press(S); v=await look(S,'w');
     check('a minute later Kalshi is 60% and the Bovada price (loaded about 2m30s ago, inside the 3 minutes) wins the bet back: the card is as old as the board load, not as the Kalshi read a minute ago', v.book==='Bovada' && near(v.price,0.52) && !v.shop && v.seenAge>=150e3 && v.seenAge<170e3, {book:v.book, seenAge:v.seenAge});
+    // a best-book label that runs out while a bet editor is open asks for one redraw, not one on every 30-second tick
+    kal=0.47; await press(S); v=await look(S,'w');
+    const ticks=await S.p.evaluate(async()=>{ window._aN=0; const a=window.audit; window.audit=function(){ window._aN++; return a.apply(this,arguments); }; const btn=[...document.querySelectorAll('.bet-btn')].pop(); if(btn) btn.click(); await new Promise(z=>setTimeout(z,150)); return {editor:!!document.querySelector('.editor'), n0:window._aN}; });
+    for(let i=0;i<10;i++){ await S.p.clock.fastForward(30e3); await S.p.waitForTimeout(60); }
+    const after=await S.p.evaluate(()=>({n:window._aN, stale:!!shopStale(lastRows.find(x=>x.apiKey==='w'))}));
+    check('Kalshi takes the bet again; with the I bet this box open, 5 minutes pass (the best-book claim runs out): the board is re-screened for it at most twice, not on every tick (it was 10 times)', v.book==='Kalshi' && ticks.editor && after.stale && (after.n-ticks.n0)<=2, {v:v.book, ticks, after});
     check('no page errors (win back)', !S.errs.length, S.errs); await S.ctx.close(); }
   { let nv=0.52; S=await open(b, [prop('n','Novig Row','Points',0.52,1,'Novig',25*60e3)], 'Novig, Kalshi, Bovada', (k,i,bk)=>bk==='novig'?nv:null);
     await press(S); v=await look(S,'n');

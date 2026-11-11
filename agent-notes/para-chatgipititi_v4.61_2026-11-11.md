@@ -47,7 +47,7 @@ Model 58%, market 56%: chance 56.7%. EV at price p with fee f = ((0.567 / p − 
 - Novig 56%: +1.25%, under the floor: a card whose book can't be read stays where it is.
 
 ## Checked
-- `tests/book-choice-v461-test.js`: 73 checks (it fails on v4.60). `tests/phone-filters-test.js`: 22.
+- `tests/book-choice-v461-test.js`: 74 checks (it fails on v4.60). `tests/phone-filters-test.js`: 22.
 - The full suite result is in the PR.
 
 ## Not done, on purpose
