@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.67</title>
+<title>0xBeta Screener v4.68</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1464,7 +1464,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.67</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.68</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2221,7 +2221,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 
 </div>
 <script>
-const SCREENER_VERSION='v4.67';
+const SCREENER_VERSION='v4.68';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2550,7 +2550,8 @@ const RING={pLo:0.50, pHi:0.75, evLo:0.04, evHi:0.12, room:0.025, freshMs:10*60e
    shown on the board. The model's own EV (r.net) is kept and labelled Model EV: a diagnostic, and still the first gate (under the floor = a plain skip).
    Before: the stake, the Math order and the game-line choice used the blend or the model, which is higher than okProb whenever the model is BELOW the
    market. POLICY is saved in each new bet's snapshot; old snapshots are never rewritten. */
-const MODEL_ONLY={day:5, game:1};   /* v4.55: bets with no market price, a game day and a game */
+const MODEL_ONLY={day:5, game:1};
+const LSML={day:3, game:1, below:0.45, gap:0.08};   /* v4.68 (agreed with ChatGPT, owner "BUILD" 11/11): long-shot moneylines (La Contadora under 45%) across every mode; moneylines with the model 8+ points above the market are research only */   /* v4.55: bets with no market price, a game day and a game */
 const POLICY={math:'act-v2', sent:'v3-actNet-nomkt'};   /* v4.54: sent v3 = v2-actNet with the Edge halved when there is no market price. Never compare band records across policies. */
 let betMode='safe';
 (function(){ try{ const m=JSON.parse(localStorage.getItem('mbev.mode')||'null');
@@ -2683,7 +2684,7 @@ function auditCore(rows,cfg){
   rows.forEach(r=>{ gameCount[r.game]=(gameCount[r.game]||0)+1; });
   const slateDay=document.getElementById('slate').value;
   rows.forEach((r,idx)=>{
-    r.idx=idx; r.flags=[]; delete r.watch; delete r.actNet; delete r.longShot; delete r.dayTrimmed; delete r.moved; delete r.removed; delete r.riskCand; delete r.risk; delete r.glConflict; delete r.glBest; delete r.prior; delete r.corr; delete r.contracts; delete r.gameInPlay; delete r.gameWeighted; delete r.samePlayer; delete r.capTrimmed; delete r.samePlayerX; delete r.samePlayerBet; delete r.tier; delete r.xc; delete r.xFit; delete r.xCap; delete r.moN; delete r.moUsed; delete r.xStake; delete r.xContracts; delete r.xWhy; delete r.ring; delete r.leg;   /* v4.50 */   /* v4.51: xFit */
+    r.idx=idx; r.flags=[]; delete r.watch; delete r.actNet; delete r.longShot; delete r.dayTrimmed; delete r.moved; delete r.removed; delete r.riskCand; delete r.risk; delete r.glConflict; delete r.glBest; delete r.prior; delete r.corr; delete r.contracts; delete r.gameInPlay; delete r.gameWeighted; delete r.samePlayer; delete r.capTrimmed; delete r.samePlayerX; delete r.samePlayerBet; delete r.tier; delete r.xc; delete r.xFit; delete r.xCap; delete r.moN; delete r.moUsed; delete r.xStake; delete r.xContracts; delete r.xWhy; delete r.ring; delete r.leg; delete r.gapRes; delete r.lsmlN;   /* v4.50 */   /* v4.68: gapRes, lsmlN */   /* v4.51: xFit */
     if(r.offeredProb===null||r.fairProb===null){
       r.flags.push(['out','odds unreadable']); r.gross=null; r.net=null; r.pass=false; r.stake=0; return;
     }
@@ -2708,6 +2709,7 @@ function auditCore(rows,cfg){
        chance does not is WATCH (its own group, not placed). No market price: the model alone, as before (stake capped at the minimum). */
     r.actProb=okProbR(r); r.actNet=r.actProb!=null&&r.offeredProb>0?((r.actProb/r.offeredProb-1)-r.fee)/(1+r.fee):r.net;
     if(r.net<cfg.eMin) r.flags.push(['out','net EV under the floor']);
+    else if(r.kind==='moneyline' && r.mktProb!=null && r.fairProb!=null && r.fairProb-r.mktProb>LSML.gap+1e-9){ r.watch=true; r.gapRes=true; r.flags.push(['out','MONEYLINE GAP RESEARCH · model 8+ points above market ('+(r.fairProb*100).toFixed(1)+'% vs '+(r.mktProb*100).toFixed(1)+'%): no automatic stake, kept as research']); }   /* v4.68: the market has been closer than the model there; it is watched, never staked by the screener */
     else if(r.mktProb!=null && r.actNet<cfg.eMin){ r.watch=true; r.flags.push(['out','WATCH · the model likes it ('+(r.net>=0?'+':'')+(r.net*100).toFixed(1)+'%), but with the market it is '+(r.actNet>=0?'+':'')+(r.actNet*100).toFixed(1)+'%, under your '+(cfg.eMin*100).toFixed(1)+'% floor']); }
     if(cfg.deriv&&r.kind==='derivative') r.flags.push(['out','quarter or half market']);
     if(cfg.prop&&r.kind==='prop'&&/NCAA/.test(r.sport)) r.flags.push(['out','college player prop']);
@@ -3022,12 +3024,31 @@ function auditCore(rows,cfg){
   { const used={}, inGame={}, gid=r=>(r.gameInfo&&r.gameInfo.eventId)?'e'+r.gameInfo.eventId:(r.game?gameKey(r.game):'')+'|'+String((r.gameInfo&&r.gameInfo.startISO)||'').slice(0,13);
     logged.forEach(b=>{ if(!b || b.sold || !(b.snap && b.snap.modelOnly)) return; const d=gameDayOf(b); used[d]=(used[d]||0)+1; });
     rows.forEach(r=>{ if(r.noMkt) r.moUsed=used[rowDay(r,slateDay)]||0; });
-    rows.filter(r=>r.noMkt && r.stake>0 && !r.prior && !r.waitOrder)
+    rows.filter(r=>r.noMkt && r.stake>0 && !r.prior && !r.waitOrder && !lsmlRow(r))   /* v4.68: a long-shot moneyline with no market is not offered at all (below) */
         .sort((a,b)=>((b.actNet||0)-(a.actNet||0)) || ((rowSeenAt(b)||0)-(rowSeenAt(a)||0)) || ((b.offeredProb||0)-(a.offeredProb||0)))
         .forEach(r=>{ const d=rowDay(r,slateDay), g=gid(r), n=used[d]||0;
           if((inGame[g]||0)>=MODEL_ONLY.game){ r.stake=0; delete r.contracts; r.flags.push(['warn','model only: one a game, and a better one is in this game']); return; }
           if(n>=MODEL_ONLY.day){ r.stake=0; delete r.contracts; r.flags.push(['warn','model-only limit reached ('+MODEL_ONLY.day+' a day, no market confirmation) — skip']); return; }
           used[d]=n+1; inGame[g]=(inGame[g]||0)+1; r.moN=n+1; }); }
+  /* v4.68 (agreed with ChatGPT, owner "BUILD" 11/11): long-shot moneylines, La Contadora's chance under 45%, in every mode: a real market price, your
+     smallest bet, at most LSML.day a game day and LSML.game a game. Counted: logged bets of that game day (open, settled, sold, void) and orders waiting at
+     a book that match a board row; the best by her EV keep their place. The 🍀 and 🔮 extras use the same allowance (extrasAssign). */
+  { const used={}, inGame={}, gk=(d,g)=>d+'|'+(g?gameKey(g):''), seenO=new Set();
+    logged.forEach(b=>{ if(!lsmlBet(b)) return; const d=gameDayOf(b)||b.date||''; used[d]=(used[d]||0)+1; const g=gk(d,b.game||b.matchup); inGame[g]=(inGame[g]||0)+1; });
+    rows.forEach(r=>{ if(!lsmlRow(r) || !r.waitOrder || seenO.has(r.waitOrder)) return; seenO.add(r.waitOrder); const d=rowDay(r,slateDay); used[d]=(used[d]||0)+1; const g=gk(d,r.game); inGame[g]=(inGame[g]||0)+1; });
+    rows.forEach(r=>{ if(lsmlRow(r) && r.noMkt && !r.prior){ r.stake=0; delete r.contracts; r.pass=false; r.flags.push(['out','LONG-SHOT ML · no market price: not offered in any mode']); } });
+    rows.filter(r=>lsmlRow(r) && !r.noMkt && r.stake>0 && !r.prior && !r.waitOrder)
+        .sort((a,b)=>((b.actNet||0)-(a.actNet||0)) || ((rowSeenAt(b)||0)-(rowSeenAt(a)||0)) || ((b.offeredProb||0)-(a.offeredProb||0)))
+        .forEach(r=>{ const d=rowDay(r,slateDay), g=gk(d,r.game), n=used[d]||0;
+          if((inGame[g]||0)>=LSML.game){ r.stake=0; delete r.contracts; r.flags.push(['warn','LONG-SHOT ML · one a game, and one is already in this game']); return; }
+          if(n>=LSML.day){ r.stake=0; delete r.contracts; r.flags.push(['warn','LONG-SHOT ML limit reached ('+LSML.day+' a game day)']); return; }
+          let s=+cfg.sMin||1;
+          if(/kalshi/i.test(r.book||'')){ const k=extrasKalshi(r,s,cfg,true); if(!k){ r.stake=0; delete r.contracts; return; }
+            const x=r.offeredProb, fee=(Math.ceil((cfg.fees.kalshi/100)*k.N*x*(1-x)*100-1e-9)/100)/(k.N*x), a=r.actProb!=null?((r.actProb/x-1)-fee)/(1+fee):null;
+            if(a!=null && a<cfg.eMin){ r.stake=0; delete r.contracts; r.pass=false; r.flags.push(['out','net EV under the floor after Kalshi fee rounding']); return; }
+            s=k.stake; r.contracts=k.N; if(a!=null) r.actNet=a; } else delete r.contracts;
+          r.stake=+(+s).toFixed(2); used[d]=n+1; inGame[g]=(inGame[g]||0)+1; r.lsmlN=n+1; });
+    window._lsml={used, inGame, gk}; }
   applyDayLimits(rows,cfg,slateDay);
   try{ extrasAssign(rows,cfg,slateDay); }catch(e){ console.error(e); }   // v4.50: 🍀 Just missed and 🔮 Hail Marys, after the best bets are final
   try{ rows.forEach(pxNote); }catch(e){}   // v4.21: price history for the Sentinels cards' chart
@@ -3087,6 +3108,9 @@ function applyDayLimits(rows,cfg,slateDay){
    $EXTRAS.hailEach for a Hail Mary; Kalshi in whole contracts) until that game day has EXTRAS.luckyDay / EXTRAS.hailDay logged (b.tier).
    Its r.stake stays 0 and r.pass false: nothing that reads the best bets (Place these, the daily max, Sentinels, Parlays, #1 math pick) sees it.
    Logged extras are real bets: they count in the day's money and the Hard stop still asks past the daily max. */
+/* v4.68: a long-shot moneyline: a board row, or a logged bet (her chance saved with it; older bets: the model's fair price, which is never under hers) */
+function lsmlRow(r){ return !!(r && r.kind==='moneyline' && r.actProb!=null && r.actProb<LSML.below-1e-9); }
+function lsmlBet(b){ if(!b || b.kind!=='moneyline') return false; const p=(b.snap && b.snap.act!=null)?+b.snap.act:toProb(b.fair); return p!=null && p>0 && p<LSML.below-1e-9; }
 function extrasUsed(){ const U={lucky:{}, hail:{}}; logged.forEach(b=>{ if(!b || !U[b.tier]) return; const d=gameDayOf(b); U[b.tier][d]=(U[b.tier][d]||0)+1; }); return U; }
 function extrasKalshi(r,s,cfg,atLeast){ const x=r.offeredProb, rate=cfg.fees.kalshi/100, F=N=>Math.ceil(rate*N*x*(1-x)*100-1e-9)/100;
   if(atLeast){ const N=Math.max(1,Math.ceil((s-1e-9)/x)); return {N, stake:+(N*x+F(N)).toFixed(2)}; }   // Just missed: not under the smallest bet
@@ -3102,9 +3126,12 @@ function extrasAssign(rows,cfg,slateDay){
     if(liveState(r)!=='open') return;
     if((r.flags||[]).some(f=>/this is the other side|is the OTHER side/.test(f[1]))) return;
     if(GLK.test(r.kind||'') && r.game && logged.some(L=>!L.sold && onBoard(L) && GLK.test(L.kind||'') && axis(L.kind)===axis(r.kind) && gameKey(L.game)===gameKey(r.game))) return;
-    if((Math.round(r.amer)>=EXTRAS.hailOdds || isLongShot(r)) && onlyOut(r,/^(WATCH ·|odds outside|net EV under the floor|gross EV over the ceiling)/)) r.xc='hail';
+    if((Math.round(r.amer)>=EXTRAS.hailOdds || isLongShot(r)) && onlyOut(r,/^(WATCH ·|MONEYLINE GAP RESEARCH|odds outside|net EV under the floor|gross EV over the ceiling)/)) r.xc='hail';   /* v4.68: a gap-research moneyline can still be your own Hail Mary */
     else if(r.watch && r.actNet!=null && r.actNet>=0 && onlyOut(r,/^WATCH ·/)) r.xc='lucky';
     if(!r.xc) return;
+    if(lsmlRow(r)){ const L=window._lsml; if(r.noMkt) { delete r.xc; return; }   /* v4.68: one allowance for long-shot moneylines in every mode */
+      if(L){ const d=rowDay(r,slateDay), g=L.gk(d,r.game); if((L.used[d]||0)>=LSML.day || (L.inGame[g]||0)>=LSML.game){ r.xCap=1; r.xWhy='LONG-SHOT ML: '+LSML.day+' a game day and one a game, in every mode'; if(r.xc==='lucky'?cfg.lucky:cfg.hail) r.flags.push(['warn',r.xWhy]); return; }
+        r._lsmlTake=()=>{ L.used[d]=(L.used[d]||0)+1; L.inGame[g]=(L.inGame[g]||0)+1; r.lsmlN=L.used[d]; }; } }
     const on=r.xc==='lucky'?cfg.lucky:cfg.hail;   /* v4.51: its own mode is open. The offer is worked out whatever the mode (r.xFit, the number on its mode button); it is given (r.tier) only there */
     const day=rowDay(r,slateDay), used=U[r.xc][day]||0, cap=r.xc==='lucky'?EXTRAS.luckyDay:EXTRAS.hailDay;
     if(used>=cap){ r.xCap=1; if(on){ r.xWhy=(r.xc==='lucky'?'🍀 Just missed':'🔮 Hail Marys')+': '+cap+' a day, and you have '+used+' on '+dayLabel(day)+'\'s games'; r.flags.push(['warn',r.xWhy]); } return; }
@@ -3112,7 +3139,7 @@ function extrasAssign(rows,cfg,slateDay){
     if(/kalshi/i.test(r.book||'')){ const k=extrasKalshi(r,s,cfg,r.xc==='lucky'); if(!k){ if(on) r.xWhy='one Kalshi contract costs more than $'+s.toFixed(2); return; } s=k.stake; N=k.N; }
     else if(/polymarket/i.test(r.book||'')) N=Math.max(1,Math.floor(s/r.offeredProb+1e-9));
     if(!(s>0)) return;
-    r.xFit=r.xc;
+    r.xFit=r.xc; if(r._lsmlTake){ r._lsmlTake(); delete r._lsmlTake; }
     if(!on) return;
     r.tier=r.xc; r.xStake=+s.toFixed(2); if(N) r.xContracts=N;
   });
@@ -3751,24 +3778,35 @@ function ageTxt(ms){ if(ms==null || !isFinite(ms)) return ''; const s=Math.max(0
 function cvBand(p){ return !(p>=0&&p<=1)?0:p<.45?1:p<.50?2:p<.55?3:p<.60?4:p<.65?5:p<.70?6:p<.75?7:p<.80?8:9; }
 function cvNames(){ return ['Unknown','Unlikely','Coin Flip','On the Line','Slight Lean','Lean','Solid','Strong','Heavy Favorite','High Cover']; }   /* v4.51 (owner: "i think so"): Augi's "Long Shot" (<45%) and "Feeling Lucky" (45-50%) shared their names with the 🔮 long shots and the 🍀 Feeling Lucky mode; they are Unlikely and Coin Flip here. The bands themselves are unchanged. */
 function cvRanges(){ return ['no cover saved','<45%','45–<50%','50–<55%','55–<60%','60–<65%','65–<70%','70–<75%','75–<80%','80%+']; }
-function logBandOf(b){ if(!b || b.kind==='parlay') return null; const p=toProb(b.fair); return (p>0 && p<1)?cvBand(p):0; }   /* no fair odds saved (toProb gives 0): "no band", not Unlikely */   /* v4.66: a logged single's band, from the cover it had when you took it (the fair odds saved with the bet) */
-function logBandChip(b){ const k=logBandOf(b); if(k==null) return ''; const p=toProb(b.fair);
-  return '<button type="button" class="cv-chip cv-'+k+' lbf" data-band="'+k+'" title="'+(k?'Projected cover '+(p*100).toFixed(1)+'% when you took it · '+cvRanges()[k]:'No cover was saved with this bet')+'. Tap to see only '+(k?cvNames()[k]:'these')+' bets, with their record">'+(k?cvNames()[k]:'no band')+'</button>'; }
+function logBandOf(b){ if(!b || b.kind==='parlay') return null; const c=betCover(b); return c?cvBand(c.p):0; }   /* v4.68: the fair odds saved with it, else the cover you typed */
+/* v4.68 (agreed with ChatGPT, owner "BUILD" 11/11): a logged single's cover: the fair odds saved with it, else the Cover % typed in the bet editor.
+   cal: it may be used for hit rate, calibration and Brier (a saved fair, or a cover typed before the game started); a cover typed after kickoff,
+   or with no known kickoff, is shown and banded but never judged. */
+function betCover(b){ if(!b) return null; const f=toProb(b.fair); if(f>0 && f<1) return {p:f, cal:true, typed:false};
+  const c=b.cover; if(c && +c.p>0 && +c.p<1) return {p:+c.p, cal:!!c.pre, typed:true}; return null; }
+/* v4.68: one outcome = game day + game + player or team + stat and exact line + side. Two tickets on it are two wagers (profit counts both) and one
+   forecast (hit rate, calibration and Brier count it once). */
+function outcomeKey(b){ return [gameDayOf(b)||b.date||'', gameKey(b.game||b.matchup||''), b.name||'', b.market||'', b.side||sideOf(b)||''].join('|').toLowerCase(); }
+function outcomeCounts(list){ const S=(list||[]).filter(b=>b && b.kind!=='parlay' && (b.sold || betProfit(b)!=null)), O=new Set(), G=new Set();
+  S.forEach(b=>{ O.add(outcomeKey(b)); G.add((gameDayOf(b)||b.date||'')+'|'+gameKey(b.game||b.matchup||b.name||'')); }); return {tickets:S.length, outcomes:O.size, games:G.size}; }   /* no fair odds saved (toProb gives 0): "no band", not Unlikely */   /* v4.66: a logged single's band, from the cover it had when you took it (the fair odds saved with the bet) */
+function logBandChip(b){ const k=logBandOf(b); if(k==null) return ''; const c=betCover(b), p=c?c.p:null;
+  return '<button type="button" class="cv-chip cv-'+k+' lbf" data-band="'+k+'" title="'+(k?(c.typed?'Cover you typed ':'Projected cover ')+(p*100).toFixed(1)+'%'+(c.typed?(c.cal?' before the game':' · added after the game started: shown, not judged'):' when you took it')+' · '+cvRanges()[k]:'No cover was saved with this bet')+'. Tap to see only '+(k?cvNames()[k]:'these')+' bets, with their record">'+(k?cvNames()[k]:'no band')+'</button>'; }
 function cvChipHtml(p){ const b=cvBand(p); return b?'<span class="cv-chip cv-'+b+'" title="Projected cover '+(p*100).toFixed(1)+'% · '+cvRanges()[b]+' (Augi\'s 5-point bands; a label, not a rule)">'+cvNames()[b]+'</span>':''; }
 function renderStudy(){ const el=document.getElementById('studyRows'); if(!el) return;
   const scope=(document.getElementById('studyScope')||{}).value||'all', today=ctDay(Date.now()), d0=new Date(today+'T12:00:00');
   const inScope=b=>{ const d=gameDayOf(b); if(scope==='all') return true; if(!d) return false; if(scope==='day') return d===today; if(scope==='month') return d.slice(0,7)===today.slice(0,7);
     const dd=new Date(d+'T12:00:00'); return Math.abs(dd-d0)<7*864e5 && dd<=d0; };
-  const G=Array.from({length:10},()=>({n:0,pend:0,w:0,l:0,p:0,pred:0,g:0,net:0,money:0}));
-  logged.filter(b=>b.kind!=='parlay' && inScope(b)).forEach(b=>{ const p=toProb(b.fair), k=logBandOf(b), g=G[k]; g.n++;   // v4.66: a bet with no fair odds saved went into Unlikely at 0% (toProb gives 0); it is "no cover saved" now
+  const G=Array.from({length:10},()=>({n:0,pend:0,w:0,l:0,p:0,pred:0,g:0,cw:0,net:0,money:0})), oSeen=new Set(), inS=logged.filter(b=>b.kind!=='parlay' && inScope(b));
+  inS.forEach(b=>{ const c=betCover(b), p=c?c.p:null, k=logBandOf(b), g=G[k]; g.n++;   // v4.66: a bet with no fair odds saved went into Unlikely at 0% (toProb gives 0); it is "no cover saved" now
     const r=b.sold?'sold':b.result; if(r==='win') g.w++; else if(r==='loss') g.l++; else if(r==='push') g.p++; else if(r!=='sold') g.pend++;
-    if((r==='win'||r==='loss') && k){ g.g++; g.pred+=p; }
+    if((r==='win'||r==='loss') && k && c.cal){ const ok=outcomeKey(b); if(!oSeen.has(ok)){ oSeen.add(ok); g.g++; g.pred+=p; if(r==='win') g.cw++; } }   /* v4.68: hit rate and the prediction once per outcome, and only from a cover known before the game */
     const pr=betProfit(b); if(pr!=null){ g.net+=pr; g.money++; } });
   const pc=x=>(x*100).toFixed(1)+'%', usd=x=>(x>=0?'+':'−')+'$'+Math.abs(x).toFixed(2);
-  el.innerHTML=[1,2,3,4,5,6,7,8,9,0].map(k=>{ const g=G[k]; if(!g.n) return ''; const dec=g.w+g.l, avg=g.g?g.pred/g.g:null, hit=dec?g.w/dec:null;
+  el.innerHTML=[1,2,3,4,5,6,7,8,9,0].map(k=>{ const g=G[k]; if(!g.n) return ''; const avg=g.g?g.pred/g.g:null, hit=g.g?g.cw/g.g:null;   /* v4.68: the same bets for both */
     return '<tr><td>'+(k?'<button type="button" class="cv-chip cv-'+k+' lbf" data-band="'+k+'" title="Tap to see these bets in the Bet log">'+cvNames()[k]+'</button> <span class="meta">'+cvRanges()[k]+'</span>':'<button type="button" class="linkbtn lbf" data-band="0" title="Tap to see these bets in the Bet log">'+cvRanges()[0]+'</button>')+'</td><td class="num">'+g.n+'</td><td class="num">'+g.pend+'</td><td class="num">'+g.w+'–'+g.l+'–'+g.p+'</td><td class="num">'+(avg==null?'—':pc(avg))+'</td><td class="num">'+(hit==null?'—':pc(hit))+'</td><td class="num">'+(avg==null||hit==null?'—':(hit>=avg?'+':'−')+(Math.abs(hit-avg)*100).toFixed(1)+' pts')+'</td><td class="num '+(g.net>=0?'pl-up':'pl-down')+'">'+(g.money?usd(g.net):'—')+'</td></tr>'; }).join('')||'<tr><td colspan="8" class="meta">No singles in this range yet.</td></tr>';
   const graded=G.reduce((t,g)=>t+g.w+g.l,0), n=G.reduce((t,g)=>t+g.n,0), sm=document.getElementById('studySum');
-  if(sm) sm.textContent=n+' singles · '+graded+' graded wins and losses'+(graded<30?' · early sample: small groups swing a lot, so do not change rules from this yet':' · a band whose hit rate stays below its average prediction over hundreds of bets is the model being too sure'); }
+  const oc=outcomeCounts(inS);
+  if(sm) sm.textContent=n+' singles · '+oc.tickets+' settled tickets · '+oc.outcomes+' unique outcomes · '+oc.games+' unique games · '+graded+' graded wins and losses'+(graded<30?' · early sample: small groups swing a lot, so do not change rules from this yet':' · a band whose hit rate stays below its average prediction over hundreds of bets is the model being too sure'); }
 /* v4.36 (Alonzo: "Build", Augi's screens step 3 of 5: the Bet log): Augi's bet calendar on our log. A month of game days (each: bets and the
    settled profit, grey while only open bets), tap a day for its summary (bets, staked, settled profit, in play, to play, pending), the daily max
    as a bar (cfg.dayMax, our version of his daily goal), his cover range breakdown for that day (singles, plus parlay legs from the Parlays tab),
@@ -3784,11 +3822,11 @@ function lcStats(list){ const g={n:0,pend:0,w:0,l:0,p:0,staked:0,stSet:0,profit:
     if(b.sold){ g.settled++; } else if(b.result==='win') g.w++; else if(b.result==='loss') g.l++; else if(b.result==='push') g.p++;
     if(pr==null){ g.pend++; return; } g.settled+=b.sold?0:1; g.profit+=pr; g.stSet+=st; });
   return g; }
-function lcBands(day){ const C=Array(10).fill(0); let n=0;
+function lcBands(day){ const C=Array(10).fill(0); let n=0;   /* v4.68: a single with no cover is "no cover" (cvBand(null) gave Unlikely), and a typed cover counts */
   logged.forEach(b=>{ if(gameDayOf(b)!==day) return;
     if(b.kind==='parlay'){ const L=b.parlay&&b.parlay.pk&&b.parlay.pk.legs; if(Array.isArray(L)&&L.length) L.forEach(l=>{ C[cvBand(+l.p)]++; n++; });
       else { const k=+(b.parlay&&b.parlay.picks)||0; C[0]+=k; n+=k; } return; }
-    C[cvBand(toProb(b.fair))]++; n++; });
+    C[logBandOf(b)||0]++; n++; });
   return {C,n}; }
 function lcRender(){ const cal=document.getElementById('lcCal'); if(!cal) return;
   const days=calDays('All'), today=ctDay(Date.now()), [Y,M]=lcMonth.split('-').map(Number), first=new Date(Date.UTC(Y,M-1,1)), nd=new Date(Date.UTC(Y,M,0)).getUTCDate();
@@ -4231,6 +4269,17 @@ function ebMoneyApply(ed,L,before){ const mb=ed&&ed.querySelector('.eb-money'); 
   if(mb.querySelector('.eb-free').checked) L.free=true; else delete L.free;
   if(mb.dataset.won==='1'){ const pv=parseFloat(mb.querySelector('.eb-prof').value); if(pv>0){ L.towin=+pv.toFixed(2); L.paidReal=true; } else { delete L.towin; delete L.paidReal; } }
   if(mb.dataset.lost==='1'){ const lv=parseFloat(mb.querySelector('.eb-lostamt').value); if(lv>=0 && Math.abs(lv-(+L.stake||0))>0.004) L.lostAmt=+lv.toFixed(2); else delete L.lostAmt; } }
+/* v4.68 (agreed with ChatGPT, owner "BUILD" 11/11; Alonzo: "allow me to re edit bets ... so i can check against the book log"): an optional Cover %
+   typed in the bet editor. Saved with when it was typed, the game's start, whether that was before the start (pre), where it came from, the app and
+   the math policy. Before the game it may be changed; once the game has started a cover typed before it is kept, and a later one only goes into
+   coverHist. A cover typed after the start, or with no known start, is shown and banded but never judged (betCover). */
+function coverApply(L, inp, before, now){ if(!L || !inp) return; const v=parseFloat(inp.value); if(!(v>0 && v<100)) return;
+  const p=+(v/100).toFixed(4); if(L.cover && Math.abs(+L.cover.p-p)<1e-6) return;
+  const t=Date.parse(L.start||''), known=!isNaN(t), pre=known && now<t;
+  const rec={p, enteredAt:new Date(now).toISOString(), gameStart:known?new Date(t).toISOString():null, pre, src:'typed_by_user', app:SCREENER_VERSION, policy:(L.snap&&L.snap.policy)||POLICY.math};
+  if(L.cover && L.cover.pre && !pre){ (L.coverHist=L.coverHist||[]).push(rec); return; }   // the forecast made before the game stands
+  if(L.cover) (L.coverHist=L.coverHist||[]).push(L.cover);
+  if(before) before.cover=L.cover||null; L.cover=rec; }
 function openBetEditor(tr, r, opt){
   opt=opt||{};
   const isCard=tr.classList.contains('pcard')||tr.classList.contains('ab-host');   // v2.79: + Add a bet hosts one too   // v2.69: the card holds its own editor
@@ -4262,6 +4311,7 @@ function openBetEditor(tr, r, opt){
     (lateRow?'<label title="The game has started. Logging it after the fact? Set how it went and it is saved as graded by you.">Result <select class="eb-res-new"><option value="">Not settled yet</option><option value="win">Won</option><option value="loss">Lost</option><option value="push">Push / void</option></select></label>'+
       (late4?'<span class="meta eb-late" style="color:var(--warn)">Started over 4 hours ago, so it will not grade itself: set Result, or mark it later in the Bet log</span>':''):'')+   // v3.57
     (opt.edit?'<label title="The day the game is played. Change it if you picked the wrong one.">Game day <input class="eb-date" type="date" value="'+esc(gameDayOf(opt.edit)||opt.edit.date||'')+'"></label>':'')+   // v3.88: the date can be fixed when editing
+    (opt.edit && opt.edit.kind!=='parlay'?'<label title="Optional. The chance you saw for this bet (for example on BettingPros). It gives the bet its cover band when no fair odds were saved. Typed before the game: it counts in the hit rate and calibration. Typed after the game started: shown only.">Cover % <input class="eb-cover" type="number" step="0.1" min="1" max="99" placeholder="optional" style="width:70px" value="'+(opt.edit.cover&&+opt.edit.cover.p>0?(+opt.edit.cover.p*100).toFixed(1):'')+'"></label>':'')+   /* v4.68 */
     (opt.edit?'<span class="eb-money"><b class="eb-money-h">Real money</b>'+   // v3.98 (Alonzo: "I want to have the real total amounts I get back"): boosts, free bets, what the book really paid
       '<label class="bar-check" title="A free bet (bonus bet) is not your money: if it loses you lose $0, if it wins you get the winnings. It does not count as money you staked."><input type="checkbox" class="eb-free"'+(opt.edit.free?' checked':'')+'> 🎁 Free bet</label>'+
       '<label title="Everything the book paid you, your stake included (a boost: the boosted amount). Type this or Winnings: the other one fills in.">Got back $ <input class="eb-back" type="number" step="0.01" min="0" style="width:90px"></label>'+
@@ -4557,6 +4607,7 @@ function openBetEditor(tr, r, opt){
           L.date=nd; L.dateSet=true; if(L.result==='?'){ delete L.result; delete L.why; } } }
       if(extra.towin>0) L.towin=extra.towin; else if(!L.paidReal && (L.stake!==+(+before.stake||0).toFixed(2) || L.odds!==before.odds)) delete L.towin;   // v3.54: a new To win replaces the old one; a new stake or odds drops a stale one   // v3.98: not what the book really paid
       ebMoneyApply(ed,L,before);   // v3.98: Real money   // v4.03: one helper, also used by the result buttons
+      coverApply(L, ed.querySelector('.eb-cover'), before, Date.now());   /* v4.68 */
       if(gross!=null){ L.gross=gross; L.net=net; }
       if(extra.market) L.market=extra.market;
       L.betnow=betNowOf({market:L.market, side:L.side||sideOf(L)||'', offeredRaw:odds});
@@ -4616,6 +4667,7 @@ function decisionHtml(r,cfg){
     : dl('dec-done','ALREADY BET', [$(r.prior.stake||0)+' on', esc(bookLabel(r.prior.book)||'?')]);
   if(r.tier){ const x=extraLine(r); return dl('dec-lim', (r.tier==='lucky'?'🍀 JUST MISSED ':'🔮 HAIL MARY ')+$(+r.xStake||0), [esc(x.short), r.tier==='lucky'?'not a best bet':'your call, not the math’s']); }   // v4.50
   if(r.xWhy) return d('dec-skip','SKIP', esc(r.xWhy));   // v4.50: an extra past its daily count
+  if(!r.pass && r.gapRes) return dl('dec-skip','RESEARCH', ['model 8+ pts above market', 'no automatic stake']);   /* v4.68 */
   if(!r.pass) return d('dec-skip','SKIP', (r.flags.find(f=>f[0]==='out')||[,''])[1]);
   if(r.removed) return r.moved ? dl('dec-skip','BET REMOVED', ['you still have', esc(lineOnly(r.moved))])
                                 : dl('dec-skip','BET REMOVED', [r.removed.lost>0?'lost $'+r.removed.lost.toFixed(2):'never placed']);
@@ -4625,6 +4677,7 @@ function decisionHtml(r,cfg){
     : dl('dec-skip','SKIP', [esc(r.glConflict.label)+' is better', r.glConflict.theirs+' vs '+r.glConflict.mine]);
   if(r.stake>0){
     if(r.glBest) return dl('dec-bet','BET '+$(r.stake), ['best bet'].concat(r.glBest.map(x=>esc(x)+' skipped')));
+    if(r.lsmlN) return dl('dec-lim','LONG-SHOT ML '+$(r.stake), ['smallest bet · market-confirmed', r.lsmlN+' of '+LSML.day+' used today · one a game']);   /* v4.68: its own limit says why it is small */
     if(r.risk) return d('dec-risk','⚠ RISK '+$(r.stake),'outlier, below market — small on purpose');
     if(r.outlier) return d('dec-lim','OUTLIER '+$(r.stake),'capped at the minimum');
     if(r.noMkt) return dl('dec-lim','MODEL ONLY '+$(r.stake), ['no market confirmation', (r.moN||1)+' of '+MODEL_ONLY.day+' today']);   /* v4.55 */
@@ -4639,6 +4692,9 @@ function decisionHtml(r,cfg){
   if(has(/long-shot limit|long shot under|long shot at/)) return d('dec-skip','SKIP','long-shot limit');
   if(has(/outlier limit reached/)) return d('dec-skip','SKIP','outlier limit reached');
   if(has(/model-only limit reached/)) return d('dec-skip','SKIP','model-only limit ('+MODEL_ONLY.day+' a day)');
+  if(has(/^LONG-SHOT ML limit reached/)) return d('dec-skip','SKIP','long-shot ML limit ('+LSML.day+' a day)');   /* v4.68 */
+  if(has(/^LONG-SHOT ML · one a game/)) return d('dec-skip','SKIP','long-shot ML: one a game');
+  if(has(/^LONG-SHOT ML · no market price/)) return d('dec-skip','SKIP','long-shot ML: no market price');
   if(has(/^model only: one a game/)) return d('dec-skip','SKIP','model only: one a game');
   if(has(/risk-bet limit/)) return d('dec-skip','SKIP','risk-bet limit reached');
   if(has(/outlier and .* below market — skip/)) return d('dec-skip','SKIP','outlier, too far below market');
@@ -5433,6 +5489,7 @@ function addToLog(r){
   logged.push({
     id:(self.crypto&&crypto.randomUUID)?crypto.randomUUID():('b'+Date.now()+Math.random().toString(36).slice(2)),
     key:betKey(r), date:r.gameDay||document.getElementById('slate').value, dateSet:r.dateSet||undefined, towin:(r.towin>0)?r.towin:undefined,   // v3.52: the date you chose
+    gapRes:r.gapRes?true:undefined, lsml:r.lsmlN?true:undefined,   /* v4.68: a moneyline the model put 8+ points above the market is research (kept out of the scorecard); a long-shot moneyline counts toward its 3 a day */
     name:r.name, sport:r.sport, market:r.market, betnow:betNowOf(r), book:r.book, game:r.game,
     odds:r.offeredRaw, fair:r.fairRaw, gross:r.gross, net:r.net, stake:r.stake, mkt:r.mktProb!=null?r.mktProb:null,
     kind:r.kind, closing:'', srcType: r.src==='paste:mev'?'mev':(String(r.src||'').startsWith('api:')?'api':'paste'),
@@ -5483,8 +5540,8 @@ function renderLog(){ setTimeout(()=>{ try{ csvDays(); }catch(e){} try{ lcRender
   const tb=document.getElementById('logBody'), empty=document.getElementById('logEmpty');
   tb.innerHTML='';
   { const lf=document.getElementById('logFilter'); if(lf){ const bf=logBandFilter!=null; lf.style.display=(logDayFilter||bf)?'flex':'none';
-    let bandTxt=''; if(bf){ let n=0,w=0,l=0,ps=0,pend=0,net=0,pred=0,g=0; logged.forEach(b=>{ if(logBandOf(b)!==logBandFilter) return; if(logDayFilter && (gameDayOf(b)||b.date||'')!==logDayFilter) return; n++; const r=b.sold?'sold':b.result; if(r==='win') w++; else if(r==='loss') l++; else if(r==='push') ps++; else if(r!=='sold') pend++; if((r==='win'||r==='loss') && logBandFilter){ g++; pred+=toProb(b.fair); } const pr=betProfit(b); if(pr!=null) net+=pr; });   /* v4.66 */
-      bandTxt=(logBandFilter?'<span class="cv-chip cv-'+logBandFilter+'">'+cvNames()[logBandFilter]+'</span><span class="meta">'+cvRanges()[logBandFilter]+'</span>':'<b>no band</b> <span class="meta">(no cover saved)</span>')+' <span class="lbf-stats">· '+n+' bet'+(n===1?'':'s')+' · '+w+'–'+l+'–'+ps+(pend?' · '+pend+' open':'')+(g?' · won '+Math.round(w/(w+l)*100)+'% vs '+Math.round(pred/g*100)+'% expected':'')+' · <b class="'+(net>=0?'pl-up':'pl-down')+'">'+(net>=0?'+':'−')+'$'+Math.abs(net).toFixed(2)+'</b></span>'; }
+    let bandTxt=''; if(bf){ let n=0,w=0,l=0,ps=0,pend=0,net=0,pred=0,g=0,cw=0; const oS=new Set(); logged.forEach(b=>{ if(logBandOf(b)!==logBandFilter) return; if(logDayFilter && (gameDayOf(b)||b.date||'')!==logDayFilter) return; n++; const r=b.sold?'sold':b.result; if(r==='win') w++; else if(r==='loss') l++; else if(r==='push') ps++; else if(r!=='sold') pend++; const c=betCover(b); if((r==='win'||r==='loss') && logBandFilter && c && c.cal && !oS.has(outcomeKey(b))){ oS.add(outcomeKey(b)); g++; pred+=c.p; if(r==='win') cw++; } const pr=betProfit(b); if(pr!=null) net+=pr; });   /* v4.66 */   /* v4.68: won % and expected % on the same bets: once per outcome, covers known before the game */
+      bandTxt=(logBandFilter?'<span class="cv-chip cv-'+logBandFilter+'">'+cvNames()[logBandFilter]+'</span><span class="meta">'+cvRanges()[logBandFilter]+'</span>':'<b>no band</b> <span class="meta">(no cover saved)</span>')+' <span class="lbf-stats">· '+n+' bet'+(n===1?'':'s')+' · '+w+'–'+l+'–'+ps+(pend?' · '+pend+' open':'')+(g?' · won '+Math.round(cw/g*100)+'% vs '+Math.round(pred/g*100)+'% expected':'')+' · <b class="'+(net>=0?'pl-up':'pl-down')+'">'+(net>=0?'+':'−')+'$'+Math.abs(net).toFixed(2)+'</b></span>'; }
     if(logDayFilter||bf) lf.innerHTML='<span>Showing '+(bf?bandTxt+' ':'bets ')+(logDayFilter?(bf?'· ':'')+'played <b>'+esc(new Date(logDayFilter+'T12:00:00Z').toLocaleDateString('en-US',{weekday:'short',month:'numeric',day:'numeric',timeZone:'UTC'}))+'</b>':'')+'</span><button type="button" class="ghost sm" id="logFilterOff">show all</button>'; } }
   // v3.57: newest first, one row per game day that opens and closes (days still open, yesterday and later, and days with a bet to check start open)
   const yday=ctDay(Date.now()-86400e3), dst=dayStats(), atv=t=>isNaN(t)?0:t, look=new Map(), seen=new Set();
@@ -6785,7 +6842,7 @@ function srcTagCore(b){   // v2.86: where the bet came from
   if(!t) return '';
   return '<span class="src-tag" title="Saved '+t[1]+'">'+t[0]+'</span>'; }
 /* v3.35: when the bet was made (or first saved here), and why a bet is still "?" */
-function betTimeTxt(b){ const t=loggedAtOf(b); return isNaN(t)?'time unknown':new Date(t).toLocaleString('en-US',{timeZone:'America/Chicago',month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}); }
+function betTimeTxt(b){ const p=Date.parse(b.placedAt), t=isNaN(p)?loggedAtOf(b):p;   /* v4.68 (Alonzo: Paul George and Wendell Carter Jr. said "bet 11/11, 7:25 AM", placed Tue 11:59 AM): a bet from your book shows when you placed it, not when the app read it */ return isNaN(t)?'time unknown':new Date(t).toLocaleString('en-US',{timeZone:'America/Chicago',month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}); }
 function whyHtml(b){ return ''; /* v3.37: why text moved to the ? badge tooltip */ const w=b.why;
   return '<div class="meta" style="color:var(--warn)" title="Why the grader could not finish this bet">why ?: '+esc(w.reason)+(w.stat!=null?' · stat read '+w.stat:'')+(w.line?' · line '+w.line.line+' '+w.line.side:'')+(w.market?' · market "'+esc(w.market)+'"':'')+'</div>'; }
 function playedHtml(b){   // v2.84: "plays" before kickoff, "in progress" until graded, "played" once settled
@@ -6836,6 +6893,10 @@ async function autoGradeLog(){
       if(b.result==='push' && b.gradedBy!=='manual'){ b.result='win'; }
       changed++; });
     const redo94=b=>(b.fixSog94 || (lookOutWhy(b) && (gameDayOf(b)||b.date||'')>=ctDay(Date.now()-30*86400e3))) && ESPN_MAP[b.sport] && b.kind!=='parlay';   // v3.96 (Alonzo: "you have the dates they played and the ESPN api"): every bet in Look out from the last 30 days is graded too, not only the last 4 days   // v3.95 (Alonzo: "30 that were graded before but now they are not"): v3.94 cleared shots bets of every age, but only the last 4 days were graded again
+    /* v4.68: bets put on "game unknown" because the fill was read after the game, though the book says it was placed before: their game is given back,
+       and the check below runs again with the time you placed it. Nothing graded is touched. */
+    logged.forEach(b=>{ if(!b.wrongGame18 || b.start || b.game || settled(b) || isNaN(Date.parse(b.placedAt)) || b.fixWg68) return; b.fixWg68=1;
+      (b.edits=b.edits||[]).push({at:new Date().toISOString(), before:{game:'', wrongGame18:b.wrongGame18}, note:'v4.68: its game given back (placed '+b.placedAt+')'}); b.game=b.wrongGame18; delete b.wrongGame18; changed++; });
     const open=logged.filter(b=>(recent(b)||redo94(b)) && !settled(b));
     if(!open.length && !undated.length){ if(changed){ saveLog(); renderLog(); renderPerf(); refresh(); } return; }
     for(const b of undated){
@@ -6847,7 +6908,7 @@ async function autoGradeLog(){
     for(const b of open){ try{   // v3.96: one bet that fails cannot stop the others
       const ev=await findBetGame(b);
       if(!ev && b.fills && b.fills.length && !b.start && teamsOf(b.game) && !b.wrongGame18){   // v3.18: its saved game was already over when the fill came in
-        const at=Date.parse(b.snap&&b.snap.at), E=[].concat(...await Promise.all([-3,-2,-1,0].map(n=>fetchScoreboardDay(b.sport, dayPlus(ctDay(isNaN(at)?Date.now():at),n)))));
+        const at=Date.parse(b.placedAt||(b.snap&&b.snap.at)), E=[]   /* v4.68: when you placed it (the book says), not when the app read the fill: a fill read the morning after was put on "game unknown" */.concat(...await Promise.all([-3,-2,-1,0].map(n=>fetchScoreboardDay(b.sport, dayPlus(ctDay(isNaN(at)?Date.now():at),n)))));
         const old=findGame(E,b.game)||findGameAny(E,b.game);
         if(old && !isNaN(at) && Date.parse(old.date)<at-5*3600e3){ b.wrongGame18=b.game; b.game=''; changed++; }
         continue; }
@@ -6887,11 +6948,13 @@ function calibrationPoints(){
     seen.add([d,name,market].join('|').toLowerCase());
   });
   const pts=[...uniq.values()].map(h=>({cover:h.cover, net:h.net, won:!!h.won, mkt:h.mkt!=null?h.mkt:null}));
+  const oSeen=new Set();
   logged.forEach(b=>{
-    if(b.sold || (b.result!=='win' && b.result!=='loss')) return;
+    if(b.kind==='parlay' || b.sold || (b.result!=='win' && b.result!=='loss')) return;
     const k=[b.date,b.name,b.market].join('|').toLowerCase(); if(seen.has(k)) return;
-    const p=toProb(b.fair); if(p==null) return;
-    pts.push({cover:p, net:b.net, won:b.result==='win', mkt:b.mkt!=null?b.mkt:null});
+    const c=betCover(b); if(!c || !c.cal) return;   /* v4.68: a cover typed after kickoff is never judged */
+    const ok=outcomeKey(b); if(oSeen.has(ok)) return; oSeen.add(ok);   /* v4.68: two tickets on one outcome are one forecast */
+    pts.push({cover:c.p, net:b.net, won:b.result==='win', mkt:(b.mkt!=null && !c.typed)?b.mkt:null});
   });
   return pts;
 }
@@ -6968,7 +7031,7 @@ const roiOf=xs=>{ let p=0,s=0; xs.forEach(b=>{ p+=b._pl; s+=b._st; }); return s>
 const medOf=xs=>{ if(!xs.length) return null; const a=xs.map(b=>b._clv).sort((x,y)=>x-y), m=a.length>>1; return a.length%2?a[m]:(a[m-1]+a[m])/2; };
 const meanClvOf=xs=>xs.length?xs.reduce((t,b)=>t+b._clv,0)/xs.length:null;
 function scoreSet(list){
-  const S=list.filter(b=>b.kind!=='parlay' && !b.research && !b.tier).map(b=>({b, _pl:betProfit(b), _st:b.free?0:(+b.stake||0), _clv:clv(b), _day:gameDayOf(b)}));   // v3.98: ROI on your own money: profit without the stake, free bets stake $0
+  const S=list.filter(b=>b.kind!=='parlay' && !b.research && !b.tier && !b.gapRes).map(b=>({b, _pl:betProfit(b), _st:b.free?0:(+b.stake||0), _clv:clv(b), _day:gameDayOf(b)}));   // v3.98: ROI on your own money: profit without the stake, free bets stake $0
   return {settled:S.filter(x=>x._pl!=null && x._st>0), withClose:S.filter(x=>x._clv!=null)};
 }
 function segLabel(n){ return n>=1000?'<span class="sc-tag ev">evidence</span>':n>=300?'<span class="sc-tag cmp">comparison</span>':n>=100?'<span class="sc-tag">exploratory</span>':'<span class="sc-tag" style="opacity:.72">too few</span>'; }
@@ -7092,7 +7155,7 @@ function watchNote(rows){ const A=watchAll(), now=Date.now(); let ch=0; const by
     let ld=null; if(LIVE_BOOK(r.book)){ try{ const d=liveDesc(Object.assign(rowAsBet(r),{id:'w'})); if(d){ delete d.id; ld=d; } }catch(e){} }
     o=Object.assign({k, pk, v:2, at:new Date(now).toISOString(), ver:SCREENER_VERSION, dev:watchDev(), devName:syncDev(), tz:new Date(now).getTimezoneOffset(), tsrc:'device',
       sport:r.sport, kind:r.kind||'prop', name:r.name, team:r.team||null, market:r.market, side:r.side||'', betnow:betNowOf(r), game:r.game||r.matchup||'', ev:(r.gameInfo&&r.gameInfo.eventId)||null,
-      start:st||null, date:st?ctDay(t0):null, dateSet:!!st, book:r.book}, cur, {net:+(r.net||0).toFixed(4), xc:r.xc||null, result:null, seen:pre?now:null, nSig:0, ld});   /* v4.52: xc = 'lucky' when it was a Just missed at first sight */
+      start:st||null, date:st?ctDay(t0):null, dateSet:!!st, book:r.book}, cur, {net:+(r.net||0).toFixed(4), xc:r.xc||null, result:null, seen:pre?now:null, nSig:0, ld}, r.gapRes?{tag:'ml_gap_research', why:'MONEYLINE GAP RESEARCH · model 8+ points above market'}:{});   /* v4.68: the reason it was watched */   /* v4.52: xc = 'lucky' when it was a Just missed at first sight */
     if(!o.ld) delete o.ld; A.push(o); by.set(k,o); by.set(pk,o); ch++; });
   if(ch) watchSave(); return ch; }
 function watchState(o){ const L=(o.sig&&o.sig.length)?o.sig[o.sig.length-1]:o;   // the price and forecasts as last seen before the cutoff
@@ -8991,7 +9054,7 @@ function csvDays(){ const sel=document.getElementById('csvDay'); if(!sel) return
   if(sel.innerHTML!==h){ sel.innerHTML=h; sel.value=D[cur]?cur:''; } }
 function logCsv(day){
   const q=s=>{ s=s===undefined||s===null?'':String(s); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
-  const head=['game day','placed','bet','pick','sport','type','book','odds','implied %','stake $','free bet','result','profit $','fair %','EV after fees %','closing','CLV %','game','kickoff (CT)','legs','stat','mode','source','band','La Contadora EV %'];   // v4.67 (owner: "Yes to all"): the stat (sacks showed as "O 0.5"), the mode, where it came from, its cover band, and her EV when taken (the EV column is the model’s)
+  const head=['game day','placed','bet','pick','sport','type','book','odds','implied %','stake $','free bet','result','profit $','fair %','EV after fees %','closing','CLV %','game','kickoff (CT)','legs','stat','mode','source','band','La Contadora EV %','market chance %','La Contadora chance %','policy','app version'];   /* v4.68: frozen from the bet's snapshot, blank when missing */   // v4.67 (owner: "Yes to all"): the stat (sacks showed as "O 0.5"), the mode, where it came from, its cover band, and her EV when taken (the EV column is the model’s)
   const rows=logged.map((b,i)=>({b,i,d:gameDayOf(b)||b.date||''})).filter(x=>!day||x.d===day).sort((a,b)=>(b.d.localeCompare(a.d))||(b.i-a.i)).map(({b,d})=>{
     const p=toProb(b.odds), pr=betProfit(b), c=clv(b), st=b.start||(b.gameInfo&&b.gameInfo.startISO);
     const res=b.sold?'sold':b.result==='win'?'win':b.result==='loss'?'loss':b.result==='push'?'push':'open';
@@ -8999,9 +9062,10 @@ function logCsv(day){
       bookLabel(b.book||''), b.odds, p!=null?(p*100).toFixed(1):'', (+b.stake||0).toFixed(2), b.free?'yes':'', res, pr!=null?pr.toFixed(2):'',
       b.fair!=null?b.fair:(b.fairProb!=null?(b.fairProb*100).toFixed(1):''), b.net!=null?(b.net*100).toFixed(2):'', b.closing||'', c!==null?(c*100).toFixed(2):'',
       b.game||b.matchup||'', st?new Date(st).toLocaleString('en-US',{timeZone:'America/Chicago'}):'', b.kind==='parlay'&&b.parlay?String(b.parlay.legs||''):'',
-      b.kind==='parlay'?'':(b.market||''), b.tier==='lucky'?'Feeling Lucky (just missed)':b.tier==='hail'?'Clairvoyant (Hail Mary)':(b.kind==='parlay'?'':'Safe'),
+      b.kind==='parlay'?'':(b.market||''), b.tier==='lucky'?'Feeling Lucky (just missed)':b.tier==='hail'?'Clairvoyant (Hail Mary)':b.gapRes?'Moneyline gap research':(b.kind==='parlay'?'':'Safe'),
       (()=>{ const d=document.createElement('div'); d.innerHTML=srcTagCore(b); return d.textContent.trim(); })(), (()=>{ const k=logBandOf(b); return k==null?'':k?cvNames()[k]:'no cover saved'; })(),
-      (b.snap&&b.snap.actNet!=null)?(b.snap.actNet*100).toFixed(2):''].map(q).join(','); });
+      (b.snap&&b.snap.actNet!=null)?(b.snap.actNet*100).toFixed(2):'',
+      (b.snap&&b.snap.market!=null)?(b.snap.market*100).toFixed(1):'', (b.snap&&b.snap.act!=null)?(b.snap.act*100).toFixed(1):'', (b.snap&&b.snap.policy)||'', (b.snap&&b.snap.screener)||''].map(q).join(','); });
   return '\ufeff'+[head.join(','),...rows].join('\r\n'); }
 document.getElementById('csvDay').addEventListener('focus',csvDays); document.getElementById('csvDay').addEventListener('pointerdown',csvDays);
 document.getElementById('csvDl').addEventListener('click',()=>{ csvDays(); const day=document.getElementById('csvDay').value;

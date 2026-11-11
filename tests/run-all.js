@@ -57,6 +57,7 @@ const runs = [
   ['v4.56 agreed scope: provisional pick’em entries, settlement note, model-only legs out of recommended entries, stale best-book claims, unreadable-book switch, order counter', 'scope-v456-test.js', []],
   ['v4.57 agreed scope: the book shown is the one to beat, stale sportsbook prices give way to a fresh exchange price that clears the floor, book-swap cards expire, the choice is saved', 'book-choice-v457-test.js', []],
   ['v4.59: the board search also finds a stat ("sack" finds Defense Sacks and Defensive Sacks)', 'search-stat-test.js', []],
+  ['v4.68: Kalshi stays put on repeated presses; long-shot moneylines 3 a day at the smallest bet; moneyline gap research; tickets vs outcomes; typed Cover %; 4 CSV columns', 'scope-v468-test.js', []],
   ['v4.60/v4.62: on a phone the Today’s games line, Cover bands, Show, Sort, Sport, the book chips, the tick boxes and Cards fold behind Filters, which names what is on', 'phone-filters-test.js', []],
   ['v4.63: on a phone the BettingPros panel and the Sources panel are one line each, closed when the app opens', 'phone-header-test.js', []],
   ['v4.64: on a phone the Today card is one line (day, bet, record, in play, to check), closed when the app opens', 'phone-today-test.js', []],
