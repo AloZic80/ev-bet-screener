@@ -24,7 +24,13 @@ New builds add their line at the top of the right section.
   unasked rows' `_shopQ` and 🔓/🔒 (`r._was`) and does not stamp `pkSentAt`; the swap tooltip names the unreadable book, `snap.shop.swapFrom`;
   `swapBooks` drops `shopChk` when it makes a swap card; "live · was" becomes "read 5m ago · was" after `shopLim` (`shopSameOld`); `barSumPaint`
   skips Sport / Sweet spot / My games on the pasted board and reads `boardBooks`; `#shopMsg` keeps its place on a phone; `aria-controls` lists all.
-  `tests/book-choice-v461-test.js` (55, fails on v4.60), `tests/phone-filters-test.js` (22).
+  A third review (3 reviewers, 13 confirmed, 1 medium) then gave: `decide` deletes `_liveAt` when the winner is not a live price (a Pull sportsbook
+  that wins the card back is as old as the board), `swapHunt` no longer sets `_liveAt` (a swap card's age is `swap.at`), `bookPick`'s `seen` is
+  `max(shop.scan, _liveAt)` else the board; `rowSeenAt` no longer counts `exOpen.at` (the open-market check leaves the card's price as it was);
+  tooltips: `unreadLater` for a moved card, "was read again 2m ago and kept its place"; a failed scan gives unasked rows no new 🔓/🔒 and drops a
+  restored tag that is no longer true; the Kalshi re-decision loops up to 4 rounds (each only takes cards off Kalshi); the age pill says "Paste the
+  board again" for pasted rows; `ringRecheck` compares `shopStaleSig()` with the one saved at the last draw (it compared a count).
+  `tests/book-choice-v461-test.js` (73, fails on v4.60), `tests/phone-filters-test.js` (22).
 - v4.60 (owner, phone: "I think this can be on a drop down?", "Also this", "For now only on phone"): under 760 px the board bar shows only the search
   box, Filters and Send the Sentinels (CSS `order`); Show, Sort, Sport, the book chips, the tick boxes, Show all notes and Cards fold behind Filters
   (`.board-bar.bar-open`, the same `mbev.barMore` switch). `barSumPaint` (hoisted, reads the page and localStorage only) names what hides bets on the

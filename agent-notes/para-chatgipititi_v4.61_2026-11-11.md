@@ -10,7 +10,8 @@ It replaces the open questions in `para-chatgipititi_v4.60_2026-11-11.md`: Alonz
 - A recheck of v4.57 (six reviewers, a skeptic on every finding) confirmed 12 problems. Alonzo: "I had already said build".
 - I then pointed out that the card's price age, the ◎ fresh check and the score's freshness still counted a saved (cached) load as just loaded. Alonzo: "You can decide if you think it's the best thing to do". I decided yes.
 - I also pointed out that a Sentinels press made a sportsbook card "fresh" when it had only read another book. Alonzo: "Ok fix it and build".
-- A second review (four reviewers) of the fixes reported 20 more points; all are fixed in this version. A third review ran on the final code.
+- A second review (four reviewers) of the fixes reported 20 more points; all are fixed in this version.
+- A third review (three reviewers, a skeptic on each finding) confirmed 13 more, one medium and the rest low; all are fixed too.
 
 No floor, threshold, fee, Kelly or cap changed. The ◎ fresh limit is still 10 minutes.
 
@@ -35,6 +36,7 @@ One rule now: **a price is as old as the last time the book the card shows was r
 - A saved load shows its true age on the card ("⏱ 20m", it said "0s").
 - The ◎ fresh check (10 minutes, unchanged) and the score's freshness use that age.
 - A Sentinels press makes a price new only when it read the book the card shows. Reading Novig for a bet does not make its Bovada price new; before, it did, so a card could say "sportsbook price is stale" and "fresh: price read 0s ago" together.
+- The automatic open-market check (it reads the exchange when a board loads, to see the market is open, but leaves the card's price as it was) no longer makes a price new either. Only a Sentinels press, which puts the price it read on the card, does.
 
 What Alonzo will notice: a sportsbook card stops being "fresh" 10 minutes after the board was really loaded and stays that way until he refreshes the board. It can lose ◎ PERFECTA · BET NOW in the meantime. Stakes and the Place-these list do not change.
 
@@ -45,7 +47,7 @@ Model 58%, market 56%: chance 56.7%. EV at price p with fee f = ((0.567 / p − 
 - Novig 56%: +1.25%, under the floor: a card whose book can't be read stays where it is.
 
 ## Checked
-- `tests/book-choice-v461-test.js`: 55 checks (it fails on v4.60). `tests/phone-filters-test.js`: 22.
+- `tests/book-choice-v461-test.js`: 73 checks (it fails on v4.60). `tests/phone-filters-test.js`: 22.
 - The full suite result is in the PR.
 
 ## Not done, on purpose

@@ -9,7 +9,8 @@ Status: active, thresholds **frozen** since v4.50 (2026-11-10) · Approved by: A
 4. Lined up: model ≥ market, and the market alone beats the price.
 5. Fresh: price read in the last 10 minutes. "Read" means the price the card shows (`rowSeenAt`, v4.61, owner: "You can decide if you think it's the best
    thing to do", "Ok fix it and build"): a board answer the Worker had saved counts from when it was fetched (`r.priceAt`; no time = unknown, not fresh),
-   and a Sentinels press makes a price new only when it read the book the card shows (reading Novig does not make a Bovada price new). The 10 minutes did not change.
+   and a Sentinels press makes a price new only when it read the book the card shows (reading Novig does not make a Bovada price new). The open-market
+   check (`exOpen`) does not count either: it reads the exchange but leaves the card's price as it was. The 10 minutes did not change.
 6. Clean: no warning, injury, bad weather, outlier, capped stake, or price up a point in the hour.
 
 6 of 6: gold card, BET NOW. 5 of 6: a ring naming the miss. A label only: it never changes a stake.
