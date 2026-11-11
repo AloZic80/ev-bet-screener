@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.61</title>
+<title>0xBeta Screener v4.62</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1425,6 +1425,9 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 @media (max-width:760px){
   .board-panel .board-bar:not(.bar-open)>.bar-item, .board-panel .board-bar:not(.bar-open)>.book-chips, .board-panel .board-bar:not(.bar-open)>.bar-check{display:none}
   .board-panel .board-bar>.bar-search{order:-3} .board-panel .board-bar>.bar-more-btn{order:-2} .board-panel .board-bar>#shopBtn{order:-1} .board-panel .board-bar>#shopMsg{order:-1}
+  /* v4.62 (Alonzo: "what's on the screenshot should all be in a drop down because I don't need to see it all the time"): the Today's games line and Cover bands fold behind Filters too (barPhonePlace moves them into the bar on a phone) */
+  .board-panel .board-bar:not(.bar-open)>#todayLine, .board-panel .board-bar:not(.bar-open)>.cv-legend-box{display:none}
+  .board-panel .board-bar>#todayLine, .board-panel .board-bar>.cv-legend-box{flex-basis:100%; margin:0}
 }
 </style>
 </head>
@@ -1434,7 +1437,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.61</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.62</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2186,7 +2189,7 @@ a.sc-price.sc-link{text-decoration:none; color:inherit}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.61';
+const SCREENER_VERSION='v4.62';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3651,14 +3654,21 @@ function barSumPaint(){ const b=document.getElementById('barMoreBtn'); if(!b) re
     if(Array.isArray(a) && a.length) n.push(a.length===1?String(a[0]):a.length+' books'); }
   [['swOnly','Sweet spot',1],['onlyMyGames','My games',1],['showRejects','Rejected shown',0]].forEach(([id,t,api])=>{ if(pv && api) return; const c=document.getElementById(id); if(c && c.checked) n.push(t); });
   const sum=!n.length?'':n.length<=2?n.join(' · '):n.length+' on';
-  b.innerHTML='<span>Filters'+(sum?' · <span class="bar-sum">'+esc(sum)+'</span>':'')+(on?' ▴':' ▾')+'</span>';   /* one span: the button is a flex box on a phone, which would drop the spaces between pieces */ b.title=(n.length?'On: '+n.join(', ')+'. ':'')+'Show, Sort, Sport, books, Only sweet spot, Show rejected, Only games I already bet, Show all notes, Cards'; }
+  b.innerHTML='<span>Filters'+(sum?' · <span class="bar-sum">'+esc(sum)+'</span>':'')+(on?' ▴':' ▾')+'</span>';   /* one span: the button is a flex box on a phone, which would drop the spaces between pieces */ b.title=(n.length?'On: '+n.join(', ')+'. ':'')+'Today’s games line, Cover bands, Show, Sort, Sport, books, Only sweet spot, Show rejected, Only games I already bet, Show all notes, Cards'; }
 document.addEventListener('change', e=>{ if(e.target && e.target.closest && e.target.closest('.board-panel .board-bar')) barSumPaint(); });
 document.addEventListener('click', e=>{ if(e.target && e.target.closest && e.target.closest('#bookChips')) setTimeout(barSumPaint,0); });
 document.addEventListener('toggle', e=>{ const d=e.target; if(!d || !d.classList || !d.classList.contains('help') || !d.dataset.help) return; const S=helpOpenSet(); if(d.open) S.add(d.dataset.help); else S.delete(d.dataset.help); helpOpenSave(); }, true);
 document.addEventListener('click', e=>{ const t=e.target.closest && e.target.closest('.tb-more, #barMoreBtn'); if(!t) return;
   if(t.id==='barMoreBtn'){ let on=false; try{ on=localStorage.getItem('mbev.barMore')==='1'; localStorage.setItem('mbev.barMore', on?'0':'1'); }catch(e){} barMoreApply(); return; }
   e.stopPropagation(); e.preventDefault(); try{ localStorage.setItem('mbev.tbBooks', tbBooksOpen()?'0':'1'); }catch(e){} try{ renderTodayBar(); }catch(e){} }, true);   // capture: before the Today card's own click (which opens the Bet log)
-try{ helpApply(); barMoreApply(); }catch(e){}
+/* v4.62 (Alonzo: "what's on the screenshot should all be in a drop down because I don't need to see it all the time"): on a phone the Today's games line
+   and Cover bands move into the board bar, first among what Filters opens; on a computer they go back above the bar, where they always were. Hoisted. */
+function barPhonePlace(){ try{ const bar=document.querySelector('.board-panel .board-bar'), tl=document.getElementById('todayLine'), cv=document.querySelector('.board-panel .cv-legend-box'); if(!bar || !tl || !cv) return;
+    const phone=!!(window.matchMedia && window.matchMedia('(max-width:760px)').matches);
+    if(phone){ if(tl.parentNode!==bar || cv.parentNode!==bar){ bar.insertBefore(cv, bar.firstChild); bar.insertBefore(tl, bar.firstChild); } }
+    else if(tl.parentNode===bar || cv.parentNode===bar){ bar.parentNode.insertBefore(tl, bar); bar.parentNode.insertBefore(cv, bar); } }catch(e){} }
+try{ helpApply(); barPhonePlace(); barMoreApply(); }catch(e){}
+try{ const mq=window.matchMedia && window.matchMedia('(max-width:760px)'); if(mq){ if(mq.addEventListener) mq.addEventListener('change', barPhonePlace); else if(mq.addListener) mq.addListener(barPhonePlace); } }catch(e){}
 document.addEventListener('toggle', e=>{ const d=e.target; if(!d || !d.classList || !d.classList.contains('sc-why')) return; const k=d.dataset.pck||''; if(!k) return; const S=scOpenSet(); if(d.open) S.add(k); else S.delete(k); scOpenSave(); }, true);
 /* how fresh the price is: the last time a price for this bet was read (the load, a Sentinels check, the open-market check, line shopping) */
 function rowSeenAt(r){ const m=Math.max((r&&r.priceAt)?(Date.parse(r.priceAt)||0):(Date.parse(r&&r.loadedAt)||0) /* v4.61 (owner: "You can decide if you think it is the best thing to do"): a saved answer counts from when it was fetched, not from when it was put on the board; no time = unknown */, +(r&&r._liveAt)||0, +(r&&r.swap&&r.swap.at)||0 /* v4.61: a swap card: when its price was read */, Date.parse(r&&r.shop&&r.shop.at)||0); return m>0?m:null; }   /* v4.61: not exOpen.at: the open-market check reads the exchange but leaves the card's price as it was, so it does not make that price new (it hid a saved answer's real age) */

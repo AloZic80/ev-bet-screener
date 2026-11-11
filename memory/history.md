@@ -6,6 +6,10 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.62 (owner: "Did I not say that what's on the screenshot should all be in a drop down because I don't need to see it all the time?"): v4.60 had left
+  the Today's games line (#todayLine) and Cover bands (.cv-legend-box) outside. `barPhonePlace` (hoisted; runs at startup and on a matchMedia change)
+  moves them into the board bar on a phone, first among what Filters opens, and back above the bar on a computer. `tests/phone-filters-test.js` (24).
+  Lesson: when the owner points at a screenshot, everything in it is the scope; ask if a part looks out of place, do not leave it out.
 - v4.61 (owner: "I had already said build", after a six-reviewer recheck of v4.57 found 12 real issues): book-swap cards follow the unreadable rule
   (the shown swap book's last quote stays in `_altQ` marked `_unread`; the incumbent is `_swapInc`, the book shown when the last press started; a fresh
   price replaces it only if it clears `cfg.eMin`, else `r.swapNone`); a card moved to Kalshi that fails the floor after the fee rounding is decided again
