@@ -6,6 +6,10 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.67 (owner: "Yes to all", after the CSV analysis): `logCsv` adds five columns at the end (old ones keep their places): stat (`b.market`: a sacks
+  bet said only "O 0.5"), mode (Safe / Feeling Lucky (just missed) / Clairvoyant (Hail Mary) from `b.tier`), source (`srcTagCore` text), band
+  (`logBandOf`), La Contadora EV % (`snap.actNet`; the "EV after fees %" column is the model's). On a phone the ESPN scores box is one line too
+  (`#ssFoldBtn`, `body.ss-open`, shown on every tab like the box). `tests/csv-columns-test.js` (7), phone-header-test (24).
 - v4.66 (owner: "I want to be able to click on the betting range ... or tell on the log which ones are classified as unlikely, coin flip, etc, but after
   the bet or on the log"): `logBandOf(b)` (the band from the fair odds saved with the bet; none saved = 0, "no band") and `logBandChip(b)` on every single
   in the Bet log; `logBandFilter` shows one band with "N bets · W–L–P · won X% vs Y% expected · ±$"; the Bet result study's bands are buttons that open
