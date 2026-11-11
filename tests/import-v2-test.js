@@ -8,7 +8,7 @@ const html=fs.readFileSync(process.argv[2]||INDEX,'utf8');
 let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?'PASS ':'FAIL ')+n+'  → '+JSON.stringify(got===undefined?null:got).slice(0,700)); };
 const NOW=Date.parse('2026-11-11T18:00:00Z');
 const bet=(id,o)=>Object.assign({id,key:id,sport:'NHL',kind:'prop',book:'Novig',odds:'-122',fair:'',stake:3.34,date:'2026-10-29',dateSet:true,manual:true,name:'Player '+id,side:'O',market:'1.5 Shots',betnow:'O 1.5 -122',result:'win',gradedBy:'manual',snap:{at:'2026-10-29T15:00:00Z'},start:null},o);
-const LOG=[bet('z',{name:'Fabian Zetterlund'}),                                                          // fix: $4.09, won $3.29
+const LOG=[bet('z',{name:'Fabian Zetterlund',autoFrom:'novig',fills:['f1'],fillCost:3.34,fillBook:'novig'}),                                                          // fix: $4.09, won $3.29
   bet('t',{name:'Brice Turang',sport:'MLB',odds:'+126',stake:0.99,date:'2026-10-26'}),                     // fix: won → lost
   bet('w1',{name:'Jaylen Warren',book:'DK Predictions',stake:3.04,date:'2026-10-25',result:'loss'}),       // fix only the DK one
   bet('w2',{name:'Jaylen Warren',book:'Novig',stake:2.85,date:'2026-10-25'}),
@@ -66,6 +66,11 @@ const load=async p=>{ await p.setInputFiles('#lcFile',{name:'bets.json',mimeType
   check('fix by book: the DraftKings Warren is $2.75 at −122 (−$2.75); the Novig Warren is untouched', R.w1.st===2.75 && R.w1.odds==='-122' && R.w1.p===-2.75 && R.w2.st===2.85 && R.w2.ed===0, {w1:R.w1, w2:R.w2});
   check('the two "Twin" bets are not touched (more than one matched)', R.twins.every(x=>x==='win'), R.twins);
   check('fix on a parlay: the Novig combo pays +$2.56 (was +$2.81)', R.combo===2.56, R.combo);
+  // v4.71: the app re-reads Novig fills of the last 14 days; the same fill ($3.34) must not put the old stake back on the corrected bet
+  const rl=await p.evaluate(()=>{ const b=logged.find(x=>x.name==='Fabian Zetterlund'); linkFill(b,{book:'novig',id:'f1',cost:3.34,fee:0,qty:5,price:0.55}); return {st:b.stake, p:betProfit(b), src:b.accountingSource}; });
+  check('v4.71: re-reading the Novig fill leaves the corrected Zetterlund at $4.09 and +$3.29', rl.st===4.09 && rl.p===3.29 && rl.src==='import', rl);
+  const rl2=await p.evaluate(()=>{ const b={id:'x',autoFrom:'novig',fills:['g1'],fillCost:1,stake:1,odds:'-110'}; linkFill(b,{book:'novig',id:'g2',cost:1.5,fee:0,qty:3,price:0.5}); return b.stake; });
+  check('a bet nobody corrected still follows its fills: $1.00 + a second $1.50 fill = $2.50', rl2===2.5, rl2);
   await load(p); const again=await p.evaluate(()=>({m:document.getElementById('lcImpMsg').textContent, fixOn:[...document.querySelectorAll('#lcImpList .lc-fix .lc-on')].filter(x=>!x.disabled).length, t:document.getElementById('lcImpList').textContent}));
   check('loading the same file again: all 7 tickets are "already in your log" and no fix applies twice (each says "already done" or no longer matches)', /7 already in your log/.test(again.m) && again.fixOn===0 && /already done/.test(again.t), again);
   // Polymarket fee: $1.00 at +317 = +$3.17 at the price; the settlement says pnl 2.95 on a $1.00 position
