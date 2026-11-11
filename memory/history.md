@@ -6,6 +6,9 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.65 (owner, phone, the "51 pass · of 2223 · 2172 skipped · 2 already bet" box: "I'm sure you can accommodate the top info somewhere else or
+  abbreviate"): under 760 px the box is one line inside itself (`#sbFoldBtn`): "Board 51 of 2,223 pass · 2 already bet ▾" (already bet in the alert's
+  red, so it is never hidden), closed every time the app opens (`window._sbOpen`). `tests/phone-header-test.js` (22).
 - v4.64 (owner, phone, a screenshot of the Today card: "Even this"): under 760 px the Today card is one line (`#tbFoldBtn`), closed every time the app
   opens (`window._tbOpen`); `hdFoldPaint` writes "TODAY · $10.50 · 4 bets · 1–1 · $2.00 in play ▾" (another day: its label; no bets: "no bets"; bets to
   check in orange). `.head.tb-open` shows the card; by book stays remembered inside it. `tests/phone-today-test.js` (15); live-batch-test opens the line.

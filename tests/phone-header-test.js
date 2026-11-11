@@ -1,4 +1,4 @@
-// node tests/phone-header-test.js — v4.63 (Alonzo, phone: "And these, make them cleaner as well. I don't need to have them open all the time. Because the
+// node tests/phone-header-test.js — v4.63 (+ v4.65: the count box) (Alonzo, phone: "And these, make them cleaner as well. I don't need to have them open all the time. Because the
 // my bets will be all the way to the bottom"): on a phone the BettingPros panel and the Sources panel are one line each, closed every time the app opens;
 // the line says what is loaded (and "saved board, not live") or what the sources have left; a tap opens it. At 1000, 1280 and 1960 px nothing changes.
 const path=require('path'); const INDEX=path.join(__dirname,'..','index.html');
@@ -30,6 +30,17 @@ const txt=(p,id)=>p.evaluate(id=>document.getElementById(id).textContent.replace
   const pos=await p.evaluate(()=>{ const y=id=>Math.round(document.getElementById(id).getBoundingClientRect().top+scrollY); return {src:y('srcFoldBtn'), board:Math.round(document.querySelector('.board-panel').getBoundingClientRect().top+scrollY)}; });
   const old=await p.evaluate(()=>{ const h=document.querySelector('.head'); h.classList.add('bp-open','src-open'); const y=Math.round(document.querySelector('.board-panel').getBoundingClientRect().top+scrollY); h.classList.remove('bp-open','src-open'); return y; });
   check('your bets come up '+(old-pos.board)+' px sooner on the page (the board starts at '+pos.board+' px instead of '+old+' px)', old-pos.board>=250, {now:pos.board, open:old});
+  // v4.65: the board count box is one line too
+  const sbV=await seen(p,['sbFoldBtn','count','cuts']), sbT=await txt(p,'sbFoldBtn');
+  check('phone (v4.65): the box with the count is one line, "Board 1 of 1 pass ▾"; the big number and the skipped list are folded away', sbV.sbFoldBtn && sbV.count===false && /^Board\s*1 of 1 pass\s*▾$/.test(sbT), {sbV, sbT});
+  await p.evaluate(()=>{ const a=document.getElementById('alerts'); a.innerHTML='<span class="alert dupe">2 already bet</span>'; a.style.display='flex'; document.getElementById('countNote').textContent='pass · of 2223'; document.getElementById('count').textContent='51'; });
+  await p.waitForTimeout(100);
+  const sbT2=await txt(p,'sbFoldBtn'), red=await p.evaluate(()=>{ const e=document.querySelector('#sbFoldBtn .hf-bad'); return e?getComputedStyle(e).color===getComputedStyle(document.querySelector('#alerts .alert.dupe')).color:false; });
+  check('with 51 of 2,223 passing and 2 already bet: "Board 51 of 2,223 pass · 2 already bet ▾", already bet in the same red as the alert', /^Board\s*51 of 2,223 pass · 2 already bet\s*▾$/.test(sbT2) && red, {sbT2, red});
+  await p.click('#sbFoldBtn'); await p.waitForTimeout(150);
+  const sbO=await seen(p,['count','alerts']);
+  check('a tap opens the box (the number, skipped, already bet)', sbO.count && sbO.alerts, sbO);
+  await p.click('#sbFoldBtn'); await p.waitForTimeout(100);
   await p.click('#bpFoldBtn'); await p.waitForTimeout(150);
   v=await seen(p,IN);
   check('a tap on the BettingPros line opens the panel (sport, Load, the status line); Sources stays closed', v.bpLoadbar && v.apiSport && v.loadApi && v.apiStatus && v.srcLine===false && /▴$/.test(await txt(p,'bpFoldBtn')) && await p.evaluate(()=>document.getElementById('bpFoldBtn').getAttribute('aria-expanded')==='true'), v);
@@ -55,7 +66,7 @@ const txt=(p,id)=>p.evaluate(id=>document.getElementById(id).textContent.replace
   check('phone: no sideways scroll', over<=0, over);
   check('no page errors (phone)', !errs.length, errs); await ctx.close();
   for(const W of [1000,1280,1960]){ ({ctx,p,errs}=await open(b,W));
-    v=await seen(p,['bpFoldBtn','srcFoldBtn','bpLoadbar','apiSport','loadApi','srcLine']);
-    check(W+' px: unchanged: no fold lines, the BettingPros panel and the source chips show as before', v.bpFoldBtn===false && v.srcFoldBtn===false && v.bpLoadbar && v.apiSport && v.loadApi && v.srcLine, v);
+    v=await seen(p,['bpFoldBtn','srcFoldBtn','sbFoldBtn','bpLoadbar','apiSport','loadApi','srcLine','count']);
+    check(W+' px: unchanged: no fold lines, the BettingPros panel, the source chips and the count box show as before', v.bpFoldBtn===false && v.srcFoldBtn===false && v.sbFoldBtn===false && v.bpLoadbar && v.apiSport && v.loadApi && v.srcLine && v.count, v);
     check('no page errors ('+W+')', !errs.length, errs); await ctx.close(); }
   await b.close(); console.log('\n'+pass+' passed, '+fail+' failed'); process.exit(fail?1:0); })();
