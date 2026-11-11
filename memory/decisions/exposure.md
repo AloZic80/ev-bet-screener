@@ -9,3 +9,10 @@ Status: active · Introduced: v2.50, v4.47, v4.48 · Last verified: 2026-11-10
 - Not built: a manual same-player override with a combined cap (waits for measured correlations).
 
 Tests: `tests/same-player-test.js`, `tests/hard-stop-test.js`.
+
+## Long-shot moneylines and moneyline gaps (v4.68, agreed with ChatGPT, owner "BUILD" 2026-11-11)
+- Why: his week of Nov 4–10 lost $43.63 on 34 long shots (4–30), almost all underdog moneylines; props were +11%.
+- A moneyline where La Contadora's chance is under 45%: needs a market price, the smallest bet, at most 3 a game day and 1 a game, in every mode (🍀 and 🔮 use the same 3). Logged bets and matched waiting orders count.
+- A moneyline where the model is more than 8 points above the market: research only (👀 Watch, no stake, kept out of the scorecard if logged). Spreads and totals are not affected.
+- Test: `tests/scope-v468-test.js`.
+
