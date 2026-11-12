@@ -16,6 +16,7 @@ const ROWS=[row(), row({name:'Jaylen Brown',team:'BOS',game:'LAL @ BOS',matchup:
   const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
   await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1500);
+  await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(300);   /* v4.76: both sample bets (model = market = 55.1%) are 🪙 Volado bets (50 to 60%), not in the opening tab, 💪 Machín: the M-OH card and its I bet this are read there */
   const R=await p.evaluate(()=>{ const r=lastRows.find(x=>x.kind==='moneyline'), cfg=cfgRead(), mx=maxPriceFor(r.fairProb,r.book,cfg.eMin), k=kalshiHow(r,+r.stake,r.offeredProb,mx);
     // v4.21: the card is short now: one line says what to type; the four steps, explained, open in Why this play?
     const el=[...document.querySelectorAll('#placeCards .pcard')].find(x=>/M-OH/.test(x.textContent) && /On Kalshi/i.test(x.textContent));

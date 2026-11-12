@@ -29,16 +29,21 @@ const LOG=[{id:'b1',name:'Bowling Green Falcons',kind:'moneyline',market:'BGSU t
   await p.waitForTimeout(600);
   const see=()=>p.evaluate(()=>({cards:[...document.querySelectorAll('#placeCards .pcard')].map(c=>['AKR','BGSU','BALL'].find(t=>c.textContent.includes(t+' @')||c.textContent.includes(t+' vs')||c.textContent.includes(t))),
     already:[...document.querySelectorAll('#tbody tr.dupe')].map(t=>t.textContent.replace(/\s+/g,' ').slice(0,400))}));
-  const A=await see();
+  /* v4.76: approved bets are split into tabs by La Contadora's chance. AKR, BGSU and BALL (model = market = 55%) are 🪙 Volado bets (50 to 60%), and an
+     order waiting at a book stays in the opening tab, 💪 Machín (modeFamOf). So each look reads every tab and puts them together: "out of Place these"
+     means in no tab, "in Already bet" means in some tab (before, all of them were in the one default tab). Ends back on the opening tab. */
+  const seeTabs=async()=>{ const V={cards:[],already:[],tabs:{}}; for(const m of ['boring','safe','volado','lucky','clair']){ await p.evaluate(m=>setMode(m),m); await p.waitForTimeout(300); const v=await see(); V.cards.push(...v.cards); V.already.push(...v.already); V.tabs[m]={cards:v.cards, already:v.already.length}; }
+    await p.evaluate(()=>setMode('safe')); await p.waitForTimeout(300); return V; };
+  const A=await seeTabs();
   check('a bet logged from the Kalshi fill (worded "Bowling Green Falcons") matches the BGSU row by Kalshi\'s market code → Already bet', !A.cards.includes('BGSU') && A.already.some(t=>/BGSU/.test(t) && /ALREADY BET/.test(t)), A);
   // an order waiting on Kalshi for AKR (YES), and a NO order on BALL (the other side)
   ORDERS={orders:[{id:'o1',book:'kalshi',ref:'KX-AKR',side:'yes',price:0.52,qty:6},{id:'o2',book:'kalshi',ref:'KX-BALL',side:'no',price:0.47,qty:4}]};
   await p.evaluate(()=>syncOrders(true)); await p.waitForTimeout(800);
-  const B=await see();
+  const B=await seeTabs();   /* v4.76: AKR's ORDER WAITING row is in 💪 Machín, BALL's card in 🪙 Volado: every tab, put together */
   check('an order still waiting on Kalshi moves AKR to Already bet: "ORDER WAITING on Kalshi: 6 shares at 52¢"', !B.cards.includes('AKR') && B.already.some(t=>/AKR/.test(t) && /ORDER WAITING/.test(t) && /6 shares at 52¢/.test(t)), B);
   check('a NO order on BALL does not hide the YES bet: BALL stays in Place these', B.cards.includes('BALL'), B.cards);
   ORDERS={orders:[]}; await p.evaluate(()=>syncOrders(true)); await p.waitForTimeout(800);
-  const C=await see();
+  const C=await seeTabs();   /* v4.76: every tab, put together (AKR and BALL are back under 🪙 Volado) */
   check('when the order is gone (cancelled), AKR is back in Place these', C.cards.includes('AKR') && C.cards.includes('BALL') && !C.cards.includes('BGSU'), C.cards);
   check('no page errors', !errs.length, errs);
   console.log(`\n${pass} passed, ${fail} failed`); await b.close(); process.exit(fail?1:0);

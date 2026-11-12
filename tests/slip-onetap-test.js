@@ -17,6 +17,7 @@ async function run(ctxOpt, rows){
     if(/\/live\?bets=/.test(u)){ asked++; const ds=JSON.parse(decodeURIComponent(u.split('bets=')[1])); const R={}; ds.forEach(d=>{ if(/^q:/.test(d.id)) R[d.id]={ok:true,src:'novig',price:0.519,outcome:'o-123',ref:'m-1',at:new Date().toISOString()}; });   /* only the tap's own check (q:…), not the background scans */ return r.fulfill({contentType:'application/json',body:JSON.stringify({results:R})}); }
     if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1300);
+  await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(300);   /* v4.76: the approved bets are split into the tabs by La Contadora's chance: these (53.6%: market 52.6% + 0.35 × (55.46 − 52.6)) are under 🪙 Volado (50 to 60%), not the default 💪 Machín; the iPhone and the Mac read their cards there */
   return {b,ctx,p,errs,asked:()=>asked};
 }
 const chip=(p,name)=>p.evaluate(n=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>x.textContent.includes(n)); const e=c&&c.querySelector('.sc-price.book'); return e?{tag:e.tagName, href:e.getAttribute('href'), target:e.getAttribute('target')}:null; }, name);

@@ -20,6 +20,7 @@ const ROWS=[prop('Five Star','MIN','16.5 Points',5,0.52,0.54,0.535,'k1'), prop('
     const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
     await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/api\.0xbeta\.dev/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
     await p.goto('http://app.test/'); await p.waitForTimeout(1200);
+    await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(300);   /* v4.76: the three sample props are approved at La Contadora min(model, market + 0.35 × (model − market)): Five Star 53.7% (min(.54, .535 + .35 × .005)), Four Star 53.2%, Three Star 51.4%, all in the On the Line band, so their cards are under 🪙 Volado (50–60%), not the opening tab */
     const st=await p.evaluate(()=>({sort:document.getElementById('sortBy').value, cards:[...document.querySelectorAll('#placeCards .sc-card')].map(c=>({name:(c.querySelector('.sc-who')||c).innerText.split('\n').find(t=>/Star/.test(t))||'', top:!!c.querySelector('.sc-mathtop'), word:(c.querySelector('.sc-word')||{}).textContent||''})),
       edge:lastRows.map(r=>({n:r.name, k:mathKey(r)})).sort((a,b)=>b.k-a.k).map(x=>x.n), head:(document.querySelector('#placeCards .pc-head')||{}).innerText||'', opts:[...document.querySelectorAll('#sortBy option')].map(o=>o.value)}));
     if(W===1280){

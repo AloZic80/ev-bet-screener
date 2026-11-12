@@ -11,3 +11,5 @@
 | A test passed on a file being edited mid-run | v4.50 | Run the suite on a snapshot or stop editing |
 | A random generator that repeated after 10,000 draws | v4.52 (caught in review) | mulberry32 in `tierCmp`; `watchStats` still uses the old one (open) |
 | A count on screen that did not match the list ("Novig 53") | v4.50 | Count after every filter |
+| A count on screen that did not match the list ("72 pass", tabs 6 + 1 + 27) | v4.76 | "N in the tabs ▸" lists where every approved bet is and adds up; `tests/pass-where-test.js` |
+| A final game graded from a box score read mid-game (Live Games settle) | v4.76 (caught in a test: Over 27.5 lost at 20, final 28) | Final games read `fetchBoxscore(…, true)` and settle only when `boxDone`; `tests/live-player-test.js` |

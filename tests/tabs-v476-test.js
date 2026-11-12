@@ -36,4 +36,26 @@ const WANT={boring:['Alpha Boring','Bravo Heavy'], safe:['Charlie Strong','Delta
     if(W===1280) check('the table view has the same band headers in Machín (Strong, Lean)', JSON.stringify(tbl)===JSON.stringify(['Strong 70–<75% · 1','Lean 60–<65% · 1']), tbl);
     const over=await p.evaluate(()=>document.documentElement.scrollWidth-innerWidth); check(W+' px: no sideways scroll', over<=0, over);
     check('no page errors ('+W+')', !errs.length, errs); await ctx.close(); }
+  // YES / NO (Alonzo, 11/12: "what the hell does, JUST MISSED floor by blah blah. Like, Do i Still Bet or not?"). In 🍀 Suertudo: Golf Coin is
+  // approved (47% at 43%: +9.3%); India Near just missed: model 50%, market 45% → La Contadora 45% + 0.35 × 5 = 46.75%, at 46.38% (+116) her EV is
+  // 46.75 / 46.38 − 1 = +0.80%, under the 1.5% floor (still 0% or better). Labels only: the stakes are what they were.
+  { const NEAR=Object.assign(row('i','India Near',0.50), {mktProb:0.45, offeredProb:0.4638, offeredRaw:am(0.4638)});
+    const ctx=await b.newContext({timezoneId:'America/Chicago',viewport:{width:1280,height:1000}}); await ctx.clock.install({time:new Date(NOW)});
+    await ctx.addInitScript(([R,d])=>{ try{ if(sessionStorage.getItem('s')) return; sessionStorage.setItem('s','1'); localStorage.clear(); localStorage.setItem('mbev.cfg',JSON.stringify({books:'Novig',bank:'500',cfgVer:3.03})); localStorage.setItem('mbev.cards','1'); localStorage.setItem('mbev.board',JSON.stringify({v:1,savedAt:new Date().toISOString(),slate:d,rows:R})); }catch(e){} },[[row('g','Golf Coin',0.47), NEAR],DAY]);
+    const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
+    await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
+    await p.goto('http://app.test/'); await p.waitForTimeout(1300); await p.evaluate(()=>setMode('lucky')); await p.waitForTimeout(400);
+    const v=await p.evaluate(()=>{ const t=x=>x?x.textContent.replace(/\s+/g,' ').trim():null, near=lastRows.find(r=>r.name==='India Near'), golf=lastRows.find(r=>r.name==='Golf Coin');
+      const card=[...document.querySelectorAll('#placeCards .sc-card')].find(c=>/India Near/.test(c.textContent));
+      return {heads:[...document.querySelectorAll('#placeCards .pc-head')].map(t), band:t(card&&card.querySelector('.sc-xtop')), dec:t(card&&card.querySelector('.sc-dec')),
+        near:{tier:near&&near.tier, act:near&&+near.actNet.toFixed(4), stake:near&&near.xStake, pass:near&&!!near.pass}, golf:{pass:golf&&!!golf.pass, stake:golf&&golf.stake}}; });
+    check('the near-miss: La Contadora +0.80%, under the 1.5% floor, offered as 🍀 Just missed at the smallest bet; Golf Coin approved', v.near.tier==='lucky' && Math.abs(v.near.act-0.008)<0.0006 && v.near.stake>0 && !v.near.pass && v.golf.pass && v.golf.stake>0, {near:v.near, golf:v.golf});
+    check('Place these says YES: "✅ La Contadora: YES on every card here"', v.heads.length===2 && /Place these · 1/.test(v.heads[0]) && /✅ La Contadora: YES on every card here: the math says bet them\. Best first/.test(v.heads[0]), v.heads[0]);
+    check('the 🍀 header says NO first: "La Contadora: NO. The model likes these … not best bets. Optional …"', /^🍀 Just missed · 1 ?La Contadora: NO\. The model likes these, but with the market her EV is under your 1\.5% floor \(still 0% or better\): not best bets\. Optional: if you want a few, the smallest bet each/.test(v.heads[1]||''), v.heads[1]);
+    check('the card says it outright: "🍀 La Contadora: NO · just under your floor (+0.8% vs your 1.5%) · optional, smallest bet"', v.band==='🍀 La Contadora: NO · just under your floor (+0.8% vs your 1.5%) · optional, smallest bet', v.band);
+    check('its decision says the same under "🍀 JUST MISSED $"', /🍀 JUST MISSED \$\d+\.\d\d ?La Contadora: NO · just under your floor \(\+0\.8% vs your 1\.5%\) · optional, smallest bet/.test(v.dec||''), v.dec);
+    await p.evaluate(()=>{ localStorage.setItem('mbev.cards','0'); }); await p.uncheck('#cardsOn').catch(()=>{}); await p.evaluate(()=>{ refresh(); }); await p.waitForTimeout(300);
+    const g=await p.evaluate(()=>[...document.querySelectorAll('#tbody tr.group-row:not(.band-row)')].map(x=>x.textContent.replace(/\s+/g,' ').trim()));
+    check('the table view: "Place these · 1 · ✅ La Contadora: YES" and "🍀 Just missed · La Contadora: NO, just under your floor · optional …"', g.includes('Place these · 1 · ✅ La Contadora: YES') && g.some(x=>/^🍀 Just missed · La Contadora: NO, just under your floor · optional: the smallest bet each, up to \d+ a day · 1$/.test(x)), g);
+    check('no page errors (YES / NO)', !errs.length, errs); await ctx.close(); }
   await b.close(); console.log('\n'+pass+' passed, '+fail+' failed'); process.exit(fail?1:0); })();

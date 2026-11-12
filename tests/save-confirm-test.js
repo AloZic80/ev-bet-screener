@@ -15,6 +15,7 @@ const ROW={name:'Ryan O\'Reilly',game:'NSH @ STL',matchup:'NSH @ STL',side:'O',s
   const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
   await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1500);
+  await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(300);   /* v4.76: the sample bet is at La Contadora 56% (model = market = 56%), so it is listed under 🪙 Volado (50–60%), not the opening tab */
   await p.evaluate(()=>document.querySelector('.bet-btn').click()); await p.waitForTimeout(400);
   const save=()=>p.evaluate(()=>document.querySelector('.eb-save').click());
   const msg=()=>p.evaluate(()=>{ const m=document.querySelector('.eb-msg'); const r=m.getBoundingClientRect(); return {txt:m.textContent, warn:m.classList.contains('eb-warn'), btn:document.querySelector('.eb-save').textContent, seen:r.height>20 && r.width>100, n:logged.length}; });

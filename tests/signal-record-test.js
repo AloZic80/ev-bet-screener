@@ -35,6 +35,8 @@ const WATCH=[WO('w1',0.004,'win',0.5),WO('w2',0.010,'loss',0.5),WO('w3',-0.02,'w
     S[K('back')]=[[m-40,0.40,0.50,0.455,'c'],[m-20,0.444,0.50,0.50,'c']];
     S[K('grid')]=[[m-240,0.444,0.50,0.455,'c'],[m-180,0.444,0.50,0.50,'c']];
     refresh(); }); await p.waitForTimeout(400);
+  /* v4.76: the three plays (model = market = 50%, so La Contadora's chance is 50.0%) are under 🪙 Volado (50 to 60%), not the 💪 Machín tab the page opens in: their cards, the Signal sort and the board's ⚡ pills below are read there */
+  await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(300);
   const sg=await p.evaluate(()=>Object.fromEntries(lastRows.map(r=>{ const c=document.querySelector('#placeCards .sc-card[data-idx="'+r.idx+'"]'), pill=c&&c.querySelector('.sc-pill.sig'); return [r.apiKey,{sc:sentScore(r), pill:pill?pill.textContent:'', good:!!(pill&&pill.classList.contains('good')), tip:pill?pill.title:''}]; })));
   const b0=base[0].sc.total;
   check('Frost: the consensus market moved +4.5 pts his way (45.5% → 50.0%), seen 20 min ago, and Novig has not followed: "⚡ market +4.5 pts · 20m" (not "sharp"), bonus 5 × 1 × (1 − 5/105) × 0.4 = 1.9 → +2 (ChatGPT: a consensus move counts at most 2)', /^⚡ market \+4\.5 pts · 20m$/.test(sg.frost.pill) && sg.frost.good && sg.frost.sc.s===2 && sg.frost.sc.total===Math.min(100,b0+2) && Math.abs(sg.frost.sc.sig.rise-0.045)<1e-9 && sg.frost.sc.sig.mins===20 && sg.frost.sc.sig.behind && !sg.frost.sc.sig.sharp && !sg.frost.sc.sig.sampled && /from 45\.5% to 50\.0%, seen 20m ago\. Novig has not followed yet\. Seen between your loads, not live\./.test(sg.frost.tip), sg.frost);

@@ -28,8 +28,13 @@ const ORD={orders:[{id:'o1',book:'kalshi',ref:'KXNCAAFGAME-26NOV07KSUOKST-OKST',
     if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.fulfill({status:404,body:'{}'}); });
   await p.goto('http://app.test/'); await p.waitForTimeout(4000);
   const R=await p.evaluate(()=>({rows:lastRows.length, cards:document.querySelectorAll('#placeCards .pcard').length, today:(document.getElementById('todayBar')||{}).innerText||'', budget:(document.getElementById('apiBudget')||{}).textContent, log:document.querySelectorAll('#logBody tr').length}));
+  /* v4.76: approved bets are split into tabs by La Contadora's chance. Every bet on this board (the two Kalshi games at 52%, the two props at 57%) is
+     under 🪙 Volado (50 to 60%), so the tab the page opens in (💪 Machín) has no Place these card: the cards are counted in Volado, then back to
+     Machín. Everything else is read as the page came up, as before. */
+  await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(400); R.cardsVolado=await p.evaluate(()=>document.querySelectorAll('#placeCards .pcard').length);
+  await p.evaluate(()=>setMode('safe')); await p.waitForTimeout(400);
   check('no startup error (v4.15: Cannot access nrm before initialization)', !errs.length, errs);
-  check('the saved board comes back (rows and Place these cards)', R.rows>=4 && R.cards>=1, {rows:R.rows, cards:R.cards});
+  check('the saved board comes back (rows and Place these cards)', R.rows>=4 && R.cardsVolado>=1, {rows:R.rows, cards:R.cardsVolado, cardsMachin:R.cards});   /* v4.76: the cards under 🪙 Volado */
   check('the Today card is drawn', /TODAY/.test(R.today) && /bets/.test(R.today), R.today.slice(0,80));
   check('the BettingPros budget loads (startup reached the end)', /20 \/ 50/.test(R.budget||''), R.budget);
   check('the Bet log is drawn', R.log>0, R.log);

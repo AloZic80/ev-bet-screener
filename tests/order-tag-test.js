@@ -28,9 +28,18 @@ const ORD={orders:[
     await p.goto('http://app.test/'); await p.waitForTimeout(800);
     await p.evaluate(()=>{ const i=document.getElementById('books'); i.value='Kalshi'; i.dispatchEvent(new Event('input',{bubbles:true})); }); await p.waitForTimeout(600);
     await p.evaluate(()=>syncOrders(true)); await p.waitForTimeout(900);
-    const R=await p.evaluate(()=>{ const card=re=>{ const c=[...document.querySelectorAll('#placeCards .pcard')].find(x=>re.test(x.textContent)); return c?((c.querySelector('.ord-tag')||{}).textContent||'(no tag)'):null; };
+    const look=()=>p.evaluate(()=>{ const card=re=>{ const c=[...document.querySelectorAll('#placeCards .pcard')].find(x=>re.test(x.textContent)); return c?((c.querySelector('.ord-tag')||{}).textContent||'(no tag)'):null; };   /* v4.76: read in each tab (below) */
       const row=re=>{ const t=[...document.querySelectorAll('#tbody tr')].find(x=>re.test(x.textContent) && x.querySelector('.ord-tag')); return t?t.querySelector('.ord-tag').textContent:null; };
       const vw=document.documentElement.clientWidth; return {ok:card(/Oklahoma State/), bg:card(/Bowling Green/), bgRow:row(/Bowling Green/), nc:card(/North Carolina/), spill:[...document.querySelectorAll('.ord-tag')].some(e=>e.getBoundingClientRect().right>vw+1), sw:document.documentElement.scrollWidth, vw}; });
+    /* v4.76: approved bets are split into tabs by La Contadora's chance. Oklahoma State and North Carolina (52%, still offered: the order is on another
+       game, or on the other team) are Place these cards under 🪙 Volado (50 to 60%), not the 💪 Machín tab the page opens in; Bowling Green (an order
+       waiting on this game) stays in Machín, under Already bet. So each tag is read in its tab, and "out of Place these" and "nothing runs off the screen"
+       are checked in every tab (before, all of them were in the default tab). */
+    const V={safe:await look()};   // the default tab, read as before
+    for(const m of ['boring','volado','lucky','clair']){ await p.evaluate(m=>setMode(m),m); await p.waitForTimeout(400); V[m]=await look(); }
+    await p.evaluate(()=>setMode('safe')); await p.waitForTimeout(400);
+    const all=Object.values(V), worst=all.reduce((a,v)=>(v.sw-v.vw)>(a.sw-a.vw)?v:a);
+    const R={ok:V.volado.ok, bg:(all.find(v=>v.bg!==null)||V.safe).bg, bgRow:V.safe.bgRow, nc:V.volado.nc, spill:all.some(v=>v.spill), sw:worst.sw, vw:worst.vw};   /* v4.76: bg = a Bowling Green card in any tab */
     check(W+' px: Oklahoma State (11/14): "You have a Kalshi order on this team … (Sat, 11/7), 2 at 49¢, not filled. That is another game: this one is not placed"', /You have a Kalshi order on this team: “KXNCAAFGAME-26NOV07OKSTKSU-OKST” \(Sat, 11\/7\), 2 at 49¢, not filled\. That is another game: this one is not placed/.test(R.ok||''), R.ok);
     check(W+' px: Bowling Green, the same game, Kalshi code BG (not ESPN\'s BGSU): ORDER WAITING, out of Place these, tagged on its row', R.bg===null && /ORDER WAITING on Kalshi: 3 at 37¢, not filled\. Already placed: do not bet it again/.test(R.bgRow||''), {card:R.bg, row:R.bgRow});
     check(W+' px: North Carolina: your order in this game is on the other team (Louisville)', /Your Kalshi order in this game is on the other team: “Louisville at North Carolina”, 1 at 55¢, not filled/.test(R.nc||''), R.nc);

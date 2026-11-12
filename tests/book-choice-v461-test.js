@@ -126,6 +126,7 @@ const near=(a,b)=>Math.abs(a-b)<1e-6;
     check('4 minutes later nothing can be read: "no price could be read · refresh prices", and not "Send the Sentinels" (the button just pressed)', v.book==='Novig' && /no price could be read · refresh prices/.test(v.tag) && !/Send the Sentinels/.test(v.tag), v.tag);
     check('no page errors (exchange)', !S.errs.length, S.errs); await S.ctx.close(); }
   { let live={kalshi:0.498}; S=await open(b, [prop('l','Live Row','Points',0.52,1,'Kalshi',60e3)], 'Novig, Kalshi, Polymarket, Bovada', (k,i,bk)=>live[bk]||null);
+    await S.p.evaluate(()=>setMode('volado')); await S.p.waitForTimeout(150);   /* v4.76: La Contadora 56.7% is a 🪙 Volado bet now, not in the default 💪 Machín (60 to 75%): its tab is opened before the first press, so the card is on the page when the clock redraws it (as it was under Safe), and no switch of tab redraws it for the clock */
     await press(S); v=await look(S,'l');
     check('press: Kalshi reads 49.8%: "live · was −108"', v.book==='Kalshi' && near(v.price,0.498) && v.shop.same && /live · was -108/.test(v.tag), v.tag);
     await S.p.clock.fastForward(5*60e3); await S.p.waitForTimeout(300); v=await look(S,'l');
@@ -155,6 +156,7 @@ const near=(a,b)=>Math.abs(a-b)<1e-6;
     check('no page errors (freshness)', !S.errs.length, S.errs); await S.ctx.close(); }
   // ================= the read time belongs to the price shown =================
   { let kal=0.47; S=await open(b, [prop('w','Win Back','Points',0.52,1,'Bovada',90e3)], 'Kalshi, Bovada', (k,i,bk)=>bk==='kalshi'?kal:null);
+    await S.p.evaluate(()=>setMode('volado')); await S.p.waitForTimeout(150);   /* v4.76: La Contadora 56.7% is a 🪙 Volado bet now: its tab is opened, so its I bet button is on the page below (in the default 💪 Machín there is none) */
     await press(S); v=await look(S,'w');
     check('press 1: Kalshi 47% takes the bet from a fresh Bovada 52%; the card’s price was read just now', v.book==='Kalshi' && near(v.price,0.47) && v.seenAge<5000, {book:v.book, seenAge:v.seenAge});
     await S.p.clock.fastForward(60e3); kal=0.60; await press(S); v=await look(S,'w');
@@ -183,6 +185,7 @@ const near=(a,b)=>Math.abs(a-b)<1e-6;
   // ================= a pasted board: the age pill’s advice =================
   { const pr=Object.assign(prop('fd','Fan Duel Row','Points',0.52,1,'FanDuel',45*60e3),{src:'paste'});
     S=await open(b, [pr], 'FanDuel, Novig', null, {cards:'1'});
+    await S.p.evaluate(()=>setMode('volado')); await S.p.waitForTimeout(150);   /* v4.76: La Contadora 56.7% is a 🪙 Volado bet now: its tab is opened, so its card (and age pill) is on the pasted board */
     const pill=await S.p.evaluate(()=>{ boardSrc='paste'; refresh(); const c=document.querySelector('.sc-card .sc-pill.age'); return c?{t:c.title, x:c.textContent}:null; });
     check('a pasted FanDuel bet, 45 minutes old: the age pill says "Paste the board again for a fresh one (the Sentinels read the exchanges, not FanDuel)" (it said "Refresh the board")', pill && /45m/.test(pill.x) && /Paste the board again for a fresh one \(the Sentinels read the exchanges, not FanDuel\)/.test(pill.t) && !/Refresh the board/.test(pill.t), pill);
     check('no page errors (pasted)', !S.errs.length, S.errs); await S.ctx.close(); }

@@ -6,6 +6,22 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.76 also (owner, 11/12: "i see 72, but the rest? ... 6 + 1 + 27 ... doesnt equal 72"): `passWhere` (in `renderCore`, where `mN` is counted) puts each
+  approved row under the first reason it is not in a tab: other board (paste/API), duplicate, already bet / order waiting, started or closed, can't
+  confirm (no ESPN start), $0 stake, filters (sport, search, Settings, only my games, only sweet spot), book chips; else in the tabs by family.
+  `passWhereHtml` shows it as "N in the tabs ▸" before "skipped ▸", with the extras the tab buttons also count (🍀 just missed, 🔮 Hail Marys). Counting only.
+- v4.76 also (owner: AJ Dybantsa "Game not found on ESPN · Not started" while ESPN had WSH @ IND in the 4th): Novig names a prop only by player
+  ("<player> <line> <stat>"), so `autoAddFromDesc` saves it with no game. `renderLive` now adds `liveGameByPlayer`: in-progress or final games of
+  that sport within 90 min of the book's start, inside `evOkFor`, whose box score lists the player (`boxHasPlayer`); exactly one; remembered in
+  `liveByPlayer` for the session, the saved bet unchanged. A copy read before tip-off (no players) is dropped and read again. Unknown games are grouped
+  by sport and start (they were one "Game not found" list); the header says "<book> did not name the game · found by the player once it starts" and the
+  status "Game not known yet" (was "Not started"). Found with it: the hub settled a final game's props from its last mid-game box score (a test bet
+  Over 27.5 at 20 points was marked lost; the final was 28). Now a final game reads `fetchBoxscore(…, true)` and settles a prop only when `boxDone`.
+- v4.76 (owner, 11/12: "Boring, Volado, Machín, Suertudo, Brujo", "only 5 tabs", the cover-band list): five tabs by La Contadora's chance
+  (`passFam`: ≥75 boring, 60–75 safe/Machín, 50–60 volado, 45–50 lucky/Suertudo, <45 hail/Brujo); band headers inside Place these (`rowBand`,
+  `bandHead`, `.pc-band`, table `tr.band-row`). YES / NO said outright (owner: "JUST MISSED floor by blah blah ... Do i Still Bet or not?"):
+  `extraLine` lucky `short` = "La Contadora: NO · just under your floor (+X% vs your Y%) · optional, smallest bet" (card band, decision, Why);
+  the 🍀 header and `GROUP_NAMES[6]` start with "La Contadora: NO"; Place these says "✅ La Contadora: YES". Labels and listing only.
 - v4.75 (agreed with ChatGPT, owner "we keep building" 11/12): `qFailState` reads a failed Sentinels quote: no_offer (Kalshi/Polymarket "no offer to buy right now"), gone_line_moved ("lists X at 2.5+ — not your 2+"), else unreadable (Novig "no market at your line", not found, not listed, busy, not mapped). Kept per row in `_qFail` during the press; after `decide`, only the answer of the book the card showed counts: moved to another book (`shopChk.q.decision:'moved'`) or `r.qGone` → auditCore out flag `qGoneText` ("NO OFFER at <book> · …" / "GONE at <book> · your 2+ moved to 2.5+, 3.5+"), stake 0. Cleared at each press, restored on a failed scan; `shopSnap` keeps `chk.q` (state, code, raw, decision). Swap cards and placed bets untouched. Test: `tests/sentinel-gone-test.js` (19).
 - v4.74 also (owner, same day): "price 3m old: re-check" → "⏱ 3m: re-check" (◎ fresh check) and "Price 3m old · best book…" → "⏱ 3m · best book…"; a long shot freed from Skipping Jail follows `modeFamOf` too (tested); logos: 'polymarket us' (owner's SVG, black mark, put on white so it shows on dark) before 'polymarket' (owner's SVG, white on blue) in `LOGOS` (first match wins).
 - v4.74 (owner, USC +251 and Kraken +251 under Safe: "Have them only where they belong"): `lsEdge(r)` (passes, actProb < LSML.below 45%) → `modeFamOf` gives 'hail': listed under 🔮 Clairvoyant, group header and Sentinels head "Place these · 🔮 edge · long shots"; a held one too (no tier). Mode counts follow `modeFamOf`. Listing only: math, stake and limits unchanged. Test: `tests/longshot-mode-test.js` (10).

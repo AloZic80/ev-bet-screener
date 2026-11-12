@@ -19,6 +19,7 @@ const ROWS=[row('AKR','KENT','Kalshi','k1'), row('BGSU','TOL','Kalshi','k2'), ro
     await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
     await p.goto('http://app.test/'); await p.waitForTimeout(800);
     await p.evaluate(()=>{ const i=document.getElementById('books'); i.value='Kalshi, Novig, Bovada'; i.dispatchEvent(new Event('input',{bubbles:true})); }); await p.waitForTimeout(1200);
+    await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(300);   /* v4.76: the four bets (model = market = 55%) are 🪙 Volado bets (50 to 60%), not in the opening tab, 💪 Machín; the book chips count the open tab's bets */
     const see=()=>p.evaluate(()=>({chips:[...document.querySelectorAll('#bookChips .bchip')].map(c=>c.textContent.replace(/\s+/g,' ').trim()+(c.classList.contains('on')?' *':'')),
       cards:[...document.querySelectorAll('#placeCards .pcard')].map(c=>{ const nm=((c.querySelector('.pc-nm')||{}).textContent||'').trim(); return ['AKR','BGSU','BALL','EMU'].find(t=>nm.startsWith(t))||'?'; }),
       saved:localStorage.getItem('mbev.boardBooks'), vw:document.documentElement.clientWidth, sw:document.documentElement.scrollWidth, right:Math.max(...[...document.querySelectorAll('#bookChips .bchip')].map(e=>e.getBoundingClientRect().right))}));
@@ -31,7 +32,7 @@ const ROWS=[row('AKR','KENT','Kalshi','k1'), row('BGSU','TOL','Kalshi','k2'), ro
     check(W+' px: tap Kalshi too: Kalshi and Novig bets (3), both chips on, Bovada off', C.cards.length===3 && !C.cards.includes('EMU') && C.chips.includes('Kalshi 2 *') && C.chips.includes('Novig 1 *') && C.chips.includes('Bovada 1'), C);
     check(W+' px: the counts stay for every book, so you can switch', /Bovada 1/.test(C.chips.join('|')), C.chips);
     check(W+' px: the chips wrap, nothing runs off the screen', C.sw<=C.vw+1 && C.right<=C.vw+1, {vw:C.vw, sw:C.sw, right:C.right});
-    await p.reload(); await p.waitForTimeout(1500); const D=await see();
+    await p.reload(); await p.waitForTimeout(1500); await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(300); const D=await see();   /* v4.76: their tab, 🪙 Volado, again (the book chips are what this checks) */
     check(W+' px: after a reload Kalshi and Novig are still the ones shown', D.cards.length===3 && !D.cards.includes('EMU') && D.saved==='["Novig","Kalshi"]', D);
     await tap('Novig'); const E=await see();
     check(W+' px: tap Novig again to turn it off: Kalshi only', JSON.stringify(E.cards.sort())==='["AKR","BGSU"]', E.cards);
@@ -46,6 +47,7 @@ const ROWS=[row('AKR','KENT','Kalshi','k1'), row('BGSU','TOL','Kalshi','k2'), ro
     const p=await ctx.newPage(); await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
     await p.goto('http://app.test/'); await p.waitForTimeout(800);
     await p.evaluate(()=>{ const i=document.getElementById('books'); i.value='Kalshi, Novig, Bovada'; i.dispatchEvent(new Event('input',{bubbles:true})); }); await p.waitForTimeout(1200);
+    await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(300);   /* v4.76: all four bets (55%) are under 🪙 Volado, so the one Novig card is counted there */
     const n=await p.evaluate(()=>document.querySelectorAll('#placeCards .pcard').length);
     check('a book chosen in v4.13 (one menu) carries over as the one chip on', n===1, n);
     await ctx.close(); }

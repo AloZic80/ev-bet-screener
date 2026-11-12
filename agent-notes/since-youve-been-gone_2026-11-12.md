@@ -1,6 +1,6 @@
 # Since you've been gone — for ChatGPT (from Claude Code, for Alonzo to paste)
 
-Ref: CC-2026-11-12-02 · Started Thu 2026-11-12, America/Chicago. Updated after each build until Alonzo pastes it. No keys or passwords in it.
+Ref: CC-2026-11-12-02 · Started Wed 2026-11-11 (evening), America/Chicago, for Alonzo to paste on Thu 11/12. Updated after each build until he pastes it. No keys or passwords in it.
 
 ## Why this note
 Alonzo used the whole ChatGPT allowance for the day. We kept building on what you had already agreed, plus his own requests. This is the record to check.
@@ -31,18 +31,32 @@ Alonzo used the whole ChatGPT allowance for the day. We kept building on what yo
 - **Not covered:** swap cards (rows at a book Alonzo does not bet, shown at one of his) still follow the v4.57 rule. Placed bets are never asked about.
 - **Tests:** `tests/sentinel-gone-test.js`, 19 checks covering your 12 cases plus the classifier.
 
-### v4.76 (Alonzo's own request; listing and labels only) — in testing
-- Five tabs, highest chance first. Each cover band belongs to one tab:
+### v4.76 (Alonzo's own requests; listing, labels and Live Games; no math, stake or limit changed)
+- Five tabs, highest chance first, by La Contadora's chance. Each cover band belongs to one tab:
   - 😴 **Boring** = High Cover + Heavy Favorite (75%+);
   - 💪 **Machín** = Strong + Solid + Lean (60–75%; the app opens here; it was 🛡️ Safe);
   - 🪙 **Volado** = Slight Lean + On the Line (50–60%);
   - 🍀 **Suertudo** = Coin Flip (45–50%) plus the near-misses (it was Feeling Lucky);
   - 🔮 **Brujo** = Unlikely (under 45%) plus the Hail Marys (it was Clairvoyant).
 - Inside each tab, the bets are grouped under their band, highest first.
-- Alonzo asked what "just missed your floor" means ("Do I still bet or not?"). The cards will now say it outright:
-  - approved bets: "✅ La Contadora: YES";
-  - near-misses: "La Contadora: NO · just under your floor (+0.8% vs your 1.5%) · optional, smallest bet".
+- Alonzo asked what "just missed your floor" means ("Do I still bet or not?"). The cards now say it outright:
+  - approved bets: "✅ La Contadora: YES on every card here" (Place these);
+  - near-misses: "🍀 La Contadora: NO · just under your floor (+0.8% vs your 1.5%) · optional, smallest bet".
 - Note: his default odds range stops at −300 (75%), so High Cover bets reach Boring only when the book prices them at 75% or less.
+- **Live Games.** A Novig player prop (Novig names no teams) said "Game not found on ESPN · Not started" while the game was in the 4th. Live Games now finds the game by the player's box score:
+  - the game is in progress or final, within 90 minutes of Novig's start, inside the 4-hour rule;
+  - exactly one match, or nothing;
+  - kept for the session only; the saved bet is not changed.
+- **Found and fixed: a final game could be settled from a mid-game box score.** Test: Over 27.5 marked lost at 20 points; the final was 28. A final game now reads ESPN's final box score and settles only when it says final.
+- **"72 pass" vs the tabs.** Alonzo saw 72 in the header and 6 + 1 + 27 on the tabs. "N in the tabs ▸" now lists where every approved bet is, and the lines add up to the header:
+  - started, already bet, can't confirm the game, $0 stake, filters, book chips;
+  - plus what else the tab buttons count (near-misses and Hail Marys, which are not approved).
+  - His Settings have every book on, but "No DFS pick'em" is checked, so the pick'em apps' rows are skipped.
+
+### Next: v4.77 "⏱ Old prices" (Alonzo: "put the older bets in another category. or Tab in itself ... lets not mix them with our regular tabs")
+- A sixth tab holds any card whose price was read more than 12 hours ago.
+- A Sentinels press or a reload that reads a fresh price sends the card back to its tab.
+- Listing only.
 
 ### Worker v3.43 (Alonzo: "Arent sentinels suppose to report back? FIX") — PR open, waits for his go
 - **What he saw.** An Oklahoma State moneyline card at Kalshi 49¢, "⏱ 5d", while Kalshi showed 61¢.
@@ -55,3 +69,6 @@ Alonzo used the whole ChatGPT allowance for the day. We kept building on what yo
 2. Should swap cards get the same NO OFFER / GONE treatment when the book they show answers clearly?
 3. A price can stay on the board for days (the card shows its true age, e.g. ⏱ 5d) and still sit in Place these, because v4.61 agreed that staleness only labels. After the Oklahoma State case (49¢ shown, 61¢ real), should an exchange price older than some limit (an hour? a day?) leave Place these until a press or a reload reads it again?
 4. Part B (a Worker completeness flag so Novig "no market at your line" can become GONE) waits for Alonzo's go. Anything you would add to the field list before it is built?
+5. Alonzo answered question 3 for the listing: old prices get their own tab (v4.77, over 12 hours). Should they also stop counting toward the daily max until re-checked? A stale price can look like the best edge on the board and take money from fresh bets. That is a stake rule: nothing is built until you agree and he says build. And is 12 hours the right line (the ⏱ pill turns amber at 30 minutes)?
+6. The cover chip shows the model's cover %; the tabs and band headers use La Contadora's chance. So a near-miss can sit in Suertudo (Coin Flip by La Contadora) with an "On the Line" chip (model 50%). Should the chip follow La Contadora, show both, or stay?
+7. Live Games keeps the game found by the player for the session only. Should it be saved on the bet, so the Bet log and ALREADY BET can use it?

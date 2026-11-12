@@ -33,6 +33,7 @@ const ORD_SAME={id:'o3',book:'kalshi',ref:'KXNCAAFGAME-26NOV14TTUOKST-OKST',side
     const D=await p.evaluate(()=>liveDesc(rowAsBet(lastRows.find(r=>/Oklahoma/.test(r.name)))));
     if(W===1280) check('Kalshi is asked for the exact game: TTU @ OKST, team OKST, the 11/14 start (it was not asked at all: full names had no codes)', D && D.away==='TTU' && D.home==='OKST' && D.team==='OKST' && D.start==='2026-11-14T17:00:00.000Z', D);
     const card=()=>p.evaluate(()=>{ const c=[...document.querySelectorAll('#placeCards .pcard')].find(x=>/Oklahoma State/.test(x.textContent)); return c?c.textContent.replace(/\s+/g,' '):null; });
+    await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(400);   /* v4.76: approved bets are split into tabs by La Contadora's chance: both games here (52%) are Place these cards under 🪙 Volado (50 to 60%), not the 💪 Machín tab the page opens in, so the cards are read there */
     const c0=await card();
     check(W+' px: the Kalshi strip names the game: "in Texas Tech at Oklahoma State, Sat, 11/14, 11:00 AM CT"', c0 && /in Texas Tech at Oklahoma State, Sat, 11\/14, 11:00 AM CT/.test(c0), c0&&c0.slice(0,600));
     // his orders: Oklahoma St. vs Kansas St., North Carolina vs UConn (other games, today)
@@ -42,7 +43,12 @@ const ORD_SAME={id:'o3',book:'kalshi',ref:'KXNCAAFGAME-26NOV14TTUOKST-OKST',side
     check(W+' px: the same for North Carolina vs UConn', unc && /“North Carolina vs UConn” \(3\.01 at 45¢\) is another game/.test(unc), unc&&unc.slice(-400));
     // an order on THIS game → ORDER WAITING, out of Place these
     ORDERS={orders:ORD_OTHER.concat([ORD_SAME])}; await p.evaluate(()=>syncOrders(true)); await p.waitForTimeout(900);
-    const c2=await card(), al=await p.evaluate(()=>[...document.querySelectorAll('#tbody tr.dupe')].map(t=>t.textContent.replace(/\s+/g,' ')));
+    /* v4.76: an order waiting on THIS game is listed under Already bet in the default tab (💪 Machín), so Oklahoma State leaves Volado's Place these.
+       "Out of Place these" and the Already bet row are read in every tab and combined (before, both were in the one tab), then back to Volado. */
+    const dupes=()=>p.evaluate(()=>[...document.querySelectorAll('#tbody tr.dupe')].map(t=>t.textContent.replace(/\s+/g,' ')));
+    let c2=await card(); const al=await dupes();   // Volado, as it stands
+    for(const m of ['boring','safe','lucky','clair']){ await p.evaluate(m=>setMode(m),m); await p.waitForTimeout(400); c2=c2||await card(); al.push(...await dupes()); }
+    await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(400);
     check(W+' px: an order on THIS game (Texas Tech at Oklahoma St., 11/14) moves it to Already bet: ORDER WAITING 2 shares at 49¢', !c2 && al.some(t=>/Oklahoma State/.test(t) && /ORDER WAITING/.test(t) && /2 shares at 49¢/.test(t)), {c2:!!c2, al});
     if(W===1280){
       // open slip on North Carolina: Kalshi cannot find it → the card says which game to pick
@@ -56,7 +62,9 @@ const ORD_SAME={id:'o3',book:'kalshi',ref:'KXNCAAFGAME-26NOV14TTUOKST-OKST',side
       const bar=await p.evaluate(()=>{ const e=document.getElementById('slipGo'); return e&&!e.hidden?e.textContent:null; });
       check('390 px: on a phone the slip bar says the same', /did not find this exact game\. Pick Louisville at North Carolina/.test(bar||''), bar);
     }
-    const sp=await p.evaluate(()=>({vw:document.documentElement.clientWidth, sw:document.documentElement.scrollWidth}));
+    const spOf=()=>p.evaluate(()=>({vw:document.documentElement.clientWidth, sw:document.documentElement.scrollWidth}));
+    let sp=await spOf();   // Volado, as it stands (the North Carolina card, and the slip bar on a phone)
+    for(const m of ['boring','safe','lucky','clair']){ await p.evaluate(m=>setMode(m),m); await p.waitForTimeout(400); const s=await spOf(); if(s.sw-s.vw>sp.sw-sp.vw) sp=s; }   /* v4.76: and every other tab (the Already bet row is in 💪 Machín); the widest is checked */
     check(W+' px: nothing runs off the screen', sp.sw<=sp.vw+1, sp);
     check(W+' px: no page errors', !errs.length, errs);
     await ctx.close();
