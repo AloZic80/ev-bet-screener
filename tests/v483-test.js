@@ -13,7 +13,7 @@ const am=p=>p>=0.5?String(Math.round(-100*p/(1-p))):'+'+Math.round(100*(1-p)/p);
 const row=(id,name,team,market,book,price,c)=>({name,team,game:'CHA @ PHX',matchup:'CHA @ PHX',side:'O',sport:'NBA',market,kind:'prop',book,offeredRaw:am(price),offeredProb:price,fairProb:c,fairRaw:'',mktProb:c,stars:3,evModel:'market',
   gameInfo:GI,src:'api:NBA:props',apiKey:id,loadedAt:iso(NOW-60e3)});
 const ROWS=[row('g','Collin Gillespie','PHX','1.5 Threes','Novig',0.58,0.64), row('b','Devin Booker','PHX','2.5 Threes','Novig',0.58,0.64), row('m','Miles Bridges','CHA','1.5 Threes','Novig',0.58,0.64),
-  row('k','Kel Oubre','PHX','1.5 Threes','Kalshi',0.55,0.64)];
+  row('k','Kel Oubre','PHX','1.5 Threes','Kalshi',0.55,0.64), row('g2','Collin Gillespie','PHX','9.5 Points','Novig',0.60,0.64)];   // g2: the same player, a smaller edge (one per player: g wins)
 (async()=>{ const b=await chromium.launch();
   for(const W of [1280,390]){
     const ctx=await b.newContext({timezoneId:'America/Chicago',viewport:{width:W,height:1000}}); await ctx.clock.install({time:new Date(NOW)});
@@ -82,6 +82,11 @@ const ROWS=[row('g','Collin Gillespie','PHX','1.5 Threes','Novig',0.58,0.64), ro
       await p.evaluate(async()=>{ await shopExchanges(); }); await p.waitForTimeout(500);
       const k2=await p.evaluate(()=>{ const r=lastRows.find(x=>x.apiKey==='k'); return {stake:+r.stake||0, gone:r.qGone||null}; });
       check('6. the next 🦑 press reads a price at Kalshi: he is back with a stake', k2.stake>0 && !k2.gone, k2);
+      // Los Chismosos: a held card must not win the one-per-player pick (its runner-up would be $0 too)
+      const e0=await p.evaluate(()=>{ const g=k=>lastRows.find(r=>r.apiKey===k); return {g:+g('g').stake||0, g2:+g('g2').stake||0}; });
+      await ev(()=>{ lastRows.find(x=>x.apiKey==='g').awol={book:'Novig', note:'Novig: no market at your line', at:Date.now()}; refresh(); });
+      const e1=await p.evaluate(()=>{ const g=k=>lastRows.find(r=>r.apiKey===k); return {g:+g('g').stake||0, hold:g('g').hold||null, g2:+g('g2').stake||0, tier:g('g').tier||null}; });
+      check('Gillespie’s Threes win his one-per-player pick ($8.93, Points $0); when the Threes go 👻 AWOL ($0, held), his Points bet gets the money instead, and the held card is never re-offered as an extra', e0.g>0 && e0.g2===0 && e1.g===0 && e1.hold && e1.g2>0 && !e1.tier, {e0, e1});
     } else {
       await p.evaluate(()=>{ lastRows.find(x=>x.apiKey==='b').loadedAt=new Date(Date.now()-13*3600e3).toISOString(); refresh(); setMode('old'); }); await p.waitForTimeout(400);
       const L=await p.evaluate(()=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>/Devin Booker/.test(x.textContent)), m=c&&c.querySelector('.sc-money'), r=m&&m.getBoundingClientRect(), cr=c&&c.getBoundingClientRect();

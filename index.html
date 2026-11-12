@@ -2967,6 +2967,10 @@ function auditCore(rows,cfg){
     if(!r.flags.some(f=>f[1]===liveWhy(r))) r.flags.push([st==='unconfirmed'?'warn':'out', liveWhy(r)]); });
   // v2.56: a bet you already hold at another line gets no new stake
   rows.forEach(r=>{ if(r.moved && r.stake>0){ r.stake=0; delete r.contracts; } });
+  /* v4.83 (agreed with Sally, owner "BUILD" 11/12): a 👻 AWOL card (its own book could not find it) or a ⏱ Old one (a price read over 12 hours ago)
+     has no money and holds none of the daily max, the game and player picks or the day's slots (Los Chismosos: set before all of them); it shows what it would get ("if found: up to $X"). Found or read again, the next audit sizes it
+     with the room left then: the old stake is never put back by itself. */
+  rows.forEach(r=>{ if(!r) return; delete r.hold; if(r.stake>0 && !r.prior && !r.waitOrder && !r.moved && !r.exClosed && (rowAwol(r)||rowOld(r))){ r.hold={why:rowAwol(r)?'awol':'old', stake:+(+r.stake).toFixed(2)}; r.stake=0; delete r.contracts; } });
   // v2.61: say it once — drop the notes that repeat "you already have this bet"
   rows.forEach(r=>{ if(r.moved) r.flags=r.flags.filter(f=>!/one per player|Same game as your|PLAYER EXPOSURE · already/.test(f[1])); });   // v4.48: the new wording too
   // v2.55: game lines on the same game — moneyline/spread on either team are one bet "axis",
@@ -3083,10 +3087,6 @@ function auditCore(rows,cfg){
             s=k.stake; r.contracts=k.N; if(a!=null) r.actNet=a; } else delete r.contracts;
           r.stake=+(+s).toFixed(2); used[d]=n+1; inGame[g]=(inGame[g]||0)+1; r.lsmlN=n+1; });
     window._lsml={used, inGame, gk}; }
-  /* v4.83 (agreed with Sally, owner "BUILD" 11/12): a 👻 AWOL card (its own book could not find it) or a ⏱ Old one (a price read over 12 hours ago)
-     has no money and holds none of the daily max; it shows what it would get ("if found: up to $X"). Found or read again, the next audit sizes it
-     with the room left then: the old stake is never put back by itself. */
-  rows.forEach(r=>{ if(!r) return; delete r.hold; if(r.stake>0 && !r.prior && !r.waitOrder && !r.moved && !r.exClosed && (rowAwol(r)||rowOld(r))){ r.hold={why:rowAwol(r)?'awol':'old', stake:+(+r.stake).toFixed(2)}; r.stake=0; delete r.contracts; } });
   applyDayLimits(rows,cfg,slateDay);
   try{ extrasAssign(rows,cfg,slateDay); }catch(e){ console.error(e); }   // v4.50: 🍀 Just missed and 🔮 Hail Marys, after the best bets are final
   try{ rows.forEach(pxNote); }catch(e){}   // v4.21: price history for the Sentinels cards' chart
@@ -3182,7 +3182,7 @@ function extrasAssign(rows,cfg,slateDay){
   rows.forEach(r=>{
     if(!r || r.prior || r.waitOrder || r.moved || r.removed || r.hiddenDup || r.glConflict || r.samePlayerX || r.otherSideOf) return;
     if(!(r.offeredProb>0 && r.offeredProb<1) || r.fairProb==null || r.net==null) return;
-    if(r.pass && r.stake>0) return;   // a best bet stays a best bet
+    if(r.pass && (r.stake>0 || r.hold /* v4.83: AWOL / Old: never re-offered as an extra */)) return;   // a best bet stays a best bet
     if(r.pass && (r.flags||[]).some(f=>/^(daily max reached|game cap reached)/.test(f[1]))) return;   /* v4.51: also when your daily max or game cap left it no stake: it stays Safe's, not a $1 Hail Mary past the limit */
     if(liveState(r)!=='open') return;
     if((r.flags||[]).some(f=>/this is the other side|is the OTHER side/.test(f[1]))) return;
@@ -10906,6 +10906,7 @@ async function shopExchanges(){
   if(!jobs.length){ msg.textContent='🦑 nothing for the Sentinels to hunt'; pkSentNote(msg,false); return; }   // v3.57: parlay picks still go out
   btn.disabled=true; let matched=0, stopAt=jobs.length, failMsg='';   // v4.61: where a failed request stopped the scan
   const before=new Map(rows.map(r=>[r, isPlace(r) || !!r.hold /* v4.83 */]));
+  window._perfHold=1;   /* v4.83 (Los Chismosos): no 🔔 from any redraw while this press waits for prices (its qGone is cleared first); finally clears it */
   try{
     rows.forEach(r=>{ r._was={q:r._shopQ, freed:r.freed, jailed:r.jailed, qg:r.qGone}; delete r._shopQ; delete r.freed; delete r.jailed; delete r._qFail; delete r.qGone; });   /* v4.75: qGone, re-decided on every press */   /* v4.61: kept until it is known the scan asked about this bet */
     for(let i=0;i<jobs.length;i+=8){
