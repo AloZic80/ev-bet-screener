@@ -1,16 +1,16 @@
 # 👀 Watch list: 0xBeta Screener, live beta
 
-Ref: CC-2026-11-11-08 · updated Thu 2026-11-12, morning, America/Chicago · Live: **v4.81** (with v4.80) · Worker **v3.44**
+Ref: CC-2026-11-11-08 · updated Thu 2026-11-12, about 10 AM, America/Chicago · Live: **v4.82** · Worker **v3.44**
 
 Alonzo: "we will say OK Lets put IT LIVE, but, we still need to be on top of it."
 **Live beta** means: live and usable, still a work in progress. Every change still goes through El Juez (all tests green) before it goes live. This page lists what is open; it is updated with every build.
 
 ## ⏳ Waiting on El Jefe (a word from you)
-- [ ] **🍀 Near-misses: A, B or C?**
+- [x] **🍀 Near-misses: A, B or C?** A ("what you seems better"), live since v4.80.
   - A: hide them, only YES bets on the board;
   - B: list them in their own band's tab, as "🍀 Just missed · NO";
   - C: leave them as they are.
-- [ ] **Worker v3.43:** say "merge the Worker". It finds Kalshi games by team names when the codes don't match (the Oklahoma State case). PR: AloZic80/prop-bet-api#6.
+- [x] **Worker v3.43:** merged and deployed ("Yes all across"). It finds Kalshi games by team names when the codes don't match (the Oklahoma State case). PR: AloZic80/prop-bet-api#6.
 - [ ] **Javiera's names** for the crew. Code word: "Frijolito".
 
 ## 🤖 Waiting on ChatGiPiTiTi (tomorrow)
@@ -40,16 +40,20 @@ The full review (Los Chismosos, each finding challenged by Los Desconfiados) is 
   - Live Games re-downloaded final box scores every minute (about 0.4 GB a night on a phone).
   - Live Games dropped the found game when ESPN did not answer once or twice.
 - [x] Caught before publishing: Polymarket team bets (one market, two sides): the strip names the side (SEA +1.5); a Draw row gets no strip; "OK up to" rounds down.
-- [ ] **⏳ El Jefe: Kalshi too?** The Kalshi strip (since v4.09) says YES on an underdog spread; on Kalshi it is NO on "<favourite> wins by over". Draw rows name the home team on Kalshi as well. Same fix, next build, on your word.
-- [ ] **Worker (needs your go):** the Sentinels price a soccer Draw row as the home team on Kalshi and Polymarket.
-- [ ] **Next build (text only, confirmed by Los Desconfiados):** when only the long-shot moneyline limit (3 a game day, one a game) holds a 🍀 / 🔮 candidate back, the header says "none right now". It should name that limit.
-- [ ] **Draw rows, every book (since before v4.79):** the card's pick line says "<home> to win" for a soccer Draw. Same fix as the Kalshi one, on your word.
+- [x] (v4.80) **⏳ El Jefe: Kalshi too?** The Kalshi strip (since v4.09) says YES on an underdog spread; on Kalshi it is NO on "<favourite> wins by over". Draw rows name the home team on Kalshi as well. Same fix, next build, on your word.
+- [x] (Worker v3.44) **Worker (needs your go):** the Sentinels price a soccer Draw row as the home team on Kalshi and Polymarket.
+- [x] (v4.80) **Next build (text only, confirmed by Los Desconfiados):** when only the long-shot moneyline limit (3 a game day, one a game) holds a 🍀 / 🔮 candidate back, the header says "none right now". It should name that limit.
+- [x] (v4.80: "Draw (tie)") **Draw rows, every book (since before v4.79):** the card's pick line says "<home> to win" for a soccer Draw. Same fix as the Kalshi one, on your word.
 - [ ] **Unverified on Polymarket US** (a screenshot would settle it): does the Limit form ask for shares or dollars? Can shares be fractional? Are moneylines Yes / No or one button per team?
 - [ ] For Sally: limit at La Contadora's most (47¢) or at the price shown (44¢)? Is the 6.95% × (1 − price) fee right for Polymarket US?
 
 ## ✅ v4.80 + v4.81 (live) and Worker v3.43 + v3.44 (live), on "Yes all across"
 - [x] Near-misses option A (not offered; 👀 Watch keeps the record) · ◎ Perfectas across every tab · Kalshi underdog spreads are NO · Draw cards · 🔔 level 1 · 👻 AWOL tab.
 - [x] Worker v3.43 (Kalshi games by team names) and v3.44 (a Draw is not read) merged and deployed.
+
+## ✅ v4.82 (live): an AWOL card never says BET NOW or #1 MATH PICK
+- [x] The ring on a 👻 AWOL card reads "◎ PERFECTA · 👻 AWOL · look at the book first" (the six checks are unchanged); #1 MATH PICK skips AWOL cards.
+- [ ] For Sally (and you): should #1 MATH PICK skip ⏱ Old cards too? An old price can still be the tab's #1 there.
 
 ## ⏳ Open (reported by the reviewers, not changed)
 - [ ] **🔔 + filters:** the banner can announce a Perfecta your book chips or filters hide. Should the alert follow your filters? (your call)
