@@ -33,12 +33,12 @@ const ROWS=[row('g','Collin Gillespie','PHX','1.5 Threes','Novig',0.58,0.64), ro
     ANS['Collin Gillespie']={ok:false, note:'Novig: no market at your line'}; ANS['Devin Booker']={ok:false, busy:true, note:'Novig: busy — too many markets to read in one go, try again in a minute'};
     await press();
     const t1=await tabs();
-    const s1=await p.evaluate(()=>({g:modeFamOf(lastRows.find(r=>r.apiKey==='g')), b:modeFamOf(lastRows.find(r=>r.apiKey==='b')), stake:+lastRows.find(r=>r.apiKey==='g').stake, count:(document.getElementById('count')||{}).textContent||''}));
+    const s1=await p.evaluate(()=>({g:modeFamOf(lastRows.find(r=>r.apiKey==='g')), b:modeFamOf(lastRows.find(r=>r.apiKey==='b')), stake:+lastRows.find(r=>r.apiKey==='g').stake, hold:lastRows.find(r=>r.apiKey==='g').hold||null, count:(document.getElementById('count')||{}).textContent||''}));
     if(W===1280){
       check('Novig says "no market at your line" for Gillespie: he moves to 👻 AWOL (1), 💪 Machín 2; "busy" is our side: Booker stays', /^👻 AWOL 1$/.test(t1[6]) && /^💪 Machín 2$/.test(t1[1]) && s1.g==='awol' && s1.b==='safe', {t1, s1});
-      check('listing only: Gillespie keeps his stake; the big number counts only what you can bet now (2)', s1.stake>0 && /^2$/.test(s1.count.trim()), s1);
+      check('v4.83 (agreed with Sally): Gillespie is $0 and holds none of the daily max, with what he would get kept ("if found: up to $X"); the big number counts only what you can bet now (2)', s1.stake===0 && s1.hold && s1.hold.why==='awol' && s1.hold.stake>0 && /^2$/.test(s1.count.trim()), s1);
       const pw=await p.evaluate(()=>[...document.querySelectorAll('#cuts .pass-where .cut-list > div')].map(x=>x.textContent.trim()));
-      check('"N elsewhere ▸" says where he is: "1 in 👻 AWOL: the book could not find them on its last check, look at the book first"', pw.includes('1 in 👻 AWOL: the book could not find them on its last check, look at the book first'), pw);
+      check('"N elsewhere ▸" says where he is: "1 in 👻 AWOL: the book could not find them on its last check, $0 until found (look at the book first)"', pw.includes('1 in 👻 AWOL: the book could not find them on its last check, $0 until found (look at the book first)'), pw);
       await p.evaluate(()=>setMode('awol')); await p.waitForTimeout(400);
       const v=await p.evaluate(()=>{ const t=x=>x?x.textContent.replace(/\s+/g,' ').trim():null; const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>/Collin Gillespie/.test(x.textContent));
         return {cards:[...document.querySelectorAll('#placeCards .sc-card')].length, pill:c?t(c.querySelector('.sc-pill.awol')):null, head:t(document.querySelector('#placeCards .pc-head')), lc:t(document.getElementById('contadora'))}; });

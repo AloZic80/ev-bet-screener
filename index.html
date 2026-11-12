@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.82</title>
+<title>0xBeta Screener v4.83</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1477,7 +1477,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.82</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.83</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2236,7 +2236,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 
 </div>
 <script>
-const SCREENER_VERSION='v4.82';
+const SCREENER_VERSION='v4.83';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3083,6 +3083,10 @@ function auditCore(rows,cfg){
             s=k.stake; r.contracts=k.N; if(a!=null) r.actNet=a; } else delete r.contracts;
           r.stake=+(+s).toFixed(2); used[d]=n+1; inGame[g]=(inGame[g]||0)+1; r.lsmlN=n+1; });
     window._lsml={used, inGame, gk}; }
+  /* v4.83 (agreed with Sally, owner "BUILD" 11/12): a 👻 AWOL card (its own book could not find it) or a ⏱ Old one (a price read over 12 hours ago)
+     has no money and holds none of the daily max; it shows what it would get ("if found: up to $X"). Found or read again, the next audit sizes it
+     with the room left then: the old stake is never put back by itself. */
+  rows.forEach(r=>{ if(!r) return; delete r.hold; if(r.stake>0 && !r.prior && !r.waitOrder && !r.moved && !r.exClosed && (rowAwol(r)||rowOld(r))){ r.hold={why:rowAwol(r)?'awol':'old', stake:+(+r.stake).toFixed(2)}; r.stake=0; delete r.contracts; } });
   applyDayLimits(rows,cfg,slateDay);
   try{ extrasAssign(rows,cfg,slateDay); }catch(e){ console.error(e); }   // v4.50: 🍀 Just missed and 🔮 Hail Marys, after the best bets are final
   try{ rows.forEach(pxNote); }catch(e){}   // v4.21: price history for the Sentinels cards' chart
@@ -3333,14 +3337,14 @@ function boardAnchorBack(A){ if(!A) return; try{
    list adds up to the header. Counting only: nothing is moved, staked or hidden by it. */
 function passWhere(passing, shown, pv, isStarted, mN, rows){ const cOn=new Set(boardBooks), inS=new Set(shown), W={n:passing.length, pv, tabs:0, fam:{boring:0, safe:0, volado:0, lucky:0, hail:0, old:0, awol:0}, other:0, dup:0, prior:0, started:0, unconf:0, zero:0, removed:0, filt:0, chips:0, xL:0, xH:0, xO:0, xA:0};
   passing.forEach(r=>{ if(pv?!isPasteRow(r):isPasteRow(r)) W.other++; else if(r.hiddenDup) W.dup++; else if(r.prior||r.waitOrder) W.prior++; else if(isStarted(r)) W.started++; else if(liveState(r)==='unconfirmed') W.unconf++;
-    else if(r.removed) W.removed++; else if(!(r.stake>0) && !r.xFit) W.zero++; else if(!inS.has(r)) W.filt++;   /* v4.77: an approved long shot offered as a Hail Mary is in Brujo; a removed bet is its own line */ else if(cOn.size && !cOn.has(bookLabel(r.book)||'?')) W.chips++; else { W.tabs++; const f=modeFamOf(r); W.fam[f]=(W.fam[f]||0)+1; } });
+    else if(r.removed) W.removed++; else if(!(r.stake>0) && !r.xFit && !r.hold /* v4.83: AWOL / Old at $0 are counted in their tab */) W.zero++; else if(!inS.has(r)) W.filt++;   /* v4.77: an approved long shot offered as a Hail Mary is in Brujo; a removed bet is its own line */ else if(cOn.size && !cOn.has(bookLabel(r.book)||'?')) W.chips++; else { W.tabs++; const f=modeFamOf(r); W.fam[f]=(W.fam[f]||0)+1; } });
   shown.forEach(r=>{ if(r.pass || !(r.xFit==='lucky' || r.xFit==='hail') || (cOn.size && !cOn.has(bookLabel(r.book)||'?'))) return; const f=modeFamOf(r); if(f==='awol') W.xA++; else if(f==='old') W.xO++; else if(r.xFit==='lucky') W.xL++; else W.xH++; });   /* v4.81: + AWOL */   /* v4.77: the extras the tab buttons count that are not approved */
   W.now=W.tabs-(W.fam.old||0)-(W.fam.awol||0) /* v4.81 */; W.jail=(rows||[]).filter(r=>r && r.jailed && !r.pass && (pv?isPasteRow(r):!isPasteRow(r))).length;   /* v4.77: what you can bet now; and Skipping Jail */
   return W; }
 function passWhereHtml(W){ if(!W || !W.n) return '';
   const L=[], add=(n,t)=>{ if(n) L.push('<div><b>'+n+'</b> '+t+'</div>'); }, F=W.fam, fm=[['😴',F.boring],['💪',F.safe],['🪙',F.volado],['🍀',F.lucky],['🔮',F.hail]].filter(x=>x[1]).map(x=>x[0]+' '+x[1]).join(' · ');
-  add(F.old||0, 'in ⏱ Old: read more than 12 hours ago, check each price first');   /* v4.77 */
-  add(F.awol||0, 'in 👻 AWOL: the book could not find them on its last check, look at the book first');   /* v4.81 */
+  add(F.old||0, 'in ⏱ Old: read more than 12 hours ago, $0 until refreshed (check each price first)');   /* v4.77 */
+  add(F.awol||0, 'in 👻 AWOL: the book could not find them on its last check, $0 until found (look at the book first)');   /* v4.81 */
   add(W.started, 'in games that started or closed: can’t bet now');
   add(W.prior, 'already bet (or an order waiting)');
   add(W.unconf, 'can’t confirm the game on ESPN: check the app');
@@ -3405,7 +3409,7 @@ function renderCore(rows,cfg){
   if(!pv && swc.only) shown=shown.filter(r=>r.tier || r.xFit || (r.prior&&r.prior.tier) || isSweet(r,swc));   // v4.50: Only sweet spot narrows the best bets; a mode's extras keep their own groups
   // v2.62: three groups — bets to place, bets you already have, then everything to skip.
   // Your sort (or a column-header click) applies inside each group.
-  const grpOf=x=> (x.prior||x.waitOrder) ? 1 : isStarted(x) ? 3 : liveState(x)==='unconfirmed' ? 4 : (x.pass && x.stake>0 && !x.removed) ? 0 : x.tier==='lucky' ? 6 : x.tier==='hail' ? 7 : x.watch ? 5 : 2;   // v4.43: 5 = Watch   // v4.50: 6 = Just missed, 7 = Hail Marys
+  const grpOf=x=> (x.prior||x.waitOrder) ? 1 : isStarted(x) ? 3 : liveState(x)==='unconfirmed' ? 4 : (x.pass && (x.stake>0 || !!x.hold /* v4.83: AWOL / Old at $0, still listed in their tab */) && !x.removed) ? 0 : x.tier==='lucky' ? 6 : x.tier==='hail' ? 7 : x.watch ? 5 : 2;   // v4.43: 5 = Watch   // v4.50: 6 = Just missed, 7 = Hail Marys
   const GRP_RANK=[0,3,5,6,7,4,1,2];   // v4.43: Place these, Already bet, Watch, Skip, Started, Can't confirm   // v4.50: Just missed and Hail Marys right after Place these
   /* v4.51 (owner: "they aren't supposed to be under the same either - show on Safe, Feeling Lucky, etc. only where they fit"): a mode lists only its
      own rows (modeFamOf): Safe the best bets, Feeling Lucky the ones that just missed, Clairvoyant the Hail Marys; a bet you hold stays where you took
@@ -3415,7 +3419,8 @@ function renderCore(rows,cfg){
     const full=k=>!mN[k==='lucky'?'xL':'xH'] /* v4.78: the extras alone */ && rows.some(r=>r.xc===k && r.xCapDay /* v4.79 (Los Chismosos): the day count, not the long-shot ML allowance */ && !r.hiddenDup && (pv?isPasteRow(r):!isPasteRow(r))); mN.fullL=full('lucky'); mN.fullH=full('hail');
     mN.lsmlH=!mN.xH && !mN.fullH && rows.some(r=>r.xc==='hail' && r.xCap && !r.xCapDay && /^LONG-SHOT ML/.test(r.xWhy||'') && !r.hiddenDup && (pv?isPasteRow(r):!isPasteRow(r))); }   /* v4.80 (Los Chismosos): held back only by the long-shot moneyline limit: say so */   // candidates on the board, none offered: the day's count is used
   rows.forEach(r=>{ if(r) r._old=rowOld(r); });
-  try{ perfNotifyCheck(rows.filter(x=>x && grpOf(x)===0 && x.ring && x.ring.n===x.ring.of && !rowAwol(x) && !rowOld(x) && (pv?isPasteRow(x):!isPasteRow(x))), pv); }catch(e){}   /* v4.81: never an AWOL or old card; which board */   /* v4.80: 🔔 a new ◎ Perfecta, once each */   /* v4.78: what each row was at this draw (ringRecheck moves a card that turns 12 hours old) */
+  try{ const cOn=new Set(boardBooks), sig=JSON.stringify([!!pv, filterSport||'', filterPlayer||'', activeSettingsFilters(), !!filterCorrOnly, !!swc.only, !!(cfg&&cfg.hideStarted), boardBooks.slice().sort()]);
+    perfNotifyCheck(shown.filter(x=>x && grpOf(x)===0 && x.ring && x.ring.n===x.ring.of && !rowAwol(x) && !rowOld(x) && (!cOn.size || cOn.has(bookLabel(x.book)||'?'))), pv, sig); }catch(e){}   /* v4.83 (agreed with Sally): only what Show › ◎ Perfectas would list under your filters and book chips */   /* v4.81: never an AWOL or old card; which board */   /* v4.80: 🔔 a new ◎ Perfecta, once each */   /* v4.78: what each row was at this draw (ringRecheck moves a card that turns 12 hours old) */
   const passW=passWhere(passing, shown, pv, isStarted, mN, rows);   /* v4.76: where each approved bet is (the "N in the tabs ▸" list), counted where the tab numbers are */
   shown=shown.filter(x=>boardView==='perf' ? (grpOf(x)===0 && !!x.ring && x.ring.n===x.ring.of && !rowAwol(x) && !rowOld(x) /* v4.81: never an AWOL or old card */) : famIs(x));   /* v4.80 (owner: "Yes all across"): Show › ◎ Perfectas lists them from every tab */
   if(boardView!=='all') shown=shown.filter(x=>{ const g=grpOf(x); return boardView==='pass'?(g===0||g===6||g===7) : boardView==='perf'?(g===0&&!!x.ring&&x.ring.n===x.ring.of) : boardView==='legs'?!!x.leg : boardView==='outlier'?(g===0&&!!x.outlier) : boardView==='prior'?g===1 : boardView==='watch'?(g===5||g===6) : g===2; });   // v4.43: + Watch   // v4.34: Augi's Show menu
@@ -3504,7 +3509,7 @@ function renderCore(rows,cfg){
   const cardsOn=boardCardsOn(), cardsHtml=[], luckyHtml=[], hailRows=[];   // v2.69   // v4.50: the extras have their own card groups
   const bandN={}; shown.forEach(r=>{ if(grpOf(r)===0){ const k=rowBand(r); bandN[k]=(bandN[k]||0)+1; } }); let lastBand=-1, nCards=0;   /* v4.76 */
   const bandHead=k=>'<span class="cv-chip cv-'+k+'">'+(k?cvNames()[k]:'No band')+'</span> <span class="meta">'+(k?cvRanges()[k]:'')+' · '+(bandN[k]||0)+'</span>';
-  const mathTop=(shown||[]).filter(r=>r.pass && r.stake>0 && !r.prior && !r.waitOrder && !r.removed && !r.moved && !r.glConflict && !rowAwol(r) /* v4.82: never an AWOL card */).reduce((a,r)=>!a||mathKey(r)>mathKey(a)?r:a, null);   // v4.28
+  const mathTop=(shown||[]).filter(r=>r.pass && r.stake>0 && !r.prior && !r.waitOrder && !r.removed && !r.moved && !r.glConflict && !rowAwol(r) /* v4.82: never an AWOL card */ && !rowOld(r) /* v4.83: nor a ⏱ Old one */).reduce((a,r)=>!a||mathKey(r)>mathKey(a)?r:a, null);   // v4.28
   shown.forEach(r=>{
     const g=grpOf(r);
     if(g!==lastGroup && !(cardsOn && (g===0||g===6||g===7))){
@@ -4334,7 +4339,7 @@ function placeCardHtml(r,cfg,o){
       '<div class="sc-game"><b>'+esc(giWhen(gi)||'game time not found')+'</b><span>'+esc(gameTxt)+'</span></div></div>'+
     '<div class="sc-tags">'+cvChipHtml(r.fairProb)+tags+'</div>'+   // v4.31: Augi's cover band
     '<div class="sc-bet"><div class="sc-pick">'+esc(pickTxt)+(X?'':impTagHtml(r))+'</div>'+   // v4.10's line: the price as a %, OK to / look elsewhere, the math on hover
-      '<div class="sc-money"><b>'+(st>0?'$'+st.toFixed(2):'—')+'</b><span>'+(pay!=null?(isX?'pays $'+pay.toFixed(2):'wins $'+Math.max(0,pay-st).toFixed(2)):'stake')+'</span>'+(lim?'<span class="sc-lim">'+esc(lim)+'</span>':'')+'</div>'+
+      '<div class="sc-money"><b>'+(st>0?'$'+st.toFixed(2):(r.hold&&!X)?'$0':'—')+'</b><span>'+((r.hold&&!X&&!(st>0))?(r.hold.why==='awol'?'if found':'if refreshed')+': up to $'+r.hold.stake.toFixed(2) /* v4.83 */:pay!=null?(isX?'pays $'+pay.toFixed(2):'wins $'+Math.max(0,pay-st).toFixed(2)):'stake')+'</span>'+(lim?'<span class="sc-lim">'+esc(lim)+'</span>':'')+'</div>'+
       (()=>{ const hl=slip?slipLinkFor(r,st):null;   // v4.42: one tap on a phone: the chip is a real link when the book's slip is already known
         return (hl?'<a class="sc-price book go sc-link'+(over?' over':'')+'" href="'+esc(hl)+'"'+(/^https:/.test(hl)?' target="_blank" rel="noopener"':''):'<span class="sc-price book'+(over?' over':'')+(slip?' go':'')+'" role="button" tabindex="0"')+' title="'+(slip?'Open this bet on '+esc(bk)+(st>0?' with $'+st.toFixed(2)+' filled':''):esc(bk))+(over?'. The price is over La Contadora’s most now: skip it or look elsewhere':'')+'">'+
         '<span class="scp-o">'+logo+'<b>'+esc(odds)+'</b></span><span class="scp-p">'+(okP?pp(p):'')+(over?' · over':'')+'</span>'+(hl?'</a>':'</span>'); })()+'</div>'+
@@ -4857,6 +4862,7 @@ function decisionHtml(r,cfg){
   if(r.glConflict) return r.glConflict.held
     ? dl('dec-skip','SKIP', ['already bet', esc(r.glConflict.label)])
     : dl('dec-skip','SKIP', [esc(r.glConflict.label)+' is better', r.glConflict.theirs+' vs '+r.glConflict.mine]);
+  if(r.hold) return dl('dec-lim', r.hold.why==='awol'?'👻 AWOL $0':'⏱ OLD PRICE $0', [(r.hold.why==='awol'?'if found':'if refreshed')+': up to '+$(r.hold.stake), 'holds none of your daily max']);   /* v4.83 */
   if(r.stake>0){
     if(r.glBest) return dl('dec-bet','BET '+$(r.stake), ['best bet'].concat(r.glBest.map(x=>esc(x)+' skipped')));
     if(r.lsmlN) return dl('dec-lim','LONG-SHOT ML '+$(r.stake), ['smallest bet · market-confirmed', r.lsmlN+' of '+LSML.day+' used today · one a game']);   /* v4.68: its own limit says why it is small */
@@ -5674,6 +5680,7 @@ function saidOf(r){
   else if(r.removed) d='BET REMOVED';
   else if(r.moved) d='YOU HAVE';
   else if(r.glConflict) d='SKIP';
+  else if(r.hold) d=r.hold.why==='awol'?'AWOL':'OLD PRICE';   /* v4.83: $0, not on the list */
   else if(r.stake>0) d = r.risk?'RISK' : r.outlier?'OUTLIER' : (r.capTrimmed||r.dayTrimmed)?'LIMITED' : 'BET';
   else d = (r.flags||[]).some(f=>/game cap/.test(f[1])) ? 'LIMITED' : 'SKIP';
   if(started) d='STARTED';
@@ -10630,17 +10637,34 @@ function perfAlertText(r){ const cfg=cfgRead(), mx=r.fairProb!=null?maxPriceFor(
   return pick.replace(/\s+/g,' ').trim()+' · '+bk+ok; }
 function perfBeep(){ try{ const C=window._perfAC; if(!C) return; if(C.state==='suspended') C.resume(); const t=C.currentTime;
   [880,1320].forEach((f,i)=>{ const o=C.createOscillator(), g=C.createGain(), a=t+i*0.16; o.frequency.value=f; g.gain.setValueAtTime(0.0001,a); g.gain.exponentialRampToValueAtTime(0.18,a+0.02); g.gain.exponentialRampToValueAtTime(0.0001,a+0.14); o.connect(g); g.connect(C.destination); o.start(a); o.stop(a+0.15); }); }catch(e){} }
-function perfBanner(T, src){ let el=document.getElementById('perfAlert'); if(!el){ el=document.createElement('div'); el.id='perfAlert'; el.setAttribute('role','status'); document.body.appendChild(el); }
-  if(el.classList.contains('on') && el._perfT) T=el._perfT.concat(T.filter(t=>!el._perfT.includes(t)));   /* v4.81: a banner still open keeps the earlier ones */
-  el._perfT=T; el.dataset.src=src||'api';
+/* v4.83 (agreed with Sally): each banner line keeps its card's key; every draw drops a line whose card is no longer a Perfecta you can see
+   (👻 AWOL, ⏱ Old, under 6 of 6, placed, filtered out), with its notification; no line left, no banner. */
+function perfBanner(I, src){ let el=document.getElementById('perfAlert'); if(!el){ el=document.createElement('div'); el.id='perfAlert'; el.setAttribute('role','status'); document.body.appendChild(el); }
+  I=(I||[]).map(x=>typeof x==='string'?{k:'t|'+x, t:x}:x); src=src||'api';
+  if(el.classList.contains('on') && el._perfI && el.dataset.src===src) I=el._perfI.concat(I.filter(x=>!el._perfI.some(y=>y.k===x.k)));   /* v4.81: a banner still open keeps the earlier ones (v4.83: from the same board) */
+  el._perfI=I; el.dataset.src=src; perfBannerPaint(el); }
+function perfBannerCheck(perf, pv){ const el=document.getElementById('perfAlert'); if(!el || !el.classList.contains('on') || !el._perfI || el.dataset.src!==(pv?'paste':'api')) return;
+  const K=new Set(perf.map(pxKey)), keep=el._perfI.filter(x=>K.has(x.k) || /^t\|/.test(x.k)); if(keep.length===el._perfI.length) return;
+  el._perfI.forEach(x=>{ if(keep.includes(x)) return; try{ const n=(window._perfN||{})[x.k]; if(n){ n.close(); delete window._perfN[x.k]; } }catch(e){} });
+  el._perfI=keep; perfBannerPaint(el); }
+function perfBannerPaint(el){ const T=(el._perfI||[]).map(x=>x.t); if(!T.length){ el.classList.remove('on'); el.innerHTML=''; return; }
+  el._perfT=T;
   el.innerHTML='<b class="pa-h">◎ New Perfecta'+(T.length>1?'s ('+T.length+')':'')+'</b>'+T.slice(0,3).map(t=>'<span class="pa-i">'+esc(t)+'</span>').join('')+(T.length>3?'<span class="pa-i">and '+(T.length-3)+' more</span>':'')+
     '<span class="pa-b"><button type="button" class="pa-show">Show them</button><button type="button" class="pa-x" aria-label="Close">×</button></span>';
   el.classList.add('on'); }
-function perfNotifyCheck(perf, pv){ if(!perfNotifyOn()) return; const seen=perfSeenGet(), now=Date.now(), first=!seen._init, fresh=[];
-  perf.forEach(r=>{ const k=pxKey(r); if(!seen[k]){ seen[k]=now; if(!first) fresh.push(r); } });
+function perfNotifyCheck(perf, pv, sig){ if(window._perfHold) return;   /* v4.83: not while a 🦑 press is still working (its 👻 AWOL is written last) */
+  perfBannerCheck(perf, pv); if(!perfNotifyOn()) return;
+  /* v4.83 (agreed with Sally): a change of sport, search, Settings filters or book chips takes a quiet baseline of the Perfectas then in view
+     (this session only, not saved as seen); only later ones ring. The Show menu is not a filter here. */
+  const Q=window._perfQuiet||(window._perfQuiet={}), qk=pv?'paste':'api';
+  if(!Q[qk]) Q[qk]={sig, keys:new Set()};
+  else if(sig!=null && Q[qk].sig!==sig){ Q[qk]={sig, keys:new Set(perf.map(pxKey))}; return; }
+  { const cur=new Set(perf.map(pxKey)); Q[qk].keys.forEach(k=>{ if(!cur.has(k)) Q[qk].keys.delete(k); }); }   /* quiet only while it stays in view: one that leaves and comes back can ring */
+  const seen=perfSeenGet(), now=Date.now(), first=!seen._init, fresh=[];
+  perf.forEach(r=>{ const k=pxKey(r); if(Q[qk].keys.has(k)) return; if(!seen[k]){ seen[k]=now; if(!first) fresh.push(r); } });
   Object.keys(seen).forEach(k=>{ if(k!=='_init' && now-seen[k]>3*864e5) delete seen[k]; }); seen._init=1; perfSeenSet(seen);
-  if(!fresh.length) return; const T=fresh.map(perfAlertText); perfBanner(T, pv?'paste':'api'); perfBeep();
-  try{ if('Notification' in window && Notification.permission==='granted') fresh.slice(0,3).forEach((r,i)=>{ const n=new Notification('◎ New Perfecta', {body:T[i], tag:'perf|'+pxKey(r)}); n.onclick=()=>{ try{ window.focus(); n.close(); }catch(e){} }; }); }
+  if(!fresh.length) return; const T=fresh.map(perfAlertText); perfBanner(fresh.map((r,i)=>({k:pxKey(r), t:T[i]})), pv?'paste':'api'); perfBeep();
+  try{ if('Notification' in window && Notification.permission==='granted') fresh.slice(0,3).forEach((r,i)=>{ const n=new Notification('◎ New Perfecta', {body:T[i], tag:'perf|'+pxKey(r)}); n.onclick=()=>{ try{ window.focus(); n.close(); }catch(e){} }; (window._perfN=window._perfN||{})[pxKey(r)]=n; }); }
   catch(e){ window._perfNoCtor=true; perfNotifyNote(); } }   /* v4.81 (Los Chismosos): Chrome for Android has no page notifications without a service worker: say so */
 function perfNotifyNote(){ const n=document.getElementById('perfNotifyNote'); if(!n) return; const on=perfNotifyOn(), P=('Notification' in window)?Notification.permission:'none';
   n.textContent=!on?'':window._perfNoCtor?'On: banner and sound. This browser does not show notifications from a page (Chrome for Android needs an installed app).':P==='granted'?'On: banner, sound and a notification.':P==='denied'?'On: banner and sound. This browser blocks notifications for this site.':P==='none'?'On: banner and sound. No notifications in this browser (on an iPhone they need the app added to the Home Screen).':'On: banner and sound. For notifications too, untick and tick this box again and allow them.' /* v4.81 */; }
@@ -10776,7 +10800,7 @@ function qFailState(q){ const raw=String((q&&q.note)||'').slice(0,200), bk=/^(Ka
   if(m) return {state:'gone_line_moved', code:'line_moved', raw, line:m[3].trim(), listed:m[2].split(',').map(x=>x.trim()).filter(Boolean)};
   return {state:'unreadable', code:'unreadable', raw}; }
 function qGoneText(g){ const B=bookLabel(g.book);
-  return g.state==='no_offer' ? 'NO OFFER at '+B+' · exact market found, but nobody is selling this side now' : 'GONE at '+B+' · your '+(g.line||'line')+' moved to '+((g.listed||[]).join(', ')||'another line'); }
+  return (g.state==='no_offer' ? 'NO OFFER at '+B+' · exact market found, but nobody is selling this side now' : 'GONE at '+B+' · your '+(g.line||'line')+' moved to '+((g.listed||[]).join(', ')||'another line'))+(g.tap?' · Send the Sentinels to check other books':''); }   /* v4.83: a tap on the price checks only that book */
 function bookPick(r, Q, cfg, now){
   const orig=r.shop?r.shop.orig:{book:r.book, offeredRaw:r.offeredRaw, offeredProb:r.offeredProb}, lim=shopLim(r,now), names=Object.keys(Q||{});
   const netAt=(book,p)=>{ const f=feeRate(book,p,cfg.fees), a=actNetOf(r.fairProb, r.mktProb, p, f); return a!=null?a:((r.fairProb/p-1)-f)/(1+f); };
@@ -10845,8 +10869,12 @@ document.addEventListener('click', async e=>{
     } else url=bookUrl(src, q, +obj.stake||0) || url;
     if(!(q && q.ok)){ miss=isDrawRow(obj) ? 'The app does not read Draw prices at '+(BOOK_NAME[src]||'the book')+' yet: find the Draw for '+gameHintOf(obj)+' yourself' /* v4.81 (Los Chismosos) */ : (BOOK_NAME[src]||'The book')+' did not find this exact game. Pick '+gameHintOf(obj)+', not another game of the same team';   // v4.15
       const note=host.querySelector('.pp-open'); if(note){ note.textContent='⚠ '+miss; note.style.color='var(--warn)'; }
-      if(slipRow && q && awolNote(q.note) && LIVE_BOOK(slipRow.book)===src){ slipRow.awol={book:slipRow.book, note:String(q.note), hint:miss, at:Date.parse(q.at)||Date.now()}; setTimeout(()=>{ try{ refresh(); }catch(_e){} }, 800); } }   /* v4.81: the book could not find it: the card goes to 👻 AWOL */
-    else if(slipRow && (slipRow.awol || slipRow.exClosed) && LIVE_BOOK(slipRow.book)===src && !(p0!=null && Math.abs(q.price-p0)>SLIP_GUARD) /* v4.81: a price far from the card may be another market: not a find */){ delete slipRow.awol; delete slipRow.exClosed; /* v4.81: found */ setTimeout(()=>{ try{ refresh(); }catch(_e){} }, 800); } } }catch(_){}
+      const qf=q?qFailState(q):null;
+      if(slipRow && qf && qf.state!=='unreadable' && LIVE_BOOK(slipRow.book)===src && !slipRow.prior){   /* v4.83 (agreed with Sally): a sure NO OFFER / GONE from a tap counts as on a press: $0, out of Place these, until the next press */
+        slipRow.qGone={state:qf.state, code:qf.code, raw:qf.raw, book:slipRow.book, lb:src, line:qf.line, listed:qf.listed, at:Date.parse(q.at)||Date.now(), tap:true}; delete slipRow.awol;
+        miss=qGoneText(slipRow.qGone); if(note) note.textContent='⚠ '+miss; setTimeout(()=>{ try{ refresh(); }catch(_e){} }, 800); }
+      else if(slipRow && q && awolNote(q.note) && LIVE_BOOK(slipRow.book)===src){ slipRow.awol={book:slipRow.book, note:String(q.note), hint:miss, at:Date.parse(q.at)||Date.now()}; setTimeout(()=>{ try{ refresh(); }catch(_e){} }, 800); } }   /* v4.81: the book could not find it: the card goes to 👻 AWOL */
+    else if(slipRow && (slipRow.awol || slipRow.exClosed || (slipRow.qGone && slipRow.qGone.tap) /* v4.83 */) && LIVE_BOOK(slipRow.book)===src && !(p0!=null && Math.abs(q.price-p0)>SLIP_GUARD) /* v4.81: a price far from the card may be another market: not a find */){ delete slipRow.awol; delete slipRow.exClosed; if(slipRow.qGone && slipRow.qGone.tap) delete slipRow.qGone; /* v4.81: found */ setTimeout(()=>{ try{ refresh(); }catch(_e){} }, 800); } } }catch(_){}
   if(isPhone()){ slipReady(url, src, miss); return; }   // v4.04
   if(w) w.location.href=url; else location.href=url;
 }, true);
@@ -10877,7 +10905,7 @@ async function shopExchanges(){
   const jobs=[]; rows.forEach(r=>{ exch.forEach(n=>{ const d=liveDesc(Object.assign(rowAsBet(r),{book:n, id:'shop:'+r.idx+':'+LIVE_BOOK(n)})); if(d) jobs.push([r,n,d]); }); });
   if(!jobs.length){ msg.textContent='🦑 nothing for the Sentinels to hunt'; pkSentNote(msg,false); return; }   // v3.57: parlay picks still go out
   btn.disabled=true; let matched=0, stopAt=jobs.length, failMsg='';   // v4.61: where a failed request stopped the scan
-  const before=new Map(rows.map(r=>[r, isPlace(r)]));
+  const before=new Map(rows.map(r=>[r, isPlace(r) || !!r.hold /* v4.83 */]));
   try{
     rows.forEach(r=>{ r._was={q:r._shopQ, freed:r.freed, jailed:r.jailed, qg:r.qGone}; delete r._shopQ; delete r.freed; delete r.jailed; delete r._qFail; delete r.qGone; });   /* v4.75: qGone, re-decided on every press */   /* v4.61: kept until it is known the scan asked about this bet */
     for(let i=0;i<jobs.length;i+=8){
@@ -10916,7 +10944,7 @@ async function shopExchanges(){
           if(stay) r.qGone={state:f.state, code:f.code, raw:f.raw, book:fb, lb:LIVE_BOOK(fb), line:f.line, listed:f.listed, at:now}; } }
       delete r._qFail;
     });
-    refresh();   // the board re-screens every row at its new price (fees, floor, odds range, market check, caps, daily max)
+    window._perfHold=1; refresh();   /* v4.83: no 🔔 until this press is done */   // the board re-screens every row at its new price (fees, floor, odds range, market check, caps, daily max)
     /* v4.61: the board rounds Kalshi's fee up to the cent on whole contracts and checks the floor again. A bet this press moved to Kalshi that fails that
        check is decided again without Kalshi, so a book that does clear the floor is shown instead (the same check as the board's, at its own stake). */
     { const kalFail=r=>LIVE_BOOK(r.book)==='kalshi' && (r.flags||[]).some(f=>/after Kalshi fee rounding/.test((f&&f[1])||''));
@@ -10937,14 +10965,14 @@ async function shopExchanges(){
       if(hit){ delete r.awol; delete r.exClosed; } else if(mb && !r.qGone) r.awol={book:r.book, note:r._qMiss[mb], at:now}; delete r._qMiss; });
     const repriced=rows.filter(r=>pre.get(r)!==r.book+'|'+r.offeredProb).length;
     let freed=0, jailed=0;
-    rows.forEach(r=>{ const was=before.get(r), now=isPlace(r);
+    rows.forEach(r=>{ const was=before.get(r), now=isPlace(r) || !!r.hold;
       if(unasked.has(r)){ if(r.freed && !now) delete r.freed; if(r.jailed && now) delete r.jailed; return; }   /* v4.61: not checked on this press: no new tag, and an old tag stays only while it is still true */
       if(!was && now){ r.freed=true; freed++; } else if(was && !now){ r.jailed=true; jailed++; } });
-    refresh();
+    delete window._perfHold; refresh();   /* v4.83: the 🔔 check sees this press's final state (👻 AWOL written) */
     msg.innerHTML=(failMsg?'🦑 '+esc(failMsg)+' · <b>'+unasked.size+'</b> '+(unasked.size===1?'bet':'bets')+' not checked, left as '+(unasked.size===1?'it was':'they were')+' · ':'🦑 Sentinels are back: ')+'<b>'+matched+'</b> live prices · <b>'+repriced+'</b> repriced'+(freed?' · <b style="color:var(--live)">🔓 '+freed+' out of Skipping Jail</b>':'')+(jailed?' · <b style="color:var(--out)">🔒 '+jailed+' sent to Skipping Jail</b>':'')+' · '+new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
     pkSentNote(msg,!failMsg);   // v3.57: what is better in a parlay goes to the Parlays tab; v4.61: "checked at live prices" only when the whole scan ran
   }catch(e){ msg.textContent='🦑 the Sentinels got lost (exchange check failed)'; }
-  finally{ btn.disabled=false; rows.forEach(r=>{ delete r._qFail; delete r._qMiss; /* v4.81 */ const w=r._was; if(!w) return; delete r._was; if(w.q) r._shopQ=w.q; if(w.freed) r.freed=w.freed; if(w.jailed) r.jailed=w.jailed; if(w.qg) r.qGone=w.qg; }); }   /* v4.61: a scan that broke before deciding gives the earlier prices and tags back */
+  finally{ btn.disabled=false; delete window._perfHold; rows.forEach(r=>{ delete r._qFail; delete r._qMiss; /* v4.81 */ const w=r._was; if(!w) return; delete r._was; if(w.q) r._shopQ=w.q; if(w.freed) r.freed=w.freed; if(w.jailed) r.jailed=w.jailed; if(w.qg) r.qGone=w.qg; }); }   /* v4.61: a scan that broke before deciding gives the earlier prices and tags back */
 }
 function pkSentNote(msg,live){ if(live) pkSentAt=Date.now(); const n=pkSentLegs().length; try{ if(document.getElementById('v-parlay').classList.contains('on')) renderParlays(); }catch(e){}
   if(n) msg.insertAdjacentHTML('beforeend',' · <button type="button" class="linkbtn pk-sent-go" title="Good in a 2- to 6-pick entry (good alone or not)">🎟️ <b>'+n+'</b> good in a parlay → Parlays</button>'); }   // v3.62
