@@ -51,7 +51,7 @@ const NO='Kalshi: no offer to buy right now', MOVED='Polymarket lists Card Two a
   // 7, 8: Novig "no market at your line" and a busy answer stay unreadable (v4.57: the card stays)
   S=await open(b,[prop('n','Card Four',0.53,'Novig'), prop('z','Card Five',0.53,'Kalshi')], (i,bk)=>bk==='novig'?{note:'Novig: no market at your line'}:bk==='kalshi'?{busy:true,note:'Kalshi: busy'}:null);
   await press(S); const vn=await look(S,'n'), vz=await look(S,'z');
-  check('7: Novig "no market at your line" proves nothing: the card stays in Place these, no NO OFFER / GONE', vn.place && !vn.q && !vn.out.length, vn);
+  check('7: Novig "no market at your line" proves nothing: no NO OFFER / GONE, still approved; v4.81 lists it under 👻 AWOL and v4.83 (agreed with Sally) holds it at $0 ("if found: up to $X")', vn.pass && !vn.q && !vn.out.length && vn.stake===0 && /^👻 AWOL \$0 if found: up to \$\d/.test(vn.dec), vn);
   check('8: a busy answer proves nothing either', vz.place && !vz.q, vz);
   check('no page errors (unreadable)', !S.errs.length, S.errs); await S.ctx.close();
   // 9: the card is at Novig and Novig reads 53%; a challenger (Kalshi) has no offer: nothing changes
