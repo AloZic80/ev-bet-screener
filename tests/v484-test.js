@@ -15,6 +15,7 @@ const row=(id,o)=>Object.assign({name:'Collin Gillespie',team:'PHX',game:'CHA @ 
 const ROWS=[row('o',{offeredProb:0.55, fairProb:0.64, mktProb:0.64}), row('u',{side:'U', offeredProb:0.47, fairProb:0.36, mktProb:0.36}),
   row('dk',{side:'U', book:'DraftKings', offeredProb:0.40, fairProb:0.36, mktProb:0.36}),   // not one of his books: never counted
   row('mp',{name:'PHX', team:'PHX', side:'', kind:'moneyline', market:'Moneyline', offeredProb:0.60, fairProb:0.66, mktProb:0.66}), row('mc',{name:'CHA', team:'CHA', side:'', kind:'moneyline', market:'Moneyline', offeredProb:0.43, fairProb:0.34, mktProb:0.34}),
+  row('tq',{name:'Total', team:'', side:'O', kind:'total', market:'? Total', offeredProb:0.5, fairProb:0.5, mktProb:0.5}), row('tu',{name:'Total', team:'', side:'U', kind:'total', market:'? Total', offeredProb:0.5, fairProb:0.5, mktProb:0.5}),   // no line: no market
   row('sx',{name:'ARS', team:'ARS', game:'ARS @ CHE', matchup:'ARS @ CHE', side:'', sport:'SOCCER', kind:'moneyline', market:'Moneyline', offeredProb:0.40, fairProb:0.46, mktProb:0.46})];
 (async()=>{ const b=await chromium.launch();
   for(const W of [1280,390]){
@@ -27,7 +28,7 @@ const ROWS=[row('o',{offeredProb:0.55, fairProb:0.64, mktProb:0.64}), row('u',{s
         return r.fulfill({contentType:'application/json',body:JSON.stringify({results:R})}); }
       if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
     await p.goto('http://app.test/'); await p.waitForTimeout(1300);
-    const look=()=>p.evaluate(()=>{ const g=k=>lastRows.find(r=>r.apiKey===k)||{}; return {o:g('o').sh||null, oTxt:shText(g('o')), oStake:+(+g('o').stake||0).toFixed(2), mp:shText(g('mp')), sx:g('sx').sh||null}; });
+    const look=()=>p.evaluate(()=>{ const g=k=>lastRows.find(r=>r.apiKey===k)||{}; return {o:g('o').sh||null, oTxt:shText(g('o')), oStake:+(+g('o').stake||0).toFixed(2), mp:shText(g('mp')), sx:g('sx').sh||null, tq:g('tq').sh||null}; });
     const ev=(f)=>p.evaluate(f).then(()=>p.waitForTimeout(300));
     if(W===1280){
       const v0=await look();
@@ -50,10 +51,18 @@ const ROWS=[row('o',{offeredProb:0.55, fairProb:0.64, mktProb:0.64}), row('u',{s
       check('the Under read 20 minutes ago: "the other side has no price read in the last 10 minutes"', v3.o && !v3.o.ok && /other side has no price read in the last 10 minutes/.test(v3.o.why), v3.o);
       await ev(()=>{ const u=lastRows.find(x=>x.apiKey==='u'); u.loadedAt=new Date(Date.now()-60e3).toISOString(); u.offeredProb=0.43; u.offeredRaw='+133'; refresh(); });
       const v4=await look();
-      check('Under 43% + Over 55% = −2.0%: "UNDERROUND · CHECK Hold −2.0%" (never a bet signal)', v4.o && v4.o.ok && /^UNDERROUND · CHECK Hold −2\.0% · /.test(v4.oTxt), v4.oTxt);
+      check('Under 43% + Over 55% = −2.0%: "UNDERROUND · CHECK, not a bet · Hold −2.0%"', v4.o && v4.o.ok && /^UNDERROUND · CHECK, not a bet · Hold −2\.0% · /.test(v4.oTxt), v4.oTxt);
       check('a label only: the Over’s stake is the same whatever the hold (fresh, stale, underround)', v2.oStake===s0 && v3.oStake===s0 && v4.oStake===s0, {s0, v2:v2.oStake, v3:v3.oStake, v4:v4.oStake});
       const snap=await p.evaluate(()=>{ addToLog(lastRows.find(x=>x.apiKey==='o')); const b=logged[logged.length-1]; return b.snap && b.snap.syntheticHold; });
       check('a new bet keeps the hold when taken: type, quoted, fee-adjusted, both sides (book, price, time), policy synthetic-hold-v1', snap && snap.type==='two_way' && snap.policy==='synthetic-hold-v1' && snap.sides.length===2 && snap.sides.every(x=>x.book && x.price && x.observedAt) && Math.abs(snap.feeAdjusted+0.02)<1e-9, snap);
+      check('Los Chismosos: a total with no line ("? Total") is no market: no tag', v0.tq===null, v0.tq);
+      await ev(()=>{ const u=lastRows.find(x=>x.apiKey==='u'); u._gi=u.gameInfo; u.gameInfo=Object.assign({}, u.gameInfo, {startISO:new Date(Date.parse(u.gameInfo.startISO)+864e5).toISOString()}); refresh(); });
+      const d1=await look();
+      check('Los Chismosos: the same teams the next day are another game: their Under never pairs with tonight’s Over', d1.o && !d1.o.ok, d1.o);
+      await ev(()=>{ const u=lastRows.find(x=>x.apiKey==='u'); u.gameInfo=u._gi; delete u._gi; refresh(); });
+      await p.clock.fastForward(11*60e3); await p.waitForTimeout(200);
+      const x1=await p.evaluate(()=>shText(lastRows.find(x=>x.apiKey==='o')));
+      check('Los Chismosos: with the page left open, a hold whose prices are now over 10 minutes old reads "Hold —"', /^Hold — · /.test(x1), x1);
     } else {
       const L=await p.evaluate(()=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>/Collin Gillespie/.test(x.textContent)&&/Threes/.test(x.textContent)), s=c&&c.querySelector('.sc-pill.sh'), r=s&&s.getBoundingClientRect(), cr=c&&c.getBoundingClientRect();
         return {t:s?s.textContent:null, inside:!!(r&&cr&&r.right<=cr.right+1&&r.left>=cr.left-1), sideways:document.documentElement.scrollWidth>innerWidth}; });

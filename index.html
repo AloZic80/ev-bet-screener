@@ -3247,40 +3247,48 @@ function awolWhy(r){ const w=r.exClosed ? String(r.exClosed) : r.awol ? (r.awol.
    gives the other side too (1 − its bid, read at the same moment). Two-way only: Over / Under at the same line, or a moneyline / spread in a
    sport with no draw. Three-way markets wait. Missing or stale: no number. */
 function shCfg(){ return {fresh:10*60e3, gap:5*60e3, lo:0.02, hi:0.04, gl:/^(NFL|NBA|NHL|MLB|NCAAF|NCAAB|WNBA)$/, pol:'synthetic-hold-v1'}; }   /* a function, not a const: render reaches it (startup rule) */
-function shIdent(r){ if(!r || isDrawRow(r)) return null; const g=gameKey(r.game||r.matchup||''); if(!g) return null; const k=r.kind||'prop';
-  if(k==='prop' || k==='total'){ if(r.side!=='O' && r.side!=='U') return null; return {key:g+'|'+k+'|'+(k==='prop'?String(r.name||'').toLowerCase().trim():'')+'|'+String(r.market||'').toLowerCase().replace(/\s+/g,' ').trim(), side:r.side}; }
-  if(!shCfg().gl.test(String(r.sport||''))) return null; const tm=normAbbr(r.team||r.name||''); if(!tm) return null;
-  if(k==='moneyline') return {key:g+'|ml', side:tm, team:tm};
-  if(k==='spread'){ const n=parseFloat(String(r.market||'')); if(!isFinite(n)) return null; return {key:g+'|sp|'+Math.abs(n), side:tm+'|'+n, team:tm, n}; }
+/* v4.84 review (Los Chismosos): the key has the game day (two meetings of the same teams are two markets); a market with no number is no
+   market; pick'em and pasted prices are not single bets at a price read now; a book that just said closed / AWOL / GONE gives no quote; 1 − bid
+   stands for the other side only where both settle the same (not an NFL moneyline, which can tie, nor a whole-number line, which can push) */
+function shIdent(r){ if(!r || isDrawRow(r)) return null; const day=String((r.gameInfo&&r.gameInfo.startISO)||'').slice(0,10); if(!day) return null;
+  const g=gameKey(r.game||r.matchup||''); if(!g) return null; const k=r.kind||'prop', mk=String(r.market||''), num=parseFloat(mk); if(!/^\s*[+-]?\d/.test(mk) && k!=='moneyline') return null;
+  const whole=isFinite(num) && Math.abs(num-Math.round(num))<1e-9, base=day+'|'+g;
+  if(k==='prop' || k==='total'){ if(r.side!=='O' && r.side!=='U') return null; return {key:base+'|'+k+'|'+(k==='prop'?String(r.name||'').toLowerCase().trim():'')+'|'+mk.toLowerCase().replace(/\s+/g,' ').trim(), side:r.side, oneMinus:!whole}; }
+  const C=shCfg(); if(!C.gl.test(String(r.sport||''))) return null; const tm=normAbbr(r.team||r.name||''); if(!tm) return null;
+  if(k==='moneyline') return {key:base+'|ml', side:tm, team:tm, oneMinus:r.sport!=='NFL'};
+  if(k==='spread'){ if(!isFinite(num)) return null; return {key:base+'|sp|'+Math.abs(num), side:tm+'|'+num, team:tm, n:num, oneMinus:!whole}; }
   return null; }
-function shAssign(rows,cfg){ const now=Date.now(), mine=b=>!cfg.books.length || cfg.books.some(e=>bookIsMine(b,e)), G=new Map();
-  rows.forEach(r=>{ delete r.sh; const id=shIdent(r); if(!id) return; r._shId=id; (G.get(id.key)||G.set(id.key,[]).get(id.key)).push(r); });
-  const eff=(book,p)=>p*(1+feeRate(book,p,cfg.fees,false));
-  G.forEach(list=>{ const sides=[...new Set(list.map(r=>r._shId.side))];
-    const C={}; const add=(side,book,p,at)=>{ if(!(p>0 && p<1) || !at || now-at>shCfg().fresh || at>now+60e3 /* a time in the future is not a read */ || !mine(book)) return; (C[side]=C[side]||[]).push({side, book, price:+p.toFixed(4), q:eff(book,p), at}); };
-    const oppOf=id=>{ if(!id.team) return id.side==='O'?'U':'O'; const o=list.map(x=>x._shId).find(x=>x.team!==id.team && (id.n==null || Math.abs(x.n+id.n)<1e-9)); return o?o.side:null; };
-    list.forEach(r=>{ const id=r._shId; if(!(r.prior || rowAwol(r) || rowOld(r) || r.qGone || r.exClosed)) add(id.side, r.book, r.offeredProb, rowSeenAt(r));
-      const op=oppOf(id), Q=[r._openQ].concat(Object.values(r._shopQ||{}), Object.values(r._altQ||{}));
-      Q.forEach(q=>{ if(!q || !q.ok || !BOOK_NAME[q.src]) return; const at=Date.parse(q.at)||0, bk=BOOK_NAME[q.src]; add(id.side, bk, q.price, at); if(op && q.bid>0 && q.bid<1) add(op, bk, 1-q.bid, at); }); });
-    list.forEach(r=>{ const id=r._shId, op=oppOf(id), team=!!id.team, two=team ? new Set(list.map(x=>x._shId.team)).size===2 : true;
+function shAssign(rows,cfg){ const C=shCfg(), now=Date.now(), mine=b=>!cfg.books.length || cfg.books.some(e=>bookIsMine(b,e)), G=new Map();
+  rows.forEach(r=>{ delete r.sh; delete r._shX; const id=shIdent(r); if(!id) return; r._shId=id; (G.get(id.key)||G.set(id.key,[]).get(id.key)).push(r); });
+  G.forEach(list=>{ const live=list.some(r=>r.gameInfo && r.gameInfo.state==='in'), eff=(book,p)=>p*(1+feeRate(book,p,cfg.fees,live)) /* Novig's live fee too */;
+    const C2={}; const add=(side,book,p,at)=>{ if(!(p>0 && p<1) || !at || now-at>C.fresh || at>now+60e3 /* a time in the future is not a read */ || !mine(book) || DFS.test(book||'')) return; (C2[side]=C2[side]||[]).push({side, book, price:+p.toFixed(4), q:eff(book,p), at}); };
+    const ids=list.map(x=>x._shId), oppOf=id=>{ if(!id.team) return id.side==='O'?'U':'O'; const o=ids.find(x=>x.team!==id.team && (id.n==null || Math.abs(x.n+id.n)<1e-9)); return o?o.side:null; };
+    list.forEach(r=>{ const id=r._shId, op=oppOf(id), said=[r.exClosed?(r.exClosedBook||r.book):null, r.awol&&r.awol.book, r.qGone&&r.qGone.book].filter(Boolean).map(b=>LIVE_BOOK(b)||b);
+      if(!(r.prior || rowAwol(r) || rowOld(r) || r.qGone || r.exClosed || String(r.src||'').startsWith('paste'))) add(id.side, r.book, r.offeredProb, rowSeenAt(r));
+      [r._openQ].concat(Object.values(r._shopQ||{}), Object.values(r._altQ||{})).forEach(q=>{ if(!q || !q.ok || !BOOK_NAME[q.src] || said.includes(q.src)) return; const at=Date.parse(q.at)||0, bk=BOOK_NAME[q.src];
+        add(id.side, bk, q.price, at); if(op && id.oneMinus && q.bid>0 && q.bid<1) add(op, bk, 1-q.bid, at); }); });
+    list.forEach(r=>{ const id=r._shId, op=oppOf(id), two=id.team ? new Set(ids.map(x=>x.team)).size===2 : true;
       if(!op || !two){ r.sh={ok:false, why:'the other side is not on the board'}; return; }
-      const A=C[id.side]||[], B=C[op]||[]; let best=null;
-      A.forEach(a=>B.forEach(b=>{ if(Math.abs(a.at-b.at)>shCfg().gap) return; const H=a.q+b.q-1; if(!best || H<best.H) best={a,b,H}; }));
+      const A=C2[id.side]||[], B=C2[op]||[]; let best=null;
+      A.forEach(a=>B.forEach(b=>{ if(Math.abs(a.at-b.at)>C.gap) return; const H=a.q+b.q-1; if(!best || H<best.H) best={a,b,H}; }));
       if(!best){ r.sh={ok:false, why:!A.length?'this side has no price read in the last 10 minutes':!B.length?'the other side has no price read in the last 10 minutes':'the two sides were read more than 5 minutes apart'}; return; }
       const sd=x=>({side:x.side, book:x.book, price:x.price, effectiveProb:+x.q.toFixed(4), observedAt:new Date(x.at).toISOString()});
-      r.sh={ok:true, type:'two_way', quoted:+(best.a.price+best.b.price-1).toFixed(4), feeAdjusted:+best.H.toFixed(4), sides:[sd(best.a), sd(best.b)], policy:shCfg().pol}; }); });
+      r.sh={ok:true, type:'two_way', quoted:+(best.a.price+best.b.price-1).toFixed(4), feeAdjusted:+best.H.toFixed(4), sides:[sd(best.a), sd(best.b)], policy:C.pol}; }); });
   rows.forEach(r=>{ delete r._shId; }); }
-function shBand(h){ return h<=0?'under':h<shCfg().lo?'low':h<=shCfg().hi?'std':'high'; }
+/* the hold as it stands now: a number whose oldest read passed 10 minutes (page left open) is no number (Los Chismosos) */
+function shNow(r){ const h=r&&r.sh; if(!h || !h.ok) return h||null; const old=Math.min.apply(null, h.sides.map(x=>Date.parse(x.observedAt)||0));
+  return Date.now()-old>shCfg().fresh ? {ok:false, why:'its prices were read more than 10 minutes ago'} : h; }
+function shBand(h){ const C=shCfg(); return h<=0?'under':h<C.lo?'low':h<=C.hi?'std':'high'; }
 function shPx(book,p){ return /kalshi|polymarket/i.test(book||'') ? (Math.round(p*1000)/10)+'¢' : fmtOdds(Math.round(americanOf(p))); }
-function shSideTxt(x){ const s=String(x.side||''); return (s==='O'?'O':s==='U'?'U':s.split('|')[0])+' '+bookLabel(x.book)+' '+shPx(x.book,x.price); }
-function shText(r){ const h=r&&r.sh; if(!h) return ''; if(!h.ok) return 'Hold — · '+h.why;
+function shSideTxt(x){ const s=String(x.side||''), t=s.split('|'); return (s==='O'?'O':s==='U'?'U':t[0]+(t[1]!=null?' '+(+t[1]>0?'+':'')+t[1]:''))+' '+bookLabel(x.book)+' '+shPx(x.book,x.price); }
+function shText(r){ const h=shNow(r); if(!h) return ''; if(!h.ok) return 'Hold — · '+h.why;
   const b=shBand(h.feeAdjusted), pc=x=>(x>=0?'':'−')+Math.abs(x*100).toFixed(1)+'%';
-  return (b==='under'?'UNDERROUND · CHECK ':'')+'Hold '+pc(h.feeAdjusted)+' · '+h.sides.map(shSideTxt).join(' · '); }
-function shPill(r){ const h=r&&r.sh; if(!h) return ''; const b=h.ok?shBand(h.feeAdjusted):'na';
-  const tip=h.ok ? 'Synthetic hold: the best price you can get on each side of this exact market, added up, fees in ('+(h.quoted*100).toFixed(1)+'% before fees). What a coin flip here costs you: lower is a cheaper place to be wrong. A label only: it does not change the stake or the order.'+(b==='under'?' Under 0% can be a real gap between books, or a stale price, a different line or different rules: check both sides before anything.':'')
+  return (b==='under'?'UNDERROUND · CHECK, not a bet · ':'')+'Hold '+pc(h.feeAdjusted)+' · '+h.sides.map(shSideTxt).join(' · '); }
+function shPill(r){ const h=shNow(r); if(!h) return ''; const b=h.ok?shBand(h.feeAdjusted):'na';
+  const tip=h.ok ? 'Synthetic hold: the best price you can get on each side of this exact market, added up, fees in ('+(h.quoted*100).toFixed(1)+'% before fees). It is what the market charges if a read is wrong. A label only: it is not a reason to bet and does not change the stake or the order.'+(b==='under'?' Under 0% can be a real gap between books, or a stale price, a different line or different rules: check both sides; it is not a bet.':'')
     : 'No hold: '+h.why+'. Both sides need a price read in the last 10 minutes, within 5 minutes of each other.';
   return '<span class="sc-pill sh '+b+'" title="'+esc(tip)+'">'+esc(h.ok?shText(r):'Hold —')+'</span>'; }
-function shHow(r){ const h=r&&r.sh; if(!h) return ''; return '<div class="sh-how meta">'+esc(shText(r))+(h.ok?' ('+(h.quoted*100).toFixed(1)+'% before fees)':'')+'. A label only.</div>'; }
+function shHow(r){ const h=shNow(r); if(!h) return ''; return '<div class="sh-how meta">'+esc(shText(r))+(h.ok?' ('+(h.quoted*100).toFixed(1)+'% before fees)':'')+'. A label only.</div>'; }
 function awolPill(r){ return rowAwol(r) ? '<span class="sc-pill awol" title="'+esc(awolWhy(r))+'. A 🦑 Sentinels press that finds it sends it back to its tab.">👻 AWOL · '+esc(awolWhy(r))+'</span>' : ''; }   /* v4.81 */
 function modeFamOf(r){ if(!r) return 'safe';
   if(r.prior){ const t=r.prior.tier; return (t==='lucky' || t==='hail') ? t : r.pass ? passFam(r) : 'safe'; }   /* v4.76 */
@@ -3346,6 +3354,7 @@ function ringRecheck(){ try{ if(document.visibilityState!=='visible') return;
     { const sig=shopStaleSig(); if(sig!==(window._shopStaleSig||'')){ window._shopStaleSig=sig; refresh(); return; } }   /* v4.56: a best-book claim ran out: redraw (no prices are read); v4.61: saved here before the redraw, so a draw held back by an open editor is asked for once, not on every tick */
     if(betMode==='clair'){ const m=JSON.parse(localStorage.getItem('mbev.mode')||'null'); if(m && m.day && m.day!==new Date().toLocaleDateString('en-CA',{timeZone:'America/Chicago'})){ setMode('safe'); return; } }   /* v4.51: "back to Safe at midnight" also with the page left open (it only happened on a reload) */ const v=document.body.dataset.view; if(v && v!=='v-board') return;
     { const ch=(lastRows||[]).filter(r=>r && r._old!==undefined && r._old!==rowOld(r)); if(ch.length){ ch.forEach(r=>{ r._old=rowOld(r); }); refresh(); return; } }   /* v4.78: a card turned 12 hours old with the page left open: to ⏱ Old; v4.79 (Los Chismosos): stamped before the redraw, like _shopStaleSig, so a draw held back by an open editor is asked for once, not every 30 s */
+    { const ex=(lastRows||[]).filter(r=>r && r.sh && r.sh.ok && !r._shX && !shNow(r).ok); if(ex.length){ ex.forEach(r=>{ r._shX=1; }); refresh(); return; } }   /* v4.84 review: a hold whose reads passed 10 minutes is redrawn as "Hold —" */
     const cfg=cfgRead(); if((lastRows||[]).some(r=>r && r.ring && ringOf(r,cfg).n!==r.ring.n)) refresh(); }catch(e){} }
 setInterval(ringRecheck, 30000);
 function legNeed(){ try{ const a=pkPays('PrizePicks','power')[4]; const b=pkBreakEven(4,a); if(b>0 && b<1) return b; }catch(e){} return 0.5623; }   // what a pick needs in a 4-pick PrizePicks Power entry (10×)
@@ -5760,8 +5769,8 @@ function addToLog(r){
       shop:shopSnap(r),   /* v4.56: where the best book came from, its age when you took it, and why the 0.3-point rule was skipped; v4.57: both books, their ages and EV, and book-swap cards */
       act:(()=>{ const q=r.noAct?null:okProb(r.actFair!==undefined?r.actFair:r.fairProb, r.actMkt!==undefined?r.actMkt:r.mktProb); return q!=null?+q.toFixed(4):null; })(), actNet:(()=>{ const a=r.noAct?null:actNetOf(r.actFair!==undefined?r.actFair:r.fairProb, r.actMkt!==undefined?r.actMkt:r.mktProb, r.offeredProb, r.fee); return a!=null?+a.toFixed(4):null; })(), policy:POLICY.math,   /* v4.53: La Contadora's chance and EV when you took it, and the math policy; older bets do not have these and are left as they are */
       sent:(()=>{ try{ if(!r.sentOk||r.tier||r.xc||r.fairProb==null) return undefined; const z=sentScore(r); return {t:z.total, t1:z.total1, e:z.e, m:z.m, f:z.f, s:z.s, pol:POLICY.sent}; }catch(e){ return undefined; } })(),   /* v4.53: the Sentinel score when you took it (t1 = what it was with the Edge on the model's EV) */
-      ring: r.ring&&!(r.tier||r.xc) ? {n:r.ring.n, of:r.ring.of, miss:r.ring.miss.slice(0,3)} : undefined,
-      syntheticHold: r.sh ? (r.sh.ok ? {type:r.sh.type, quoted:r.sh.quoted, feeAdjusted:r.sh.feeAdjusted, sides:r.sh.sides.map(x=>Object.assign({},x)), policy:r.sh.policy} : {unavailable:r.sh.why, policy:shCfg().pol}) : undefined,   /* v4.84: the hold when you took it (a label) */   // v4.50: the ◎ Perfecta checks when you took it
+      ring: r.ring&&!(r.tier||r.xc) ? {n:r.ring.n, of:r.ring.of, miss:r.ring.miss.slice(0,3)} : undefined,   // v4.50: the ◎ Perfecta checks when you took it
+      syntheticHold:(()=>{ const h=shNow(r); return h ? (h.ok ? {type:h.type, quoted:h.quoted, feeAdjusted:h.feeAdjusted, sides:h.sides.map(x=>Object.assign({},x)), policy:h.policy} : {unavailable:h.why, policy:shCfg().pol}) : undefined; })(),   /* v4.84: the hold when you took it (a label) */
       said: r.said || saidOf(r), mode: betMode }
   });
   saveLog();
