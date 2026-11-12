@@ -71,6 +71,7 @@ const BOARD=[
   check('calendar day filter shows just that day', one.join()===D3, one);
   // a board bet whose game is over: Result in the editor, saved graded, no second press
   await p.click('.tab[data-view="v-board"]'); await p.waitForTimeout(500);
+  await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(300);   /* v4.76: both board rows are at La Contadora 56.05% (model 58%, market 55%: min(.58, .55 + .35 × .03)), so they are listed under 🪙 Volado (50–60%), not the opening tab */
   const btns=await p.$$eval('button.bet-btn',b=>b.map(x=>({i:+x.dataset.idx, name:lastRows.find(r=>r.idx===+x.dataset.idx).name, where:x.closest('#placeCards')?'Place these':'table'})));
   const over=btns.find(x=>x.name==='Jalen Brunson'), pre=btns.find(x=>x.name==='Cade Cunningham');
   check('both board rows have I bet this (the open game under Place these, the finished one in the table)', !!over && !!pre && pre.where==='Place these' && over.where==='table', btns);
