@@ -34,7 +34,7 @@ const ROWS=[row('a','Fresh Machin',0.62,0.58,60e3), row('b','Stale Machin',0.62,
         heads:[...document.querySelectorAll('#placeCards .pc-head')].map(t), contadora:t(document.getElementById('contadora'))}; });
       check('⏱ Old lists Stale Machin, Stale Brujo and the Stale Hail Hail Mary, nothing fresh', JSON.stringify(v.cards.slice().sort())===JSON.stringify(['Stale Brujo','Stale Hail','Stale Machin']), v.cards);
       check('its Place these says what YES means here: "⏱ Read more than 12 hours ago: La Contadora said YES at these prices. Check each price at the book first …"', /Place these · ⏱ old prices · 2/.test(v.heads[0]||'') && /⏱ Read more than 12 hours ago: La Contadora said YES at these prices\. Check each price at the book first/.test(v.heads[0]||''), v.heads);
-      check('La Contadora says to check them first', /more than 12 hours old\. I said yes at those prices, not at today’s\. Check each one first/.test(v.contadora||''), v.contadora);
+      check('La Contadora says to check them first; v4.79 (Los Chismosos): her YES was for the approved cards only, the 🍀 Just missed and 🔮 Hail Mary cards listed here never had it', /more than 12 hours old\. My YES was for those prices, not today’s, and the 🍀 Just missed and 🔮 Hail Mary cards never had it\. Check each one first/.test(v.contadora||''), v.contadora);
       const pw=await p.evaluate(()=>[...document.querySelectorAll('#cuts .pass-where .cut-list > div')].map(x=>x.textContent.trim()));
       check('"N elsewhere ▸" says how many approved bets are in ⏱ Old (and 2 to bet now: Fresh Machin, Eleven Volado)', pw.includes('2 in ⏱ Old: read more than 12 hours ago, check each price first') && pw.some(x=>/^2 to bet now: 💪 1 · 🪙 1\./.test(x)), pw);
       // a Sentinels press reads a fresh Novig price for Stale Machin: back to 💪 Machín
@@ -61,4 +61,22 @@ const ROWS=[row('a','Fresh Machin',0.62,0.58,60e3), row('b','Stale Machin',0.62,
     const w=await p.evaluate(()=>({head:((document.querySelector('#placeCards .pc-head')||{}).textContent||'').replace(/\s+/g,' '), lc:(document.getElementById('contadora')||{}).textContent||''}));
     check('v4.78: the words cover a pasted board: "press 🦑 Send the Sentinels, reload the board or paste it again"', /press 🦑 Send the Sentinels, reload the board or paste it again/.test(w.head) && /send the Sentinels, reload the board or paste it again/.test(w.lc), w);
     check('no page errors (v4.78 old)', !errs.length, errs); await ctx.close(); }
+  // v4.79 (Los Chismosos): a card turns 12 hours old while the bet editor is open. The draw waits for the editor, so the 30-second check asks
+  // for it once; it used to ask again every 30 s (a full audit each time) until the editor closed. Closing the editor moves the card.
+  { const R=[row('n','Almost Old',0.62,0.58,12*H-40e3), row('f','Fresh One',0.62,0.58,60e3)];
+    const ctx=await b.newContext({timezoneId:'America/Chicago',viewport:{width:1280,height:1000}}); await ctx.clock.install({time:new Date(NOW)});
+    await ctx.addInitScript(([R,d])=>{ try{ if(sessionStorage.getItem('s')) return; sessionStorage.setItem('s','1'); localStorage.clear(); localStorage.setItem('mbev.cfg',JSON.stringify({books:'Novig',bank:'500',cfgVer:3.03})); localStorage.setItem('mbev.cards','1'); localStorage.setItem('mbev.board',JSON.stringify({v:1,savedAt:new Date().toISOString(),slate:d,rows:R})); }catch(e){} },[R,DAY]);
+    const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
+    await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
+    await p.goto('http://app.test/'); await p.waitForTimeout(1300);
+    const tabs=()=>p.evaluate(()=>[...document.querySelectorAll('#modeBar button')].map(x=>x.textContent.replace(/\s+/g,' ').trim()));
+    const ed=await p.evaluate(()=>{ window._rr=0; const f=window.refresh; window.refresh=function(){ if(/ringRecheck/.test(new Error().stack||'')) window._rr++; return f.apply(this,arguments); };
+      const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>x.textContent.includes('Almost Old')); if(c) c.querySelector('.bet-btn').click(); return boardEditorOpen(); });
+    await p.clock.runFor(130000); await p.waitForTimeout(300);   // runFor fires every 30-second tick on the way (fastForward fires each timer once)
+    const n=await p.evaluate(()=>({calls:window._rr, open:boardEditorOpen(), old:rowOld(lastRows.find(r=>r.name==='Almost Old'))}));
+    check('v4.79: the editor is open while the card turns 12 hours old: the 30-second check asks for the redraw once, not on every tick', ed && n.open && n.old && n.calls===1, n);
+    await p.evaluate(()=>{ document.querySelectorAll('#placeCards .editor').forEach(e=>e.remove()); refresh(); }); await p.waitForTimeout(500);
+    const t=await tabs();
+    check('v4.79: the editor closed: the card moves to ⏱ Old (Old 1, Machín 1)', /^⏱ Old 1$/.test(t[5]) && /^💪 Machín 1$/.test(t[1]), t);
+    check('no page errors (editor open)', !errs.length, errs); await ctx.close(); }
   await b.close(); console.log('\n'+pass+' passed, '+fail+' failed'); process.exit(fail?1:0); })();

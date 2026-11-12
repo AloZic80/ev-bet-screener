@@ -68,6 +68,8 @@ const runs = [
   ['v4.76: Live Games finds a Novig prop saved without its game by the player’s box score; a final game settles a prop only from the final box score', 'live-player-test.js', []],
   ['v4.76: "N in the tabs ▸" lists where every approved bet is (started, already bet, can’t confirm, $0, filters, book chips), adding up to the header', 'pass-where-test.js', []],
   ['v4.77: a card whose price was read over 12 hours ago is listed under ⏱ Old; a fresh read sends it back; same stakes', 'old-prices-test.js', []],
+  ['v4.79: Polymarket US cards say what to type: Limit (not Market), YES or NO, La Contadora’s most as the limit price, whole shares, the most it costs', 'poly-strip-test.js', []],
+  ['v4.79: "No more today" means the day’s Hail Marys or near-misses are used, not the long-shot moneyline allowance', 'no-more-today-test.js', []],
   ['v4.60/v4.62: on a phone the Today’s games line, Cover bands, Show, Sort, Sport, the book chips, the tick boxes and Cards fold behind Filters, which names what is on', 'phone-filters-test.js', []],
   ['v4.63: on a phone the BettingPros panel and the Sources panel are one line each, closed when the app opens', 'phone-header-test.js', []],
   ['v4.64: on a phone the Today card is one line (day, bet, record, in play, to check), closed when the app opens', 'phone-today-test.js', []],
