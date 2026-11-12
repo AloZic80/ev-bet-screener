@@ -1,6 +1,6 @@
 # 👀 Watch list: 0xBeta Screener, live beta
 
-Ref: CC-2026-11-11-08 · Wed 2026-11-11, updated 11:20 PM, America/Chicago · Live: **v4.78**, v4.79 in testing
+Ref: CC-2026-11-11-08 · Wed 2026-11-11, updated Thu 12:00 AM, America/Chicago · Live: **v4.79** (published just before midnight; [AloZic80/ev-bet-screener#124](https://github.com/AloZic80/ev-bet-screener/pull/124))
 
 Alonzo: "we will say OK Lets put IT LIVE, but, we still need to be on top of it."
 **Live beta** means: live and usable, still a work in progress. Every change still goes through El Juez (all tests green) before it goes live. This page lists what is open; it is updated with every build.
@@ -31,7 +31,7 @@ The full review (Los Chismosos, each finding challenged by Los Desconfiados) is 
 - [ ] Wording: Suertudo's La Contadora line ("A few that just missed") and its empty-tab text still describe only the near-misses, not the Coin Flips.
 - [ ] (For ChatGiPiTiTi, above) the cover chip shows the model's chance while the tab and header use La Contadora's.
 
-## 🔍 v4.79 (in testing): what to type on Polymarket US + the v4.78 review
+## ✅ v4.79 (live): what to type on Polymarket US + the v4.78 review
 - [x] **Polymarket US strip** (the Aho bet, "High slippage"): Limit, not Market · YES / NO · limit = La Contadora's most · whole shares · Cost ≤.
 - [x] The v4.78 review: 5 confirmed (Los Chismosos found, Los Desconfiados could not refute), all fixed:
   - ⏱ Old with an editor open: the redraw was asked for every 30 s; now once.
