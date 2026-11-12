@@ -6,6 +6,21 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.83 (agreed with Sally, owner "BUILD" Thu 11/12; `agent-notes/v483-scope-agreed_2026-11-12_v1.md`): (1) `window._perfHold` set before the
+  first `refresh()` of a 🦑 press and cleared before its last one (and in `finally`): `perfNotifyCheck` returns while it is set. (2) `perfBanner`
+  takes `{k,t}` items (strings still work, key `t|…`); `perfBannerCheck` drops lines whose `pxKey` is not in the current alert list and closes
+  their Notification (`window._perfN`); `perfBannerPaint` closes an empty banner. (3) The alert list is `shown` (sport, search, Settings filters,
+  hide-started, correlated-only, sweet-only) plus the book chips, not `rows`; a filter signature change sets `window._perfQuiet[board]` = the keys
+  then in view (session only, a key leaves the quiet set when it leaves the view). (4) `mathTop` skips `rowOld`. (5) Before `applyDayLimits`:
+  `rowAwol(r)||rowOld(r)` with a stake → `r.hold={why, stake}`, `r.stake=0` (not `exClosed`, prior, order waiting, moved); `grpOf` counts a held
+  card in group 0, so it stays in its tab; `passWhere` does not count it as "$0 stake"; card "$0 · if found / if refreshed: up to $X";
+  `decisionHtml` "👻 AWOL $0" / "⏱ OLD PRICE $0"; `saidOf` AWOL / OLD PRICE; press freed/jailed treat a held card as listed. The ring needs a stake,
+  so a held card has none. (6) Slip tap: `qFailState` not unreadable for the card's own book → `r.qGone` with `tap:true` (text adds "Send the
+  Sentinels to check other books"); a later tap that finds the price near the card's clears it; a press re-decides. Tests: `v483-test` (18);
+  `awol-test`, `old-prices-test` follow rule 5. Review fixes (Los Chismosos, before publishing): the hold is set right after the v2.56 "moved"
+  line, before the game-line, player, risk, outlier, model-only and long-shot slots (its runner-up gets the money); `extrasAssign` skips a held
+  card; `_perfHold` is set before the press's network wait. Reported, not changed: an `exClosed` AWOL card keeps the v2.97 $0 with no "if found";
+  a quiet baseline is not saved, so those Perfectas can ring once after a reload.
 - v4.82 (Claude Code's own catch in the v4.81 screenshots, told to the owner before building): an AWOL card (`rowAwol`) still showed
   "◎ PERFECTA · BET NOW" and "✅ #1 MATH PICK" next to its 👻 AWOL pill. The gold ring (`placeCardHtml`, the six checks frozen and unchanged) now
   reads "◎ PERFECTA · 👻 AWOL · look at the book first" for an AWOL card, and `mathTop` skips AWOL cards (inside 👻 AWOL no card is the #1 math

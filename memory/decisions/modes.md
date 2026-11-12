@@ -20,9 +20,11 @@ Status: active · Introduced: v4.50, made exclusive in v4.51, five tabs by La Co
 - 👻 AWOL (`awol`, v4.81; Alonzo: "Those go either on OLD or a AWOL category / Tab if they can't be found anymore"): a card whose own book said, on
   the last check, that it cannot find this bet (no market at your line, not listed, nobody selling, the line moved): a 🦑 press,
   the open check after a load, or a tap on the price (`rowAwol`, `awolNote`). Busy, not mapped, "game not found", a Draw or "could not tell" are
-  our side: not AWOL. Listing only (same stake), like ⏱ Old; a check that finds it sends it back. A closed market from the open check keeps the
+  our side: not AWOL. Listing only, like ⏱ Old (since v4.83 both at $0, below); a check that finds it sends it back. A closed market from the open check keeps the
   v2.97 rule (no money) and is listed there too. AWOL comes before ⏱ Old. v4.82: an AWOL card never says BET NOW or #1 MATH PICK; its ◎ ring
   (six checks unchanged) reads "◎ PERFECTA · 👻 AWOL · look at the book first", and `mathTop` skips it.
+  v4.83 (agreed with Sally): 👻 AWOL and ⏱ Old cards are $0 and hold none of the daily max; the card shows "if found / if refreshed: up to
+  $X" (listing stays in their tab; found or refreshed, sized again from the room left). The ⏱ Old tab line stays 12 hours.
 - Inside a tab, Place these is grouped under a header per cover band (`rowBand`, `bandHead`), highest first; your sort applies inside a band.
 - Each row is listed in exactly one tab (`modeFamOf`):
   1. a bet you hold: by `prior.tier` (Just missed, Hail Mary), else by its chance if it passes, else Machín;

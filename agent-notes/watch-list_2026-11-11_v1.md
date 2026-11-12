@@ -1,6 +1,6 @@
 # 👀 Watch list: 0xBeta Screener, live beta
 
-Ref: CC-2026-11-11-08 · updated Thu 2026-11-12, about 10 AM, America/Chicago · Live: **v4.82** · Worker **v3.44**
+Ref: CC-2026-11-11-08 · updated Thu 2026-11-12, about 10 AM, America/Chicago · Live: **v4.83** · Worker **v3.44**
 
 Alonzo: "we will say OK Lets put IT LIVE, but, we still need to be on top of it."
 **Live beta** means: live and usable, still a work in progress. Every change still goes through El Juez (all tests green) before it goes live. This page lists what is open; it is updated with every build.
@@ -54,6 +54,12 @@ The full review (Los Chismosos, each finding challenged by Los Desconfiados) is 
 ## ✅ v4.82 (live): an AWOL card never says BET NOW or #1 MATH PICK
 - [x] The ring on a 👻 AWOL card reads "◎ PERFECTA · 👻 AWOL · look at the book first" (the six checks are unchanged); #1 MATH PICK skips AWOL cards.
 - [ ] For Sally (and you): should #1 MATH PICK skip ⏱ Old cards too? An old price can still be the tab's #1 there.
+
+## ✅ v4.83 (live), agreed with Sally, on "BUILD"
+- [x] 🔔 waits for a 🦑 press to finish · the open banner drops cards no longer Perfectas you can see · a quiet baseline after a filter change.
+- [x] 👻 AWOL and ⏱ Old cards are $0 and hold no daily max ("if found / if refreshed: up to $X") · #1 MATH PICK skips ⏱ Old · a tap's NO OFFER / GONE is $0 at once.
+- [ ] v4.84 (agreed, waits for BUILD): the frozen listing record on new bets, CSV columns, the "Own / unverified" Scorecard line.
+- [ ] Reported: a closed-market AWOL card has no "if found: up to $X"; a quiet baseline can ring once after a reload.
 
 ## ⏳ Open (reported by the reviewers, not changed)
 - [ ] **🔔 + filters:** the banner can announce a Perfecta your book chips or filters hide. Should the alert follow your filters? (your call)

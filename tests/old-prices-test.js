@@ -26,8 +26,8 @@ const ROWS=[row('a','Fresh Machin',0.62,0.58,60e3), row('b','Stale Machin',0.62,
     const t1=await tabs();
     if(W===1280){
       check('six tabs: ⏱ Old after 🔮 Brujo; it holds 3 (Stale Machin 13 h, Stale Brujo 5 d, the Stale Hail Hail Mary 20 h); v4.81: then 👻 AWOL (0 here)', t1.length===7 && /^👻 AWOL 0$/.test(t1[6]) && /^⏱ Old 3$/.test(t1[5]) && /^💪 Machín 1$/.test(t1[1]) && /^🪙 Volado 1$/.test(t1[2]) && /^🔮 Brujo 1$/.test(t1[4]), t1);
-      const st=await p.evaluate(()=>{ const g=n=>lastRows.find(r=>r.name===n); return {fresh:g('Fresh Machin').stake, stale:g('Stale Machin').stake, held:modeFamOf(g('Held Old')), eleven:modeFamOf(g('Eleven Volado'))}; });
-      check('listing only: Stale Machin keeps the same stake as Fresh Machin (same chance, same price)', st.stale>0 && Math.abs(st.stale-st.fresh)<1e-9, st);
+      const st=await p.evaluate(()=>{ const g=n=>lastRows.find(r=>r.name===n); return {fresh:g('Fresh Machin').stake, stale:g('Stale Machin').stake, hold:g('Stale Machin').hold||null, held:modeFamOf(g('Held Old')), eleven:modeFamOf(g('Eleven Volado'))}; });
+      check('v4.83 (agreed with Sally): Stale Machin is $0 and holds no daily max; "if refreshed: up to $X" is what Fresh Machin gets (same chance, same price)', st.stale===0 && st.hold && st.hold.why==='old' && Math.abs(st.hold.stake-st.fresh)<0.005, st);
       check('a bet you hold stays where it is (Held Old, 2 days old, already bet: 💪 Machín); 11 hours is not old (🪙 Volado)', st.held==='safe' && st.eleven==='volado', st);
       await p.evaluate(()=>setMode('old')); await p.waitForTimeout(400);
       const v=await p.evaluate(()=>{ const t=x=>x?x.textContent.replace(/\s+/g,' ').trim():null; return {cards:[...document.querySelectorAll('#placeCards .sc-card')].map(c=>(c.textContent.match(/(Fresh Machin|Stale Machin|Stale Brujo|Eleven Volado|Stale Hail|Fresh Hail|Held Old)/)||[])[1]),
@@ -36,7 +36,7 @@ const ROWS=[row('a','Fresh Machin',0.62,0.58,60e3), row('b','Stale Machin',0.62,
       check('its Place these says what YES means here: "⏱ Read more than 12 hours ago: La Contadora said YES at these prices. Check each price at the book first …"', /Place these · ⏱ old prices · 2/.test(v.heads[0]||'') && /⏱ Read more than 12 hours ago: La Contadora said YES at these prices\. Check each price at the book first/.test(v.heads[0]||''), v.heads);
       check('La Contadora says to check them first; v4.79 (Los Chismosos): her YES was for the approved cards only, the 🍀 Just missed and 🔮 Hail Mary cards listed here never had it', /more than 12 hours old\. My YES was for those prices, not today’s, and the 🍀 Just missed and 🔮 Hail Mary cards never had it\. Check each one first/.test(v.contadora||''), v.contadora);
       const pw=await p.evaluate(()=>[...document.querySelectorAll('#cuts .pass-where .cut-list > div')].map(x=>x.textContent.trim()));
-      check('"N elsewhere ▸" says how many approved bets are in ⏱ Old (and 2 to bet now: Fresh Machin, Eleven Volado)', pw.includes('2 in ⏱ Old: read more than 12 hours ago, check each price first') && pw.some(x=>/^2 to bet now: 💪 1 · 🪙 1\./.test(x)), pw);
+      check('"N elsewhere ▸" says how many approved bets are in ⏱ Old (and 2 to bet now: Fresh Machin, Eleven Volado)', pw.includes('2 in ⏱ Old: read more than 12 hours ago, $0 until refreshed (check each price first)') && pw.some(x=>/^2 to bet now: 💪 1 · 🪙 1\./.test(x)), pw);
       // a Sentinels press reads a fresh Novig price for Stale Machin: back to 💪 Machín
       fresh=true; await p.evaluate(async()=>{ await shopExchanges(); }); await p.waitForTimeout(400);
       const t2=await tabs();

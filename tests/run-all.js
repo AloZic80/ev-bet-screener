@@ -72,6 +72,7 @@ const runs = [
   ['v4.79: "No more today" means the day’s Hail Marys or near-misses are used, not the long-shot moneyline allowance', 'no-more-today-test.js', []],
   ['v4.80: near-misses not offered (👀 Watch only), ◎ Perfectas across every tab, Kalshi underdog spreads are NO, Draw cards, 🔔 a new Perfecta (banner, sound, notification)', 'v480-test.js', []],
   ['v4.81: 👻 AWOL: a card whose book cannot find the bet (a 🦑 press, the open check, a tap on the price) is listed under 👻 AWOL; a find sends it back; busy or unmapped is not AWOL', 'awol-test.js', []],
+  ['v4.83: 🔔 after a 🦑 press finishes, the open banner drops cards no longer Perfectas you can see, a quiet baseline after a filter change; ⏱ Old and 👻 AWOL at $0 (no daily max); a tap’s NO OFFER is $0 at once', 'v483-test.js', []],
   ['v4.60/v4.62: on a phone the Today’s games line, Cover bands, Show, Sort, Sport, the book chips, the tick boxes and Cards fold behind Filters, which names what is on', 'phone-filters-test.js', []],
   ['v4.63: on a phone the BettingPros panel and the Sources panel are one line each, closed when the app opens', 'phone-header-test.js', []],
   ['v4.64: on a phone the Today card is one line (day, bet, record, in play, to check), closed when the app opens', 'phone-today-test.js', []],
