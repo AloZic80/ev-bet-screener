@@ -11,7 +11,7 @@ Alonzo: "lets keep that base. but shes from Chile, so i want her to put her inpu
 | 2 | El Juez | **Don Ramiro** | the test suite | serious, no appeals |
 | 3 | El Capataz | **Claudio** | Claude Code | from "Claude" 😏 |
 | 4 | El Consultor | **ChatGiPiTiTi** | ChatGPT | Javiera's original |
-| 0 | La Contadora | **Doña Lupe** | the math (the careful chance) | counts every peso twice |
+| 0 | La Contadora | **Doña Petra** 💛 | the math (the careful chance) | Alonzo's grandmother: she lives on in every YES and NO (approved 11/11: "i approve") |
 | 5 | El Historiador | **Don Chema** | the claude.ai Project agent | keeps the receipts |
 | 6 | Los Desconfiados | **Tomás**, **Santos**, **Nacho** | the skeptic agents | Tomás = "doubting Thomas" |
 | 7 | Los Chismosos | **Chencha**, **Cuca**, **Pancho** | the reviewer agents | puro chisme |
@@ -19,7 +19,7 @@ Alonzo: "lets keep that base. but shes from Chile, so i want her to put her inpu
 
 ## ChatGiPiTiTi's proper name (the nickname stays)
 - Options from G-P-T: **Don Genaro** (GE-naro) or **Doña Genoveva** (GE-noveva). Javiera breaks the tie.
-- **Reserved, not to be used: "Doña Petra"**. It was Alonzo's grandmother's name and what everyone called her (Alonzo, 11/11).
+- **"Doña Petra"** is La Contadora's name: a tribute to Alonzo's grandmother (her name, and what everyone called her). Alonzo: "that means she still lives on" ... "i approve". It is not used for anyone else.
 
 ## Javiera's input 🇨🇱
 _(waiting: write her picks here, one by one; they win)_
