@@ -40,7 +40,7 @@ Alonzo used the whole ChatGPT allowance for the day. We kept building on what yo
   - 🔮 **Brujo** = Unlikely (under 45%) plus the Hail Marys (it was Clairvoyant).
 - Inside each tab, the bets are grouped under their band, highest first.
 - Alonzo asked what "just missed your floor" means ("Do I still bet or not?"). The cards now say it outright:
-  - approved bets: "✅ La Contadora: YES on every card here" (Place these);
+  - approved bets: "✅ La Contadora: YES. The math says bet every card here." (Place these);
   - near-misses: "🍀 La Contadora: NO · just under your floor (+0.8% vs your 1.5%) · optional, smallest bet".
 - Note: his default odds range stops at −300 (75%), so High Cover bets reach Boring only when the book prices them at 75% or less.
 - **Live Games.** A Novig player prop (Novig names no teams) said "Game not found on ESPN · Not started" while the game was in the 4th. Live Games now finds the game by the player's box score:

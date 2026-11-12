@@ -18,7 +18,7 @@ results honestly. Prices come through Alonzo's Cloudflare Worker; scores and gra
 
    Inside each tab, Place these is grouped under a header per band, highest first.
 2. **YES / NO, said outright.** He asked: "what the hell does, JUST MISSED floor by blah blah. Like, Do i Still Bet or not?"
-   - Place these now says "✅ La Contadora: YES on every card here".
+   - Place these now says "✅ La Contadora: YES. The math says bet every card here."
    - A near-miss card says "🍀 La Contadora: NO · just under your floor (+0.8% vs your 1.5%) · optional, smallest bet". The same words appear in its decision, in the 🍀 header and in the table group.
    - Example: model 50%, market 45% → La Contadora 45 + 0.35 × 5 = 46.75%. At a price of 46.38% her EV is 46.75 / 46.38 − 1 = +0.80%, under the 1.5% floor but not below 0%.
 3. **Live Games found the game.** He saw "Game not found on ESPN · Not started" for AJ Dybantsa Under 23.5 Pts+Reb (Novig, −104, $2.61) while ESPN showed WSH 101 – IND 114 in the 4th.
