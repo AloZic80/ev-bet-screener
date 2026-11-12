@@ -13,7 +13,8 @@ Status: active · Introduced: v4.50, made exclusive in v4.51, five tabs by La Co
   - 🔮 Brujo (`clair`, family `hail`; was Clairvoyant): under 45%: Unlikely, plus the Hail Marys.
 - ⏱ Old (`old`, v4.77; Alonzo: "lets not mix them with our regular tabs"): any card whose price was read more than 12 hours ago (`rowOld`, `OLD_PRICE`),
   whatever its chance, extras included. A Sentinels press or a reload that reads it fresh sends it back. A bet you hold, an order waiting or a moved line
-  stays where it is. Its Place these says La Contadora said YES at those prices: check each price first.
+  stays where it is. Its Place these says La Contadora said YES at those prices: check each price first. Since v4.78 a price read at an unknown time
+  counts from the board load, and a card that turns old with the page open moves within 30 seconds (`ringRecheck`).
 - Inside a tab, Place these is grouped under a header per cover band (`rowBand`, `bandHead`), highest first; your sort applies inside a band.
 - Each row is listed in exactly one tab (`modeFamOf`):
   1. a bet you hold: by `prior.tier` (Just missed, Hail Mary), else by its chance if it passes, else Machín;

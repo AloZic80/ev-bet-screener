@@ -1,6 +1,6 @@
 # 👀 Watch list: 0xBeta Screener, live beta
 
-Ref: CC-2026-11-11-08 · Wed 2026-11-11, 10:05 PM, America/Chicago · Live: **v4.77**
+Ref: CC-2026-11-11-08 · Wed 2026-11-11, updated late evening, America/Chicago · Live: **v4.77**, v4.78 in testing
 
 Alonzo: "we will say OK Lets put IT LIVE, but, we still need to be on top of it."
 **Live beta** means: live and usable, still a work in progress. Every change still goes through El Juez (all tests green) before it goes live. This page lists what is open; it is updated with every build.
@@ -20,7 +20,7 @@ Alonzo: "we will say OK Lets put IT LIVE, but, we still need to be on top of it.
 - [ ] Should Live Games **save** the game it finds for a bet that came without one?
 - [ ] The CSV "mode" column, swap cards with NO OFFER, and Part B (the Worker's completeness flag). These are older questions.
 
-## 🔍 Known, small, not fixed yet: the v4.78 polish build
+## 🔍 The v4.78 polish build (in testing): the items below are fixed in it, except the cover chip (Sally's question)
 The full review (Los Chismosos, each finding challenged by Los Desconfiados) is in: **21 confirmed, 3 refuted**. Most were fixed in v4.77. Still open, all labels, listing or Live Games (no stake, no grade):
 - [ ] **⏱ Old, unknown read time:** a price whose read time is "unknown" (some cached answers) never reaches ⏱ Old. Fix: count it from the board load time.
 - [ ] **⏱ Old, page left open:** a card that turns 12 hours old waits for the next redraw to move. Fix: the 30-second check also moves it.
@@ -30,6 +30,9 @@ The full review (Los Chismosos, each finding challenged by Los Desconfiados) is 
 - [ ] **On a pasted sportsbook board**, ⏱ Old says "press the Sentinels or reload", but only pasting the board again refreshes those prices. Each card's ⏱ tooltip already says so.
 - [ ] Wording: Suertudo's La Contadora line ("A few that just missed") and its empty-tab text still describe only the near-misses, not the Coin Flips.
 - [ ] (For ChatGiPiTiTi, above) the cover chip shows the model's chance while the tab and header use La Contadora's.
+
+## 🔍 Still open after v4.78
+- [ ] Grading, before v4.76: a prop with no teams is graded from the first finished game that lists the player, with no check for a second game with the same name. Live Games now refuses to guess. Question 8 for Sally.
 
 ## 🗓️ Planned
 - [ ] **Weekend:** the live crew progress page (original animated crew, a progress bar per job).
