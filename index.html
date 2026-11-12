@@ -3226,7 +3226,7 @@ function rowOld(r){ if(!r || r.prior || r.waitOrder || r.moved) return false; co
    It is listed under 👻 AWOL, whatever its chance; a check that finds it sends it back. Busy, not mapped, a Draw or "could not tell" are on our
    side, not the book's: not AWOL. A bet you hold, an order waiting or a moved line stays where it is. Listing only: same stake, same daily max. */
 function awolNote(note){ const t=String(note||''); return /no market at your line|no offer to buy|not listed|lists .+ — not your|no full-game .+ open|no .+ outcome — not opening/i.test(t) && !/busy|mapped|not matched|Draw: not read|no live source|couldn.t tell|game not found/i.test(t); }   /* v4.81 (Los Chismosos): "game not found" also comes from our side (a league the Worker does not read, the wrong series): not AWOL */
-function rowAwol(r){ if(!r || r.prior || r.waitOrder || r.moved) return false; return !!(r.exClosed || (r.awol && LIVE_BOOK(r.awol.book)===LIVE_BOOK(r.book))); }
+function rowAwol(r){ if(!r || r.prior || r.waitOrder || r.moved) return false; return !!((r.exClosed && (!r.exClosedBook || LIVE_BOOK(r.exClosedBook)===LIVE_BOOK(r.book))) /* v4.81: the book that said it */ || (r.awol && LIVE_BOOK(r.awol.book)===LIVE_BOOK(r.book))); }
 function awolWhy(r){ const w=r.exClosed ? String(r.exClosed) : r.awol ? (r.awol.hint ? String(r.awol.hint) /* your tap: which game to pick */ : bookLabel(r.book)+': '+String(r.awol.note||'').replace(/^(Kalshi|Polymarket|Novig):\s*/,'')) : ''; return w+(r.awol && r.awol.at && !r.exClosed ? ' ('+ageTxt(Date.now()-r.awol.at)+' ago)' : ''); }
 function awolPill(r){ return rowAwol(r) ? '<span class="sc-pill awol" title="'+esc(awolWhy(r))+'. A 🦑 Sentinels press that finds it sends it back to its tab.">👻 AWOL · '+esc(awolWhy(r))+'</span>' : ''; }   /* v4.81 */
 function modeFamOf(r){ if(!r) return 'safe';
@@ -5148,7 +5148,7 @@ async function checkExchangeOpen(rows){
       if(q.ok){ delete r.exClosed; delete r.awol; /* v4.81: found */ if(suspectQ(q,r.fairProb,r.offeredProb,r.mktProb)) return; r.exOpen={p:q.price, at:Date.now()}; liveQuotes[d.id]=q; r._openQ=q; return; }
       const note=String(q.note||'');
       // closed only when the book answered about THIS market; unmapped stats / lookup errors leave it open
-      if(/no offer to buy|no market at your line|not listed|lists .* not your/i.test(note)) r.exClosed=note.replace(/^(Kalshi|Polymarket|Novig):\s*/,bookLabel(r.book)+': ');
+      if(/no offer to buy|no market at your line|not listed|lists .* not your/i.test(note)){ r.exClosed=note.replace(/^(Kalshi|Polymarket|Novig):\s*/,bookLabel(r.book)+': '); r.exClosedBook=r.book; /* v4.81: which book said it */ }
       else { delete r.exClosed; if(awolNote(note)) r.awol={book:r.book, note, at:Date.now()}; }   /* v4.81: e.g. "game not found": 👻 AWOL */ });
   }
 }
@@ -10846,7 +10846,7 @@ document.addEventListener('click', async e=>{
     if(!(q && q.ok)){ miss=isDrawRow(obj) ? 'The app does not read Draw prices at '+(BOOK_NAME[src]||'the book')+' yet: find the Draw for '+gameHintOf(obj)+' yourself' /* v4.81 (Los Chismosos) */ : (BOOK_NAME[src]||'The book')+' did not find this exact game. Pick '+gameHintOf(obj)+', not another game of the same team';   // v4.15
       const note=host.querySelector('.pp-open'); if(note){ note.textContent='⚠ '+miss; note.style.color='var(--warn)'; }
       if(slipRow && q && awolNote(q.note) && LIVE_BOOK(slipRow.book)===src){ slipRow.awol={book:slipRow.book, note:String(q.note), hint:miss, at:Date.parse(q.at)||Date.now()}; setTimeout(()=>{ try{ refresh(); }catch(_e){} }, 800); } }   /* v4.81: the book could not find it: the card goes to 👻 AWOL */
-    else if(slipRow && (slipRow.awol || slipRow.exClosed) && LIVE_BOOK(slipRow.book)===src){ delete slipRow.awol; delete slipRow.exClosed; /* v4.81: found */ setTimeout(()=>{ try{ refresh(); }catch(_e){} }, 800); } } }catch(_){}
+    else if(slipRow && (slipRow.awol || slipRow.exClosed) && LIVE_BOOK(slipRow.book)===src && !(p0!=null && Math.abs(q.price-p0)>SLIP_GUARD) /* v4.81: a price far from the card may be another market: not a find */){ delete slipRow.awol; delete slipRow.exClosed; /* v4.81: found */ setTimeout(()=>{ try{ refresh(); }catch(_e){} }, 800); } } }catch(_){}
   if(isPhone()){ slipReady(url, src, miss); return; }   // v4.04
   if(w) w.location.href=url; else location.href=url;
 }, true);

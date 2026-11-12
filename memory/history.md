@@ -14,6 +14,13 @@ New builds add their line at the top of the right section.
   after `decide`: a hit for the card's book clears it), the open check (other notes) and your tap on the price (`slipRow`). `modeFamOf`: AWOL
   before ⏱ Old. Listing only (same stake). The card shows `awolPill` ("👻 AWOL · Novig: no market at your line (3m ago)"). The Game Hub says
   AWOL. Tests: `awol-test` (19); `old-prices`, `tabs-v476` count seven tabs; `floor-watch` follows near-misses A (v4.80, published together).
+  Review fixes before publishing (Los Chismosos, confirmed by Los Desconfiados): AWOL is decided after every move of a 🦑 press (the Kalshi fee
+  check can move a card back) and for book-swap cards; "game not found" is our side (the Worker says it for a league it does not read or the
+  wrong series), so not AWOL; Show › ◎ Perfectas never lists an AWOL or ⏱ Old card and uses its own words, its empty text says the filters
+  apply; a near-miss keeps `xc:'lucky'` (offer gated by `EXTRAS.nearMiss`), so one placed anyway is saved as tier lucky (out of the Scorecard);
+  🔔 words name the button and market on Kalshi / Polymarket (`kalshiHow` / `polyHow`), the game of a total, round the safe way; "Show them"
+  opens the board it came from; Chrome for Android (no page notifications) is said so; the seen list is kept in memory too; the sound wakes on
+  touchend / click; Kalshi / Polymarket team lookup with `normAbbr` (GSW→GS …); a Draw tap says Draws are not read; the AWOL pill wraps.
 - v4.80 (owner, Thu 11/12 morning: "Yes all across. And what you seems better."): near-misses option A: `EXTRAS.nearMiss=false` stops `extrasAssign`
   giving `xc:'lucky'`, so no 🍀 Just missed offers (no near-miss stake); the rows stay 👀 Watch records; `contadoraText` / `CONTADORA.luckyNM` and
   `modeEmptyText` follow the switch (tests that cover the machinery set it true). Show › ◎ Perfectas lists the 6-of-6 bets of every tab (the

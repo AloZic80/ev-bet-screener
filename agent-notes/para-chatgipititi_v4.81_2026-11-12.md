@@ -50,4 +50,14 @@ No floor, fee, Kelly, cap or grading rule changed.
 
 ## Questions for you
 1. **AWOL keeps its stake** (listing only), like ⏱ Old. So an AWOL card still uses part of the daily max until a check finds it or the board reloads. Should AWOL (and ⏱ Old) stop counting toward the daily max? This is the same open question as for ⏱ Old, and nothing is built until you and Alonzo agree.
-2. **"Game not found"** counts as AWOL. On Kalshi it can also be our own code mismatch (college teams; Worker v3.43 now also searches by team names). Should "game not found" be AWOL, or treated as our side?
+2. **"Game not found"** is treated as our side, not AWOL (changed before publishing, after the reviewers showed the Worker also says it for a league it does not read, or after searching the wrong series). Do you agree?
+
+## Also fixed before publishing (the reviewers read v4.80 and v4.81)
+- AWOL is decided after every move of a 🦑 press. Before this, the Kalshi fee check could move a card back to the book that had just said it cannot find it.
+- Show › ◎ Perfectas never lists an AWOL or ⏱ Old card, uses its own words, and its empty text says the filters apply.
+- A near-miss keeps its kind: one placed anyway is saved as a near-miss and stays out of the Scorecard.
+- 🔔 notifications:
+  - the words name the button on Kalshi or Polymarket ("press NO on CAR wins by over 1.5 · a Limit at 66¢, not Market") and the game of a total;
+  - sportsbook odds are rounded the safe way;
+  - "Show them" opens the board the alert came from;
+  - a phone browser without page notifications (Chrome for Android) is told so.
