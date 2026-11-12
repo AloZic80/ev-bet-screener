@@ -44,7 +44,9 @@ const WANT={boring:['Alpha Boring','Bravo Heavy'], safe:['Charlie Strong','Delta
     await ctx.addInitScript(([R,d])=>{ try{ if(sessionStorage.getItem('s')) return; sessionStorage.setItem('s','1'); localStorage.clear(); localStorage.setItem('mbev.cfg',JSON.stringify({books:'Novig',bank:'500',cfgVer:3.03})); localStorage.setItem('mbev.cards','1'); localStorage.setItem('mbev.board',JSON.stringify({v:1,savedAt:new Date().toISOString(),slate:d,rows:R})); }catch(e){} },[[row('g','Golf Coin',0.47), NEAR],DAY]);
     const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
     await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
-    await p.goto('http://app.test/'); await p.waitForTimeout(1300); await p.evaluate(()=>setMode('lucky')); await p.waitForTimeout(400);
+    await p.goto('http://app.test/'); await p.waitForTimeout(1300);
+    await p.evaluate(()=>{ EXTRAS.nearMiss=true; refresh(); }); await p.waitForTimeout(300);   /* v4.80: near-miss offers are off by default (owner: option A); this block keeps their machinery covered with them on */
+    await p.evaluate(()=>setMode('lucky')); await p.waitForTimeout(400);
     const v=await p.evaluate(()=>{ const t=x=>x?x.textContent.replace(/\s+/g,' ').trim():null, near=lastRows.find(r=>r.name==='India Near'), golf=lastRows.find(r=>r.name==='Golf Coin');
       const card=[...document.querySelectorAll('#placeCards .sc-card')].find(c=>/India Near/.test(c.textContent));
       return {heads:[...document.querySelectorAll('#placeCards .pc-head')].map(t), band:t(card&&card.querySelector('.sc-xtop')), dec:t(card&&card.querySelector('.sc-dec')),
