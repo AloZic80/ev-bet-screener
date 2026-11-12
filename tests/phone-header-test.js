@@ -32,7 +32,7 @@ const txt=(p,id)=>p.evaluate(id=>document.getElementById(id).textContent.replace
   check('your bets come up '+(old-pos.board)+' px sooner on the page (the board starts at '+pos.board+' px instead of '+old+' px)', old-pos.board>=250, {now:pos.board, open:old});
   // v4.65: the board count box is one line too
   const sbV=await seen(p,['sbFoldBtn','count','cuts']), sbT=await txt(p,'sbFoldBtn');
-  check('phone (v4.65): the box with the count is one line, "Board 1 of 1 pass ▾"; the big number and the skipped list are folded away', sbV.sbFoldBtn && sbV.count===false && /^Board\s*1 of 1 pass\s*▾$/.test(sbT), {sbV, sbT});
+  check('phone (v4.65): the box with the count is one line, "Board 1 of 1 pass ▾" (v4.77, Alonzo: "i want only live bets i can get": "Board 1 of 1 to bet now ▾"); the big number and the skipped list are folded away', sbV.sbFoldBtn && sbV.count===false && /^Board\s*1 of 1 to bet now\s*▾$/.test(sbT), {sbV, sbT});
   await p.evaluate(()=>{ const a=document.getElementById('alerts'); a.innerHTML='<span class="alert dupe">2 already bet</span>'; a.style.display='flex'; document.getElementById('countNote').textContent='pass · of 2223'; document.getElementById('count').textContent='51'; });
   await p.waitForTimeout(100);
   const sbT2=await txt(p,'sbFoldBtn'), red=await p.evaluate(()=>{ const e=document.querySelector('#sbFoldBtn .hf-bad'); return e?getComputedStyle(e).color===getComputedStyle(document.querySelector('#alerts .alert.dupe')).color:false; });

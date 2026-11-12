@@ -23,7 +23,7 @@ const WANT={boring:['Alpha Boring','Bravo Heavy'], safe:['Charlie Strong','Delta
     await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
     await p.goto('http://app.test/'); await p.waitForTimeout(1300);
     const tabs=await p.evaluate(()=>[...document.querySelectorAll('#modeBar button')].map(x=>x.textContent.replace(/\s+/g,' ').trim()));
-    check(W+' px: five tabs, highest chance first: Boring, Machín, Volado, Suertudo, Brujo, each with its count (2, 2, 2, 1, 1)', tabs.length===5 && /^😴 Boring 2$/.test(tabs[0]) && /^💪 Machín 2$/.test(tabs[1]) && /^🪙 Volado 2$/.test(tabs[2]) && /^🍀 Suertudo 1$/.test(tabs[3]) && /^🔮 Brujo 1$/.test(tabs[4]), tabs);
+    check(W+' px: five tabs, highest chance first: Boring, Machín, Volado, Suertudo, Brujo, each with its count (2, 2, 2, 1, 1); v4.77: then ⏱ Old, 0 here (every price is a minute old)', tabs.length===6 && /^⏱ Old 0$/.test(tabs[5]) && /^😴 Boring 2$/.test(tabs[0]) && /^💪 Machín 2$/.test(tabs[1]) && /^🪙 Volado 2$/.test(tabs[2]) && /^🍀 Suertudo 1$/.test(tabs[3]) && /^🔮 Brujo 1$/.test(tabs[4]), tabs);
     const pass0=await p.evaluate(()=>lastRows.every(r=>r.pass && r.stake>0));
     check(W+' px: all eight bets are approved with a stake (stakes are not changed by the tab)', pass0, pass0);
     const look=()=>p.evaluate(()=>({cards:[...document.querySelectorAll('#placeCards .sc-card')].map(c=>(c.textContent.match(/(Alpha Boring|Bravo Heavy|Charlie Strong|Delta Lean|Echo Slight|Foxtrot Line|Golf Coin|Hotel Unlikely)/)||[])[1]),
@@ -54,6 +54,13 @@ const WANT={boring:['Alpha Boring','Bravo Heavy'], safe:['Charlie Strong','Delta
     check('the 🍀 header says NO first: "La Contadora: NO. The model likes these … not best bets. Optional …"', /^🍀 Just missed · 1 ?La Contadora: NO\. The model likes these, but with the market her EV is under your 1\.5% floor \(still 0% or better\): not best bets\. Optional: if you want a few, the smallest bet each/.test(v.heads[1]||''), v.heads[1]);
     check('the card says it outright: "🍀 La Contadora: NO · just under your floor (+0.8% vs your 1.5%) · optional, smallest bet"', v.band==='🍀 La Contadora: NO · just under your floor (+0.8% vs your 1.5%) · optional, smallest bet', v.band);
     check('its decision says the same under "🍀 JUST MISSED $"', /🍀 JUST MISSED \$\d+\.\d\d ?La Contadora: NO · just under your floor \(\+0\.8% vs your 1\.5%\) · optional, smallest bet/.test(v.dec||''), v.dec);
+    /* v4.77 (Los Chismosos): Suertudo also lists approved Coin Flips, so its line counts only the near-misses; an empty Machín says where the bets are */
+    const cnt=await p.evaluate(()=>(document.getElementById('contadora')||{}).textContent||'');
+    check('v4.77: Suertudo\'s line counts only the near-miss: "🍀 1 just missed on the board" (Golf Coin is an approved Coin Flip, not a near-miss)', /🍀 1 just missed on the board/.test(cnt) && !/🍀 2 just missed/.test(cnt), cnt);
+    await p.evaluate(()=>setMode('safe')); await p.waitForTimeout(300);
+    const em=await p.evaluate(()=>({empty:(document.getElementById('emptyMsg')||{}).textContent||''}));
+    check('v4.77: 💪 Machín has nothing but Suertudo has 2: it says "💪 Machín lists the bets La Contadora approves at 60 to 75%, and none is on the board right now … 🍀 Suertudo has 2 (1 just missed)", not "Every bet failed a screen"', /💪 Machín lists the bets La Contadora approves at 60 to 75%, and none is on the board right now/.test(em.empty) && /🍀 Suertudo has 2 \(1 just missed\)/.test(em.empty) && !/Every bet failed/.test(em.empty), em);
+    await p.evaluate(()=>setMode('lucky')); await p.waitForTimeout(300);
     await p.evaluate(()=>{ localStorage.setItem('mbev.cards','0'); }); await p.uncheck('#cardsOn').catch(()=>{}); await p.evaluate(()=>{ refresh(); }); await p.waitForTimeout(300);
     const g=await p.evaluate(()=>[...document.querySelectorAll('#tbody tr.group-row:not(.band-row)')].map(x=>x.textContent.replace(/\s+/g,' ').trim()));
     check('the table view: "Place these · 1 · ✅ La Contadora: YES" and "🍀 Just missed · La Contadora: NO, just under your floor · optional …"', g.includes('Place these · 1 · ✅ La Contadora: YES') && g.some(x=>/^🍀 Just missed · La Contadora: NO, just under your floor · optional: the smallest bet each, up to \d+ a day · 1$/.test(x)), g);

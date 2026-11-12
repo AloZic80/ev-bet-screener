@@ -6,6 +6,22 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.77 (owner, 11/11: "put the older bets in another category. or Tab in itself. If sentinels takes them out of jail, then good. but, lets not mix them
+  with our regular tabs"): `rowOld(r)` = the price (`rowSeenAt`: load, Sentinels answer, swap) read more than `OLD_PRICE.ms` (12 h) ago, not a bet you
+  hold, an order waiting or a moved line. `modeFamOf` gives 'old' before the extras and the chance tabs; `MODES.old` (⏱ Old, offers both extras,
+  only the old ones listed), `famNow`, `mN.old`, `passWhere` ("N in ⏱ Old"), `modeElse`, `modeEmptyText`, `CONTADORA.old`, the Place these head and the
+  table label ("La Contadora said YES at these prices. Check each price at the book first"), the Game Hub's See on Board. A Sentinels press re-reads every
+  row, so a fresh answer sends the card back. Listing only: stakes and the daily max unchanged (the daily-max question is ChatGPT's).
+- v4.77 also (owner, 11/11: "are those on jail and passed bets part of the 72? i hope not ... i want only live bets i can get. if anything, add where
+  they are...in jail, etc."): `#count` = `passW.now` (approved bets in the tabs, not ⏱ Old) with "to bet now · of N"; "N elsewhere ▸" (`passWhereHtml`)
+  lists the other approved bets by where they are, plus `W.jail` (rows with `r.jailed`, 🔒 Skipping Jail, counted in the skipped). The phone fold reads
+  "to bet now" too. Review fixes (Los Chismosos, confirmed by El Capataz): `mN.xL`/`mN.xH` count the extras alone (Suertudo also lists approved Coin
+  Flips: "🍀 2 just missed" was 1 near-miss + 1 Coin Flip); an approved long shot offered as a Hail Mary is in the tabs, not "$0 stake"; a removed bet is
+  its own line; an empty Machín says where the bets are; "Back to 💪 Machín at midnight" (Brujo only); "Best first on Sort › Math, band by band"; the
+  #1 MATH PICK is the best edge in this tab. Live Games: `liveGameByPlayer` re-reads a box score without the player at most once a minute
+  (`liveByPlayerAt`; NFL lists a player after his first stat), takes the game that starts at the book's time when two list the name, and makes no
+  guess while another game in the window has not started; `liveStatus` says "Not started" when the start is still ahead; `renderLive` reads the
+  scoreboards once (`SB`) before the loop. Not done (reported): Game Hub cards and the scores strip still find a bet's game by team codes only.
 - v4.76 also (owner, 11/12: "i see 72, but the rest? ... 6 + 1 + 27 ... doesnt equal 72"): `passWhere` (in `renderCore`, where `mN` is counted) puts each
   approved row under the first reason it is not in a tab: other board (paste/API), duplicate, already bet / order waiting, started or closed, can't
   confirm (no ESPN start), $0 stake, filters (sport, search, Settings, only my games, only sweet spot), book chips; else in the tabs by family.

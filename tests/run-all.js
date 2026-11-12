@@ -67,6 +67,7 @@ const runs = [
   ['v4.76: five tabs by La Contadora’s chance (Boring, Machín, Volado, Suertudo, Brujo), band headers inside; La Contadora YES / NO said outright', 'tabs-v476-test.js', []],
   ['v4.76: Live Games finds a Novig prop saved without its game by the player’s box score; a final game settles a prop only from the final box score', 'live-player-test.js', []],
   ['v4.76: "N in the tabs ▸" lists where every approved bet is (started, already bet, can’t confirm, $0, filters, book chips), adding up to the header', 'pass-where-test.js', []],
+  ['v4.77: a card whose price was read over 12 hours ago is listed under ⏱ Old; a fresh read sends it back; same stakes', 'old-prices-test.js', []],
   ['v4.60/v4.62: on a phone the Today’s games line, Cover bands, Show, Sort, Sport, the book chips, the tick boxes and Cards fold behind Filters, which names what is on', 'phone-filters-test.js', []],
   ['v4.63: on a phone the BettingPros panel and the Sources panel are one line each, closed when the app opens', 'phone-header-test.js', []],
   ['v4.64: on a phone the Today card is one line (day, bet, record, in play, to check), closed when the app opens', 'phone-today-test.js', []],
