@@ -29,6 +29,7 @@ const ROWS=[row('lek','Jonathan Lekkerimaki','Novig',0.519,0.5546,0.526),
   check('a price of 53.5%: the model would say OK, the blend says "need ≤ 52.8% · look elsewhere"', /^53\.5% · need ≤ 52\.8% · look elsewhere$/.test(m.mid), m.mid);
   check('with no market price the model\'s own limit stays: OK to 54.6%', /OK to 54\.6%$/.test(m.nomkt), m.nomkt);
   check('Kalshi: the limit price comes from the blend, lower than the model\'s', m.kxOk<m.kxModel && m.kxOk>0.5, [m.kxOk,m.kxModel]);
+  await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(300);   /* v4.76: the approved bets are split into the tabs by La Contadora's chance: Quinn Hughes (58%), Lekkerimaki (53.6%) and Pettersson (55.5%) are under 🪙 Volado (50 to 60%), not the default 💪 Machín; the Kalshi card and the Place these head below are read there */
   const kx=await p.evaluate(()=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>/Quinn Hughes/.test(x.textContent)); const k=c&&c.querySelector('.sc-kx'); return k?k.textContent:null; });
   const lim=Math.floor(m.kxOk*100+1e-9);
   check('the Kalshi line on the card says Limit '+lim+'¢ (the blend\'s, in whole cents rounded down)', kx && kx.includes('Limit '+lim+'¢'), kx);

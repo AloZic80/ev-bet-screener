@@ -45,6 +45,7 @@ const ROSTERS={   // ESPN: football comes in groups, basketball flat
     if(/a\.espncdn\.com\//.test(u)) return r.fulfill({contentType:'image/png',body:PNG});
     return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(2500);
+  await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(2500);   /* v4.76: every sample prop is at La Contadora 57.4% (model 60%, market 56%: min(.60, .56 + .35 × .04)), so its card is under 🪙 Volado (50–60%), not the opening tab; rosters are asked for once the cards are on screen */
   const cards=await p.evaluate(()=>[...document.querySelectorAll('#placeCards .pcard')].map(c=>{ const box=c.querySelector('[data-pcidx]'), r=lastRows.find(x=>x.idx===+(box&&box.dataset.pcidx)); const img=c.querySelector('img.pc-hs');
     return {name:r&&r.name, src:img?img.getAttribute('src'):null, logo:!!c.querySelector('img.pc-cl'), loaded:img?img.complete&&img.naturalWidth>0:null}; }));
   const C=n=>cards.find(x=>x.name===n)||{};
@@ -58,7 +59,7 @@ const ROSTERS={   // ESPN: football comes in groups, basketball flat
   check('Jr. handled, FantasyPros fallback to ESPN (Marvin Harrison Jr.)', C('Marvin Harrison Jr.').src===ROSTERS['football/nfl/22'].athletes[0].items[0].headshot.href, C('Marvin Harrison Jr.'));
   const uniq=new Set(rosterHits);
   check('each team roster asked once, even ones ESPN does not have', rosterHits.length===uniq.size && uniq.size===14, rosterHits.length+' calls, '+uniq.size+' teams');
-  await p.reload(); await p.waitForTimeout(2000);
+  await p.reload(); await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(2000);   /* v4.76: the same 7 cards on screen again (Volado), so a missing roster would be asked for */
   check('rosters are kept on the device: no new calls after a reload', rosterHits.length===uniq.size, rosterHits.length);
   // the same pictures on the board's rows (cards off), the Parlays picks and the Bet log
   await p.evaluate(()=>{ const c=document.getElementById('cardsOn'); c.checked=false; c.dispatchEvent(new Event('change')); });

@@ -17,6 +17,7 @@ const LOG=[B('a',20),B('b',28)];
   const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
   await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/api\.0xbeta\.dev/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1200);
+  await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(300);   /* v4.76: both sample props are approved at La Contadora 55.35% (min(.56, .55 + .35 × .01)), so their cards are under 🪙 Volado (50–60%), not the opening tab; the Gobert check below reads Place these there too */
   const open=async n=>{ const r=await p.evaluate(n=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>x.textContent.includes(n)); if(!c) return {card:false, cards:document.querySelectorAll('#placeCards .sc-card').length, stat:(document.querySelector('.statbox')||{}).innerText, rows:lastRows.map(r=>r.name+':'+(r.flags||[]).map(f=>f[1].slice(0,40)).join('|'))}; const b=c.querySelector('.sc-act .bet-btn'); if(!b) return {card:true, btn:false, html:c.innerText.slice(0,200)}; b.click(); return {card:true, btn:true}; }, n);
     for(let i=0;i<10;i++){ if(await p.evaluate(()=>!!document.querySelector('#placeCards .editor .eb-save'))) break; await p.waitForTimeout(200); }
     if(!(await p.evaluate(()=>!!document.querySelector('#placeCards .editor .eb-save')))) console.log('  editor not open:', JSON.stringify(r)); };
@@ -30,6 +31,7 @@ const LOG=[B('a',20),B('b',28)];
   const gob=await p.evaluate(()=>{ const r=lastRows.find(x=>/Gobert/.test(x.name)); return {card:[...document.querySelectorAll('#placeCards .sc-card')].some(c=>/Gobert/.test(c.textContent)), flags:(r.flags||[]).map(f=>f[1]).join(' | ')}; });
   check('the day is at $51 now: the board itself keeps the next bet out of Place these (daily max reached)', !gob.card && /daily max reached/.test(gob.flags), gob);
   await p.evaluate(()=>{ const L=JSON.parse(localStorage.getItem('mbev.log')); L.splice(0,2); localStorage.setItem('mbev.log',JSON.stringify(L)); }); await p.reload(); await p.waitForTimeout(1200);
+  await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(300);   /* v4.76: Gobert's card is under 🪙 Volado (55.35%) after the reload too */
   await open('Rudy Gobert'); await setStake('1.5'); await save(); st=await state();
   check('with $3 staked today, a $1.50 bet saves on the first press (no stop)', !st.open && st.n===2, st);
   check('no page errors', !errs.length, errs);

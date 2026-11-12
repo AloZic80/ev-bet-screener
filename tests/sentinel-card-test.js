@@ -30,8 +30,9 @@ const PX={[key('rui hachimura','4 5 rebounds','O',NOW+7*H)]:[[t-50,0.405,0.40],[
     const card=n=>p.evaluate(n=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>x.textContent.includes(n)); if(!c) return null; const d=c.querySelector('details.sc-why'), r=c.getBoundingClientRect();
       return {text:c.innerText.replace(/\s+/g,' '), score:parseInt((c.querySelector('.sc-score')||{}).textContent,10),   /* v4.28: the score is followed by its word */ open:!!(d&&d.open), price:(c.querySelector('.sc-price')||{}).className, bet:!!c.querySelector('.sc-act .bet-btn'), w:Math.round(r.width), right:Math.round(r.right),
         age:(c.querySelector('.sc-pill.age')||{}).className||'', mv:(c.querySelector('.sc-pill.mv')||{}).textContent||'', chart:!!c.querySelector('.sc-svg .l-p'), leg:(c.querySelector('.sc-leg')||{}).textContent||''}; }, n);
-    const N=await card('Naz Reid');   // a lean (54%): 🛡️ Safe
-    await p.evaluate(()=>setMode('clair')); await p.waitForTimeout(400);   /* v4.74: Rui (39.5%, an approved long shot) is listed under 🔮 Clairvoyant */
+    await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(400);   /* v4.76: Naz (La Contadora 54.2%, 50 to 60%) is listed under 🪙 Volado, no longer under the default tab (was 🛡️ Safe) */
+    const N=await card('Naz Reid');   // a lean (54%): 🪙 Volado (v4.76; was 🛡️ Safe)
+    await p.evaluate(()=>setMode('clair')); await p.waitForTimeout(400);   /* v4.74: Rui (39.5%, an approved long shot) is listed under 🔮 Clairvoyant */   /* v4.76: 🔮 Brujo now (was Clairvoyant); La Contadora 39.7%, under 45% */
     const R=await card('Hachimura');
     if(W===390){
       check('the short card: score, book + La Contadora’s EV after fees (+5.5%; v4.53: it showed the model’s +6.4%), ⏱ 55s, kickoff and game, who / what, the bet, stake, pays, price chip, I bet this', R && R.score>0 && /\+5\.5%/.test(R.text) && !/\+6\.4%/.test(R.text) && /⏱ 5\ds/.test(R.text) && /Today 7:50 PM CT/.test(R.text) && /Los Angeles @ Minnesota/.test(R.text) && /Rui Hachimura LAC/.test(R.text) && /Rebounds/.test(R.text) && /Over 4\.5/.test(R.text) && /\$\d+\.\d\d pays \$\d+\.\d\d/.test(R.text) && /\+178 36¢/.test(R.text) && R.bet, R&&R.text);
@@ -63,7 +64,7 @@ const PX={[key('rui hachimura','4 5 rebounds','O',NOW+7*H)]:[[t-50,0.405,0.40],[
       const n1=await p.evaluate(()=>pxSeries(lastRows.find(x=>/Naz/.test(x.name))).length);
       check('a new price is saved for the chart (one more point)', n1===n0+1, {n0, n1});
       // a price read live by the Sentinels makes it fresh
-      await p.evaluate(()=>{ const r=lastRows.find(x=>/Naz/.test(x.name)); r._liveAt=Date.now(); setMode('safe'); }); await p.waitForTimeout(400);   /* v4.74: back to Safe, where Naz (a lean) is listed */
+      await p.evaluate(()=>{ const r=lastRows.find(x=>/Naz/.test(x.name)); r._liveAt=Date.now(); setMode('volado'); }); await p.waitForTimeout(400);   /* v4.74: back to Safe, where Naz (a lean) is listed */   /* v4.76: back to 🪙 Volado, where Naz (54.2%) is listed now */
       const N2=await card('Naz Reid');
       check('after a live check the age is "⏱ 0s" and no longer old', /⏱ 0s/.test(N2.text) && !/\bold\b/.test(N2.age), N2.age);
       // I bet this opens under the buttons

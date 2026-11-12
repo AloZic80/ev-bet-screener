@@ -21,6 +21,7 @@ const ROWS=T.map((t,i)=>({name:t,team:t,game:'X'+i+' @ '+t,matchup:t+' vs X'+i,s
     await p.addStyleTag({content:'body{padding-bottom:2400px}'});   // room below, like a full board
     if(safari) await p.addStyleTag({content:'html,body,*{overflow-anchor:none !important}'});   // Safari (iPhone, Mac) has no scroll anchoring: the page jumps as the board is rebuilt
     await p.evaluate(()=>{ const i=document.getElementById('books'); i.value='Kalshi'; i.dispatchEvent(new Event('input',{bubbles:true})); }); await p.waitForTimeout(800);
+    await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(400);   /* v4.76: the 12 bets (La Contadora 55%, 50 to 60%) are listed under 🪙 Volado; the redraws below keep it (cfgRead reads the tab) */
     const sel=cards?'#placeCards .sc-card':'#tbody tr';
     // scroll so the 7th bet sits near the top of the screen
     const before=await p.evaluate(sel=>{ const T=/(AKR|BGSU|BALL|KENT|TOL|NIU|EMU|WMU|CMU|OHIO|BUFF|MASS)/, all=[...document.querySelectorAll(sel)].filter(e=>T.test(e.textContent) && e.querySelector('[data-idx]'));

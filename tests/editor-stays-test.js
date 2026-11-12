@@ -18,6 +18,7 @@ const ROWS=[row(), row({name:'Akron Zips',team:'AKR',game:'AKR @ KENT',matchup:'
     const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
     await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
     await p.goto('http://app.test/'); await p.waitForTimeout(1500);
+    await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(300);   /* v4.76: both bets (model = market: M-OH 55.1%, AKR 55%) are 🪙 Volado bets (50 to 60%), not in the opening tab, 💪 Machín; the redraws below keep it (cfgRead reads the tab) */
     const nCards=await p.evaluate(()=>document.querySelectorAll('#placeCards .pcard').length);
     // open I bet this on the second card, type a stake
     await p.evaluate(()=>{ const c=[...document.querySelectorAll('#placeCards .pcard')].find(x=>/AKR @ KENT/.test(x.textContent)); c.scrollIntoView({block:'center'}); (c.querySelector('.bet-btn')).click(); });

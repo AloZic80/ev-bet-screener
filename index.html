@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.75</title>
+<title>0xBeta Screener v4.76</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1456,6 +1456,10 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
   .hd-fold .hf-look{color:var(--warn); font-weight:700}
   body[data-view]:not([data-view="v-board"]) .hd-fold:not(#ssFoldBtn){display:none !important}   /* the scores box shows on every tab, so its line does too */
 }
+/* v4.76: a cover-band header inside each tab */
+.pass-where .cut-list{min-width:280px; max-width:calc(100vw - 32px)} .pass-where .cut-list .meta{padding:2px 0}   /* v4.76: where the approved bets are */
+.sc-grid .pc-band{grid-column:1/-1; margin:8px 0 0; display:flex; gap:8px; align-items:center}
+.band-row td{padding-top:8px}
 </style>
 </head>
 <body>
@@ -1464,7 +1468,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.75</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.76</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1560,7 +1564,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
   <h2 id="boardTitle">The board</h2>
   <div class="psrc-note" id="pasteNote" style="display:none"></div>
   <div class="modes" id="modeBar" role="group" aria-label="Betting mode">
-    <button type="button" data-mode="safe">🛡️ Safe</button><button type="button" data-mode="lucky">🍀 Feeling Lucky</button><button type="button" data-mode="clair">🔮 Clairvoyant</button>
+    <button type="button" data-mode="boring">😴 Boring</button><button type="button" data-mode="safe">💪 Machín</button><button type="button" data-mode="volado">🪙 Volado</button><button type="button" data-mode="lucky">🍀 Suertudo</button><button type="button" data-mode="clair">🔮 Brujo</button><!-- v4.76 -->
     <span class="contadora" id="contadora"></span>
   </div>
   <div class="today-line" id="todayLine"></div>
@@ -1803,7 +1807,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 <div class="panel rg-panel" id="rulesGlance">   <!-- v4.38: Augi's rules layout: everything La Contadora uses, in one place -->
   <h2>Your rules at a glance <span class="cn-chip">saved in this browser · no secrets</span></h2>
   <div class="rg-grid" id="rgGrid"></div>
-  <p class="hint" style="margin:6px 0 0">Change any of them in Screens and Stake sizing below; this updates as you type. A mode does not change any of them. Each mode lists only its own bets: Safe the best bets, Feeling Lucky the ones that just missed (the smallest bet, 5 a day), Clairvoyant the Hail Marys ($1 each, 3 a day).</p>
+  <p class="hint" style="margin:6px 0 0">Change any of them in Screens and Stake sizing below; this updates as you type. A mode does not change any of them. Each tab lists only its own bets, by La Contadora’s chance: 😴 Boring = High Cover + Heavy Favorite (75%+), 💪 Machín = Strong + Solid + Lean (60–75%), 🪙 Volado = Slight Lean + On the Line (50–60%), 🍀 Suertudo = Coin Flip (45–50%) and the ones that just missed (the smallest bet, 5 a day), 🔮 Brujo = Unlikely (under 45%) and the Hail Marys ($1 each, 3 a day).</p>
 </div>
 <details class="panel fold" id="layoutPanel" open>   <!-- v3.54 -->
   <summary><h2>Layout <span class="sub">how the screener fits this device</span></h2></summary>
@@ -2222,7 +2226,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 
 </div>
 <script>
-const SCREENER_VERSION='v4.75';
+const SCREENER_VERSION='v4.76';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2540,10 +2544,17 @@ function pairUp(rows){
    only its own bets. Safe = the best bets. Feeling Lucky = only the ones that just missed (and the other Watch rows, not offered). Clairvoyant = only
    Hail Marys. v4.50 stacked them (Feeling Lucky = Safe's cards + Just missed, Clairvoyant = both + Hail Marys), so the same cards sat under all three.
    The math is the same in every mode: only the list changes. See modeFamOf and renderCore. */
+/* v4.76 (owner, 11/12: "Boring, Volado, Machín, Suertudo, Brujo"; "Machín is like 52.5-60"; "only 5 tabs. so, start with boring and end with Brujo";
+   "have the Highest under and so on"; then the Cover bands into the tabs, see passFam): five tabs, highest chance first; 💪 Machín keeps the old
+   Safe's key and the app opens there · 🍀 Suertudo (the
+   ones that just missed; was Feeling Lucky) · 🔮 Brujo (under 45% and the Hail Marys; was Clairvoyant). Where a bet is listed only: no math, stake or
+   limit changes. The keys stay safe / lucky / clair, so saved settings and records keep working. */
 const MODES={
-  safe:  {label:'🛡️ Safe'},
-  lucky: {label:'🍀 Feeling Lucky', lucky:true},
-  clair: {label:'🔮 Clairvoyant',   hail:true},
+  boring:{label:'😴 Boring'},
+  volado:{label:'🪙 Volado'},
+  safe:  {label:'💪 Machín'},
+  lucky: {label:'🍀 Suertudo', lucky:true},
+  clair: {label:'🔮 Brujo',   hail:true},
 };
 const EXTRAS={luckyDay:5, hailDay:3, hailEach:1, hailOdds:300};   // v4.50
 const RING={pLo:0.50, pHi:0.75, evLo:0.04, evHi:0.12, room:0.025, freshMs:10*60e3, leg:0.70};   // v4.50: the ◎ PERFECTA checks, and the 🎟 parlay-leg chance   // v4.51: legEv, and the six checks are frozen as they are (ChatGPT, 11/10: "freeze whichever rule you choose before seeing results")
@@ -2560,9 +2571,9 @@ let betMode='safe';
 (function(){ try{ const m=JSON.parse(localStorage.getItem('mbev.mode')||'null');
   if(m && MODES[m.mode]){ const today=new Date().toLocaleDateString('en-CA',{timeZone:'America/Chicago'});
     betMode = (m.mode==='clair' && m.day!==today) ? 'safe' : m.mode; } }catch(e){} })();
-const CONTADORA={safe:'',
+const CONTADORA={safe:'', boring:'<b>La Contadora:</b> "75% or better: High Cover and Heavy Favorite. They win often, pay little, and one loss eats several wins."', volado:'<b>La Contadora:</b> "50 to 60%: On the Line and Slight Lean. Close to a coin toss; the edge is real, any one can lose."',   /* v4.76 */
   lucky:'<b>La Contadora:</b> "A few that just missed, at the smallest bet. Five a day, not more."',   // v4.50
-  clair:'<b>La Contadora:</b> "Two of these, maybe three. Not thirty-six." · $1 each · back to Safe at midnight'};
+  clair:'<b>La Contadora:</b> "Two of these, maybe three. Not thirty-six." · $1 each · back to Machín at midnight'};
 function paintModes(){ document.querySelectorAll('#modeBar button').forEach(b=>b.classList.toggle('on', b.dataset.mode===betMode));
   const c=document.getElementById('contadora'); if(c) c.innerHTML=CONTADORA[betMode]||''; }
 function setMode(m){ betMode=MODES[m]?m:'safe';
@@ -2887,7 +2898,7 @@ function auditCore(rows,cfg){
       if(r.noMkt) s = Math.min(s, cfg.sMin);   // v3.12
       // v2.65: long shots are off unless you're in Clairvoyant mode — and then they're small
       // v4.50: a long shot is never a best bet; in Clairvoyant it is a 🔮 Hail Mary, in its own group ($1, extrasAssign)
-      if(isLongShot(r)){ r.longShot=true; s=0; r.flags.push(['warn','long shot — only in 🔮 Clairvoyant mode, as a Hail Mary']); }
+      if(isLongShot(r)){ r.longShot=true; s=0; r.flags.push(['warn','long shot — only in 🔮 Brujo, as a Hail Mary']); }
       // v2.52: an outlier that's ALSO below the market price is a skip — except a few small "risk bets"
       // a day (picked after the loop), and only when it's close to the market
       if(r.outlier && r.mktNet!=null && r.mktNet<=0){
@@ -3181,17 +3192,22 @@ function extrasAssign(rows,cfg,slateDay){
    Contadora approves whose chance (actProb) is under 45% is a long shot: it is listed under 🔮 Clairvoyant ("edge · long shot"), not 🛡️ Safe.
    Where it is listed only: the math, the stake (the long-shot moneyline rule's smallest bet) and the limits do not change. */
 function lsEdge(r){ return !!(r && r.pass && r.actProb!=null && r.actProb<LSML.below-1e-9); }
+/* v4.76 (owner, the Cover bands list: "WE are going to add all those, inside those 5 Tabs"): each band belongs to one tab, highest chance first:
+   😴 Boring = High Cover + Heavy Favorite (75%+) · 💪 Machín = Strong + Solid + Lean (60–75%) · 🪙 Volado = Slight Lean + On the Line (50–60%) ·
+   🍀 Suertudo = Coin Flip (45–50%) and the ones that just missed · 🔮 Brujo = Unlikely (under 45%) and the Hail Marys. Uneven counts are expected. */
+function passFam(r){ const a=r && r.actProb; if(a==null || !isFinite(a)) return 'safe'; return a<LSML.below-1e-9 ? 'hail' : a<0.50-1e-9 ? 'lucky' : a<0.60-1e-9 ? 'volado' : a<0.75-1e-9 ? 'safe' : 'boring'; }   /* v4.76 */
+function rowBand(r){ const a=r && r.actProb; return (a!=null && isFinite(a) && a>=0 && a<=1) ? cvBand(a) : 0; }   /* v4.76: the cover band of the chance La Contadora uses */
 function modeFamOf(r){ if(!r) return 'safe';
-  if(r.prior){ const t=r.prior.tier; return (t==='lucky' || t==='hail') ? t : lsEdge(r) ? 'hail' : 'safe'; }
+  if(r.prior){ const t=r.prior.tier; return (t==='lucky' || t==='hail') ? t : r.pass ? passFam(r) : 'safe'; }   /* v4.76 */
   if(r.waitOrder || r.moved) return 'safe';   /* an order waiting at a book, or the same bet at another line: with the best bets, so the "do not bet it twice" mark is in the default mode */
   if(r.xc) return r.xc;
-  if(r.pass && !r.longShot) return lsEdge(r) ? 'hail' : 'safe';   /* v4.74 */   /* a scorer long shot that passes but cannot be offered (you hold a bet on that player) is still Clairvoyant's */
+  if(r.pass && !r.longShot) return passFam(r);   /* v4.74 */   /* v4.76: by chance: Boring, Volado, Machín, Brujo */   /* a scorer long shot that passes but cannot be offered (you hold a bet on that player) is still Clairvoyant's */
   return (Math.round(r.amer)>=EXTRAS.hailOdds || isLongShot(r)) ? 'hail' : r.watch ? 'lucky' : 'safe'; }
 
 // what the math thinks of an extra, in one line (the card, the editor, the notes)
 function extraLine(r){ const P=x=>(x*100).toFixed(1)+'%', sg=x=>(x>=0?'+':'−')+Math.abs(x*100).toFixed(1)+'%', cfg=cfgRead();
   const p=r.actProb!=null?r.actProb:r.fairProb, ev=r.actNet!=null?r.actNet:r.net, be=r.offeredProb*(1+(+r.fee||0));
-  if(r.tier==='lucky' || (!r.tier && r.xc==='lucky')) return {t:'La Contadora '+sg(ev)+', your floor is '+P(cfg.eMin), short:'missed your '+P(cfg.eMin)+' floor by '+((cfg.eMin-ev)*100).toFixed(1)+' pts', agree:false};
+  if(r.tier==='lucky' || (!r.tier && r.xc==='lucky')) return {t:'La Contadora '+sg(ev)+', your floor is '+P(cfg.eMin), short:'La Contadora: NO · just under your floor ('+sg(ev)+' vs your '+P(cfg.eMin)+') · optional, smallest bet', agree:false};   // v4.76 (Alonzo: "JUST MISSED floor by blah blah ... Do I still bet or not?"): it says NO, why, and that it is optional
   const tooGood=r.gross!=null && r.gross>cfg.eMax, agree=!tooGood && ev!=null && ev>0;
   /* v4.51 (owner, passing on ChatGPT: "show both market and conservative estimates. For longshots, the disagreement is the main information ...
      Needs 22.2% · market 20.7% · La Contadora 19.4%, then Math says −12.7% at this price"): the three numbers side by side, then her EV at this price. */
@@ -3276,6 +3292,28 @@ function boardAnchorBack(A){ if(!A) return; try{
     const el=[...document.querySelectorAll('#placeCards .sc-card, #tbody tr')].find(e=>keyOf(e)===A.k);
     if(el){ const d=el.getBoundingClientRect().top-A.top; if(Math.abs(d)>1) window.scrollBy(0,d); } else if(Math.abs(window.scrollY-A.y)>1) window.scrollTo(0,A.y);
   }catch(e){} }
+/* v4.76 (Alonzo, 11/12, twice: "i see 72, but the rest? look at the tabs on board...6 + 1 + 27...but that doesnt equal 72"; "i had already chosen all
+   the apps to bet"): the header counts every approved row; the tabs count only what you can bet now, under your filters and book chips, and add the
+   extras offered (🍀 just missed, 🔮 Hail Marys), which are not approved. Each approved row goes under the first reason it is not in a tab, so the
+   list adds up to the header. Counting only: nothing is moved, staked or hidden by it. */
+function passWhere(passing, shown, pv, isStarted, mN){ const cOn=new Set(boardBooks), inS=new Set(shown), W={n:passing.length, pv, tabs:0, fam:{boring:0, safe:0, volado:0, lucky:0, hail:0}, other:0, dup:0, prior:0, started:0, unconf:0, zero:0, filt:0, chips:0};
+  passing.forEach(r=>{ if(pv?!isPasteRow(r):isPasteRow(r)) W.other++; else if(r.hiddenDup) W.dup++; else if(r.prior||r.waitOrder) W.prior++; else if(isStarted(r)) W.started++; else if(liveState(r)==='unconfirmed') W.unconf++;
+    else if(!(r.stake>0) || r.removed) W.zero++; else if(!inS.has(r)) W.filt++; else if(cOn.size && !cOn.has(bookLabel(r.book)||'?')) W.chips++; else { W.tabs++; const f=modeFamOf(r); W.fam[f]=(W.fam[f]||0)+1; } });
+  W.xL=Math.max(0,((mN&&mN.lucky)||0)-W.fam.lucky); W.xH=Math.max(0,((mN&&mN.hail)||0)-W.fam.hail); return W; }
+function passWhereHtml(W){ if(!W || !W.n) return '';
+  const L=[], add=(n,t)=>{ if(n) L.push('<div><b>'+n+'</b> '+t+'</div>'); }, F=W.fam, fm=[['😴',F.boring],['💪',F.safe],['🪙',F.volado],['🍀',F.lucky],['🔮',F.hail]].filter(x=>x[1]).map(x=>x[0]+' '+x[1]).join(' · ');
+  add(W.tabs, 'in the tabs, to bet now'+(fm?': '+fm:''));
+  add(W.started, 'in games that started or closed: can’t bet now');
+  add(W.prior, 'already bet (or an order waiting)');
+  add(W.unconf, 'can’t confirm the game on ESPN: check the app');
+  add(W.zero, '$0 stake: daily max, game cap, one per player or under the minimum');
+  add(W.filt, 'hidden by your filters (sport, search, Settings, only my games, only sweet spot)');
+  add(W.chips, 'hidden by the book chips: tap All');
+  add(W.dup, 'the same bet twice: shown once');
+  add(W.other, W.pv ? 'on The board (API), not this pasted one' : 'on the Pasted board');
+  const x=[W.xL?W.xL+' 🍀 just missed':'', W.xH?W.xH+' 🔮 Hail Mary'+(W.xH===1?'':'s'):''].filter(Boolean).join(' and ');
+  return '<details class="cut-sum pass-where"><summary class="cut"><b>'+W.tabs+'</b> in the tabs ▸</summary><div class="cut-list"><div class="meta">Where the '+W.n+' approved bets are:</div>'+L.join('')+
+    (x?'<div class="meta">The tab buttons also count '+x+' offered to you: not approved by La Contadora, so not in the '+W.n+'.</div>':'')+'</div></details>'; }
 function render(rows,cfg){
   if(boardEditorOpen() && !_boardForce){ _boardPending=[rows,cfg]; return; }   // v4.12: wait while you are placing a bet
   _boardPending=null;
@@ -3297,7 +3335,7 @@ function renderCore(rows,cfg){
   const isStarted=r=>{ const s=liveState(r); return s==='started'||s==='closed'; };
   // v2.86: two boards from one audit — ALREADY BET, one-per-player, game caps and the daily max are shared
   const pv=boardSrc==='paste';
-  const famNow=cfg.mode==='lucky'?'lucky':cfg.mode==='clair'?'hail':'safe', famIs=x=>modeFamOf(x)===famNow;   // v4.51: the mode's own rows
+  const famNow=cfg.mode==='lucky'?'lucky':cfg.mode==='clair'?'hail':cfg.mode==='boring'?'boring':cfg.mode==='volado'?'volado':'safe',   /* v4.76 */ famIs=x=>modeFamOf(x)===famNow;   // v4.51: the mode's own rows
   shown=shown.filter(r=>pv?isPasteRow(r):!isPasteRow(r));
   { const n=passing.filter(isPasteRow).length, el=document.getElementById('pasteTabN'); if(el) el.textContent=n?n:'';
     const t=document.getElementById('boardTitle'); if(t) t.textContent=pv?'Pasted board':'The board';
@@ -3331,9 +3369,10 @@ function renderCore(rows,cfg){
   /* v4.51 (owner: "they aren't supposed to be under the same either - show on Safe, Feeling Lucky, etc. only where they fit"): a mode lists only its
      own rows (modeFamOf): Safe the best bets, Feeling Lucky the ones that just missed, Clairvoyant the Hail Marys; a bet you hold stays where you took
      it. The number on each mode button is counted here, under the same sport, search, Settings and book-chip filters, so it is what you see there. */
-  const mN={safe:0, lucky:0, hail:0, all:rows.filter(r=>pv?isPasteRow(r):!isPasteRow(r)).length};
-  { const cOn=new Set(boardBooks); shown.forEach(r=>{ if(cOn.size && !cOn.has(bookLabel(r.book)||'?')) return; if(r.xFit==='lucky' || r.xFit==='hail') mN[r.xFit]++; else if(grpOf(r)===0) mN[modeFamOf(r)==='hail'?'hail':'safe']++; });   /* v4.74: an approved long shot counts under Clairvoyant */
+  const mN={safe:0, lucky:0, hail:0, boring:0, volado:0, all:rows.filter(r=>pv?isPasteRow(r):!isPasteRow(r)).length};
+  { const cOn=new Set(boardBooks); shown.forEach(r=>{ if(cOn.size && !cOn.has(bookLabel(r.book)||'?')) return; if(r.xFit==='lucky' || r.xFit==='hail') mN[r.xFit]++; else if(grpOf(r)===0) mN[modeFamOf(r)]++; });   /* v4.76: each tab counts its own */   /* v4.74: an approved long shot counts under Clairvoyant */
     const full=k=>!mN[k] && rows.some(r=>r.xc===k && r.xCap && !r.hiddenDup && (pv?isPasteRow(r):!isPasteRow(r))); mN.fullL=full('lucky'); mN.fullH=full('hail'); }   // candidates on the board, none offered: the day's count is used
+  const passW=passWhere(passing, shown, pv, isStarted, mN);   /* v4.76: where each approved bet is (the "N in the tabs ▸" list), counted where the tab numbers are */
   shown=shown.filter(famIs);
   if(boardView!=='all') shown=shown.filter(x=>{ const g=grpOf(x); return boardView==='pass'?(g===0||g===6||g===7) : boardView==='perf'?(g===0&&!!x.ring&&x.ring.n===x.ring.of) : boardView==='legs'?!!x.leg : boardView==='outlier'?(g===0&&!!x.outlier) : boardView==='prior'?g===1 : boardView==='watch'?(g===5||g===6) : g===2; });   // v4.43: + Watch   // v4.34: Augi's Show menu
   /* v4.50 (owner: "it says Novig 53, but I can't even see the ones rejected, so why put that there? I will get confused"): the number on a book chip
@@ -3349,6 +3388,7 @@ function renderCore(rows,cfg){
   shown.sort((a,b)=>{
     const ga=grpOf(a), gb=grpOf(b);
     if(ga!==gb) return GRP_RANK[ga]-GRP_RANK[gb];   // v4.43: Watch after Already bet
+    if(ga===0){ const ba=rowBand(a), bb=rowBand(b); if(ba!==bb) return bb-ba; }   /* v4.76: Place these grouped by cover band, highest first; your sort inside each band */
     if(colSort){
       const va=colVal(a,colSort), vb=colVal(b,colSort);
       if(va==null && vb==null) return 0;
@@ -3414,19 +3454,22 @@ function renderCore(rows,cfg){
   lastShown=shown;
   renderTodayLine();
   const rb=document.getElementById('refreshApi'); if(rb) rb.disabled=!lastRows.some(x=>String(x.src||'').startsWith('api:'));
-  const GROUP_NAMES=['Place these','Already bet','Skip','Started, over or closed — can\'t bet','Can\'t confirm — check the app','Watch · the model likes these, the edge with the market is too small: not placed','🍀 Just missed · not best bets: the smallest bet each, up to '+EXTRAS.luckyDay+' a day','🔮 Hail Marys · long shots, math edge or not: $'+EXTRAS.hailEach+' each, up to '+EXTRAS.hailDay+' a day'];   // v4.43   // v4.50
+  const GROUP_NAMES=['Place these','Already bet','Skip','Started, over or closed — can\'t bet','Can\'t confirm — check the app','Watch · the model likes these, the edge with the market is too small: not placed','🍀 Just missed · La Contadora: NO, just under your floor · optional: the smallest bet each, up to '+EXTRAS.luckyDay+' a day' /* v4.76 */,'🔮 Hail Marys · long shots, math edge or not: $'+EXTRAS.hailEach+' each, up to '+EXTRAS.hailDay+' a day'];   // v4.43   // v4.50
   const groupCount=[0,0,0,0,0,0,0,0]; shown.forEach(r=>groupCount[grpOf(r)]++);
   let lastGroup=-1;
   const cardsOn=boardCardsOn(), cardsHtml=[], luckyHtml=[], hailRows=[];   // v2.69   // v4.50: the extras have their own card groups
+  const bandN={}; shown.forEach(r=>{ if(grpOf(r)===0){ const k=rowBand(r); bandN[k]=(bandN[k]||0)+1; } }); let lastBand=-1, nCards=0;   /* v4.76 */
+  const bandHead=k=>'<span class="cv-chip cv-'+k+'">'+(k?cvNames()[k]:'No band')+'</span> <span class="meta">'+(k?cvRanges()[k]:'')+' · '+(bandN[k]||0)+'</span>';
   const mathTop=(shown||[]).filter(r=>r.pass && r.stake>0 && !r.prior && !r.waitOrder && !r.removed && !r.moved && !r.glConflict).reduce((a,r)=>!a||mathKey(r)>mathKey(a)?r:a, null);   // v4.28
   shown.forEach(r=>{
     const g=grpOf(r);
     if(g!==lastGroup && !(cardsOn && (g===0||g===6||g===7))){
       lastGroup=g;
       const gr=document.createElement('tr'); gr.className='group-row';
-      gr.innerHTML='<td colspan="'+BOARD_COLS.length+'"><span class="glabel"><b>'+GROUP_NAMES[g]+(g===0&&famNow==='hail'?' · 🔮 edge · long shots':'')+'</b> · '+groupCount[g]+'</span></td>';
+      gr.innerHTML='<td colspan="'+BOARD_COLS.length+'"><span class="glabel"><b>'+GROUP_NAMES[g]+(g===0&&famNow==='hail'?' · 🔮 edge · long shots':'')+'</b> · '+groupCount[g]+(g===0?' · ✅ La Contadora: YES':'')+'</span></td>';   // v4.76: Place these says YES
       tb.appendChild(gr);
     }
+    if(g===0 && !cardsOn){ const k=rowBand(r); if(k!==lastBand){ lastBand=k; const br=document.createElement('tr'); br.className='group-row band-row'; br.innerHTML='<td colspan="'+BOARD_COLS.length+'">'+bandHead(k)+'</td>'; tb.appendChild(br); } }   /* v4.76 */
     const tr=document.createElement('tr');
     const started = r.gameInfo && (r.gameInfo.state==='in'||r.gameInfo.state==='post');
     // v2.61: anything you shouldn't place is greyed out (still readable on hover / with notes open)
@@ -3451,7 +3494,8 @@ function renderCore(rows,cfg){
       : r.risk ? 'risk' : (r.flags.some(f=>f[0]==='warn'||f[0]==='corr') || (r.mktNet!=null&&r.mktNet<=0) || r.oddsApi===null) ? 'warn' : '';
     const nKey=String(r.apiKey||(r.name+'|'+r.market+'|'+(r.side||'')+'|'+r.book));
     const nOpen=notesAll || openNotes.has(nKey);
-    if(cardsOn && g===0){ cardsHtml.push(placeCardHtml(r,cfg,{tags,nTags,worst,nKey,nOpen,sweet:isSweet(r,swc),top:r===mathTop})); return; }   // v2.69; v4.28: top = the #1 math pick
+    if(cardsOn && g===0){ const k=rowBand(r); if(k!==lastBand){ lastBand=k; cardsHtml.push('<div class="pc-band">'+bandHead(k)+'</div>'); }   /* v4.76: a header per cover band */
+      nCards++; cardsHtml.push(placeCardHtml(r,cfg,{tags,nTags,worst,nKey,nOpen,sweet:isSweet(r,swc),top:r===mathTop})); return; }   // v2.69; v4.28: top = the #1 math pick
     if(cardsOn && g===6){ luckyHtml.push(placeCardHtml(r,cfg,{tags,nTags,worst,nKey,nOpen,tier:'lucky'})); return; }   // v4.50
     if(cardsOn && g===7){ hailRows.push({r, o:{tags,nTags,worst,nKey,nOpen,tier:'hail'}}); return; }   // v4.50: built by game, only the open games
     const kick = !r.gameInfo ? ''
@@ -3516,7 +3560,7 @@ function renderCore(rows,cfg){
   const pcBox=document.getElementById('placeCards');
   if(pcBox){
     const xHtml=cardsOn?extrasCardsHtml(luckyHtml,hailRows,cfg,mN):'';   // v4.50: 🍀 Just missed and 🔮 Hail Marys   // v4.51: each only in its own mode, in place of Place these
-    if(cardsOn && (cardsHtml.length || xHtml)){ pcBox.classList.add('sc-grid'); pcBox.innerHTML=(!cardsHtml.length?'':'<div class="pc-head"><b>🦑 The Sentinels</b> · Place these'+(famNow==='hail'?' · 🔮 edge · long shots':'')+' · '+cardsHtml.length+'<span class="sc-sub">✅ The math says bet every card here: La Contadora approved each one. Best first on Sort › Math; bet down the list until your daily max. STRONG (green), GOOD (blue), THIN (yellow: still clears your estimated EV floor, with less edge, price confirmation or freshness; the smallest stakes).</span></div>'+cardsHtml.join(''))+xHtml; /* v4.51: best bets are listed in Safe only, so the v4.48 mode note is gone from here */ pcBox.style.display=''; pcFillShots(); }   // v3.57: ESPN photos   // v4.21: Sentinels cards in a grid
+    if(cardsOn && (cardsHtml.length || xHtml)){ pcBox.classList.add('sc-grid'); pcBox.innerHTML=(!nCards?'':'<div class="pc-head"><b>🦑 The Sentinels</b> · Place these'+(famNow==='hail'?' · 🔮 edge · long shots':'')+' · '+nCards+'<span class="sc-sub">✅ La Contadora: YES. The math says bet every card here.' /* v4.76: YES, then the v4.28 words */ +' Best first on Sort › Math; bet down the list until your daily max. STRONG (green), GOOD (blue), THIN (yellow: still clears your estimated EV floor, with less edge, price confirmation or freshness; the smallest stakes).</span></div>'+cardsHtml.join(''))+xHtml; /* v4.51: best bets are listed in Safe only, so the v4.48 mode note is gone from here */ pcBox.style.display=''; pcFillShots(); }   // v3.57: ESPN photos   // v4.21: Sentinels cards in a grid
     else { pcBox.innerHTML=''; pcBox.style.display='none'; }
     avFillSoon();   // v3.57: and on the board's rows
     injFillSoon();   // v3.78: injury flags
@@ -3569,7 +3613,7 @@ function renderCore(rows,cfg){
     reasons[f[1].replace(/sum to [\d.]+%/,'sum wrong')]=(reasons[f[1].replace(/sum to [\d.]+%/,'sum wrong')]||0)+1;
   }));
   { const list=Object.entries(reasons).sort((a,b)=>b[1]-a[1]), nSkip=rows.length-passing.length;   // v2.89: one chip, reasons on hover/tap
-    document.getElementById('cuts').innerHTML = nSkip>0 ? '<details class="cut-sum"><summary class="cut"><b>'+nSkip+'</b> skipped ▸</summary><div class="cut-list">'+list.map(([k,v])=>'<div><b>'+v+'</b> '+esc(k)+'</div>').join('')+'</div></details>' : ''; }
+    document.getElementById('cuts').innerHTML = passWhereHtml(passW) + (nSkip>0 ? '<details class="cut-sum"><summary class="cut"><b>'+nSkip+'</b> skipped ▸</summary><div class="cut-list">'+list.map(([k,v])=>'<div><b>'+v+'</b> '+esc(k)+'</div>').join('')+'</div></details>' : ''); }   // v4.76: + where the approved bets are
 
   empty.style.display = shown.length?'none':'block';
   if(rows.length&&!shown.length) empty.textContent=modeEmptyText(cfg.mode,mN);   // v4.51: says which mode holds what, not only "every bet failed"
@@ -4085,7 +4129,7 @@ document.addEventListener('click',e=>{ const t=e.target; if(!t.closest) return;
   if(t.closest('#hubRefresh')){ hubLoad(true); return; }
   const c=t.closest('#hubGames .hub-card'); if(c){ const ev=(window._hubEvs||[]).find(x=>String(x.id)===c.dataset.ev); if(ev){ hubOpen(ev); const g=document.getElementById('hubGame'); if(g) g.scrollIntoView({block:'start'}); } return; }
   if(t.closest('#hubGame .hub-close')){ const h=hubState(); h.ev=null; document.getElementById('hubGame').hidden=true; document.querySelectorAll('#hubGames .hub-card').forEach(x=>x.classList.remove('on')); return; }
-  const see=t.closest('#hubGame .hub-see'); if(see){ const fp=document.getElementById('filterPlayer'); const bt=document.querySelector('.tabs .tab[data-view="v-board"]'); if(bt) bt.click(); { const hm={safe:'safe',lucky:'lucky',hail:'clair'}[see.dataset.fam]; if(hm && hm!==betMode) setMode(hm); }   /* v4.51: open the mode that lists it */ if(fp){ fp.value=see.dataset.name; fp.dispatchEvent(new Event('input',{bubbles:true})); } return; }
+  const see=t.closest('#hubGame .hub-see'); if(see){ const fp=document.getElementById('filterPlayer'); const bt=document.querySelector('.tabs .tab[data-view="v-board"]'); if(bt) bt.click(); { const hm={safe:'safe',lucky:'lucky',hail:'clair',boring:'boring',volado:'volado'}[see.dataset.fam]; /* v4.76: + Boring, Volado */ if(hm && hm!==betMode) setMode(hm); }   /* v4.51: open the mode that lists it */ if(fp){ fp.value=see.dataset.name; fp.dispatchEvent(new Event('input',{bubbles:true})); } return; }
   if(t.closest('.tab[data-view="v-live"]')) setTimeout(()=>hubLoad(),0); });
 document.addEventListener('input',e=>{ if(e.target && e.target.id==='hubQ'){ const h=hubState(); h.q=e.target.value; const pos=e.target.selectionStart; const ev=(window._hubEvs||[]).find(x=>String(x.id)===h.ev); if(ev) hubOpen(ev,true).then(()=>{ const qi=document.getElementById('hubQ'); if(qi){ qi.focus(); try{ qi.setSelectionRange(pos,pos); }catch(x){} } }); }
   if(e.target && e.target.id==='hubDate'){ const h=hubState(); h.ev=null; document.getElementById('hubGame').hidden=true; hubLoad(); } });
@@ -4227,11 +4271,11 @@ function placeCardHtml(r,cfg,o){
       '<div class="sc-more"><button class="log sm share-btn" data-idx="'+r.idx+'" title="Send this bet to someone, with the same link the logo opens: the slip with the side, line and the screener stake filled in (they can change it). Your bankroll, EV and log do not go with it.">📤 Share</button></div>'+
     '</div></details>';
   return '<div class="pcard sc-card'+(X?' sc-x '+X:R?(R.n===R.of?' sc-perf':' sc-perf5'):'')+'" data-idx="'+r.idx+'" data-pck="'+esc(pxKey(r))+'">'+
-    (X?'<div class="sc-xtop '+X+'" title="'+esc(XL.t)+'">'+(X==='lucky'?'🍀 JUST MISSED · ':'🔮 HAIL MARY · ')+esc(XL.short)+'</div>'
+    (X?'<div class="sc-xtop '+X+'" title="'+esc(XL.t)+'">'+(X==='lucky'?'🍀 ':'🔮 HAIL MARY · ')+esc(XL.short)+'</div>' /* v4.76: 🍀 La Contadora: NO · … */
       :R?(R.n===R.of?'<div class="sc-ringb gold" title="All six checks pass: zone, edge, room for error, lined up with the market, a fresh price, nothing flagged. The list is in Why this play?">◎ PERFECTA · BET NOW <small>6 of 6 · '+esc(String((R.checks.find(c=>c.k==='fresh')||{}).t||'').replace(/^fresh: /,''))+'</small></div>'
                      :'<div class="sc-ringb" title="Five of the six Perfecta checks pass. The list is in Why this play?">◎ 5 of 6 · <b>'+esc(R.miss[0]||'')+'</b></div>'):'')+   // v4.50
     (o.top?'<div class="sc-mathtop" title="The best edge on the board right now (edge after blending the market with the model, what the stake is sized on). Bet the cards top to bottom on Sort › Math until your daily max.">✅ #1 MATH PICK</div>':'')+   // v4.28
-    '<div class="sc-top">'+(X?'<span class="sc-score x" title="'+(X==='lucky'?'Just missed: not a best bet':'A Hail Mary: your call, not the math’s')+'">'+(X==='lucky'?'🍀':'🔮')+'<small class="sc-word">'+(X==='lucky'?'JUST MISSED':'HAIL MARY')+'</small></span>'
+    '<div class="sc-top">'+(X?'<span class="sc-score x" title="'+(X==='lucky'?'Just missed: La Contadora says NO · optional, smallest bet' /* v4.76 */:'A Hail Mary: your call, not the math’s')+'">'+(X==='lucky'?'🍀':'🔮')+'<small class="sc-word">'+(X==='lucky'?'JUST MISSED':'HAIL MARY')+'</small></span>'
       :'<span class="sc-score '+scCls+'" title="Sentinel score: edge '+sc.e+'/50, market '+sc.m+'/30, fresh '+sc.f+'/20'+(sc.s?', signal +'+sc.s:'')+'. Open Why this play? for the parts.">'+sc.total+'<small class="sc-word">'+scWord(sc.total)+'</small></span>')+
       ('<span class="sc-pill ev" title="La Contadora’s EV after fees at '+esc(bk)+(r.mktProb!=null?' (with the market)':' (no market price: the model alone)')+': the number the stake, the order and the score use. Model EV: '+(r.net==null?'—':(r.net>0?'+':'')+pct(r.net))+'">'+logo+'<b class="'+(evA>0?'up':'down')+'">'+(evA==null?'—':(evA>0?'+':'')+pct(evA))+'</b></span>')+   /* v4.53: every card shows her EV (best bets showed the model's) */
       (sc.age!=null?'<span class="sc-pill age'+(sc.age>30*60e3?' old':'')+'" title="This price was read '+ageTxt(sc.age)+' ago'+(sc.age>30*60e3?(LIVE_BOOK(r.book)?'. Send the Sentinels for a fresh one.':String(r.src||'').startsWith('paste')?'. Paste the board again for a fresh one (the Sentinels read the exchanges, not '+esc(bookLabel(r.book)||'this book')+').':'. Refresh the board for a fresh one (the Sentinels read the exchanges, not '+esc(bookLabel(r.book)||'this book')+').'):'')+'">⏱ '+ageTxt(sc.age)+'</span>':'')+mvTxt+sgTxt+
@@ -4755,7 +4799,7 @@ function decisionHtml(r,cfg){
   if(r.waitOrder && !r.prior){ const o=r.waitOrder; return dl('dec-done','ORDER WAITING', [(o.qty!=null?(+o.qty)+' shares':'order')+(o.price!=null?' at '+Math.round(o.price*100)+'¢':''), 'on '+esc(bookLabel(r.book)||'?')+', not filled']); }   // v4.14
   if(r.prior) return r.prior.sold ? d('dec-done','SOLD','cashed out')
     : dl('dec-done','ALREADY BET', [$(r.prior.stake||0)+' on', esc(bookLabel(r.prior.book)||'?')]);
-  if(r.tier){ const x=extraLine(r); return dl('dec-lim', (r.tier==='lucky'?'🍀 JUST MISSED ':'🔮 HAIL MARY ')+$(+r.xStake||0), [esc(x.short), r.tier==='lucky'?'not a best bet':'your call, not the math’s']); }   // v4.50
+  if(r.tier){ const x=extraLine(r); return dl('dec-lim', (r.tier==='lucky'?'🍀 JUST MISSED ':'🔮 HAIL MARY ')+$(+r.xStake||0), (r.tier==='lucky'?[esc(x.short)]:[esc(x.short), 'your call, not the math’s']) /* v4.76: the NO line says it all */); }   // v4.50
   if(r.xWhy) return d('dec-skip','SKIP', esc(r.xWhy));   // v4.50: an extra past its daily count
   if(!r.pass && r.gapRes) return dl('dec-skip','RESEARCH', ['model 8+ pts above market', 'no automatic stake']);   /* v4.68 */
   if(!r.pass) return d('dec-skip','SKIP', (r.flags.find(f=>f[0]==='out')||[,''])[1]);
@@ -5484,16 +5528,19 @@ function samePlayerAs(L,r){ if(!L||!r) return false; const pk=k=>!k||k==='prop';
 /* v4.51 (owner: "show on Safe, Feeling Lucky, etc. only where they fit"): the modes no longer share cards, so the v4.50 note on Place these ("the same
    cards and the same stakes as in Safe ... listed apart, under them") is gone. Each mode says where the other bets are instead. */
 function modeElse(mN,mode){ const a=[]; if(!mN) return '';
-  if(mode!=='safe') a.push(mN.safe ? 'Your '+mN.safe+' best bet'+(mN.safe===1?' is':'s are')+' under 🛡️ Safe' : 'No best bets under 🛡️ Safe right now');
-  if(mode!=='lucky' && mN.lucky) a.push('🍀 Feeling Lucky has '+mN.lucky+' that just missed');
-  if(mode!=='clair' && mN.hail) a.push('🔮 Clairvoyant has '+mN.hail+' Hail Mary'+(mN.hail===1?'':'s'));
+  if(mode!=='safe') a.push(mN.safe ? 'Your '+mN.safe+' best bet'+(mN.safe===1?' is':'s are')+' under 💪 Machín' : 'No bets under 💪 Machín right now');
+  if(mode!=='boring' && mN.boring) a.push('😴 Boring has '+mN.boring);   /* v4.76 */
+  if(mode!=='volado' && mN.volado) a.push('🪙 Volado has '+mN.volado);
+  if(mode!=='lucky' && mN.lucky) a.push('🍀 Suertudo has '+mN.lucky+' that just missed');
+  if(mode!=='clair' && mN.hail) a.push('🔮 Brujo has '+mN.hail);
   return a.length ? a.join(' · ')+'.' : ''; }
 function modeEmptyText(mode,mN){ const el=modeElse(mN,mode), bv=(typeof boardView==='string')?boardView:'all';
-  if(mode!=='safe' && (bv==='perf' || bv==='outlier')) return (bv==='perf'?'◎ Perfectas':'Outliers')+' are best bets: they are listed under 🛡️ Safe.';
-  if(mode==='safe' && bv==='watch') return '👀 Watch bets are the ones that just missed: they are listed under 🍀 Feeling Lucky (the long shots among them under 🔮 Clairvoyant).';
+  if(mode!=='safe' && (bv==='perf' || bv==='outlier')) return (bv==='perf'?'◎ Perfectas':'Outliers')+' are best bets: they are listed by chance under 💪 Machín, 🪙 Volado or 😴 Boring.';
+  if(mode==='safe' && bv==='watch') return '👀 Watch bets are the ones that just missed: they are listed under 🍀 Suertudo (the long shots among them under 🔮 Brujo).';
   if(bv!=='all' && mN && ((mode==='lucky' && mN.lucky) || (mode==='clair' && mN.hail))){ const n=mode==='lucky'?mN.lucky:mN.hail; return 'Nothing under this Show choice in this mode. Show › All groups lists its '+n+' bet'+(n===1?'':'s')+'.'; }
-  if(mode==='lucky') return '🍀 Feeling Lucky lists only the bets that just missed La Contadora’s floor, and '+(mN&&mN.fullL?'you have used today’s '+EXTRAS.luckyDay:'none is on the board right now')+'. '+el;
-  if(mode==='clair') return '🔮 Clairvoyant lists only Hail Marys (long shots), and '+(mN&&mN.fullH?'you have used today’s '+EXTRAS.hailDay:'none is on the board right now')+'. '+el;
+  if(mode==='boring' || mode==='volado') return (mode==='boring'?'😴 Boring lists the bets La Contadora approves at 75% or better':'🪙 Volado lists the bets La Contadora approves at 50 to 60%')+', and none is on the board right now. '+el;   /* v4.76 */
+  if(mode==='lucky') return '🍀 Suertudo lists only the bets that just missed La Contadora’s floor, and '+(mN&&mN.fullL?'you have used today’s '+EXTRAS.luckyDay:'none is on the board right now')+'. '+el;
+  if(mode==='clair') return '🔮 Brujo lists the long shots under 45% and the Hail Marys, and '+(mN&&mN.fullH?'you have used today’s '+EXTRAS.hailDay:'none is on the board right now')+'. '+el;
   return 'Every bet failed a screen. Switch on the rejects to see why each one died.'+(el?' '+el:''); }
 /* v4.50: the two extra card groups, under Place these. Hail Marys are grouped by game, each a drop-down (so a Sunday with 60 TD scorers stays short);
    only the open games get their cards built, and opening one redraws. A search opens them all. */
@@ -5501,7 +5548,7 @@ function hmOpenMap(){ return window._hmOpen||(window._hmOpen={}); }   // startup
 function extrasCardsHtml(L,H,cfg,mN){ let h=''; const U=extrasUsed(), today=ctDay(Date.now()), P=x=>(x*100).toFixed(1)+'%', mode=cfg.mode, any=!!(mN && mN.all);
   /* v4.51: a mode's header shows only in that mode, even with nothing to offer (it says why). Where the other bets are is said once, on the mode line (modeCountsPaint). */
   if(mode==='lucky' && (L.length || any)){ const used=U.lucky[today]||0;
-    h+='<div class="pc-head pc-x lucky"><b>🍀 Just missed</b> · '+L.length+'<span class="sc-sub">'+(L.length ? 'The model likes these, but with the market La Contadora’s EV is under your '+P(cfg.eMin)+' floor (still 0% or better). They are not best bets. If you want a few: the smallest bet each ('+money(+cfg.sMin||0)+'), up to '+EXTRAS.luckyDay+' a game day'+(used?' · '+used+' used today':'')+'. They count in your day’s money like any bet.'
+    h+='<div class="pc-head pc-x lucky"><b>🍀 Just missed</b> · '+L.length+'<span class="sc-sub">'+(L.length ? 'La Contadora: NO. The model likes these, but with the market her EV is under your '+P(cfg.eMin)+' floor (still 0% or better): not best bets. Optional: if you want a few, the smallest bet each (' /* v4.76: NO first */+money(+cfg.sMin||0)+'), up to '+EXTRAS.luckyDay+' a game day'+(used?' · '+used+' used today':'')+'. They count in your day’s money like any bet.'
       : (mN && mN.lucky) ? mN.lucky+' here, hidden by the Show menu: choose Show › All groups.' : (mN && mN.fullL) ? 'No more today: '+EXTRAS.luckyDay+' a game day, and you have used them.' : 'No bet on the board just missed La Contadora’s floor right now.')+'</span></div>'+L.join(''); }
   if(mode==='clair' && (H.length || any)){ const used=U.hail[today]||0, G=[], by={}, q=String(filterPlayer||'').trim();
     H.forEach(x=>{ const r=x.r, gi=r.gameInfo||{}, k=(gi.eventId?'e'+gi.eventId:(r.game?gameKey(r.game):'?'))+'|'+String(gi.startISO||'').slice(0,13); if(!by[k]){ by[k]={k, r, L:[]}; G.push(by[k]); } by[k].L.push(x); });
@@ -5517,12 +5564,14 @@ function extrasCardsHtml(L,H,cfg,mN){ let h=''; const U=extrasUsed(), today=ctDa
   return h; }
 document.addEventListener('click', e=>{ const sm=e.target.closest && e.target.closest('details.hm-game > summary'); if(!sm) return; const d=sm.parentElement, willOpen=!d.open;   // your own tap (or Enter on it): remembered until the page reloads
   hmOpenMap()[d.dataset.hm]=willOpen; if(willOpen && !d.querySelector('.sc-card')){ e.preventDefault(); refresh(); } });   // a closed game has no cards built yet: redraw with it open
-function modeCountsPaint(rows,mN){ mN=mN||{safe:0, lucky:0, hail:0, all:0};   /* v4.51: each mode lists only its own bets, so each button says how many it holds (under the filters you have on), not what it would add */
+function modeCountsPaint(rows,mN){ mN=mN||{safe:0, lucky:0, hail:0, boring:0, volado:0, all:0};   /* v4.51: each mode lists only its own bets, so each button says how many it holds (under the filters you have on), not what it would add */
   const set=(m,n,tip)=>{ const b=document.querySelector('#modeBar button[data-mode="'+m+'"]'); if(!b) return; let el=b.querySelector('.mode-n'); if(!el){ el=document.createElement('small'); el.className='mode-n'; b.appendChild(el); } el.textContent=mN.all?' '+n:''; b.title=tip; };
-  set('safe', mN.safe, 'Only the best bets: everything La Contadora approves, at her stakes ('+mN.safe+' to place now).');
-  set('lucky', mN.lucky, 'Only the bets that just missed her floor ('+mN.lucky+' now): the smallest bet each, up to '+EXTRAS.luckyDay+' a day. The best bets stay under Safe.');
-  set('clair', mN.hail, 'Only Hail Marys: long shots, math edge or not ('+mN.hail+' now), $'+EXTRAS.hailEach+' each, up to '+EXTRAS.hailDay+' a day. Back to Safe at midnight. The best bets stay under Safe.');
-  const c=document.getElementById('contadora'); if(!c) return; if(betMode==='safe'){ c.innerHTML=CONTADORA.safe||''; return; }
+  set('boring', mN.boring||0, 'High Cover and Heavy Favorite: bets La Contadora approves at 75% or better ('+(mN.boring||0)+' now).');
+  set('volado', mN.volado||0, 'Slight Lean and On the Line: bets La Contadora approves at 50 to 60% ('+(mN.volado||0)+' now).');
+  set('safe', mN.safe, 'Strong, Solid and Lean: bets La Contadora approves at 60 to 75% ('+mN.safe+' to place now).');
+  set('lucky', mN.lucky, 'Coin Flip (45 to 50%) and the bets that just missed her floor ('+mN.lucky+' now; the near-misses at the smallest bet, up to '+EXTRAS.luckyDay+' a day).');
+  set('clair', mN.hail, 'Unlikely (under 45%) and Hail Marys: long shots ('+mN.hail+' now). Back to Machín at midnight.');
+  const c=document.getElementById('contadora'); if(!c) return; if(betMode==='safe' || betMode==='boring' || betMode==='volado'){ c.innerHTML=(CONTADORA[betMode]||'')+(betMode!=='safe'?' <span class="mode-info">· '+esc(modeElse(mN,betMode))+'</span>':''); return; }   /* v4.76 */
   const U=extrasUsed(), today=ctDay(Date.now()), uL=U.lucky[today]||0, uH=U.hail[today]||0, el=modeElse(mN,betMode);
   c.innerHTML=(CONTADORA[betMode]||'')+' <span class="mode-info">· '+(betMode==='lucky'
       ? '🍀 '+(mN.lucky?mN.lucky+' just missed on the board':mN.fullL?'no more today ('+EXTRAS.luckyDay+' a day)':'none just missed right now')+(uL?', '+uL+' of '+EXTRAS.luckyDay+' used today':'')
@@ -5951,6 +6000,7 @@ function liveOpenBets(){
 }
 function betPayout(b){ const p=betProfit(Object.assign({},b,{result:'win',sold:null})); return p==null?null:(+b.stake||0)+p; }
 function liveStatus(b, ev, box){
+  if(!ev) return {cls:'wait', text:'Game not known yet', bar:null};   // v4.76: without its game the app cannot tell (was "Not started")
   const st=(ev&&ev.status)||{}, state=(st.type&&st.type.state)||'pre';
   const lm=String(b.market||'').match(/^([+-]?[\d.]+)/);
   let L=lm?parseFloat(lm[1]):null;
@@ -6037,7 +6087,7 @@ function liveBarHtml(v, unit){
 /* v2.67: ESPN-style game box — logos, score, who has the ball, down & distance, TV.
    Everything comes from the same scoreboard call; nothing extra is fetched. */
 function liveGameHead(ev, g){
-  if(!ev) return '<div class="lgame-h"><span>'+esc(g.game||'Game not found on ESPN')+'</span><span class="meta">'+esc(g.sport)+'</span></div>';
+  if(!ev) return '<div class="lgame-h"><span>'+esc(g.game||liveNoGameText(g))+'</span><span class="meta">'+esc(g.sport)+'</span></div>';   // v4.76: no game saved: say so (was "Game not found on ESPN")
   const st=(ev.status&&ev.status.type)||{}, comp=(ev.competitions&&ev.competitions[0])||{}, sit=comp.situation||{};
   const comps=compsOf(ev), a=comps.find(c=>c.homeAway==='away'), h=comps.find(c=>c.homeAway==='home');
   const val=c=>c&&c.score!=null?(typeof c.score==='object'?c.score.value:c.score):'';
@@ -6073,6 +6123,7 @@ function liveGameHead(ev, g){
    ESPN's line, the pre-game predictor). Anything ESPN leaves out is simply not shown. */
 let liveBusy=false, liveAgain=false, liveLastRun=0, liveScrollTo=null;
 const liveOpen=new Set(), liveAll=new Set(), liveSig=new Map(), liveBoxAt=new Map(), liveProb=new Map(), livePred=new Map();
+const liveByPlayer=new Map();   // v4.76: bet → the ESPN game found by its player (a bet saved without its game), this session only
 function espnCore(sport){ const p=ESPN_MAP[sport]; return p ? 'https://sports.core.api.espn.com/v2/sports/'+p.replace('/','/leagues/') : null; }
 async function fetchLiveProb(sport, ev){
   const base=espnCore(sport); if(!base||!ev) return null;
@@ -6404,6 +6455,25 @@ function liveBoxScoreHtml(g){
       }).join('')+'</div>'; }).join('');
   return html+'</div>';
 }
+/* v4.76 (Alonzo, 11/12: ESPN had WSH 101 – IND 114 in the 4th; Live Games said "Game not found on ESPN · Not started" for AJ Dybantsa
+   Under 23.5 Pts+Reb at Novig): Novig names a player prop only as "<player> <line> <stat>", so its fill is saved without a game. Grading
+   already finds such a bet after the final by the box score that lists the player; Live Games looked only by team codes. Now it looks the same
+   way while the game is on: games of that sport in progress or final, within 90 minutes of the start the book gave, inside the 4-hour rule,
+   whose box score lists the player. Exactly one, or none (no guess). Remembered for this session only; the saved bet is not changed.
+   Before tip-off ESPN lists no players, so the game shows once it starts. */
+function boxHasPlayer(box, name){ const P=box&&box.boxscore&&box.boxscore.players; return !!(P && name) && P.some(t=>(t.statistics||[]).some(c=>(c.athletes||[]).some(a=>nameMatch(a.athlete&&a.athlete.displayName, name)))); }
+async function liveGameByPlayer(b, evs){
+  if(!b || !b.name || !evs || !evs.length || GL_KINDS.test(b.kind||'') || teamsOf(b.game) || teamsOf(b.matchup)) return null;
+  const key=b.id||b, had=liveByPlayer.get(key), ev0=had?evs.find(e=>String(e.id)===had):null; if(ev0) return ev0;
+  const t0=Date.parse(b.start), hit=[];
+  for(const e of evs){ const st=e&&e.status&&e.status.type&&e.status.type.state;
+    if((st!=='in' && st!=='post') || !evOkFor(b,e) || (!isNaN(t0) && !(Math.abs(Date.parse(e.date)-t0)<=90*60e3))) continue;
+    const ck=b.sport+':'+e.id, old=boxscoreCache[ck]; if(old && !((old.boxscore&&old.boxscore.players)||[]).length) delete boxscoreCache[ck];   // a copy read before tip-off lists no players
+    if(boxHasPlayer(await fetchBoxscore(b.sport, e.id), b.name)) hit.push(e); }
+  if(hit.length!==1) return null;
+  liveByPlayer.set(key, String(hit[0].id)); return hit[0]; }
+function liveNoGameText(g){ const b=(g&&g.bets&&g.bets[0])||{}, who=b.autoFrom?bookLabel(b.book)+' did not name the game':'No game saved with this bet';
+  return GL_KINDS.test(b.kind||'') ? who : who+' · found by the player once it starts'; }
 async function renderLive(force){
   const body=document.getElementById('liveBody'); if(!body) return;
   if(liveBusy){ liveAgain=true; return; }
@@ -6417,8 +6487,8 @@ async function renderLive(force){
     const groups=new Map();
     for(const b of bets){
       const evs=scoreboardCache[b.sport]||[];
-      const ev=findGame(evs,b.game)||findGameAny(evs,b.game,b.name,b.matchup);
-      const k=ev?b.sport+':'+ev.id:'?:'+gameKey(b.game);
+      const ev=findGame(evs,b.game)||findGameAny(evs,b.game,b.name,b.matchup)||await liveGameByPlayer(b,evs);   // v4.76: + by the player's box score (Novig props name no teams)
+      const k=ev?b.sport+':'+ev.id:'?:'+b.sport+':'+gameKey(b.game)+(teamsOf(b.game)?'':':'+(b.start||b.date||''));   // v4.76: two unknown games are not one
       if(!groups.has(k)) groups.set(k,{ev,sport:b.sport,game:b.game,bets:[]});
       groups.get(k).bets.push(b);
     }
@@ -6433,7 +6503,7 @@ async function renderLive(force){
       if(!state) return;
       if(force && state==='in' && (changed || Date.now()-(liveBoxAt.get(key)||0)>60000)) delete boxscoreCache[key];
       if(!boxscoreCache[key]) liveBoxAt.set(key, Date.now());
-      const jobs=[fetchBoxscore(g.sport, g.ev.id).then(bx=>{ g.box=bx; })];
+      const jobs=[fetchBoxscore(g.sport, g.ev.id, state==='post').then(bx=>{ g.box=bx; })];   // v4.76: a final game reads the final box score
       const pr=liveProb.get(key);
       if(state==='in' && (changed || !pr || Date.now()-pr.at>60000)) jobs.push(fetchLiveProb(g.sport, g.ev).then(it=>{ liveProb.set(key,{item:it||(pr&&pr.item)||null, at:Date.now()}); }));
       await Promise.all(jobs);
@@ -6442,7 +6512,7 @@ async function renderLive(force){
       const state=g.ev&&g.ev.status&&g.ev.status.type&&g.ev.status.type.state;
       // a game that just went final: settle its bets like "Check results"
       if(state==='post') g.bets.forEach(b=>{
-        const r = GL_KINDS.test(b.kind||'') ? gradeGameLine(b,g.ev) : gradeBet(b,g.box);
+        const r = GL_KINDS.test(b.kind||'') ? gradeGameLine(b,g.ev) : (boxDone(g.box) ? gradeBet(b,g.box) : null);   // v4.76: only from the final box score (Check results does it later otherwise)
         if(r){ b.result = r.push?'push':(r.won?'win':'loss'); settled++; }
       });
     }
@@ -9178,7 +9248,7 @@ function logCsv(day){
       bookLabel(b.book||''), b.odds, p!=null?(p*100).toFixed(1):'', (+b.stake||0).toFixed(2), b.free?'yes':'', res, pr!=null?pr.toFixed(2):'',
       b.fair!=null?b.fair:(b.fairProb!=null?(b.fairProb*100).toFixed(1):''), b.net!=null?(b.net*100).toFixed(2):'', b.closing||'', c!==null?(c*100).toFixed(2):'',
       b.game||b.matchup||'', st?new Date(st).toLocaleString('en-US',{timeZone:'America/Chicago'}):'', b.kind==='parlay'&&b.parlay?String(b.parlay.legs||''):'',
-      b.kind==='parlay'?'':(b.market||''), b.tier==='lucky'?'Feeling Lucky (just missed)':b.tier==='hail'?'Clairvoyant (Hail Mary)':b.gapRes?'Moneyline gap research':(b.kind==='parlay'?'':'Safe'),
+      b.kind==='parlay'?'':(b.market||''), b.tier==='lucky'?'Suertudo (just missed)':b.tier==='hail'?'Brujo (Hail Mary)':b.gapRes?'Moneyline gap research':(b.kind==='parlay'?'':'Safe'),
       (()=>{ const d=document.createElement('div'); d.innerHTML=srcTagCore(b); return d.textContent.trim(); })(), (()=>{ const k=logBandOf(b); return k==null?'':k?cvNames()[k]:'no cover saved'; })(),
       (b.snap&&b.snap.actNet!=null)?(b.snap.actNet*100).toFixed(2):'',
       (b.snap&&b.snap.market!=null)?(b.snap.market*100).toFixed(1):'', (b.snap&&b.snap.act!=null)?(b.snap.act*100).toFixed(1):'', (b.snap&&b.snap.policy)||'', (b.snap&&b.snap.screener)||''].map(q).join(','); });

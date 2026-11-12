@@ -13,6 +13,8 @@
   (branch, tests, publish on the owner's go). The claude.ai Project's agent keeps the history, researches and writes specs;
   ChatGPT gives second opinions; the owner decides, deploys the Worker and carries notes. Code drafted elsewhere comes in
   as a note to merge and test, never as an upload over `main`.
+- Crew names (owner, 2026-11-11: "Love it!"), used in agent labels and reports: El Jefe (Alonzo), El Juez (the test suite), El Capataz (Claude Code),
+  El Consultor (ChatGPT), El Historiador (the Project's agent), Los Desconfiados (skeptic agents), Los Chismosos (reviewer agents), Los Chambeadores (worker agents).
 - Owner (2026-11-05): "build without my other agent". No relay blocks or reports for the other agents unless the owner asks;
   keep the record in the PR description. Still ask plainly before each publish.
 - Notes for the Project's agent or ChatGPT: the owner copy-pastes them into those chats. Always put the full text in the
