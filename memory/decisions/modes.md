@@ -18,10 +18,11 @@ Status: active · Introduced: v4.50, made exclusive in v4.51, five tabs by La Co
   editor holds the draw, then drawn when it closes). Its La Contadora line (v4.79): her YES was for those prices, and the 🍀 Just missed and
   🔮 Hail Mary cards listed there never had it.
 - 👻 AWOL (`awol`, v4.81; Alonzo: "Those go either on OLD or a AWOL category / Tab if they can't be found anymore"): a card whose own book said, on
-  the last check, that it cannot find this bet (no market at your line, not listed, game not found, nobody selling, the line moved): a 🦑 press,
-  the open check after a load, or a tap on the price (`rowAwol`, `awolNote`). Busy, not mapped, a Draw or "could not tell" are our side: not
-  AWOL. Listing only (same stake), like ⏱ Old; a check that finds it sends it back. A closed market from the open check keeps the v2.97 rule
-  (no money) and is listed there too. AWOL comes before ⏱ Old.
+  the last check, that it cannot find this bet (no market at your line, not listed, nobody selling, the line moved): a 🦑 press,
+  the open check after a load, or a tap on the price (`rowAwol`, `awolNote`). Busy, not mapped, "game not found", a Draw or "could not tell" are
+  our side: not AWOL. Listing only (same stake), like ⏱ Old; a check that finds it sends it back. A closed market from the open check keeps the
+  v2.97 rule (no money) and is listed there too. AWOL comes before ⏱ Old. v4.82: an AWOL card never says BET NOW or #1 MATH PICK; its ◎ ring
+  (six checks unchanged) reads "◎ PERFECTA · 👻 AWOL · look at the book first", and `mathTop` skips it.
 - Inside a tab, Place these is grouped under a header per cover band (`rowBand`, `bandHead`), highest first; your sort applies inside a band.
 - Each row is listed in exactly one tab (`modeFamOf`):
   1. a bet you hold: by `prior.tier` (Just missed, Hail Mary), else by its chance if it passes, else Machín;

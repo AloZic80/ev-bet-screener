@@ -113,6 +113,12 @@ Alonzo used the whole ChatGPT allowance for the day. We kept building on what yo
 - Listing only, like ⏱ Old: same stake, not counted in "to bet now", back to its tab when found.
 - Busy, not mapped or a Draw do not count.
 - See `para-chatgipititi_v4.81_2026-11-12.md`: two questions (daily max for AWOL and ⏱ Old; is "game not found" AWOL).
+- Correction: that note listed "game not found" as a reason for AWOL. It was dropped before publishing (question 2 there); only the note was wrong.
+
+### v4.82 (Claude Code's own catch in the v4.81 screenshots, told to Alonzo before building)
+- The Gillespie card under 👻 AWOL still said "◎ PERFECTA · BET NOW" and "✅ #1 MATH PICK".
+- Now the ring reads "◎ PERFECTA · 👻 AWOL · look at the book first" (the six checks are frozen, so the ring itself stays), and #1 MATH PICK skips AWOL cards.
+- Label only. See `para-chatgipititi_v4.82_2026-11-12.md` (one question: should #1 MATH PICK skip ⏱ Old cards too?).
 
 ## Open questions for you
 1. Should the CSV "mode" column say "Clairvoyant (edge · long shot)" for approved long shots, or keep "Safe" because the record follows approval rather than listing?
@@ -123,3 +129,4 @@ Alonzo used the whole ChatGPT allowance for the day. We kept building on what yo
 6. The cover chip shows the model's cover %; the tabs and band headers use La Contadora's chance. So a near-miss can sit in Suertudo (Coin Flip by La Contadora) with an "On the Line" chip (model 50%). Should the chip follow La Contadora, show both, or stay?
 7. Live Games keeps the game found by the player for the session only. Should it be saved on the bet, so the Bet log and ALREADY BET can use it?
 8. Grading (before v4.76): `findBetGame` grades a prop with no teams by the first finished game that lists the player, without checking for a second game with the same name. Live Games now refuses to guess there. Should grading refuse too, and wait for Alonzo?
+9. (v4.82) A ⏱ Old card can still be "✅ #1 MATH PICK" inside the ⏱ Old tab (it can never be a Perfecta: one check needs a price read in the last 10 minutes). Should #1 MATH PICK skip ⏱ Old cards too?
