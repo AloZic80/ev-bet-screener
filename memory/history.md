@@ -17,7 +17,14 @@ New builds add their line at the top of the right section.
   more today" with none used); `CONTADORA.old` no longer says YES above the 🍀 / 🔮 cards; `liveGameByPlayer` keeps a FINAL box score that does
   not list the player (`boxDone`), re-reads the other games every 5 min once found (`had`), and keeps the found game as a hit when its box score
   has no players (ESPN did not answer). Tests: `poly-strip` (20), `no-more-today` (7), `live-player` 8–10, `old-prices` (editor open: `clock.runFor`,
-  since `fastForward` fires each timer once).
+  since `fastForward` fires each timer once). Caught before publishing (Los Chismosos, confirmed): a Polymarket US moneyline or spread is ONE
+  market with two sides (the Worker's `live.js`: `full_game_winner` long side by team; an underdog spread is NO on the favourite's market), so
+  the strip's bare YES could buy the other side. `polyHow` now names the side (CAR, SEA +1.5; `btn`), with YES / NO from the Sentinels' quote
+  title ("NO · <market>") or the spread's sign (`giTeamFor` for the opponent); a soccer Draw row (`name:'Draw'`, `team`=home) gets no strip;
+  a total adds "if it shows Over / Under"; Cost ≤ rounds UP (`Math.ceil`) from the stake in whole cents; `okTo` (the "OK up to" tile and the
+  chart legend) floors whole cents for Kalshi / Polymarket (it rounded 47.68¢ to 48¢). Open (pre-existing, reported, not changed): `kalshiHow`
+  says YES on an underdog spread (the Worker prices NO on the favourite's "wins by over"), and Draw rows on Kalshi; the Worker prices a Draw
+  row as the home team on Kalshi and Polymarket.
 - v4.78 (owner, 11/11: "DO iT BUILD"; the full review's open items, confirmed by Los Desconfiados): `rowOld` counts an unknown read time
   (`priceAt` 'unknown') from `loadedAt`; `renderCore` stamps `r._old` and `ringRecheck` (30 s) redraws when a row turns old with the page open (same
   row objects: `audit` returns `lastRows`); `full()` decides "No more today" from `mN.xL`/`mN.xH`; `liveGameByPlayer` has no shortcut to the game found

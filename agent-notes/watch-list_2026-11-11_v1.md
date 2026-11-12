@@ -39,6 +39,9 @@ The full review (Los Chismosos, each finding challenged by Los Desconfiados) is 
   - The ⏱ Old La Contadora line said YES above the 🍀 / 🔮 cards.
   - Live Games re-downloaded final box scores every minute (about 0.4 GB a night on a phone).
   - Live Games dropped the found game when ESPN did not answer once or twice.
+- [x] Caught before publishing: Polymarket team bets (one market, two sides): the strip names the side (SEA +1.5); a Draw row gets no strip; "OK up to" rounds down.
+- [ ] **⏳ El Jefe: Kalshi too?** The Kalshi strip (since v4.09) says YES on an underdog spread; on Kalshi it is NO on "<favourite> wins by over". Draw rows name the home team on Kalshi as well. Same fix, next build, on your word.
+- [ ] **Worker (needs your go):** the Sentinels price a soccer Draw row as the home team on Kalshi and Polymarket.
 - [ ] **Unverified on Polymarket US** (a screenshot would settle it): does the Limit form ask for shares or dollars? Can shares be fractional? Are moneylines Yes / No or one button per team?
 - [ ] For Sally: limit at La Contadora's most (47¢) or at the price shown (44¢)? Is the 6.95% × (1 − price) fee right for Polymarket US?
 

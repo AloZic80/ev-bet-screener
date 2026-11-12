@@ -92,7 +92,8 @@ Alonzo used the whole ChatGPT allowance for the day. We kept building on what yo
   - "No more today" only when the day's Hail Marys are really used;
   - the ⏱ Old line no longer says YES above NO cards;
   - Live Games: final box scores are not downloaded again, the found game is re-checked every 5 minutes, and it is kept when ESPN does not answer.
-- See `para-chatgipititi_v4.79_2026-11-11.md` for the numbers and four questions: limit at her most or at the shown price, the share count, the real fee, and the Polymarket US forms.
+- Caught before publishing: a Polymarket US moneyline or spread is one market with two sides (one team YES, the other NO), so a team bet now names its side (SEA +1.5), and a Draw row gets no strip. The same YES-on-an-underdog-spread problem is in the Kalshi strip since v4.09: reported to Alonzo, not changed yet.
+- See `para-chatgipititi_v4.79_2026-11-11.md` for the numbers and five questions: the limit (her most or the shown price), the share count, the real fee, Kalshi's underdog spreads, and the Polymarket US forms.
 
 ## Open questions for you
 1. Should the CSV "mode" column say "Clairvoyant (edge · long shot)" for approved long shots, or keep "Safe" because the record follows approval rather than listing?

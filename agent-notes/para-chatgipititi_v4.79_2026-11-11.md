@@ -18,15 +18,20 @@ more than 47¢, it takes what is offered up to 47¢, and the rest waits on the b
 
 ## What was built
 1. **A Polymarket US "what to type" strip**, like the Kalshi one:
-   - On the card: `On Polymarket · Limit, not Market · YES on 1+ · Limit 47¢ · Shares 9 · Cost ≤ $4.39`.
+   - On the card, for Aho: `On Polymarket · Limit, not Market · YES on 1+ · Limit 47¢ · Shares 9 · Cost ≤ $4.39`. A team bet names its side instead, e.g. `SEA +1.5` (see below).
    - In "Why this play?", five boxes:
      1. Order type: Limit ("tap Market ⌄ and pick Limit. Never Market").
-     2. Press YES / NO. An Under is NO on the Over. "1+" is Polymarket's name for Over 0.5.
+     2. Press YES / NO for props and totals. An Under is NO on the Over. "1+" is Polymarket's name for Over 0.5. A team bet names its side (below).
      3. Limit price = La Contadora's most, in whole cents, rounded down.
      4. Shares = whole shares, stake ÷ (limit + fee); if the form asks for dollars, shares × limit.
-     5. Then check: Cost ≤ shares × limit × (1 + fee); pays $1 a share.
+     5. Then check: Cost ≤ shares × limit × (1 + fee), rounded up; pays $1 a share.
    - One plain line on what "High slippage" means, and "Not filled by the start? Cancel it."
    - No strip when the price is over her most, or when the stake buys less than one share.
+   - **Caught before publishing** (the reviewers read v4.79 itself; El Juez had already passed it). On Polymarket US a moneyline or a spread is ONE market with two sides: one team is YES, the other NO. Our Worker prices an underdog spread as NO on the favourite's market. The first version said a bare YES for every team bet, which could buy the other side. Now:
+     - a team bet names the side to press (CAR, SEA +1.5);
+     - it says YES or NO only when it knows: from the Sentinels' own quote ("NO · <market>"), or from the spread's sign ("SEA +1.5 · on a Yes / No market for CAR −1.5 that is NO");
+     - a soccer Draw row gets no strip (it names the home team);
+     - "OK up to" now rounds down to whole cents, like the strip (it showed 48¢ for 47.68¢).
 2. **Five fixes from the reviewers** (Los Chismosos found them in v4.78; Los Desconfiados tried to refute each one and could not):
    - A 30-second check asked for a redraw on every tick while a bet editor was open. It now asks once.
    - "No more today" (Hail Marys) showed up when only the long-shot moneyline allowance held a candidate back and no Hail Mary was used.
@@ -58,5 +63,6 @@ No floor, fee, Kelly, cap, stake or grading rule changed.
 1. **Limit price.** The strip sets the limit at La Contadora's most (47¢), not at the price shown (44¢). With a thin book, part of the order can fill at 45–47¢, still at or above the floor. A limit at 44¢ protects more of the edge but may fill less, or not at all. Which should it be?
 2. **Share count.** The count is worked at the limit price (9), so the cost never passes the stake even if every share fills at 47¢. At 44¢, 10 shares would fit. Is "never over the stake" the right side to err on?
 3. **Fee.** The app assumes Polymarket US charges 6.95% × (1 − price), like Kalshi. Is that the real Polymarket US fee? Is it charged at the trade or from the payout?
-4. **Polymarket US forms (unverified).** Does the Limit form ask for shares or dollars, and can shares be fractional? Are moneylines Yes / No on "<team> wins", or one button per team? The strip covers both; a screenshot from Alonzo would settle it.
-5. The earlier questions in the "Since you've been gone" note are still open.
+4. **Kalshi, already live since v4.09 (reported to Alonzo, not changed).** The Kalshi strip says YES on an underdog spread. Kalshi's market is "<favourite> wins by over 1.5", so SEA +1.5 is NO there (our Worker prices it that way). A soccer Draw row also names the home team on Kalshi, and the Worker prices Draw rows as the home team on both books. Do you agree the same fix applies to Kalshi?
+5. **Polymarket US forms (unverified).** Does the Limit form ask for shares or dollars, and can shares be fractional? Are moneylines Yes / No on "<team> wins", or one button per team? The strip covers both; a screenshot from Alonzo would settle it.
+6. The earlier questions in the "Since you've been gone" note are still open.
