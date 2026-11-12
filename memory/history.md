@@ -6,6 +6,17 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.84 (agreed with Sally, owner "BUILD" Thu 11/12; from the "Bet As If You're Wrong" newsletter): the synthetic-hold tag, a label only.
+  `shAssign` (end of the audit, after `ringAssign`) groups rows by `shIdent` (game key + kind + player + market text for O/U; game key + team
+  for moneylines / spreads in NFL, NBA, NHL, MLB, NCAAF, NCAAB, WNBA only), takes his books' prices (`bookIsMine`) read within 10 minutes
+  (`rowSeenAt`, exchange quote `at`; a future time is ignored) and not AWOL / Old / qGone / exClosed / held bets, adds the other side from an
+  exchange quote at 1 − bid, and picks the lowest Σ p·(1+fee) − 1 among pairs read within 5 minutes. `r.sh` ok → `shPill` on the card
+  ("Hold 2.0% · O Novig -122 · U Novig +113"; bands under/low/std/high) and `shHow` in Why this play?; not ok → "Hold —" with why. New bets
+  keep `snap.syntheticHold` (policy synthetic-hold-v1). `shCfg()` is a function (startup rule). Three-way markets wait. Test: `v484-test` (12).
+  The bet-records change agreed earlier (listing record, CSV, Own / unverified) moves to v4.85.
+  Review fixes (Los Chismosos): the key has the game day; `shNow` turns a number stale after 10 minutes (ringRecheck redraws, the saved
+  record uses it); no number for a market with no line, DFS pick'em, pasted rows, or quotes from a book that said closed / AWOL / GONE;
+  no 1 − bid on NFL moneylines or whole-number lines; Novig's live fee. Test 15.
 - v4.83 (agreed with Sally, owner "BUILD" Thu 11/12; `agent-notes/v483-scope-agreed_2026-11-12_v1.md`): (1) `window._perfHold` set before the
   first `refresh()` of a 🦑 press and cleared before its last one (and in `finally`): `perfNotifyCheck` returns while it is set. (2) `perfBanner`
   takes `{k,t}` items (strings still work, key `t|…`); `perfBannerCheck` drops lines whose `pxKey` is not in the current alert list and closes
