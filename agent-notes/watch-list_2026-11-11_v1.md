@@ -1,6 +1,6 @@
 # 👀 Watch list: 0xBeta Screener, live beta
 
-Ref: CC-2026-11-11-08 · Wed 2026-11-11, updated Thu 12:00 AM, America/Chicago · Live: **v4.79** (published just before midnight; [AloZic80/ev-bet-screener#124](https://github.com/AloZic80/ev-bet-screener/pull/124))
+Ref: CC-2026-11-11-08 · Wed 2026-11-11, updated 11:55 PM, America/Chicago · Live: **v4.79** (published 11:52 PM; [AloZic80/ev-bet-screener#124](https://github.com/AloZic80/ev-bet-screener/pull/124))
 
 Alonzo: "we will say OK Lets put IT LIVE, but, we still need to be on top of it."
 **Live beta** means: live and usable, still a work in progress. Every change still goes through El Juez (all tests green) before it goes live. This page lists what is open; it is updated with every build.
