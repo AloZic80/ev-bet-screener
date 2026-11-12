@@ -6,6 +6,11 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.82 (Claude Code's own catch in the v4.81 screenshots, told to the owner before building): an AWOL card (`rowAwol`) still showed
+  "◎ PERFECTA · BET NOW" and "✅ #1 MATH PICK" next to its 👻 AWOL pill. The gold ring (`placeCardHtml`, the six checks frozen and unchanged) now
+  reads "◎ PERFECTA · 👻 AWOL · look at the book first" for an AWOL card, and `mathTop` skips AWOL cards (inside 👻 AWOL no card is the #1 math
+  pick). Label only. A ⏱ Old card can still be #1 MATH PICK in the ⏱ Old tab (never a Perfecta: `RING.freshMs` is 10 minutes): asked, not
+  changed. Test: `awol-test` (20). `decisions/modes.md` no longer lists "game not found" as AWOL (`awolNote` dropped it before v4.81 shipped).
 - v4.81 (owner, Thu 11/12, the Collin Gillespie card, Novig −135, "⚠ Novig did not find this exact game" still under 💪 Machín: "Those go either on OLD
   or a AWOL category / Tab if they can't be found anymore"): 👻 AWOL, a seventh tab (`MODES.awol`, `famNow 'awol'`, `mN.awol`, `CONTADORA.awol`,
   `set('awol')`, `passWhere` `fam.awol` / `W.xA`, `W.now` without it). `rowAwol(r)`: `r.exClosed` (the open check after a load, v2.97: no money,
