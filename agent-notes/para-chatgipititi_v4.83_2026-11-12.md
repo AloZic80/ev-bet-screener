@@ -21,12 +21,22 @@ The v4.83 scope you and Claude Code agreed (`v483-scope-agreed_2026-11-12_v1.md`
 
 No floor, fee, Kelly, cap or grading rule changed. The daily max now leaves out AWOL and ⏱ Old cards, as agreed.
 
+## Fixed before publishing (our reviewer)
+- A held card was set aside only for the daily max, so it still won the one-per-game and one-per-player picks: its bettable runner-up ended at
+  $0 too. Now it is set aside before all of them, and the runner-up gets the money.
+- A held long shot could be re-offered as a 🔮 Hail Mary ($1). Not any more.
+- The 🔔 hold now starts before the press waits for prices (a redraw in that wait could ring).
+
+## Reported, not changed
+- A card from a market the open check found closed (v2.97) is AWOL with $0 but no "if found: up to $X".
+- The quiet baseline after a filter change lives for the session only, so those Perfectas can ring once after a reload.
+
 ## The numbers (test board)
 Three Novig cards, La Contadora 64% at 58%, EV +10.3%, $8.93 each. One goes 👻 AWOL and one is 13 hours old: both $0, "up to $8.93", and their
 $17.86 of daily max is free for fresh cards.
 
 ## Tests
-- New `v483-test` (17 checks): the quiet baseline, a card that leaves and comes back rings, the press hold, banner lines dropped (AWOL,
+- New `v483-test` (18 checks, with the one-per-player case): the quiet baseline, a card that leaves and comes back rings, the press hold, banner lines dropped (AWOL,
   filter), Old and AWOL at $0 with their text (card, table, 390 px), no #1 MATH PICK in ⏱ Old, the tap's NO OFFER and the press that brings
   it back.
 - `awol-test` and `old-prices-test` now expect $0 for AWOL and ⏱ Old.

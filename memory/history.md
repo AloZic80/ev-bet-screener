@@ -16,8 +16,11 @@ New builds add their line at the top of the right section.
   card in group 0, so it stays in its tab; `passWhere` does not count it as "$0 stake"; card "$0 · if found / if refreshed: up to $X";
   `decisionHtml` "👻 AWOL $0" / "⏱ OLD PRICE $0"; `saidOf` AWOL / OLD PRICE; press freed/jailed treat a held card as listed. The ring needs a stake,
   so a held card has none. (6) Slip tap: `qFailState` not unreadable for the card's own book → `r.qGone` with `tap:true` (text adds "Send the
-  Sentinels to check other books"); a later tap that finds the price near the card's clears it; a press re-decides. Tests: `v483-test` (17);
-  `awol-test`, `old-prices-test` follow rule 5.
+  Sentinels to check other books"); a later tap that finds the price near the card's clears it; a press re-decides. Tests: `v483-test` (18);
+  `awol-test`, `old-prices-test` follow rule 5. Review fixes (Los Chismosos, before publishing): the hold is set right after the v2.56 "moved"
+  line, before the game-line, player, risk, outlier, model-only and long-shot slots (its runner-up gets the money); `extrasAssign` skips a held
+  card; `_perfHold` is set before the press's network wait. Reported, not changed: an `exClosed` AWOL card keeps the v2.97 $0 with no "if found";
+  a quiet baseline is not saved, so those Perfectas can ring once after a reload.
 - v4.82 (Claude Code's own catch in the v4.81 screenshots, told to the owner before building): an AWOL card (`rowAwol`) still showed
   "◎ PERFECTA · BET NOW" and "✅ #1 MATH PICK" next to its 👻 AWOL pill. The gold ring (`placeCardHtml`, the six checks frozen and unchanged) now
   reads "◎ PERFECTA · 👻 AWOL · look at the book first" for an AWOL card, and `mathTop` skips AWOL cards (inside 👻 AWOL no card is the #1 math
