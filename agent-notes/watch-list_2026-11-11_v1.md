@@ -1,6 +1,6 @@
 # 👀 Watch list: 0xBeta Screener, live beta
 
-Ref: CC-2026-11-11-08 · Wed 2026-11-11, updated 11:55 PM, America/Chicago · Live: **v4.79** (published 11:52 PM; [AloZic80/ev-bet-screener#124](https://github.com/AloZic80/ev-bet-screener/pull/124))
+Ref: CC-2026-11-11-08 · updated Thu 2026-11-12, morning, America/Chicago · Live: **v4.81** (with v4.80) · Worker **v3.44**
 
 Alonzo: "we will say OK Lets put IT LIVE, but, we still need to be on top of it."
 **Live beta** means: live and usable, still a work in progress. Every change still goes through El Juez (all tests green) before it goes live. This page lists what is open; it is updated with every build.
@@ -46,6 +46,17 @@ The full review (Los Chismosos, each finding challenged by Los Desconfiados) is 
 - [ ] **Draw rows, every book (since before v4.79):** the card's pick line says "<home> to win" for a soccer Draw. Same fix as the Kalshi one, on your word.
 - [ ] **Unverified on Polymarket US** (a screenshot would settle it): does the Limit form ask for shares or dollars? Can shares be fractional? Are moneylines Yes / No or one button per team?
 - [ ] For Sally: limit at La Contadora's most (47¢) or at the price shown (44¢)? Is the 6.95% × (1 − price) fee right for Polymarket US?
+
+## ✅ v4.80 + v4.81 (live) and Worker v3.43 + v3.44 (live), on "Yes all across"
+- [x] Near-misses option A (not offered; 👀 Watch keeps the record) · ◎ Perfectas across every tab · Kalshi underdog spreads are NO · Draw cards · 🔔 level 1 · 👻 AWOL tab.
+- [x] Worker v3.43 (Kalshi games by team names) and v3.44 (a Draw is not read) merged and deployed.
+
+## ⏳ Open (reported by the reviewers, not changed)
+- [ ] **🔔 + filters:** the banner can announce a Perfecta your book chips or filters hide. Should the alert follow your filters? (your call)
+- [ ] Draw bets: Live Games treats a Draw as the home team; ALREADY BET matching mixes Draws with the home team's moneyline; a Draw's label and logo in the Bet log; `pxKey` shared by Draws (all older).
+- [ ] Sportsbook "OK up to" on the card rounds to the nearest odds (can be a hair over her most). Kalshi / Polymarket round down.
+- [ ] 🔔 polish: the scroll after "Show them", the other board's first alert, an alert before the weather loads, keyboard order.
+- [ ] For Sally: should AWOL and ⏱ Old stop counting toward the daily max until a check finds them?
 
 ## 🔍 Still open after v4.79
 - [ ] Grading, before v4.76: a prop with no teams is graded from the first finished game that lists the player, with no check for a second game with the same name. Live Games now refuses to guess. Question 8 for Sally.
