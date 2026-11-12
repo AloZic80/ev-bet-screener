@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.77</title>
+<title>0xBeta Screener v4.78</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1468,7 +1468,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.77</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.78</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2226,7 +2226,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 
 </div>
 <script>
-const SCREENER_VERSION='v4.77';
+const SCREENER_VERSION='v4.78';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2574,9 +2574,9 @@ let betMode='safe';
   if(m && MODES[m.mode]){ const today=new Date().toLocaleDateString('en-CA',{timeZone:'America/Chicago'});
     betMode = (m.mode==='clair' && m.day!==today) ? 'safe' : m.mode; } }catch(e){} })();
 const CONTADORA={safe:'', boring:'<b>La Contadora:</b> "75% or better: High Cover and Heavy Favorite. They win often, pay little, and one loss eats several wins."', volado:'<b>La Contadora:</b> "50 to 60%: On the Line and Slight Lean. Close to a coin toss; the edge is real, any one can lose."',   /* v4.76 */
-  lucky:'<b>La Contadora:</b> "A few that just missed, at the smallest bet. Five a day, not more."',   // v4.50
+  lucky:'<b>La Contadora:</b> "45 to 50%: the Coin Flips I say YES to. And a few that just missed: NO, the smallest bet if you want them. Five a day, not more."',   // v4.50   // v4.78: + the Coin Flips
   clair:'<b>La Contadora:</b> "Two of these, maybe three. Not thirty-six." · $1 each · back to Machín at midnight',
-  old:'<b>La Contadora:</b> "These prices are more than 12 hours old. I said yes at those prices, not at today’s. Check each one first: send the Sentinels or reload the board, and the fresh ones go back to their tabs."'};   // v4.77
+  old:'<b>La Contadora:</b> "These prices are more than 12 hours old. I said yes at those prices, not at today’s. Check each one first: send the Sentinels, reload the board or paste it again, and the fresh ones go back to their tabs."'};   // v4.77
 function paintModes(){ document.querySelectorAll('#modeBar button').forEach(b=>b.classList.toggle('on', b.dataset.mode===betMode));
   const c=document.getElementById('contadora'); if(c) c.innerHTML=CONTADORA[betMode]||''; }
 function setMode(m){ betMode=MODES[m]?m:'safe';
@@ -3204,7 +3204,7 @@ function rowBand(r){ const a=r && r.actProb; return (a!=null && isFinite(a) && a
    lets not mix them with our regular tabs"): a row whose price was read more than 12 hours ago (rowSeenAt: the load, a Sentinels answer, a swap) is
    listed under ⏱ Old, whatever its chance. A press or a reload that reads it fresh sends it back to its tab. A bet you hold, an order waiting
    or a moved line stays where it is. Listing only: its stake and the daily max are as before. */
-function rowOld(r){ if(!r || r.prior || r.waitOrder || r.moved) return false; const at=rowSeenAt(r); return !!at && Date.now()-at>OLD_PRICE.ms; }
+function rowOld(r){ if(!r || r.prior || r.waitOrder || r.moved) return false; const at=rowSeenAt(r) || Date.parse(r.loadedAt) || 0; return !!at && Date.now()-at>OLD_PRICE.ms; }   /* v4.78: a read time that is unknown counts from the board load (it was never old) */
 function modeFamOf(r){ if(!r) return 'safe';
   if(r.prior){ const t=r.prior.tier; return (t==='lucky' || t==='hail') ? t : r.pass ? passFam(r) : 'safe'; }   /* v4.76 */
   if(r.waitOrder || r.moved) return 'safe';   /* an order waiting at a book, or the same bet at another line: with the best bets, so the "do not bet it twice" mark is in the default mode */
@@ -3267,6 +3267,7 @@ function ringAssign(rows,cfg){ rows.forEach(r=>{ if(!r) return;
 function ringRecheck(){ try{ if(document.visibilityState!=='visible') return;
     { const sig=shopStaleSig(); if(sig!==(window._shopStaleSig||'')){ window._shopStaleSig=sig; refresh(); return; } }   /* v4.56: a best-book claim ran out: redraw (no prices are read); v4.61: saved here before the redraw, so a draw held back by an open editor is asked for once, not on every tick */
     if(betMode==='clair'){ const m=JSON.parse(localStorage.getItem('mbev.mode')||'null'); if(m && m.day && m.day!==new Date().toLocaleDateString('en-CA',{timeZone:'America/Chicago'})){ setMode('safe'); return; } }   /* v4.51: "back to Safe at midnight" also with the page left open (it only happened on a reload) */ const v=document.body.dataset.view; if(v && v!=='v-board') return;
+    if((lastRows||[]).some(r=>r && r._old!==undefined && r._old!==rowOld(r))){ refresh(); return; }   /* v4.78: a card turned 12 hours old with the page left open: to ⏱ Old */
     const cfg=cfgRead(); if((lastRows||[]).some(r=>r && r.ring && ringOf(r,cfg).n!==r.ring.n)) refresh(); }catch(e){} }
 setInterval(ringRecheck, 30000);
 function legNeed(){ try{ const a=pkPays('PrizePicks','power')[4]; const b=pkBreakEven(4,a); if(b>0 && b<1) return b; }catch(e){} return 0.5623; }   // what a pick needs in a 4-pick PrizePicks Power entry (10×)
@@ -3385,7 +3386,8 @@ function renderCore(rows,cfg){
      it. The number on each mode button is counted here, under the same sport, search, Settings and book-chip filters, so it is what you see there. */
   const mN={safe:0, lucky:0, hail:0, boring:0, volado:0, old:0, xL:0, xH:0, all:rows.filter(r=>pv?isPasteRow(r):!isPasteRow(r)).length};
   { const cOn=new Set(boardBooks); shown.forEach(r=>{ if(cOn.size && !cOn.has(bookLabel(r.book)||'?')) return; const f=modeFamOf(r); if(f==='old'){ if(r.xFit==='lucky' || r.xFit==='hail' || grpOf(r)===0) mN.old++; } else if(r.xFit==='lucky' || r.xFit==='hail'){ mN[r.xFit]++; mN[r.xFit==='lucky'?'xL':'xH']++; } else if(grpOf(r)===0) mN[f]++; /* v4.77: an old card counts under ⏱ only; xL and xH count the extras alone (Suertudo also lists approved Coin Flips) */ });   /* v4.76: each tab counts its own */   /* v4.74: an approved long shot counts under Clairvoyant */
-    const full=k=>!mN[k] && rows.some(r=>r.xc===k && r.xCap && !r.hiddenDup && (pv?isPasteRow(r):!isPasteRow(r))); mN.fullL=full('lucky'); mN.fullH=full('hail'); }   // candidates on the board, none offered: the day's count is used
+    const full=k=>!mN[k==='lucky'?'xL':'xH'] /* v4.78: the extras alone */ && rows.some(r=>r.xc===k && r.xCap && !r.hiddenDup && (pv?isPasteRow(r):!isPasteRow(r))); mN.fullL=full('lucky'); mN.fullH=full('hail'); }   // candidates on the board, none offered: the day's count is used
+  rows.forEach(r=>{ if(r) r._old=rowOld(r); });   /* v4.78: what each row was at this draw (ringRecheck moves a card that turns 12 hours old) */
   const passW=passWhere(passing, shown, pv, isStarted, mN, rows);   /* v4.76: where each approved bet is (the "N in the tabs ▸" list), counted where the tab numbers are */
   shown=shown.filter(famIs);
   if(boardView!=='all') shown=shown.filter(x=>{ const g=grpOf(x); return boardView==='pass'?(g===0||g===6||g===7) : boardView==='perf'?(g===0&&!!x.ring&&x.ring.n===x.ring.of) : boardView==='legs'?!!x.leg : boardView==='outlier'?(g===0&&!!x.outlier) : boardView==='prior'?g===1 : boardView==='watch'?(g===5||g===6) : g===2; });   // v4.43: + Watch   // v4.34: Augi's Show menu
@@ -3574,7 +3576,7 @@ function renderCore(rows,cfg){
   const pcBox=document.getElementById('placeCards');
   if(pcBox){
     const xHtml=cardsOn?extrasCardsHtml(luckyHtml,hailRows,cfg,mN):'';   // v4.50: 🍀 Just missed and 🔮 Hail Marys   // v4.51: each only in its own mode, in place of Place these
-    if(cardsOn && (cardsHtml.length || xHtml)){ pcBox.classList.add('sc-grid'); pcBox.innerHTML=(!nCards?'':'<div class="pc-head"><b>🦑 The Sentinels</b> · Place these'+(famNow==='hail'?' · 🔮 edge · long shots':famNow==='old'?' · ⏱ old prices':'')+' · '+nCards+'<span class="sc-sub">'+(famNow==='old'?'⏱ Read more than 12 hours ago: La Contadora said YES at these prices. Check each price at the book first, or press 🦑 Send the Sentinels or reload the board; a fresh price sends the card back to its tab.':'✅ La Contadora: YES. The math says bet every card here.') /* v4.76 */ /* v4.77: old prices */ +' Best first on Sort › Math, band by band; bet down the list until your daily max. STRONG (green), GOOD (blue), THIN (yellow: still clears your estimated EV floor, with less edge, price confirmation or freshness; the smallest stakes).</span></div>'+cardsHtml.join(''))+xHtml; /* v4.51: best bets are listed in Safe only, so the v4.48 mode note is gone from here */ pcBox.style.display=''; pcFillShots(); }   // v3.57: ESPN photos   // v4.21: Sentinels cards in a grid
+    if(cardsOn && (cardsHtml.length || xHtml)){ pcBox.classList.add('sc-grid'); pcBox.innerHTML=(!nCards?'':'<div class="pc-head"><b>🦑 The Sentinels</b> · Place these'+(famNow==='hail'?' · 🔮 edge · long shots':famNow==='old'?' · ⏱ old prices':'')+' · '+nCards+'<span class="sc-sub">'+(famNow==='old'?'⏱ Read more than 12 hours ago: La Contadora said YES at these prices. Check each price at the book first, or press 🦑 Send the Sentinels, reload the board or paste it again; a fresh price sends the card back to its tab.':'✅ La Contadora: YES. The math says bet every card here.') /* v4.76 */ /* v4.77: old prices */ +' Best first on Sort › Math, band by band; bet down the list until your daily max. STRONG (green), GOOD (blue), THIN (yellow: still clears your estimated EV floor, with less edge, price confirmation or freshness; the smallest stakes).</span></div>'+cardsHtml.join(''))+xHtml; /* v4.51: best bets are listed in Safe only, so the v4.48 mode note is gone from here */ pcBox.style.display=''; pcFillShots(); }   // v3.57: ESPN photos   // v4.21: Sentinels cards in a grid
     else { pcBox.innerHTML=''; pcBox.style.display='none'; }
     avFillSoon();   // v3.57: and on the board's rows
     injFillSoon();   // v3.78: injury flags
@@ -4127,7 +4129,7 @@ async function hubOpen(ev, keep){ const h=hubState(), box=document.getElementByI
   let plays=(sum.plays||[]).slice(-6).reverse();
   if(!plays.length && sum.drives){ const cur=(sum.drives.current&&sum.drives.current.plays)||[]; plays=cur.slice(-6).reverse(); }
   const playsH=plays.length?'<ol class="hub-plays">'+plays.map(pl=>'<li><span class="meta">'+esc(((pl.period&&pl.period.number)?'P'+pl.period.number+' ':'')+((pl.clock&&pl.clock.displayValue)||''))+'</span> '+esc(pl.text||pl.shortText||'')+'</li>').join('')+'</ol>':'<div class="meta">No plays yet.</div>';
-  const day=h.day||ctDay(Date.now()), mine=logged.filter(b=>b.sport===h.sport && b.kind!=='parlay' && (gameDayOf(b)===day || b.date===day) && (findGame([ev],b.game)||findGameAny([ev],b.game,b.name,b.matchup)));
+  const day=h.day||ctDay(Date.now()), mine=logged.filter(b=>b.sport===h.sport && b.kind!=='parlay' && (gameDayOf(b)===day || b.date===day) && (findGame([ev],b.game)||findGameAny([ev],b.game,b.name,b.matchup)||liveFoundEv(b,[ev])));   /* v4.78: + the game found by the player */
   const mineH=mine.length?'<ul class="hub-list">'+mine.map(b=>'<li><b>'+esc(b.name)+'</b> '+esc(b.betnow||((b.side?(b.side==='O'?'Over ':b.side==='U'?'Under ':''):'')+(b.market||'')))+' <span class="meta">'+esc(String(b.odds||''))+' · $'+(+b.stake||0).toFixed(2)+' · '+esc(bookLabel(b.book)||'')+'</span> '+(b.result==='win'?'<b class="pl-up">WON</b>':b.result==='loss'?'<b class="pl-down">LOST</b>':b.result==='push'?'<b>PUSH</b>':'<span class="meta">open</span>')+'</li>').join('')+'</ul>':'<div class="meta">No bets of yours in this game.</div>';
   const rows=hubRows(h.sport, ev), q=(h.q||'').toLowerCase().trim(), shownR=rows.filter(r=>!q || (r.name+' '+r.market+' '+(r.book||'')).toLowerCase().includes(q));
   const dec=r=>{ const ls=liveState(r); return r.prior||r.waitOrder?'<b class="hub-dec prior">ALREADY BET</b>':(ls==='started'||ls==='closed'||hubState3(ev)!=='scheduled')?'<span class="hub-dec skip">STARTED</span>':(r.pass&&r.stake>0)?'<b class="hub-dec pass">BET $'+(+r.stake).toFixed(2)+'</b>':'<span class="hub-dec skip">skip</span>'; };
@@ -5554,7 +5556,7 @@ function modeEmptyText(mode,mN){ const el=modeElse(mN,mode), bv=(typeof boardVie
   if(mode==='safe' && bv==='watch') return '👀 Watch bets are the ones that just missed: they are listed under 🍀 Suertudo (the long shots among them under 🔮 Brujo).';
   if(bv!=='all' && mN && (mode==='clair'?mN.hail:mN[mode])){ const n=mode==='clair'?mN.hail:mN[mode]; /* v4.77: every tab */ return 'Nothing under this Show choice in this mode. Show › All groups lists its '+n+' bet'+(n===1?'':'s')+'.'; }
   if(mode==='boring' || mode==='volado') return (mode==='boring'?'😴 Boring lists the bets La Contadora approves at 75% or better':'🪙 Volado lists the bets La Contadora approves at 50 to 60%')+', and none is on the board right now. '+el;   /* v4.76 */
-  if(mode==='lucky') return '🍀 Suertudo lists only the bets that just missed La Contadora’s floor, and '+(mN&&mN.fullL?'you have used today’s '+EXTRAS.luckyDay:'none is on the board right now')+'. '+el;
+  if(mode==='lucky') return '🍀 Suertudo lists the Coin Flips La Contadora approves (45 to 50%) and the bets that just missed her floor, and ' /* v4.78 */+(mN&&mN.fullL?'you have used today’s '+EXTRAS.luckyDay:'none is on the board right now')+'. '+el;
   if(mode==='old') return '⏱ Old lists the bets whose price was read more than 12 hours ago, and none is on the board right now. '+el;   /* v4.77 */
   if(mode==='clair') return '🔮 Brujo lists the long shots under 45% and the Hail Marys, and '+(mN&&mN.fullH?'you have used today’s '+EXTRAS.hailDay:'none is on the board right now')+'. '+el;
   if(mode==='safe' && mN && (mN.boring||mN.volado||mN.lucky||mN.hail||mN.old)) return '💪 Machín lists the bets La Contadora approves at 60 to 75%, and none is on the board right now. '+el;   /* v4.77: the other tabs have bets */
@@ -5588,7 +5590,7 @@ function modeCountsPaint(rows,mN){ mN=mN||{safe:0, lucky:0, hail:0, boring:0, vo
   set('safe', mN.safe, 'Strong, Solid and Lean: bets La Contadora approves at 60 to 75% ('+mN.safe+' to place now).');
   set('lucky', mN.lucky, 'Coin Flip (45 to 50%) and the bets that just missed her floor ('+mN.lucky+' now; the near-misses at the smallest bet, up to '+EXTRAS.luckyDay+' a day).');
   set('clair', mN.hail, 'Unlikely (under 45%) and Hail Marys: long shots ('+mN.hail+' now). Back to Machín at midnight.');
-  set('old', mN.old||0, 'Prices read more than 12 hours ago, from any tab ('+(mN.old||0)+' now). Check each price first: a Sentinels press or a reload that reads it fresh sends it back to its tab.');   /* v4.77 */
+  set('old', mN.old||0, 'Prices read more than 12 hours ago, from any tab ('+(mN.old||0)+' now). Check each price first: a Sentinels press, a reload or a new paste that reads it fresh sends it back to its tab.');   /* v4.77 */
   const c=document.getElementById('contadora'); if(!c) return; if(betMode==='safe' || betMode==='boring' || betMode==='volado' || betMode==='old'){ c.innerHTML=(CONTADORA[betMode]||'')+(betMode!=='safe'?' <span class="mode-info">· '+esc(modeElse(mN,betMode))+'</span>':''); return; }   /* v4.76 */
   const U=extrasUsed(), today=ctDay(Date.now()), uL=U.lucky[today]||0, uH=U.hail[today]||0, el=modeElse(mN,betMode);
   c.innerHTML=(CONTADORA[betMode]||'')+' <span class="mode-info">· '+(betMode==='lucky'
@@ -6482,7 +6484,7 @@ function liveBoxScoreHtml(g){
 function boxHasPlayer(box, name){ const P=box&&box.boxscore&&box.boxscore.players; return !!(P && name) && P.some(t=>(t.statistics||[]).some(c=>(c.athletes||[]).some(a=>nameMatch(a.athlete&&a.athlete.displayName, name)))); }
 async function liveGameByPlayer(b, evs){
   if(!b || !b.name || !evs || !evs.length || GL_KINDS.test(b.kind||'') || teamsOf(b.game) || teamsOf(b.matchup)) return null;
-  const key=b.id||b, had=liveByPlayer.get(key), ev0=had?evs.find(e=>String(e.id)===had):null; if(ev0) return ev0;
+  const key=b.id||b;   /* v4.78 (Los Desconfiados): no shortcut to the game found earlier: it is checked again on every pass (the box scores are kept) */
   /* v4.77 (Los Chismosos): a box score that does not list the player yet is read again, at most once a minute (an NFL box score lists a player only
      after his first stat). Two games that list the name: the one that starts when the book said, if exactly one does. While another game in the
      window has not started (its players are not listed yet), no guess unless the start time matches. */
@@ -6493,9 +6495,9 @@ async function liveGameByPlayer(b, evs){
     if(!boxscoreCache[ck]) liveByPlayerAt.set(ck, Date.now());
     if(boxHasPlayer(await fetchBoxscore(b.sport, e.id), b.name)) hit.push(e); }
   const exact=hit.filter(e=>!isNaN(t0) && Math.abs(Date.parse(e.date)-t0)<60e3), one=exact.length===1?exact[0]:hit.length===1?hit[0]:null;
-  if(!one) return null;
-  if(exact.length!==1 && W.some(e=>stOf(e)==='pre')) return null;
+  if(!one || (exact.length!==1 && W.some(e=>stOf(e)==='pre'))){ liveByPlayer.delete(key); return null; }   /* v4.78: a second game now lists the name: let it go */
   liveByPlayer.set(key, String(one.id)); return one; }
+function liveFoundEv(b, evs){ try{ const id=liveByPlayer.get(b.id||b); return id ? (evs||[]).find(e=>e && String(e.id)===id) || null : null; }catch(e){ return null; } }   /* v4.78: the game Live Games found by the player, for the Game Hub and the scores strip */
 function liveNoGameText(g){ const b=(g&&g.bets&&g.bets[0])||{}, who=b.autoFrom?bookLabel(b.book)+' did not name the game':'No game saved with this bet';
   return GL_KINDS.test(b.kind||'') ? who : who+' · found by the player once it starts'; }
 async function renderLive(force){
@@ -6507,8 +6509,8 @@ async function renderLive(force){
     if(!bets.length){ body.innerHTML='<div class="empty" style="display:block">No open bets in today\'s games. Bets show here from the day of the game until they settle.</div>'; return; }
     const sports=[...new Set(bets.map(b=>b.sport).filter(s=>ESPN_MAP[s]))];
     if(force) sports.forEach(sp=>{ delete scoreboardCache[sp]; });
-    await Promise.all(sports.map(fetchScoreboard));
-    const groups=new Map(), SB={}; sports.forEach(sp=>{ SB[sp]=scoreboardCache[sp]||[]; });   /* v4.77: the scoreboards as read now (another refresh can clear the cache while a box score loads) */
+    const SBv=await Promise.all(sports.map(fetchScoreboard));
+    const groups=new Map(), SB={}; sports.forEach((sp,i)=>{ SB[sp]=(SBv&&SBv[i])||scoreboardCache[sp]||[]; });   /* v4.78: from what each fetch returned */   /* v4.77: the scoreboards as read now (another refresh can clear the cache while a box score loads) */
     for(const b of bets){
       const evs=SB[b.sport]||[];
       const ev=findGame(evs,b.game)||findGameAny(evs,b.game,b.name,b.matchup)||await liveGameByPlayer(b,evs);   // v4.76: + by the player's box score (Novig props name no teams)
@@ -6816,7 +6818,7 @@ function ssFillSel(sel){
 }
 /* v4.26: each game tile says what your open bets on it risk (ESPN's "1 Bet risking $1.26"). Open = no result, not sold, not a parlay (liveOpenBets);
    a free bet counts as a bet but risks $0. Keyed sport:eventId, the same key as the tile's data-key. */
-function ssRiskMap(bySport){ const m=new Map(); liveOpenBets().forEach(b=>{ const evs=bySport(b.sport)||[]; const ev=findGame(evs,b.game)||findGameAny(evs,b.game,b.name,b.matchup); if(!ev) return;
+function ssRiskMap(bySport){ const m=new Map(); liveOpenBets().forEach(b=>{ const evs=bySport(b.sport)||[]; const ev=findGame(evs,b.game)||findGameAny(evs,b.game,b.name,b.matchup)||liveFoundEv(b,evs) /* v4.78 */; if(!ev) return;
   const k=b.sport+':'+ev.id, x=m.get(k)||{n:0,amt:0}; x.n++; x.amt+=(b.free?0:(+b.stake||0)); m.set(k,x); }); return m; }
 async function ssMine(box, force){   // v4.26: every game with an open bet of yours, from ESPN's scoreboard for that league
   const sports=ssBetSports();

@@ -6,6 +6,13 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.78 (owner, 11/11: "DO iT BUILD"; the full review's open items, confirmed by Los Desconfiados): `rowOld` counts an unknown read time
+  (`priceAt` 'unknown') from `loadedAt`; `renderCore` stamps `r._old` and `ringRecheck` (30 s) redraws when a row turns old with the page open (same
+  row objects: `audit` returns `lastRows`); `full()` decides "No more today" from `mN.xL`/`mN.xH`; `liveGameByPlayer` has no shortcut to the game found
+  earlier (re-checked every pass, `liveByPlayer.delete` when a second game lists the name); `liveFoundEv` (try/catch for the startup order) lets
+  `ssRiskMap` (Game Hub cards, scores strip) and `hubOpen` count a bet found by its player; `renderLive` builds `SB` from Promise.all's values; the
+  ⏱ Old words add "or paste it again"; Suertudo's La Contadora line and empty text name the Coin Flips. Not changed: the cover chip (Sally's question),
+  the near-misses (A/B/C waits for the owner), and `findBetGame`'s by-player search (pre-existing: it takes the first finished game that lists the name).
 - v4.77 (owner, 11/11: "put the older bets in another category. or Tab in itself. If sentinels takes them out of jail, then good. but, lets not mix them
   with our regular tabs"): `rowOld(r)` = the price (`rowSeenAt`: load, Sentinels answer, swap) read more than `OLD_PRICE.ms` (12 h) ago, not a bet you
   hold, an order waiting or a moved line. `modeFamOf` gives 'old' before the extras and the chance tabs; `MODES.old` (⏱ Old, offers both extras,

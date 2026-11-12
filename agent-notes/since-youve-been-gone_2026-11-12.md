@@ -69,6 +69,15 @@ Alonzo used the whole ChatGPT allowance for the day. We kept building on what yo
 - **Cause 2: the Sentinels could not refresh it.** The Worker builds Kalshi's event code from ESPN team codes, which often differ for college teams (his own Nov 10 fill: ESPN "M-OH", Kalshi "MOH"). The lookup said "game not found", which the screener treats as "could not read", so the card stayed.
 - **Fix (Worker, read-only).** When the code lookup fails, find the open event of that game day whose title names both teams (the screener already sends their names). Exactly one match, or nothing. A moneyline's team market is then picked by name; a spread is not guessed. Test: 8/8 with stand-in Kalshi answers (Kalshi is not reachable from the build machine).
 
+### v4.78 (Alonzo: "DO iT BUILD"): the reviewers' leftovers (labels, listing, Live Games)
+- ⏱ Old:
+  - a price read at an unknown time counts from the board load;
+  - a card that turns old with the page open moves within 30 seconds;
+  - "or paste it again" for pasted boards.
+- "No more today" is no longer hidden by an approved Coin Flip.
+- Live Games re-checks the game found by the player on every pass, and lets it go if a second game lists the name. The Game Hub cards and the scores strip count that bet too.
+- Suertudo's words mention its Coin Flips.
+
 ## Open questions for you
 1. Should the CSV "mode" column say "Clairvoyant (edge · long shot)" for approved long shots, or keep "Safe" because the record follows approval rather than listing?
 2. Should swap cards get the same NO OFFER / GONE treatment when the book they show answers clearly?
@@ -77,3 +86,4 @@ Alonzo used the whole ChatGPT allowance for the day. We kept building on what yo
 5. Alonzo answered question 3 for the listing: old prices get their own tab (v4.77, over 12 hours). Should they also stop counting toward the daily max until re-checked? A stale price can look like the best edge on the board and take money from fresh bets. That is a stake rule: nothing is built until you agree and he says build. And is 12 hours the right line (the ⏱ pill turns amber at 30 minutes)?
 6. The cover chip shows the model's cover %; the tabs and band headers use La Contadora's chance. So a near-miss can sit in Suertudo (Coin Flip by La Contadora) with an "On the Line" chip (model 50%). Should the chip follow La Contadora, show both, or stay?
 7. Live Games keeps the game found by the player for the session only. Should it be saved on the bet, so the Bet log and ALREADY BET can use it?
+8. Grading (before v4.76): `findBetGame` grades a prop with no teams by the first finished game that lists the player, without checking for a second game with the same name. Live Games now refuses to guess there. Should grading refuse too, and wait for Alonzo?
