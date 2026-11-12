@@ -25,7 +25,7 @@ const ROWS=[row('a','Fresh Machin',0.62,0.58,60e3), row('b','Stale Machin',0.62,
     const tabs=()=>p.evaluate(()=>[...document.querySelectorAll('#modeBar button')].map(x=>x.textContent.replace(/\s+/g,' ').trim()));
     const t1=await tabs();
     if(W===1280){
-      check('six tabs: ⏱ Old after 🔮 Brujo; it holds 3 (Stale Machin 13 h, Stale Brujo 5 d, the Stale Hail Hail Mary 20 h)', t1.length===6 && /^⏱ Old 3$/.test(t1[5]) && /^💪 Machín 1$/.test(t1[1]) && /^🪙 Volado 1$/.test(t1[2]) && /^🔮 Brujo 1$/.test(t1[4]), t1);
+      check('six tabs: ⏱ Old after 🔮 Brujo; it holds 3 (Stale Machin 13 h, Stale Brujo 5 d, the Stale Hail Hail Mary 20 h); v4.81: then 👻 AWOL (0 here)', t1.length===7 && /^👻 AWOL 0$/.test(t1[6]) && /^⏱ Old 3$/.test(t1[5]) && /^💪 Machín 1$/.test(t1[1]) && /^🪙 Volado 1$/.test(t1[2]) && /^🔮 Brujo 1$/.test(t1[4]), t1);
       const st=await p.evaluate(()=>{ const g=n=>lastRows.find(r=>r.name===n); return {fresh:g('Fresh Machin').stake, stale:g('Stale Machin').stake, held:modeFamOf(g('Held Old')), eleven:modeFamOf(g('Eleven Volado'))}; });
       check('listing only: Stale Machin keeps the same stake as Fresh Machin (same chance, same price)', st.stale>0 && Math.abs(st.stale-st.fresh)<1e-9, st);
       check('a bet you hold stays where it is (Held Old, 2 days old, already bet: 💪 Machín); 11 hours is not old (🪙 Volado)', st.held==='safe' && st.eleven==='volado', st);
@@ -41,7 +41,7 @@ const ROWS=[row('a','Fresh Machin',0.62,0.58,60e3), row('b','Stale Machin',0.62,
       fresh=true; await p.evaluate(async()=>{ await shopExchanges(); }); await p.waitForTimeout(400);
       const t2=await tabs();
       check('after a Sentinels press reads Stale Machin fresh at Novig, it is back under 💪 Machín (2); ⏱ Old 2', /^💪 Machín 2$/.test(t2[1]) && /^⏱ Old 2$/.test(t2[5]), t2); }
-    const over=await p.evaluate(()=>document.documentElement.scrollWidth-innerWidth); check(W+' px: six tabs, no sideways scroll', over<=0 && t1.length===6, {over, n:t1.length});
+    const over=await p.evaluate(()=>document.documentElement.scrollWidth-innerWidth); check(W+' px: seven tabs (v4.81: + 👻 AWOL), no sideways scroll', over<=0 && t1.length===7, {over, n:t1.length});
     check('no page errors ('+W+')', !errs.length, errs); await ctx.close(); }
   // v4.78 (Los Chismosos): a price whose read time is unknown counts from the board load; a card that turns 12 hours old while the page sits open
   // moves on its own (the 30-second check), with no tap; and on a pasted board the words say to paste it again

@@ -33,7 +33,7 @@ const ROWS=[row('lek','Jonathan Lekkerimaki','VAN',0.519,0.5546,0.526),   // ble
   check('v4.51: the best-bet tabs (Boring, Machín, Volado; was Safe) list only the best bets: no Watch group and no Cuylle (he is under Suertudo)', !safeG.g.some(g=>/^Watch|JUST MISSED/i.test(g)) && !safeG.cu, safeG);
   await p.evaluate(()=>setMode('lucky')); await p.waitForTimeout(300);
   const groups=await p.evaluate(()=>[...document.querySelectorAll('#tbody tr.group-row')].map(g=>g.innerText.replace(/\s+/g,' ').trim()));
-  check('v4.51: 🍀 Suertudo (was Feeling Lucky) lists him, as 🍀 Just missed (his EV with the market is +0.2%, 0% or better), and no Place these there', groups.length===1 && /JUST MISSED/i.test(groups[0]) && await p.evaluate(()=>/Cuylle/.test(document.getElementById('tbody').textContent) && !/Lekkerimaki/.test(document.getElementById('tbody').textContent)), groups);
+  check('v4.51: 🍀 Suertudo (was Feeling Lucky) lists him; v4.80 (owner: near-misses option A): as a 👀 Watch row, not offered as 🍀 Just missed (his EV with the market is +0.2%, under the floor), and no Place these there', groups.length===1 && /^WATCH/i.test(groups[0]) && !/JUST MISSED/i.test(groups[0]) && await p.evaluate(()=>/Cuylle/.test(document.getElementById('tbody').textContent) && !/Lekkerimaki/.test(document.getElementById('tbody').textContent)), groups);
   await p.selectOption('#boardView','watch'); await p.waitForTimeout(300);
   const only=await p.evaluate(()=>[...document.querySelectorAll('#tbody tr:not(.group-row)')].map(t=>t.textContent.match(/Lekkerimaki|Cuylle|Pettersson|Hughes/)?.[0]).filter(Boolean));
   check('Show › 👀 Watch lists only the watch rows (Cuylle)', only.length===1 && only[0]==='Cuylle', only);
