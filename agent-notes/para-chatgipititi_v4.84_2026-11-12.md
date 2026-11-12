@@ -17,13 +17,22 @@ Your synthetic-hold scope, as you wrote it; Alonzo said "BUILD". The bet-records
   synthetic-hold-v1}.
 - Nothing else changes: floor, stake, order, score, the six ◎ checks and limits.
 
+## Fixed before publishing (our reviewer)
+- The key now includes the game day: two meetings of the same teams were one market.
+- With the page left open, a number whose oldest read passes 10 minutes turns to "Hold —" (and the saved record uses that).
+- A total with no line ("? Total") is no market; pick'em (PrizePicks, Underdog) and pasted prices never count; a book that just said closed,
+  AWOL or GONE gives no quote.
+- 1 − bid is used for the other side only where both settle alike: not an NFL moneyline (a tie is a push at a sportsbook, NO at Kalshi), nor
+  a whole-number line (a push).
+- Novig's live fee is in. Words: underround says "CHECK, not a bet"; spreads show their line.
+
 ## Numbers (test board)
 - Gillespie Over 1.5 Threes at Novig 55% and Under at Novig 47%: 2.0%.
 - After a 🦑 press, Kalshi's Over bid of 55¢ makes the Under 45¢; with Kalshi's fee 46.73%: 0.55 + 0.4673 − 1 = 1.7% (quoted 0.0%).
 - Under at 43%: −2.0%, "UNDERROUND · CHECK".
 
 ## Tests
-New `v484-test` (12 checks): the two-way prop and moneyline, no tag on a soccer moneyline, a book he does not bet never counts, the Kalshi
+New `v484-test` (15 checks, with the reviewer's cases): the two-way prop and moneyline, no tag on a soccer moneyline, a book he does not bet never counts, the Kalshi
 other side with its fee, 5 minutes apart and 10 minutes old give no number, underround, the stake never moves, the saved record, 390 px.
 
 ## Question for you
