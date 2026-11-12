@@ -4224,7 +4224,7 @@ function scKalshiLine(r){ if(LIVE_BOOK(r.book)!=='kalshi' || r.fairProb==null ||
 function scPolyLine(r){ if(LIVE_BOOK(r.book)!=='poly' || r.fairProb==null || !(r.offeredProb>0 && r.offeredProb<1)) return '';   /* v4.79: what to type on Polymarket US, on the card (like the Kalshi line) */
   const st=+r.stake||0, mx=maxPriceFor(okProbR(r), r.book, cfgRead().eMin); if(!(st>0) || mx==null || r.offeredProb>mx+1e-9) return '';
   const k=polyHow(r,st,mx); if(!k) return '';
-  return '<div class="sc-kx sc-px" title="What to type on Polymarket US. A Market order on a thin book (High slippage) pays more than the price shown; a Limit order never pays more than its price. The steps are explained in Why this play?"><span class="sc-kx-h">On Polymarket</span><span class="sc-kx-i"><b>Limit</b>, not Market</span><span class="sc-kx-i"><b>'+k.btn+'</b>'+(k.plus?' on '+k.plus:'')+'</span><span class="sc-kx-i">Limit <b>'+k.lim+'¢</b></span><span class="sc-kx-i">Shares <b>'+k.shares+'</b></span><span class="sc-kx-i">Cost ≤ <b>$'+k.cost.toFixed(2)+'</b></span></div>'; }
+  return '<div class="sc-kx sc-px" title="What to type on Polymarket US. A Market order on a thin book (High slippage) pays more than the price shown; a Limit order never pays more than its price. The steps are explained in Why this play?"><span class="sc-kx-h">On Polymarket</span><span class="sc-kx-i"><b>Limit</b>, not Market</span><span class="sc-kx-i"><b>'+esc(k.btn)+'</b>'+(k.plus?' on '+k.plus:'')+'</span><span class="sc-kx-i">Limit <b>'+k.lim+'¢</b></span><span class="sc-kx-i">Shares <b>'+k.shares+'</b></span><span class="sc-kx-i">Cost ≤ <b>$'+k.cost.toFixed(2)+'</b></span></div>'; }
 function placeCardHtml(r,cfg,o){
   const gi=r.gameInfo||{}, T=gi.teams||[], away=T.find(t=>t.ha==='away'), home=T.find(t=>t.ha==='home');
   const gl=GL_KINDS.test(r.kind||''), myAb=r.team?normAbbr(r.team):(gl?glTeam(r):null);
@@ -4248,7 +4248,7 @@ function placeCardHtml(r,cfg,o){
   const p=r.offeredProb, okP=p>0&&p<1, isX=!!LIVE_BOOK(r.book), mx=r.fairProb!=null?maxPriceFor(okProbR(r), r.book, cfg.eMin):null, over=!X && okP && (mx==null || p>mx+1e-9);
   const st=+(X?r.xStake:r.stake)||0, fee=okP?feeRate(r.book,p,cfg.fees):0, pay=st>0&&okP?Math.floor(st/(p*(1+fee))*100+1e-6)/100:null;
   const isC=/kalshi|polymarket/i.test(r.book||''), isPB=isX || /predict|prophet|sporttrade/i.test(r.book||'');
-  const pp=x=>isC?Math.round(x*100)+'¢':(x*100).toFixed(1)+'%', okTo=x=>isPB?pp(x):fmtOdds(Math.round(americanOf(x))), odds=okP?fmtOdds(Math.round(americanOf(p))):fmtOdds(r.offeredRaw);
+  const pp=x=>isC?Math.round(x*100)+'¢':(x*100).toFixed(1)+'%', okTo=x=>isPB?(isC?Math.floor(x*100+1e-9)+'¢' /* v4.79 (Los Chismosos): her most in whole cents rounds down, like the strip */:pp(x)):fmtOdds(Math.round(americanOf(x))), odds=okP?fmtOdds(Math.round(americanOf(p))):fmtOdds(r.offeredRaw);
   const bk=bookLabel(r.book)||'book?', logo=bookLogo(r.book)?logoTag(r.book):'<i>'+esc(bk)+'</i>';
   const slip=!!(LIVE_BOOK(r.book) || /draftkings|prizepicks/i.test(r.book||''));
   const lim=X?((r.xContracts?r.xContracts+' contract'+(r.xContracts===1?'':'s')+' · ':'')+(X==='lucky'?'the smallest bet':'a Hail Mary')):r.risk?'⚠ small on purpose':r.outlier?'outlier: capped':(r.capTrimmed||r.dayTrimmed)?'limited by your caps':'';
@@ -10545,11 +10545,22 @@ function kalshiHowHtml(r){   // a full-width strip on the card: one box per thin
    price. Like Kalshi's strip: Limit, the button, the limit price = La Contadora's most in whole cents (rounded down), whole shares = the stake ÷
    (limit price + Polymarket US's fee), and the most it can cost. What is offered up to the limit fills; the rest waits on the book. */
 function polyHow(r,st,mx){ if(!(st>0) || !(mx>0)) return null;
-  const lim=Math.floor(mx*100+1e-9); if(lim<1) return null; const L=lim/100, per=L*(1+feeRate('Polymarket US',L,cfgRead().fees)), shares=Math.floor(st/per+1e-6); if(shares<1) return null;
+  const lim=Math.floor(mx*100+1e-9); if(lim<1) return null; const L=lim/100, per=L*(1+feeRate('Polymarket US',L,cfgRead().fees)), shares=Math.floor(Math.floor(st*100+1e-6)/100/per+1e-6); if(shares<1) return null;   /* v4.79: from the stake in whole cents */
   const gl=GL_KINDS.test(r.kind||''), team=gl && r.kind!=='total', U=r.side==='U', ln=parseFloat(r.market), mk=String(r.market||'').replace(/^([+-]?[\d.]+)\s*/,'$1 ');
+  if(team && /^draw$/i.test(String(r.name||'').trim())) return null;   /* v4.79 (Los Chismosos): a soccer Draw row names the home team: no strip, never the wrong outcome */
   const plus=!gl && (r.side==='O'||U) && ln>=0 && Math.abs(ln%1-0.5)<1e-9 ? (ln+0.5)+'+' : '';   // Over 0.5 = "1+" on Polymarket
-  const what=team ? (r.team||r.name)+(r.kind==='spread'?' '+String(r.market||'').replace(/\s*Spread$/i,''):' wins') : (gl?'':(r.name||'')+' ')+'Over '+mk+(plus?' (“'+plus+'” on Polymarket)':'');
-  return {btn:U?'NO':'YES', what, plus, team, underNote:U, lim, shares, amt:+(shares*L).toFixed(2), cost:+(shares*per).toFixed(2), payout:shares}; }
+  const base={plus:'', team:false, underNote:false, lim, shares, amt:+(shares*L).toFixed(2), cost:Math.ceil(shares*per*100-1e-9)/100 /* v4.79 (Los Chismosos): the most it can cost, rounded UP */, payout:shares};
+  if(!team) return Object.assign(base, {btn:U?'NO':'YES', what:(gl?'':(r.name||'')+' ')+'Over '+mk+(plus?' (“'+plus+'” on Polymarket)':'')+(gl?' · if it shows Over / Under: '+(U?'Under':'Over'):''), plus, underNote:U});   /* v4.79: a game total may show Over / Under */
+  /* v4.79 (Los Chismosos): a moneyline or a spread is ONE market with two sides: one team is its YES side, the other its NO side (an underdog
+     spread is NO on the favourite's market). So a team bet names the side to press, never a bare YES; when the Sentinels read this market,
+     their quote says which answer it is ("NO · <market>"). */
+  const q=[r._openQ, r._shopQ&&r._shopQ['Polymarket US'], r._altQ&&r._altQ['Polymarket US']].find(x=>x && x.ok && x.src==='poly' && x.title);
+  const me=r.team||r.name||'', sp=r.kind==='spread'?String(r.market||'').replace(/\s*Spread$/i,'').trim():'', spN=parseFloat(sp), AH=giTeamsOf(r), mine=AH?giTeamFor(r, me):null;
+  const opp=mine?(AH.find(x=>x!==mine)||{}).abbr||null:null, side=me+(sp?' '+sp:''), full=r.name && r.name!==me ? r.name+' ('+side+')' : side, does=sp?' covers':' wins';
+  const yn=q ? ' · on “'+String(q.title).replace(/^NO · /,'')+'” that is '+(/^NO · /.test(q.title)?'NO':'YES')
+    : sp && opp && spN>0 ? ' · on a Yes / No market for '+opp+' −'+spN+' that is NO' : sp && spN<0 ? ' · on a Yes / No market for '+side+' that is YES'
+    : ' · if it asks Yes / No: the answer that means '+side+does;
+  return Object.assign(base, {btn:side, what:full+does+yn, team:true}); }
 function polyHowHtml(r){   // v4.79: the full strip in Why this play?, one box per thing to type, in the order Polymarket US asks
   if(LIVE_BOOK(r.book)!=='poly' || r.fairProb==null || !(r.offeredProb>0 && r.offeredProb<1)) return '';
   const st=+r.stake||0, mx=maxPriceFor(okProbR(r), r.book, cfgRead().eMin); if(!(st>0) || mx==null || r.offeredProb>mx+1e-9) return '';
@@ -10557,7 +10568,7 @@ function polyHowHtml(r){   // v4.79: the full strip in Why this play?, one box p
   const box=(lbl,val,note)=>'<div class="kx-b"><span class="kx-l">'+lbl+'</span><b class="kx-v">'+val+'</b>'+(note?'<span class="kx-n">'+note+'</span>':'')+'</div>';
   return '<div class="kx-how px-how" title="What to type on Polymarket US for La Contadora’s bet"><div class="kx-h">On Polymarket US, enter</div><div class="kx-row">'+
     box('1 · Order type', 'Limit', 'tap Market ⌄ and pick Limit. Never Market')+
-    box('2 · Press', k.btn, esc(k.what)+(k.underNote?' (NO on the Over = the Under)':'')+(k.team?' (or the team’s own button)':'')+'<br>in '+esc(gameHintOf(r)))+
+    box('2 · Press', esc(k.btn), esc(k.what)+(k.underNote?' (NO on the Over = the Under)':'')+'<br>in '+esc(gameHintOf(r)))+   /* v4.79: a team bet names its side (esc: it is a team name) */
     box('3 · Limit price', k.lim+'¢', 'La Contadora’s most, never higher')+
     box('4 · Shares', String(k.shares), 'if it asks for dollars: $'+k.amt.toFixed(2))+
     box('Then check', 'Cost ≤ $'+k.cost.toFixed(2), 'Pays $'+k.payout.toFixed(2)+' if it wins')+'</div>'+

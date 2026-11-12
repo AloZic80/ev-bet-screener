@@ -46,8 +46,25 @@ const strip=(p,name)=>p.evaluate(n=>{ const c=[...document.querySelectorAll('#pl
       check('Alonzo\'s Aho slip ($4.61, OK to 47.5%): Limit 47¢, 9 shares (if it asks for dollars: $4.23), Cost ≤ $4.39, pays $9.00', O && O.lim===47 && O.shares===9 && O.amt===4.23 && O.cost===4.39 && O.payout===9 && O.btn==='YES' && O.plus==='1+', O);
       const J=await strip(p,'Seth Jarvis');
       check('an Under is NO on "1+" ("NO on the Over = the Under")', J && /^On Polymarket Limit, not Market NO on 1\+ Limit \d+¢ Shares \d+ Cost ≤ \$\d+\.\d\d$/i.test(J.line||'') && /^2 · Press NO Seth Jarvis Over 0\.5 Assists \(“1\+” on Polymarket\) \(NO on the Over = the Under\) in /.test(J.boxes[1]||''), J);
-      const G=await p.evaluate(()=>polyHow({kind:'moneyline', team:'Carolina Hurricanes', name:'Carolina Hurricanes', market:'Moneyline', side:''}, 5, 0.6));
-      check('a moneyline: YES on "Carolina Hurricanes wins" (or the team’s own button), no "1+"', G && G.btn==='YES' && G.what==='Carolina Hurricanes wins' && G.team===true && G.plus==='', G);
+      /* v4.79 (Los Chismosos, before publishing): a Polymarket US moneyline or spread is ONE market with two sides, one team YES and the other NO
+         (the Worker: full_game_winner; an underdog spread is NO on the favourite's market). A bare YES could buy the other side: a team bet names
+         its side, says YES or NO only when it knows, and a soccer Draw row (it names the home team) gets no strip at all. */
+      const G=await p.evaluate(()=>{ const T=(ha,abbr)=>({ha,id:abbr,abbr,name:abbr,loc:abbr,nick:abbr}), gi={teams:[T('away','CAR'),T('home','SEA')]};
+        const ml={kind:'moneyline', team:'CAR', name:'Carolina Hurricanes', market:'Moneyline', side:'', gameInfo:gi}, dog={kind:'spread', team:'SEA', name:'Seattle Kraken', market:'+1.5 Spread', side:'', gameInfo:gi};
+        const fav={kind:'spread', team:'CAR', name:'Carolina Hurricanes', market:'-1.5 Spread', side:'', gameInfo:gi};
+        const q=Object.assign({}, dog, {kind:'moneyline', market:'Moneyline', _openQ:{ok:true, src:'poly', price:0.46, title:'NO · Carolina Hurricanes vs. Seattle Kraken'}});
+        return {ml:polyHow(ml,5,0.6), dog:polyHow(dog,5,0.6), fav:polyHow(fav,5,0.6), q:polyHow(q,5,0.6), draw:polyHow({kind:'moneyline', name:'Draw', team:'Arsenal', market:'Moneyline', side:''},5,0.3)}; });
+      check('a moneyline names the team to press, never a bare YES: "CAR" · "Carolina Hurricanes (CAR) wins · if it asks Yes / No: the answer that means CAR wins"', G.ml && G.ml.btn==='CAR' && G.ml.what==='Carolina Hurricanes (CAR) wins · if it asks Yes / No: the answer that means CAR wins' && G.ml.team===true && G.ml.plus==='', G.ml);
+      check('an underdog spread is NO on the favourite\'s market: "SEA +1.5" · "… covers · on a Yes / No market for CAR −1.5 that is NO"', G.dog && G.dog.btn==='SEA +1.5' && G.dog.what==='Seattle Kraken (SEA +1.5) covers · on a Yes / No market for CAR −1.5 that is NO', G.dog);
+      check('a favourite\'s spread is YES on its own market: "CAR -1.5" · "… on a Yes / No market for CAR -1.5 that is YES"', G.fav && G.fav.btn==='CAR -1.5' && /covers · on a Yes \/ No market for CAR -1\.5 that is YES$/.test(G.fav.what), G.fav);
+      check('when the Sentinels read the market, its own words say YES or NO: "on “Carolina Hurricanes vs. Seattle Kraken” that is NO"', G.q && G.q.btn==='SEA' && /wins · on “Carolina Hurricanes vs\. Seattle Kraken” that is NO$/.test(G.q.what), G.q);
+      check('a soccer Draw row (it names the home team) gets no strip, never "Arsenal wins"', G.draw===null, G.draw);
+      const C=await p.evaluate(()=>{ const r={kind:'prop', name:'Test Cost', market:'0.5 Assists', side:'O'}, out=[]; for(const st of [1.37,2.5,3.33,4.61,7.77,9.99]) for(const mx of [0.3125,0.4767,0.552,0.81]){ const k=polyHow(r,st,mx); if(!k) continue; const per=(k.lim/100)*(1+feeRate('Polymarket US',k.lim/100,cfgRead().fees)); out.push({st,mx,cost:k.cost,exact:+(k.shares*per).toFixed(6),up:k.cost+1e-9>=k.shares*per,under:k.cost<=st+1e-9}); } return out; });
+      check('v4.79 (Los Chismosos): "Cost ≤" is a true ceiling (rounded up) and never over the card stake, for 24 stakes and limits', C.length>=20 && C.every(x=>x.up && x.under), C.filter(x=>!x.up||!x.under).slice(0,4));
+      const Tt=await p.evaluate(()=>{ const r={kind:'total', name:'CAR @ SEA', market:'5.5 Goals', side:'U'}; return polyHow(r,5,0.55); });
+      check('a game total Under: NO on "Over 5.5 Goals", and "if it shows Over / Under: Under"', Tt && Tt.btn==='NO' && Tt.underNote===true && Tt.what==='Over 5.5 Goals · if it shows Over / Under: Under', Tt);
+      const tile=await p.evaluate(()=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>x.textContent.includes('Sebastian Aho')); const d=c&&c.querySelector('details.sc-why'); if(d) d.open=true; const t=d?d.innerText.replace(/\s+/g,' '):''; if(d) d.open=false; return ((t.match(/OK up to \S+/i)||[])[0]||'').replace(/^OK up to/i,'OK up to')||null; });
+      check('v4.79 (Los Chismosos): "OK up to" says 47¢ like the strip (her most, 47.68¢, rounded down), not 48¢', tile==='OK up to 47¢', tile);
       const K=await strip(p,'Quinn Hughes'), N=await strip(p,'Jonathan Lekkerimaki');
       check('a Kalshi card keeps the Kalshi line (On Kalshi … Limit …¢) and gets no Polymarket strip', K && /^On Kalshi YES Shares [\d.]+ Limit \d+¢ Cost ≈ \$/i.test(K.kalshi||'') && K.line===null && K.how===null, K);
       check('a Novig card has no what-to-type strip', N && N.line===null && N.how===null && N.kalshi===null, N);
