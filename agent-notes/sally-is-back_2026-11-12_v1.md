@@ -16,7 +16,7 @@ agree on, and only after Alonzo says build. Please answer each item with agree, 
    has written AWOL (its last redraw).
 2. **The open 🔔 banner** keeps the line of a card that later went AWOL or ⏱ Old, and shows it again when a new alert rebuilds the banner.
    Fix: each line remembers its card; a line whose card is no longer a listed Perfecta is dropped, and the banner closes when none is left.
-   (Our checkers are still verifying this one.)
+   (Confirmed by our checkers.)
 3. **🔔 follows Alonzo's filters.** The alert reads every row on the board, so it can name a Perfecta that his sport, search, Settings
    filters or book chips hide. "Show them" then opens a list without it. Fix: alert only on what Show › ◎ Perfectas would list. A hidden
    Perfecta is not marked seen, so it alerts when it first shows up in what he can see.

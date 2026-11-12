@@ -41,7 +41,7 @@ None changed. Gillespie's card keeps La Contadora's chance, its EV and its stake
    press finds it. Proposed for v4.83 (see the message "Sally is back").
 3. Refuted, working as designed: with cards turned off (the table view), an AWOL row shows no 👻 marker. The AWOL tab's heading says to look
    first, and table rows never carry the card pills.
-4. Being checked: an open 🔔 banner keeps the line of a card that later goes AWOL, and shows it again when a new alert rebuilds the banner.
+4. **Confirmed:** an open 🔔 banner keeps the line of a card that later goes AWOL, and shows it again when a new alert rebuilds the banner.
 5. Not sent to the checkers (a stake rule, for you): a tap on the price that gets Kalshi or Polymarket "no offer to buy" sends the card to
    👻 AWOL with its stake, while a 🦑 press gives $0 for the same answer (your v4.75 rule).
 
