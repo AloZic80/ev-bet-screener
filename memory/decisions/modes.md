@@ -1,6 +1,6 @@
-# Modes: five tabs (Boring, Machín, Volado, Suertudo, Brujo)
+# Modes: five tabs (Boring, Machín, Volado, Suertudo, Brujo) and ⏱ Old
 
-Status: active · Introduced: v4.50, made exclusive in v4.51, five tabs by La Contadora's chance in v4.76 · Approved by: Alonzo · Last verified: 2026-11-12
+Status: active · Introduced: v4.50, made exclusive in v4.51, five tabs by La Contadora's chance in v4.76, ⏱ Old in v4.77 · Approved by: Alonzo · Last verified: 2026-11-11
 
 ## Rule
 - A mode never changes the math (stakes, daily max, what passes). It only changes the list.
@@ -11,27 +11,32 @@ Status: active · Introduced: v4.50, made exclusive in v4.51, five tabs by La Co
   - 🪙 Volado (`volado`): 50 to 60%: Slight Lean, On the Line;
   - 🍀 Suertudo (`lucky`; was Feeling Lucky): 45 to 50%: Coin Flip, plus the Just missed offers;
   - 🔮 Brujo (`clair`, family `hail`; was Clairvoyant): under 45%: Unlikely, plus the Hail Marys.
+- ⏱ Old (`old`, v4.77; Alonzo: "lets not mix them with our regular tabs"): any card whose price was read more than 12 hours ago (`rowOld`, `OLD_PRICE`),
+  whatever its chance, extras included. A Sentinels press or a reload that reads it fresh sends it back. A bet you hold, an order waiting or a moved line
+  stays where it is. Its Place these says La Contadora said YES at those prices: check each price first.
 - Inside a tab, Place these is grouped under a header per cover band (`rowBand`, `bandHead`), highest first; your sort applies inside a band.
 - Each row is listed in exactly one tab (`modeFamOf`):
   1. a bet you hold: by `prior.tier` (Just missed, Hail Mary), else by its chance if it passes, else Machín;
   2. an order waiting or a moved line: Machín;
-  3. a candidate: its own tab (`r.xc`);
-  4. passes every screen: by its chance (`passFam`);
-  5. of the rest: long shots Brujo, Watch rows Suertudo, other rejects Machín.
+  3. a price read more than 12 hours ago: ⏱ Old (v4.77);
+  4. a candidate: its own tab (`r.xc`);
+  5. passes every screen: by its chance (`passFam`);
+  6. of the rest: long shots Brujo, Watch rows Suertudo, other rejects Machín.
 - Just missed (`xc:'lucky'`): a Watch row with `actNet` ≥ 0 and no other reject. Smallest bet, 5 a game day. Its card says
   "La Contadora: NO · just under your floor (+X% vs your Y%) · optional, smallest bet"; Place these says "✅ La Contadora: YES" (v4.76).
 - Hail Mary (`xc:'hail'`): +300 or longer, or a scorer long shot from +200. $1, 3 a game day. Brujo goes back to Machín at midnight.
 - A best bet that your daily max or game cap left with no stake stays in its chance tab, out of Place these.
-- Each tab button counts its own Place these bets plus the extras offered there. The header's "N pass" counts every approved row; "N in the tabs ▸"
-  (`passWhere`, `passWhereHtml`) lists where each approved row is, under the first reason it is not in a tab, so the lines add up (v4.76).
+- Each tab button counts its own Place these bets plus the extras offered there. Since v4.77 the header's big number is the approved bets you can bet now
+  ("to bet now · of N", `passW.now`: in the tabs, not ⏱ Old); "N elsewhere ▸" (`passWhere`, `passWhereHtml`) lists every other approved row under the first
+  reason it is not in a tab, plus how many sit in 🔒 Skipping Jail (v4.76 showed "N pass" and "N in the tabs ▸").
 - Extras are real bets in the money views, and are kept out of the Scorecard.
 
 ## Code
-`MODES`, `EXTRAS`, `extrasAssign` (`xc`, `xFit`, `tier`, `xCap`), `modeFamOf`, `passFam`, `rowBand`, `renderCore` (`famIs`, `mN`, `passW`), `passWhere`,
+`MODES`, `EXTRAS`, `OLD_PRICE`, `rowOld`, `extrasAssign` (`xc`, `xFit`, `tier`, `xCap`), `modeFamOf`, `passFam`, `rowBand`, `renderCore` (`famIs`, `mN`, `passW`), `passWhere`,
 `passWhereHtml`, `modeCountsPaint`, `modeEmptyText`, `extrasCardsHtml`, `extraLine`.
 
 ## Tests
-`tests/tabs-v476-test.js`, `tests/pass-where-test.js`, `tests/modes-perfecta-test.js`, `tests/longshot-mode-test.js`, `tests/same-player-test.js`, `tests/floor-watch-test.js`.
+`tests/tabs-v476-test.js`, `tests/old-prices-test.js`, `tests/pass-where-test.js`, `tests/modes-perfecta-test.js`, `tests/longshot-mode-test.js`, `tests/same-player-test.js`, `tests/floor-watch-test.js`.
 
 ## Supersedes
 v4.51 to v4.75: three modes (🛡️ Safe the best bets, 🍀 Feeling Lucky the Just missed, 🔮 Clairvoyant the Hail Marys). v4.50: modes stacked

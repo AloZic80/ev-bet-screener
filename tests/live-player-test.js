@@ -3,6 +3,7 @@
 // Novig names a player prop only as "<player> <line> <stat>", so the fill is saved without its game. Live Games now finds that game the way
 // grading does after the final: the in-progress or final game of that sport, within 90 minutes of Novig's start, whose box score lists the
 // player; exactly one, or none. And a game that went final settles a prop only from ESPN's final box score, never a copy read mid-game.
+// v4.77: a box score that does not list him yet is read again once a minute; a same-named player in another game is not taken while his game waits.
 const path=require('path'); const INDEX=path.join(__dirname,'..','index.html');
 const { chromium } = require('playwright'); const fs=require('fs');
 const html=fs.readFileSync(process.argv[2]||INDEX,'utf8');
@@ -71,8 +72,29 @@ const res=(p,n)=>p.evaluate(n=>{ const b=logged.find(x=>x.name===n); return b?{r
   T=await open(b,S5,TIP-20*60e3);
   await T.p.evaluate(f=>{ autoAddFromDesc(f); autoAddFromDesc(Object.assign({},f,{id:'nvf-nhl-1', bet:Object.assign({},f.bet,{sport:'NHL', player:'Cole Caufield', statText:'SHOTS ON GOAL', line:3.5, side:'O', start:new Date(Date.parse(f.bet.start)+30*60e3).toISOString()})})); }, FILL);
   await live(T.p); v=await view(T.p);
-  check('5: before tip-off, not found yet: says Novig did not name the game, not "Not started" for a game it does not know', v.some(x=>x.head==='Novig did not name the game · found by the player once it starts NBA' && x.st[0]==='AJ Dybantsa | Game not known yet'), v);
+  check('5: before tip-off, not found yet: says Novig did not name the game; v4.77: its start is still ahead, so the status is "Not started" (a game that has started but is not found says "Game not known yet")', v.some(x=>x.head==='Novig did not name the game · found by the player once it starts NBA' && x.st[0]==='AJ Dybantsa | Not started'), v);
   check('5: the NBA and NHL bets with no game are two groups, not one "Game not found" list', v.length===2 && v.every(x=>/^YOUR BETS ON · 1 ·/.test(x.bets)), v.map(x=>x.bets));
   check('5: no box score is read before any game starts', !Object.keys(S5.sum).length, S5.sum);
   check('no page errors (before tip-off)', !T.errs.length, T.errs); await T.ctx.close();
+  // 6 — v4.77 (Los Chismosos): an NFL box score lists a player only after his first stat. AJ is not listed at first; the box score is read again
+  // at most once a minute, so he is found a minute later, not never.
+  const S6={games:{nba:[game('401',WSH,IND,TIP,'in',20,18)]}, box:{'401':box('in',[['WSH',[ath('Bilal Coulibaly',2,4)]],['IND',[ath('Pascal Siakam',3,6)]]])}};
+  T=await open(b,S6); await T.p.evaluate(f=>{ autoAddFromDesc(f); }, FILL); await live(T.p); v=await view(T.p);
+  check('6: AJ is not in the box score yet: not found, no guess', v.length===1 && !v[0].box && S6.sum['401']===1, {v, reads:S6.sum});
+  S6.box['401']=box('in',[['WSH',[ath('AJ Dybantsa',3,8),ath('Bilal Coulibaly',2,4)]],['IND',[ath('Pascal Siakam',3,6)]]]);
+  await live(T.p); v=await view(T.p);
+  check('6: within the minute the box score is not read again (no hammering ESPN)', S6.sum['401']===1 && v.length===1 && !v[0].box, {v, reads:S6.sum});
+  await T.p.clock.fastForward(61000); await live(T.p); v=await view(T.p);
+  check('6: a minute later it is read again and AJ is found under WSH @ IND (8 + 3 = 11, room 12.5)', v.length===1 && v[0].box && v[0].st.some(x=>/^AJ Dybantsa \| 11 · room 12\.5/.test(x)), {v, reads:S6.sum});
+  check('no page errors (late listing)', !T.errs.length, T.errs); await T.ctx.close();
+  // 7 — v4.77 (Los Chismosos): another player with the same name is in an earlier game that started; the bet's own game (Novig's start) has not.
+  // No guess while a game in the window has not started; once it starts, the game that starts when Novig said is taken.
+  const S7={games:{nba:[game('501',BOS,NYK,TIP-60*60e3,'in',40,38), game('401',WSH,IND,TIP,'pre',0,0)]}, box:{'501':box('in',[['BOS',[ath('AJ Dybantsa',1,2)]],['NYK',[ath('Jalen Brunson',2,15)]]])}};
+  T=await open(b,S7,TIP-20*60e3); await T.p.evaluate(f=>{ autoAddFromDesc(f); }, FILL); await live(T.p); v=await view(T.p);
+  check('7: the same name in an earlier game while the bet\'s game has not started: no guess ("Not started", Novig did not name the game)', v.length===1 && !v[0].box && v[0].st[0]==='AJ Dybantsa | Not started', v);
+  S7.games.nba[1]=game('401',WSH,IND,TIP,'in',30,28); S7.box['401']=box('in',[['WSH',[ath('AJ Dybantsa',6,14)]],['IND',[ath('Pascal Siakam',3,6)]]]);
+  await T.p.clock.fastForward(30*60e3); await live(T.p); v=await view(T.p);
+  const g7=v.find(x=>x.st.some(s=>/AJ Dybantsa/.test(s)));
+  check('7: once his game starts, the one that starts when Novig said is taken: WSH @ IND, 14 + 6 = 20', g7 && g7.box && /WSH|WAS/.test(g7.head) && /IND/.test(g7.head) && g7.st.some(x=>/^AJ Dybantsa \| 20 · room 3\.5/.test(x)), v);
+  check('no page errors (same name)', !T.errs.length, T.errs); await T.ctx.close();
   await b.close(); console.log('\n'+pass+' passed, '+fail+' failed'); process.exit(fail?1:0); })();

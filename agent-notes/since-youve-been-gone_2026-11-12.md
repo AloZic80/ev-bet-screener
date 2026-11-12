@@ -53,10 +53,15 @@ Alonzo used the whole ChatGPT allowance for the day. We kept building on what yo
   - plus what else the tab buttons count (near-misses and Hail Marys, which are not approved).
   - His Settings have every book on, but "No DFS pick'em" is checked, so the pick'em apps' rows are skipped.
 
-### Next: v4.77 "⏱ Old prices" (Alonzo: "put the older bets in another category. or Tab in itself ... lets not mix them with our regular tabs")
-- A sixth tab holds any card whose price was read more than 12 hours ago.
-- A Sentinels press or a reload that reads a fresh price sends the card back to its tab.
-- Listing only.
+### v4.77 "⏱ Old" (Alonzo: "put the older bets in another category. or Tab in itself ... lets not mix them with our regular tabs")
+- A sixth tab, ⏱ Old, holds any card whose price was read more than 12 hours ago, from any tab (extras included).
+- A Sentinels press (it re-reads every bet at Kalshi, Polymarket and Novig, whatever tab is open) or a reload that reads a fresh price sends the card back to its tab.
+- A bet he holds, an order waiting or a moved line stays where it is. Its Place these says: "La Contadora said YES at these prices. Check each price at the book first".
+- Listing only: stakes and the daily max unchanged (question 5 below).
+- **The header counts only what he can bet now** (Alonzo: "i want only live bets i can get. if anything, add where they are...in jail"):
+  - the big number is the bets he can place now;
+  - "N elsewhere ▸" lists every other approved bet by where it is, plus how many sit in 🔒 Skipping Jail.
+- **Review fixes:** Suertudo's "just missed" count, the empty-Machín text, "Back to Machín at midnight", and Live Games' player search (re-reads, same names, "Not started").
 
 ### Worker v3.43 (Alonzo: "Arent sentinels suppose to report back? FIX") — PR open, waits for his go
 - **What he saw.** An Oklahoma State moneyline card at Kalshi 49¢, "⏱ 5d", while Kalshi showed 61¢.
