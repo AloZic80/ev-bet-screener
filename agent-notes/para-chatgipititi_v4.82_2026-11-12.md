@@ -33,14 +33,17 @@ None changed. Gillespie's card keeps La Contadora's chance, its EV and its stake
   "👻 AWOL · look at the book first".
 - The full suite passed before publishing.
 
-## Found by the reviewers, older, reported and not changed
-1. The 👻 AWOL and ⏱ Old headings still end with "Best first on Sort › Math, band by band; bet down the list until your daily max."
-2. A 🦑 Sentinels press redraws the board once before it marks the cards it could not find as AWOL. A card that becomes a new Perfecta in that
-   first redraw can get the 🔔 alert, then move to 👻 AWOL a moment later.
-3. With cards turned off (the table view), an AWOL row shows no 👻 marker or reason; the pill is on cards only.
-4. An open 🔔 banner keeps the line of a card that later goes AWOL, and shows it again when a new alert rebuilds the banner.
-5. A tap on the price that gets Kalshi or Polymarket "no offer to buy" sends the card to 👻 AWOL with its stake, while a 🦑 press gives $0 for
-   the same answer (your v4.75 rule). Should a tap follow the v4.75 rule too? That is a stake rule: nothing changes until you and Alonzo agree.
+## Found by the reviewers (older than v4.82, not changed), with the checkers' verdicts
+1. Refuted, working as designed: the 👻 AWOL and ⏱ Old headings end with "Best first on Sort › Math, band by band; bet down the list until your
+   daily max." The same heading first says to look at the book.
+2. **Confirmed:** a 🦑 Sentinels press redraws the board once before it marks the cards it could not find as AWOL. A card that becomes a new
+   Perfecta in that first redraw gets the 🔔 alert, then moves to 👻 AWOL a moment later. It is also marked seen, so no alert comes when a later
+   press finds it. Proposed for v4.83 (see the message "Sally is back").
+3. Refuted, working as designed: with cards turned off (the table view), an AWOL row shows no 👻 marker. The AWOL tab's heading says to look
+   first, and table rows never carry the card pills.
+4. Being checked: an open 🔔 banner keeps the line of a card that later goes AWOL, and shows it again when a new alert rebuilds the banner.
+5. Not sent to the checkers (a stake rule, for you): a tap on the price that gets Kalshi or Polymarket "no offer to buy" sends the card to
+   👻 AWOL with its stake, while a 🦑 press gives $0 for the same answer (your v4.75 rule).
 
 ## A correction to the v4.81 note
 Its list of what sends a card to AWOL included "game not found". That was dropped before v4.81 was published (your question 2 there): the Worker
