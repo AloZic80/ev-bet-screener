@@ -26,6 +26,7 @@ const ROWS=[ml('Chicago Bulls','Chicago Bulls','Philadelphia 76ers @ Chicago Bul
     if(/api\.0xbeta\.dev/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'});
     if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1200);
+  await p.evaluate(()=>setMode('clair')); await p.waitForTimeout(300);   /* v4.74: these sample bets are approved long shots (under 45%), listed under Clairvoyant */
   const st=await p.evaluate(()=>lastRows.map(r=>({name:r.name, prior:!!r.prior, flags:(r.flags||[]).filter(f=>f[0]==='dupe'||f[0]==='warn').map(f=>f[1]).join(' | ')})));
   const chi=st.find(x=>x.name==='Chicago Bulls'), tmrw=st.find(x=>x.name==='CHI'), phi=st.find(x=>/76ers/.test(x.name));
   check('the Bulls moneyline today at Novig is ALREADY BET (your Novig fill: name "CHI", no game text, a different price), with the price you got', chi && chi.prior && /ALREADY BET at \+365/.test(chi.flags), chi);

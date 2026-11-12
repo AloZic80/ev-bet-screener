@@ -63,7 +63,7 @@ async function open(b, rows, extra){ const ctx=await b.newContext({timezoneId:'A
   const nCalls=S.calls.length;
   await S.p.clock.fastForward(3*60e3+20e3); await S.p.waitForTimeout(400);
   const st=await S.p.evaluate(()=>{ const r=lastRows.find(x=>x.apiKey==='k1'); return {tag:shopTagHtml(r).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim(), stale:!!shopStale(r)}; });
-  check('3 minutes 20 seconds later the claim has run out: "Price 3m old · best book no longer confirmed · Send the Sentinels", and no price was read again by itself', st.stale && /Price 3m old · best book no longer confirmed · Send the Sentinels/.test(st.tag) && S.calls.length===nCalls, {st, calls:S.calls.length-nCalls});
+  check('3 minutes 20 seconds later the claim has run out: "⏱ 3m · best book no longer confirmed · Send the Sentinels", and no price was read again by itself', st.stale && /⏱ 3m · best book no longer confirmed · Send the Sentinels/.test(st.tag) && S.calls.length===nCalls, {st, calls:S.calls.length-nCalls});
   const kick=await S.p.evaluate(()=>{ const now=Date.now(), mk=(koIn,age)=>({shop:{same:false, at:new Date(now-age).toISOString(), orig:{book:'Kalshi'}}, gameInfo:{startISO:new Date(now+koIn).toISOString()}});
     return {far60:!!shopStale(mk(60*60e3,100e3)), near100:!!shopStale(mk(4*60e3,100e3)), near80:!!shopStale(mk(4*60e3,80e3)), same:!!shopStale({shop:{same:true, at:new Date(now-600e3).toISOString()}})}; });
   check('within 5 minutes of kickoff the claim lasts 90 seconds (100 s old: stale; 80 s: not); an hour before, 100 s is still fine; a same-book live price makes no best-book claim', !kick.far60 && kick.near100 && !kick.near80 && !kick.same, kick);

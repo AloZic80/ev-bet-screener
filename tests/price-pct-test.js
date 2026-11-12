@@ -18,6 +18,7 @@ const ROWS=[row(), row({name:'Luka Doncic',team:'DAL',market:'4.5 Threes',fairPr
     const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
     await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
     await p.goto('http://app.test/'); await p.waitForTimeout(1500);
+    await p.evaluate(()=>setMode('clair')); await p.waitForTimeout(300);   /* v4.74: these sample bets are approved long shots (under 45%), listed under Clairvoyant */
     await p.evaluate(()=>{ const i=document.getElementById('books'); i.value='Bovada, Kalshi'; i.dispatchEvent(new Event('input',{bubbles:true})); }); await p.waitForTimeout(1500);
     const R=await p.evaluate(()=>{ const t=n=>{ const d=document.createElement('div'); d.innerHTML=impTagHtml(lastRows.find(x=>x.name===n)); const s=d.firstChild; return s?{text:s.textContent,cls:s.className,tip:s.title}:null; };
       const imps=[...document.querySelectorAll('.imp')], vw=document.documentElement.clientWidth;

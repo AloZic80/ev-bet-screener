@@ -23,3 +23,5 @@ Status: active · Introduced: v4.50, made exclusive in v4.51 · Approved by: Alo
 
 ## Supersedes
 v4.50: modes stacked (Feeling Lucky = Safe + Just missed). v2.65 to v4.49: modes raised Kelly, the game cap and the daily max.
+- v4.74 (owner: "Safe are leans and such ... Have them only where they belong"): an approved bet under 45% (La Contadora's chance) is listed under 🔮 Clairvoyant as "edge · long shot", not 🛡️ Safe. Stake and math unchanged.
+
