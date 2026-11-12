@@ -1,6 +1,6 @@
 # Modes: five tabs (Boring, Machín, Volado, Suertudo, Brujo) and ⏱ Old
 
-Status: active · Introduced: v4.50, made exclusive in v4.51, five tabs by La Contadora's chance in v4.76, ⏱ Old in v4.77 · Approved by: Alonzo · Last verified: 2026-11-12 (v4.79)
+Status: active · Introduced: v4.50, made exclusive in v4.51, five tabs by La Contadora's chance in v4.76, ⏱ Old in v4.77 · Approved by: Alonzo · Last verified: 2026-11-12 (v4.80)
 
 ## Rule
 - A mode never changes the math (stakes, daily max, what passes). It only changes the list.
@@ -25,7 +25,10 @@ Status: active · Introduced: v4.50, made exclusive in v4.51, five tabs by La Co
   4. a candidate: its own tab (`r.xc`);
   5. passes every screen: by its chance (`passFam`);
   6. of the rest: long shots Brujo, Watch rows Suertudo, other rejects Machín.
-- Just missed (`xc:'lucky'`): a Watch row with `actNet` ≥ 0 and no other reject. Smallest bet, 5 a game day. Its card says
+- **Near-misses are not offered since v4.80** (owner: option A, "what you seems better"): `EXTRAS.nearMiss=false`. They stay 👀 Watch records (no money),
+  so the record still shows whether they would have won. 🍀 Suertudo lists only the Coin Flips La Contadora approves. The machinery below is kept
+  (switch it back on with `EXTRAS.nearMiss=true`).
+- Just missed (`xc:'lucky'`, only when `EXTRAS.nearMiss`): a Watch row with `actNet` ≥ 0 and no other reject. Smallest bet, 5 a game day. Its card says
   "La Contadora: NO · just under your floor (+X% vs your Y%) · optional, smallest bet"; Place these says "✅ La Contadora: YES" (v4.76).
 - Hail Mary (`xc:'hail'`): +300 or longer, or a scorer long shot from +200. $1, 3 a game day. Brujo goes back to Machín at midnight.
 - "No more today" (`full()`, `mN.fullL` / `mN.fullH`): none offered in that tab and a candidate is held back by the day count itself
@@ -36,6 +39,9 @@ Status: active · Introduced: v4.50, made exclusive in v4.51, five tabs by La Co
   ("to bet now · of N", `passW.now`: in the tabs, not ⏱ Old); "N elsewhere ▸" (`passWhere`, `passWhereHtml`) lists every other approved row under the first
   reason it is not in a tab, plus how many sit in 🔒 Skipping Jail (v4.76 showed "N pass" and "N in the tabs ▸").
 - Extras are real bets in the money views, and are kept out of the Scorecard.
+- Show › ◎ Perfectas (v4.80) lists the 6-of-6 bets of every tab, whichever tab is open.
+- 🔔 (v4.80, level 1, while the app is open): Settings › "Tell me when a new ◎ Perfecta shows up": a fixed banner, a short sound and a browser
+  notification, once per Perfecta (kept 3 days); turning it on takes the board as it is. A label: no stake or decision changes.
 
 ## Code
 `MODES`, `EXTRAS`, `OLD_PRICE`, `rowOld`, `extrasAssign` (`xc`, `xFit`, `tier`, `xCap`, `xCapDay`), `modeFamOf`, `passFam`, `rowBand`, `renderCore` (`famIs`, `mN`, `passW`), `passWhere`,

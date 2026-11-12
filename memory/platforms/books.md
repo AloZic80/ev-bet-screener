@@ -11,7 +11,8 @@
 | Polymarket US Limit form: whether it asks for shares or dollars, and whether shares can be fractional | **unverified** (the strip gives whole shares and the dollar amount) |
 | Polymarket US moneyline / spread = ONE market with two sides: one team long (YES), the other NO; an underdog spread is NO on the favourite's market (Worker `live.js`) | active (how the Sentinels read the API) |
 | Polymarket US moneylines on screen: Yes / No or one button per team | **unverified** (v4.79 names the side to press, e.g. CAR or SEA +1.5, and says YES / NO only when it knows) |
-| Kalshi moneyline: one market per team (YES on "<team> wins"); spread: "<team> wins by over X", so an underdog +X is NO on the favourite's market (Worker `live.js`) | active; the app's Kalshi strip still says YES on an underdog spread (open, reported 2026-11-11) |
+| Kalshi moneyline: one market per team (YES on "<team> wins"); spread: "<team> wins by over X", so an underdog +X is NO on the favourite's market (Worker `live.js`) | active; the app's Kalshi strip says so since v4.80 |
+| A soccer Draw row (name Draw, team = the home team) | not read by the Worker since v3.44 (it was priced as the home team on Kalshi, Polymarket and Novig); the app never asks (v4.80). Each book's own draw market is not mapped yet |
 | pinnapi live layout | **unverified** (from its docs) |
 | Owner is in Texas: no DraftKings / FanDuel sportsbooks | active |
 | Exchange integrations are read-only | active, never to change without the owner |

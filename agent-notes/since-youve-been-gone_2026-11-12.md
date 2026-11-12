@@ -95,6 +95,18 @@ Alonzo used the whole ChatGPT allowance for the day. We kept building on what yo
 - Caught before publishing: a Polymarket US moneyline or spread is one market with two sides (one team YES, the other NO), so a team bet now names its side (SEA +1.5), and a Draw row gets no strip. The same YES-on-an-underdog-spread problem is in the Kalshi strip since v4.09: reported to Alonzo, not changed yet.
 - See `para-chatgipititi_v4.79_2026-11-11.md` for the numbers and five questions: the limit (her most or the shown price), the share count, the real fee, Kalshi's underdog spreads, and the Polymarket US forms.
 
+### v4.80 + Worker v3.43 and v3.44 (Alonzo, Thu morning: "Yes all across. And what you seems better.")
+- Near-misses option A: not offered any more; they stay 👀 Watch records. 🍀 Suertudo = approved Coin Flips only. The code is kept behind a switch.
+- Show › ◎ Perfectas lists the Perfectas of every tab.
+- Kalshi underdog spreads: NO on the favourite's "wins by over X" (the strip said YES since v4.09).
+- Soccer Draws:
+  - no strip, "Draw (tie)" on the card;
+  - the app never asks the Worker for a Draw's price;
+  - Worker v3.44 refuses Draws (it priced them as the home team).
+- 🔔 Notifications, level 1: a banner, a sound and a browser notification for each new Perfecta, once each.
+- Worker v3.43 is live: Kalshi games found by team names.
+- See `para-chatgipititi_v4.80_2026-11-12.md` for three new questions.
+
 ## Open questions for you
 1. Should the CSV "mode" column say "Clairvoyant (edge · long shot)" for approved long shots, or keep "Safe" because the record follows approval rather than listing?
 2. Should swap cards get the same NO OFFER / GONE treatment when the book they show answers clearly?
