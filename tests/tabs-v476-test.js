@@ -64,5 +64,11 @@ const WANT={boring:['Alpha Boring','Bravo Heavy'], safe:['Charlie Strong','Delta
     await p.evaluate(()=>{ localStorage.setItem('mbev.cards','0'); }); await p.uncheck('#cardsOn').catch(()=>{}); await p.evaluate(()=>{ refresh(); }); await p.waitForTimeout(300);
     const g=await p.evaluate(()=>[...document.querySelectorAll('#tbody tr.group-row:not(.band-row)')].map(x=>x.textContent.replace(/\s+/g,' ').trim()));
     check('the table view: "Place these · 1 · ✅ La Contadora: YES" and "🍀 Just missed · La Contadora: NO, just under your floor · optional …"', g.includes('Place these · 1 · ✅ La Contadora: YES') && g.some(x=>/^🍀 Just missed · La Contadora: NO, just under your floor · optional: the smallest bet each, up to \d+ a day · 1$/.test(x)), g);
+    /* v4.78 (Los Chismosos): the day's 5 near-misses are used and an approved Coin Flip (Golf Coin) is on the board: the 🍀 header says "No more
+       today" (it said "No bet on the board just missed", because the Coin Flip was counted as a near-miss) */
+    await p.evaluate(()=>{ localStorage.setItem('mbev.cards','1'); const n=lastRows.find(x=>x.name==='India Near'); for(let i=0;i<5;i++) addToLog(Object.assign({}, n, {name:'Used '+i, apiKey:'u'+i, tier:'lucky', stake:1})); });
+    await p.check('#cardsOn').catch(()=>{}); await p.evaluate(()=>{ setMode('lucky'); refresh(); }); await p.waitForTimeout(400);
+    const nm=await p.evaluate(()=>({head:[...document.querySelectorAll('#placeCards .pc-head.lucky')].map(h=>h.textContent.replace(/\s+/g,' ').trim()), info:(document.getElementById('contadora')||{}).textContent||'', near:(lastRows.find(x=>x.name==='India Near')||{}).xCap||0}));
+    check('v4.78: 5 near-misses used today, an approved Coin Flip on the board: "No more today: 5 a game day, and you have used them." and "🍀 no more today (5 a day)"', nm.near===1 && nm.head.some(h=>/No more today: 5 a game day, and you have used them\./.test(h)) && /🍀 no more today \(5 a day\)/.test(nm.info), nm);
     check('no page errors (YES / NO)', !errs.length, errs); await ctx.close(); }
   await b.close(); console.log('\n'+pass+' passed, '+fail+' failed'); process.exit(fail?1:0); })();

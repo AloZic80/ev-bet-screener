@@ -50,6 +50,8 @@ const res=(p,n)=>p.evaluate(n=>{ const b=logged.find(x=>x.name===n); return b?{r
   check('1: "YOUR BETS ON WSH @ IND · 2 · $7.61": his two bets on that game in one group', g1 && /^YOUR BETS ON (WSH|WAS) @ IND · 2 · \$7\.61$/.test(g1.bets), g1&&g1.bets);
   check('1: the live stat replaces "Not started": 14 pts + 6 reb = 20, room 3.5 under 23.5', g1 && g1.st.some(s=>/^AJ Dybantsa \| 20 · room 3\.5 · projection/.test(s)), g1&&g1.st);
   check('1: only the two games that started at 6:00 PM were read (the 9:00 PM game was not)', S1.sum['401']>=1 && S1.sum['402']>=1 && !S1.sum['403'], S1.sum);
+  const risk=await T.p.evaluate(()=>{ const m=ssRiskMap(s=>scoreboardCache[s]||[]); const x=m.get('NBA:401'); return x?{n:x.n, amt:+x.amt.toFixed(2)}:null; });
+  check('1: v4.78: the Game Hub cards and the scores strip count AJ too (found by his player): WSH @ IND, 2 bets risking $7.61', risk && risk.n===2 && risk.amt===7.61, risk);
   // 2 — the scoreboard says final but ESPN's box score is still the in-game copy: nothing is settled from it
   S1.games.nba[0]=game('401',WSH,IND,TIP,'post',108,121); S1.games.nba[1]=game('402',BOS,NYK,TIP,'post',101,99);
   await live(T.p);
@@ -97,4 +99,13 @@ const res=(p,n)=>p.evaluate(n=>{ const b=logged.find(x=>x.name===n); return b?{r
   const g7=v.find(x=>x.st.some(s=>/AJ Dybantsa/.test(s)));
   check('7: once his game starts, the one that starts when Novig said is taken: WSH @ IND, 14 + 6 = 20', g7 && g7.box && /WSH|WAS/.test(g7.head) && /IND/.test(g7.head) && g7.st.some(x=>/^AJ Dybantsa \| 20 · room 3\.5/.test(x)), v);
   check('no page errors (same name)', !T.errs.length, T.errs); await T.ctx.close();
+  // 8 — v4.78 (Los Desconfiados): the game found by the player is checked again on every pass. WSH @ IND lists AJ, so it is taken; a minute
+  // later a second game at the same start (BOS @ NYK) lists a player with the same name: the match is let go (no guess), not kept for the session.
+  const S8={games:{nba:[game('401',WSH,IND,TIP,'in',60,58), game('402',BOS,NYK,TIP,'in',50,52)]}, box:{'401':box('in',[['WSH',[ath('AJ Dybantsa',4,10)]]]), '402':box('in',[['BOS',[ath('Jayson Tatum',5,20)]]])}};
+  T=await open(b,S8); await T.p.evaluate(f=>{ autoAddFromDesc(f); }, FILL); await live(T.p); v=await view(T.p);
+  check('8: AJ is found under WSH @ IND (the only game that lists him)', v.length===1 && v[0].box && /IND/.test(v[0].head), v);
+  S8.box['402']=box('in',[['BOS',[ath('AJ Dybantsa',1,2),ath('Jayson Tatum',5,20)]]]);
+  await T.p.clock.fastForward(61000); await live(T.p); v=await view(T.p);
+  check('8: a second game at the same start now lists the name: the match is let go ("Game not known yet"), not kept', v.length===1 && !v[0].box && v[0].st[0]==='AJ Dybantsa | Game not known yet', v);
+  check('no page errors (re-check)', !T.errs.length, T.errs); await T.ctx.close();
   await b.close(); console.log('\n'+pass+' passed, '+fail+' failed'); process.exit(fail?1:0); })();

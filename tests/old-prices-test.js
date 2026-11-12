@@ -43,4 +43,22 @@ const ROWS=[row('a','Fresh Machin',0.62,0.58,60e3), row('b','Stale Machin',0.62,
       check('after a Sentinels press reads Stale Machin fresh at Novig, it is back under 💪 Machín (2); ⏱ Old 2', /^💪 Machín 2$/.test(t2[1]) && /^⏱ Old 2$/.test(t2[5]), t2); }
     const over=await p.evaluate(()=>document.documentElement.scrollWidth-innerWidth); check(W+' px: six tabs, no sideways scroll', over<=0 && t1.length===6, {over, n:t1.length});
     check('no page errors ('+W+')', !errs.length, errs); await ctx.close(); }
+  // v4.78 (Los Chismosos): a price whose read time is unknown counts from the board load; a card that turns 12 hours old while the page sits open
+  // moves on its own (the 30-second check), with no tap; and on a pasted board the words say to paste it again
+  { const R=[row('u','Unknown Time',0.62,0.58,13*H,{priceAt:'unknown'}), row('n','Almost Old',0.62,0.58,12*H-60e3), row('f','Fresh One',0.62,0.58,60e3)];
+    const ctx=await b.newContext({timezoneId:'America/Chicago',viewport:{width:1280,height:1000}}); await ctx.clock.install({time:new Date(NOW)});
+    await ctx.addInitScript(([R,d])=>{ try{ if(sessionStorage.getItem('s')) return; sessionStorage.setItem('s','1'); localStorage.clear(); localStorage.setItem('mbev.cfg',JSON.stringify({books:'Novig',bank:'500',cfgVer:3.03})); localStorage.setItem('mbev.cards','1'); localStorage.setItem('mbev.board',JSON.stringify({v:1,savedAt:new Date().toISOString(),slate:d,rows:R})); }catch(e){} },[R,DAY]);
+    const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
+    await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
+    await p.goto('http://app.test/'); await p.waitForTimeout(1300);
+    const tabs=()=>p.evaluate(()=>[...document.querySelectorAll('#modeBar button')].map(x=>x.textContent.replace(/\s+/g,' ').trim()));
+    const t1=await tabs();
+    check('v4.78: a price read at an unknown time, loaded 13 hours ago, is old (⏱ Old 1); 11 h 59 m is not yet (💪 Machín 2)', /^⏱ Old 1$/.test(t1[5]) && /^💪 Machín 2$/.test(t1[1]), t1);
+    await p.clock.fastForward(100000); await p.waitForTimeout(400);
+    const t2=await tabs();
+    check('v4.78: with the page left open, the card that turns 12 hours old moves to ⏱ Old by itself (no tap): Machín 1, Old 2', /^⏱ Old 2$/.test(t2[5]) && /^💪 Machín 1$/.test(t2[1]), t2);
+    await p.evaluate(()=>setMode('old')); await p.waitForTimeout(300);
+    const w=await p.evaluate(()=>({head:((document.querySelector('#placeCards .pc-head')||{}).textContent||'').replace(/\s+/g,' '), lc:(document.getElementById('contadora')||{}).textContent||''}));
+    check('v4.78: the words cover a pasted board: "press 🦑 Send the Sentinels, reload the board or paste it again"', /press 🦑 Send the Sentinels, reload the board or paste it again/.test(w.head) && /send the Sentinels, reload the board or paste it again/.test(w.lc), w);
+    check('no page errors (v4.78 old)', !errs.length, errs); await ctx.close(); }
   await b.close(); console.log('\n'+pass+' passed, '+fail+' failed'); process.exit(fail?1:0); })();
