@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.78</title>
+<title>0xBeta Screener v4.79</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1460,6 +1460,8 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 .pass-where .cut-list{min-width:280px; max-width:calc(100vw - 32px)} .pass-where .cut-list .meta{padding:2px 0}   /* v4.76: where the approved bets are */
 .sc-grid .pc-band{grid-column:1/-1; margin:8px 0 0; display:flex; gap:8px; align-items:center}
 .band-row td{padding-top:8px}
+/* v4.79: Polymarket US, what to type (the Kalshi strip's look) */
+.px-slip{margin-top:8px; font-size:12.5px; font-weight:600; color:var(--warn)}
 </style>
 </head>
 <body>
@@ -1468,7 +1470,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.78</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.79</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2226,7 +2228,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 
 </div>
 <script>
-const SCREENER_VERSION='v4.78';
+const SCREENER_VERSION='v4.79';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2576,7 +2578,7 @@ let betMode='safe';
 const CONTADORA={safe:'', boring:'<b>La Contadora:</b> "75% or better: High Cover and Heavy Favorite. They win often, pay little, and one loss eats several wins."', volado:'<b>La Contadora:</b> "50 to 60%: On the Line and Slight Lean. Close to a coin toss; the edge is real, any one can lose."',   /* v4.76 */
   lucky:'<b>La Contadora:</b> "45 to 50%: the Coin Flips I say YES to. And a few that just missed: NO, the smallest bet if you want them. Five a day, not more."',   // v4.50   // v4.78: + the Coin Flips
   clair:'<b>La Contadora:</b> "Two of these, maybe three. Not thirty-six." · $1 each · back to Machín at midnight',
-  old:'<b>La Contadora:</b> "These prices are more than 12 hours old. I said yes at those prices, not at today’s. Check each one first: send the Sentinels, reload the board or paste it again, and the fresh ones go back to their tabs."'};   // v4.77
+  old:'<b>La Contadora:</b> "These prices are more than 12 hours old. My YES was for those prices, not today’s, and the 🍀 Just missed and 🔮 Hail Mary cards never had it. Check each one first: send the Sentinels, reload the board or paste it again, and the fresh ones go back to their tabs."'};   // v4.77   // v4.79 (Los Chismosos): the 🍀 and 🔮 cards listed here are NO or long shots
 function paintModes(){ document.querySelectorAll('#modeBar button').forEach(b=>b.classList.toggle('on', b.dataset.mode===betMode));
   const c=document.getElementById('contadora'); if(c) c.innerHTML=CONTADORA[betMode]||''; }
 function setMode(m){ betMode=MODES[m]?m:'safe';
@@ -2701,7 +2703,7 @@ function auditCore(rows,cfg){
   rows.forEach(r=>{ gameCount[r.game]=(gameCount[r.game]||0)+1; });
   const slateDay=document.getElementById('slate').value;
   rows.forEach((r,idx)=>{
-    r.idx=idx; r.flags=[]; delete r.watch; delete r.actNet; delete r.longShot; delete r.dayTrimmed; delete r.moved; delete r.removed; delete r.riskCand; delete r.risk; delete r.glConflict; delete r.glBest; delete r.prior; delete r.corr; delete r.contracts; delete r.gameInPlay; delete r.gameWeighted; delete r.samePlayer; delete r.capTrimmed; delete r.samePlayerX; delete r.samePlayerBet; delete r.tier; delete r.xc; delete r.xFit; delete r.xCap; delete r.moN; delete r.moUsed; delete r.xStake; delete r.xContracts; delete r.xWhy; delete r.ring; delete r.leg; delete r.gapRes; delete r.lsmlN;   /* v4.50 */   /* v4.68: gapRes, lsmlN */   /* v4.51: xFit */
+    r.idx=idx; r.flags=[]; delete r.watch; delete r.actNet; delete r.longShot; delete r.dayTrimmed; delete r.moved; delete r.removed; delete r.riskCand; delete r.risk; delete r.glConflict; delete r.glBest; delete r.prior; delete r.corr; delete r.contracts; delete r.gameInPlay; delete r.gameWeighted; delete r.samePlayer; delete r.capTrimmed; delete r.samePlayerX; delete r.samePlayerBet; delete r.tier; delete r.xc; delete r.xFit; delete r.xCap; delete r.xCapDay; /* v4.79 */ delete r.moN; delete r.moUsed; delete r.xStake; delete r.xContracts; delete r.xWhy; delete r.ring; delete r.leg; delete r.gapRes; delete r.lsmlN;   /* v4.50 */   /* v4.68: gapRes, lsmlN */   /* v4.51: xFit */
     if(r.offeredProb===null||r.fairProb===null){
       r.flags.push(['out','odds unreadable']); r.gross=null; r.net=null; r.pass=false; r.stake=0; return;
     }
@@ -3173,11 +3175,11 @@ function extrasAssign(rows,cfg,slateDay){
     else if(r.watch && r.actNet!=null && r.actNet>=0 && onlyOut(r,/^WATCH ·/)) r.xc='lucky';
     if(!r.xc) return;
     if(lsmlRow(r)){ const L=window._lsml; if(r.noMkt) { delete r.xc; return; }   /* v4.68: one allowance for long-shot moneylines in every mode */
-      if(L){ const d=rowDay(r,slateDay), g=L.gk(d,r.game); if((L.used[d]||0)>=LSML.day || (L.inGame[g]||0)>=LSML.game){ r.xCap=1; r.xWhy='LONG-SHOT ML: '+LSML.day+' a game day and one a game, in every mode'; if(r.xc==='lucky'?cfg.lucky:cfg.hail) r.flags.push(['warn',r.xWhy]); return; }
+      if(L){ const d=rowDay(r,slateDay), g=L.gk(d,r.game); if((L.used[d]||0)>=LSML.day || (L.inGame[g]||0)>=LSML.game){ r.xCap=1; if((U[r.xc][d]||0)>=(r.xc==='lucky'?EXTRAS.luckyDay:EXTRAS.hailDay)) r.xCapDay=1; /* v4.79: the day count is used too */ r.xWhy='LONG-SHOT ML: '+LSML.day+' a game day and one a game, in every mode'; if(r.xc==='lucky'?cfg.lucky:cfg.hail) r.flags.push(['warn',r.xWhy]); return; }
         r._lsmlTake=()=>{ L.used[d]=(L.used[d]||0)+1; L.inGame[g]=(L.inGame[g]||0)+1; r.lsmlN=L.used[d]; }; } }
     const on=r.xc==='lucky'?cfg.lucky:cfg.hail;   /* v4.51: its own mode is open. The offer is worked out whatever the mode (r.xFit, the number on its mode button); it is given (r.tier) only there */
     const day=rowDay(r,slateDay), used=U[r.xc][day]||0, cap=r.xc==='lucky'?EXTRAS.luckyDay:EXTRAS.hailDay;
-    if(used>=cap){ r.xCap=1; if(on){ r.xWhy=(r.xc==='lucky'?'🍀 Just missed':'🔮 Hail Marys')+': '+cap+' a day, and you have '+used+' on '+dayLabel(day)+'\'s games'; r.flags.push(['warn',r.xWhy]); } return; }
+    if(used>=cap){ r.xCap=1; r.xCapDay=1; /* v4.79: the day count itself ("No more today" reads this, not the long-shot ML allowance) */ if(on){ r.xWhy=(r.xc==='lucky'?'🍀 Just missed':'🔮 Hail Marys')+': '+cap+' a day, and you have '+used+' on '+dayLabel(day)+'\'s games'; r.flags.push(['warn',r.xWhy]); } return; }
     let s=r.xc==='lucky'?(+cfg.sMin||0):EXTRAS.hailEach, N=0;
     if(/kalshi/i.test(r.book||'')){ const k=extrasKalshi(r,s,cfg,r.xc==='lucky'); if(!k){ if(on) r.xWhy='one Kalshi contract costs more than $'+s.toFixed(2); return; } s=k.stake; N=k.N; }
     else if(/polymarket/i.test(r.book||'')) N=Math.max(1,Math.floor(s/r.offeredProb+1e-9));
@@ -3267,7 +3269,7 @@ function ringAssign(rows,cfg){ rows.forEach(r=>{ if(!r) return;
 function ringRecheck(){ try{ if(document.visibilityState!=='visible') return;
     { const sig=shopStaleSig(); if(sig!==(window._shopStaleSig||'')){ window._shopStaleSig=sig; refresh(); return; } }   /* v4.56: a best-book claim ran out: redraw (no prices are read); v4.61: saved here before the redraw, so a draw held back by an open editor is asked for once, not on every tick */
     if(betMode==='clair'){ const m=JSON.parse(localStorage.getItem('mbev.mode')||'null'); if(m && m.day && m.day!==new Date().toLocaleDateString('en-CA',{timeZone:'America/Chicago'})){ setMode('safe'); return; } }   /* v4.51: "back to Safe at midnight" also with the page left open (it only happened on a reload) */ const v=document.body.dataset.view; if(v && v!=='v-board') return;
-    if((lastRows||[]).some(r=>r && r._old!==undefined && r._old!==rowOld(r))){ refresh(); return; }   /* v4.78: a card turned 12 hours old with the page left open: to ⏱ Old */
+    { const ch=(lastRows||[]).filter(r=>r && r._old!==undefined && r._old!==rowOld(r)); if(ch.length){ ch.forEach(r=>{ r._old=rowOld(r); }); refresh(); return; } }   /* v4.78: a card turned 12 hours old with the page left open: to ⏱ Old; v4.79 (Los Chismosos): stamped before the redraw, like _shopStaleSig, so a draw held back by an open editor is asked for once, not every 30 s */
     const cfg=cfgRead(); if((lastRows||[]).some(r=>r && r.ring && ringOf(r,cfg).n!==r.ring.n)) refresh(); }catch(e){} }
 setInterval(ringRecheck, 30000);
 function legNeed(){ try{ const a=pkPays('PrizePicks','power')[4]; const b=pkBreakEven(4,a); if(b>0 && b<1) return b; }catch(e){} return 0.5623; }   // what a pick needs in a 4-pick PrizePicks Power entry (10×)
@@ -3386,7 +3388,7 @@ function renderCore(rows,cfg){
      it. The number on each mode button is counted here, under the same sport, search, Settings and book-chip filters, so it is what you see there. */
   const mN={safe:0, lucky:0, hail:0, boring:0, volado:0, old:0, xL:0, xH:0, all:rows.filter(r=>pv?isPasteRow(r):!isPasteRow(r)).length};
   { const cOn=new Set(boardBooks); shown.forEach(r=>{ if(cOn.size && !cOn.has(bookLabel(r.book)||'?')) return; const f=modeFamOf(r); if(f==='old'){ if(r.xFit==='lucky' || r.xFit==='hail' || grpOf(r)===0) mN.old++; } else if(r.xFit==='lucky' || r.xFit==='hail'){ mN[r.xFit]++; mN[r.xFit==='lucky'?'xL':'xH']++; } else if(grpOf(r)===0) mN[f]++; /* v4.77: an old card counts under ⏱ only; xL and xH count the extras alone (Suertudo also lists approved Coin Flips) */ });   /* v4.76: each tab counts its own */   /* v4.74: an approved long shot counts under Clairvoyant */
-    const full=k=>!mN[k==='lucky'?'xL':'xH'] /* v4.78: the extras alone */ && rows.some(r=>r.xc===k && r.xCap && !r.hiddenDup && (pv?isPasteRow(r):!isPasteRow(r))); mN.fullL=full('lucky'); mN.fullH=full('hail'); }   // candidates on the board, none offered: the day's count is used
+    const full=k=>!mN[k==='lucky'?'xL':'xH'] /* v4.78: the extras alone */ && rows.some(r=>r.xc===k && r.xCapDay /* v4.79 (Los Chismosos): the day count, not the long-shot ML allowance */ && !r.hiddenDup && (pv?isPasteRow(r):!isPasteRow(r))); mN.fullL=full('lucky'); mN.fullH=full('hail'); }   // candidates on the board, none offered: the day's count is used
   rows.forEach(r=>{ if(r) r._old=rowOld(r); });   /* v4.78: what each row was at this draw (ringRecheck moves a card that turns 12 hours old) */
   const passW=passWhere(passing, shown, pv, isStarted, mN, rows);   /* v4.76: where each approved bet is (the "N in the tabs ▸" list), counted where the tab numbers are */
   shown=shown.filter(famIs);
@@ -4219,6 +4221,10 @@ function scKalshiLine(r){ if(LIVE_BOOK(r.book)!=='kalshi' || r.fairProb==null ||
   const st=+r.stake||0, mx=maxPriceFor(okProbR(r), r.book, cfgRead().eMin); if(!(st>0) || mx==null || r.offeredProb>mx+1e-9) return '';
   const k=kalshiHow(r,st,r.offeredProb,mx); if(!k) return '';
   return '<div class="sc-kx" title="What to type on Kalshi. The steps are explained in Why this play?"><span class="sc-kx-h">On Kalshi</span><span class="sc-kx-i"><b>'+k.btn+'</b></span><span class="sc-kx-i">Shares <b>'+k.shares.toFixed(2)+'</b></span><span class="sc-kx-i">Limit <b>'+k.lim+'¢</b></span><span class="sc-kx-i">Cost ≈ <b>$'+k.cost.toFixed(2)+'</b></span></div>'; }
+function scPolyLine(r){ if(LIVE_BOOK(r.book)!=='poly' || r.fairProb==null || !(r.offeredProb>0 && r.offeredProb<1)) return '';   /* v4.79: what to type on Polymarket US, on the card (like the Kalshi line) */
+  const st=+r.stake||0, mx=maxPriceFor(okProbR(r), r.book, cfgRead().eMin); if(!(st>0) || mx==null || r.offeredProb>mx+1e-9) return '';
+  const k=polyHow(r,st,mx); if(!k) return '';
+  return '<div class="sc-kx sc-px" title="What to type on Polymarket US. A Market order on a thin book (High slippage) pays more than the price shown; a Limit order never pays more than its price. The steps are explained in Why this play?"><span class="sc-kx-h">On Polymarket</span><span class="sc-kx-i"><b>Limit</b>, not Market</span><span class="sc-kx-i"><b>'+k.btn+'</b>'+(k.plus?' on '+k.plus:'')+'</span><span class="sc-kx-i">Limit <b>'+k.lim+'¢</b></span><span class="sc-kx-i">Shares <b>'+k.shares+'</b></span><span class="sc-kx-i">Cost ≤ <b>$'+k.cost.toFixed(2)+'</b></span></div>'; }
 function placeCardHtml(r,cfg,o){
   const gi=r.gameInfo||{}, T=gi.teams||[], away=T.find(t=>t.ha==='away'), home=T.find(t=>t.ha==='home');
   const gl=GL_KINDS.test(r.kind||''), myAb=r.team?normAbbr(r.team):(gl?glTeam(r):null);
@@ -4282,7 +4288,7 @@ function placeCardHtml(r,cfg,o){
       '<div class="sc-dec">'+decisionHtml(r,cfg)+'</div>'+
       (X?'<div class="sc-ringl"><div class="sc-h">'+(X==='lucky'?'🍀 Why it just missed':'🔮 What the math thinks')+'</div><ul><li>'+esc(XL.t)+'</li><li>'+esc(XL.short)+'</li><li>'+(X==='lucky'?'Not a best bet: the smallest bet, up to '+EXTRAS.luckyDay+' a day.':'A Hail Mary is your call, not the math’s: $'+EXTRAS.hailEach+', up to '+EXTRAS.hailDay+' a day.')+'</li></ul></div>'
         :r.ring?'<div class="sc-ringl"><div class="sc-h">◎ Perfecta checks: '+r.ring.n+' of '+r.ring.of+'</div><ul>'+r.ring.checks.map(c=>'<li class="'+(c.ok?'ok':'no')+'">'+(c.ok?'✓ ':'✗ ')+esc(c.t)+'</li>').join('')+'</ul></div>':'')+   // v4.50
-      kalshiHowHtml(r)+
+      kalshiHowHtml(r)+polyHowHtml(r)+   // v4.79: Polymarket US, what to type
       (o.nTags?'<div class="sc-notes"><div class="sc-h">Notes</div><div class="tags">'+o.tags+'</div></div>':'')+
       '<div class="sc-more"><button class="log sm share-btn" data-idx="'+r.idx+'" title="Send this bet to someone, with the same link the logo opens: the slip with the side, line and the screener stake filled in (they can change it). Your bankroll, EV and log do not go with it.">📤 Share</button></div>'+
     '</div></details>';
@@ -4306,7 +4312,7 @@ function placeCardHtml(r,cfg,o){
       (()=>{ const hl=slip?slipLinkFor(r,st):null;   // v4.42: one tap on a phone: the chip is a real link when the book's slip is already known
         return (hl?'<a class="sc-price book go sc-link'+(over?' over':'')+'" href="'+esc(hl)+'"'+(/^https:/.test(hl)?' target="_blank" rel="noopener"':''):'<span class="sc-price book'+(over?' over':'')+(slip?' go':'')+'" role="button" tabindex="0"')+' title="'+(slip?'Open this bet on '+esc(bk)+(st>0?' with $'+st.toFixed(2)+' filled':''):esc(bk))+(over?'. The price is over La Contadora’s most now: skip it or look elsewhere':'')+'">'+
         '<span class="scp-o">'+logo+'<b>'+esc(odds)+'</b></span><span class="scp-p">'+(okP?pp(p):'')+(over?' · over':'')+'</span>'+(hl?'</a>':'</span>'); })()+'</div>'+
-    (X?'<div class="sc-kx sc-xline'+(XL.agree?' ok':'')+'" title="'+esc(XL.short)+'">'+esc(XL.t)+'</div>':scKalshiLine(r))+   // v4.50: what the math thinks, in the Kalshi line's place (an extra never has one)
+    (X?'<div class="sc-kx sc-xline'+(XL.agree?' ok':'')+'" title="'+esc(XL.short)+'">'+esc(XL.t)+'</div>':scKalshiLine(r)||scPolyLine(r) /* v4.79: or Polymarket US */)+   // v4.50: what the math thinks, in the Kalshi line's place (an extra never has one)
     (lnGet(pxKey(r))?'<div class="ln-text" title="Your note on this line">📝 '+esc(lnGet(pxKey(r)))+'</div>':'')+   // v4.34: your note
     '<div class="sc-act"><button class="log sm bet-btn" data-idx="'+r.idx+'">'+(r.moved?'Add this line too':'I bet this')+'</button>'+lnBtnHtml(r)+
       '<button class="log sm parlay'+(inParlay(r)?' on':'')+' parlay-btn" data-idx="'+r.idx+'" title="Mark as used in a parlay">'+(inParlay(r)?'In parlay ✓':'Parlay')+'</button>'+
@@ -6484,16 +6490,19 @@ function liveBoxScoreHtml(g){
 function boxHasPlayer(box, name){ const P=box&&box.boxscore&&box.boxscore.players; return !!(P && name) && P.some(t=>(t.statistics||[]).some(c=>(c.athletes||[]).some(a=>nameMatch(a.athlete&&a.athlete.displayName, name)))); }
 async function liveGameByPlayer(b, evs){
   if(!b || !b.name || !evs || !evs.length || GL_KINDS.test(b.kind||'') || teamsOf(b.game) || teamsOf(b.matchup)) return null;
-  const key=b.id||b;   /* v4.78 (Los Desconfiados): no shortcut to the game found earlier: it is checked again on every pass (the box scores are kept) */
+  const key=b.id||b, had=liveByPlayer.get(key);   /* v4.78 (Los Desconfiados): no shortcut to the game found earlier: it is checked again on every pass (the box scores are kept) */
   /* v4.77 (Los Chismosos): a box score that does not list the player yet is read again, at most once a minute (an NFL box score lists a player only
      after his first stat). Two games that list the name: the one that starts when the book said, if exactly one does. While another game in the
      window has not started (its players are not listed yet), no guess unless the start time matches. */
   const t0=Date.parse(b.start), stOf=e=>e&&e.status&&e.status.type&&e.status.type.state, hit=[];
   const W=evs.filter(e=>evOkFor(b,e) && (isNaN(t0) || Math.abs(Date.parse(e.date)-t0)<=90*60e3));
   for(const e of W){ const st=stOf(e); if(st!=='in' && st!=='post') continue;
-    const ck=b.sport+':'+e.id, old=boxscoreCache[ck]; if(old && !boxHasPlayer(old, b.name) && Date.now()-(liveByPlayerAt.get(ck)||0)>60e3) delete boxscoreCache[ck];
+    /* v4.79 (Los Chismosos): a final box score that does not list the player never will: it is not read again. Once the bet's game is found,
+       the other games are read again every 5 minutes, not every minute. The game found stays found when ESPN gives no box score for it (no answer). */
+    const ck=b.sport+':'+e.id, old=boxscoreCache[ck]; if(old && !boxDone(old) && !boxHasPlayer(old, b.name) && Date.now()-(liveByPlayerAt.get(ck)||0)>(had?300e3:60e3)) delete boxscoreCache[ck];
     if(!boxscoreCache[ck]) liveByPlayerAt.set(ck, Date.now());
-    if(boxHasPlayer(await fetchBoxscore(b.sport, e.id), b.name)) hit.push(e); }
+    const bx=await fetchBoxscore(b.sport, e.id), P=bx&&bx.boxscore&&bx.boxscore.players;
+    if(boxHasPlayer(bx, b.name) || (had===String(e.id) && !(Array.isArray(P) && P.length))) hit.push(e); }
   const exact=hit.filter(e=>!isNaN(t0) && Math.abs(Date.parse(e.date)-t0)<60e3), one=exact.length===1?exact[0]:hit.length===1?hit[0]:null;
   if(!one || (exact.length!==1 && W.some(e=>stOf(e)==='pre'))){ liveByPlayer.delete(key); return null; }   /* v4.78: a second game now lists the name: let it go */
   liveByPlayer.set(key, String(one.id)); return one; }
@@ -10531,6 +10540,28 @@ function kalshiHowHtml(r){   // a full-width strip on the card: one box per thin
     box('3 · Limit price', k.lim+'¢', 'La Contadora\'s most, never higher')+
     box('Then check', 'Cost ≈ $'+k.cost.toFixed(2), 'Max payout $'+k.payout.toFixed(2))+'</div>'+
     (r.otherGameOrder?'<div class="kx-other">⚠ Your Kalshi order “'+esc(r.otherGameOrder.title||r.otherGameOrder.ref||'')+'”'+(r.otherGameOrder.qty!=null?' ('+(+r.otherGameOrder.qty)+' at '+Math.round((r.otherGameOrder.price||0)*100)+'¢)':'')+' is another game. This one is not placed.</div>':'')+'</div>'; }   // v4.15
+/* v4.79 (Alonzo, 11/12, the Aho bet: Polymarket US said "High slippage" on a $4.61 Market order; "so, PUT IT"): a Market order buys whatever the
+   book has, so on a thin book the average price climbs past La Contadora's most (44¢ shown, about 53¢ paid). A Limit order never pays more than its
+   price. Like Kalshi's strip: Limit, the button, the limit price = La Contadora's most in whole cents (rounded down), whole shares = the stake ÷
+   (limit price + Polymarket US's fee), and the most it can cost. What is offered up to the limit fills; the rest waits on the book. */
+function polyHow(r,st,mx){ if(!(st>0) || !(mx>0)) return null;
+  const lim=Math.floor(mx*100+1e-9); if(lim<1) return null; const L=lim/100, per=L*(1+feeRate('Polymarket US',L,cfgRead().fees)), shares=Math.floor(st/per+1e-6); if(shares<1) return null;
+  const gl=GL_KINDS.test(r.kind||''), team=gl && r.kind!=='total', U=r.side==='U', ln=parseFloat(r.market), mk=String(r.market||'').replace(/^([+-]?[\d.]+)\s*/,'$1 ');
+  const plus=!gl && (r.side==='O'||U) && ln>=0 && Math.abs(ln%1-0.5)<1e-9 ? (ln+0.5)+'+' : '';   // Over 0.5 = "1+" on Polymarket
+  const what=team ? (r.team||r.name)+(r.kind==='spread'?' '+String(r.market||'').replace(/\s*Spread$/i,''):' wins') : (gl?'':(r.name||'')+' ')+'Over '+mk+(plus?' (“'+plus+'” on Polymarket)':'');
+  return {btn:U?'NO':'YES', what, plus, team, underNote:U, lim, shares, amt:+(shares*L).toFixed(2), cost:+(shares*per).toFixed(2), payout:shares}; }
+function polyHowHtml(r){   // v4.79: the full strip in Why this play?, one box per thing to type, in the order Polymarket US asks
+  if(LIVE_BOOK(r.book)!=='poly' || r.fairProb==null || !(r.offeredProb>0 && r.offeredProb<1)) return '';
+  const st=+r.stake||0, mx=maxPriceFor(okProbR(r), r.book, cfgRead().eMin); if(!(st>0) || mx==null || r.offeredProb>mx+1e-9) return '';
+  const k=polyHow(r,st,mx); if(!k) return '';
+  const box=(lbl,val,note)=>'<div class="kx-b"><span class="kx-l">'+lbl+'</span><b class="kx-v">'+val+'</b>'+(note?'<span class="kx-n">'+note+'</span>':'')+'</div>';
+  return '<div class="kx-how px-how" title="What to type on Polymarket US for La Contadora’s bet"><div class="kx-h">On Polymarket US, enter</div><div class="kx-row">'+
+    box('1 · Order type', 'Limit', 'tap Market ⌄ and pick Limit. Never Market')+
+    box('2 · Press', k.btn, esc(k.what)+(k.underNote?' (NO on the Over = the Under)':'')+(k.team?' (or the team’s own button)':'')+'<br>in '+esc(gameHintOf(r)))+
+    box('3 · Limit price', k.lim+'¢', 'La Contadora’s most, never higher')+
+    box('4 · Shares', String(k.shares), 'if it asks for dollars: $'+k.amt.toFixed(2))+
+    box('Then check', 'Cost ≤ $'+k.cost.toFixed(2), 'Pays $'+k.payout.toFixed(2)+' if it wins')+'</div>'+
+    '<div class="px-slip">⚠ “High slippage” means a Market order would pay more than the price shown: the book is thin, so it keeps buying higher. A Limit order buys what is offered up to '+k.lim+'¢ and waits for the rest. Not filled by the start? Cancel it.</div></div>'; }
 // v3.07: your open Make orders (read-only, from the books) on the row they belong to — WAITING FOR TAKER
 function makesFor(r){
   const O=(myOrders&&myOrders.orders)||[]; if(!O.length || !r) return [];

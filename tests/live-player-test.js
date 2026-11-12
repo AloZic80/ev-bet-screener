@@ -27,7 +27,7 @@ async function open(b, S, at){ const ctx=await b.newContext({timezoneId:'America
   await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html});
     if(/espn\.com/.test(u)){ let m;
       if((m=u.match(/sports\/[a-z-]+\/([a-z0-9.-]+)\/scoreboard/))) return r.fulfill({contentType:'application/json',body:JSON.stringify({events:(S.games[m[1]]||[])})});
-      if((m=u.match(/summary\?event=(\w+)/))){ S.sum[m[1]]=(S.sum[m[1]]||0)+1; return r.fulfill({contentType:'application/json',body:JSON.stringify(S.box[m[1]]||{})}); }
+      if((m=u.match(/summary\?event=(\w+)/))){ S.sum[m[1]]=(S.sum[m[1]]||0)+1; if(S.down && S.down[m[1]]) return r.abort(); return r.fulfill({contentType:'application/json',body:JSON.stringify(S.box[m[1]]||{})}); }   // v4.79: S.down = ESPN does not answer for that game
       return r.fulfill({contentType:'application/json',body:'{}'}); }
     if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1200); return {ctx,p,errs}; }
@@ -106,6 +106,29 @@ const res=(p,n)=>p.evaluate(n=>{ const b=logged.find(x=>x.name===n); return b?{r
   check('8: AJ is found under WSH @ IND (the only game that lists him)', v.length===1 && v[0].box && /IND/.test(v[0].head), v);
   S8.box['402']=box('in',[['BOS',[ath('AJ Dybantsa',1,2),ath('Jayson Tatum',5,20)]]]);
   await T.p.clock.fastForward(61000); await live(T.p); v=await view(T.p);
-  check('8: a second game at the same start now lists the name: the match is let go ("Game not known yet"), not kept', v.length===1 && !v[0].box && v[0].st[0]==='AJ Dybantsa | Game not known yet', v);
+  check('8: v4.79: once his game is found, the other games are read again every 5 minutes, not every minute (BOS @ NYK read once so far; AJ still under WSH @ IND)', S8.sum['402']===1 && v.length===1 && v[0].box && /IND/.test(v[0].head), {v, reads:S8.sum});
+  await T.p.clock.fastForward(240000); await live(T.p); v=await view(T.p);
+  check('8: five minutes on, a second game at the same start now lists the name: the match is let go ("Game not known yet"), not kept', S8.sum['402']===2 && v.length===1 && !v[0].box && v[0].st[0]==='AJ Dybantsa | Game not known yet', {v, reads:S8.sum});
   check('no page errors (re-check)', !T.errs.length, T.errs); await T.ctx.close();
+  // 9 — v4.79 (Los Chismosos): a FINAL box score that does not list the player never will, so it is not downloaded again every minute
+  // (each ESPN summary is about half a megabyte); an in-progress one still is, until the player shows up
+  const S9={games:{nba:[game('401',WSH,IND,TIP,'in',60,58), game('402',BOS,NYK,TIP-60*60e3,'post',101,99)]}, box:{'401':box('in',[['WSH',[ath('Bilal Coulibaly',2,4)]]]), '402':box('post',[['BOS',[ath('Jayson Tatum',8,31)]],['NYK',[ath('Jalen Brunson',3,28)]]])}};
+  T=await open(b,S9); await T.p.evaluate(f=>{ autoAddFromDesc(f); }, FILL); await live(T.p);
+  await T.p.clock.fastForward(61000); await live(T.p); v=await view(T.p);
+  check('9: a minute later the in-progress box score is read again (AJ not listed yet), the final one is not (it never will list him)', S9.sum['401']===2 && S9.sum['402']===1 && v.length===1 && !v[0].box, {v, reads:S9.sum});
+  S9.box['401']=box('in',[['WSH',[ath('AJ Dybantsa',5,12),ath('Bilal Coulibaly',2,4)]]]);
+  await T.p.clock.fastForward(61000); await live(T.p); await T.p.clock.fastForward(301000); await live(T.p); v=await view(T.p);
+  check('9: AJ is found under WSH @ IND, and the final BOS @ NYK box score was still read only once in 8 minutes', v.length===1 && v[0].box && /IND/.test(v[0].head) && S9.sum['402']===1, {v, reads:S9.sum});
+  check('no page errors (final box scores)', !T.errs.length, T.errs); await T.ctx.close();
+  // 10 — v4.79 (Los Chismosos): the game found by the player stays found when ESPN does not answer for it (one failed read, or two in a row);
+  // only a box score that is read and does not list him lets it go
+  const S10={games:{nba:[game('401',WSH,IND,TIP,'in',60,58)]}, box:{'401':box('in',[['WSH',[ath('AJ Dybantsa',4,10)]]])}, down:{}};
+  T=await open(b,S10); await T.p.evaluate(f=>{ autoAddFromDesc(f); }, FILL); await live(T.p); v=await view(T.p);
+  check('10: AJ is found under WSH @ IND', v.length===1 && v[0].box && /IND/.test(v[0].head), v);
+  S10.down['401']=true; await T.p.clock.fastForward(61000); await live(T.p); await live(T.p); await live(T.p); v=await view(T.p);
+  const g10=v.find(x=>x.st.some(s=>/AJ Dybantsa/.test(s)));
+  check('10: ESPN does not answer for WSH @ IND (three passes): AJ stays under WSH @ IND, not "Game not known yet"', S10.sum['401']>=3 && g10 && /IND/.test(g10.head) && !g10.st.some(s=>/Game not known yet/.test(s)), {v, reads:S10.sum});
+  S10.down['401']=false; S10.box['401']=box('in',[['WSH',[ath('Bilal Coulibaly',2,4)]]]); await T.p.clock.fastForward(61000); await live(T.p); await live(T.p); v=await view(T.p);
+  check('10: a box score that is read and no longer lists him lets it go ("Game not known yet")', v.length===1 && v[0].st[0]==='AJ Dybantsa | Game not known yet', v);
+  check('no page errors (ESPN down)', !T.errs.length, T.errs); await T.ctx.close();
   await b.close(); console.log('\n'+pass+' passed, '+fail+' failed'); process.exit(fail?1:0); })();

@@ -78,6 +78,22 @@ Alonzo used the whole ChatGPT allowance for the day. We kept building on what yo
 - Live Games re-checks the game found by the player on every pass, and lets it go if a second game lists the name. The Game Hub cards and the scores strip count that bet too.
 - Suertudo's words mention its Coin Flips.
 
+### v4.79 (Alonzo, the Sebastian Aho bet on Polymarket US: "with High Slippage?", "so, PUT IT"): what to type on Polymarket US
+- A Market order for $4.61 on a thin book said "High slippage". It would have averaged about 53¢ against La Contadora's most of 47.5¢.
+- Every approved Polymarket US card now says what to type, like Kalshi's:
+  - **Limit, not Market**;
+  - YES / NO (an Under is NO on the Over; "1+" = Over 0.5);
+  - the limit price = La Contadora's most, in whole cents;
+  - whole shares = stake ÷ (limit + fee);
+  - Cost ≤ shares × limit × (1 + fee).
+- Alonzo's slip: Limit 47¢, 9 shares, Cost ≤ $4.39, pays $9.00.
+- Five fixes from the reviewers:
+  - one redraw request while an editor is open;
+  - "No more today" only when the day's Hail Marys are really used;
+  - the ⏱ Old line no longer says YES above NO cards;
+  - Live Games: final box scores are not downloaded again, the found game is re-checked every 5 minutes, and it is kept when ESPN does not answer.
+- See `para-chatgipititi_v4.79_2026-11-11.md` for the numbers and four questions: limit at her most or at the shown price, the share count, the real fee, and the Polymarket US forms.
+
 ## Open questions for you
 1. Should the CSV "mode" column say "Clairvoyant (edge · long shot)" for approved long shots, or keep "Safe" because the record follows approval rather than listing?
 2. Should swap cards get the same NO OFFER / GONE treatment when the book they show answers clearly?

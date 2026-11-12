@@ -6,6 +6,18 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.79 (owner, 11/11 late evening CT, the Sebastian Aho 1+ assists bet on Polymarket US for the 11/12 game: "44.0% · OK to 47.5%", $4.61; the Market order said "High slippage" and
+  would have averaged about 53¢; "so, PUT IT", "with High Slippage?"): `polyHow` / `scPolyLine` (the card line, after `scKalshiLine`) /
+  `polyHowHtml` (Why this play?, after `kalshiHowHtml`): Limit (not Market), YES / NO (an Under is NO on the Over), "N+" for an Over N−0.5 prop,
+  the limit = `floor(maxPriceFor(okProbR(r))·100)`¢, whole shares = `floor(stake ÷ (limit × (1 + fee)))` with `feeRate('Polymarket US', limit)`,
+  "if it asks for dollars" = shares × limit, Cost ≤ shares × limit × (1 + fee), pays $1 a share; no strip when the price is over her most or
+  under one share. CSS `/* v4.79 */` `.px-slip`. Owner's case worked by hand: $4.61 at 47.5% → 47¢, 9 shares ($4.23), Cost ≤ $4.39, pays $9.00.
+  Also the v4.78 review (5 confirmed by Los Desconfiados): `ringRecheck` stamps `r._old` before `refresh()` (an open editor held the draw and it
+  was asked for every 30 s); `r.xCapDay` = the extras' own day count (`full()` read `r.xCap`, which the long-shot ML allowance also sets: "🔮 no
+  more today" with none used); `CONTADORA.old` no longer says YES above the 🍀 / 🔮 cards; `liveGameByPlayer` keeps a FINAL box score that does
+  not list the player (`boxDone`), re-reads the other games every 5 min once found (`had`), and keeps the found game as a hit when its box score
+  has no players (ESPN did not answer). Tests: `poly-strip` (20), `no-more-today` (7), `live-player` 8–10, `old-prices` (editor open: `clock.runFor`,
+  since `fastForward` fires each timer once).
 - v4.78 (owner, 11/11: "DO iT BUILD"; the full review's open items, confirmed by Los Desconfiados): `rowOld` counts an unknown read time
   (`priceAt` 'unknown') from `loadedAt`; `renderCore` stamps `r._old` and `ringRecheck` (30 s) redraws when a row turns old with the page open (same
   row objects: `audit` returns `lastRows`); `full()` decides "No more today" from `mN.xL`/`mN.xH`; `liveGameByPlayer` has no shortcut to the game found
