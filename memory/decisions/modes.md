@@ -1,4 +1,4 @@
-# Modes: five tabs (Boring, Machín, Volado, Suertudo, Brujo) and ⏱ Old
+# Modes: five tabs (Boring, Machín, Volado, Suertudo, Brujo), ⏱ Old and 👻 AWOL
 
 Status: active · Introduced: v4.50, made exclusive in v4.51, five tabs by La Contadora's chance in v4.76, ⏱ Old in v4.77 · Approved by: Alonzo · Last verified: 2026-11-12 (v4.80)
 
@@ -17,11 +17,16 @@ Status: active · Introduced: v4.50, made exclusive in v4.51, five tabs by La Co
   counts from the board load, and a card that turns old with the page open moves within 30 seconds (`ringRecheck`; v4.79: asked for once while an
   editor holds the draw, then drawn when it closes). Its La Contadora line (v4.79): her YES was for those prices, and the 🍀 Just missed and
   🔮 Hail Mary cards listed there never had it.
+- 👻 AWOL (`awol`, v4.81; Alonzo: "Those go either on OLD or a AWOL category / Tab if they can't be found anymore"): a card whose own book said, on
+  the last check, that it cannot find this bet (no market at your line, not listed, game not found, nobody selling, the line moved): a 🦑 press,
+  the open check after a load, or a tap on the price (`rowAwol`, `awolNote`). Busy, not mapped, a Draw or "could not tell" are our side: not
+  AWOL. Listing only (same stake), like ⏱ Old; a check that finds it sends it back. A closed market from the open check keeps the v2.97 rule
+  (no money) and is listed there too. AWOL comes before ⏱ Old.
 - Inside a tab, Place these is grouped under a header per cover band (`rowBand`, `bandHead`), highest first; your sort applies inside a band.
 - Each row is listed in exactly one tab (`modeFamOf`):
   1. a bet you hold: by `prior.tier` (Just missed, Hail Mary), else by its chance if it passes, else Machín;
   2. an order waiting or a moved line: Machín;
-  3. a price read more than 12 hours ago: ⏱ Old (v4.77);
+  3. the book could not find it on the last check: 👻 AWOL (v4.81); then a price read more than 12 hours ago: ⏱ Old (v4.77);
   4. a candidate: its own tab (`r.xc`);
   5. passes every screen: by its chance (`passFam`);
   6. of the rest: long shots Brujo, Watch rows Suertudo, other rejects Machín.
@@ -44,11 +49,11 @@ Status: active · Introduced: v4.50, made exclusive in v4.51, five tabs by La Co
   notification, once per Perfecta (kept 3 days); turning it on takes the board as it is. A label: no stake or decision changes.
 
 ## Code
-`MODES`, `EXTRAS`, `OLD_PRICE`, `rowOld`, `extrasAssign` (`xc`, `xFit`, `tier`, `xCap`, `xCapDay`), `modeFamOf`, `passFam`, `rowBand`, `renderCore` (`famIs`, `mN`, `passW`), `passWhere`,
+`MODES`, `EXTRAS`, `OLD_PRICE`, `rowOld`, `rowAwol`, `awolNote`, `extrasAssign` (`xc`, `xFit`, `tier`, `xCap`, `xCapDay`), `modeFamOf`, `passFam`, `rowBand`, `renderCore` (`famIs`, `mN`, `passW`), `passWhere`,
 `passWhereHtml`, `modeCountsPaint`, `modeEmptyText`, `extrasCardsHtml`, `extraLine`.
 
 ## Tests
-`tests/tabs-v476-test.js`, `tests/old-prices-test.js`, `tests/no-more-today-test.js`, `tests/pass-where-test.js`, `tests/modes-perfecta-test.js`, `tests/longshot-mode-test.js`, `tests/same-player-test.js`, `tests/floor-watch-test.js`.
+`tests/tabs-v476-test.js`, `tests/old-prices-test.js`, `tests/no-more-today-test.js`, `tests/awol-test.js`, `tests/v480-test.js`, `tests/pass-where-test.js`, `tests/modes-perfecta-test.js`, `tests/longshot-mode-test.js`, `tests/same-player-test.js`, `tests/floor-watch-test.js`.
 
 ## Supersedes
 v4.51 to v4.75: three modes (🛡️ Safe the best bets, 🍀 Feeling Lucky the Just missed, 🔮 Clairvoyant the Hail Marys). v4.50: modes stacked

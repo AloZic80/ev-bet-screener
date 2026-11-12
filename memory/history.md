@@ -6,6 +6,14 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.81 (owner, Thu 11/12, the Collin Gillespie card, Novig −135, "⚠ Novig did not find this exact game" still under 💪 Machín: "Those go either on OLD
+  or a AWOL category / Tab if they can't be found anymore"): 👻 AWOL, a seventh tab (`MODES.awol`, `famNow 'awol'`, `mN.awol`, `CONTADORA.awol`,
+  `set('awol')`, `passWhere` `fam.awol` / `W.xA`, `W.now` without it). `rowAwol(r)`: `r.exClosed` (the open check after a load, v2.97: no money,
+  unchanged, so not a card) or `r.awol` for the book the card shows, set by `awolNote(note)` (game not found, no market at your line, not listed,
+  no offer, the line moved, no full-game market; never busy, not mapped, not matched, Draw, could not tell) from a 🦑 press (`r._qMiss`, then
+  after `decide`: a hit for the card's book clears it), the open check (other notes) and your tap on the price (`slipRow`). `modeFamOf`: AWOL
+  before ⏱ Old. Listing only (same stake). The card shows `awolPill` ("👻 AWOL · Novig: no market at your line (3m ago)"). The Game Hub says
+  AWOL. Tests: `awol-test` (19); `old-prices`, `tabs-v476` count seven tabs; `floor-watch` follows near-misses A (v4.80, published together).
 - v4.80 (owner, Thu 11/12 morning: "Yes all across. And what you seems better."): near-misses option A: `EXTRAS.nearMiss=false` stops `extrasAssign`
   giving `xc:'lucky'`, so no 🍀 Just missed offers (no near-miss stake); the rows stay 👀 Watch records; `contadoraText` / `CONTADORA.luckyNM` and
   `modeEmptyText` follow the switch (tests that cover the machinery set it true). Show › ◎ Perfectas lists the 6-of-6 bets of every tab (the

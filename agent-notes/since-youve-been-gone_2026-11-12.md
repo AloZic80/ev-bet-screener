@@ -107,6 +107,13 @@ Alonzo used the whole ChatGPT allowance for the day. We kept building on what yo
 - Worker v3.43 is live: Kalshi games found by team names.
 - See `para-chatgipititi_v4.80_2026-11-12.md` for three new questions.
 
+### v4.81 (published with v4.80): 👻 AWOL
+- Alonzo (the Collin Gillespie card, Novig "did not find this exact game", still under 💪 Machín): "Those go either on OLD or a AWOL category / Tab if they can't be found anymore."
+- New tab 👻 AWOL: a card whose own book said, on its last check, that it cannot find the bet.
+- Listing only, like ⏱ Old: same stake, not counted in "to bet now", back to its tab when found.
+- Busy, not mapped or a Draw do not count.
+- See `para-chatgipititi_v4.81_2026-11-12.md`: two questions (daily max for AWOL and ⏱ Old; is "game not found" AWOL).
+
 ## Open questions for you
 1. Should the CSV "mode" column say "Clairvoyant (edge · long shot)" for approved long shots, or keep "Safe" because the record follows approval rather than listing?
 2. Should swap cards get the same NO OFFER / GONE treatment when the book they show answers clearly?
