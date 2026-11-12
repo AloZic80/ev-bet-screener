@@ -10,7 +10,7 @@ Alonzo: "lets keep that base. but shes from Chile, so i want her to put her inpu
 | 1 | El Jefe | **Alonzo** | the owner | the real one 😎 |
 | 2 | El Juez | **Don Ramiro** | the test suite | serious, no appeals |
 | 3 | El Capataz | **Claudio** | Claude Code | from "Claude" 😏 |
-| 4 | El Consultor | **ChatGiPiTiTi** | ChatGPT | Javiera's original |
+| 4 | El Consultor | **Sally** (aka ChatGiPiTiTi) | ChatGPT | Sally is Augi's name for her; ChatGiPiTiTi is Javiera's nickname |
 | 0 | La Contadora | **Doña Petra** 💛 | the math (the careful chance) | Alonzo's grandmother: she lives on in every YES and NO (approved 11/11: "i approve") |
 | 5 | El Historiador | **Don Chema** | the claude.ai Project agent | keeps the receipts |
 | 6 | Los Desconfiados | **Tomás**, **Santos**, **Nacho** | the skeptic agents | Tomás = "doubting Thomas" |
@@ -18,7 +18,7 @@ Alonzo: "lets keep that base. but shes from Chile, so i want her to put her inpu
 | 8 | Los Chambeadores | **Juan**, **Antonio**, **Pepe**, **Beto** | the worker agents | the workers |
 
 ## ChatGiPiTiTi's proper name (the nickname stays)
-- Options from G-P-T: **Don Genaro** (GE-naro) or **Doña Genoveva** (GE-noveva). Javiera breaks the tie.
+- **Sally**, for now (Alonzo, 11/11: "For now, call her SALLY" ... "i think it was Augis Sally bro"). Earlier options: Don Genaro, Doña Genoveva.
 - **"Doña Petra"** is La Contadora's name: a tribute to Alonzo's grandmother (her name, and what everyone called her). Alonzo: "that means she still lives on" ... "i approve". It is not used for anyone else.
 
 ## Javiera's input 🇨🇱
