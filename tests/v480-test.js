@@ -37,8 +37,10 @@ const NOTIF=()=>{ window._notes=[]; window.Notification=class{ constructor(t,o){
 (async()=>{ const b=await chromium.launch(); let S;
   // ================= 1. near-misses: option A =================
   S=await open(b,1280);
-  const nm=await S.p.evaluate(()=>{ const r=lastRows.find(x=>x.apiKey==='lucky'); return {off:EXTRAS.nearMiss===false, xc:r.xc||'', tier:r.tier||'', watch:!!r.watch, act:+(r.actNet||0).toFixed(4)}; });
-  check('near-misses are not offered (EXTRAS.nearMiss false): Cuylle (La Contadora +0.2%, under the 1.5% floor) is a 👀 Watch row, not a 🍀 candidate', nm.off && nm.watch && nm.xc==='' && nm.tier==='' && Math.abs(nm.act-0.002)<0.0015, nm);
+  const nm=await S.p.evaluate(()=>{ const r=lastRows.find(x=>x.apiKey==='lucky'); return {off:EXTRAS.nearMiss===false, xc:r.xc||'', tier:r.tier||'', fit:r.xFit||'', watch:!!r.watch, act:+(r.actNet||0).toFixed(4)}; });
+  check('near-misses are not offered (EXTRAS.nearMiss false): Cuylle (La Contadora +0.2%, under the 1.5% floor) is a 👀 Watch row: no offer and no stake; v4.81: he keeps his kind (🍀) for the record', nm.off && nm.watch && nm.xc==='lucky' && nm.tier==='' && nm.fit==='' && Math.abs(nm.act-0.002)<0.0015, nm);
+  const placed=await S.p.evaluate(()=>{ addToLog(lastRows.find(x=>x.apiKey==='lucky')); const b=logged[logged.length-1]; const t=b.tier; logged.pop(); return t; });
+  check('v4.81 (Los Chismosos): a near-miss you place anyway is saved as one (tier lucky), so it stays out of the Scorecard as before', placed==='lucky', placed);
   await S.p.evaluate(()=>setMode('lucky')); await S.p.waitForTimeout(300);
   const lk=await S.p.evaluate(()=>({cards:[...document.querySelectorAll('#placeCards .sc-card')].length, heads:[...document.querySelectorAll('#placeCards .pc-head')].map(h=>h.textContent.replace(/\s+/g,' ').trim()), info:(document.getElementById('contadora')||{}).textContent.replace(/\s+/g,' ')}));
   check('🍀 Suertudo: no Just missed card or header; La Contadora says the near-misses are a NO and not offered, 👀 Watch keeps their record', !lk.cards && !lk.heads.some(h=>/Just missed/i.test(h)) && /The ones that just missed my floor are a NO, so they are not offered: 👀 Watch keeps their record\./.test(lk.info) && /🍀 no Coin Flip right now · near-misses: 👀 Watch only/.test(lk.info), lk);
@@ -83,7 +85,7 @@ const NOTIF=()=>{ window._notes=[]; window.Notification=class{ constructor(t,o){
     const n2=await S.p.evaluate(()=>({notes:window._notes.length, banner:!!document.querySelector('#perfAlert.on')}));
     if(W===1280) check('once each: the next redraw does not alert again for Kincaid (the × closed the banner)', n2.notes===1 && !n2.banner, n2);
     if(W===1280){ const kt=await S.p.evaluate(()=>perfAlertText(lastRows.find(x=>x.apiKey==='kxsp')));
-      check('on Kalshi or Polymarket the words say the Limit: "SEA +1.5 · Kalshi · OK up to 66¢: a Limit at 66¢, not Market"', /^SEA \+1\.5 · Kalshi · OK up to 66¢: a Limit at 66¢, not Market$/.test(kt), kt);
+      check('on Kalshi or Polymarket the words say the button and the Limit (v4.81, Los Chismosos): "SEA +1.5 · Kalshi · press NO on CAR wins by over 1.5 · a Limit at 66¢, not Market"', /^SEA \+1\.5 · Kalshi · press NO on CAR wins by over 1\.5 · a Limit at 66¢, not Market$/.test(kt), kt);
       await S.p.evaluate(()=>{ perfBanner(['test']); }); await S.p.evaluate(()=>document.querySelector('#perfAlert .pa-show').click()); await S.p.waitForTimeout(400);
       const sv=await S.p.evaluate(()=>({view:document.getElementById('boardView').value, banner:!!document.querySelector('#perfAlert.on')}));
       check('"Show them" closes the banner and switches the board to Show › ◎ Perfectas', sv.view==='perf' && !sv.banner, sv); }
