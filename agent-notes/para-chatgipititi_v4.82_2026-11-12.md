@@ -20,7 +20,7 @@ A card the book cannot find should not say BET NOW.
   "◎ PERFECTA · 👻 AWOL · look at the book first · 6 of 6 · price read 1m ago" instead of "◎ PERFECTA · BET NOW".
 - **#1 MATH PICK skips AWOL cards.** Inside 👻 AWOL every card is AWOL, so no card there is the #1 math pick.
 - Already true since v4.81:
-  - the 🔔 alert and Show › ◎ Perfectas never use an AWOL card;
+  - the 🔔 alert and Show › ◎ Perfectas skip AWOL cards (the reviewers found one timing gap in the alert, below);
   - AWOL cards are not counted in "to bet now".
 
 Label only: no stake, floor, fee, Kelly, cap or grading rule changed.
@@ -32,6 +32,15 @@ None changed. Gillespie's card keeps La Contadora's chance, its EV and its stake
 - `awol-test` has 20 checks (one new): with the book not finding the bet, the card says neither BET NOW nor #1 MATH PICK, and its ring reads
   "👻 AWOL · look at the book first".
 - The full suite passed before publishing.
+
+## Found by the reviewers, older, reported and not changed
+1. The 👻 AWOL and ⏱ Old headings still end with "Best first on Sort › Math, band by band; bet down the list until your daily max."
+2. A 🦑 Sentinels press redraws the board once before it marks the cards it could not find as AWOL. A card that becomes a new Perfecta in that
+   first redraw can get the 🔔 alert, then move to 👻 AWOL a moment later.
+3. With cards turned off (the table view), an AWOL row shows no 👻 marker or reason; the pill is on cards only.
+4. An open 🔔 banner keeps the line of a card that later goes AWOL, and shows it again when a new alert rebuilds the banner.
+5. A tap on the price that gets Kalshi or Polymarket "no offer to buy" sends the card to 👻 AWOL with its stake, while a 🦑 press gives $0 for
+   the same answer (your v4.75 rule). Should a tap follow the v4.75 rule too? That is a stake rule: nothing changes until you and Alonzo agree.
 
 ## A correction to the v4.81 note
 Its list of what sends a card to AWOL included "game not found". That was dropped before v4.81 was published (your question 2 there): the Worker
