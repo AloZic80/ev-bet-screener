@@ -29,7 +29,7 @@ const LOG=[{id:'old',key:'old',sport:'NFL',kind:'moneyline',name:'NEP',team:'NEP
         info:((document.getElementById('contadora')||{}).textContent||'').replace(/\s+/g,' ').trim(), page:/No more today/i.test((document.getElementById('placeCards')||{}).textContent||'')}; });
     const v=await look();
     check(W+' px: A and C take the 2nd and 3rd long-shot moneylines today ($1.00 each); X (+400, EV −1.5%) is a Hail Mary candidate held back by that allowance', v.A===1 && v.C===1 && v.X.xc==='hail' && v.X.cap && /^LONG-SHOT ML: 3 a game day and one a game/.test(v.X.why) && v.X.stake===0, v);
-    check(W+' px: no Hail Mary is used today, so Brujo does not say "no more today": "🔮 no Hail Marys right now"', !v.X.day && /🔮 no Hail Marys right now/.test(v.info) && !/no more today/i.test(v.info) && !v.page, v.info);
+    check(W+' px: no Hail Mary is used today, so Brujo does not say "no more today"; v4.80 (Los Chismosos): it names what holds the long shot back: "🔮 long-shot moneyline limit used (3 a game day, one a game)"', !v.X.day && /🔮 long-shot moneyline limit used \(3 a game day, one a game\)/.test(v.info) && !/no more today/i.test(v.info) && !v.page, v.info);
     if(W===1280){
       // three Hail Marys logged today: now the day's count is used too, and "no more today (3 a day)" is right
       await p.evaluate(()=>{ for(let i=0;i<3;i++) addToLog(Object.assign({}, lastRows.find(x=>x.apiKey==='X'), {name:'Used '+i, team:'U'+i, game:'U'+i+' @ V'+i, matchup:'U'+i+' @ V'+i, apiKey:'h'+i, kind:'prop', market:'0.5 Goals', side:'O', tier:'hail', stake:1})); refresh(); }); await p.waitForTimeout(400);

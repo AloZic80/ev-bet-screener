@@ -6,6 +6,33 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.81 (owner, Thu 11/12, the Collin Gillespie card, Novig −135, "⚠ Novig did not find this exact game" still under 💪 Machín: "Those go either on OLD
+  or a AWOL category / Tab if they can't be found anymore"): 👻 AWOL, a seventh tab (`MODES.awol`, `famNow 'awol'`, `mN.awol`, `CONTADORA.awol`,
+  `set('awol')`, `passWhere` `fam.awol` / `W.xA`, `W.now` without it). `rowAwol(r)`: `r.exClosed` (the open check after a load, v2.97: no money,
+  unchanged, so not a card) or `r.awol` for the book the card shows, set by `awolNote(note)` (game not found, no market at your line, not listed,
+  no offer, the line moved, no full-game market; never busy, not mapped, not matched, Draw, could not tell) from a 🦑 press (`r._qMiss`, then
+  after `decide`: a hit for the card's book clears it), the open check (other notes) and your tap on the price (`slipRow`). `modeFamOf`: AWOL
+  before ⏱ Old. Listing only (same stake). The card shows `awolPill` ("👻 AWOL · Novig: no market at your line (3m ago)"). The Game Hub says
+  AWOL. Tests: `awol-test` (19); `old-prices`, `tabs-v476` count seven tabs; `floor-watch` follows near-misses A (v4.80, published together).
+  Review fixes before publishing (Los Chismosos, confirmed by Los Desconfiados): AWOL is decided after every move of a 🦑 press (the Kalshi fee
+  check can move a card back) and for book-swap cards; "game not found" is our side (the Worker says it for a league it does not read or the
+  wrong series), so not AWOL; Show › ◎ Perfectas never lists an AWOL or ⏱ Old card and uses its own words, its empty text says the filters
+  apply; a near-miss keeps `xc:'lucky'` (offer gated by `EXTRAS.nearMiss`), so one placed anyway is saved as tier lucky (out of the Scorecard);
+  🔔 words name the button and market on Kalshi / Polymarket (`kalshiHow` / `polyHow`), the game of a total, round the safe way; "Show them"
+  opens the board it came from; Chrome for Android (no page notifications) is said so; the seen list is kept in memory too; the sound wakes on
+  touchend / click; Kalshi / Polymarket team lookup with `normAbbr` (GSW→GS …); a Draw tap says Draws are not read; the AWOL pill wraps.
+- v4.80 (owner, Thu 11/12 morning: "Yes all across. And what you seems better."): near-misses option A: `EXTRAS.nearMiss=false` stops `extrasAssign`
+  giving `xc:'lucky'`, so no 🍀 Just missed offers (no near-miss stake); the rows stay 👀 Watch records; `contadoraText` / `CONTADORA.luckyNM` and
+  `modeEmptyText` follow the switch (tests that cover the machinery set it true). Show › ◎ Perfectas lists the 6-of-6 bets of every tab (the
+  `shown` filter lets them past `famIs`). Kalshi (`kalshiHow`): a spread is "<team> wins by over X": a favourite is YES on its own market, an
+  underdog NO on the other team's (`k.on`, shown on the card line), as the Worker prices it; `isDrawRow` (name Draw or Tie on a team market): no
+  Kalshi or Polymarket strip, `liveDesc` returns null (never asked), the card says "Draw (tie)" with no home logo or code. `mN.lsmlH` names the
+  long-shot moneyline limit in 🔮 Brujo when it alone holds a candidate back (Los Chismosos, v4.79 review). 🔔 level 1: Settings `cPerfNotify`
+  (`mbev.perfNotify`), `perfNotifyCheck` in `renderCore` (Place these, ring 6 of 6, `pxKey`, `mbev.perfSeen` 3 days, first run = baseline),
+  `perfBanner` (`#perfAlert`, fixed), `perfBeep` (WebAudio after a tap), `Notification` when allowed, "Show them" → Show › ◎ Perfectas. Worker the
+  same morning: v3.43 merged (Kalshi games by team names; its merge message says "~12:05 AM" by mistake: the go came in the morning) and v3.44
+  (a Draw row is not read: it was priced as the home team). Tests: `v480-test` (21), `tabs-v476` and `modes-perfecta` set `EXTRAS.nearMiss=true`,
+  `no-more-today` expects the named limit; Worker `test/draw-test.mjs` (4).
 - v4.79 (owner, 11/11 late evening CT, the Sebastian Aho 1+ assists bet on Polymarket US for the 11/12 game: "44.0% · OK to 47.5%", $4.61; the Market order said "High slippage" and
   would have averaged about 53¢; "so, PUT IT", "with High Slippage?"): `polyHow` / `scPolyLine` (the card line, after `scKalshiLine`) /
   `polyHowHtml` (Why this play?, after `kalshiHowHtml`): Limit (not Market), YES / NO (an Under is NO on the Over), "N+" for an Over N−0.5 prop,

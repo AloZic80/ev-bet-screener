@@ -23,7 +23,7 @@ const WANT={boring:['Alpha Boring','Bravo Heavy'], safe:['Charlie Strong','Delta
     await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
     await p.goto('http://app.test/'); await p.waitForTimeout(1300);
     const tabs=await p.evaluate(()=>[...document.querySelectorAll('#modeBar button')].map(x=>x.textContent.replace(/\s+/g,' ').trim()));
-    check(W+' px: five tabs, highest chance first: Boring, Machín, Volado, Suertudo, Brujo, each with its count (2, 2, 2, 1, 1); v4.77: then ⏱ Old, 0 here (every price is a minute old)', tabs.length===6 && /^⏱ Old 0$/.test(tabs[5]) && /^😴 Boring 2$/.test(tabs[0]) && /^💪 Machín 2$/.test(tabs[1]) && /^🪙 Volado 2$/.test(tabs[2]) && /^🍀 Suertudo 1$/.test(tabs[3]) && /^🔮 Brujo 1$/.test(tabs[4]), tabs);
+    check(W+' px: five tabs, highest chance first: Boring, Machín, Volado, Suertudo, Brujo, each with its count (2, 2, 2, 1, 1); v4.77: then ⏱ Old, 0 here (every price is a minute old)', tabs.length===7 && /^⏱ Old 0$/.test(tabs[5]) && /^👻 AWOL 0$/.test(tabs[6]) /* v4.81 */ && /^😴 Boring 2$/.test(tabs[0]) && /^💪 Machín 2$/.test(tabs[1]) && /^🪙 Volado 2$/.test(tabs[2]) && /^🍀 Suertudo 1$/.test(tabs[3]) && /^🔮 Brujo 1$/.test(tabs[4]), tabs);
     const pass0=await p.evaluate(()=>lastRows.every(r=>r.pass && r.stake>0));
     check(W+' px: all eight bets are approved with a stake (stakes are not changed by the tab)', pass0, pass0);
     const look=()=>p.evaluate(()=>({cards:[...document.querySelectorAll('#placeCards .sc-card')].map(c=>(c.textContent.match(/(Alpha Boring|Bravo Heavy|Charlie Strong|Delta Lean|Echo Slight|Foxtrot Line|Golf Coin|Hotel Unlikely)/)||[])[1]),
@@ -44,7 +44,9 @@ const WANT={boring:['Alpha Boring','Bravo Heavy'], safe:['Charlie Strong','Delta
     await ctx.addInitScript(([R,d])=>{ try{ if(sessionStorage.getItem('s')) return; sessionStorage.setItem('s','1'); localStorage.clear(); localStorage.setItem('mbev.cfg',JSON.stringify({books:'Novig',bank:'500',cfgVer:3.03})); localStorage.setItem('mbev.cards','1'); localStorage.setItem('mbev.board',JSON.stringify({v:1,savedAt:new Date().toISOString(),slate:d,rows:R})); }catch(e){} },[[row('g','Golf Coin',0.47), NEAR],DAY]);
     const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
     await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
-    await p.goto('http://app.test/'); await p.waitForTimeout(1300); await p.evaluate(()=>setMode('lucky')); await p.waitForTimeout(400);
+    await p.goto('http://app.test/'); await p.waitForTimeout(1300);
+    await p.evaluate(()=>{ EXTRAS.nearMiss=true; refresh(); }); await p.waitForTimeout(300);   /* v4.80: near-miss offers are off by default (owner: option A); this block keeps their machinery covered with them on */
+    await p.evaluate(()=>setMode('lucky')); await p.waitForTimeout(400);
     const v=await p.evaluate(()=>{ const t=x=>x?x.textContent.replace(/\s+/g,' ').trim():null, near=lastRows.find(r=>r.name==='India Near'), golf=lastRows.find(r=>r.name==='Golf Coin');
       const card=[...document.querySelectorAll('#placeCards .sc-card')].find(c=>/India Near/.test(c.textContent));
       return {heads:[...document.querySelectorAll('#placeCards .pc-head')].map(t), band:t(card&&card.querySelector('.sc-xtop')), dec:t(card&&card.querySelector('.sc-dec')),
