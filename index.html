@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.74</title>
+<title>0xBeta Screener v4.75</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1464,7 +1464,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.74</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.75</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2222,7 +2222,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 
 </div>
 <script>
-const SCREENER_VERSION='v4.74';
+const SCREENER_VERSION='v4.75';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -2714,6 +2714,8 @@ function auditCore(rows,cfg){
     if(r.net<cfg.eMin) r.flags.push(['out','net EV under the floor']);
     else if(r.kind==='moneyline' && r.mktProb!=null && r.fairProb!=null && r.fairProb-r.mktProb>LSML.gap+1e-9){ r.watch=true; r.gapRes=true; r.flags.push(['out','MONEYLINE GAP RESEARCH · model 8+ points above market ('+(r.fairProb*100).toFixed(1)+'% vs '+(r.mktProb*100).toFixed(1)+'%): no automatic stake, kept as research']); }   /* v4.68: the market has been closer than the model there; it is watched, never staked by the screener */
     else if(r.mktProb!=null && r.actNet<cfg.eMin){ r.watch=true; r.flags.push(['out','WATCH · the model likes it ('+(r.net>=0?'+':'')+(r.net*100).toFixed(1)+'%), but with the market it is '+(r.actNet>=0?'+':'')+(r.actNet*100).toFixed(1)+'%, under your '+(cfg.eMin*100).toFixed(1)+'% floor']); }
+    if(r.qGone && !r.prior && LIVE_BOOK(r.book)===r.qGone.lb) r.flags.push(['out', qGoneText(r.qGone)]);   /* v4.75: the book the card shows said so on the last press, and no other book cleared the floor */
+    else if(r.qGone) delete r.qGone;
     if(cfg.deriv&&r.kind==='derivative') r.flags.push(['out','quarter or half market']);
     if(cfg.prop&&r.kind==='prop'&&/NCAA/.test(r.sport)) r.flags.push(['out','college player prop']);
     if(cfg.dfs&&DFS.test(r.book)) r.flags.push(['out','DFS pick\u2019em, not a single bet: see Parlays']);
@@ -10545,6 +10547,17 @@ function shopStale(r, now){ if(!r) return null; const at=(r.shop && !r.shop.same
    90 seconds within 5 minutes of the start). Fresh: another fresh price needs 0.3 points more of La Contadora's EV. An exchange that could not be read:
    the best fresh price that clears the floor takes its place with no 0.3. A stale sportsbook price: a fresh exchange price that clears the floor replaces it with no 0.3.
    Nothing fresh: no winner, nothing moves. Pure: it reads the row and the quotes and returns the decision. Hoisted. */
+/* v4.75 (agreed with ChatGPT, owner "we keep building" 11/12): what a failed Sentinels quote proves. Only two answers are certain today:
+   no_offer (Kalshi or Polymarket found the exact market, nobody selling this side) and gone_line_moved (they list the player at other lines, not
+   yours). Everything else (Novig "no market at your line", game or player not found, not mapped, busy, errors) is unreadable: v4.57 behaviour. */
+function qFailState(q){ const raw=String((q&&q.note)||'').slice(0,200), bk=/^(Kalshi|Polymarket)/i.test(raw);
+  if(q && q.busy) return {state:'unreadable', code:'busy', raw};
+  if(bk && /no offer to buy right now/i.test(raw)) return {state:'no_offer', code:'no_ask', raw};
+  const m=bk && raw.match(/lists (.+?) at (.+?) — not your (.+)$/);
+  if(m) return {state:'gone_line_moved', code:'line_moved', raw, line:m[3].trim(), listed:m[2].split(',').map(x=>x.trim()).filter(Boolean)};
+  return {state:'unreadable', code:'unreadable', raw}; }
+function qGoneText(g){ const B=bookLabel(g.book);
+  return g.state==='no_offer' ? 'NO OFFER at '+B+' · exact market found, but nobody is selling this side now' : 'GONE at '+B+' · your '+(g.line||'line')+' moved to '+((g.listed||[]).join(', ')||'another line'); }
 function bookPick(r, Q, cfg, now){
   const orig=r.shop?r.shop.orig:{book:r.book, offeredRaw:r.offeredRaw, offeredProb:r.offeredProb}, lim=shopLim(r,now), names=Object.keys(Q||{});
   const netAt=(book,p)=>{ const f=feeRate(book,p,cfg.fees), a=actNetOf(r.fairProb, r.mktProb, p, f); return a!=null?a:((r.fairProb/p-1)-f)/(1+f); };
@@ -10566,7 +10579,7 @@ function bookPick(r, Q, cfg, now){
 function shopSnap(r){ const moved=!!(r.shop && !r.shop.same), c=r.shopChk; if(!moved && !r.swap && !c) return undefined; const now=Date.now(), at=moved?r.shop.at:(r.swap&&r.swap.at)?new Date(+r.swap.at).toISOString():undefined, st=shopStale(r,now);
   const side=x=>x?{book:x.book, p:+(+x.p).toFixed(4), actNet:(x.net!=null && isFinite(x.net))?+x.net.toFixed(4):null, age:x.age!=null?Math.round(x.age):null, readable:x.readable!==undefined?!!x.readable:true, live:!!x.live}:undefined;
   return {from:moved?r.shop.orig.book:r.swap?r.swap.orig.book:(c&&c.orig)||undefined, swap:r.swap?true:undefined, at, age:at?now-Date.parse(at):undefined, stale:!!st, bypass:(moved&&r.shop.bypass)||(r.swap&&r.swap.bypass)||(c&&c.bypass)||undefined, swapNone:r.swapNone||undefined, swapFrom:(r.swap&&r.swap.from)||undefined, skip:(c&&c.skip)||((r.swap && r._swapSkip && Object.keys(r._swapSkip).length)?'kalshi_fee_rounding':undefined),   /* v4.61: a swap card's reason, and a Kalshi price left out after its fee rounding */
-    chk:c?{at:new Date(c.at).toISOString(), age:now-c.at, incumbent:side(c.inc), challenger:side(c.ch), margin:c.margin, none:c.none||undefined}:undefined}; }
+    chk:c?{at:new Date(c.at).toISOString(), age:now-c.at, incumbent:side(c.inc), challenger:side(c.ch), margin:c.margin, none:c.none||undefined, q:c.q||undefined}:undefined}; }   /* v4.75: q = the shown book's clear answer (state, code, raw reason) */
 function shopTagHtml(r){
   let h='';
   if(r.swap) h+='<span class="meta shop-was" title="'+esc(bookLabel(r.swap.orig.book))+' is not a book you bet: this is the same bet at '+esc(bookLabel(r.book))+', screened at its price'+((r.swap.bypass && r.swap.from)?'. '+esc(bookLabel(r.swap.from))+' could not be read on the last scan; '+esc(bookLabel(r.book))+' is the best fresh price that clears your floor':'')+'">↪ for you: '+esc(bookLabel(r.book))+' (was '+esc(bookLabel(r.swap.orig.book))+' '+esc(fmtOdds(r.swap.orig.offeredRaw))+')</span> ';   // v4.05
@@ -10644,16 +10657,16 @@ async function shopExchanges(){
   btn.disabled=true; let matched=0, stopAt=jobs.length, failMsg='';   // v4.61: where a failed request stopped the scan
   const before=new Map(rows.map(r=>[r, isPlace(r)]));
   try{
-    rows.forEach(r=>{ r._was={q:r._shopQ, freed:r.freed, jailed:r.jailed}; delete r._shopQ; delete r.freed; delete r.jailed; });   /* v4.61: kept until it is known the scan asked about this bet */
+    rows.forEach(r=>{ r._was={q:r._shopQ, freed:r.freed, jailed:r.jailed, qg:r.qGone}; delete r._shopQ; delete r.freed; delete r.jailed; delete r._qFail; delete r.qGone; });   /* v4.75: qGone, re-decided on every press */   /* v4.61: kept until it is known the scan asked about this bet */
     for(let i=0;i<jobs.length;i+=8){
       const chunk=jobs.slice(i,i+8); msg.textContent='🦑 Sentinels hunting… '+Math.min(i+8,jobs.length)+' / '+jobs.length;
       let res=null, R=null; try{ res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(chunk.map(x=>x[2]))), {headers:apiHeaders()}); if(res.ok) R=((await res.json())||{}).results||{}; }catch(e){ R=null; }
       if(!R){ failMsg='exchange check failed ('+(res&&!res.ok?res.status:'no answer')+')'; msg.textContent=failMsg; stopAt=i; break; }   /* v4.61: a request that threw is a failed request too */
-      chunk.forEach(([r,n,d])=>{ const q=R[d.id]; if(!q||!q.ok) return; if(suspectQ(q,r.fairProb,r.swap?r.swap.orig.offeredProb:r.offeredProb /* v4.57: like swapHunt */,r.mktProb)){ (r._suspect=r._suspect||{})[n]=q; return; } matched++; liveQuotes[d.id]=q; (r._shopQ=r._shopQ||{})[n]=q; });   // v4.21: fresh; v4.61 (owner: "Ok fix it and build"): the price is fresh only when the book the card shows was read (decide, below): reading another exchange does not make a sportsbook price new
+      chunk.forEach(([r,n,d])=>{ const q=R[d.id]; if(q && !q.ok){ const st=qFailState(q); if(st.state!=='unreadable') (r._qFail=r._qFail||{})[n]=st; return; } if(!q||!q.ok) return;   /* v4.75: a clear "no offer" or "line moved" answer is kept */ if(suspectQ(q,r.fairProb,r.swap?r.swap.orig.offeredProb:r.offeredProb /* v4.57: like swapHunt */,r.mktProb)){ (r._suspect=r._suspect||{})[n]=q; return; } matched++; liveQuotes[d.id]=q; (r._shopQ=r._shopQ||{})[n]=q; });   // v4.21: fresh; v4.61 (owner: "Ok fix it and build"): the price is fresh only when the book the card shows was read (decide, below): reading another exchange does not make a sportsbook price new
     }
     /* v4.61: a request that failed stops the scan: the bets whose prices were not asked for stay exactly as they were (they were not "unreadable") */
     const unasked=new Set(jobs.slice(stopAt).map(j=>j[0]));
-    rows.forEach(r=>{ const w=r._was; delete r._was; if(!w || !unasked.has(r)) return; if(w.q) r._shopQ=w.q; else delete r._shopQ; if(w.freed) r.freed=w.freed; if(w.jailed) r.jailed=w.jailed; });   /* their earlier prices and tags come back */
+    rows.forEach(r=>{ const w=r._was; delete r._was; if(!w || !unasked.has(r)) return; if(w.q) r._shopQ=w.q; else delete r._shopQ; if(w.freed) r.freed=w.freed; if(w.jailed) r.jailed=w.jailed; if(w.qg) r.qGone=w.qg; });   /* their earlier prices and tags come back */
     matched=rows.reduce((n,r)=>n+(unasked.has(r)?0:Object.keys(r._shopQ||{}).length),0);
     const now=Date.now(), mineBk=b=>!have || have.some(x=>bookIsMine(b,x)), pre=new Map(rows.map(r=>[r, r.book+'|'+r.offeredProb]));   // v4.61: "repriced" = the book or price really changed
     const decide=(r,Q)=>{ const d=bookPick(r, Q, cfg, now), orig=d.orig, best=d.win;
@@ -10674,7 +10687,12 @@ async function shopExchanges(){
         r._altQ=nq; r._altAt=now;
         if(r.shop){ if(!r.swap){ r.book=r.shop.orig.book; r.offeredProb=r.shop.orig.offeredProb; r.offeredRaw=r.shop.orig.offeredRaw; } delete r.shop; } return; }
       r._pre={book:r.book, offeredProb:r.offeredProb, offeredRaw:r.offeredRaw, shop:r.shop, liveAt:r._liveAt};
-      decide(r, r._shopQ||{});
+      const incB=r.book; decide(r, r._shopQ||{});
+      { const fb=Object.keys(r._qFail||{}).find(n=>LIVE_BOOK(n)===LIVE_BOOK(incB)), f=fb?r._qFail[fb]:null;   /* v4.75: only the answer of the book the card showed (a challenger's "no offer" changes nothing) */
+        if(f && r.shopChk){ const stay=LIVE_BOOK(r.book)===LIVE_BOOK(incB);
+          r.shopChk.q={state:f.state, code:f.code, raw:f.raw, book:fb, line:f.line, listed:f.listed, at:now, decision:stay?'stake_zero':'moved'};
+          if(stay) r.qGone={state:f.state, code:f.code, raw:f.raw, book:fb, lb:LIVE_BOOK(fb), line:f.line, listed:f.listed, at:now}; } }
+      delete r._qFail;
     });
     refresh();   // the board re-screens every row at its new price (fees, floor, odds range, market check, caps, daily max)
     /* v4.61: the board rounds Kalshi's fee up to the cent on whole contracts and checks the floor again. A bet this press moved to Kalshi that fails that
@@ -10700,7 +10718,7 @@ async function shopExchanges(){
     msg.innerHTML=(failMsg?'🦑 '+esc(failMsg)+' · <b>'+unasked.size+'</b> '+(unasked.size===1?'bet':'bets')+' not checked, left as '+(unasked.size===1?'it was':'they were')+' · ':'🦑 Sentinels are back: ')+'<b>'+matched+'</b> live prices · <b>'+repriced+'</b> repriced'+(freed?' · <b style="color:var(--live)">🔓 '+freed+' out of Skipping Jail</b>':'')+(jailed?' · <b style="color:var(--out)">🔒 '+jailed+' sent to Skipping Jail</b>':'')+' · '+new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
     pkSentNote(msg,!failMsg);   // v3.57: what is better in a parlay goes to the Parlays tab; v4.61: "checked at live prices" only when the whole scan ran
   }catch(e){ msg.textContent='🦑 the Sentinels got lost (exchange check failed)'; }
-  finally{ btn.disabled=false; rows.forEach(r=>{ const w=r._was; if(!w) return; delete r._was; if(w.q) r._shopQ=w.q; if(w.freed) r.freed=w.freed; if(w.jailed) r.jailed=w.jailed; }); }   /* v4.61: a scan that broke before deciding gives the earlier prices and tags back */
+  finally{ btn.disabled=false; rows.forEach(r=>{ delete r._qFail; const w=r._was; if(!w) return; delete r._was; if(w.q) r._shopQ=w.q; if(w.freed) r.freed=w.freed; if(w.jailed) r.jailed=w.jailed; if(w.qg) r.qGone=w.qg; }); }   /* v4.61: a scan that broke before deciding gives the earlier prices and tags back */
 }
 function pkSentNote(msg,live){ if(live) pkSentAt=Date.now(); const n=pkSentLegs().length; try{ if(document.getElementById('v-parlay').classList.contains('on')) renderParlays(); }catch(e){}
   if(n) msg.insertAdjacentHTML('beforeend',' · <button type="button" class="linkbtn pk-sent-go" title="Good in a 2- to 6-pick entry (good alone or not)">🎟️ <b>'+n+'</b> good in a parlay → Parlays</button>'); }   // v3.62
