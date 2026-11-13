@@ -30,7 +30,7 @@ const LOG=[
     grp:[...document.querySelectorAll('#rpClv tbody tr')].map(r=>[...r.children].map(c=>c.textContent).join('|')), edge:document.getElementById('rpEdge').textContent.replace(/\s+/g,' ')}));
   check('closing line: 4 of the 10 settled singles have a closing price (the parlay is left out)', v.ks['With a closing price']==='4 of 10', v.ks);
   check('average CLV = mean of +11.1%, 0, −11.1%, +11.1% = +2.78%; median +5.56%', v.ks['Average CLV']==='+2.78%' && v.ks['Median CLV']==='+5.56%', v.ks);
-  check('stake-weighted CLV: the free bet weighs 0 → mean of +11.1, 0, −11.1 = 0.00%', /^[+−]0\.00%$/.test(v.ks['Stake-weighted CLV']), v.ks);
+  check('stake-weighted CLV: the free bet weighs 0 → mean of +11.1, 0, −11.1 = 0.00%', v.ks['Stake-weighted CLV']==='0.00%', v.ks);
   check('beat / even (within 0.1 point) / missed: 2 / 1 / 1', v.grp[0].startsWith('Beat the close|2|50.0%') && v.grp[1].startsWith('Even (within 0.1 point)|1|25.0%') && v.grp[2].startsWith('Missed the close|1|25.0%'), v.grp);
   check('the proxy is labelled "if the closing price were fair", never "expected earnings": 2×0.111 + 2×0 − 2×0.111 = $0.00', /CLV value proxy · if the closing price were fair: \$0\.00/.test(v.clv) && !/expected earnings/i.test(v.clv), v.clv.slice(0,300));
   // expected profit: eligible = a, b, c, d, r1, r2, pu (not free, sold, late, parlay) = 7 of 10
@@ -41,6 +41,12 @@ const LOG=[
   check('expected wins by unique outcome: 3.5 (0.6×5 + 0.55: the earlier Repeat ticket speaks) vs actual 4 · 6 eligible outcomes from 10 settled tickets', /Expected 3\.[56] · actual 4 · 6 eligible outcomes from 10 settled single tickets/.test(v.edge), v.edge.slice(260,600));
   check('the main range resamples whole games; the independent SD sits in a labelled detail', /95% range by game \(resampling whole games, 4 games\)/.test(v.edge) && /ignores same-game correlation; not a confidence range/.test(v.edge), v.edge.slice(0,900));
   check('stage label under 30 outcomes, and no verdict before 100', /extremely preliminary/.test(v.edge) && /No verdict before 100 eligible outcomes/.test(v.edge), null);
+  const ex=await p.evaluate(()=>{ const c=rpPctP(-1e-17), base={kind:'prop', name:'Z', market:'1.5 Threes', side:'O', game:'LAL @ GSW', date:'2026-11-10', dateSet:true, start:'2026-11-11T00:00:00Z', stake:1, odds:'+100'};
+    logged.push(Object.assign({}, base, {id:'z1', key:'z1', sold:{price:1.2}, snap:{at:'2026-11-10T10:00:00Z', act:0.5, actNet:0}}), Object.assign({}, base, {id:'z2', key:'z2', result:'win', gradedBy:'espn', snap:{at:'2026-11-10T12:00:00Z', act:0.9, actNet:0}}), Object.assign({}, base, {id:'z3', key:'z3', name:'NoStart', start:undefined, result:'win', gradedBy:'espn', snap:{at:'2026-11-10T12:00:00Z', act:0.6, actNet:0.1}}));
+    rpRender(); const e=document.getElementById('rpEdge').textContent.replace(/\s+/g,' '); logged.splice(-3,3); rpRender(); return {c, e}; });
+  check('Los Chismosos: a near-zero result shows 0.00%, never −0.00%', ex.c==='0.00%', ex.c);
+  check('Los Chismosos: the earliest ticket on an outcome was sold, so that outcome drops out (a later ticket does not speak for it); a bet with no start time is left out and the text says so', /Expected 3\.[56] · actual 4 · 6 eligible outcomes/.test(ex.e) && /no game start time saved/.test(ex.e), ex.e.slice(0,700));
+  check('Los Chismosos: the stage wording is "may be informative" (never stronger)', await p.evaluate(()=>rpStage(400,200)==='may be informative'), null);
   for(const W of [390,1280]){ await p.setViewportSize({width:W,height:900}); await p.waitForTimeout(150);
     const r=await p.evaluate(()=>({side:document.documentElement.scrollWidth>innerWidth, out:[...document.querySelectorAll('#rpClv .rp-tw, #rpClv .rp-ks, #rpEdge .rp-box')].filter(e=>e.getBoundingClientRect().right>innerWidth+1).length}));
     check(W+' px: no sideways scroll', !r.side && !r.out, r); }

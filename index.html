@@ -5899,7 +5899,7 @@ function lsSafeSet(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){
 function saveFailNote(bad){ let el=document.getElementById('saveFail'); if(!bad){ if(el) el.remove(); return; }
   if(!el){ el=document.createElement('div'); el.id='saveFail'; el.setAttribute('role','alert'); document.body.prepend(el); }
   el.textContent='⚠ Your bet log (or a book fill you added or ignored) could not be saved on this device: the browser storage is full ('+Math.round(lsSize()/1024)+' KB used). Your last change will be lost when the page reloads. Tell Claude Code.'; }
-function saveLog(){ saveFailNote(!lsSafeSet('mbev.log',JSON.stringify(logged))); if(typeof renderTodayBar==='function') setTimeout(renderTodayBar,0); if(document.body && document.body.dataset.view==='v-reports') setTimeout(rpRender,0); /* v4.89: an open report follows every change to the log */ syncTouched(); }   // v3.82: no more silent failures
+function saveLog(){ saveFailNote(!lsSafeSet('mbev.log',JSON.stringify(logged))); if(typeof renderTodayBar==='function') setTimeout(renderTodayBar,0); if(document.body && document.body.dataset.view==='v-reports' && !window._rpPend){ window._rpPend=1; setTimeout(()=>{ window._rpPend=0; rpRender(); },50); }   /* v4.91 review: many saves in a row paint once */ /* v4.89: an open report follows every change to the log */ syncTouched(); }   // v3.82: no more silent failures
 /* v2.63: what the screener said about a row, in one word — saved with every bet you log.
    "On the list" = the screener had a stake on it (BET / RISK / OUTLIER / LIMITED) and the game hadn't started. */
 function saidOf(r){
@@ -9743,22 +9743,27 @@ function rpStep2(S){ const set=(id,h)=>{ const el=document.getElementById(id); i
    free; next to the actual profit of the same bets. Expected wins = Σ her frozen pregame chance (snap.act) over unique outcomes (the earliest
    ticket on an outcome speaks for it; pushes out; free bets in). The main range resamples whole games (bets on one game move together). */
 function rpPregame(b){ const s=b.snap||{}, at=Date.parse(s.at), st=Date.parse(b.start||(b.gameInfo&&b.gameInfo.startISO)); return !isNaN(at) && !isNaN(st) && at<st; }
+var rpBootMemo=new Map();
 function rpBootGames(items, B){ const G=new Map(); items.forEach(x=>{ (G.get(x.g)||G.set(x.g,[]).get(x.g)).push(x.v); }); const S=[...G.values()].map(a=>a.reduce((t,v)=>t+v,0)), n=S.length; if(n<2) return null;
-  const rnd=rng32(items.length*7919+n), v=new Float64Array(B=B||2000); for(let b=0;b<B;b++){ let t=0; for(let i=0;i<n;i++) t+=S[(rnd()*n)|0]; v[b]=t; } v.sort();
+  const mk=(B||2000)+'|'+items.length+'|'+S.map(x=>x.toFixed(6)).join(','); if(rpBootMemo.has(mk)) return rpBootMemo.get(mk); if(rpBootMemo.size>40) rpBootMemo.clear();   /* review: the same data is never resampled twice */
+  const r0=rpBootGames0(S, items.length, B); rpBootMemo.set(mk, r0); return r0; }
+function rpBootGames0(S, len, B){ const n=S.length;
+  const rnd=rng32(len*7919+n), v=new Float64Array(B=B||2000); for(let b=0;b<B;b++){ let t=0; for(let i=0;i<n;i++) t+=S[(rnd()*n)|0]; v[b]=t; } v.sort();
   return {lo:v[Math.floor(0.025*(B-1))], hi:v[Math.ceil(0.975*(B-1))], games:n}; }
-function rpStage(n, games){ return n<30?'extremely preliminary':n<100?'descriptive only':n<300||games<150?'directional':'large enough to be informative'; }
+function rpStage(n, games){ return n<30?'extremely preliminary':n<100?'descriptive only':n<300||games<150?'directional':'may be informative'; }
 function rpMed(a){ if(!a.length) return null; const s=a.slice().sort((x,y)=>x-y), m=s.length>>1; return s.length%2?s[m]:(s[m-1]+s[m])/2; }
-function rpPctP(x){ return x==null?'—':(x>=0?'+':'−')+Math.abs(x*100).toFixed(2)+'%'; }
+function rpPctP(x){ if(x==null) return '—'; const r=+(x*100).toFixed(2); return (r>0?'+':r<0?'−':'')+Math.abs(r).toFixed(2)+'%'; }   /* review: never −0.00% */
+function rpClvCls(x){ return x==null?'':x>=0.001?'pl-up':x<=-0.001?'pl-down':''; }
 function rpClvHtml(S){ const M=S.L.filter(b=>b.kind!=='parlay' && !heldValue(b).open), C=M.filter(b=>clv(b)!=null);
   if(!M.length) return '<p class="meta">No settled single bets in this report.</p>';
   if(!C.length) return '<p class="meta">None of the '+M.length+' settled single bets has a closing price yet.</p>';
   const v=C.map(clv), mean=v.reduce((t,x)=>t+x,0)/v.length, W=C.map(b=>b.free?0:(+b.stake||0)), sw=W.reduce((t,x)=>t+x,0), wmean=sw>0?C.reduce((t,b,i)=>t+W[i]*v[i],0)/sw:null, proxy=C.reduce((t,b,i)=>t+W[i]*v[i],0);
   const grp=[['Beat the close',C.filter(b=>clv(b)>=0.001)],['Even (within 0.1 point)',C.filter(b=>Math.abs(clv(b))<0.001)],['Missed the close',C.filter(b=>clv(b)<=-0.001)]];
   const c=rpCounts(C), tile=(l,x,cl,t)=>'<div class="rp-k"'+(t?' title="'+esc(t)+'"':'')+'><span>'+l+'</span><strong'+(cl?' class="'+cl+'"':'')+'>'+x+'</strong></div>';
-  return '<div class="rp-ks">'+tile('With a closing price',C.length+' of '+M.length,'', 'settled single bets with a closing price on the same side and line')+tile('Average CLV',rpPctP(mean),rpCls(mean))+tile('Median CLV',rpPctP(rpMed(v)),rpCls(rpMed(v)||0))+tile('Stake-weighted CLV',rpPctP(wmean),rpCls(wmean||0),'each bet counted by its own-money stake; free bets weigh 0')+'</div>'+
+  return '<div class="rp-ks">'+tile('With a closing price',C.length+' of '+M.length,'', 'settled single bets with a closing price on the same side and line')+tile('Average CLV',rpPctP(mean),rpClvCls(mean))+tile('Median CLV',rpPctP(rpMed(v)),rpClvCls(rpMed(v)))+tile('Stake-weighted CLV',rpPctP(wmean),rpClvCls(wmean),'each bet counted by its own-money stake; free bets weigh 0')+'</div>'+
     '<div class="rp-tw"><table class="rp-t rp-clv"><thead><tr><th></th><th class="num">Tickets</th><th class="num">Share</th><th class="num">W–L–P</th><th class="num">Profit</th><th class="num">ROI</th></tr></thead><tbody>'+
     grp.map(([lab,L])=>{ const x=rpAgg(L,[]); return '<tr><td class="rp-bet"><b>'+lab+'</b></td><td class="num" data-l="Tickets">'+L.length+'</td><td class="num" data-l="Share">'+(L.length/C.length*100).toFixed(1)+'%</td><td class="num" data-l="W–L–P">'+x.w+'–'+x.l+'–'+x.p+'</td><td class="num '+rpCls(x.profit)+'" data-l="Profit">'+lcUsd(x.profit)+'</td><td class="num" data-l="ROI">'+rpPct(x.roi)+'</td></tr>'; }).join('')+'</tbody></table></div>'+
-    '<div class="rp-box"><b>CLV value proxy · if the closing price were fair:</b> <b class="'+rpCls(proxy)+'">'+lcUsd(proxy)+'</b> <span class="meta">(Σ own stake × CLV). The close still has the book’s margin in it, so this is a sign of price quality, not money expected.</span></div>'+
+    '<div class="rp-box"><b>CLV value proxy · if the closing price were fair:</b> <b class="'+rpCls(proxy)+'">'+lcUsd(proxy)+'</b> <span class="meta">(each bet’s own stake × its CLV, added up). The close still has the book’s margin in it, so this is a sign of price quality, not money expected.</span></div>'+
     '<p class="meta">'+c.outcomes+' unique outcome'+(c.outcomes===1?'':'s')+' on '+c.games+' game'+(c.games===1?'':'s')+(rpSample(c.outcomes)?' · <b class="rp-smp">'+rpSample(c.outcomes)+'</b>':'')+'</p>'; }
 function rpEdgeHtml(S){ const sing=S.L.filter(b=>b.kind!=='parlay' && !heldValue(b).open), settledN=sing.length;
   /* expected profit: her frozen pregame EV, money bets only */
@@ -9766,16 +9771,16 @@ function rpEdgeHtml(S){ const sing=S.L.filter(b=>b.kind!=='parlay' && !heldValue
   const E=EP.reduce((t,b)=>t+(+b.stake||0)*(+b.snap.actNet),0), A=EP.reduce((t,b)=>t+betProfit(b),0);
   const cP=rpCounts(EP), bP=rpBootGames(EP.map(b=>({g:rpGameKey(b), v:betProfit(b)-(+b.stake||0)*(+b.snap.actNet)})));
   /* expected wins: unique outcomes, the earliest pregame ticket speaks for each */
-  const O=new Map(); sing.filter(b=>!b.sold && (b.result==='win'||b.result==='loss') && b.snap && b.snap.act!=null && isFinite(+b.snap.act) && rpPregame(b)).forEach(b=>{ const k=rpOutKey(b), o=O.get(k); if(!o || Date.parse(b.snap.at)<Date.parse(o.snap.at)) O.set(k,b); });
-  const OW=[...O.values()], EW=OW.reduce((t,b)=>t+(+b.snap.act),0), AW=OW.filter(b=>b.result==='win').length, sd=Math.sqrt(OW.reduce((t,b)=>t+(+b.snap.act)*(1-(+b.snap.act)),0));
+  const O=new Map(); sing.filter(b=>b.snap && b.snap.act!=null && +b.snap.act>0 && +b.snap.act<1 && rpPregame(b)).forEach(b=>{ const k=rpOutKey(b), o=O.get(k); if(!o || Date.parse(b.snap.at)<Date.parse(o.snap.at)) O.set(k,b); });   /* review: the earliest valid pregame ticket speaks; then a push or sold one drops its outcome */
+  const OW=[...O.values()].filter(b=>!b.sold && (b.result==='win'||b.result==='loss')), EW=OW.reduce((t,b)=>t+(+b.snap.act),0), AW=OW.filter(b=>b.result==='win').length, sd=Math.sqrt(OW.reduce((t,b)=>t+(+b.snap.act)*(1-(+b.snap.act)),0));
   const gW=new Set(OW.map(rpGameKey)).size, bW=rpBootGames(OW.map(b=>({g:rpGameKey(b), v:(b.result==='win'?1:0)-(+b.snap.act)})));
   const rng=(b,f)=>b?'95% range by game (resampling whole games, '+b.games+' games): '+f(b.lo)+' to '+f(b.hi):'a range needs at least two games';
-  const pm=x=>(x>=0?'+':'−')+Math.abs(x).toFixed(1);
+  const pm=x=>{ const r=+x.toFixed(1); return (r>0?'+':r<0?'−':'')+Math.abs(r).toFixed(1); };
   return '<div class="rp-edge">'+
-    '<div class="rp-box"><b>La Contadora’s expected profit</b> <span class="meta">(Σ stake × her EV, frozen before the game)</span><br>Expected <b class="'+rpCls(E)+'">'+lcUsd(E)+'</b> · actual <b class="'+rpCls(A)+'">'+lcUsd(A)+'</b> · '+EP.length+' of '+settledN+' settled singles eligible'+
-      '<div class="meta">'+(EP.length?'Actual − expected: '+lcUsd(A-E)+' · '+rng(bP,lcUsd)+' · <b class="rp-smp">'+rpStage(cP.outcomes,cP.games)+'</b> ('+cP.outcomes+' outcomes, '+cP.games+' games)':'No settled single has her EV saved before its game.')+'. Left out: parlays, open, sold and free bets, bets with no EV saved before the start.</div></div>'+
-    '<div class="rp-box"><b>Expected wins</b> <span class="meta">(Σ her chance, frozen before the game)</span><br>Expected <b>'+EW.toFixed(1)+'</b> · actual <b>'+AW+'</b> · '+OW.length+' eligible outcome'+(OW.length===1?'':'s')+' from '+settledN+' settled single ticket'+(settledN===1?'':'s')+
-      '<div class="meta">'+(OW.length?'Actual − expected: '+pm(AW-EW)+' wins · '+rng(bW,pm)+' · <b class="rp-smp">'+rpStage(OW.length,gW)+'</b>':'No settled single has her chance saved before its game.')+'. Free bets count here (the forecast is the same); pushes, parlays and sold bets do not; a repeated bet on one outcome counts once.</div>'+
+    '<div class="rp-box"><b>La Contadora’s expected profit</b> <span class="meta">(each bet’s stake × her EV saved before the game, added up)</span><br>Expected <b class="'+rpCls(E)+'">'+lcUsd(E)+'</b> · actual <b class="'+rpCls(A)+'">'+lcUsd(A)+'</b> · '+EP.length+' of '+settledN+' settled singles eligible'+
+      '<div class="meta">'+(EP.length?'Actual − expected: '+lcUsd(A-E)+' · '+rng(bP,lcUsd)+' · <b class="rp-smp">'+rpStage(cP.outcomes,cP.games)+'</b> ('+cP.outcomes+' outcomes, '+cP.games+' games)':'No settled single has her EV saved before its game.')+'. Left out: parlays, open, sold and free bets, bets with no EV saved before the start or no game start time saved.</div></div>'+
+    '<div class="rp-box"><b>Expected wins</b> <span class="meta">(her chance for each outcome, saved before the game, added up)</span><br>Expected <b>'+EW.toFixed(1)+'</b> · actual <b>'+AW+'</b> · '+OW.length+' eligible outcome'+(OW.length===1?'':'s')+' from '+settledN+' settled single ticket'+(settledN===1?'':'s')+
+      '<div class="meta">'+(OW.length?'Actual − expected: '+pm(AW-EW)+' wins · '+rng(bW,pm)+' · <b class="rp-smp">'+rpStage(OW.length,gW)+'</b>':'No settled single has her chance saved before its game.')+'. Free bets count here (the forecast is the same); pushes, parlays, sold bets and bets with no game start time saved do not; a repeated bet on one outcome counts once (its earliest ticket).</div>'+
       (OW.length?'<details class="meta"><summary>Independent-outcome SD</summary>Independent-outcome SD: '+sd.toFixed(1)+' wins · ignores same-game correlation; not a confidence range.</details>':'')+'</div>'+
     '<p class="meta">No verdict before 100 eligible outcomes. Any one bet can lose; only many bets show whether the edge is real.</p></div>'; }
 function rpStep3(S){ const set=(id,h)=>{ const el=document.getElementById(id); if(el) el.innerHTML=h; }; set('rpClv', rpClvHtml(S)); set('rpEdge', rpEdgeHtml(S)); }
