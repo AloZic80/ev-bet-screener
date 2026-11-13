@@ -10,7 +10,7 @@ Yesterday's one-night report said "expected wins 8.9 of 15; he won 11". Proposal
 - Same eligible set as the expected-profit check: settled singles with a frozen pregame chance; no parlays, sold, free, own/unverified
   without a chance, post-start chances. A push is left out of both sides.
 - Show it next to the expected-profit box: "Expected wins 8.9 · actual 11 · 15 eligible (of 18 settled)", with the sample label.
-- Spread: show the plain variance √Σ p_i(1 − p_i) as "± typical swing" (here about ±1.8), or wait for the game-clustered range like the profit check?
+- Spread: show the plain variance √Σ p_i(1 − p_i) as "± typical swing" (here about ±1.9), or wait for the game-clustered range like the profit check?
 - Repeated tickets on one outcome: count once (your canonical earliest pregame forecast), as for hit rate.
 
 ## 2. Price breakdown both ways (step 2)
