@@ -1,4 +1,4 @@
-# 📋 Game-day report: Wed 11/12 (from Alonzo's Bet log CSV)
+# 📋 Game-day report: Thu 11/12 (from Alonzo's Bet log CSV)
 
 Ref: CC-2026-11-13-07 · Written by Claude Code (El Capataz), Fri 2026-11-13, America/Chicago. From the CSV Alonzo pasted (game day 11/12,
 18 bets). Numbers only from that file; nothing was changed in the app or the log. One night is a small sample: it says almost nothing about
