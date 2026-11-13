@@ -63,7 +63,7 @@ const REM=[{id:'rm1', lost:1.5, date:'2026-11-12', dateSet:true, start:'2026-11-
   check('CSV: exactly the 4 filtered bets, each with ticket id, report basis, range, filters and time; the plain CSV is unchanged', rows.length===4 && head.slice(-5).join('|')==='ticket id|report basis|report range|report filters|report generated' && rows.every(r=>r.length===head.length) && rows.map(r=>r[head.indexOf('ticket id')]).sort().join(',')==='a,c,f,oct' && await p.evaluate(()=>{ const h=logCsv('').split('\r\n')[0]; return /band source$/.test(h); }), {head:head.slice(-5), n:rows.length});
   // saved: only the choices; the log untouched
   const ui=await p.evaluate(()=>JSON.parse(localStorage.getItem('mbev.reportsUi')||'null')), logAfter=await p.evaluate(()=>localStorage.getItem('mbev.log'));
-  check('only the choices are saved (basis, period, filters); no totals; the bet log is byte-for-byte the same', ui && ui.basis==='game' && ui.per==='all' && ui.f.sport==='NBA' && Object.keys(ui).sort().join(',')==='basis,f,from,per,to' && logAfter===logBefore, {ui});
+  check('only the choices are saved (basis, period, filters); no totals; the bet log is byte-for-byte the same', ui && ui.basis==='game' && ui.per==='all' && ui.f.sport==='NBA' && Object.keys(ui).every(k=>['basis','per','f','from','to','by','px','bwWho','bwDir','small'].includes(k)) /* v4.90: the step-2 choices; never a total */ && logAfter===logBefore, {ui});
   // live: settle a bet and the open report follows
   await p.evaluate(()=>{ document.getElementById('rpReset').click(); }); const pre=await rd();
   await p.evaluate(()=>{ const t=logged.find(x=>x.id==='d'); t.result='win'; t.gradedBy='manual'; saveLog(); }); await p.waitForTimeout(200); const post=await rd();

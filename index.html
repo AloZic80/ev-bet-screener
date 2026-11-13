@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.89</title>
+<title>0xBeta Screener v4.90</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1512,6 +1512,16 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 .rp-h{margin:14px 0 4px; font-size:16px}
 .rp-cover:empty{display:none}
 .rp-cust[hidden], .rp-nav[hidden]{display:none}
+/* v4.90: Reports step 2 */
+#rpPxWrap[hidden]{display:none}
+.rp-px-note{margin:4px 0}
+.rp-chart{margin:6px 0 4px}
+.rp-chart svg{width:100%; height:160px; display:block; background:var(--panel-2); border:1px solid var(--rule); border-radius:8px}
+.rp-chart .rp-zero{stroke:var(--soft); stroke-dasharray:4 4; vector-effect:non-scaling-stroke}
+.rp-chart .rp-up{stroke:var(--gain)} .rp-chart .rp-dn{stroke:var(--loss)}
+.rp-months{display:grid; grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:6px; margin:8px 0}
+.rp-mo{display:flex; flex-direction:column; align-items:flex-start; gap:2px; padding:6px 8px; border:1px solid var(--rule); border-radius:8px; background:var(--panel-2); color:inherit; font:inherit; font-size:12.5px; cursor:pointer; min-width:0}
+.rp-mo b{font-size:14.5px} .rp-mo.up b{color:var(--gain)} .rp-mo.dn b{color:var(--loss)}
 @media (max-width:640px){   /* on a phone each row is a small card: nothing hides off the side */
   .rp-t thead{display:none}
   .rp-t, .rp-t tbody{display:block}
@@ -1528,7 +1538,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.89</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.90</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2322,6 +2332,16 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
   <div class="meta rp-cover" id="rpCover"></div>
   <div id="rpHead"></div>
   <div id="rpSplit"></div>
+  <h3 class="rp-h">Breakdown</h3>   <!-- v4.90: Reports step 2 -->
+  <div class="rp-ctl"><label class="rp-lab">By <select id="rpBy"><option value="sport">Sport</option><option value="book">Book</option><option value="kind">Bet type</option><option value="price">Price paid</option><option value="tab">Tab (her chance when taken)</option><option value="band">Band</option></select></label>
+    <label class="rp-lab" id="rpPxWrap">Show price as <select id="rpPx"><option value="chance">Break-even chance, all in</option><option value="american">American odds, all in</option></select></label></div>
+  <div id="rpBreak"></div>
+  <h3 class="rp-h">Profit over time</h3><div id="rpChart"></div><div id="rpMonths"></div>
+  <h3 class="rp-h">Best and worst</h3>
+  <div class="rp-ctl"><select id="rpBwWho" aria-label="Teams or players"><option value="teams">Teams</option><option value="players">Players</option></select>
+    <div class="rp-seg" id="rpBwDir" role="group" aria-label="Best or worst"><button type="button" data-d="best">Best</button><button type="button" data-d="worst">Worst</button></div>
+    <label class="rp-lab"><input type="checkbox" id="rpSmall"> Show small samples</label></div>
+  <div id="rpBw"></div>
   <h3 class="rp-h">Open bets <span class="meta" id="rpOpenN"></span></h3><div id="rpOpen"></div>
   <h3 class="rp-h">Settled bets <span class="meta" id="rpSetN"></span></h3><div id="rpSettled"></div>
   <p><button type="button" class="btn-sm" id="rpCsv">⬇ CSV of exactly these bets</button></p>
@@ -2330,7 +2350,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 
 </div>
 <script>
-const SCREENER_VERSION='v4.89';
+const SCREENER_VERSION='v4.90';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -4093,8 +4113,13 @@ function outcomeCounts(list){ const S=(list||[]).filter(b=>b && b.kind!=='parlay
    what win rate the price paid needed to break even, fee included: the fill's cost ÷ its payout (an exchange contract pays $1: cost ÷ shares),
    else the price with its fee. A price, never a forecast: worked out from the bet's own fill, never written into fair, cover or the snapshot,
    and kept out of calibration, the forecast bands, EV and the Scorecard. */
-function entryP(b){ if(!b) return null; const c=+b.fillCost, q=+b.fillQty; if(c>0 && q>0 && c/q<1 && !/^(import|user)$/.test(String(b.accountingSource||'')) /* a price you corrected wins */) return c/q;
-  const p=toProb(b.odds), f=(b.snap && b.snap.fee!=null) ? +b.snap.fee : (b.fee!=null ? +b.fee : 0); return (p>0 && p<1) ? Math.min(0.999, p*(1+(f>0?f:0))) : null; }
+function entryP(b){ const x=entryPInfo(b); return x?x.p:null; }
+/* v4.90 (Sally: never add the fee twice; keep how it was worked out): a fill's saved cost already holds the fee (stake = cost + fee when the fill
+   is logged), so cost ÷ shares is all in; then stake ÷ (stake + to win) when a to-win profit is saved (a boost lands in its true band); then the
+   paid odds with the saved fee on top. src names the way. */
+function entryPInfo(b){ if(!b) return null; const c=+b.fillCost, q=+b.fillQty; if(c>0 && q>0 && c/q<1 && !/^(import|user)$/.test(String(b.accountingSource||'')) /* a price you corrected wins */) return {p:c/q, src:'fill_cost_includes_fee'};
+  const st=+b.stake||0, tw=+b.towin||0; if(b.kind!=='parlay' && st>0 && tw>0) return {p:st/(st+tw), src:'stake_to_win'};
+  const p=toProb(b.odds), f=(b.snap && b.snap.fee!=null) ? +b.snap.fee : (b.fee!=null ? +b.fee : 0); return (p>0 && p<1) ? {p:Math.min(0.999, p*(1+(f>0?f:0))), src:'paid_odds'} : null; }
 function isEntryBet(b){ return !!(b && b.kind!=='parlay' && b.autoFrom && !bandCover(b,'act') && entryP(b)!=null); }
 function entryChip(b){ const p=entryP(b), k=cvBand(p);
   return '<button type="button" class="cv-chip ep-chip lbf" data-band="0" title="The win rate this price needed to break even, fee included ('+(p*100).toFixed(1)+'%: the '+cvNames()[k]+' range by price). A book fill that matched no board card: no forecast was saved, so this is not a cover band and says nothing about an edge. Tap to see the bets with no forecast.">ENTRY PRICE · '+(p*100).toFixed(1)+'% · '+cvNames()[k]+' · no forecast</button>'; }
@@ -9549,11 +9574,11 @@ setTimeout(csvDays,0);
    never guessed). Money comes from lcStats + betProfit and the cancelled-bet losses, exactly as the calendar's totals, so the two cannot drift.
    ROI is settled profit over settled own-money stake; open money is shown apart (to play, in play) and never in W–L–P, profit or ROI. */
 var RP={basis:'game', per:'month', anchor:null, from:'', to:'', f:{}, all:{open:false, set:false}};
-try{ const s=JSON.parse(localStorage.getItem('mbev.reportsUi')||'null'); if(s && typeof s==='object'){ if(s.basis==='placed') RP.basis='placed'; if(['day','month','year','all','custom'].includes(s.per)) RP.per=s.per; if(s.f && typeof s.f==='object') RP.f=s.f; if(typeof s.from==='string') RP.from=s.from; if(typeof s.to==='string') RP.to=s.to; } }catch(e){}
-function rpSaveUi(){ try{ localStorage.setItem('mbev.reportsUi',JSON.stringify({basis:RP.basis, per:RP.per, f:RP.f, from:RP.from, to:RP.to})); }catch(e){} }
+try{ const s=JSON.parse(localStorage.getItem('mbev.reportsUi')||'null'); if(s && typeof s==='object'){ if(s.basis==='placed') RP.basis='placed'; if(['day','month','year','all','custom'].includes(s.per)) RP.per=s.per; if(s.f && typeof s.f==='object') RP.f=s.f; if(typeof s.from==='string') RP.from=s.from; if(typeof s.to==='string') RP.to=s.to; if(['sport','book','kind','price','tab','band'].includes(s.by)) RP.by=s.by; if(s.px==='american') RP.px='american'; if(s.bwWho==='players') RP.bwWho='players'; if(s.bwDir==='worst') RP.bwDir='worst'; RP.small=!!s.small; } }catch(e){}   /* v4.90: the step-2 choices too */
+function rpSaveUi(){ try{ localStorage.setItem('mbev.reportsUi',JSON.stringify({basis:RP.basis, per:RP.per, f:RP.f, from:RP.from, to:RP.to, by:RP.by, px:RP.px, bwWho:RP.bwWho, bwDir:RP.bwDir, small:!!RP.small})); }catch(e){} }
 function rpPlacedDay(b){ const t=Date.parse(b && b.snap && b.snap.at); return isNaN(t)?null:ctDay(t); }   // the saved time only: never the id, the game day or an edit time
 function rpDayOf(b){ return RP.basis==='placed' ? rpPlacedDay(b) : (gameDayOf(b)||null); }
-function rpAmerican(b){ const p=toProb(b.odds); if(p==null || !(p>0 && p<1)) return null; return p>=0.5 ? -100*p/(1-p) : 100*(1-p)/p; }
+function rpAmerican(b){ const p=b.kind==='parlay'?null:entryP(b); /* v4.90: the all-in price paid, as the price breakdown */ if(p==null || !(p>0 && p<1)) return null; return p>=0.5 ? -100*p/(1-p) : 100*(1-p)/p; }
 function rpOddsBucket(b){ const a=rpAmerican(b); if(a==null) return ''; return a<-750?'a':a<-300?'b':a<-150?'c':a<=150?'d':a<=300?'e':a<=750?'f':'g'; }
 var RP_ODDS={a:'below −750', b:'−750 to −300', c:'−300 to −150', d:'−150 to +150', e:'+150 to +300', f:'+300 to +750', g:'above +750'};
 var RP_KIND={prop:'Player prop', moneyline:'Moneyline', spread:'Spread', total:'Game total', parlay:'Parlay'};
@@ -9577,7 +9602,7 @@ function rpPass(b){ const f=RP.f||{};
   if(f.book && bookLabel(b.book||'')!==f.book) return false;
   if(f.sport && String(b.sport||'')!==f.sport) return false;
   if(f.kind && String(b.kind||'')!==f.kind) return false;
-  if(f.odds && rpOddsBucket(b)!==f.odds) return false;
+  if(f.odds && (rpOddsBucket(b)||'u')!==f.odds) return false;
   if(f.tab && (rpTabOf(b)||'none')!==f.tab) return false;
   if(f.band && (rpBandOf(b)||'none')!==f.band) return false;
   if(f.sel && rpSelOf(b)!==f.sel) return false;
@@ -9605,7 +9630,7 @@ function rpOptions(){ const uniq=fn=>[...new Set(logged.map(fn).filter(Boolean))
   sel('rpBook','All books',uniq(b=>bookLabel(b.book||'')).map(x=>[x,x]));
   sel('rpSport','All sports',uniq(b=>String(b.sport||'')).map(x=>[x,x]));
   sel('rpKind','All bet types',uniq(b=>String(b.kind||'')).map(x=>[x,rpKindWord(x)]));
-  sel('rpOdds','All odds',Object.keys(RP_ODDS).map(k=>[k,RP_ODDS[k]]));
+  sel('rpOdds','All prices (all-in)',Object.keys(RP_ODDS).map(k=>[k,RP_ODDS[k]]).concat([['u','Unknown price (parlays, no price)']]));
   sel('rpTab','All tabs',['boring','machin','volado','suertudo','brujo'].map(k=>[k,tabWord(k)]).concat([['none','No tab (own, parlay or no chance saved)']]));
   sel('rpBand','All bands',[1,2,3,4,5,6,7,8,9].map(k=>[String(k),cvNames()[k]+' · '+cvRanges()[k]]).concat([['0','Unknown'],['none','No band (parlays)']]));
   sel('rpSel','All selections',[['approved','Approved'],['extra','Extra (Just missed / Hail Mary)'],['own','Own (typed, fill or import)'],['override','Override'],['none','No record (before v4.86)']]);
@@ -9646,8 +9671,62 @@ function rpRender(){ const box=document.getElementById('rpPanel'); if(!box) retu
   const tS=b=>{ const t=Date.parse(b.start||(b.gameInfo&&b.gameInfo.startISO)); return isNaN(t)?Infinity:t; }, O=S.L.filter(b=>heldValue(b).open).sort((a,b)=>tS(a)-tS(b)),   /* open: by start time, soonest first */ D=S.L.filter(b=>!heldValue(b).open).sort(byDay);
   document.getElementById('rpOpenN').textContent=O.length?'· '+O.length:''; document.getElementById('rpSetN').textContent=D.length?'· '+D.length:'';
   document.getElementById('rpOpen').innerHTML=rpListHtml(O,true,RP.all.open);
+  rpStep2(S);   /* v4.90 */
   document.getElementById('rpSettled').innerHTML=rpListHtml(D,false,RP.all.set)+(S.Rm.length?'<p class="meta rp-canc"><b>Cancelled bets that lost money</b> (counted in the totals, as on the calendar): '+S.Rm.map(b=>esc(b.name||'bet')+' · '+esc(bookLabel(b.book||''))+' · '+esc(rpDayOf(b)||'')+' · <b class="pl-down">−$'+(+b.lost).toFixed(2)+'</b>').join('; ')+'</p>':'');   /* review: the list adds up to the headline */
   }catch(e){ console.error(e); const h=document.getElementById('rpHead'); if(h) h.innerHTML='<p class="meta">The report could not be worked out: '+esc(e.message)+'</p>'; } }
+/* v4.90 (agreed with Sally 11/13 (CC-2026-11-13-16, -17), owner "BUILD"): Reports step 2. Breakdowns (sport, book, bet type, price, tab, band),
+   the profit-over-time line, month tiles, and Best / Worst teams and players behind Sally's sample gates. Money is still rpAgg (lcStats).
+   Price = what was paid, all in (entryPInfo: a fill's cost ÷ shares, the fee already in the cost; else stake ÷ (stake + to win); else the
+   paid odds with the saved fee): never a forecast, never in Brier, calibration, expected wins or the Scorecard. Parlays: Unknown price. */
+function rpNorm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9.+-]+/g,' ').trim(); }
+function rpGameKey(b){ const ev=(b.gameInfo&&b.gameInfo.eventId)||b.eventId||''; if(ev) return 'e'+ev; const d=gameDayOf(b)||''; return b.game ? 'g'+d+'|'+gameKey(b.game) : 'x'+(b.id||b.name||''); }
+function rpOutKey(b){ return rpGameKey(b)+'|'+(b.kind||'')+'|'+rpNorm(b.name)+'|'+rpNorm(b.market)+'|'+(b.side||''); }   /* the same outcome: game, who, market and line, side; never book, odds or stake */
+function rpPxBand(b){ const p=b.kind==='parlay'?null:entryP(b); if(p==null) return 'u'; return p<0.40?'p1':p<0.50?'p2':p<0.60?'p3':p<0.70?'p4':'p5'; }   /* half-open: 40.0% is in 40–<50 */
+var RP_PX={p1:'under 40%', p2:'40–<50%', p3:'50–<60%', p4:'60–<70%', p5:'70% or more', u:'Unknown price (parlays, no price)'};
+function rpCounts(L){ const o=new Set(), g=new Set(); L.forEach(b=>{ if(heldValue(b).open) return; o.add(rpOutKey(b)); g.add(rpGameKey(b)); }); return {outcomes:o.size, games:g.size}; }
+function rpGroupKey(b, by){
+  if(by==='sport') return String(b.sport||'')||'(no sport)';
+  if(by==='book') return bookLabel(b.book||'')||'(no book)';
+  if(by==='kind') return rpKindWord(b.kind);
+  if(by==='tab'){ const t=rpTabOf(b); return t?tabWord(t):'No tab'; }
+  if(by==='band'){ if(b.kind==='parlay') return 'No band (parlays)'; const k=rpBandOf(b); return k===''||k==='0'?'Unknown':cvNames()[+k]+' · '+cvRanges()[+k]; }
+  if(by==='price') return RP.px==='american' ? (rpOddsBucket(b) ? RP_ODDS[rpOddsBucket(b)] : RP_PX.u) : RP_PX[rpPxBand(b)];
+  return ''; }
+function rpGroupOrder(by){ if(by==='price') return RP.px==='american' ? Object.keys(RP_ODDS).map(k=>RP_ODDS[k]).concat([RP_PX.u]) : Object.keys(RP_PX).map(k=>RP_PX[k]);
+  if(by==='tab') return ['boring','machin','volado','suertudo','brujo'].map(tabWord).concat(['No tab']); if(by==='band') return [9,8,7,6,5,4,3,2,1].map(k=>cvNames()[k]+' · '+cvRanges()[k]).concat(['Unknown','No band (parlays)']); return null; }
+function rpBreakHtml(S){ const by=RP.by||'sport', G=new Map(), R=new Map(); S.L.forEach(b=>{ const k=rpGroupKey(b,by); (G.get(k)||G.set(k,[]).get(k)).push(b); }); S.Rm.forEach(b=>{ const k=rpGroupKey(b,by); (R.get(k)||R.set(k,[]).get(k)).push(b); });
+  const keys=[...new Set([...G.keys(),...R.keys()])], ord=rpGroupOrder(by);
+  if(ord) keys.sort((a,b)=>ord.indexOf(a)-ord.indexOf(b)); else keys.sort((a,b)=>rpAgg(G.get(b)||[],R.get(b)||[]).profit-rpAgg(G.get(a)||[],R.get(a)||[]).profit);
+  if(!keys.length) return '<p class="meta">No bets in this report.</p>';
+  const head=by==='price'?'<p class="meta rp-px-note"><b>Price paid · all-in break-even chance · not a forecast</b>'+(RP.px==='american'?' (shown as the all-in equivalent American price, fees included)':'')+'. It shows how hard each price was to beat, not whether the bet had an edge.</p>':'';
+  return head+'<div class="rp-tw"><table class="rp-t rp-br"><thead><tr><th></th><th class="num">Tickets</th><th class="num">Outcomes</th><th class="num">W–L–P</th><th class="num">Settled risked</th><th class="num">Profit</th><th class="num">ROI</th><th>Sample</th></tr></thead><tbody>'+
+    keys.map(k=>{ const L=G.get(k)||[], x=rpAgg(L,R.get(k)||[]), c=rpCounts(L), smp=rpSample(c.outcomes);
+      return '<tr><td class="rp-bet"><b>'+esc(k)+'</b></td><td class="num" data-l="Tickets">'+x.n+'</td><td class="num" data-l="Outcomes">'+c.outcomes+'</td><td class="num" data-l="W–L–P">'+x.w+'–'+x.l+'–'+x.p+'</td><td class="num" data-l="Settled risked">$'+x.stSet.toFixed(2)+'</td><td class="num '+rpCls(x.profit)+'" data-l="Profit">'+lcUsd(x.profit)+'</td><td class="num" data-l="ROI">'+rpPct(x.roi)+'</td><td class="meta" data-l="Sample">'+(smp||'—')+'</td></tr>'; }).join('')+'</tbody></table></div>'; }
+/* settled profit, added up day by day in the order of the chosen basis; open bets do not move it */
+function rpChartHtml(S){ const M=new Map(); S.L.forEach(b=>{ const pr=betProfit(b); if(pr==null) return; const d=rpDayOf(b); M.set(d,(M.get(d)||0)+pr); }); S.Rm.forEach(b=>{ const d=rpDayOf(b); M.set(d,(M.get(d)||0)-b.lost); });
+  const days=[...M.keys()].filter(Boolean).sort(); if(days.length<2) return '<p class="meta">The line needs settled bets on at least two days in this period.</p>';
+  let c=0; const pts=days.map(d=>(c+=M.get(d),{d,c})), lo=Math.min(0,...pts.map(p=>p.c)), hi=Math.max(0,...pts.map(p=>p.c)), W=600, H=160, pad=6, sp=(hi-lo)||1;
+  const X=i=>pad+i*(W-2*pad)/(pts.length-1), Y=v=>pad+(hi-v)*(H-2*pad)/sp, last=pts[pts.length-1];
+  return '<figure class="rp-chart"><svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img" aria-label="Settled profit added up from '+esc(days[0])+' to '+esc(last.d)+': '+esc(lcUsd(last.c))+'"><line x1="0" x2="'+W+'" y1="'+Y(0).toFixed(1)+'" y2="'+Y(0).toFixed(1)+'" class="rp-zero"/><polyline fill="none" class="'+(last.c>=0?'rp-up':'rp-dn')+'" stroke-width="2.5" vector-effect="non-scaling-stroke" points="'+pts.map((p,i)=>X(i).toFixed(1)+','+Y(p.c).toFixed(1)).join(' ')+'"/></svg>'+
+    '<figcaption class="meta">'+esc(days[0])+' → '+esc(last.d)+' · settled profit added up by '+(RP.basis==='placed'?'date placed':'game day')+' · now <b class="'+rpCls(last.c)+'">'+lcUsd(last.c)+'</b> · high '+lcUsd(hi)+', low '+lcUsd(lo)+' · open bets do not move it</figcaption></figure>'; }
+function rpMonthsHtml(S){ if(RP.per==='day'||RP.per==='month') return ''; const G=new Map(), R=new Map(); S.L.forEach(b=>{ const k=(rpDayOf(b)||'').slice(0,7); (G.get(k)||G.set(k,[]).get(k)).push(b); }); S.Rm.forEach(b=>{ const k=(rpDayOf(b)||'').slice(0,7); (R.get(k)||R.set(k,[]).get(k)).push(b); });
+  const keys=[...new Set([...G.keys(),...R.keys()])].filter(Boolean).sort(); if(!keys.length) return '';
+  return '<div class="rp-months">'+keys.map(k=>{ const x=rpAgg(G.get(k)||[],R.get(k)||[]), set=(x.n-x.pend)||x.cancelled; return '<button type="button" class="rp-mo '+(set?(x.profit>0.005?'up':x.profit<-0.005?'dn':''):'')+'" data-mo="'+esc(k)+'" title="Open this month"><span>'+esc(new Date(k+'-01T12:00:00Z').toLocaleDateString('en-US',{month:'short',year:'2-digit',timeZone:'UTC'}))+'</span><b>'+(set?lcUsd(x.profit):'—')+'</b><small>'+x.w+'–'+x.l+(x.p?'–'+x.p:'')+'</small></button>'; }).join('')+'</div>'; }
+/* Best / Worst (Sally: listed at 10 settled tickets and 5 outcomes; ranked by default at 20 tickets and 10 outcomes or games; smaller ones only
+   behind "Show small samples"). Repeated tickets count in the money; the outcomes and games are counted once. */
+function rpBwHtml(S){ const who=RP.bwWho==='players'?'players':'teams', of=who==='players'?rpPlayerOf:rpTeamOf, G=new Map();
+  S.L.forEach(b=>{ if(b.kind==='parlay') return; const k=of(b); if(!k) return; (G.get(k)||G.set(k,[]).get(k)).push(b); });
+  const rows=[...G.entries()].map(([k,L])=>{ const x=rpAgg(L,[]), c=rpCounts(L), st=x.n-x.pend; return {k,x,c,st, show:st>=10 && c.outcomes>=5, rank:st>=20 && Math.max(c.outcomes,c.games)>=10}; }).filter(r=>r.st>0);
+  const list=rows.filter(r=>RP.small?true:r.rank).sort((a,b)=>RP.bwDir==='worst'?a.x.profit-b.x.profit:b.x.profit-a.x.profit).slice(0,10);
+  const hid=rows.filter(r=>!r.rank).length;
+  const body=list.length?'<div class="rp-tw"><table class="rp-t rp-bw"><thead><tr><th>'+(who==='players'?'Player':'Team')+'</th><th class="num">W–L–P</th><th class="num">Profit</th><th class="num">ROI</th><th>Sample</th></tr></thead><tbody>'+list.map(r=>'<tr><td class="rp-bet"><b>'+esc(r.k)+'</b><br><span class="meta">'+r.st+' ticket'+(r.st===1?'':'s')+' · '+r.c.outcomes+' unique outcome'+(r.c.outcomes===1?'':'s')+' · '+r.c.games+' game'+(r.c.games===1?'':'s')+'</span></td><td class="num" data-l="W–L–P">'+r.x.w+'–'+r.x.l+'–'+r.x.p+'</td><td class="num '+rpCls(r.x.profit)+'" data-l="Profit">'+lcUsd(r.x.profit)+'</td><td class="num" data-l="ROI">'+rpPct(r.x.roi)+'</td><td class="meta" data-l="Sample">'+(r.rank?(rpSample(r.c.outcomes)||'—'):!r.show?'too few to rank':rpSample(r.c.outcomes))+'</td></tr>').join('')+'</tbody></table></div>'
+    : '<p class="meta">No '+(who==='players'?'player':'team')+' has 20 settled tickets and 10 different outcomes or games yet, the size needed to rank.</p>';
+  return body+(hid?'<p class="meta">'+hid+' '+(who==='players'?'player':'team')+(hid===1?' has':'s have')+' fewer settled bets than that'+(RP.small?' and '+(hid===1?'is':'are')+' shown above with a warning.':'. Tick "Show small samples" to see them.')+' Sorted by profit; ROI beside it.</p>':''); }
+function rpStep2(S){ const set=(id,h)=>{ const el=document.getElementById(id); if(el) el.innerHTML=h; };
+  const by=document.getElementById('rpBy'); if(by) by.value=RP.by||'sport'; const px=document.getElementById('rpPx'); if(px) px.value=RP.px||'chance'; const pw=document.getElementById('rpPxWrap'); if(pw) pw.hidden=(RP.by||'sport')!=='price';
+  const bw=document.getElementById('rpBwWho'); if(bw) bw.value=RP.bwWho||'teams'; const sm=document.getElementById('rpSmall'); if(sm) sm.checked=!!RP.small;
+  document.querySelectorAll('#rpBwDir button').forEach(x=>{ const on=x.dataset.d===(RP.bwDir||'best'); x.classList.toggle('on',on); x.setAttribute('aria-pressed',String(on)); });
+  set('rpBreak', rpBreakHtml(S)); set('rpChart', rpChartHtml(S)); set('rpMonths', rpMonthsHtml(S)); set('rpBw', rpBwHtml(S)); }
 function rpCsvDl(){ const S=rpSet(); if(!S.L.length && !S.Rm.length){ alert('No bets in this report.'); return; }
   const f=RP.f||{}, fl=Object.keys(f).filter(k=>f[k]).map(k=>k+'='+f[k]).join('; ')||'none';
   const meta={basis:RP.basis==='placed'?'date placed':'game day', range:RP.per==='all'?'All time':S.R.lab+(RP.per==='custom'?'':' ('+S.R.lo+' to '+S.R.hi+')'), filters:fl, at:new Date().toLocaleString('en-US',{timeZone:'America/Chicago'}), cancelled:S.Rm};
@@ -9659,8 +9738,12 @@ function rpCsvDl(){ const S=rpSet(); if(!S.L.length && !S.Rm.length){ alert('No 
     if(b.id==='rpPrev'){ rpStep(-1); return; } if(b.id==='rpNext'){ rpStep(1); return; } if(b.id==='rpToday'){ RP.anchor=null; rpRender(); return; }
     if(b.id==='rpReset'){ RP.f={}; rpSaveUi(); rpRender(); return; }
     if(b.id==='rpCsv'){ rpCsvDl(); return; }
+    if(b.dataset.mo){ RP.per='month'; RP.anchor=b.dataset.mo+'-15'; rpSaveUi(); rpRender(); document.getElementById('rpPanel').scrollIntoView({block:'start'}); return; }   /* v4.90: a month tile opens that month */
+    if(b.dataset.d){ RP.bwDir=b.dataset.d==='worst'?'worst':'best'; rpSaveUi(); rpRender(); return; }
     if(b.classList.contains('rp-more')){ const w=b.dataset.w; RP.all[w]=!RP.all[w]; rpRender(); return; } });
   p.addEventListener('change',e=>{ const t=e.target;
+    if(t.id==='rpBy'){ RP.by=t.value; rpSaveUi(); rpRender(); return; } if(t.id==='rpPx'){ RP.px=t.value==='american'?'american':'chance'; rpSaveUi(); rpRender(); return; }   /* v4.90 */
+    if(t.id==='rpBwWho'){ RP.bwWho=t.value==='players'?'players':'teams'; rpSaveUi(); rpRender(); return; } if(t.id==='rpSmall'){ RP.small=t.checked; rpSaveUi(); rpRender(); return; }
     if(t.id==='rpBasis'){ RP.basis=t.value==='placed'?'placed':'game'; rpSaveUi(); rpRender(); return; }
     if(t.id==='rpFrom'||t.id==='rpTo'){ RP[t.id==='rpFrom'?'from':'to']=t.value||''; rpSaveUi(); rpRender(); return; }
     if(t.dataset && t.dataset.k){ RP.f[t.dataset.k]=t.value||''; if(!RP.f[t.dataset.k]) delete RP.f[t.dataset.k]; rpSaveUi(); rpRender(); } });
