@@ -1511,6 +1511,15 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 .rp-sp .rp-all td{font-weight:700}
 .rp-h{margin:14px 0 4px; font-size:16px}
 .rp-cover:empty{display:none}
+.rp-cust[hidden], .rp-nav[hidden]{display:none}
+@media (max-width:640px){   /* on a phone each row is a small card: nothing hides off the side */
+  .rp-t thead{display:none}
+  .rp-t, .rp-t tbody{display:block}
+  .rp-t tr{display:grid; grid-template-columns:1fr 1fr; gap:2px 12px; padding:8px 0; border-bottom:1px solid var(--rule)}
+  .rp-t td{border:0; padding:1px 0; text-align:left!important; white-space:normal}
+  .rp-t td.rp-bet{grid-column:1 / -1}
+  .rp-t td[data-l]::before{content:attr(data-l)': '; color:var(--soft); font-size:12px}
+}
 </style>
 </head>
 <body>
@@ -9550,7 +9559,7 @@ function rpKindWord(k){ return RP_KIND[k] || (k?String(k):'Other'); }
 function rpTabOf(b){ if(b.kind==='parlay') return ''; const L=b.snap&&b.snap.listed; if(L && L.tab) return L.tab; const a=b.snap&&b.snap.act!=null?+b.snap.act:null; return a!=null?(tabOfChance(a)||''):''; }
 function rpSelOf(b){ const L=b.snap&&b.snap.listed; return L ? (L.status||'') : 'none'; }
 function rpBandOf(b){ const k=logBandOf(b,'act'); return k==null?'':String(k); }
-function rpBandTxt(b){ if(b.kind==='parlay') return ''; const c=bandCover(b,'act'); if(!c) return 'no band'; const src=c.source==='act'?'La Contadora':c.source==='typed'?'typed':'model'; return cvNames()[cvBand(c.p)]+' · '+src; }
+function rpBandTxt(b){ if(b.kind==='parlay') return 'none (parlay)'; const c=bandCover(b,'act'); if(!c) return 'no band'; const src=c.source==='act'?'La Contadora':c.source==='typed'?'typed':'model'; return cvNames()[cvBand(c.p)]+' · '+src; }
 function rpTeamOf(b){ return String(b.team || (b.kind!=='prop' && b.kind!=='parlay' ? b.name : '') || '').trim(); }
 function rpPlayerOf(b){ return b.kind==='prop' ? String(b.name||'').trim() : ''; }
 function rpRange(){ const today=ctDay(Date.now()), a=RP.anchor||today;
@@ -9603,9 +9612,9 @@ function rpListHtml(list, open, all){ if(!list.length) return '<p class="meta">'
   const max=100, shown=all?list:list.slice(0,max);
   const rows=shown.map(b=>{ const st=b.free?0:(+b.stake||0), d=rpDayOf(b)||'', pr=betProfit(b), tw=rpToWin(b);
     const res=b.sold?'sold':b.result==='win'?'won':b.result==='loss'?'lost':b.result==='push'?'push':(betLocked(b)?'▶ in play':'⏳ to play');
-    return '<tr><td>'+esc(d)+'</td><td><b>'+esc(b.name||'')+'</b><br><span class="meta">'+esc(rpPick(b))+'</span></td><td>'+esc(bookLabel(b.book||''))+'</td><td class="num">'+esc(b.odds||'')+'</td><td class="num">$'+st.toFixed(2)+(b.free?' <span class="meta">free</span>':'')+'</td>'+
-      (open?'<td class="num">'+(tw==null?'—':'$'+tw.toFixed(2))+'</td>':'<td class="num '+rpCls(pr||0)+'">'+(pr==null?'—':lcUsd(pr))+'</td>')+'<td>'+esc(res)+'</td><td class="meta">'+esc(rpBandTxt(b))+'</td></tr>'; }).join('');
-  return '<div class="rp-tw"><table class="rp-t"><thead><tr><th>'+(RP.basis==='placed'?'Placed':'Game day')+'</th><th>Bet</th><th>Book</th><th class="num">Odds</th><th class="num">Risked</th><th class="num">'+(open?'To win':'Profit')+'</th><th>'+(open?'Status':'Result')+'</th><th>Band (source)</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    return '<tr><td data-l="'+(RP.basis==='placed'?'Placed':'Game day')+'">'+esc(d)+'</td><td class="rp-bet"><b>'+esc(b.name||'')+'</b><br><span class="meta">'+esc(rpPick(b))+'</span></td><td data-l="Book">'+esc(bookLabel(b.book||''))+'</td><td class="num" data-l="Odds">'+esc(b.odds||'')+'</td><td class="num" data-l="Risked">$'+st.toFixed(2)+(b.free?' <span class="meta">free</span>':'')+'</td>'+
+      (open?'<td class="num" data-l="To win">'+(tw==null?'—':'$'+tw.toFixed(2))+'</td>':'<td class="num '+rpCls(pr||0)+'" data-l="Profit">'+(pr==null?'—':lcUsd(pr))+'</td>')+'<td data-l="'+(open?'Status':'Result')+'">'+esc(res)+'</td><td class="meta" data-l="Band">'+esc(rpBandTxt(b))+'</td></tr>'; }).join('');
+  return '<div class="rp-tw"><table class="rp-t rp-list"><thead><tr><th>'+(RP.basis==='placed'?'Placed':'Game day')+'</th><th>Bet</th><th>Book</th><th class="num">Odds</th><th class="num">Risked</th><th class="num">'+(open?'To win':'Profit')+'</th><th>'+(open?'Status':'Result')+'</th><th>Band (source)</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
     (list.length>max?'<button type="button" class="btn-sm rp-more" data-w="'+(open?'open':'set')+'">'+(all?'Show the first '+max:'Show all '+list.length)+'</button><span class="meta"> '+(all?'':'showing '+max+' of '+list.length)+'</span>':''); }
 function rpRender(){ const box=document.getElementById('rpPanel'); if(!box) return;
   try{
@@ -9624,11 +9633,11 @@ function rpRender(){ const box=document.getElementById('rpPanel'); if(!box) retu
     '<div class="rp-line"><b>Settled:</b> $'+g.stSet.toFixed(2)+' risked, <b class="'+rpCls(g.profit)+'">'+lcUsd(g.profit)+'</b> · <b>To play:</b> $'+g.toPlay.toFixed(2)+' · <b>In play:</b> $'+g.inPlay.toFixed(2)+'</div>'+
     '<div class="rp-ks">'+tile('Tickets',g.n)+tile('W–L–P',g.w+'–'+g.l+'–'+g.p,'',g.hit==null?'':'won '+(g.hit*100).toFixed(1)+'% of the bets that won or lost')+tile('Hit rate',g.hit==null?'—':(g.hit*100).toFixed(1)+'%')+tile('Settled risked','$'+g.stSet.toFixed(2),'','your own money on settled bets (free bets are $0)')+
       tile('Settled profit',lcUsd(g.profit),rpCls(g.profit))+tile('ROI',rpPct(g.roi),rpCls(g.roi||0),'settled profit ÷ settled risked: open bets are never in it')+tile('⏳ To play','$'+g.toPlay.toFixed(2),'rp-grey')+tile('▶ In play','$'+g.inPlay.toFixed(2),'rp-grey')+tile('Open total','$'+(g.toPlay+g.inPlay).toFixed(2)+' · '+g.pend+' open','rp-grey')+'</div>'+
-    '<div class="meta">'+[sett?sett+' settled ticket'+(sett===1?'':'s'):'nothing settled yet', g.cancelled?g.cancelled+' cancelled bet'+(g.cancelled===1?'':'s')+' that lost '+lcUsd(-g.cancelLost)+' (counted, as on the calendar)':'', smp?'<b class="rp-smp">'+smp+'</b>: '+(g.w+g.l+g.p)+' won, lost or pushed':''].filter(Boolean).join(' · ')+'</div>'
+    '<div class="meta">'+[sett?sett+' settled ticket'+(sett===1?'':'s'):'nothing settled yet', g.cancelled?g.cancelled+' cancelled bet'+(g.cancelled===1?'':'s')+' that lost $'+g.cancelLost.toFixed(2)+' (counted, as on the calendar)':'', smp?'<b class="rp-smp">'+smp+'</b>: '+(g.w+g.l+g.p)+' won, lost or pushed':''].filter(Boolean).join(' · ')+'</div>'
     : '<p class="meta">No bets in this report. Change the period or the filters.</p>';
   const parts=[['Overall',S.L,S.Rm],['Singles',S.L.filter(b=>b.kind!=='parlay'),S.Rm.filter(b=>b.kind!=='parlay')],['Parlays',S.L.filter(b=>b.kind==='parlay'),S.Rm.filter(b=>b.kind==='parlay')]];
   document.getElementById('rpSplit').innerHTML=(g.n||g.cancelled)?'<div class="rp-tw"><table class="rp-t rp-sp"><thead><tr><th></th><th class="num">Tickets</th><th class="num">W–L–P</th><th class="num">Settled risked</th><th class="num">Profit</th><th class="num">ROI</th><th class="num">Open</th></tr></thead><tbody>'+
-    parts.map(([lab,L,Rm])=>{ const x=rpAgg(L,Rm); return '<tr'+(lab==='Overall'?' class="rp-all"':'')+'><td>'+(lab==='Overall'?'<b>Overall</b>':'· '+lab)+'</td><td class="num">'+x.n+'</td><td class="num">'+x.w+'–'+x.l+'–'+x.p+'</td><td class="num">$'+x.stSet.toFixed(2)+'</td><td class="num '+rpCls(x.profit)+'">'+lcUsd(x.profit)+'</td><td class="num">'+rpPct(x.roi)+'</td><td class="num">'+x.pend+'</td></tr>'; }).join('')+'</tbody></table></div>':'';
+    parts.map(([lab,L,Rm])=>{ const x=rpAgg(L,Rm); return '<tr'+(lab==='Overall'?' class="rp-all"':'')+'><td class="rp-bet">'+(lab==='Overall'?'<b>Overall</b>':'· '+lab)+'</td><td class="num" data-l="Tickets">'+x.n+'</td><td class="num" data-l="W–L–P">'+x.w+'–'+x.l+'–'+x.p+'</td><td class="num" data-l="Settled risked">$'+x.stSet.toFixed(2)+'</td><td class="num '+rpCls(x.profit)+'" data-l="Profit">'+lcUsd(x.profit)+'</td><td class="num" data-l="ROI">'+rpPct(x.roi)+'</td><td class="num" data-l="Open">'+x.pend+'</td></tr>'; }).join('')+'</tbody></table></div>':'';
   const byDay=(a,b)=>String(rpDayOf(b)||'').localeCompare(String(rpDayOf(a)||''));
   const tS=b=>{ const t=Date.parse(b.start||(b.gameInfo&&b.gameInfo.startISO)); return isNaN(t)?Infinity:t; }, O=S.L.filter(b=>heldValue(b).open).sort((a,b)=>tS(a)-tS(b)),   /* open: by start time, soonest first */ D=S.L.filter(b=>!heldValue(b).open).sort(byDay);
   document.getElementById('rpOpenN').textContent=O.length?'· '+O.length:''; document.getElementById('rpSetN').textContent=D.length?'· '+D.length:'';

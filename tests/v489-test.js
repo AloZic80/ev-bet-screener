@@ -33,6 +33,7 @@ const REM=[{id:'rm1', lost:1.5, date:'2026-11-12', dateSet:true, start:'2026-11-
   const calNov=cal[0]||'', st=(calNov.match(/settled ([−+]?\$[\d.]+)/)||[])[1], roi=(calNov.match(/ROI ([−+][\d.]+%)/)||[])[1];
   check('the month matches the Bet calendar to the cent: same tickets, W–L–P, settled profit and ROI (cancelled loss included)', m.ks['Tickets']==='6' && calNov.startsWith('November so far 6 bets '+m.ks['W–L–P']) && m.ks['Settled profit']===st && m.ks['ROI']===roi, {ks:m.ks, cal:calNov});
   check('headline: "Settled: $X risked, ±$Y · To play: $4.00 · In play: $5.00"; open money is not in the ROI', /^Settled: \$6\.00 risked, /.test(m.line) && /To play: \$4\.00 · In play: \$5\.00$/.test(m.line) && m.ks['Settled risked']==='$6.00' && m.ks['Open total']==='$9.00 · 2 open', {line:m.line, ks:m.ks});
+  check('Month view: the custom dates are hidden, the ‹ › arrows show; the cancelled loss reads "lost $1.50"', await p.evaluate(()=>getComputedStyle(document.getElementById('rpCustom')).display==='none' && getComputedStyle(document.getElementById('rpNav')).display!=='none' && /lost \$1\.50 \(counted/.test(document.getElementById('rpHead').textContent)), null);
   check('a small sample says so ("too few to rank")', await p.evaluate(()=>/too few to rank/.test(document.getElementById('rpHead').textContent)), null);
   check('singles and parlays apart: Overall 6, Singles 5, Parlays 1 (the parlay lost $1)', m.split.length===3 && /^Overall\|6\|/.test(m.split[0]) && /^· Singles\|5\|/.test(m.split[1]) && /^· Parlays\|1\|0–1–0\|\$1\.00\|−\$1\.00\|/.test(m.split[2]), m.split);
   check('open list: Tonight Guy to play, Dallas Cowboys in play; settled list holds the four settled', m.open.join(',')==='Dallas Cowboys|▶ in play,Tonight Guy|⏳ to play' /* soonest start first */ && m.set.length===4, {open:m.open, set:m.set});
@@ -47,7 +48,7 @@ const REM=[{id:'rm1', lost:1.5, date:'2026-11-12', dateSet:true, start:'2026-11-
   check('Date placed, 11/11: Lost Guy is there', pl11.set.join(',')==='Lost Guy', pl11.set);
   // all time + filters
   await p.evaluate(()=>{ const s=document.getElementById('rpBasis'); s.value='game'; s.dispatchEvent(new Event('change',{bubbles:true})); document.querySelector('#rpPer [data-p="all"]').click(); }); const al=await rd();
-  check('All time: 7 tickets (October included)', al.ks['Tickets']==='7' && al.lab==='All time', al.ks);
+  check('All time: 7 tickets (October included); no arrows on All', al.ks['Tickets']==='7' && al.lab==='All time' && await p.evaluate(()=>getComputedStyle(document.getElementById('rpNav')).display==='none'), al.ks);
   await p.evaluate(()=>{ const s=document.getElementById('rpSport'); s.value='NBA'; s.dispatchEvent(new Event('change',{bubbles:true})); }); const fN=await rd();
   await p.evaluate(()=>{ const s=document.getElementById('rpBook'); s.value='Novig'; s.dispatchEvent(new Event('change',{bubbles:true})); const t=document.getElementById('rpTeam'); t.value='por'; t.dispatchEvent(new Event('change',{bubbles:true})); }); const fT=await rd();
   check('filters: NBA keeps 5 (the NHL and NFL bets leave); + Novig + team "por" still 5; the count of filters shows', fN.ks['Tickets']==='5' && fT.ks['Tickets']==='5' && /3 filters on/.test(fT.asof), {nba:fN.ks.Tickets, t:fT.ks.Tickets, asof:fT.asof});
