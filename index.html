@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.88</title>
+<title>0xBeta Screener v4.89</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1484,6 +1484,42 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 .lc-totals{margin:10px 0 4px; display:grid; gap:6px}
 .lc-tot{display:flex; flex-wrap:wrap; gap:4px 14px; align-items:baseline; padding:8px 10px; border:1px solid var(--rule); border-radius:8px; background:var(--panel-2); font-size:13.5px}
 .lc-tot-h{min-width:120px}
+/* v4.89: Reports */
+.rp-ctl{display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; margin:6px 0}
+.rp-seg{display:inline-flex; flex-wrap:wrap; border:1px solid var(--rule); border-radius:8px; overflow:hidden}
+.rp-seg button{border:0; border-right:1px solid var(--rule); background:var(--panel-2); color:inherit; padding:6px 12px; font:inherit; cursor:pointer; min-height:34px}
+.rp-seg button:last-child{border-right:0}
+.rp-seg button.on{background:var(--accent); color:var(--on-accent,#fff); font-weight:700}
+.rp-nav{display:flex; align-items:center; gap:10px; margin:6px 0; flex-wrap:wrap}
+.rp-nav > button:not(.btn-sm){min-width:36px; min-height:34px; font-size:18px; border:1px solid var(--rule); border-radius:8px; background:var(--panel-2); color:inherit; cursor:pointer}
+.rp-cust{display:flex; gap:12px; flex-wrap:wrap; margin:6px 0}
+.rp-filt{margin:8px 0; border:1px solid var(--rule); border-radius:8px; padding:6px 10px; background:var(--panel-2)}
+.rp-filt summary{cursor:pointer; font-weight:700}
+.rp-fg{display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:8px 12px; margin-top:8px; align-items:end}
+.rp-fg label{display:flex; flex-direction:column; gap:3px; font-size:13px}
+.rp-fg select, .rp-fg input{max-width:100%; box-sizing:border-box}
+.rp-line{margin:8px 0 6px; font-size:15px}
+.rp-ks{display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:6px; margin:6px 0}
+.rp-k{border:1px solid var(--rule); border-radius:8px; padding:6px 8px; background:var(--panel-2); font-size:12.5px; display:flex; flex-direction:column; gap:2px; min-width:0}
+.rp-k strong{font-size:16px; overflow-wrap:anywhere}
+.rp-grey{color:var(--soft)}
+.rp-smp{color:var(--warn,inherit)}
+.rp-tw{overflow-x:auto; max-width:100%}
+.rp-t{width:100%; border-collapse:collapse; font-size:13px; margin:6px 0}
+.rp-t th, .rp-t td{padding:5px 6px; border-bottom:1px solid var(--rule); text-align:left; vertical-align:top}
+.rp-t .num{text-align:right; white-space:nowrap}
+.rp-sp .rp-all td{font-weight:700}
+.rp-h{margin:14px 0 4px; font-size:16px}
+.rp-cover:empty{display:none}
+.rp-cust[hidden], .rp-nav[hidden]{display:none}
+@media (max-width:640px){   /* on a phone each row is a small card: nothing hides off the side */
+  .rp-t thead{display:none}
+  .rp-t, .rp-t tbody{display:block}
+  .rp-t tr{display:grid; grid-template-columns:1fr 1fr; gap:2px 12px; padding:8px 0; border-bottom:1px solid var(--rule)}
+  .rp-t td{border:0; padding:1px 0; text-align:left!important; white-space:normal}
+  .rp-t td.rp-bet{grid-column:1 / -1}
+  .rp-t td[data-l]::before{content:attr(data-l)': '; color:var(--soft); font-size:12px}
+}
 </style>
 </head>
 <body>
@@ -1492,7 +1528,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.88</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.89</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1570,6 +1606,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
   <button type="button" class="subhome" data-group="log" data-home="v-log">Bet log</button>
   <button class="tab" role="tab" aria-selected="false" data-view="v-add" data-group="log" title="Take a price or post your own — BET or SKIP and how much">+ Add a bet</button>
   <button class="tab" role="tab" aria-selected="false" data-view="v-perf" data-group="log">Performance</button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-reports" data-group="log" title="Your results for a day, a month, a year or all time, worked out live from your bet log">📊 Reports</button>   <!-- v4.89 -->
 </div>
 
 <!-- v2.71: ESPN score strip (free — no BettingPros calls) -->
@@ -2257,10 +2294,43 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
   </details>
 </div>
 </div>
+<div class="view" id="v-reports">   <!-- v4.89: Reports, step 1 (agreed with Sally, owner "BUILD NOW" Fri 11/13) -->
+<div class="panel" id="rpPanel">
+  <h2>📊 Reports <span class="sub">worked out from your bet log each time it shows · changes when a bet settles or you edit one · nothing here is saved</span></h2>
+  <div class="rp-ctl">
+    <label class="rp-lab">Count by <select id="rpBasis"><option value="game">Game day (as the Bet calendar)</option><option value="placed">Date placed</option></select></label>
+    <div class="rp-seg" id="rpPer" role="group" aria-label="Period"><button type="button" data-p="day">Day</button><button type="button" data-p="month">Month</button><button type="button" data-p="year">Year</button><button type="button" data-p="all">All</button><button type="button" data-p="custom">Custom</button></div>
+  </div>
+  <div class="rp-nav" id="rpNav"><button type="button" id="rpPrev" aria-label="Previous period">‹</button><b id="rpLabel" aria-live="polite"></b><button type="button" id="rpNext" aria-label="Next period">›</button><button type="button" class="btn-sm" id="rpToday">Today</button></div>
+  <div class="rp-cust" id="rpCustom" hidden><label>From <input type="date" id="rpFrom"></label><label>To <input type="date" id="rpTo"></label></div>
+  <details class="rp-filt"><summary>Filters <span id="rpFiltN"></span></summary>
+    <div class="rp-fg">
+      <label>Book <select id="rpBook" data-k="book"></select></label>
+      <label>Sport <select id="rpSport" data-k="sport"></select></label>
+      <label>Bet type <select id="rpKind" data-k="kind"></select></label>
+      <label>Odds <select id="rpOdds" data-k="odds"></select></label>
+      <label>Tab (her chance when taken) <select id="rpTab" data-k="tab"></select></label>
+      <label>Band <select id="rpBand" data-k="band"></select></label>
+      <label>Selection <select id="rpSel" data-k="sel"></select></label>
+      <label>Team <input id="rpTeam" data-k="team" list="rpTeamL" placeholder="any team" autocomplete="off"><datalist id="rpTeamL"></datalist></label>
+      <label>Player <input id="rpPlayer" data-k="player" list="rpPlayerL" placeholder="any player" autocomplete="off"><datalist id="rpPlayerL"></datalist></label>
+      <button type="button" class="btn-sm" id="rpReset">Clear filters</button>
+    </div>
+    <p class="meta">Filters only choose which bets are counted. They never change a saved bet.</p>
+  </details>
+  <div class="meta" id="rpAsOf"></div>
+  <div class="meta rp-cover" id="rpCover"></div>
+  <div id="rpHead"></div>
+  <div id="rpSplit"></div>
+  <h3 class="rp-h">Open bets <span class="meta" id="rpOpenN"></span></h3><div id="rpOpen"></div>
+  <h3 class="rp-h">Settled bets <span class="meta" id="rpSetN"></span></h3><div id="rpSettled"></div>
+  <p><button type="button" class="btn-sm" id="rpCsv">⬇ CSV of exactly these bets</button></p>
+</div>
+</div>
 
 </div>
 <script>
-const SCREENER_VERSION='v4.88';
+const SCREENER_VERSION='v4.89';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -5798,7 +5868,7 @@ function lsSafeSet(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){
 function saveFailNote(bad){ let el=document.getElementById('saveFail'); if(!bad){ if(el) el.remove(); return; }
   if(!el){ el=document.createElement('div'); el.id='saveFail'; el.setAttribute('role','alert'); document.body.prepend(el); }
   el.textContent='⚠ Your bet log (or a book fill you added or ignored) could not be saved on this device: the browser storage is full ('+Math.round(lsSize()/1024)+' KB used). Your last change will be lost when the page reloads. Tell Claude Code.'; }
-function saveLog(){ saveFailNote(!lsSafeSet('mbev.log',JSON.stringify(logged))); if(typeof renderTodayBar==='function') setTimeout(renderTodayBar,0); syncTouched(); }   // v3.82: no more silent failures
+function saveLog(){ saveFailNote(!lsSafeSet('mbev.log',JSON.stringify(logged))); if(typeof renderTodayBar==='function') setTimeout(renderTodayBar,0); if(document.body && document.body.dataset.view==='v-reports') setTimeout(rpRender,0); /* v4.89: an open report follows every change to the log */ syncTouched(); }   // v3.82: no more silent failures
 /* v2.63: what the screener said about a row, in one word — saved with every bet you log.
    "On the list" = the screener had a stake on it (BET / RISK / OUTLIER / LIMITED) and the game hadn't started. */
 function saidOf(r){
@@ -9447,10 +9517,11 @@ function csvDays(){ const sel=document.getElementById('csvDay'); if(!sel) return
   logged.forEach(b=>{ const d=gameDayOf(b)||b.date||''; if(d) D[d]=(D[d]||0)+1; });
   const h='<option value="">All days · '+logged.length+' bets</option>'+Object.keys(D).sort().reverse().map(d=>'<option value="'+d+'">'+esc(new Date(d+'T12:00:00Z').toLocaleDateString('en-US',{timeZone:'UTC',weekday:'short',month:'numeric',day:'numeric',year:'numeric'}))+' · '+D[d]+'</option>').join('');
   if(sel.innerHTML!==h){ sel.innerHTML=h; sel.value=D[cur]?cur:''; } }
-function logCsv(day){
+function logCsv(day, only, meta){   // v4.89: only = the Reports tab's bets; meta adds the report's basis, range, filters, time and ticket id
   const q=s=>{ s=s===undefined||s===null?'':String(s); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
   const head=['game day','placed','bet','pick','sport','type','book','odds','implied %','stake $','free bet','result','profit $','fair %','EV after fees %','closing','CLV %','game','kickoff (CT)','legs','stat','mode (old)','source','band','La Contadora EV %','market chance %','La Contadora chance %','policy','app version','listed tab','selection','classification','availability','in Scorecard','derived tab (tabs-v476)','band source'];   /* v4.86: mode (old) keeps its old meaning; the new columns come from the bet's record, blank before v4.86 */   /* v4.68: frozen from the bet's snapshot, blank when missing */   // v4.67 (owner: "Yes to all"): the stat (sacks showed as "O 0.5"), the mode, where it came from, its cover band, and her EV when taken (the EV column is the model’s)
-  const rows=logged.map((b,i)=>({b,i,d:gameDayOf(b)||b.date||''})).filter(x=>!day||x.d===day).sort((a,b)=>(b.d.localeCompare(a.d))||(b.i-a.i)).map(({b,d})=>{
+  const ids=[];
+  const rows=logged.map((b,i)=>({b,i,d:gameDayOf(b)||b.date||''})).filter(x=>(!day||x.d===day) && (!only||only.has(x.b))).sort((a,b)=>(b.d.localeCompare(a.d))||(b.i-a.i)).map(({b,d})=>{ ids.push(b.id||'');
     const p=toProb(b.odds), pr=betProfit(b), c=clv(b), st=b.start||(b.gameInfo&&b.gameInfo.startISO);
     const res=b.sold?'sold':b.result==='win'?'win':b.result==='loss'?'loss':b.result==='push'?'push':'open';
     return [d, (()=>{ const t=loggedAtOf(b); return isNaN(t)?'':new Date(t).toLocaleString('en-US',{timeZone:'America/Chicago'}); })(), b.name, b.betnow||[(b.side==='O'?'Over':b.side==='U'?'Under':''),b.market].join(' ').trim(), b.sport, b.kind,
@@ -9462,6 +9533,9 @@ function logCsv(day){
       (b.snap&&b.snap.actNet!=null)?(b.snap.actNet*100).toFixed(2):'',
       (b.snap&&b.snap.market!=null)?(b.snap.market*100).toFixed(1):'', (b.snap&&b.snap.act!=null)?(b.snap.act*100).toFixed(1):'', (b.snap&&b.snap.policy)||'', (b.snap&&b.snap.screener)||'',
       ...(()=>{ const L=b.snap&&b.snap.listed, a=b.snap&&b.snap.act!=null?+b.snap.act:null; return [L?tabWord(L.tab):'', L?L.status:'', L?(L.classification||''):'', L?(L.availability||''):'', inScorecardTxt(b), (!L && b.kind!=='parlay' && a!=null)?tabWord(tabOfChance(a))+' (derived)':'', (()=>{ const c=bandCover(b,'act'); return b.kind==='parlay'?'':c?bandSrcWord(c.source):'none'; })()]; })()].map(q).join(','); });
+  if(meta){ const M=[meta.basis,meta.range,meta.filters,meta.at].map(q).join(',');
+    const C=(meta.cancelled||[]).map(b=>head.map(h=>h==='game day'?(gameDayOf(b)||''):h==='bet'?(b.name||''):h==='sport'?(b.sport||''):h==='type'?(b.kind||''):h==='book'?bookLabel(b.book||''):h==='result'?'cancelled':h==='profit $'?(-(+b.lost||0)).toFixed(2):'').map(q).join(',')+','+q(b.id||'')+','+M);   /* v4.89 review: a cancelled bet that lost money is a row too, so the file adds up to the report */
+    return '\ufeff'+[head.concat(['ticket id','report basis','report range','report filters','report generated']).join(','),...rows.map((r,i)=>r+','+q(ids[i])+','+M),...C].join('\r\n'); }   // v4.89: the Reports tab's export says how it was cut
   return '\ufeff'+[head.join(','),...rows].join('\r\n'); }
 document.getElementById('csvDay').addEventListener('focus',csvDays); document.getElementById('csvDay').addEventListener('pointerdown',csvDays);
 document.getElementById('csvDl').addEventListener('click',()=>{ csvDays(); const day=document.getElementById('csvDay').value;
@@ -9469,6 +9543,129 @@ document.getElementById('csvDl').addEventListener('click',()=>{ csvDays(); const
   const blob=new Blob([logCsv(day)],{type:'text/csv;charset=utf-8'}), a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download='0xbeta-bets-'+(day||'all-'+ctDay(Date.now()))+'.csv'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1500); });
 setTimeout(csvDays,0);
+/* v4.89 (Alonzo: "a tab just for Reports ... daily, monthly or all time ... it changes dynamically"; scope agreed with Sally 11/13, owner "BUILD NOW"):
+   Reports, step 1. Worked out from the log every time it paints: no total, row or ranking is ever saved (only the choices: mbev.reportsUi).
+   Two bases: game day (default, the Bet calendar's day: gameDayOf) and date placed (snap.at only; a bet without it is counted in a coverage line,
+   never guessed). Money comes from lcStats + betProfit and the cancelled-bet losses, exactly as the calendar's totals, so the two cannot drift.
+   ROI is settled profit over settled own-money stake; open money is shown apart (to play, in play) and never in W–L–P, profit or ROI. */
+var RP={basis:'game', per:'month', anchor:null, from:'', to:'', f:{}, all:{open:false, set:false}};
+try{ const s=JSON.parse(localStorage.getItem('mbev.reportsUi')||'null'); if(s && typeof s==='object'){ if(s.basis==='placed') RP.basis='placed'; if(['day','month','year','all','custom'].includes(s.per)) RP.per=s.per; if(s.f && typeof s.f==='object') RP.f=s.f; if(typeof s.from==='string') RP.from=s.from; if(typeof s.to==='string') RP.to=s.to; } }catch(e){}
+function rpSaveUi(){ try{ localStorage.setItem('mbev.reportsUi',JSON.stringify({basis:RP.basis, per:RP.per, f:RP.f, from:RP.from, to:RP.to})); }catch(e){} }
+function rpPlacedDay(b){ const t=Date.parse(b && b.snap && b.snap.at); return isNaN(t)?null:ctDay(t); }   // the saved time only: never the id, the game day or an edit time
+function rpDayOf(b){ return RP.basis==='placed' ? rpPlacedDay(b) : (gameDayOf(b)||null); }
+function rpAmerican(b){ const p=toProb(b.odds); if(p==null || !(p>0 && p<1)) return null; return p>=0.5 ? -100*p/(1-p) : 100*(1-p)/p; }
+function rpOddsBucket(b){ const a=rpAmerican(b); if(a==null) return ''; return a<-750?'a':a<-300?'b':a<-150?'c':a<=150?'d':a<=300?'e':a<=750?'f':'g'; }
+var RP_ODDS={a:'below −750', b:'−750 to −300', c:'−300 to −150', d:'−150 to +150', e:'+150 to +300', f:'+300 to +750', g:'above +750'};
+var RP_KIND={prop:'Player prop', moneyline:'Moneyline', spread:'Spread', total:'Game total', parlay:'Parlay'};
+function rpKindWord(k){ return RP_KIND[k] || (k?String(k):'Other'); }
+function rpTabOf(b){ if(b.kind==='parlay') return ''; const L=b.snap&&b.snap.listed; if(L) return L.tab||'';   /* review: an own bet has no tab, as in the CSV */ const a=b.snap&&b.snap.act!=null?+b.snap.act:null; return a!=null?(tabOfChance(a)||''):''; }
+function rpSelOf(b){ const L=b.snap&&b.snap.listed; return L ? (L.status||'') : 'none'; }
+function rpBandOf(b){ const k=logBandOf(b,'act'); return k==null?'':String(k); }
+function rpBandTxt(b){ if(b.kind==='parlay') return 'none (parlay)'; const c=bandCover(b,'act'); if(!c) return 'no band'; const src=c.source==='act'?'La Contadora':c.source==='typed'?'typed':'model'; return cvNames()[cvBand(c.p)]+' · '+src; }
+function rpTeamOf(b){ return String(b.team || (b.kind!=='prop' && b.kind!=='parlay' ? b.name : '') || '').trim(); }
+function rpPlayerOf(b){ return b.kind==='prop' ? String(b.name||'').trim() : ''; }
+function rpRange(){ const today=ctDay(Date.now()), a=RP.anchor||today;
+  if(RP.per==='day') return {lo:a, hi:a, lab:new Date(a+'T12:00:00Z').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric',timeZone:'UTC'})+(a===today?' · today':'')};
+  if(RP.per==='month'){ const m=a.slice(0,7); return {lo:m+'-01', hi:m+'-31', lab:new Date(m+'-01T12:00:00Z').toLocaleDateString('en-US',{month:'long',year:'numeric',timeZone:'UTC'})+(m===today.slice(0,7)?' so far':'')}; }
+  if(RP.per==='year'){ const y=a.slice(0,4); return {lo:y+'-01-01', hi:y+'-12-31', lab:y+(y===today.slice(0,4)?' so far':'')}; }
+  if(RP.per==='custom'){ const lo=lcValidDay(RP.from)?RP.from:'0000-01-01', hi=lcValidDay(RP.to)?RP.to:today;   /* review: no To date means today, as the label says */ return {lo:lo>hi?hi:lo, hi:lo>hi?lo:hi, lab:(lcValidDay(RP.from)?RP.from:'the first bet')+' to '+(lcValidDay(RP.to)?RP.to:'today')}; }
+  return {lo:'0000-01-01', hi:'9999-12-31', lab:'All time'}; }
+function rpStep(dir){ const a=new Date((RP.anchor||ctDay(Date.now()))+'T12:00:00Z');
+  if(RP.per==='day') a.setUTCDate(a.getUTCDate()+dir); else if(RP.per==='month'){ a.setUTCDate(1); a.setUTCMonth(a.getUTCMonth()+dir); } else if(RP.per==='year') a.setUTCFullYear(a.getUTCFullYear()+dir); else return;
+  RP.anchor=a.toISOString().slice(0,10); rpRender(); }
+function rpPass(b){ const f=RP.f||{};
+  if(f.book && bookLabel(b.book||'')!==f.book) return false;
+  if(f.sport && String(b.sport||'')!==f.sport) return false;
+  if(f.kind && String(b.kind||'')!==f.kind) return false;
+  if(f.odds && rpOddsBucket(b)!==f.odds) return false;
+  if(f.tab && (rpTabOf(b)||'none')!==f.tab) return false;
+  if(f.band && (rpBandOf(b)||'none')!==f.band) return false;
+  if(f.sel && rpSelOf(b)!==f.sel) return false;
+  if(f.team && rpTeamOf(b).toLowerCase()!==String(f.team).trim().toLowerCase()) return false;
+  if(f.player && rpPlayerOf(b).toLowerCase()!==String(f.player).trim().toLowerCase()) return false;
+  return true; }
+/* the shared money: lcStats (the calendar's own totals) + cancelled losses, plus the open money split the calendar's days use */
+function rpAgg(list, removed){ const g=lcStats(list); g.cancelled=0; g.cancelLost=0; (removed||[]).forEach(b=>{ g.profit-=b.lost; g.cancelled++; g.cancelLost+=b.lost; });
+  g.toPlay=0; g.inPlay=0; list.forEach(b=>{ const hv=heldValue(b); if(!hv.open) return; const st=b.free?0:(+b.stake||0); if(betLocked(b)) g.inPlay+=st; else g.toPlay+=st; });
+  g.roi=g.stSet>0?g.profit/g.stSet:null; g.hit=(g.w+g.l)>0?g.w/(g.w+g.l):null; return g; }
+function rpSet(){ const R=rpRange(); let noDay=0, noDayRm=0;
+  const inR=d=>d && d>=R.lo && d<=R.hi;
+  const L=logged.filter(b=>{ if(!rpPass(b)) return false; const d=rpDayOf(b); if(!d){ noDay++; return false; } return inR(d); });
+  const Rm=removedBets.filter(b=>{ if(!(b.lost>0) || !rpPass(b)) return false; const d=rpDayOf(b); if(!d){ noDayRm++; return false; } return inR(d); });
+  return {R, L, Rm, noDay, noDayRm}; }
+function rpSample(n){ return n<10?'too few to rank':n<30?'extremely preliminary':n<100?'early sample':''; }
+function rpPct(x){ return x==null?'—':(x>=0?'+':'−')+Math.abs(x*100).toFixed(1)+'%'; }
+function rpCls(v){ return v>0.005?'pl-up':v<-0.005?'pl-down':''; }
+function rpToWin(b){ if(b.kind==='parlay'){ const pay=b.parlay&&b.parlay.payout; return b.towin>0?+b.towin:(pay>0?(+pay)-(+b.stake||0):null); } if(b.towin>0) return +b.towin; const p=toProb(b.odds); if(p==null||!(p>0&&p<1)) return null; const fee=+b.fee||0; return (+b.stake||0)*((1/p)-1-fee)/(1+fee); }   /* review: the same fee formula as betProfit */
+function rpPick(b){ return b.kind==='parlay' ? ('Parlay'+(b.parlay&&b.parlay.legs?' · '+b.parlay.legs+' legs':'')) : (b.betnow || [(b.side==='O'?'Over':b.side==='U'?'Under':''), b.market].join(' ').trim()); }
+function rpOptions(){ const uniq=fn=>[...new Set(logged.map(fn).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b)));
+  const sel=(id,all,opts)=>{ const el=document.getElementById(id); if(!el) return; const v=RP.f[el.dataset.k]||''; if(v && !opts.some(o=>o[0]===v)){ delete RP.f[el.dataset.k]; rpSaveUi(); }   /* review: a saved filter no menu can show is dropped, never left on unseen */
+    const h='<option value="">'+all+'</option>'+opts.map(([k,t])=>'<option value="'+esc(k)+'">'+esc(t)+'</option>').join(''); if(el.innerHTML!==h && document.activeElement!==el) el.innerHTML=h;   /* review: a grading in the background never closes an open menu */
+    el.value=RP.f[el.dataset.k]||''; };
+  sel('rpBook','All books',uniq(b=>bookLabel(b.book||'')).map(x=>[x,x]));
+  sel('rpSport','All sports',uniq(b=>String(b.sport||'')).map(x=>[x,x]));
+  sel('rpKind','All bet types',uniq(b=>String(b.kind||'')).map(x=>[x,rpKindWord(x)]));
+  sel('rpOdds','All odds',Object.keys(RP_ODDS).map(k=>[k,RP_ODDS[k]]));
+  sel('rpTab','All tabs',['boring','machin','volado','suertudo','brujo'].map(k=>[k,tabWord(k)]).concat([['none','No tab (own, parlay or no chance saved)']]));
+  sel('rpBand','All bands',[1,2,3,4,5,6,7,8,9].map(k=>[String(k),cvNames()[k]+' · '+cvRanges()[k]]).concat([['0','Unknown'],['none','No band (parlays)']]));
+  sel('rpSel','All selections',[['approved','Approved'],['extra','Extra (Just missed / Hail Mary)'],['own','Own (typed, fill or import)'],['override','Override'],['none','No record (before v4.86)']]);
+  const dl=(id,vals)=>{ const el=document.getElementById(id); if(el) el.innerHTML=vals.map(v=>'<option value="'+esc(v)+'">').join(''); };
+  dl('rpTeamL',uniq(rpTeamOf)); dl('rpPlayerL',uniq(rpPlayerOf));
+  ['rpTeam','rpPlayer'].forEach(id=>{ const el=document.getElementById(id); if(el && document.activeElement!==el) el.value=RP.f[el.dataset.k]||''; }); }
+function rpListHtml(list, open, all){ if(!list.length) return '<p class="meta">'+(open?'No open bets in this report.':'No settled bets in this report.')+'</p>';
+  const max=100, shown=all?list:list.slice(0,max);
+  const rows=shown.map(b=>{ const st=b.free?0:(+b.stake||0), d=rpDayOf(b)||'', pr=betProfit(b), tw=rpToWin(b);
+    const res=b.sold?'sold':b.result==='win'?'won':b.result==='loss'?'lost':b.result==='push'?'push':(betLocked(b)?'▶ in play':'⏳ to play');
+    return '<tr><td data-l="'+(RP.basis==='placed'?'Placed':'Game day')+'">'+esc(d)+'</td><td class="rp-bet"><b>'+esc(b.name||'')+'</b><br><span class="meta">'+esc(rpPick(b))+'</span></td><td data-l="Book">'+esc(bookLabel(b.book||''))+'</td><td class="num" data-l="Odds">'+esc(b.odds||'')+'</td><td class="num" data-l="Risked">$'+st.toFixed(2)+(b.free?' <span class="meta">free</span>':'')+'</td>'+
+      (open?'<td class="num" data-l="To win">'+(tw==null?'—':'$'+tw.toFixed(2))+'</td>':'<td class="num '+rpCls(pr||0)+'" data-l="Profit">'+(pr==null?'—':lcUsd(pr))+'</td>')+'<td data-l="'+(open?'Status':'Result')+'">'+esc(res)+'</td><td class="meta" data-l="Band">'+esc(rpBandTxt(b))+'</td></tr>'; }).join('');
+  return '<div class="rp-tw"><table class="rp-t rp-list"><thead><tr><th>'+(RP.basis==='placed'?'Placed':'Game day')+'</th><th>Bet</th><th>Book</th><th class="num">Odds</th><th class="num">Risked</th><th class="num">'+(open?'To win':'Profit')+'</th><th>'+(open?'Status':'Result')+'</th><th>Band (source)</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    (list.length>max?'<button type="button" class="btn-sm rp-more" data-w="'+(open?'open':'set')+'">'+(all?'Show the first '+max:'Show all '+list.length)+'</button><span class="meta"> '+(all?'':'showing '+max+' of '+list.length)+'</span>':''); }
+function rpRender(){ const box=document.getElementById('rpPanel'); if(!box) return;
+  try{
+  rpOptions();
+  document.querySelectorAll('#rpPer button').forEach(x=>{ const on=x.dataset.p===RP.per; x.classList.toggle('on',on); x.setAttribute('aria-pressed',String(on)); });
+  document.getElementById('rpBasis').value=RP.basis;
+  document.getElementById('rpCustom').hidden=RP.per!=='custom'; document.getElementById('rpNav').hidden=RP.per==='all'||RP.per==='custom';
+  document.getElementById('rpFrom').value=RP.from||''; document.getElementById('rpTo').value=RP.to||'';
+  const S=rpSet(), g=rpAgg(S.L, S.Rm), nf=Object.keys(RP.f||{}).filter(k=>RP.f[k]).length;
+  document.getElementById('rpLabel').textContent=S.R.lab;
+  document.getElementById('rpFiltN').textContent=nf?'· '+nf+' on':'· none';
+  document.getElementById('rpAsOf').textContent='As of '+new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:'America/Chicago'})+' · '+logged.length+' ticket'+(logged.length===1?'':'s')+' in the current log · counted by '+(RP.basis==='placed'?'date placed':'game day (as the Bet calendar)')+(nf?' · '+nf+' filter'+(nf===1?'':'s')+' on':'');
+  const miss=S.noDay+S.noDayRm; document.getElementById('rpCover').textContent=miss?(miss+(miss===1?' bet has':' bets have')+(RP.basis==='placed'?' no saved placed time: not in this view (never guessed).':' no game day: not in this view.')):'';
+  const sett=g.n-g.pend, smp=rpSample(g.w+g.l+g.p), tile=(l,v,c,t)=>'<div class="rp-k"'+(t?' title="'+esc(t)+'"':'')+'><span>'+l+'</span><strong'+(c?' class="'+c+'"':'')+'>'+v+'</strong></div>';
+  document.getElementById('rpHead').innerHTML=(g.n||g.cancelled)?
+    '<div class="rp-line"><b>Settled:</b> $'+g.stSet.toFixed(2)+' risked, <b class="'+rpCls(g.profit)+'">'+lcUsd(g.profit)+'</b> · <b>To play:</b> $'+g.toPlay.toFixed(2)+' · <b>In play:</b> $'+g.inPlay.toFixed(2)+'</div>'+
+    '<div class="rp-ks">'+tile('Tickets',g.n)+tile('W–L–P',g.w+'–'+g.l+'–'+g.p,'',g.hit==null?'':'won '+(g.hit*100).toFixed(1)+'% of the bets that won or lost')+tile('Hit rate',g.hit==null?'—':(g.hit*100).toFixed(1)+'%')+tile('Settled risked','$'+g.stSet.toFixed(2),'','your own money on settled bets (free bets are $0)')+
+      tile('Settled profit',lcUsd(g.profit),rpCls(g.profit))+tile('ROI',rpPct(g.roi),rpCls(g.roi||0),'settled profit ÷ settled risked: open bets are never in it')+tile('⏳ To play','$'+g.toPlay.toFixed(2),'rp-grey')+tile('▶ In play','$'+g.inPlay.toFixed(2),'rp-grey')+tile('Open total','$'+(g.toPlay+g.inPlay).toFixed(2)+' · '+g.pend+' open','rp-grey')+'</div>'+
+    '<div class="meta">'+[sett?sett+' settled ticket'+(sett===1?'':'s'):'nothing settled yet', g.cancelled?g.cancelled+' cancelled bet'+(g.cancelled===1?'':'s')+' that lost $'+g.cancelLost.toFixed(2)+' (counted, as on the calendar)':'', smp?'<b class="rp-smp">'+smp+'</b>: '+(g.w+g.l+g.p)+' won, lost or pushed':''].filter(Boolean).join(' · ')+'</div>'
+    : '<p class="meta">No bets in this report. Change the period or the filters.</p>';
+  const parts=[['Overall',S.L,S.Rm],['Singles',S.L.filter(b=>b.kind!=='parlay'),S.Rm.filter(b=>b.kind!=='parlay')],['Parlays',S.L.filter(b=>b.kind==='parlay'),S.Rm.filter(b=>b.kind==='parlay')]];
+  document.getElementById('rpSplit').innerHTML=(g.n||g.cancelled)?'<div class="rp-tw"><table class="rp-t rp-sp"><thead><tr><th></th><th class="num">Tickets</th><th class="num">W–L–P</th><th class="num">Settled risked</th><th class="num">Profit</th><th class="num">ROI</th><th class="num">Open</th></tr></thead><tbody>'+
+    parts.map(([lab,L,Rm])=>{ const x=rpAgg(L,Rm); return '<tr'+(lab==='Overall'?' class="rp-all"':'')+'><td class="rp-bet">'+(lab==='Overall'?'<b>Overall</b>':'· '+lab)+'</td><td class="num" data-l="Tickets">'+x.n+'</td><td class="num" data-l="W–L–P">'+x.w+'–'+x.l+'–'+x.p+'</td><td class="num" data-l="Settled risked">$'+x.stSet.toFixed(2)+'</td><td class="num '+rpCls(x.profit)+'" data-l="Profit">'+lcUsd(x.profit)+'</td><td class="num" data-l="ROI">'+rpPct(x.roi)+'</td><td class="num" data-l="Open">'+x.pend+'</td></tr>'; }).join('')+'</tbody></table></div>':'';
+  const byDay=(a,b)=>String(rpDayOf(b)||'').localeCompare(String(rpDayOf(a)||''));
+  const tS=b=>{ const t=Date.parse(b.start||(b.gameInfo&&b.gameInfo.startISO)); return isNaN(t)?Infinity:t; }, O=S.L.filter(b=>heldValue(b).open).sort((a,b)=>tS(a)-tS(b)),   /* open: by start time, soonest first */ D=S.L.filter(b=>!heldValue(b).open).sort(byDay);
+  document.getElementById('rpOpenN').textContent=O.length?'· '+O.length:''; document.getElementById('rpSetN').textContent=D.length?'· '+D.length:'';
+  document.getElementById('rpOpen').innerHTML=rpListHtml(O,true,RP.all.open);
+  document.getElementById('rpSettled').innerHTML=rpListHtml(D,false,RP.all.set)+(S.Rm.length?'<p class="meta rp-canc"><b>Cancelled bets that lost money</b> (counted in the totals, as on the calendar): '+S.Rm.map(b=>esc(b.name||'bet')+' · '+esc(bookLabel(b.book||''))+' · '+esc(rpDayOf(b)||'')+' · <b class="pl-down">−$'+(+b.lost).toFixed(2)+'</b>').join('; ')+'</p>':'');   /* review: the list adds up to the headline */
+  }catch(e){ console.error(e); const h=document.getElementById('rpHead'); if(h) h.innerHTML='<p class="meta">The report could not be worked out: '+esc(e.message)+'</p>'; } }
+function rpCsvDl(){ const S=rpSet(); if(!S.L.length && !S.Rm.length){ alert('No bets in this report.'); return; }
+  const f=RP.f||{}, fl=Object.keys(f).filter(k=>f[k]).map(k=>k+'='+f[k]).join('; ')||'none';
+  const meta={basis:RP.basis==='placed'?'date placed':'game day', range:RP.per==='all'?'All time':S.R.lab+(RP.per==='custom'?'':' ('+S.R.lo+' to '+S.R.hi+')'), filters:fl, at:new Date().toLocaleString('en-US',{timeZone:'America/Chicago'}), cancelled:S.Rm};
+  const blob=new Blob([logCsv('', new Set(S.L), meta)],{type:'text/csv;charset=utf-8'}), a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='0xbeta-report-'+ctDay(Date.now())+'.csv'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1500); }
+(function(){ const p=document.getElementById('rpPanel'); if(!p) return;
+  p.addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return;
+    if(b.dataset.p){ RP.per=b.dataset.p; rpSaveUi(); rpRender(); return; }
+    if(b.id==='rpPrev'){ rpStep(-1); return; } if(b.id==='rpNext'){ rpStep(1); return; } if(b.id==='rpToday'){ RP.anchor=null; rpRender(); return; }
+    if(b.id==='rpReset'){ RP.f={}; rpSaveUi(); rpRender(); return; }
+    if(b.id==='rpCsv'){ rpCsvDl(); return; }
+    if(b.classList.contains('rp-more')){ const w=b.dataset.w; RP.all[w]=!RP.all[w]; rpRender(); return; } });
+  p.addEventListener('change',e=>{ const t=e.target;
+    if(t.id==='rpBasis'){ RP.basis=t.value==='placed'?'placed':'game'; rpSaveUi(); rpRender(); return; }
+    if(t.id==='rpFrom'||t.id==='rpTo'){ RP[t.id==='rpFrom'?'from':'to']=t.value||''; rpSaveUi(); rpRender(); return; }
+    if(t.dataset && t.dataset.k){ RP.f[t.dataset.k]=t.value||''; if(!RP.f[t.dataset.k]) delete RP.f[t.dataset.k]; rpSaveUi(); rpRender(); } });
+  const tab=document.querySelector('.tab[data-view="v-reports"]'); if(tab) tab.addEventListener('click',()=>setTimeout(rpRender,0));
+})();
 document.getElementById('wipe').addEventListener('click',()=>{
   if(!logged.length) return;
   if(confirm('Delete all '+logged.length+' logged bets? This cannot be undone.'+(SY&&SY.on?' ☁ Sync is on: they are deleted on your other devices too.':''))){

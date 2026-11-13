@@ -28,7 +28,7 @@ let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?
     await p.evaluate(()=>document.querySelector('#subTabs .subhome[data-group="board"]').click()); await p.waitForTimeout(200); s=await st();
     check(W+' px: the Board pill in the row goes back to the board', s.view==='v-board', s.view);
     await p.click('.tabs .tab[data-view="v-log"]'); await p.waitForTimeout(200); s=await st();
-    check(W+' px: Bet log shows its row: Bet log · + Add a bet · Performance', s.view==='v-log' && s.sub.join('|')==='Bet log|+ Add a bet|Performance', {view:s.view, sub:s.sub});
+    check(W+' px: Bet log shows its row: Bet log · + Add a bet · Performance · 📊 Reports (v4.89)', s.view==='v-log' && s.sub.join('|')==='Bet log|+ Add a bet|Performance|📊 Reports', {view:s.view, sub:s.sub});
     await p.evaluate(()=>[...document.querySelectorAll('#subTabs .tab')].find(t=>/Performance/.test(t.textContent)).click()); await p.waitForTimeout(200); s=await st();
     check(W+' px: Performance opens and Bet log stays lit', s.view==='v-perf' && s.lit.join()==='Bet log', {view:s.view, lit:s.lit});
     for(const v of ['v-live','v-parlay','v-settings']){ await p.click('.tabs .tab[data-view="'+v+'"]'); await p.waitForTimeout(150); s=await st();
