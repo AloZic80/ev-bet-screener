@@ -60,14 +60,19 @@ for(let i=0;i<3;i++) LOG.push(bet('phx'+i,{name:'Phx Player', team:'PHX', game:'
   await p.evaluate(()=>{ RP.per='all'; RP.bwWho='teams'; RP.bwDir='best'; RP.small=false; rpRender(); });
   const bw=async()=>p.evaluate(()=>({rows:[...document.querySelectorAll('#rpBw tbody tr')].map(r=>r.children[0].textContent), note:[...document.querySelectorAll('#rpBw p')].map(x=>x.textContent).join(' ')}));
   const b1=await bw();
-  check('Best teams, default: only BOS is ranked (22 tickets, 22 outcomes, 11 games); the others are counted in a note', b1.rows.length===1 && /^BOS22 tickets · 22 unique outcomes · 11 games$/.test(b1.rows[0]) && /fewer settled bets than that\. Tick "Show small samples"/.test(b1.note), b1);
+  check('Best teams, default: BOS ranked (22 tickets, 22 outcomes, 11 games), then LAL listed, not ranked (12 tickets, 6 outcomes); smaller ones counted in a note', b1.rows.length===2 && /^BOS22 tickets · 22 unique outcomes · 11 games$/.test(b1.rows[0]) && /^LAL12 tickets · 6 unique outcomes · 6 games$/.test(b1.rows[1]) && /fewer than 10 settled tickets or 5 outcomes\. Tick "Show small samples"/.test(b1.note), b1);
+  const tier=await p.evaluate(()=>[...document.querySelectorAll('#rpBw tbody tr')].map(r=>r.children[4].textContent));
+  check('Los Chismosos: the listed tier says "listed, not ranked"', tier[1]==='listed, not ranked: too few to rank', tier);
   await p.evaluate(()=>{ document.getElementById('rpSmall').click(); }); const b2=await bw();
   const sm=await p.evaluate(()=>[...document.querySelectorAll('#rpBw tbody tr')].map(r=>r.children[0].textContent+'|'+r.children[4].textContent));
-  check('Show small samples: LAL (12 tickets, 6 outcomes) and PHX (3 tickets) appear, each "too few to rank" (under 10 outcomes)', sm.some(x=>/^LAL12 tickets · 6 unique outcomes · 6 games\|too few to rank$/.test(x)) && sm.some(x=>/^PHX.*\|too few to rank$/.test(x)), sm);
+  check('Show small samples: LAL (12 tickets, 6 outcomes) and PHX (3 tickets) appear, each "too few to rank" (under 10 outcomes)', sm.some(x=>/^LAL12 tickets · 6 unique outcomes · 6 games\|listed, not ranked/.test(x)) && /^BOS/.test(sm[0]) && sm.some(x=>/^PHX.*\|too few to rank$/.test(x)), sm);
   check('repeated tickets count once as outcomes: PHX 3 tickets · 1 unique outcome · 1 game', b2.rows.some(r=>/^PHX3 tickets · 1 unique outcome · 1 game$/.test(r)), b2.rows);
-  await p.evaluate(()=>{ document.querySelector('#rpBwDir [data-d="worst"]').click(); }); const w=await p.evaluate(()=>[...document.querySelectorAll('#rpBw tbody tr td:nth-child(3)')].map(x=>x.textContent));
-  const nums=w.map(t=>(t[0]==='−'?-1:1)*+t.replace(/[^\d.]/g,''));
-  check('Worst sorts by profit, lowest first', nums.length>1 && nums.every((x,i)=>!i||x>=nums[i-1]), w);
+  await p.evaluate(()=>{ document.querySelector('#rpBwDir [data-d="worst"]').click(); document.getElementById('rpSmall').click(); });
+  const w=await p.evaluate(()=>[...document.querySelectorAll('#rpBw tbody tr')].map(r=>r.children[0].querySelector('b').textContent));
+  check('Worst: ranked tier first, then listed; small samples hidden again', w.join(',')==='BOS,LAL', w);
+  const fx=await p.evaluate(()=>{ const a={kind:'prop', stake:2, towin:3, odds:'-110'}, won=Object.assign({}, a, {paidReal:true}), g=st=>({kind:'prop', name:'X', market:'1.5 Threes', side:'O', game:'BOS @ NYK', date:'2026-11-10', dateSet:true, start:st});
+    return {typed:entryPInfo(a).src, won:entryPInfo(won).src, dh:rpGameKey(g('2026-11-10T17:00:00Z'))!==rpGameKey(g('2026-11-10T23:00:00Z')), nog:rpGameKey({kind:'prop', name:'Y', team:'BOS', date:'2026-11-10', dateSet:true, id:'i1'})===rpGameKey({kind:'prop', name:'Y', team:'BOS', date:'2026-11-10', dateSet:true, id:'i2'})}; });
+  check('Los Chismosos: a to-win written by a win (paidReal) never moves the price band; a doubleheader stays two games; bets with no game group by day and team', fx.typed==='stake_to_win' && fx.won==='paid_odds' && fx.dh && fx.nog, fx);
   for(const W of [390,1000,1280,1960]){ await p.setViewportSize({width:W,height:900}); await p.waitForTimeout(150);
     const r=await p.evaluate(()=>({side:document.documentElement.scrollWidth>innerWidth, out:[...document.querySelectorAll('#rpPanel .rp-tw, #rpPanel .rp-chart, #rpPanel .rp-months, #rpPanel .rp-ctl')].filter(e=>e.getBoundingClientRect().right>innerWidth+1).length}));
     check(W+' px: no sideways scroll, every new block inside the screen', !r.side && !r.out, r); }
