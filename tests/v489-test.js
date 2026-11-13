@@ -68,6 +68,18 @@ const REM=[{id:'rm1', lost:1.5, date:'2026-11-12', dateSet:true, start:'2026-11-
   await p.evaluate(()=>{ document.getElementById('rpReset').click(); }); const pre=await rd();
   await p.evaluate(()=>{ const t=logged.find(x=>x.id==='d'); t.result='win'; t.gradedBy='manual'; saveLog(); }); await p.waitForTimeout(200); const post=await rd();
   check('live: grading the Cowboys moves $5 from in play into settled, without reopening the tab', /In play: \$5\.00/.test(pre.line) && /In play: \$0\.00/.test(post.line) && pre.ks['Settled risked']==='$8.00' && post.ks['Settled risked']==='$13.00', {pre:pre.line, post:post.line});
+  const rv=await p.evaluate(()=>{ RP.f={}; RP.per='month'; RP.anchor='2026-11-13'; RP.basis='game'; rpRender(); const S=rpSet();
+    const c=logCsv('', new Set(S.L), {basis:'game day', range:'r', filters:'none', at:'t', cancelled:S.Rm}).split('\r\n');
+    const canc=c.find(l=>/,cancelled,/.test(l))||'';
+    const note=(document.querySelector('#rpSettled .rp-canc')||{}).textContent||'';
+    RP.f={book:'Gone Book'}; rpRender(); const stale=Object.keys(RP.f).length; const savedStale=JSON.parse(localStorage.getItem('mbev.reportsUi')).f;
+    RP.per='custom'; RP.from='2026-11-01'; RP.to=''; const hi=rpRange().hi; RP.per='month'; RP.from=''; rpRender();
+    return {rows:c.length-1, canc, note, stale, savedStale, hi, own:rpTabOf({kind:'prop', snap:{listed:{status:'own', tab:null}, act:0.62}}), win:+rpToWin({kind:'prop', odds:'-100', stake:1.1, fee:0.1}).toFixed(4)}; });
+  check('Los Chismosos: the CSV and the Settled list carry the cancelled bet that lost $1.50, so they add up to the headline', rv.rows===7 && /Cancelled/.test(rv.canc) && /,-1\.50,/.test(rv.canc) && /Cancelled · Novig · 2026-11-12 · −\$1\.50/.test(rv.note), {rows:rv.rows, canc:rv.canc.slice(0,120), note:rv.note});
+  check('Los Chismosos: a saved filter no menu can show (a book no longer in the log) is dropped, not left on unseen', rv.stale===0 && Object.keys(rv.savedStale||{}).length===0, {stale:rv.stale, saved:rv.savedStale});
+  check('Los Chismosos: a custom range with no To date ends today, as its label says', rv.hi==='2026-11-13', rv.hi);
+  check('Los Chismosos: an own bet has no tab (as in the CSV), even with a chance saved', rv.own==='', rv.own);
+  check('Los Chismosos: "To win" takes the fee off like betProfit ($1.10 at even money with a 10% fee wins $0.90)', rv.win===0.9, rv.win);
   // widths
   for(const W of [390,1000,1280,1960]){ await p.setViewportSize({width:W,height:900}); await p.evaluate(()=>{ document.querySelector('.rp-filt').open=true; document.querySelector('#rpPer [data-p="month"]').click(); }); await p.waitForTimeout(150);
     const r=await p.evaluate(()=>{ const out=[...document.querySelectorAll('#rpPanel .rp-ks, #rpPanel .rp-fg, #rpPanel .rp-seg, #rpPanel .rp-tw, #rpPanel .rp-line')].filter(e=>e.getBoundingClientRect().right>innerWidth+1).map(e=>e.className); return {side:document.documentElement.scrollWidth>innerWidth, out}; });
