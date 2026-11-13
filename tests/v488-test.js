@@ -49,5 +49,12 @@ const ROW={name:'Board Guy',team:'PHX',game:'CHA @ PHX',matchup:'CHA @ PHX',side
   await p.evaluate(()=>{ document.querySelector('.tab[data-view="v-log"]').click(); }); await p.waitForTimeout(400);
   const tot=await p.evaluate(()=>{ lcRender(); return [...document.querySelectorAll('#lcTotals .lc-tot')].map(x=>[...x.children].map(c=>c.textContent).join(' ')); });
   check('bet calendar: "November so far · 4 bets · 2–1–0 · staked $4.00 · settled …" and "All time · 5 bets" (October included)', /^November so far 4 bets 2–1–0 staked \$\d+\.\d\d settled \+\$0\.55 ROI \+18\.3% 1 open$/.test(tot[0]||'') && /^All time 5 bets 2–2–0 staked \$\d+\.\d\d settled −\$1\.45 ROI −29\.0% 1 open$/.test(tot[1]||''), tot);
+  const rv=await p.evaluate(()=>{ const late={kind:'prop', start:'2026-11-12T19:00:00Z', snap:{at:'2026-11-12T20:00:00Z', act:0.6}}, unp={kind:'prop', fair:'-200', snap:{at:'x', model:0.7, act:null}};
+    const r0=lcStats; removedBets.push({id:'rm1', lost:3, date:'2026-11-12', dateSet:true, start:'2026-11-12T23:00:00Z', name:'Cancelled'}); lcRender();
+    const t=[...document.querySelectorAll('#lcTotals .lc-tot')].map(x=>[...x.children].map(c=>c.textContent).join(' '));
+    return {late:bandCover(late,'act'), unp:bandCover(unp,'act'), t}; });
+  check('Los Chismosos: La Contadora’s chance saved after the start is shown but not judged', rv.late && rv.late.source==='act' && rv.late.cal===false, rv.late);
+  check('Los Chismosos: a changed line no one priced gets no model band (the card’s model number is not this bet’s)', rv.unp===null, rv.unp);
+  check('Los Chismosos: a cancelled bet that lost $3 counts in the month and all-time profit, as on the days', /settled −\$2\.45 /.test(rv.t[0]||'') && /settled −\$4\.45 /.test(rv.t[1]||''), rv.t);
   check('no page errors', !errs.length, errs);
   await b.close(); console.log('\n'+pass+' passed, '+fail+' failed'); process.exit(fail?1:0); })();
