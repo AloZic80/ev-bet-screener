@@ -6,6 +6,12 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.91 (Sally 11/13, owner "BUILD"): Reports step 3. `rpClvHtml`: settled singles with a close; mean, median, stake-weighted (free = 0),
+  beat / even (|CLV| < 0.001) / missed with record and profit; "CLV value proxy · if the closing price were fair" (never "expected earnings").
+  `rpEdgeHtml`: La Contadora expected profit = Σ stake × snap.actNet saved before the start (`rpPregame`; no start time = left out, said in the
+  text), not sold or free; expected wins = Σ snap.act over unique outcomes, the earliest valid pregame ticket speaks, then a push or sold one
+  drops the outcome; free bets in. Ranges: `rpBootGames` resamples whole games (memoised per data); the independent SD only in a labelled detail.
+  `saveLog` repaints an open report once per burst (`_rpPend`, 50 ms).
 - v4.90 (Sally 11/13, owner "BUILD"): Reports step 2. `rpBreakHtml` (sport, book, type, price, tab, band), `rpChartHtml` (cumulative settled
   profit by basis day), `rpMonthsHtml`, `rpBwHtml` (listed at 10 settled tickets and 5 outcomes, ranked at 20 and 10 outcomes or games, tiers never mix).
   Price = `entryPInfo`: fill cost ÷ shares (the fee is already in the cost), then stake ÷ (stake + to win) only without `paidReal` (a win writes
