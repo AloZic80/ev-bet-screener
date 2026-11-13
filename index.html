@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.87</title>
+<title>0xBeta Screener v4.88</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1480,6 +1480,10 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 .sc-pill.sh{white-space:normal; height:auto; min-height:26px; padding:3px 8px; line-height:1.3; max-width:100%; box-sizing:border-box; overflow-wrap:anywhere}
 /* v4.87: the entry-price band (a price, not a forecast) */
 .cv-chip.ep-chip{background:transparent; color:var(--soft); border:1.5px dashed var(--soft); font-weight:700; white-space:normal}
+/* v4.88: month and all-time totals under the bet calendar */
+.lc-totals{margin:10px 0 4px; display:grid; gap:6px}
+.lc-tot{display:flex; flex-wrap:wrap; gap:4px 14px; align-items:baseline; padding:8px 10px; border:1px solid var(--rule); border-radius:8px; background:var(--panel-2); font-size:13.5px}
+.lc-tot-h{min-width:120px}
 </style>
 </head>
 <body>
@@ -1488,7 +1492,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.87</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.88</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2085,6 +2089,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
   <h2>Bet calendar <span class="sub">by game day · tap a day</span></h2>
   <div class="lc-nav"><button type="button" class="ghost sm" id="lcPrev" aria-label="Previous month">‹</button><b id="lcTitle"></b><button type="button" class="ghost sm" id="lcNext" aria-label="Next month">›</button><button type="button" class="ghost sm" id="lcToday">Today</button></div>
   <div id="lcCal" aria-label="Your bets and settled profit by game day"></div>
+  <div id="lcTotals" class="lc-totals"></div>   <!-- v4.88 (Alonzo: "no total bets so far, staked, profit"): this month and all time -->
   <h3 id="lcDayTitle" style="margin:12px 0 2px"></h3>
   <div id="lcSum" class="lc-sum"></div>
   <div id="lcMaxBox"><div class="lc-max-l" id="lcMaxL"></div><progress class="lc-max" id="lcMax" value="0" max="1"></progress></div>
@@ -2211,7 +2216,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 </div>
 <div class="panel" id="studyPanel">   <!-- v4.31: Augi's Bet result study, on our graded singles -->
   <h2>Bet result study <span class="sub">5-point cover bands · did each band win as often as it said?</span></h2>
-  <div class="row" style="margin-top:0"><label class="bar-item">Game days <select id="studyScope" class="bar-sel"><option value="all">All</option><option value="month">This month</option><option value="week">Last 7 days</option><option value="day">Today</option></select></label><span class="meta" id="studySum" aria-live="polite"></span></div>
+  <div class="row" style="margin-top:0"><label class="bar-item">Game days <select id="studyScope" class="bar-sel"><option value="all">All</option><option value="month">This month</option><option value="week">Last 7 days</option><option value="day">Today</option></select></label><label class="bar-item">Bands by <select id="studyBand" class="bar-sel"><option value="act">La Contadora</option><option value="model">Model</option></select></label><span class="meta" id="studySum" aria-live="polite"></span></div>
   <div class="scroll"><table>
     <thead><tr><th>Projected cover</th><th class="num">Logged</th><th class="num">Pending</th><th class="num">W–L–P</th><th class="num">Avg prediction</th><th class="num">Hit rate</th><th class="num">Difference</th><th class="num">Profit</th></tr></thead>
     <tbody id="studyRows"></tbody>
@@ -2255,7 +2260,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 
 </div>
 <script>
-const SCREENER_VERSION='v4.87';
+const SCREENER_VERSION='v4.88';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3572,7 +3577,7 @@ function renderCore(rows,cfg){
       return (b.fairProb||0)-(a.fairProb||0);
     }
     if(sortBy==='cover'){
-      if((b.fairProb||0)!==(a.fairProb||0)) return (b.fairProb||0)-(a.fairProb||0);
+      const ca=a.actProb!=null?a.actProb:(a.fairProb||0), cb=b.actProb!=null?b.actProb:(b.fairProb||0); if(cb!==ca) return cb-ca;   /* v4.88 review: La Contadora first */
       return (b.stars==null?-1:b.stars)-(a.stars==null?-1:a.stars);
     }
     if(sortBy==='math') return (mathKey(b)-mathKey(a)) || (sentScore(b).total-sentScore(a).total);   // v4.28
@@ -3659,8 +3664,8 @@ function renderCore(rows,cfg){
     cells.market='<td style="text-align:center">'+mktCell+'</td>';
     cells.odds='<td style="text-align:center"><div class="odds-stack">'+(bookLogo(r.book)?logoTag(r.book):'<span class="meta">'+esc(bookLabel(r.book)||'book?')+'</span>')+
         '<span>'+esc(fmtOdds(r.offeredRaw))+'</span>'+orderTagHtml(r)+impTagHtml(r)+shopTagHtml(r)+maxTagHtml(r)+'<span class="mk-slot" data-idx="'+r.idx+'">'+makeTagHtml(r)+'</span></div></td>';
-    cells.cover='<td class="num">'+(r.fairProb==null?'—':'<span class="cover">'+pct(r.fairProb)+'</span>'+cvChipHtml(r.fairProb)+   // v4.31: Augi's cover band
-        '<div class="meta">fair '+esc(fmtOdds(r.fairRaw))+'</div>'+
+    cells.cover='<td class="num">'+(r.fairProb==null?'—':'<span class="cover" title="La Contadora’s chance (the one the stake uses)">'+pct(r.actProb!=null?r.actProb:r.fairProb)+'</span>'+cvChipActHtml(r)+   // v4.31: Augi's cover band; v4.88: La Contadora first
+        (r.actProb!=null && Math.abs(r.actProb-r.fairProb)>=0.0005?'<div class="meta">model '+pct(r.fairProb)+'</div>':'')+'<div class="meta">fair '+esc(fmtOdds(r.fairRaw))+'</div>'+
         (r.mktProb!=null?'<div class="meta" title="'+(r.mktSharp?'Market benchmark: BettingPros Market EV fair price, from the sharpest books':'Market benchmark: BettingPros consensus odds (mostly retail books), both sides devigged')+(r.logitGap!=null?' · logit gap '+(r.logitGap>=0?'+':'')+r.logitGap.toFixed(2):'')+'">mkt '+pct(r.mktProb)+(r.mktSharp?' <b>sharp</b>':'')+'</div>':''))+'</td>';
     cells.stars='<td class="num">'+starsHtml(r.stars)+'</td>';
     cells.hit='<td class="num">'+hitHtml(r)+'</td>';
@@ -3990,7 +3995,20 @@ function ageTxt(ms){ if(ms==null || !isFinite(ms)) return ''; const s=Math.max(0
 function cvBand(p){ return !(p>=0&&p<=1)?0:p<.45?1:p<.50?2:p<.55?3:p<.60?4:p<.65?5:p<.70?6:p<.75?7:p<.80?8:9; }
 function cvNames(){ return ['Unknown','Unlikely','Coin Flip','On the Line','Slight Lean','Lean','Solid','Strong','Heavy Favorite','High Cover']; }   /* v4.51 (owner: "i think so"): Augi's "Long Shot" (<45%) and "Feeling Lucky" (45-50%) shared their names with the 🔮 long shots and the 🍀 Feeling Lucky mode; they are Unlikely and Coin Flip here. The bands themselves are unchanged. */
 function cvRanges(){ return ['no cover saved','<45%','45–<50%','50–<55%','55–<60%','60–<65%','65–<70%','70–<75%','75–<80%','80%+']; }
-function logBandOf(b){ if(!b || b.kind==='parlay') return null; const c=betCover(b); return c?cvBand(c.p):0; }   /* v4.68: the fair odds saved with it, else the cover you typed */
+/* v4.88 (agreed with Sally, owner "BUILD" 11/13; Alonzo: the Lillard bet at −138 was filed "Heavy Favorite" by the model's 75.8%, while
+   La Contadora sized it at 64.4%): a band answers "what chance did the decision trust when the money went in?". Source, in order: La Contadora's
+   chance saved with the bet (snap.act) → a cover you typed → the model's fair (marked "model") → none. Never the price paid. The model's own
+   record stays one switch away in the Bet result study; the calibration panels keep scoring the model (betCover). Labels only. */
+function bandCover(b, view){ if(!b || b.kind==='parlay') return null; if(view==='model'){ const c=betCover(b); return c ? Object.assign({source:c.typed?'typed':'model'}, c) : null; }
+  const a=b.snap && b.snap.act!=null ? +b.snap.act : null;
+  if(a>0 && a<1){ const bs=b.snap.bandSnapshot, st=Date.parse(b.start||(b.gameInfo&&b.gameInfo.startISO)||''), at=Date.parse(b.snap.at||''), pre=bs && bs.pregame!=null ? !!bs.pregame : (isNaN(st)||isNaN(at) ? true : at<st);
+    return {p:a, cal:pre /* v4.88 review: taken after the start is shown, not judged */, typed:false, source:'act'}; }
+  const unpriced=!!(b.snap && b.snap.model!=null && b.snap.act===null);   /* v4.88 review: a line you changed that no one priced: the card's model number is not this bet's */
+  const t=b.cover; if(t && +t.p>0 && +t.p<1) return {p:+t.p, cal:!!t.pre, typed:true, source:'typed'};
+  const f=toProb(b.fair); if(f>0 && f<1 && !unpriced) return {p:f, cal:true, typed:false, source:'model'}; return null; }
+function bandSrcWord(s){ return s==='act'?'La Contadora':s==='typed'?'typed cover':s==='model'?'model':'none'; }
+function studyView(){ const el=document.getElementById('studyBand'); return el && el.value==='model' ? 'model' : 'act'; }
+function logBandOf(b, view){ if(!b || b.kind==='parlay') return null; const c=bandCover(b, view||'act'); return c?cvBand(c.p):0; }   /* v4.68: the fair odds saved with it, else the cover you typed; v4.88: La Contadora first */
 /* v4.68 (agreed with ChatGPT, owner "BUILD" 11/11): a logged single's cover: the fair odds saved with it, else the Cover % typed in the bet editor.
    cal: it may be used for hit rate, calibration and Brier (a saved fair, or a cover typed before the game started); a cover typed after kickoff,
    or with no known kickoff, is shown and banded but never judged. */
@@ -4007,7 +4025,7 @@ function outcomeCounts(list){ const S=(list||[]).filter(b=>b && b.kind!=='parlay
    and kept out of calibration, the forecast bands, EV and the Scorecard. */
 function entryP(b){ if(!b) return null; const c=+b.fillCost, q=+b.fillQty; if(c>0 && q>0 && c/q<1 && !/^(import|user)$/.test(String(b.accountingSource||'')) /* a price you corrected wins */) return c/q;
   const p=toProb(b.odds), f=(b.snap && b.snap.fee!=null) ? +b.snap.fee : (b.fee!=null ? +b.fee : 0); return (p>0 && p<1) ? Math.min(0.999, p*(1+(f>0?f:0))) : null; }
-function isEntryBet(b){ return !!(b && b.kind!=='parlay' && b.autoFrom && !betCover(b) && entryP(b)!=null); }
+function isEntryBet(b){ return !!(b && b.kind!=='parlay' && b.autoFrom && !bandCover(b,'act') && entryP(b)!=null); }
 function entryChip(b){ const p=entryP(b), k=cvBand(p);
   return '<button type="button" class="cv-chip ep-chip lbf" data-band="0" title="The win rate this price needed to break even, fee included ('+(p*100).toFixed(1)+'%: the '+cvNames()[k]+' range by price). A book fill that matched no board card: no forecast was saved, so this is not a cover band and says nothing about an edge. Tap to see the bets with no forecast.">ENTRY PRICE · '+(p*100).toFixed(1)+'% · '+cvNames()[k]+' · no forecast</button>'; }
 function renderEntryBands(list){ const el=document.getElementById('entryRows'); if(!el) return; const B=list.filter(isEntryBet), box=document.getElementById('entryPanel'); if(box) box.hidden=!B.length; if(!B.length){ el.innerHTML=''; return; }
@@ -4016,25 +4034,28 @@ function renderEntryBands(list){ const el=document.getElementById('entryRows'); 
     if(r==='win'||r==='loss'){ g.be+=p; g.ng++; } const pr=betProfit(b); if(pr!=null){ g.pl+=pr; g.st+=b.free?0:(+b.stake||0); } });
   const pc=x=>(x*100).toFixed(1)+'%', usd=x=>(x>=0?'+':'−')+'$'+Math.abs(x).toFixed(2);
   el.innerHTML=[1,2,3,4,5,6,7,8,9].filter(k=>G[k]).map(k=>{ const g=G[k]; return '<tr><td><span class="cv-chip ep-chip">'+cvNames()[k]+'</span> <span class="meta">'+cvRanges()[k]+'</span></td><td class="num">'+g.n+'</td><td class="num">'+g.pend+'</td><td class="num">'+g.w+'–'+g.l+'–'+g.pu+'</td><td class="num">'+(g.ng?pc(g.be/g.ng):'—')+'</td><td class="num">'+(g.ng?pc(g.w/g.ng):'—')+'</td><td class="num">$'+g.st.toFixed(2)+'</td><td class="num"><b class="'+(g.pl>=0?'pl-up':'pl-down')+'">'+usd(g.pl)+'</b></td><td class="num">'+(g.st>0?(g.pl>=0?'+':'−')+Math.abs(g.pl/g.st*100).toFixed(1)+'%':'—')+'</td></tr>'; }).join(''); }
-function logBandChip(b){ const k=logBandOf(b); if(k==null) return ''; if(k===0 && isEntryBet(b)) return entryChip(b);   /* v4.87 */ const c=betCover(b), p=c?c.p:null;
-  return '<button type="button" class="cv-chip cv-'+k+' lbf" data-band="'+k+'" title="'+(k?(c.typed?'Cover you typed ':'Projected cover ')+(p*100).toFixed(1)+'%'+(c.typed?(c.cal?' before the game':' · added after the game started: shown, not judged'):' when you took it')+' · '+cvRanges()[k]:'No cover was saved with this bet')+'. Tap to see only '+(k?cvNames()[k]:'these')+' bets, with their record">'+(k?cvNames()[k]:'no band')+'</button>'; }
+function logBandChip(b){ const k=logBandOf(b); if(k==null) return ''; if(k===0 && isEntryBet(b)) return entryChip(b);   /* v4.87 */ const c=bandCover(b,'act'), p=c?c.p:null, m=betCover(b);
+  return '<button type="button" class="cv-chip cv-'+k+' lbf" data-band="'+k+'" title="'+(k?(c.source==='act'?'La Contadora ':c.typed?'Cover you typed ':'Model (no La Contadora chance saved) ')+(p*100).toFixed(1)+'%'+(c.typed?(c.cal?' before the game':' · added after the game started: shown, not judged'):' when you took it')+' · '+cvRanges()[k]+(c.source==='act' && m && !m.typed && Math.abs(m.p-p)>=0.0005?' · the model said '+(m.p*100).toFixed(1)+'% ('+cvNames()[cvBand(m.p)]+')':''):'No cover was saved with this bet')+'. Tap to see only '+(k?cvNames()[k]:'these')+' bets, with their record">'+(k?cvNames()[k]:'no band')+'</button>'; }
+function cvChipActHtml(r){ if(!r) return ''; const a=r.actProb!=null ? r.actProb : null, p=a!=null ? a : r.fairProb, b=cvBand(p); if(!b || p==null) return '';
+  return '<span class="cv-chip cv-'+b+'" title="'+(a!=null?'La Contadora '+(a*100).toFixed(1)+'%':'Model '+(p*100).toFixed(1)+'% (no market to blend)')+' · '+cvRanges()[b]+(a!=null && r.fairProb!=null && Math.abs(r.fairProb-a)>=0.0005?' · the model says '+(r.fairProb*100).toFixed(1)+'% ('+cvNames()[cvBand(r.fairProb)]+')':'')+' (5-point bands; a label, not a rule)">'+cvNames()[b]+'</span>'; }   /* v4.88 */
 function cvChipHtml(p){ const b=cvBand(p); return b?'<span class="cv-chip cv-'+b+'" title="Projected cover '+(p*100).toFixed(1)+'% · '+cvRanges()[b]+' (Augi\'s 5-point bands; a label, not a rule)">'+cvNames()[b]+'</span>':''; }
 function renderStudy(){ const el=document.getElementById('studyRows'); if(!el) return;
   const scope=(document.getElementById('studyScope')||{}).value||'all', today=ctDay(Date.now()), d0=new Date(today+'T12:00:00');
   const inScope=b=>{ const d=gameDayOf(b); if(scope==='all') return true; if(!d) return false; if(scope==='day') return d===today; if(scope==='month') return d.slice(0,7)===today.slice(0,7);
     const dd=new Date(d+'T12:00:00'); return Math.abs(dd-d0)<7*864e5 && dd<=d0; };
   const G=Array.from({length:10},()=>({n:0,pend:0,w:0,l:0,p:0,pred:0,g:0,cw:0,net:0,money:0})), oSeen=new Set(), inS=logged.filter(b=>b.kind!=='parlay' && inScope(b));
-  inS.forEach(b=>{ const c=betCover(b), p=c?c.p:null, k=logBandOf(b), g=G[k]; g.n++;   // v4.66: a bet with no fair odds saved went into Unlikely at 0% (toProb gives 0); it is "no cover saved" now
+  const V=studyView(), SRC={act:0, typed:0, model:0, none:0};   /* v4.88: La Contadora (default) or the model */
+  inS.forEach(b=>{ const c=bandCover(b,V), p=c?c.p:null, k=c?cvBand(p):0, g=G[k]; g.n++; SRC[c?c.source:'none']++;   // v4.66: a bet with no fair odds saved went into Unlikely at 0% (toProb gives 0); it is "no cover saved" now
     const r=b.sold?'sold':b.result; if(r==='win') g.w++; else if(r==='loss') g.l++; else if(r==='push') g.p++; else if(r!=='sold') g.pend++;
     if((r==='win'||r==='loss') && k && c.cal){ const ok=outcomeKey(b); if(!oSeen.has(ok)){ oSeen.add(ok); g.g++; g.pred+=p; if(r==='win') g.cw++; } }   /* v4.68: hit rate and the prediction once per outcome, and only from a cover known before the game */
     const pr=betProfit(b); if(pr!=null){ g.net+=pr; g.money++; } });
   try{ renderEntryBands(inS); }catch(e){ console.error(e); }   /* v4.87: the same game days */
   const pc=x=>(x*100).toFixed(1)+'%', usd=x=>(x>=0?'+':'−')+'$'+Math.abs(x).toFixed(2);
   el.innerHTML=[1,2,3,4,5,6,7,8,9,0].map(k=>{ const g=G[k]; if(!g.n) return ''; const avg=g.g?g.pred/g.g:null, hit=g.g?g.cw/g.g:null;   /* v4.68: the same bets for both */
-    return '<tr><td>'+(k?'<button type="button" class="cv-chip cv-'+k+' lbf" data-band="'+k+'" title="Tap to see these bets in the Bet log">'+cvNames()[k]+'</button> <span class="meta">'+cvRanges()[k]+'</span>':'<button type="button" class="linkbtn lbf" data-band="0" title="Tap to see these bets in the Bet log">'+cvRanges()[0]+'</button>')+'</td><td class="num">'+g.n+'</td><td class="num">'+g.pend+'</td><td class="num">'+g.w+'–'+g.l+'–'+g.p+'</td><td class="num">'+(avg==null?'—':pc(avg))+'</td><td class="num">'+(hit==null?'—':pc(hit))+'</td><td class="num">'+(avg==null||hit==null?'—':(hit>=avg?'+':'−')+(Math.abs(hit-avg)*100).toFixed(1)+' pts')+'</td><td class="num '+(g.net>=0?'pl-up':'pl-down')+'">'+(g.money?usd(g.net):'—')+'</td></tr>'; }).join('')||'<tr><td colspan="8" class="meta">No singles in this range yet.</td></tr>';
+    return '<tr><td>'+(k?(V==='model'?'<span class="cv-chip cv-'+k+'">'+cvNames()[k]+'</span>':'<button type="button" class="cv-chip cv-'+k+' lbf" data-band="'+k+'" title="Tap to see these bets in the Bet log">'+cvNames()[k]+'</button>')+' <span class="meta">'+cvRanges()[k]+'</span>':(V==='model'?'<span>'+cvRanges()[0]+'</span>':'<button type="button" class="linkbtn lbf" data-band="0" title="Tap to see these bets in the Bet log">'+cvRanges()[0]+'</button>'))+'</td><td class="num">'+g.n+'</td><td class="num">'+g.pend+'</td><td class="num">'+g.w+'–'+g.l+'–'+g.p+'</td><td class="num">'+(avg==null?'—':pc(avg))+'</td><td class="num">'+(hit==null?'—':pc(hit)+(()=>{ const n=g.g, z=1.96, ph=g.cw/n, d=1+z*z/n, c=(ph+z*z/(2*n))/d, h=z*Math.sqrt(ph*(1-ph)/n+z*z/(4*n*n))/d; return '<div class="meta" title="95% Wilson range: with '+n+' outcomes the true rate is likely in here">'+Math.round(Math.max(0,c-h)*100)+'–'+Math.round(Math.min(1,c+h)*100)+'%</div>'; })() /* v4.88 */)+'</td><td class="num">'+(avg==null||hit==null?'—':(hit>=avg?'+':'−')+(Math.abs(hit-avg)*100).toFixed(1)+' pts')+'</td><td class="num '+(g.net>=0?'pl-up':'pl-down')+'">'+(g.money?usd(g.net):'—')+'</td></tr>'; }).join('')||'<tr><td colspan="8" class="meta">No singles in this range yet.</td></tr>';
   const graded=G.reduce((t,g)=>t+g.w+g.l,0), n=G.reduce((t,g)=>t+g.n,0), sm=document.getElementById('studySum');
   const oc=outcomeCounts(inS);
-  if(sm) sm.textContent=n+' singles · '+oc.tickets+' settled tickets · '+oc.outcomes+' unique outcomes · '+oc.games+' unique games · '+graded+' graded wins and losses'+(graded<30?' · early sample: small groups swing a lot, so do not change rules from this yet':' · a band whose hit rate stays below its average prediction over hundreds of bets is the model being too sure'); }
+  if(sm) sm.textContent='Band source: '+(V==='model'?'Model':'La Contadora')+' · '+SRC.act+' La Contadora · '+SRC.typed+' typed · '+SRC.model+' model'+(SRC.none?' · '+SRC.none+' none':'')+' · '+n+' singles · '+oc.tickets+' settled tickets · '+oc.outcomes+' unique outcomes · '+oc.games+' unique games · '+graded+' graded wins and losses'+(graded<30?' · early sample: small groups swing a lot, so do not change rules from this yet':' · a band whose hit rate stays below its average prediction over hundreds of bets is the model being too sure'); }
 /* v4.36 (Alonzo: "Build", Augi's screens step 3 of 5: the Bet log): Augi's bet calendar on our log. A month of game days (each: bets and the
    settled profit, grey while only open bets), tap a day for its summary (bets, staked, settled profit, in play, to play, pending), the daily max
    as a bar (cfg.dayMax, our version of his daily goal), his cover range breakdown for that day (singles, plus parlay legs from the Parlays tab),
@@ -4070,6 +4091,12 @@ function lcRender(){ const cal=document.getElementById('lcCal'); if(!cal) return
       lab=k+': '+x.n+' bets, '+(x.settled?'settled '+lcUsd(x.profit):'open, not settled'); }
     h+='<button type="button" class="lc-d'+(k===today?' today':'')+(k>today?' fut':'')+'" data-day="'+k+'" aria-pressed="'+(k===lcDay)+'" aria-label="'+esc(lab)+'"><b>'+d+'</b>'+n+v+'</button>'; }
   cal.innerHTML=h+'</div>';
+  /* v4.88 (Alonzo: "i dont see anything like a month so far report ... no total bets so far, staked, profit"): the month shown and all time,
+     by game day, from lcStats (betProfit: the same money as the days and the Track by table). Parlays included, like the days. */
+  try{ const tot=document.getElementById('lcTotals'); if(tot){ const row=(lab,L,R)=>{ const g=lcStats(L); (R||[]).forEach(b=>{ g.profit-=b.lost; g.stSet+=0; }); const roi=g.stSet>0?g.profit/g.stSet:null;   /* v4.88 review: a cancelled bet that lost money counts, as on the days and in Track by */
+      return '<div class="lc-tot"><b class="lc-tot-h">'+lab+'</b><span>'+g.n+' bet'+(g.n===1?'':'s')+'</span><span>'+g.w+'–'+g.l+'–'+g.p+'</span><span>staked $'+g.staked.toFixed(2)+'</span><span>settled <b class="'+(g.profit>0.005?'pl-up':g.profit<-0.005?'pl-down':'')+'">'+lcUsd(g.profit)+'</b></span><span>ROI '+(roi==null?'—':(roi>=0?'+':'−')+Math.abs(roi*100).toFixed(1)+'%')+'</span><span>'+g.pend+' open</span></div>'; };
+    const mName=first.toLocaleDateString('en-US',{month:'long',timeZone:'UTC'});
+    tot.innerHTML=row(mName+(lcMonth===today.slice(0,7)?' so far':''), logged.filter(b=>String(gameDayOf(b)||'').slice(0,7)===lcMonth), removedBets.filter(b=>b.lost>0 && String(gameDayOf(b)||'').slice(0,7)===lcMonth))+row('All time', logged.filter(b=>gameDayOf(b)), removedBets.filter(b=>b.lost>0 && gameDayOf(b))); } }catch(e){ console.error(e); }
   const x=days[lcDay], ds=(dayStats()[lcDay])||null, cfg=cfgRead();
   document.getElementById('lcDayTitle').textContent=new Date(lcDay+'T12:00:00Z').toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric',timeZone:'UTC'})+(lcDay===today?' · today':'');
   const tile=(l,v,c)=>'<div>'+l+'<strong'+(c?' class="'+c+'"':'')+'>'+v+'</strong></div>';
@@ -4269,7 +4296,7 @@ async function hubOpen(ev, keep){ const h=hubState(), box=document.getElementByI
   const rows=hubRows(h.sport, ev), q=(h.q||'').toLowerCase().trim(), shownR=rows.filter(r=>!q || (r.name+' '+r.market+' '+(r.book||'')).toLowerCase().includes(q));
   const dec=r=>{ const ls=liveState(r); return r.prior||r.waitOrder?'<b class="hub-dec prior">ALREADY BET</b>':((ls==='closed'||rowAwol(r)) && r.pass && hubState3(ev)==='scheduled')?'<span class="hub-dec skip">AWOL</span>' /* v4.81 */:(ls==='started'||ls==='closed'||hubState3(ev)!=='scheduled')?'<span class="hub-dec skip">STARTED</span>':(r.pass&&r.stake>0)?'<b class="hub-dec pass">BET $'+(+r.stake).toFixed(2)+'</b>':'<span class="hub-dec skip">skip</span>'; };
   const propsH='<div class="row" style="margin:6px 0"><input type="search" id="hubQ" class="bar-search" placeholder="Search this game: player, stat, book…" aria-label="Search this game" value="'+esc(h.q||'')+'"><span class="meta">'+shownR.length+' of '+rows.length+' on your board</span></div>'+
-    (rows.length?'<ul class="hub-list">'+shownR.slice(0,40).map(r=>'<li>'+dec(r)+' <b>'+esc(r.name)+'</b> '+esc((r.side==='O'?'Over ':r.side==='U'?'Under ':'')+(r.market||''))+' <span class="meta">'+esc(String(r.offeredRaw||''))+' · '+esc(bookLabel(r.book)||'')+((r.actNet!=null?r.actNet:r.net)!=null?' · EV '+((r.actNet!=null?r.actNet:r.net)>=0?'+':'')+((r.actNet!=null?r.actNet:r.net)*100).toFixed(1)+'%':'')+'</span>'+cvChipHtml(r.fairProb)+' <button type="button" class="linkbtn hub-see" data-fam="'+modeFamOf(r)+'" data-name="'+esc(r.name)+'">See on Board ›</button></li>').join('')+'</ul>':'<div class="meta">This game has no props on your board. Load its sport on the Board first (BettingPros or another source).</div>');
+    (rows.length?'<ul class="hub-list">'+shownR.slice(0,40).map(r=>'<li>'+dec(r)+' <b>'+esc(r.name)+'</b> '+esc((r.side==='O'?'Over ':r.side==='U'?'Under ':'')+(r.market||''))+' <span class="meta">'+esc(String(r.offeredRaw||''))+' · '+esc(bookLabel(r.book)||'')+((r.actNet!=null?r.actNet:r.net)!=null?' · EV '+((r.actNet!=null?r.actNet:r.net)>=0?'+':'')+((r.actNet!=null?r.actNet:r.net)*100).toFixed(1)+'%':'')+'</span>'+cvChipActHtml(r) /* v4.88 review */+' <button type="button" class="linkbtn hub-see" data-fam="'+modeFamOf(r)+'" data-name="'+esc(r.name)+'">See on Board ›</button></li>').join('')+'</ul>':'<div class="meta">This game has no props on your board. Load its sport on the Board first (BettingPros or another source).</div>');
   box.hidden=false;
   box.innerHTML='<div class="hub-head"><button type="button" class="linkbtn hub-close">‹ All games</button><b>'+esc(T.a.name||T.a.ab)+' '+esc(String(T.a.score))+' @ '+esc(T.h.name||T.h.ab)+' '+esc(String(T.h.score))+'</b> <span class="meta">'+esc(st.detail||st.shortDetail||'')+'</span></div>'+
     lineH+'<h3 class="set-h">Last plays</h3>'+playsH+'<h3 class="set-h">Your bets in this game</h3>'+mineH+'<h3 class="set-h">Props on your board for this game</h3>'+propsH;
@@ -4439,7 +4466,7 @@ function placeCardHtml(r,cfg,o){
       '<div class="pc-nm" title="'+esc(r.name)+'">'+esc(r.name)+(code&&code!==String(r.name||'').toUpperCase()?' <span class="sc-tm">'+esc(code)+'</span>':'')+'</div>'+
       '<div class="sc-stat" title="'+esc(mname)+'">'+esc(statTxt)+'</div></div>'+
       '<div class="sc-game"><b>'+esc(giWhen(gi)||'game time not found')+'</b><span>'+esc(gameTxt)+'</span></div></div>'+
-    '<div class="sc-tags">'+cvChipHtml(r.fairProb)+tags+'</div>'+   // v4.31: Augi's cover band
+    '<div class="sc-tags">'+cvChipActHtml(r)+tags+'</div>'+   // v4.31: Augi's cover band; v4.88: La Contadora's chance
     '<div class="sc-bet"><div class="sc-pick">'+esc(pickTxt)+(X?'':impTagHtml(r))+'</div>'+   // v4.10's line: the price as a %, OK to / look elsewhere, the math on hover
       '<div class="sc-money"><b>'+(st>0?'$'+st.toFixed(2):(r.hold&&!X)?'$0':'—')+'</b><span>'+((r.hold&&!X&&!(st>0))?(r.hold.why==='awol'?'if found':'if refreshed')+': up to $'+r.hold.stake.toFixed(2) /* v4.83 */:pay!=null?(isX?'pays $'+pay.toFixed(2):'wins $'+Math.max(0,pay-st).toFixed(2)):'stake')+'</span>'+(lim?'<span class="sc-lim">'+esc(lim)+'</span>':'')+'</div>'+
       (()=>{ const hl=slip?slipLinkFor(r,st):null;   // v4.42: one tap on a phone: the chip is a real link when the book's slip is already known
@@ -4599,7 +4626,7 @@ function openBetEditor(tr, r, opt){
       (late4?'<span class="meta eb-late" style="color:var(--warn)">Started over 4 hours ago, so it will not grade itself: set Result, or mark it later in the Bet log</span>':''):'')+   // v3.57
     (opt.edit?'<label title="The day the game is played. Change it if you picked the wrong one.">Game day <input class="eb-date" type="date" value="'+esc(gameDayOf(opt.edit)||opt.edit.date||'')+'"></label>':'')+   // v3.88: the date can be fixed when editing
     (opt.edit?(opt.edit.placedAtSource==='book_fill'?'<span class="meta" title="The time the book says you placed it">Placed '+esc(new Date(opt.edit.placedAt).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}))+' (book)</span>':'<label title="When you placed it at the book (your time). Optional.">Placed at <input class="eb-placed" type="datetime-local" value="'+esc(placedLocalVal(opt.edit.placedAt))+'"></label>'):'')+   /* v4.73 */
-    (opt.edit && opt.edit.kind!=='parlay'?'<label title="Optional. The chance you saw for this bet (for example on BettingPros). It gives the bet its cover band when no fair odds were saved. Typed before the game: it counts in the hit rate and calibration. Typed after the game started: shown only.">Cover % <input class="eb-cover" type="number" step="0.1" min="1" max="99" placeholder="optional" style="width:70px" value="'+(opt.edit.cover&&+opt.edit.cover.p>0?(+opt.edit.cover.p*100).toFixed(1):'')+'"></label>':'')+   /* v4.68 */
+    (opt.edit && opt.edit.kind!=='parlay'?'<label title="Optional. The chance you saw for this bet (for example on BettingPros). It gives the bet its cover band when no La Contadora chance was saved (v4.88). Typed before the game: it counts in the hit rate and calibration. Typed after the game started: shown only.">Cover % <input class="eb-cover" type="number" step="0.1" min="1" max="99" placeholder="optional" style="width:70px" value="'+(opt.edit.cover&&+opt.edit.cover.p>0?(+opt.edit.cover.p*100).toFixed(1):'')+'"></label>':'')+   /* v4.68 */
     (opt.edit?'<span class="eb-money"><b class="eb-money-h">Real money</b>'+   // v3.98 (Alonzo: "I want to have the real total amounts I get back"): boosts, free bets, what the book really paid
       '<label class="bar-check" title="A free bet (bonus bet) is not your money: if it loses you lose $0, if it wins you get the winnings. It does not count as money you staked."><input type="checkbox" class="eb-free"'+(opt.edit.free?' checked':'')+'> 🎁 Free bet</label>'+
       '<label title="Everything the book paid you, your stake included (a boost: the boosted amount). Type this or Winnings: the other one fills in.">Got back $ <input class="eb-back" type="number" step="0.01" min="0" style="width:90px"></label>'+
@@ -5815,7 +5842,8 @@ function addToLog(r){
       act:(()=>{ const q=r.noAct?null:okProb(r.actFair!==undefined?r.actFair:r.fairProb, r.actMkt!==undefined?r.actMkt:r.mktProb); return q!=null?+q.toFixed(4):null; })(), actNet:(()=>{ const a=r.noAct?null:actNetOf(r.actFair!==undefined?r.actFair:r.fairProb, r.actMkt!==undefined?r.actMkt:r.mktProb, r.offeredProb, r.fee); return a!=null?+a.toFixed(4):null; })(), policy:POLICY.math,   /* v4.53: La Contadora's chance and EV when you took it, and the math policy; older bets do not have these and are left as they are */
       sent:(()=>{ try{ if(!r.sentOk||r.tier||r.xc||r.fairProb==null) return undefined; const z=sentScore(r); return {t:z.total, t1:z.total1, e:z.e, m:z.m, f:z.f, s:z.s, pol:POLICY.sent}; }catch(e){ return undefined; } })(),   /* v4.53: the Sentinel score when you took it (t1 = what it was with the Edge on the model's EV) */
       ring: r.ring&&!(r.tier||r.xc) ? {n:r.ring.n, of:r.ring.of, miss:r.ring.miss.slice(0,3)} : undefined,   // v4.50: the ◎ Perfecta checks when you took it
-      listed:(()=>{ try{ return listedOf(r); }catch(e){ return undefined; } })(),   /* v4.86: tab, selection, classification, availability */
+      listed:(()=>{ try{ return listedOf(r); }catch(e){ return undefined; } })(),
+      bandSnapshot:(()=>{ try{ const q=r.noAct?null:okProb(r.actFair!==undefined?r.actFair:r.fairProb, r.actMkt!==undefined?r.actMkt:r.mktProb), st=Date.parse((r.gameInfo&&r.gameInfo.startISO)||r.gameStart||''); return q!=null ? {p:+q.toFixed(4), source:'act', enteredAt:new Date().toISOString(), pregame:isNaN(st)?null:Date.now()<st, thresholdsPolicy:'cover-bands-v1', selectionPolicy:POLICY.math, displayPolicy:'bands-act-v1', appVersion:SCREENER_VERSION} : undefined; }catch(e){ return undefined; } })(),   /* v4.88: the band when taken */   /* v4.86: tab, selection, classification, availability */
       syntheticHold:(()=>{ const h=shNow(r); return h ? (h.ok ? {type:h.type, quoted:h.quoted, feeAdjusted:h.feeAdjusted, sides:h.sides.map(x=>Object.assign({},x)), policy:h.policy} : {unavailable:h.why, policy:shCfg().pol}) : undefined; })(),   /* v4.84: the hold when you took it (a label) */
       said: r.said || saidOf(r), mode: betMode }
   });
@@ -5848,7 +5876,7 @@ function renderLog(){ setTimeout(()=>{ try{ csvDays(); }catch(e){} try{ lcRender
   const tb=document.getElementById('logBody'), empty=document.getElementById('logEmpty');
   tb.innerHTML='';
   { const lf=document.getElementById('logFilter'); if(lf){ const bf=logBandFilter!=null; lf.style.display=(logDayFilter||bf)?'flex':'none';
-    let bandTxt=''; if(bf){ let n=0,w=0,l=0,ps=0,pend=0,net=0,pred=0,g=0,cw=0; const oS=new Set(); logged.forEach(b=>{ if(logBandOf(b)!==logBandFilter) return; if(logDayFilter && (gameDayOf(b)||b.date||'')!==logDayFilter) return; n++; const r=b.sold?'sold':b.result; if(r==='win') w++; else if(r==='loss') l++; else if(r==='push') ps++; else if(r!=='sold') pend++; const c=betCover(b); if((r==='win'||r==='loss') && logBandFilter && c && c.cal && !oS.has(outcomeKey(b))){ oS.add(outcomeKey(b)); g++; pred+=c.p; if(r==='win') cw++; } const pr=betProfit(b); if(pr!=null) net+=pr; });   /* v4.66 */   /* v4.68: won % and expected % on the same bets: once per outcome, covers known before the game */
+    let bandTxt=''; if(bf){ let n=0,w=0,l=0,ps=0,pend=0,net=0,pred=0,g=0,cw=0; const oS=new Set(); logged.forEach(b=>{ if(logBandOf(b)!==logBandFilter) return; if(logDayFilter && (gameDayOf(b)||b.date||'')!==logDayFilter) return; n++; const r=b.sold?'sold':b.result; if(r==='win') w++; else if(r==='loss') l++; else if(r==='push') ps++; else if(r!=='sold') pend++; const c=bandCover(b,'act') /* v4.88 review */; if((r==='win'||r==='loss') && logBandFilter && c && c.cal && !oS.has(outcomeKey(b))){ oS.add(outcomeKey(b)); g++; pred+=c.p; if(r==='win') cw++; } const pr=betProfit(b); if(pr!=null) net+=pr; });   /* v4.66 */   /* v4.68: won % and expected % on the same bets: once per outcome, covers known before the game */
       bandTxt=(logBandFilter?'<span class="cv-chip cv-'+logBandFilter+'">'+cvNames()[logBandFilter]+'</span><span class="meta">'+cvRanges()[logBandFilter]+'</span>':'<b>no band</b> <span class="meta">(no cover saved)</span>')+' <span class="lbf-stats">· '+n+' bet'+(n===1?'':'s')+' · '+w+'–'+l+'–'+ps+(pend?' · '+pend+' open':'')+(g?' · won '+Math.round(cw/g*100)+'% vs '+Math.round(pred/g*100)+'% expected':'')+' · <b class="'+(net>=0?'pl-up':'pl-down')+'">'+(net>=0?'+':'−')+'$'+Math.abs(net).toFixed(2)+'</b></span>'; }
     if(logDayFilter||bf) lf.innerHTML='<span>Showing '+(bf?bandTxt+' ':'bets ')+(logDayFilter?(bf?'· ':'')+'played <b>'+esc(new Date(logDayFilter+'T12:00:00Z').toLocaleDateString('en-US',{weekday:'short',month:'numeric',day:'numeric',timeZone:'UTC'}))+'</b>':'')+'</span><button type="button" class="ghost sm" id="logFilterOff">show all</button>'; } }
   // v3.57: newest first, one row per game day that opens and closes (days still open, yesterday and later, and days with a bet to check start open)
@@ -7872,7 +7900,7 @@ function colVal(r,k){
     case 'market': { const m=(r.market||'').match(/^([+-]?[\d.]+)\s+(.*)$/);
       return m ? m[2].toLowerCase()+' '+String(parseFloat(m[1])+1000).padStart(8,'0') : (r.market||'').toLowerCase(); }
     case 'odds': { const v=parseFloat(r.offeredRaw); return isNaN(v)?null:v; }
-    case 'cover': return r.fairProb;
+    case 'cover': return r.actProb!=null?r.actProb:r.fairProb;   /* v4.88 review: the number the cell shows */
     case 'stars': return r.stars;
     case 'hit': return r.l15N ? r.l15Hit : (r.seasonN ? r.seasonHit : null);
     case 'ev': return r.gross;
@@ -9309,6 +9337,7 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
 }));
 document.body.dataset.view=(document.querySelector('.view.on')||{}).id||'v-board';   // v4.02
 try{ document.getElementById('studyScope').addEventListener('change',()=>{ try{ renderStudy(); }catch(e){} }); }catch(e){}   // v4.31
+try{ document.getElementById('studyBand').addEventListener('change',()=>{ try{ renderStudy(); }catch(e){} }); }catch(e){}   // v4.88: a view only, nothing saved
 /* v4.29 (Alonzo, after seeing Augi's Odds Board: "I like his GUI, it is cleaner ... his 5 tabs"): Board, Live Games, Parlay, Bet log and Settings
    in the bar; Leagues, Parole and Moneylines in the row under Board, + Add a bet and Performance under Bet log. Every view and every tab button is
    the same as before (same data-view, same handler), so every link that opens a tab still works. body[data-group] says which row shows; the main
@@ -9420,7 +9449,7 @@ function csvDays(){ const sel=document.getElementById('csvDay'); if(!sel) return
   if(sel.innerHTML!==h){ sel.innerHTML=h; sel.value=D[cur]?cur:''; } }
 function logCsv(day){
   const q=s=>{ s=s===undefined||s===null?'':String(s); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
-  const head=['game day','placed','bet','pick','sport','type','book','odds','implied %','stake $','free bet','result','profit $','fair %','EV after fees %','closing','CLV %','game','kickoff (CT)','legs','stat','mode (old)','source','band','La Contadora EV %','market chance %','La Contadora chance %','policy','app version','listed tab','selection','classification','availability','in Scorecard','derived tab (tabs-v476)'];   /* v4.86: mode (old) keeps its old meaning; the new columns come from the bet's record, blank before v4.86 */   /* v4.68: frozen from the bet's snapshot, blank when missing */   // v4.67 (owner: "Yes to all"): the stat (sacks showed as "O 0.5"), the mode, where it came from, its cover band, and her EV when taken (the EV column is the model’s)
+  const head=['game day','placed','bet','pick','sport','type','book','odds','implied %','stake $','free bet','result','profit $','fair %','EV after fees %','closing','CLV %','game','kickoff (CT)','legs','stat','mode (old)','source','band','La Contadora EV %','market chance %','La Contadora chance %','policy','app version','listed tab','selection','classification','availability','in Scorecard','derived tab (tabs-v476)','band source'];   /* v4.86: mode (old) keeps its old meaning; the new columns come from the bet's record, blank before v4.86 */   /* v4.68: frozen from the bet's snapshot, blank when missing */   // v4.67 (owner: "Yes to all"): the stat (sacks showed as "O 0.5"), the mode, where it came from, its cover band, and her EV when taken (the EV column is the model’s)
   const rows=logged.map((b,i)=>({b,i,d:gameDayOf(b)||b.date||''})).filter(x=>!day||x.d===day).sort((a,b)=>(b.d.localeCompare(a.d))||(b.i-a.i)).map(({b,d})=>{
     const p=toProb(b.odds), pr=betProfit(b), c=clv(b), st=b.start||(b.gameInfo&&b.gameInfo.startISO);
     const res=b.sold?'sold':b.result==='win'?'win':b.result==='loss'?'loss':b.result==='push'?'push':'open';
@@ -9429,10 +9458,10 @@ function logCsv(day){
       b.fair!=null?b.fair:(b.fairProb!=null?(b.fairProb*100).toFixed(1):''), b.net!=null?(b.net*100).toFixed(2):'', b.closing||'', c!==null?(c*100).toFixed(2):'',
       b.game||b.matchup||'', st?new Date(st).toLocaleString('en-US',{timeZone:'America/Chicago'}):'', b.kind==='parlay'&&b.parlay?String(b.parlay.legs||''):'',
       b.kind==='parlay'?'':(b.market||''), b.tier==='lucky'?'Suertudo (just missed)':b.tier==='hail'?'Brujo (Hail Mary)':b.gapRes?'Moneyline gap research':(b.kind==='parlay'?'':'Safe'),
-      (()=>{ const d=document.createElement('div'); d.innerHTML=srcTagCore(b); return d.textContent.trim(); })(), (()=>{ const k=logBandOf(b); return k==null?'':k?cvNames()[k]:'no cover saved'; })(),
+      (()=>{ const d=document.createElement('div'); d.innerHTML=srcTagCore(b); return d.textContent.trim(); })(), (()=>{ const k=logBandOf(b,'act'); return k==null?'':k?cvNames()[k]:'no cover saved'; })(),
       (b.snap&&b.snap.actNet!=null)?(b.snap.actNet*100).toFixed(2):'',
       (b.snap&&b.snap.market!=null)?(b.snap.market*100).toFixed(1):'', (b.snap&&b.snap.act!=null)?(b.snap.act*100).toFixed(1):'', (b.snap&&b.snap.policy)||'', (b.snap&&b.snap.screener)||'',
-      ...(()=>{ const L=b.snap&&b.snap.listed, a=b.snap&&b.snap.act!=null?+b.snap.act:null; return [L?tabWord(L.tab):'', L?L.status:'', L?(L.classification||''):'', L?(L.availability||''):'', inScorecardTxt(b), (!L && b.kind!=='parlay' && a!=null)?tabWord(tabOfChance(a))+' (derived)':'']; })()].map(q).join(','); });
+      ...(()=>{ const L=b.snap&&b.snap.listed, a=b.snap&&b.snap.act!=null?+b.snap.act:null; return [L?tabWord(L.tab):'', L?L.status:'', L?(L.classification||''):'', L?(L.availability||''):'', inScorecardTxt(b), (!L && b.kind!=='parlay' && a!=null)?tabWord(tabOfChance(a))+' (derived)':'', (()=>{ const c=bandCover(b,'act'); return b.kind==='parlay'?'':c?bandSrcWord(c.source):'none'; })()]; })()].map(q).join(','); });
   return '\ufeff'+[head.join(','),...rows].join('\r\n'); }
 document.getElementById('csvDay').addEventListener('focus',csvDays); document.getElementById('csvDay').addEventListener('pointerdown',csvDays);
 document.getElementById('csvDl').addEventListener('click',()=>{ csvDays(); const day=document.getElementById('csvDay').value;

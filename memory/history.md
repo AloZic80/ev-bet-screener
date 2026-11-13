@@ -6,6 +6,13 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.88 (agreed with Sally, owner "BUILD" Fri 11/13; the Lillard U3.5 at −138: "Heavy Favorite" by the model's 75.8%, La Contadora 64.4%):
+  `bandCover(b, view)`: act view = snap.act → typed cover → model fair (marked) → none, never the price; model view = `betCover` (the old one).
+  `logBandOf(b, view)` defaults to act (Bet log chip and filter, calendar bands, CSV "band" + new "band source"). Board: `cvChipActHtml(r)` and
+  the table cover cell by `r.actProb` (model second). Bet result study: `#studyBand` switch (a view only), "Band source" counts, a 95% Wilson
+  range under each hit rate. New bets: `snap.bandSnapshot` {p, source act, enteredAt, pregame, cover-bands-v1, act-v2, bands-act-v1, version}.
+  Calibration panels (gradeHistory, betCover) unchanged. Also (Alonzo: "no total bets so far, staked, profit"): `#lcTotals` under the bet
+  calendar: the month shown (so far) and all time, from `lcStats`. Tests: `v488-test` (12); cover-study, scope-v468, v486 follow.
 - v4.87 (Alonzo: four Novig fills with "no band", "Put the minions to work"; Sally's step 1, owner "Build" Fri 11/13): a fill that matched no
   board card (`b.autoFrom`, no `betCover`) shows `entryChip` "ENTRY PRICE · 56.5% · Slight Lean · no forecast": `entryP` = fillCost ÷ fillQty
   (an exchange pays $1), else the price with its fee. Worked out on display, never saved into fair / cover / snap; out of calibration, the

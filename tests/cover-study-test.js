@@ -28,12 +28,12 @@ const ROWS=[{name:'Naz Reid',team:'MIN',game:'LAC @ MIN',matchup:'LAC @ MIN',sid
   const rows=await p.evaluate(()=>[...document.querySelectorAll('#studyRows tr')].map(tr=>[...tr.children].map(td=>td.innerText.replace(/\s+/g,' ').trim())));
   const row=n=>rows.find(r=>r[0].startsWith(n))||null;
   const lean=row('Lean'), ls=row('Unlikely'), hc=row('High Cover');
-  check('Lean: 3 logged, 1 pending, 1–1–0, predicted 60.0%, hit 50.0%, −10.0 pts, profit −$0.91 (+9.09 − 10)', lean && lean.slice(1).join('|')==='3|1|1–1–0|60.0%|50.0%|−10.0 pts|−$0.91', lean);
-  check('Unlikely (v4.51: the band that was "Long Shot"): 1–0–0, predicted 40.0%, hit 100.0%, +60.0 pts, +$10.00', ls && ls.slice(1).join('|')==='1|0|1–0–0|40.0%|100.0%|+60.0 pts|+$10.00', ls);
+  check('Lean: 3 logged, 1 pending, 1–1–0, predicted 60.0%, hit 50.0%, −10.0 pts, profit −$0.91 (+9.09 − 10)', lean && lean.slice(1).map((x,i)=>i===4?x.split(' ')[0]:x /* v4.88: the hit rate, then its range */).join('|')==='3|1|1–1–0|60.0%|50.0%|−10.0 pts|−$0.91', lean);
+  check('Unlikely (v4.51: the band that was "Long Shot"): 1–0–0, predicted 40.0%, hit 100.0%, +60.0 pts, +$10.00', ls && ls.slice(1).map((x,i)=>i===4?x.split(' ')[0]:x /* v4.88: the hit rate, then its range */).join('|')==='1|0|1–0–0|40.0%|100.0%|+60.0 pts|+$10.00', ls);
   check('High Cover: a push is logged but not in the hit rate (—), profit $0', hc && hc.slice(1).join('|')==='1|0|0–0–1|—|—|—|+$0.00', hc);
   check('bands with no bets are left out (3 rows)', rows.length===3, rows.map(r=>r[0]));
   const sum=await p.evaluate(()=>document.getElementById('studySum').textContent);
-  check('the summary counts 5 singles, 4 settled tickets (4 outcomes, 4 games), 3 graded, and says it is an early sample', /^5 singles · 4 settled tickets · 4 unique outcomes · 4 unique games · 3 graded/.test(sum)   /* v4.68: tickets, outcomes and games */ && /early sample/.test(sum), sum);
+  check('the summary counts 5 singles, 4 settled tickets (4 outcomes, 4 games), 3 graded, and says it is an early sample', /^Band source: La Contadora · 0 La Contadora · 0 typed · 5 model · 5 singles · 4 settled tickets · 4 unique outcomes · 4 unique games · 3 graded/.test(sum) /* v4.88: the source first */   /* v4.68: tickets, outcomes and games */ && /early sample/.test(sum), sum);
   await p.selectOption('#studyScope','day'); await p.waitForTimeout(200);
   const n2=await p.evaluate(()=>document.querySelectorAll('#studyRows tr').length);
   check('Today keeps them (all on today\'s game day)', n2===3, n2);

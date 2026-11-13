@@ -111,13 +111,13 @@ async function open(b, o){ const ctx=await b.newContext({timezoneId:'America/Chi
     // settled: d1, d2, m2 = 3 tickets; outcomes: Tuipulotu, Other = 2; games: NYJ @ MIA, BUF @ NEP = 2
     check('Performance: "3 settled tickets · 2 unique outcomes · 2 unique games"', /3 settled tickets · 2 unique outcomes · 2 unique games/.test(st.sum), st.sum);
     const lean=st.rows.find(r=>/^Lean/.test(r[0])), sl=st.rows.find(r=>/^Slight Lean/.test(r[0]));
-    check('Bet result study, Lean: 3 bets (d1, d2, m1), 2–0–0, expected 60.0% and won 100% on one outcome (profit counts both tickets)', lean && lean[1]==='3' && lean[3]==='2–0–0' && lean[4]==='60.0%' && lean[5]==='100.0%', lean);
+    check('Bet result study, Lean: 3 bets (d1, d2, m1), 2–0–0, expected 60.0% and won 100% on one outcome (profit counts both tickets)', lean && lean[1]==='3' && lean[3]==='2–0–0' && lean[4]==='60.0%' && lean[5].startsWith('100.0%') /* v4.88: then its 95% range */, lean);
     check('Bet result study, Slight Lean (m2, typed after the start): 1–0–0, no expected % and no hit rate (not judged)', sl && sl[3]==='1–0–0' && sl[4]==='—' && sl[5]==='—', sl);
     // CSV
     const csv=await p.evaluate(()=>logCsv('')); const lines=csv.replace(/^﻿/,'').split('\r\n'), head=lines[0].split(',');
-    check('CSV: the four new columns come last: market chance %, La Contadora chance %, policy, app version', head.slice(25,29).join('|')==='market chance %|La Contadora chance %|policy|app version' && head.length===35 /* v4.86 adds six after them */, head.slice(24,30));
+    check('CSV: the four new columns come last: market chance %, La Contadora chance %, policy, app version', head.slice(25,29).join('|')==='market chance %|La Contadora chance %|policy|app version' && head.length===36 /* v4.86 adds six after them, v4.88 one more */, head.slice(24,30));
     const c1=lines.find(l=>/Snap/.test(l)).split(','), d1=lines.find(l=>/Tuipulotu/.test(l)).split(',');
-    check('CSV: c1 shows 52.0, 52.6, act-v2, v4.67 from its snapshot; an older bet without them leaves the four blank', c1.slice(-10,-6).join('|')==='52.0|52.6|act-v2|v4.67' && d1.slice(-10,-6).join('|')==='|||' /* v4.86: six columns after them */, {c1:c1.slice(-10,-6), d1:d1.slice(-10,-6)});
+    check('CSV: c1 shows 52.0, 52.6, act-v2, v4.67 from its snapshot; an older bet without them leaves the four blank', c1.slice(-11,-7).join('|')==='52.0|52.6|act-v2|v4.67' && d1.slice(-11,-7).join('|')==='|||' /* v4.86: six columns after them; v4.88: band source */, {c1:c1.slice(-11,-7), d1:d1.slice(-11,-7)});
     // the phone: the Cover % box fits
     check('no page errors (Bet log)', !S.errs.length, S.errs); await S.ctx.close(); }
   { const NOW=Date.parse('2026-11-11T18:00:00Z');

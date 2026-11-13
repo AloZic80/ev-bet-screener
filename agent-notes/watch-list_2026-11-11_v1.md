@@ -1,6 +1,6 @@
 # 👀 Watch list: 0xBeta Screener, live beta
 
-Ref: CC-2026-11-11-08 · updated Thu 2026-11-12, about 10 AM, America/Chicago · Live: **v4.87** · Worker **v3.44**
+Ref: CC-2026-11-11-08 · updated Thu 2026-11-12, about 10 AM, America/Chicago · Live: **v4.88** · Worker **v3.44**
 
 Alonzo: "we will say OK Lets put IT LIVE, but, we still need to be on top of it."
 **Live beta** means: live and usable, still a work in progress. Every change still goes through El Juez (all tests green) before it goes live. This page lists what is open; it is updated with every build.
@@ -63,6 +63,8 @@ The full review (Los Chismosos, each finding challenged by Los Desconfiados) is 
 - [x] v4.86 (live): each new bet keeps its tab, selection, classification and availability; CSV columns; the "Own / unverified" Scorecard line.
 - [ ] For Sally: a longer freshness limit for sportsbook-only holds?
 - [x] v4.87 (live): ENTRY PRICE band for fills that matched no card; Performance › Entry-price bands. Step 2 (market band) parked.
+- [x] v4.88 (live): bands follow La Contadora (typed, then model, never the price); study switch; month and all-time totals.
+- [ ] Reported (older): `fillManualFromRow` writes a later board's fair into a logged bet and its snapshot.
 - [ ] Reported (older): a multi-order ticket's profit uses the last fill's odds; a fill with no fee from the book shows the price without its fee.
 - [ ] Reported: a closed-market AWOL card has no "if found: up to $X"; a quiet baseline can ring once after a reload.
 
