@@ -1,6 +1,6 @@
 # 👀 Watch list: 0xBeta Screener, live beta
 
-Ref: CC-2026-11-11-08 · updated Fri 2026-11-13, about 4 PM, America/Chicago · Live: **v4.90** · Worker **v3.44**
+Ref: CC-2026-11-11-08 · updated Fri 2026-11-13, about 4 PM, America/Chicago · Live: **v4.91** · Worker **v3.44**
 
 Alonzo: "we will say OK Lets put IT LIVE, but, we still need to be on top of it."
 **Live beta** means: live and usable, still a work in progress. Every change still goes through El Juez (all tests green) before it goes live. This page lists what is open; it is updated with every build.
@@ -66,7 +66,7 @@ The full review (Los Chismosos, each finding challenged by Los Desconfiados) is 
 - [x] v4.88: bands follow La Contadora (typed, then model, never the price); study switch; month and all-time totals.
 - [x] v4.89 (live): 📊 Reports tab, step 1 (game day / date placed, day to all time and custom, filters, settled vs open money, lists, CSV).
 - [x] v4.90 (live): Reports step 2: breakdowns (sport, book, type, price all in, tab, band), profit line, month tiles, Best/Worst with sample gates.
-- [ ] Reports step 3: CLV (value proxy, not "expected earnings"), La Contadora expected vs actual, game-clustered range.
+- [x] v4.91 (live): Reports step 3: CLV and the value proxy, La Contadora expected profit vs actual, expected wins, game-resampled ranges.
 - [ ] Small step: `resultRecordedAt` on every new result; `settledAt` only when the true time is known; then the Date settled basis.
 - [ ] Reported (older): `fillManualFromRow` writes a later board's fair into a logged bet and its snapshot.
 - [ ] Reported (older): a multi-order ticket's profit uses the last fill's odds; a fill with no fee from the book shows the price without its fee.
