@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.85</title>
+<title>0xBeta Screener v4.86</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1486,7 +1486,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.85</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.86</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2245,7 +2245,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 
 </div>
 <script>
-const SCREENER_VERSION='v4.85';
+const SCREENER_VERSION='v4.86';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3227,6 +3227,22 @@ function lsEdge(r){ return !!(r && r.pass && r.actProb!=null && r.actProb<LSML.b
 /* v4.76 (owner, the Cover bands list: "WE are going to add all those, inside those 5 Tabs"): each band belongs to one tab, highest chance first:
    😴 Boring = High Cover + Heavy Favorite (75%+) · 💪 Machín = Strong + Solid + Lean (60–75%) · 🪙 Volado = Slight Lean + On the Line (50–60%) ·
    🍀 Suertudo = Coin Flip (45–50%) and the ones that just missed · 🔮 Brujo = Unlikely (under 45%) and the Hail Marys. Uneven counts are expected. */
+/* v4.86 (agreed with Sally, owner "BUILD" 11/13): what a new bet was when you took it, frozen in its snapshot (snap.listed), kept apart:
+   the tab its chance belongs to (never "Old" or "AWOL": those are availability), whether La Contadora approved it, the classification, and
+   whether the price was live. Old bets have none: their tab is never guessed into the record (the CSV can show a labelled "derived" one). */
+function tabOfChance(a){ return (a==null || !isFinite(a)) ? null : a<0.45-1e-9 ? 'brujo' : a<0.50-1e-9 ? 'suertudo' : a<0.60-1e-9 ? 'volado' : a<0.75-1e-9 ? 'machin' : 'boring'; }
+function tabWord(t){ return ({boring:'Boring', machin:'Machín', volado:'Volado', suertudo:'Suertudo', brujo:'Brujo'})[t]||''; }
+function listedOf(r){ const board=/^(api:|paste)/.test(String(r && r.src || '')) && !r._fill /* v4.86 review: a book fill is your own bet, like before */;
+  if(!board) return {tab:null, status:'own', classification:null, availability:null, policy:'tabs-v476'};
+  const a=r.noAct ? null : okProb(r.actFair!==undefined ? r.actFair : r.fairProb, r.actMkt!==undefined ? r.actMkt : r.mktProb) /* the chance saved with it (snap.act): a changed line has its own */,
+    off=r.hold || r.moved || r.noAct || r.lineMoved || (r.said && r.said.onList===false) /* held at $0, the same bet at another line, another line, or saved against a red flag */,
+    tier=r.tier||r.xc||null, status=tier ? 'extra' : (r.pass && !off) ? 'approved' : 'override';
+  const seen=rowSeenAt(r), age=seen ? Date.now()-seen : 0, awol=(r.awol && LIVE_BOOK(r.awol.book)===LIVE_BOOK(r.book)) || (r.exClosed && (!r.exClosedBook || LIVE_BOOK(r.exClosedBook)===LIVE_BOOK(r.book)));
+  return {tab:tabOfChance(a), status, classification: tier==='hail' ? 'hail_mary' : tier==='lucky' ? 'near_miss' : (status==='approved' && a!=null && a<0.45-1e-9) ? 'approved_longshot' : null,
+    availability: awol ? 'awol' : age>OLD_PRICE.ms ? 'old_price' : 'live' /* v4.86 review: read on the row itself, also for a bet you hold at another line */, riskPolicy: r.lsmlN ? 'longshot_ml_v1' : undefined, policy:'tabs-v476'}; }
+function betOwn(b){ const L=b && b.snap && b.snap.listed; return L ? L.status==='own' : !!(b && (b.manual || b.autoFrom || b.imported || b.made)); }   /* older bets: typed, a book fill or imported */
+function inScorecard(b){ return !!(b && b.kind!=='parlay' && !b.research && !b.tier && !b.gapRes); }   /* the same population as scoreSet */
+function inScorecardTxt(b){ return b.kind==='parlay' ? '' : !inScorecard(b) ? 'no' : b.free ? 'CLV only (free bet)' : 'yes'; }
 function passFam(r){ const a=r && r.actProb; if(a==null || !isFinite(a)) return 'safe'; return a<LSML.below-1e-9 ? 'hail' : a<0.50-1e-9 ? 'lucky' : a<0.60-1e-9 ? 'volado' : a<0.75-1e-9 ? 'safe' : 'boring'; }   /* v4.76 */
 function rowBand(r){ const a=r && r.actProb; return (a!=null && isFinite(a) && a>=0 && a<=1) ? cvBand(a) : 0; }   /* v4.76: the cover band of the chance La Contadora uses */
 /* v4.77 (Alonzo, 11/11: "could we put the older bets in another category. or Tab in itself. If sentinels takes them out of jail, then good. but,
@@ -4827,7 +4843,8 @@ function openBetEditor(tr, r, opt){
     const gross=fairUse!=null ? fairUse/prob-1 : null;
     const net=gross==null?null:(gross-fee)/(1+fee);
     const extra={book, offeredRaw:odds, offeredProb:prob, gross, net, stake, fee};
-    if(fairUse!=null){ extra.actFair=fairUse; extra.actMkt=lineChanged() ? (v?v.mktAt:null) : r.mktProb; } else extra.noAct=true;   /* a new line the model did not price: no chance to save */
+    if(fairUse!=null){ extra.actFair=fairUse; extra.actMkt=lineChanged() ? (v?v.mktAt:null) : r.mktProb; } else extra.noAct=true;
+    if(lineChanged()) extra.lineMoved=true;   /* v4.86 (Los Chismosos): another line than the card: its record is not the card's approval */   /* a new line the model did not price: no chance to save */
     if(!opt.edit && !lineChanged() && r.idx>=0 && r.src!=='manual') extra.sentOk=true;   /* the score is saved only for a bet taken from a card */   /* v4.53: her chance and EV at the price and fee you saved (the snapshot), not the board's */
     if(!pmMode()){ const tw=parseFloat(ed.querySelector('.eb-win-o').value); if(tw>0) extra.towin=tw; }   // v3.51: keep the To win $ you typed
     if(pmMode() && ed._slip && ed._slip.win>0) extra.towin=+(ed._slip.read==='profit'?ed._slip.win:ed._slip.win-stake).toFixed(2);   // v3.54: % mode — the slip's profit, not the rounded odds
@@ -5772,6 +5789,7 @@ function addToLog(r){
       act:(()=>{ const q=r.noAct?null:okProb(r.actFair!==undefined?r.actFair:r.fairProb, r.actMkt!==undefined?r.actMkt:r.mktProb); return q!=null?+q.toFixed(4):null; })(), actNet:(()=>{ const a=r.noAct?null:actNetOf(r.actFair!==undefined?r.actFair:r.fairProb, r.actMkt!==undefined?r.actMkt:r.mktProb, r.offeredProb, r.fee); return a!=null?+a.toFixed(4):null; })(), policy:POLICY.math,   /* v4.53: La Contadora's chance and EV when you took it, and the math policy; older bets do not have these and are left as they are */
       sent:(()=>{ try{ if(!r.sentOk||r.tier||r.xc||r.fairProb==null) return undefined; const z=sentScore(r); return {t:z.total, t1:z.total1, e:z.e, m:z.m, f:z.f, s:z.s, pol:POLICY.sent}; }catch(e){ return undefined; } })(),   /* v4.53: the Sentinel score when you took it (t1 = what it was with the Edge on the model's EV) */
       ring: r.ring&&!(r.tier||r.xc) ? {n:r.ring.n, of:r.ring.of, miss:r.ring.miss.slice(0,3)} : undefined,   // v4.50: the ◎ Perfecta checks when you took it
+      listed:(()=>{ try{ return listedOf(r); }catch(e){ return undefined; } })(),   /* v4.86: tab, selection, classification, availability */
       syntheticHold:(()=>{ const h=shNow(r); return h ? (h.ok ? {type:h.type, quoted:h.quoted, feeAdjusted:h.feeAdjusted, sides:h.sides.map(x=>Object.assign({},x)), policy:h.policy} : {unavailable:h.why, policy:shCfg().pol}) : undefined; })(),   /* v4.84: the hold when you took it (a label) */
       said: r.said || saidOf(r), mode: betMode }
   });
@@ -7421,6 +7439,8 @@ function renderScorecard(){
   // research Makes
   const rs=researchState();
   { const nx=logged.filter(b=>b && b.tier && b.kind!=='parlay').length; if(nx) h+='<p class="meta" style="margin-top:10px">🍀 <b>Just missed</b> and 🔮 <b>Hail Marys</b> ('+nx+' logged) are kept out of everything above: this test only judges the best bets. Their record is under ◎ Rings and extras.</p>'; }   // v4.50
+  { const O=S.filter(x=>betOwn(x.b)); if(O.length){ const st=O.reduce((t,x)=>t+x._st,0), pl=O.reduce((t,x)=>t+x._pl,0);
+    h+='<p class="meta sc-own" style="margin-top:10px">✍️ <b>Own / unverified</b>: '+O.length+' of the '+n+' settled bets above '+(O.length===1?'was':'were')+' typed by you, came from a book fill or an import, not taken from a board card · profit '+money(pl,true)+(st>0?' · ROI '+sp(pl/st):'')+'. <b>Currently included in the headline under the existing policy.</b></p>'; } }   /* v4.86 (agreed with Sally): shown apart, not taken out */
   if(rs.n) h+='<p class="meta" style="margin-top:10px">🔬 <b>Research Makes</b> (outliers at the minimum, kept out of everything above): '+rs.n+' taken · '+rs.nc+' with a closing price'+(rs.mean!=null?' · mean CLV '+sp(rs.mean):'')+(rs.hi90!=null?' · hopeful end '+sp(rs.hi90):'')+' · '+(rs.paused?'<b class="pl-down">paused</b> — '+esc(rs.why):rs.nc>=50?'running':'running — the stop check starts at 50 closes')+'.</p>';
   if(!n && !C.length) h+='<div class="empty" style="display:block">Nothing settled yet. Every bet that settles moves the bar.</div>';
   el.innerHTML=h; try{ helpApply(el); }catch(e){}   // v4.25: the stages drop-down stays as you left it
@@ -9374,7 +9394,7 @@ function csvDays(){ const sel=document.getElementById('csvDay'); if(!sel) return
   if(sel.innerHTML!==h){ sel.innerHTML=h; sel.value=D[cur]?cur:''; } }
 function logCsv(day){
   const q=s=>{ s=s===undefined||s===null?'':String(s); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
-  const head=['game day','placed','bet','pick','sport','type','book','odds','implied %','stake $','free bet','result','profit $','fair %','EV after fees %','closing','CLV %','game','kickoff (CT)','legs','stat','mode','source','band','La Contadora EV %','market chance %','La Contadora chance %','policy','app version'];   /* v4.68: frozen from the bet's snapshot, blank when missing */   // v4.67 (owner: "Yes to all"): the stat (sacks showed as "O 0.5"), the mode, where it came from, its cover band, and her EV when taken (the EV column is the model’s)
+  const head=['game day','placed','bet','pick','sport','type','book','odds','implied %','stake $','free bet','result','profit $','fair %','EV after fees %','closing','CLV %','game','kickoff (CT)','legs','stat','mode (old)','source','band','La Contadora EV %','market chance %','La Contadora chance %','policy','app version','listed tab','selection','classification','availability','in Scorecard','derived tab (tabs-v476)'];   /* v4.86: mode (old) keeps its old meaning; the new columns come from the bet's record, blank before v4.86 */   /* v4.68: frozen from the bet's snapshot, blank when missing */   // v4.67 (owner: "Yes to all"): the stat (sacks showed as "O 0.5"), the mode, where it came from, its cover band, and her EV when taken (the EV column is the model’s)
   const rows=logged.map((b,i)=>({b,i,d:gameDayOf(b)||b.date||''})).filter(x=>!day||x.d===day).sort((a,b)=>(b.d.localeCompare(a.d))||(b.i-a.i)).map(({b,d})=>{
     const p=toProb(b.odds), pr=betProfit(b), c=clv(b), st=b.start||(b.gameInfo&&b.gameInfo.startISO);
     const res=b.sold?'sold':b.result==='win'?'win':b.result==='loss'?'loss':b.result==='push'?'push':'open';
@@ -9385,7 +9405,8 @@ function logCsv(day){
       b.kind==='parlay'?'':(b.market||''), b.tier==='lucky'?'Suertudo (just missed)':b.tier==='hail'?'Brujo (Hail Mary)':b.gapRes?'Moneyline gap research':(b.kind==='parlay'?'':'Safe'),
       (()=>{ const d=document.createElement('div'); d.innerHTML=srcTagCore(b); return d.textContent.trim(); })(), (()=>{ const k=logBandOf(b); return k==null?'':k?cvNames()[k]:'no cover saved'; })(),
       (b.snap&&b.snap.actNet!=null)?(b.snap.actNet*100).toFixed(2):'',
-      (b.snap&&b.snap.market!=null)?(b.snap.market*100).toFixed(1):'', (b.snap&&b.snap.act!=null)?(b.snap.act*100).toFixed(1):'', (b.snap&&b.snap.policy)||'', (b.snap&&b.snap.screener)||''].map(q).join(','); });
+      (b.snap&&b.snap.market!=null)?(b.snap.market*100).toFixed(1):'', (b.snap&&b.snap.act!=null)?(b.snap.act*100).toFixed(1):'', (b.snap&&b.snap.policy)||'', (b.snap&&b.snap.screener)||'',
+      ...(()=>{ const L=b.snap&&b.snap.listed, a=b.snap&&b.snap.act!=null?+b.snap.act:null; return [L?tabWord(L.tab):'', L?L.status:'', L?(L.classification||''):'', L?(L.availability||''):'', inScorecardTxt(b), (!L && b.kind!=='parlay' && a!=null)?tabWord(tabOfChance(a))+' (derived)':'']; })()].map(q).join(','); });
   return '\ufeff'+[head.join(','),...rows].join('\r\n'); }
 document.getElementById('csvDay').addEventListener('focus',csvDays); document.getElementById('csvDay').addEventListener('pointerdown',csvDays);
 document.getElementById('csvDl').addEventListener('click',()=>{ csvDays(); const day=document.getElementById('csvDay').value;
@@ -11147,7 +11168,7 @@ function autoAddFromRow(r,f){   // a bet on your board — log it for you, at th
   const book=FILL_NAME[f.book], prob=f.price, stake=+((+f.cost||0)+(+f.fee||0)).toFixed(2);
   const fee=f.fee!=null&&f.cost?(+f.fee)/(+f.cost):feeRate(book,prob,cfgRead().fees);
   const gross=r.fairProb!=null?r.fairProb/prob-1:null;
-  addToLog(Object.assign({}, r, {book, offeredRaw:fmtOdds(Math.round(americanOf(prob))), offeredProb:prob, stake, fee, gross, net:gross==null?null:(gross-fee)/(1+fee), said:saidOf(r)}));
+  addToLog(Object.assign({}, r, {book, offeredRaw:fmtOdds(Math.round(americanOf(prob))), offeredProb:prob, stake, fee, gross, net:gross==null?null:(gross-fee)/(1+fee), said:saidOf(r), _fill:true /* v4.86: a fill is your own bet in its record */}));
   const L=logged[logged.length-1]; L.autoFrom=f.book; L.fills=[f.id]; L.fillQty=+f.qty||0; L.fillCost=stake; noteFillRef(L,f);
   if(f.soldFor!=null) L.sold={price:+f.soldFor.toFixed(2), at:new Date(f.soldAt||Date.now()).toISOString(), auto:true};
   notePlaced(L,f); saveLog();   // v3.96
@@ -12493,7 +12514,7 @@ document.addEventListener('click', e=>{
     const t=JSON.parse(JSON.stringify(b));
     t.id='b'+Date.now()+Math.random().toString(36).slice(2,6);
     t.key=String(b.key||'')+'|ticket '+(logged.filter(x=>x.key===b.key).length+1);
-    t.dupOf=b.id; t.ticketCopy=1;
+    t.dupOf=b.id; t.ticketCopy=1; if(t.snap && t.snap.listed) t.snap.listed.availability=null;   /* v4.86 review: a second ticket was placed later; its price state is not known */
     ['result','sold','fills','fillQty','fillCost','autoRes','voided','voidedAt','noStart','fix83'].forEach(k=>delete t[k]);
     logged.push(t); saveLog(); renderLog(); renderPerf(); renderTodayBar(); refresh(); }
 });

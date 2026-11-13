@@ -115,9 +115,9 @@ async function open(b, o){ const ctx=await b.newContext({timezoneId:'America/Chi
     check('Bet result study, Slight Lean (m2, typed after the start): 1–0–0, no expected % and no hit rate (not judged)', sl && sl[3]==='1–0–0' && sl[4]==='—' && sl[5]==='—', sl);
     // CSV
     const csv=await p.evaluate(()=>logCsv('')); const lines=csv.replace(/^﻿/,'').split('\r\n'), head=lines[0].split(',');
-    check('CSV: the four new columns come last: market chance %, La Contadora chance %, policy, app version', head.slice(-4).join('|')==='market chance %|La Contadora chance %|policy|app version' && head.length===29, head.slice(-5));
+    check('CSV: the four new columns come last: market chance %, La Contadora chance %, policy, app version', head.slice(25,29).join('|')==='market chance %|La Contadora chance %|policy|app version' && head.length===35 /* v4.86 adds six after them */, head.slice(24,30));
     const c1=lines.find(l=>/Snap/.test(l)).split(','), d1=lines.find(l=>/Tuipulotu/.test(l)).split(',');
-    check('CSV: c1 shows 52.0, 52.6, act-v2, v4.67 from its snapshot; an older bet without them leaves the four blank', c1.slice(-4).join('|')==='52.0|52.6|act-v2|v4.67' && d1.slice(-4).join('|')==='|||', {c1:c1.slice(-4), d1:d1.slice(-4)});
+    check('CSV: c1 shows 52.0, 52.6, act-v2, v4.67 from its snapshot; an older bet without them leaves the four blank', c1.slice(-10,-6).join('|')==='52.0|52.6|act-v2|v4.67' && d1.slice(-10,-6).join('|')==='|||' /* v4.86: six columns after them */, {c1:c1.slice(-10,-6), d1:d1.slice(-10,-6)});
     // the phone: the Cover % box fits
     check('no page errors (Bet log)', !S.errs.length, S.errs); await S.ctx.close(); }
   { const NOW=Date.parse('2026-11-11T18:00:00Z');
