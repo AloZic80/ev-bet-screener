@@ -26,14 +26,20 @@ const OLD={id:'old',key:'old',sport:'NBA',kind:'prop',book:'Novig',odds:'-120',s
     const pre={m:{pass:g('m').pass, stake:g('m').stake}, l:{pass:g('l').pass, stake:g('l').stake, act:g('l').actProb}, a:{hold:g('a').hold||null}};
     addToLog(g('m')); addToLog(g('l')); addToLog(g('a')); addToLog(Object.assign({}, g('m'), {tier:'hail', name:'Extra Hail'}));
     addToLog({name:'Typed By Hand', sport:'NBA', kind:'prop', market:'0.5 Blocks', side:'O', team:'PHX', game:'CHA @ PHX', book:'Novig', offeredRaw:'+150', offeredProb:0.4, stake:3, src:'manual', gameInfo:g('m').gameInfo});
+    addToLog(Object.assign({}, g('m'), {name:'Moved Line', lineMoved:true, actFair:0.43, actMkt:0.43}));   /* the bet editor: you changed the line, where her chance is 43% */
+    addToLog(Object.assign({}, g('m'), {name:'Filled At Book', _fill:true}));   /* a book fill matched to the card */
+    const old=Object.assign({}, g('l'), {name:'Stale Price', loadedAt:new Date(Date.now()-13*3600e3).toISOString(), moved:{book:'Novig'}}); addToLog(old);   /* "Add this line too" on a 13-hour-old price */
     const by=n=>logged.find(x=>x.name===n), s=n=>(by(n).snap||{}).listed||null;
-    return {pre, m:s('Collin Gillespie'), l:s('Long Shot'), a:s('Ghost Card'), x:s('Extra Hail'), own:s('Typed By Hand'), old:s('Old Timer')}; });
+    return {pre, m:s('Collin Gillespie'), l:s('Long Shot'), a:s('Ghost Card'), x:s('Extra Hail'), own:s('Typed By Hand'), old:s('Old Timer'), mv:s('Moved Line'), fl:s('Filled At Book'), st:s('Stale Price')}; });
   check('an approved Machín card (64% at 58%): tab machin, approved, no classification, live, policy tabs-v476', L.m && L.m.tab==='machin' && L.m.status==='approved' && L.m.classification===null && L.m.availability==='live' && L.m.policy==='tabs-v476', L);
   check('an approved long shot (42%): tab brujo, approved, classification approved_longshot', L.pre.l.pass && L.l && L.l.tab==='brujo' && L.l.status==='approved' && L.l.classification==='approved_longshot', {pre:L.pre.l, l:L.l});
   check('a card placed from 👻 AWOL ($0, held): its chance tab (machin), status override, availability awol', L.pre.a.hold && L.a && L.a.tab==='machin' && L.a.status==='override' && L.a.availability==='awol', {pre:L.pre.a, a:L.a});
   check('an extra (Hail Mary): status extra, classification hail_mary', L.x && L.x.status==='extra' && L.x.classification==='hail_mary', L.x);
   check('a bet typed by hand: status own, no tab, no availability', L.own && L.own.status==='own' && L.own.tab===null && L.own.availability===null, L.own);
   check('a bet from before v4.86 is never given a record afterwards', L.old===null, L.old);
+  check('Los Chismosos: a line you changed in the editor records its own chance (43%: brujo) and override, not the card’s approval', L.mv && L.mv.tab==='brujo' && L.mv.status==='override', L.mv);
+  check('Los Chismosos: a book fill matched to a card is your own bet (own), as before v4.86', L.fl && L.fl.status==='own', L.fl);
+  check('Los Chismosos: "Add this line too" on a 13-hour-old price: override, old_price', L.st && L.st.status==='override' && L.st.availability==='old_price', L.st);
   const csv=await p.evaluate(()=>logCsv(''));
   const parse=line=>{ const out=[]; let cur='', q=false; for(let i=0;i<line.length;i++){ const ch=line[i]; if(q){ if(ch==='"'){ if(line[i+1]==='"'){ cur+='"'; i++; } else q=false; } else cur+=ch; } else if(ch==='"') q=true; else if(ch===','){ out.push(cur); cur=''; } else cur+=ch; } out.push(cur); return out; };
   const lines=csv.replace(/^﻿/,'').split('\r\n'), head=parse(lines[0]), rows=lines.slice(1).map(parse), col=(r,n)=>r[head.indexOf(n)], by=n=>rows.find(r=>col(r,'bet')===n);
@@ -43,7 +49,9 @@ const OLD={id:'old',key:'old',sport:'NBA',kind:'prop',book:'Novig',odds:'-120',s
     {m:cv('Collin Gillespie'), l:cv('Long Shot'), a:cv('Ghost Card'), x:cv('Extra Hail'), own:cv('Typed By Hand')});
   check('CSV: the old bet (57% when taken) has no record; only the labelled derived column says "Volado (derived)"', cv('Old Timer')==='||||yes|Volado (derived)', cv('Old Timer'));
   // Scorecard: the typed bet settles; it is shown apart and stays in the headline
+  const fr=await p.evaluate(()=>{ const t=logged.find(x=>x.name==='Collin Gillespie'); t.free=true; saveLog(); const c=logCsv(''); t.free=false; saveLog(); return c.includes('CLV only (free bet)'); });
+  check('Los Chismosos: a free bet says "CLV only (free bet)" in the in Scorecard column', fr, fr);
   const sc=await p.evaluate(()=>{ const t=logged.find(x=>x.name==='Typed By Hand'); t.result='win'; t.gradedBy='manual'; saveLog(); renderScorecard(); const el=document.querySelector('#scoreBody .sc-own'); const n=scoreSet(logged).settled.length; return {t:el?el.textContent:null, n}; });
-  check('Scorecard: "Own / unverified: 1 of the 2 settled bets …, currently included in the headline under the existing policy"; the headline still counts both', sc.t && /^✍️ Own \/ unverified: 1 of the 2 settled bets above/.test(sc.t) && /Currently included in the headline under the existing policy\./.test(sc.t) && sc.n===2, sc);
+  check('Scorecard: "Own / unverified: 1 of the 2 settled bets …, currently included in the headline under the existing policy"; the headline still counts both', sc.t && /^✍️ Own \/ unverified: 1 of the 2 settled bets above was typed by you, came from a book fill or an import, not taken from a board card/.test(sc.t) && /Currently included in the headline under the existing policy\./.test(sc.t) && sc.n===2, sc);
   check('no page errors', !errs.length, errs);
   await b.close(); console.log('\n'+pass+' passed, '+fail+' failed'); process.exit(fail?1:0); })();
