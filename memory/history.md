@@ -6,6 +6,9 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.85 (Alonzo's screenshot, Fri 11/13: "look where the time is"): the hold tag (`.sc-pill.sh`) wraps inside the card's left column (190 px
+  at most) instead of running over "Today 8:00 PM CT". `v484-test` checks it stays in its column and covers no text at 390, 1000, 1280, 1960 px.
+  The bet-records scope moves to v4.86.
 - v4.84 (agreed with Sally, owner "BUILD" Thu 11/12; from the "Bet As If You're Wrong" newsletter): the synthetic-hold tag, a label only.
   `shAssign` (end of the audit, after `ringAssign`) groups rows by `shIdent` (game key + kind + player + market text for O/U; game key + team
   for moneylines / spreads in NFL, NBA, NHL, MLB, NCAAF, NCAAB, WNBA only), takes his books' prices (`bookIsMine`) read within 10 minutes
