@@ -75,6 +75,7 @@ const runs = [
   ['v4.83: 🔔 after a 🦑 press finishes, the open banner drops cards no longer Perfectas you can see, a quiet baseline after a filter change; ⏱ Old and 👻 AWOL at $0 (no daily max); a tap’s NO OFFER is $0 at once', 'v483-test.js', []],
   ['v4.84: synthetic hold, a label: the best price on each side at your books, fees in, both read within 10 minutes and 5 minutes apart; underround says CHECK; saved on new bets; never changes a stake', 'v484-test.js', []],
   ['v4.86: each new bet keeps its tab, approved / extra / own / override, classification and availability; CSV columns; Own / unverified shown apart in the Scorecard', 'v486-test.js', []],
+  ['v4.87: a book fill that matched no card gets an ENTRY PRICE band (break-even, fee in), never a forecast; its own Performance table; out of calibration', 'v487-test.js', []],
   ['v4.60/v4.62: on a phone the Today’s games line, Cover bands, Show, Sort, Sport, the book chips, the tick boxes and Cards fold behind Filters, which names what is on', 'phone-filters-test.js', []],
   ['v4.63: on a phone the BettingPros panel and the Sources panel are one line each, closed when the app opens', 'phone-header-test.js', []],
   ['v4.64: on a phone the Today card is one line (day, bet, record, in play, to check), closed when the app opens', 'phone-today-test.js', []],
