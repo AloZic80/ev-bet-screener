@@ -13,6 +13,9 @@ New builds add their line at the top of the right section.
   none. CSV: "mode" → "mode (old)" (same values); six columns at the end (listed tab, selection, classification, availability, in Scorecard,
   derived tab (tabs-v476) for old bets only). Scorecard: `betOwn` (the record, else manual / autoFrom / imported / made) gives the
   "Own / unverified" line; the headline is unchanged. Tests: `v486-test` (11); `csv-columns`, `scope-v468` follow the header.
+  Review fixes: the chance is the saved one (`snap.act` inputs); override also for a moved line (`lineMoved` from the editor), no chance,
+  a red-flag save or a held-at-another-line row; fills (`_fill` from `autoAddFromRow`) are own; availability read on the row; free bets
+  "CLV only"; "+ ticket" clears availability. Test 15.
 - v4.85 (Alonzo's screenshot, Fri 11/13: "look where the time is"): the hold tag (`.sc-pill.sh`) wraps inside the card's left column (190 px
   at most) instead of running over "Today 8:00 PM CT". `v484-test` checks it stays in its column and covers no text at 390, 1000, 1280, 1960 px.
   The bet-records scope moves to v4.86.

@@ -16,9 +16,16 @@ Your bet-records scope (items 7 to 10 of v4.83 / v4.84 agreed); Alonzo said "BUI
   headline population does not change.
 
 ## Tests
-New `v486-test` (11): each status, the long shot, the AWOL override, an extra, a typed bet, an old bet with no record, the CSV columns and
+New `v486-test` (15, with the reviewer's cases): each status, the long shot, the AWOL override, an extra, a typed bet, an old bet with no record, the CSV columns and
 the derived tab, the Scorecard line. `csv-columns` and `scope-v468` follow the renamed column. The full suite passed before publishing.
 
+## Fixed before publishing (our reviewer)
+- A line changed in the bet editor kept the card's tab and "approved": it now records its own chance, and override when the line moved, had
+  no chance, or was saved against a red flag.
+- A book fill matched to a card said approved: it is now own (the same rule as older fills), since the matched card can be another book's.
+- "Add this line too" (the same bet at another line) said approved / live: now override, with availability read on the row itself.
+- Free bets say "CLV only (free bet)" in the in Scorecard column; a "+ ticket" copy has no availability.
+
 ## Question for you
-A book fill that matches a board card is logged through that card (it gets the card's snapshot), so it is "approved" or "override", not
-"own". Agree, or should every fill say "own" until we check the full snapshot matches?
+A watch row or a near-miss that was not offered (near-misses are off since v4.80) but placed anyway is recorded "extra / near_miss", by the
+agreed rule (a tier means extra). Would you rather call it override, since it was never offered?
