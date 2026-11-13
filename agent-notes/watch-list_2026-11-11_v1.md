@@ -1,6 +1,6 @@
 # 👀 Watch list: 0xBeta Screener, live beta
 
-Ref: CC-2026-11-11-08 · updated Thu 2026-11-12, about 10 AM, America/Chicago · Live: **v4.85** · Worker **v3.44**
+Ref: CC-2026-11-11-08 · updated Thu 2026-11-12, about 10 AM, America/Chicago · Live: **v4.86** · Worker **v3.44**
 
 Alonzo: "we will say OK Lets put IT LIVE, but, we still need to be on top of it."
 **Live beta** means: live and usable, still a work in progress. Every change still goes through El Juez (all tests green) before it goes live. This page lists what is open; it is updated with every build.
@@ -60,7 +60,7 @@ The full review (Los Chismosos, each finding challenged by Los Desconfiados) is 
 - [x] 👻 AWOL and ⏱ Old cards are $0 and hold no daily max ("if found / if refreshed: up to $X") · #1 MATH PICK skips ⏱ Old · a tap's NO OFFER / GONE is $0 at once.
 - [x] v4.84 (live): the synthetic-hold tag, a label only (agreed with Sally, "BUILD").
 - [x] v4.85 (live): the hold tag wraps inside its column (it ran over the game time).
-- [ ] v4.86 (agreed, waits for BUILD): the frozen listing record on new bets, CSV columns, the "Own / unverified" Scorecard line.
+- [x] v4.86 (live): each new bet keeps its tab, selection, classification and availability; CSV columns; the "Own / unverified" Scorecard line.
 - [ ] For Sally: a longer freshness limit for sportsbook-only holds?
 - [ ] Reported: a closed-market AWOL card has no "if found: up to $X"; a quiet baseline can ring once after a reload.
 
