@@ -6,6 +6,12 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.89 (agreed with Sally, owner "BUILD NOW" Fri 11/13; Alonzo: "a tab just for Reports ... daily, monthly or all time"): Bet log › 📊 Reports, step 1.
+  `rpRender` recomputes from `logged` + `removedBets` (lost>0) every time; only `mbev.reportsUi` (basis, period, filters, custom dates) is saved.
+  Money is `rpAgg` = `lcStats` + cancelled losses (the calendar's own totals, tested equal to the cent); ROI = settled profit ÷ settled own stake.
+  Bases: game day (`gameDayOf`, default) or date placed (`snap.at` only, never the id or game day; missing ones in a coverage line).
+  `logCsv(day, only, meta)`: `only` = the report's bets, `meta` adds ticket id, basis, range, filters, time and the cancelled rows.
+  `saveLog` repaints an open report. Steps 2 (breakdowns, chart, Best/Worst) and 3 (CLV, edge check), and `resultRecordedAt`/`settledAt`, are agreed, not built.
 - v4.88 (agreed with Sally, owner "BUILD" Fri 11/13; the Lillard U3.5 at −138: "Heavy Favorite" by the model's 75.8%, La Contadora 64.4%):
   `bandCover(b, view)`: act view = snap.act → typed cover → model fair (marked) → none, never the price; model view = `betCover` (the old one).
   `logBandOf(b, view)` defaults to act (Bet log chip and filter, calendar bands, CSV "band" + new "band source"). Board: `cvChipActHtml(r)` and
