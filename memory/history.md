@@ -6,6 +6,11 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.90 (Sally 11/13, owner "BUILD"): Reports step 2. `rpBreakHtml` (sport, book, type, price, tab, band), `rpChartHtml` (cumulative settled
+  profit by basis day), `rpMonthsHtml`, `rpBwHtml` (listed at 10 settled tickets and 5 outcomes, ranked at 20 and 10 outcomes or games, tiers never mix).
+  Price = `entryPInfo`: fill cost ÷ shares (the fee is already in the cost), then stake ÷ (stake + to win) only without `paidReal` (a win writes
+  towin), then the odds × (1 + fee). The odds filter uses the same all-in price. `rpOutKey`/`rpGameKey`: event id or nvEvent, else day + game +
+  start hour (doubleheaders apart), else day + team; never book, odds or stake.
 - v4.89 (agreed with Sally, owner "BUILD NOW" Fri 11/13; Alonzo: "a tab just for Reports ... daily, monthly or all time"): Bet log › 📊 Reports, step 1.
   `rpRender` recomputes from `logged` + `removedBets` (lost>0) every time; only `mbev.reportsUi` (basis, period, filters, custom dates) is saved.
   Money is `rpAgg` = `lcStats` + cancelled losses (the calendar's own totals, tested equal to the cent); ROI = settled profit ÷ settled own stake.
