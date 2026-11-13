@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.86</title>
+<title>0xBeta Screener v4.87</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1478,6 +1478,8 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 .sh-how{margin:8px 0 0; font-size:12.5px}
 /* v4.85 (Alonzo's screenshot: the hold tag ran over the game time): it wraps inside its column, like the AWOL tag */
 .sc-pill.sh{white-space:normal; height:auto; min-height:26px; padding:3px 8px; line-height:1.3; max-width:100%; box-sizing:border-box; overflow-wrap:anywhere}
+/* v4.87: the entry-price band (a price, not a forecast) */
+.cv-chip.ep-chip{background:transparent; color:var(--soft); border:1.5px dashed var(--rule); font-weight:700; white-space:normal}
 </style>
 </head>
 <body>
@@ -1486,7 +1488,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.86</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.87</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2216,6 +2218,14 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
   </table></div>
   <details class="help" data-help="study-how"><summary>How this is figured</summary><p class="hint">Singles only. Average prediction, hit rate and difference use graded wins and losses; pushes, sold and pending bets are left out. Difference is the hit rate minus the average prediction, in points. Profit is the settled money (betProfit: fees, boosts and free bets counted as in the Bet log). Game days, not the day the bet was placed. Small groups swing hard: read it after hundreds of bets, like the Scorecard.</p></details>
 </div>
+<div class="panel" id="entryPanel" hidden>   <!-- v4.87: book fills that matched no card, by the price paid (not a forecast) -->
+  <h2>Entry-price bands <span class="sub">book fills that matched no board card · price benchmark, not forecast calibration</span></h2>
+  <div class="scroll"><table>
+    <thead><tr><th>Entry price</th><th class="num">Tickets</th><th class="num">Pending</th><th class="num">W–L–P</th><th class="num">Avg break-even</th><th class="num">Hit rate</th><th class="num">Stake</th><th class="num">Profit</th><th class="num">ROI</th></tr></thead>
+    <tbody id="entryRows"></tbody>
+  </table></div>
+  <p class="hint">Each fill's band is the win rate its price needed to break even, fee included. Hit rate above the average break-even means these won more than their prices needed; it does not say they had an edge when taken. Not in the cover bands above, the calibration, EV or the Scorecard.</p>
+</div>
 <div class="panel" id="tierPanel">   <!-- v4.50: ◎ Perfectas against the other best bets; 🍀 Just missed and 🔮 Hail Marys on their own record -->
   <h2>◎ Rings and extras <span class="sub">Perfectas against the other best bets · Just missed and Hail Marys, each on its own record</span></h2>
   <div id="tierBody"></div>
@@ -2245,7 +2255,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 
 </div>
 <script>
-const SCREENER_VERSION='v4.86';
+const SCREENER_VERSION='v4.87';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3991,7 +4001,22 @@ function betCover(b){ if(!b) return null; const f=toProb(b.fair); if(f>0 && f<1)
 function outcomeKey(b){ return [gameDayOf(b)||b.date||'', gameKey(b.game||b.matchup||''), b.name||'', b.market||'', b.side||sideOf(b)||''].join('|').toLowerCase(); }
 function outcomeCounts(list){ const S=(list||[]).filter(b=>b && b.kind!=='parlay' && (b.sold || betProfit(b)!=null)), O=new Set(), G=new Set();
   S.forEach(b=>{ O.add(outcomeKey(b)); G.add((gameDayOf(b)||b.date||'')+'|'+gameKey(b.game||b.matchup||b.name||'')); }); return {tickets:S.length, outcomes:O.size, games:G.size}; }   /* no fair odds saved (toProb gives 0): "no band", not Unlikely */   /* v4.66: a logged single's band, from the cover it had when you took it (the fair odds saved with the bet) */
-function logBandChip(b){ const k=logBandOf(b); if(k==null) return ''; const c=betCover(b), p=c?c.p:null;
+/* v4.87 (agreed with Sally, owner "Build" 11/13): a book fill that matched no board card has no forecast, so no band. Its ENTRY PRICE BAND says
+   what win rate the price paid needed to break even, fee included: the fill's cost ÷ its payout (an exchange contract pays $1: cost ÷ shares),
+   else the price with its fee. A price, never a forecast: worked out from the bet's own fill, never written into fair, cover or the snapshot,
+   and kept out of calibration, the forecast bands, EV and the Scorecard. */
+function entryP(b){ if(!b) return null; const c=+b.fillCost, q=+b.fillQty; if(c>0 && q>0 && c/q<1) return c/q;
+  const p=toProb(b.odds), f=(b.snap && b.snap.fee!=null) ? +b.snap.fee : (b.fee!=null ? +b.fee : 0); return (p>0 && p<1) ? Math.min(0.999, p*(1+(f>0?f:0))) : null; }
+function isEntryBet(b){ return !!(b && b.kind!=='parlay' && b.autoFrom && !betCover(b) && entryP(b)!=null); }
+function entryChip(b){ const p=entryP(b), k=cvBand(p);
+  return '<span class="cv-chip ep-chip" title="The win rate this price needed to break even, fee included ('+(p*100).toFixed(1)+'%). A book fill that matched no board card: no forecast was saved, so this is not a cover band and says nothing about an edge.">ENTRY PRICE · '+(p*100).toFixed(1)+'% · '+cvNames()[k]+' · no forecast</span>'; }
+function renderEntryBands(list){ const el=document.getElementById('entryRows'); if(!el) return; const B=list.filter(isEntryBet), box=document.getElementById('entryPanel'); if(box) box.hidden=!B.length; if(!B.length){ el.innerHTML=''; return; }
+  const G={}; B.forEach(b=>{ const p=entryP(b), k=cvBand(p), g=G[k]=G[k]||{n:0,pend:0,w:0,l:0,pu:0,be:0,ng:0,st:0,pl:0}; g.n++; const r=b.sold?'sold':b.result;
+    if(r==='win') g.w++; else if(r==='loss') g.l++; else if(r==='push') g.pu++; else if(r!=='sold') g.pend++;
+    if(r==='win'||r==='loss'){ g.be+=p; g.ng++; } const pr=betProfit(b); if(pr!=null){ g.pl+=pr; g.st+=b.free?0:(+b.stake||0); } });
+  const pc=x=>(x*100).toFixed(1)+'%', usd=x=>(x>=0?'+':'−')+'$'+Math.abs(x).toFixed(2);
+  el.innerHTML=[1,2,3,4,5,6,7,8,9].filter(k=>G[k]).map(k=>{ const g=G[k]; return '<tr><td><span class="cv-chip ep-chip">'+cvNames()[k]+'</span> <span class="meta">'+cvRanges()[k]+'</span></td><td class="num">'+g.n+'</td><td class="num">'+g.pend+'</td><td class="num">'+g.w+'–'+g.l+'–'+g.pu+'</td><td class="num">'+(g.ng?pc(g.be/g.ng):'—')+'</td><td class="num">'+(g.ng?pc(g.w/g.ng):'—')+'</td><td class="num">$'+g.st.toFixed(2)+'</td><td class="num">'+usd(g.pl)+'</td><td class="num">'+(g.st>0?(g.pl>=0?'+':'−')+Math.abs(g.pl/g.st*100).toFixed(1)+'%':'—')+'</td></tr>'; }).join(''); }
+function logBandChip(b){ const k=logBandOf(b); if(k==null) return ''; if(k===0 && isEntryBet(b)) return entryChip(b);   /* v4.87 */ const c=betCover(b), p=c?c.p:null;
   return '<button type="button" class="cv-chip cv-'+k+' lbf" data-band="'+k+'" title="'+(k?(c.typed?'Cover you typed ':'Projected cover ')+(p*100).toFixed(1)+'%'+(c.typed?(c.cal?' before the game':' · added after the game started: shown, not judged'):' when you took it')+' · '+cvRanges()[k]:'No cover was saved with this bet')+'. Tap to see only '+(k?cvNames()[k]:'these')+' bets, with their record">'+(k?cvNames()[k]:'no band')+'</button>'; }
 function cvChipHtml(p){ const b=cvBand(p); return b?'<span class="cv-chip cv-'+b+'" title="Projected cover '+(p*100).toFixed(1)+'% · '+cvRanges()[b]+' (Augi\'s 5-point bands; a label, not a rule)">'+cvNames()[b]+'</span>':''; }
 function renderStudy(){ const el=document.getElementById('studyRows'); if(!el) return;
@@ -4003,6 +4028,7 @@ function renderStudy(){ const el=document.getElementById('studyRows'); if(!el) r
     const r=b.sold?'sold':b.result; if(r==='win') g.w++; else if(r==='loss') g.l++; else if(r==='push') g.p++; else if(r!=='sold') g.pend++;
     if((r==='win'||r==='loss') && k && c.cal){ const ok=outcomeKey(b); if(!oSeen.has(ok)){ oSeen.add(ok); g.g++; g.pred+=p; if(r==='win') g.cw++; } }   /* v4.68: hit rate and the prediction once per outcome, and only from a cover known before the game */
     const pr=betProfit(b); if(pr!=null){ g.net+=pr; g.money++; } });
+  try{ renderEntryBands(inS); }catch(e){ console.error(e); }   /* v4.87: the same game days */
   const pc=x=>(x*100).toFixed(1)+'%', usd=x=>(x>=0?'+':'−')+'$'+Math.abs(x).toFixed(2);
   el.innerHTML=[1,2,3,4,5,6,7,8,9,0].map(k=>{ const g=G[k]; if(!g.n) return ''; const avg=g.g?g.pred/g.g:null, hit=g.g?g.cw/g.g:null;   /* v4.68: the same bets for both */
     return '<tr><td>'+(k?'<button type="button" class="cv-chip cv-'+k+' lbf" data-band="'+k+'" title="Tap to see these bets in the Bet log">'+cvNames()[k]+'</button> <span class="meta">'+cvRanges()[k]+'</span>':'<button type="button" class="linkbtn lbf" data-band="0" title="Tap to see these bets in the Bet log">'+cvRanges()[0]+'</button>')+'</td><td class="num">'+g.n+'</td><td class="num">'+g.pend+'</td><td class="num">'+g.w+'–'+g.l+'–'+g.p+'</td><td class="num">'+(avg==null?'—':pc(avg))+'</td><td class="num">'+(hit==null?'—':pc(hit))+'</td><td class="num">'+(avg==null||hit==null?'—':(hit>=avg?'+':'−')+(Math.abs(hit-avg)*100).toFixed(1)+' pts')+'</td><td class="num '+(g.net>=0?'pl-up':'pl-down')+'">'+(g.money?usd(g.net):'—')+'</td></tr>'; }).join('')||'<tr><td colspan="8" class="meta">No singles in this range yet.</td></tr>';
