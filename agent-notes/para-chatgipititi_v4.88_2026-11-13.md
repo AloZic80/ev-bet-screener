@@ -15,8 +15,14 @@ Your "bands follow La Contadora" scope; Alonzo said "BUILD". Plus his own displa
 - **Unchanged:** the calibration / Brier panels (they read the grade history), stakes, floor, EV, the Scorecard.
 - **Alonzo's request:** under the bet calendar, "November so far" and "All time": bets, W–L–P, staked, settled profit, ROI, open.
 
+## Fixed before publishing (our reviewer)
+- One source everywhere: the Bet log filter's "expected", the Game Hub chip and the cover-column sort now use La Contadora's chance.
+- La Contadora's chance saved after the start is shown, not judged (your timing rule); a changed line that no one priced gets no model band.
+- The month / all-time totals count cancelled bets that lost money, as the days and Track by do.
+- Reported (older): when a later board load fills in a fair on a logged bet, it also rewrites snap.model / snap.market.
+
 ## Lillard (his example)
 −138 (58.0%), La Contadora 64.4% → **Lean** (was Heavy Favorite by the model's 75.8%; the tooltip still says so).
 
 ## Tests
-New `v488-test` (12); cover-study, scope-v468 and v486 follow the new text and column. The full suite passed before publishing.
+New `v488-test` (15); cover-study, scope-v468 and v486 follow the new text and column. The full suite passed before publishing.
