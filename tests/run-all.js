@@ -77,6 +77,7 @@ const runs = [
   ['v4.86: each new bet keeps its tab, approved / extra / own / override, classification and availability; CSV columns; Own / unverified shown apart in the Scorecard', 'v486-test.js', []],
   ['v4.87: a book fill that matched no card gets an ENTRY PRICE band (break-even, fee in), never a forecast; its own Performance table; out of calibration', 'v487-test.js', []],
   ['v4.88: cover bands follow La Contadora (then typed, then model, never the price); the study switch; the band frozen on new bets; the month and all-time totals under the calendar', 'v488-test.js', []],
+  ['v4.89: 📊 Reports (step 1): game day or date placed, periods, filters, settled vs open money, singles and parlays, lists, the filtered CSV; the same money as the Bet calendar', 'v489-test.js', []],
   ['v4.60/v4.62: on a phone the Today’s games line, Cover bands, Show, Sort, Sport, the book chips, the tick boxes and Cards fold behind Filters, which names what is on', 'phone-filters-test.js', []],
   ['v4.63: on a phone the BettingPros panel and the Sources panel are one line each, closed when the app opens', 'phone-header-test.js', []],
   ['v4.64: on a phone the Today card is one line (day, bet, record, in play, to check), closed when the app opens', 'phone-today-test.js', []],
