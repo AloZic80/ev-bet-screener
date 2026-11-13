@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.90</title>
+<title>0xBeta Screener v4.91</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1512,6 +1512,10 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 .rp-h{margin:14px 0 4px; font-size:16px}
 .rp-cover:empty{display:none}
 .rp-cust[hidden], .rp-nav[hidden]{display:none}
+/* v4.91: Reports step 3 */
+.rp-box{border:1px solid var(--rule); border-radius:8px; background:var(--panel-2); padding:8px 10px; margin:8px 0; font-size:14px; overflow-wrap:anywhere}
+.rp-box .meta{margin-top:4px}
+.rp-edge details{margin-top:4px}
 /* v4.90: Reports step 2 */
 #rpPxWrap[hidden]{display:none}
 .rp-px-note{margin:4px 0}
@@ -1538,7 +1542,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.90</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.91</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2342,6 +2346,8 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
     <div class="rp-seg" id="rpBwDir" role="group" aria-label="Best or worst"><button type="button" data-d="best">Best</button><button type="button" data-d="worst">Worst</button></div>
     <label class="rp-lab"><input type="checkbox" id="rpSmall"> Show small samples</label></div>
   <div id="rpBw"></div>
+  <h3 class="rp-h">Closing line</h3><div id="rpClv"></div>   <!-- v4.91: Reports step 3 -->
+  <h3 class="rp-h">Edge check · La Contadora</h3><div id="rpEdge"></div>
   <h3 class="rp-h">Open bets <span class="meta" id="rpOpenN"></span></h3><div id="rpOpen"></div>
   <h3 class="rp-h">Settled bets <span class="meta" id="rpSetN"></span></h3><div id="rpSettled"></div>
   <p><button type="button" class="btn-sm" id="rpCsv">⬇ CSV of exactly these bets</button></p>
@@ -2350,7 +2356,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
 
 </div>
 <script>
-const SCREENER_VERSION='v4.90';
+const SCREENER_VERSION='v4.91';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -9672,6 +9678,7 @@ function rpRender(){ const box=document.getElementById('rpPanel'); if(!box) retu
   document.getElementById('rpOpenN').textContent=O.length?'· '+O.length:''; document.getElementById('rpSetN').textContent=D.length?'· '+D.length:'';
   document.getElementById('rpOpen').innerHTML=rpListHtml(O,true,RP.all.open);
   rpStep2(S);   /* v4.90 */
+  rpStep3(S);   /* v4.91 */
   document.getElementById('rpSettled').innerHTML=rpListHtml(D,false,RP.all.set)+(S.Rm.length?'<p class="meta rp-canc"><b>Cancelled bets that lost money</b> (counted in the totals, as on the calendar): '+S.Rm.map(b=>esc(b.name||'bet')+' · '+esc(bookLabel(b.book||''))+' · '+esc(rpDayOf(b)||'')+' · <b class="pl-down">−$'+(+b.lost).toFixed(2)+'</b>').join('; ')+'</p>':'');   /* review: the list adds up to the headline */
   }catch(e){ console.error(e); const h=document.getElementById('rpHead'); if(h) h.innerHTML='<p class="meta">The report could not be worked out: '+esc(e.message)+'</p>'; } }
 /* v4.90 (agreed with Sally 11/13 (CC-2026-11-13-16, -17), owner "BUILD"): Reports step 2. Breakdowns (sport, book, bet type, price, tab, band),
@@ -9729,6 +9736,49 @@ function rpStep2(S){ const set=(id,h)=>{ const el=document.getElementById(id); i
   const bw=document.getElementById('rpBwWho'); if(bw) bw.value=RP.bwWho||'teams'; const sm=document.getElementById('rpSmall'); if(sm) sm.checked=!!RP.small;
   document.querySelectorAll('#rpBwDir button').forEach(x=>{ const on=x.dataset.d===(RP.bwDir||'best'); x.classList.toggle('on',on); x.setAttribute('aria-pressed',String(on)); });
   set('rpBreak', rpBreakHtml(S)); set('rpChart', rpChartHtml(S)); set('rpMonths', rpMonthsHtml(S)); set('rpBw', rpBwHtml(S)); }
+/* v4.91 (agreed with Sally 11/13 (CC-2026-11-13-12 … -17), owner "BUILD"): Reports step 3, the edge checks. Numbers only, never a verdict.
+   Closing line: settled singles with a closing price, CLV = closing chance ÷ your price's chance − 1 (clv); "even" is within 0.1 point.
+   CLV value proxy = Σ own stake × CLV, "if the closing price were fair": a proxy, not expected earnings.
+   La Contadora's expected profit = Σ stake × her frozen pregame EV (snap.actNet saved before the start), on settled singles that are not sold or
+   free; next to the actual profit of the same bets. Expected wins = Σ her frozen pregame chance (snap.act) over unique outcomes (the earliest
+   ticket on an outcome speaks for it; pushes out; free bets in). The main range resamples whole games (bets on one game move together). */
+function rpPregame(b){ const s=b.snap||{}, at=Date.parse(s.at), st=Date.parse(b.start||(b.gameInfo&&b.gameInfo.startISO)); return !isNaN(at) && !isNaN(st) && at<st; }
+function rpBootGames(items, B){ const G=new Map(); items.forEach(x=>{ (G.get(x.g)||G.set(x.g,[]).get(x.g)).push(x.v); }); const S=[...G.values()].map(a=>a.reduce((t,v)=>t+v,0)), n=S.length; if(n<2) return null;
+  const rnd=rng32(items.length*7919+n), v=new Float64Array(B=B||2000); for(let b=0;b<B;b++){ let t=0; for(let i=0;i<n;i++) t+=S[(rnd()*n)|0]; v[b]=t; } v.sort();
+  return {lo:v[Math.floor(0.025*(B-1))], hi:v[Math.ceil(0.975*(B-1))], games:n}; }
+function rpStage(n, games){ return n<30?'extremely preliminary':n<100?'descriptive only':n<300||games<150?'directional':'large enough to be informative'; }
+function rpMed(a){ if(!a.length) return null; const s=a.slice().sort((x,y)=>x-y), m=s.length>>1; return s.length%2?s[m]:(s[m-1]+s[m])/2; }
+function rpPctP(x){ return x==null?'—':(x>=0?'+':'−')+Math.abs(x*100).toFixed(2)+'%'; }
+function rpClvHtml(S){ const M=S.L.filter(b=>b.kind!=='parlay' && !heldValue(b).open), C=M.filter(b=>clv(b)!=null);
+  if(!M.length) return '<p class="meta">No settled single bets in this report.</p>';
+  if(!C.length) return '<p class="meta">None of the '+M.length+' settled single bets has a closing price yet.</p>';
+  const v=C.map(clv), mean=v.reduce((t,x)=>t+x,0)/v.length, W=C.map(b=>b.free?0:(+b.stake||0)), sw=W.reduce((t,x)=>t+x,0), wmean=sw>0?C.reduce((t,b,i)=>t+W[i]*v[i],0)/sw:null, proxy=C.reduce((t,b,i)=>t+W[i]*v[i],0);
+  const grp=[['Beat the close',C.filter(b=>clv(b)>=0.001)],['Even (within 0.1 point)',C.filter(b=>Math.abs(clv(b))<0.001)],['Missed the close',C.filter(b=>clv(b)<=-0.001)]];
+  const c=rpCounts(C), tile=(l,x,cl,t)=>'<div class="rp-k"'+(t?' title="'+esc(t)+'"':'')+'><span>'+l+'</span><strong'+(cl?' class="'+cl+'"':'')+'>'+x+'</strong></div>';
+  return '<div class="rp-ks">'+tile('With a closing price',C.length+' of '+M.length,'', 'settled single bets with a closing price on the same side and line')+tile('Average CLV',rpPctP(mean),rpCls(mean))+tile('Median CLV',rpPctP(rpMed(v)),rpCls(rpMed(v)||0))+tile('Stake-weighted CLV',rpPctP(wmean),rpCls(wmean||0),'each bet counted by its own-money stake; free bets weigh 0')+'</div>'+
+    '<div class="rp-tw"><table class="rp-t rp-clv"><thead><tr><th></th><th class="num">Tickets</th><th class="num">Share</th><th class="num">W–L–P</th><th class="num">Profit</th><th class="num">ROI</th></tr></thead><tbody>'+
+    grp.map(([lab,L])=>{ const x=rpAgg(L,[]); return '<tr><td class="rp-bet"><b>'+lab+'</b></td><td class="num" data-l="Tickets">'+L.length+'</td><td class="num" data-l="Share">'+(L.length/C.length*100).toFixed(1)+'%</td><td class="num" data-l="W–L–P">'+x.w+'–'+x.l+'–'+x.p+'</td><td class="num '+rpCls(x.profit)+'" data-l="Profit">'+lcUsd(x.profit)+'</td><td class="num" data-l="ROI">'+rpPct(x.roi)+'</td></tr>'; }).join('')+'</tbody></table></div>'+
+    '<div class="rp-box"><b>CLV value proxy · if the closing price were fair:</b> <b class="'+rpCls(proxy)+'">'+lcUsd(proxy)+'</b> <span class="meta">(Σ own stake × CLV). The close still has the book’s margin in it, so this is a sign of price quality, not money expected.</span></div>'+
+    '<p class="meta">'+c.outcomes+' unique outcome'+(c.outcomes===1?'':'s')+' on '+c.games+' game'+(c.games===1?'':'s')+(rpSample(c.outcomes)?' · <b class="rp-smp">'+rpSample(c.outcomes)+'</b>':'')+'</p>'; }
+function rpEdgeHtml(S){ const sing=S.L.filter(b=>b.kind!=='parlay' && !heldValue(b).open), settledN=sing.length;
+  /* expected profit: her frozen pregame EV, money bets only */
+  const EP=sing.filter(b=>!b.sold && !b.free && b.snap && b.snap.actNet!=null && isFinite(+b.snap.actNet) && rpPregame(b) && betProfit(b)!=null);
+  const E=EP.reduce((t,b)=>t+(+b.stake||0)*(+b.snap.actNet),0), A=EP.reduce((t,b)=>t+betProfit(b),0);
+  const cP=rpCounts(EP), bP=rpBootGames(EP.map(b=>({g:rpGameKey(b), v:betProfit(b)-(+b.stake||0)*(+b.snap.actNet)})));
+  /* expected wins: unique outcomes, the earliest pregame ticket speaks for each */
+  const O=new Map(); sing.filter(b=>!b.sold && (b.result==='win'||b.result==='loss') && b.snap && b.snap.act!=null && isFinite(+b.snap.act) && rpPregame(b)).forEach(b=>{ const k=rpOutKey(b), o=O.get(k); if(!o || Date.parse(b.snap.at)<Date.parse(o.snap.at)) O.set(k,b); });
+  const OW=[...O.values()], EW=OW.reduce((t,b)=>t+(+b.snap.act),0), AW=OW.filter(b=>b.result==='win').length, sd=Math.sqrt(OW.reduce((t,b)=>t+(+b.snap.act)*(1-(+b.snap.act)),0));
+  const gW=new Set(OW.map(rpGameKey)).size, bW=rpBootGames(OW.map(b=>({g:rpGameKey(b), v:(b.result==='win'?1:0)-(+b.snap.act)})));
+  const rng=(b,f)=>b?'95% range by game (resampling whole games, '+b.games+' games): '+f(b.lo)+' to '+f(b.hi):'a range needs at least two games';
+  const pm=x=>(x>=0?'+':'−')+Math.abs(x).toFixed(1);
+  return '<div class="rp-edge">'+
+    '<div class="rp-box"><b>La Contadora’s expected profit</b> <span class="meta">(Σ stake × her EV, frozen before the game)</span><br>Expected <b class="'+rpCls(E)+'">'+lcUsd(E)+'</b> · actual <b class="'+rpCls(A)+'">'+lcUsd(A)+'</b> · '+EP.length+' of '+settledN+' settled singles eligible'+
+      '<div class="meta">'+(EP.length?'Actual − expected: '+lcUsd(A-E)+' · '+rng(bP,lcUsd)+' · <b class="rp-smp">'+rpStage(cP.outcomes,cP.games)+'</b> ('+cP.outcomes+' outcomes, '+cP.games+' games)':'No settled single has her EV saved before its game.')+'. Left out: parlays, open, sold and free bets, bets with no EV saved before the start.</div></div>'+
+    '<div class="rp-box"><b>Expected wins</b> <span class="meta">(Σ her chance, frozen before the game)</span><br>Expected <b>'+EW.toFixed(1)+'</b> · actual <b>'+AW+'</b> · '+OW.length+' eligible outcome'+(OW.length===1?'':'s')+' from '+settledN+' settled single ticket'+(settledN===1?'':'s')+
+      '<div class="meta">'+(OW.length?'Actual − expected: '+pm(AW-EW)+' wins · '+rng(bW,pm)+' · <b class="rp-smp">'+rpStage(OW.length,gW)+'</b>':'No settled single has her chance saved before its game.')+'. Free bets count here (the forecast is the same); pushes, parlays and sold bets do not; a repeated bet on one outcome counts once.</div>'+
+      (OW.length?'<details class="meta"><summary>Independent-outcome SD</summary>Independent-outcome SD: '+sd.toFixed(1)+' wins · ignores same-game correlation; not a confidence range.</details>':'')+'</div>'+
+    '<p class="meta">No verdict before 100 eligible outcomes. Any one bet can lose; only many bets show whether the edge is real.</p></div>'; }
+function rpStep3(S){ const set=(id,h)=>{ const el=document.getElementById(id); if(el) el.innerHTML=h; }; set('rpClv', rpClvHtml(S)); set('rpEdge', rpEdgeHtml(S)); }
 function rpCsvDl(){ const S=rpSet(); if(!S.L.length && !S.Rm.length){ alert('No bets in this report.'); return; }
   const f=RP.f||{}, fl=Object.keys(f).filter(k=>f[k]).map(k=>k+'='+f[k]).join('; ')||'none';
   const meta={basis:RP.basis==='placed'?'date placed':'game day', range:RP.per==='all'?'All time':S.R.lab+(RP.per==='custom'?'':' ('+S.R.lo+' to '+S.R.hi+')'), filters:fl, at:new Date().toLocaleString('en-US',{timeZone:'America/Chicago'}), cancelled:S.Rm};
