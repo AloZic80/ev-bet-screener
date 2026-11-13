@@ -12,6 +12,12 @@ Your step 1 (ENTRY PRICE BAND); Alonzo said "Build". Step 2 (the market band) is
   calibration". Not in the cover bands, calibration, Brier / log loss, EV or the Scorecard.
 - A bet he typed without a cover still says "no band" (it is not a fill).
 
+## Fixed before publishing (our reviewer)
+- A price corrected by import or by hand wins over the fill's; the chip filters the log again; the table says the bets still sit in the
+  study's "no cover saved" row and the Scorecard's "Own / unverified" (only the entry price is kept out); profit colours; a visible outline.
+- Reported (older): a ticket bought in several orders books its profit from the last fill's odds; a fill whose book sent no fee shows the
+  price without its fee.
+
 ## Numbers (test)
 Dahlin 8 shares for $4.52 = 56.5%; Diabate −147 = 59.5%; Holloway 10 for $5.93 = 59.3% (a loss): Slight Lean, 2–1–0, average break-even
 58.4%, hit rate 66.7%. The calibration counts only the one bet with a forecast.
