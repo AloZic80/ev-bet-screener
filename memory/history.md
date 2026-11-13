@@ -6,6 +6,11 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.87 (Alonzo: four Novig fills with "no band", "Put the minions to work"; Sally's step 1, owner "Build" Fri 11/13): a fill that matched no
+  board card (`b.autoFrom`, no `betCover`) shows `entryChip` "ENTRY PRICE · 56.5% · Slight Lean · no forecast": `entryP` = fillCost ÷ fillQty
+  (an exchange pays $1), else the price with its fee. Worked out on display, never saved into fair / cover / snap; out of calibration, the
+  forecast bands, EV and the Scorecard. Performance › Entry-price bands (`renderEntryBands`, called from `renderStudy` with the same game days).
+  Step 2 (a market band read after the fill) is parked: the app learns of a fill 1–3 minutes late. Test: `v487-test` (10).
 - v4.86 (agreed with Sally, owner "BUILD" Fri 11/13): `listedOf(r)` freezes `snap.listed` on new bets in `addToLog` {tab by La Contadora's
   chance (`tabOfChance`: brujo <45, suertudo <50, volado <60, machin <75, boring), status approved / extra (r.tier or r.xc) / own (a row whose
   `src` is not `api:` or `paste…`: typed, a book fill) / override (a board row not approved, or held at $0 as AWOL / Old), classification
