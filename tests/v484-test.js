@@ -18,7 +18,7 @@ const ROWS=[row('o',{offeredProb:0.55, fairProb:0.64, mktProb:0.64}), row('u',{s
   row('tq',{name:'Total', team:'', side:'O', kind:'total', market:'? Total', offeredProb:0.5, fairProb:0.5, mktProb:0.5}), row('tu',{name:'Total', team:'', side:'U', kind:'total', market:'? Total', offeredProb:0.5, fairProb:0.5, mktProb:0.5}),   // no line: no market
   row('sx',{name:'ARS', team:'ARS', game:'ARS @ CHE', matchup:'ARS @ CHE', side:'', sport:'SOCCER', kind:'moneyline', market:'Moneyline', offeredProb:0.40, fairProb:0.46, mktProb:0.46})];
 (async()=>{ const b=await chromium.launch();
-  for(const W of [1280,390]){
+  for(const W of [1280,390,1000,1960]){
     const ctx=await b.newContext({timezoneId:'America/Chicago',viewport:{width:W,height:1000}}); await ctx.clock.install({time:new Date(NOW)});
     await ctx.addInitScript(([R,d])=>{ try{ if(sessionStorage.getItem('s')) return; sessionStorage.setItem('s','1'); localStorage.clear(); localStorage.setItem('mbev.cfg',JSON.stringify({books:'Novig,Kalshi',bank:'500',cfgVer:3.03})); localStorage.setItem('mbev.cards','1'); localStorage.setItem('mbev.board',JSON.stringify({v:1,savedAt:new Date().toISOString(),slate:d,rows:R})); }catch(e){} },[ROWS,DAY]);
     const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
@@ -63,7 +63,13 @@ const ROWS=[row('o',{offeredProb:0.55, fairProb:0.64, mktProb:0.64}), row('u',{s
       await p.clock.fastForward(11*60e3); await p.waitForTimeout(200);
       const x1=await p.evaluate(()=>shText(lastRows.find(x=>x.apiKey==='o')));
       check('Los Chismosos: with the page left open, a hold whose prices are now over 10 minutes old reads "Hold —"', /^Hold — · /.test(x1), x1);
-    } else {
+    }
+    { /* v4.85 (Alonzo: the tag ran over the game time): it stays inside its own column at every width */
+      const box=await p.evaluate(()=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>/Collin Gillespie/.test(x.textContent)&&/Threes/.test(x.textContent)), s=c&&c.querySelector('.sc-pill.sh'); if(!s) return null; let col=s; while(col.parentElement && col.parentElement!==c) col=col.parentElement;
+        const a=s.getBoundingClientRect(), b=col.getBoundingClientRect(), hit=[...c.querySelectorAll('*')].filter(e=>!col.contains(e) && !e.contains(col) && e.children.length===0 && e.textContent.trim()).some(e=>{ const r=e.getBoundingClientRect(); return r.width && r.height && r.left<a.right-1 && r.right>a.left+1 && r.top<a.bottom-1 && r.bottom>a.top+1; });
+        return {inside:a.left>=b.left-1 && a.right<=b.right+1, overlaps:hit, w:Math.round(a.width)}; });
+      check(W+' px: the hold tag stays inside its column and covers no other text (the game time)', box && box.inside && !box.overlaps, box); }
+    if(W===390){
       const L=await p.evaluate(()=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>/Collin Gillespie/.test(x.textContent)&&/Threes/.test(x.textContent)), s=c&&c.querySelector('.sc-pill.sh'), r=s&&s.getBoundingClientRect(), cr=c&&c.getBoundingClientRect();
         return {t:s?s.textContent:null, inside:!!(r&&cr&&r.right<=cr.right+1&&r.left>=cr.left-1), sideways:document.documentElement.scrollWidth>innerWidth}; });
       check('390 px: the tag fits inside the card, no sideways scroll', L.t && L.inside && !L.sideways, L);
