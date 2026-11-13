@@ -30,12 +30,19 @@ const ROWS=[row('o',{offeredProb:0.55, fairProb:0.64, mktProb:0.64}), row('u',{s
     await p.goto('http://app.test/'); await p.waitForTimeout(1300);
     const look=()=>p.evaluate(()=>{ const g=k=>lastRows.find(r=>r.apiKey===k)||{}; return {o:g('o').sh||null, oTxt:shText(g('o')), oStake:+(+g('o').stake||0).toFixed(2), mp:shText(g('mp')), sx:g('sx').sh||null, tq:g('tq').sh||null}; });
     const ev=(f)=>p.evaluate(f).then(()=>p.waitForTimeout(300));
+    const boxCheck=async()=>{ /* v4.85 (Alonzo: the tag ran over the game time): it stays inside its own column at every width */
+      const box=await p.evaluate(()=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>/Collin Gillespie/.test(x.textContent)&&/Threes/.test(x.textContent)), s=c&&c.querySelector('.sc-pill.sh'); if(!s) return null; let col=s; while(col.parentElement && col.parentElement!==c) col=col.parentElement;
+        const a=s.getBoundingClientRect(), b=col.getBoundingClientRect(), hit=[...c.querySelectorAll('*')].filter(e=>!col.contains(e) && !e.contains(col) && e.children.length===0 && e.textContent.trim()).some(e=>{ const r=e.getBoundingClientRect(); return r.width && r.height && r.left<a.right-1 && r.right>a.left+1 && r.top<a.bottom-1 && r.bottom>a.top+1; });
+        return {inside:a.left>=b.left-1 && a.right<=b.right+1, overlaps:hit, w:Math.round(a.width)}; });
+      check(W+' px: the hold tag stays inside its column and covers no other text (the game time)', box && box.inside && !box.overlaps, box); };
+    if(W!==1280) await boxCheck();
     if(W===1280){
       const v0=await look();
       check('Over at Novig 55% + Under at Novig 47%: "Hold 2.0% · O Novig -122 · U Novig +113" (DraftKings 40% is not one of his books, so it never counts)', v0.o && v0.o.ok && Math.abs(v0.o.feeAdjusted-0.02)<1e-9 && v0.oTxt==='Hold 2.0% · O Novig -122 · U Novig +113', v0);
       check('a moneyline in a sport with no draw is two-way: PHX 60% + CHA 43% = 3.0%; a soccer moneyline (three-way) gets no tag', /^Hold 3\.0% · PHX Novig -150 · CHA Novig \+133$/.test(v0.mp) && v0.sx===null, {mp:v0.mp, sx:v0.sx});
       const card=await p.evaluate(()=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>/Collin Gillespie/.test(x.textContent)&&/Threes/.test(x.textContent)); const s=c&&c.querySelector('.sc-pill.sh'); return s?{t:s.textContent, cls:s.className}:null; });
       check('the card shows the tag ("standard" band, 2 to 4%)', card && card.t==='Hold 2.0% · O Novig -122 · U Novig +113' && /\bstd\b/.test(card.cls), card);
+      await boxCheck();
       // a 🦑 press: Kalshi quotes add both sides at the same moment (the Under at 1 − the Over's bid), fees in
       await p.evaluate(async()=>{ await shopExchanges(); }); await p.waitForTimeout(500);
       const v1=await look();
@@ -64,11 +71,6 @@ const ROWS=[row('o',{offeredProb:0.55, fairProb:0.64, mktProb:0.64}), row('u',{s
       const x1=await p.evaluate(()=>shText(lastRows.find(x=>x.apiKey==='o')));
       check('Los Chismosos: with the page left open, a hold whose prices are now over 10 minutes old reads "Hold —"', /^Hold — · /.test(x1), x1);
     }
-    { /* v4.85 (Alonzo: the tag ran over the game time): it stays inside its own column at every width */
-      const box=await p.evaluate(()=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>/Collin Gillespie/.test(x.textContent)&&/Threes/.test(x.textContent)), s=c&&c.querySelector('.sc-pill.sh'); if(!s) return null; let col=s; while(col.parentElement && col.parentElement!==c) col=col.parentElement;
-        const a=s.getBoundingClientRect(), b=col.getBoundingClientRect(), hit=[...c.querySelectorAll('*')].filter(e=>!col.contains(e) && !e.contains(col) && e.children.length===0 && e.textContent.trim()).some(e=>{ const r=e.getBoundingClientRect(); return r.width && r.height && r.left<a.right-1 && r.right>a.left+1 && r.top<a.bottom-1 && r.bottom>a.top+1; });
-        return {inside:a.left>=b.left-1 && a.right<=b.right+1, overlaps:hit, w:Math.round(a.width)}; });
-      check(W+' px: the hold tag stays inside its column and covers no other text (the game time)', box && box.inside && !box.overlaps, box); }
     if(W===390){
       const L=await p.evaluate(()=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>/Collin Gillespie/.test(x.textContent)&&/Threes/.test(x.textContent)), s=c&&c.querySelector('.sc-pill.sh'), r=s&&s.getBoundingClientRect(), cr=c&&c.getBoundingClientRect();
         return {t:s?s.textContent:null, inside:!!(r&&cr&&r.right<=cr.right+1&&r.left>=cr.left-1), sideways:document.documentElement.scrollWidth>innerWidth}; });
