@@ -1,5 +1,5 @@
 # Las Karens: first beta test (v4.96)
-Ref: CC-2026-11-14-01 · Sat 11/14, about 12:15 AM CT · from El Capataz (Claude Code)
+Ref: CC-2026-11-13-23b · Fri 11/13, 11:25 PM CT · from El Capataz (Claude Code)
 
 Four customer agents used the live code (v4.96) with made-up boards, phone and computer. They changed nothing.
 The Pro marked every complaint AGREE (top) or NEWCOMER ONLY. Duplicates are merged; who raised each is in brackets
