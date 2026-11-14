@@ -44,10 +44,10 @@ const WATCH=[WO('w1',0.004,'win',0.5),WO('w2',0.010,'loss',0.5),WO('w3',-0.02,'w
   check('Gridin: the move was 3 hours ago: outside the 2 hours a signal is scored on, so no pill and no bonus', sg.grid.pill==='' && sg.grid.sc.s===0 && !sg.grid.sc.sig, sg.grid);
   const why=await p.evaluate(()=>{ const r=lastRows.find(x=>x.apiKey==='frost'), c=document.querySelector('#placeCards .sc-card[data-idx="'+r.idx+'"]'); c.querySelector('details.sc-why').open=true; return c.innerText.replace(/\s+/g,' '); });
   check('Why this play? lists the ⚡ Signal part with the reason; the score chip says "signal +2"', /⚡ Signal/.test(why) && /the market moved \+4\.5 pts this way, seen 20m ago; Novig has not followed \(a bonus of up to 5 for a sharp market, 2 for the consensus/.test(why) && await p.evaluate(()=>[...document.querySelectorAll('#placeCards .sc-score')].some(x=>/signal \+2/.test(x.title))), why.slice(why.indexOf('⚡ Signal'),why.indexOf('⚡ Signal')+170));
-  await p.selectOption('#sortBy','signal'); await p.waitForTimeout(300);
+  await p.evaluate(()=>{ if(!window._barOpen){ window._barOpen=true; barMoreApply(); } }) /* v4.94: the board controls are behind Filters; tap it first */; await p.selectOption('#sortBy','signal'); await p.waitForTimeout(300);
   const order=await p.evaluate(()=>[...document.querySelectorAll('#placeCards .sc-card')].map(c=>(lastRows.find(r=>r.idx===+c.dataset.idx)||{}).apiKey));
   check('Sort › ⚡ Signal: Frost first (fresh, book behind), then Backlund (book already moved), then Gridin (no signal)', order.join()==='frost,back,grid', order);
-  await p.selectOption('#sortBy','math'); await p.waitForTimeout(200);
+  await p.evaluate(()=>{ if(!window._barOpen){ window._barOpen=true; barMoreApply(); } }) /* v4.94: the board controls are behind Filters; tap it first */; await p.selectOption('#sortBy','math'); await p.waitForTimeout(200);
   // the rules, straight on sigMove (series written by hand; the last point is "now")
   const rules=await p.evaluate(()=>{ const r=lastRows.find(x=>x.apiKey==='frost'), k=pxKey(r), S=pxAll(), m=Math.floor(Date.now()/60000), keep=S[k], T=A=>{ S[k]=A; const g=sigMove(r), s=sigPts(r).s; return g?{rise:+g.rise.toFixed(4), mins:g.mins, behind:g.behind, sharp:g.sharp, sampled:g.sampled, retr:g.retr, s}:null; };
     const out={ sharp:T([[m-30,0.444,0.5,0.46,'s'],[m-10,0.444,0.5,0.50,'s'],[m,0.444,0.5,0.50,'s']]),

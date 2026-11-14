@@ -30,7 +30,7 @@ async function open(b, W, init){ const ctx=await b.newContext({timezoneId:'Ameri
   if(init) await ctx.addInitScript(init);
   const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
   await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
-  await p.goto('http://app.test/'); await p.waitForTimeout(1300); return {ctx,p,errs}; }
+  await p.addInitScript(()=>{ window._barOpen=true; }) /* v4.95: these checks read the notes behind Filters, so Filters is open */; await p.goto('http://app.test/'); await p.waitForTimeout(1300); return {ctx,p,errs}; }
 const cards=p=>p.evaluate(()=>[...document.querySelectorAll('#placeCards .sc-card')].map(c=>(lastRows.find(r=>r.idx===+c.dataset.idx)||{}).apiKey));
 // a stand-in Notification: records what the page asks for (headless browsers show nothing)
 const NOTIF=()=>{ window._notes=[]; window.Notification=class{ constructor(t,o){ window._notes.push({t, body:(o||{}).body, tag:(o||{}).tag}); } static get permission(){ return 'granted'; } static requestPermission(){ return Promise.resolve('granted'); } }; };
@@ -44,12 +44,12 @@ const NOTIF=()=>{ window._notes=[]; window.Notification=class{ constructor(t,o){
   await S.p.evaluate(()=>setMode('lucky')); await S.p.waitForTimeout(300);
   const lk=await S.p.evaluate(()=>({cards:[...document.querySelectorAll('#placeCards .sc-card')].length, heads:[...document.querySelectorAll('#placeCards .pc-head')].map(h=>h.textContent.replace(/\s+/g,' ').trim()), info:(document.getElementById('contadora')||{}).textContent.replace(/\s+/g,' ')}));
   check('🍀 Suertudo: no Just missed card or header; La Contadora says the near-misses are a NO and not offered, 👀 Watch keeps their record', !lk.cards && !lk.heads.some(h=>/Just missed/i.test(h)) && /The ones that just missed my floor are a NO, so they are not offered: 👀 Watch keeps their record\./.test(lk.info) && /🍀 no Coin Flip right now · near-misses: 👀 Watch only/.test(lk.info), lk);
-  await S.p.evaluate(()=>{ setMode('safe'); }); await S.p.selectOption('#boardView','watch'); await S.p.waitForTimeout(300);
+  await S.p.evaluate(()=>{ setMode('safe'); }); await S.p.evaluate(()=>{ if(!window._barOpen){ window._barOpen=true; barMoreApply(); } }) /* v4.94: the board controls are behind Filters; tap it first */; await S.p.selectOption('#boardView','watch'); await S.p.waitForTimeout(300);
   const wt=await S.p.evaluate(()=>[...document.querySelectorAll('#tbody tr:not(.group-row):not(.notes-row) .pick')].map(x=>x.textContent.trim()).concat([...document.querySelectorAll('#placeCards .sc-card')].map(c=>c.textContent)).join(' | '));
-  await S.p.selectOption('#boardView','all'); await S.p.waitForTimeout(200);
+  await S.p.evaluate(()=>{ if(!window._barOpen){ window._barOpen=true; barMoreApply(); } }) /* v4.94: the board controls are behind Filters; tap it first */; await S.p.selectOption('#boardView','all'); await S.p.waitForTimeout(200);
   // ================= 2. Show › ◎ Perfectas, every tab =================
   const per={};
-  for(const m of ['boring','safe','volado','lucky','clair']){ await S.p.evaluate(m=>setMode(m), m); await S.p.waitForTimeout(150); await S.p.selectOption('#boardView','perf'); await S.p.waitForTimeout(250); per[m]=(await cards(S.p)).join(); await S.p.selectOption('#boardView','all'); await S.p.waitForTimeout(150); }
+  for(const m of ['boring','safe','volado','lucky','clair']){ await S.p.evaluate(m=>setMode(m), m); await S.p.waitForTimeout(150); await S.p.evaluate(()=>{ if(!window._barOpen){ window._barOpen=true; barMoreApply(); } }) /* v4.94: the board controls are behind Filters; tap it first */; await S.p.selectOption('#boardView','perf'); await S.p.waitForTimeout(250); per[m]=(await cards(S.p)).join(); await S.p.evaluate(()=>{ if(!window._barOpen){ window._barOpen=true; barMoreApply(); } }) /* v4.94: the board controls are behind Filters; tap it first */; await S.p.selectOption('#boardView','all'); await S.p.waitForTimeout(150); }
   check('Show › ◎ Perfectas lists both Perfectas in every tab: Jefferson (a 🪙 Volado bet) and the Kalshi SEA +1.5 (a 💪 Machín bet, 68.7%), not only in their own tab', Object.values(per).every(v=>v.split(',').sort().join()==='kxsp,perf'), per);
   // ================= 3. Kalshi spreads and the Draw =================
   await S.p.evaluate(()=>setMode('safe')); await S.p.waitForTimeout(300);   // SEA +1.5 at 68.7%: a 💪 Machín bet

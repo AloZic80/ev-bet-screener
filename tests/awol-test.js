@@ -24,7 +24,7 @@ const ROWS=[row('g','Collin Gillespie','PHX','1.5 Threes','Novig',0.58,0.64), ro
     await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html});
       if(/\/live\?/.test(u)){ const bets=JSON.parse(decodeURIComponent(u.split('bets=')[1])), R={}; bets.forEach(d=>{ const a=ANS[d.name]; R[d.id]=a==='found'?{ok:true, src:'novig', price:0.58, bid:0.56, at:Date.now(), outcome:'o-'+d.name}:a||{ok:true, src:'novig', price:0.58, bid:0.56, at:Date.now(), outcome:'o-'+d.name}; }); return r.fulfill({contentType:'application/json',body:JSON.stringify({results:R})}); }
       if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
-    await p.goto('http://app.test/'); await p.waitForTimeout(1300);
+    await p.addInitScript(()=>{ window._barOpen=true; }) /* v4.95: these checks read the notes behind Filters, so Filters is open */; await p.goto('http://app.test/'); await p.waitForTimeout(1300);
     const tabs=()=>p.evaluate(()=>[...document.querySelectorAll('#modeBar button')].map(x=>x.textContent.replace(/\s+/g,' ').trim()));
     const press=async()=>{ await p.evaluate(async()=>{ await shopExchanges(); }); await p.waitForTimeout(400); };
     const t0=await tabs();

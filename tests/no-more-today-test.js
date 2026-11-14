@@ -22,7 +22,7 @@ const LOG=[{id:'old',key:'old',sport:'NFL',kind:'moneyline',name:'NEP',team:'NEP
       localStorage.setItem('mbev.board',JSON.stringify({v:1,savedAt:new Date().toISOString(),slate:d,rows:R})); localStorage.setItem('mbev.log',JSON.stringify(L)); }catch(e){} },[ROWS,DAY,LOG]);
     const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
     await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
-    await p.goto('http://app.test/'); await p.waitForTimeout(1300);
+    await p.addInitScript(()=>{ window._barOpen=true; }) /* v4.95: these checks read the notes behind Filters, so Filters is open */; await p.goto('http://app.test/'); await p.waitForTimeout(1300);
     await p.evaluate(()=>setMode('clair')); await p.waitForTimeout(300);
     const look=()=>p.evaluate(()=>{ const r=k=>lastRows.find(x=>x.apiKey===k)||{}, X=r('X');
       return {A:+(r('A').stake||0).toFixed(2), C:+(r('C').stake||0).toFixed(2), X:{xc:X.xc||null, cap:!!X.xCap, day:!!X.xCapDay, why:X.xWhy||'', stake:+(X.stake||0)},

@@ -20,9 +20,9 @@ const ROWS=[{name:'Naz Reid',team:'MIN',game:'LAC @ MIN',matchup:'LAC @ MIN',sid
   await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/api\.0xbeta\.dev/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1200);
   const card=await p.evaluate(()=>[...document.querySelectorAll('#placeCards .sc-card .cv-chip')].map(c=>c.textContent));
-  await p.uncheck('#cardsOn'); await p.waitForTimeout(400);   // Cards off: the same bet is a table row
+  await p.evaluate(()=>{ if(!window._barOpen){ window._barOpen=true; barMoreApply(); } }) /* v4.94: the board controls are behind Filters; tap it first */; await p.uncheck('#cardsOn'); await p.waitForTimeout(400);   // Cards off: the same bet is a table row
   const chips={card, cell:await p.evaluate(()=>[...document.querySelectorAll('#tbody td .cv-chip')].map(c=>c.textContent))};
-  await p.check('#cardsOn'); await p.waitForTimeout(200);
+  await p.evaluate(()=>{ if(!window._barOpen){ window._barOpen=true; barMoreApply(); } }) /* v4.94: the board controls are behind Filters; tap it first */; await p.check('#cardsOn'); await p.waitForTimeout(200);
   check('a 62% pick says "Lean" (60–<65%) on its Sentinels card and in the board\'s Cover cell', chips.card.includes('Lean') && chips.cell.includes('Lean'), chips);
   await p.evaluate(()=>document.querySelector('.tab[data-view="v-perf"]').click()); await p.waitForTimeout(500);
   const rows=await p.evaluate(()=>[...document.querySelectorAll('#studyRows tr')].map(tr=>[...tr.children].map(td=>td.innerText.replace(/\s+/g,' ').trim())));
