@@ -1572,6 +1572,7 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
 .board-more-list button{font:inherit; font-size:13.5px; font-weight:600; text-align:left; padding:8px 10px; border:0; border-radius:8px; background:transparent; color:var(--ink); cursor:pointer; min-height:36px}
 .board-more-list button:hover{background:var(--panel-2)}
 .board-more[hidden]{display:none}
+.cv-her{margin-left:6px; font-size:12px; font-weight:700; color:var(--soft); white-space:nowrap}   /* v4.92: the chance beside its band, so the price is never read as the band */
 </style>
 </head>
 <body>
@@ -4223,7 +4224,7 @@ function renderEntryBands(list){ const el=document.getElementById('entryRows'); 
 function logBandChip(b){ const k=logBandOf(b); if(k==null) return ''; if(k===0 && isEntryBet(b)) return entryChip(b);   /* v4.87 */ const c=bandCover(b,'act'), p=c?c.p:null, m=betCover(b);
   return '<button type="button" class="cv-chip cv-'+k+' lbf" data-band="'+k+'" title="'+(k?(c.source==='act'?'La Contadora ':c.typed?'Cover you typed ':'Model (no La Contadora chance saved) ')+(p*100).toFixed(1)+'%'+(c.typed?(c.cal?' before the game':' · added after the game started: shown, not judged'):' when you took it')+' · '+cvRanges()[k]+(c.source==='act' && m && !m.typed && Math.abs(m.p-p)>=0.0005?' · the model said '+(m.p*100).toFixed(1)+'% ('+cvNames()[cvBand(m.p)]+')':''):'No cover was saved with this bet')+'. Tap to see only '+(k?cvNames()[k]:'these')+' bets, with their record">'+(k?cvNames()[k]:'no band')+'</button>'; }
 function cvChipActHtml(r){ if(!r) return ''; const a=r.actProb!=null ? r.actProb : null, p=a!=null ? a : r.fairProb, b=cvBand(p); if(!b || p==null) return '';
-  return '<span class="cv-chip cv-'+b+'" title="'+(a!=null?'La Contadora '+(a*100).toFixed(1)+'%':'Model '+(p*100).toFixed(1)+'% (no market to blend)')+' · '+cvRanges()[b]+(a!=null && r.fairProb!=null && Math.abs(r.fairProb-a)>=0.0005?' · the model says '+(r.fairProb*100).toFixed(1)+'% ('+cvNames()[cvBand(r.fairProb)]+')':'')+' (5-point bands; a label, not a rule)">'+cvNames()[b]+'</span>'; }   /* v4.88 */
+  return '<span class="cv-chip cv-'+b+'" title="'+(a!=null?'La Contadora '+(a*100).toFixed(1)+'%':'Model '+(p*100).toFixed(1)+'% (no market to blend)')+' · '+cvRanges()[b]+(a!=null && r.fairProb!=null && Math.abs(r.fairProb-a)>=0.0005?' · the model says '+(r.fairProb*100).toFixed(1)+'% ('+cvNames()[cvBand(r.fairProb)]+')':'')+' (5-point bands; a label, not a rule)">'+cvNames()[b]+'</span><span class="cv-her" title="'+(a!=null?'La Contadora\u2019s chance that this bet wins. The price is a different number: what the book charges.':'The model\u2019s chance that this bet wins (no market to blend). The price is a different number: what the book charges.')+'">chance '+(p*100).toFixed(1)+'%</span>'; }   /* v4.88; v4.92 (Alonzo: "that is at 39.2 > NOT on the line. lets not confuse me or the bettors"): the band names the chance it comes from, beside it */
 function cvChipHtml(p){ const b=cvBand(p); return b?'<span class="cv-chip cv-'+b+'" title="Projected cover '+(p*100).toFixed(1)+'% · '+cvRanges()[b]+' (Augi\'s 5-point bands; a label, not a rule)">'+cvNames()[b]+'</span>':''; }
 function renderStudy(){ const el=document.getElementById('studyRows'); if(!el) return;
   const scope=(document.getElementById('studyScope')||{}).value||'all', today=ctDay(Date.now()), d0=new Date(today+'T12:00:00');
@@ -11092,7 +11093,7 @@ function impTagHtml(r){
   const over=r.fairProb!=null && (mx==null || p>mx+1e-9), ok=mx!=null && !over;
   const am=Math.round(americanOf(p)), how=am>0?'100 / ('+am+' + 100)':(-am)+' / ('+(-am)+' + 100)';
   const tip=fmtOdds(am)+' means the book charges for a '+P(p)+' chance ('+how+').'+(r.fairProb!=null?' The model puts it at '+P(r.fairProb)+(r.mktProb!=null?', the market at '+P(r.mktProb)+', and La Contadora sizes on '+P(okProbR(r)):'')+(mx!=null?'; at '+bookLabel(r.book)+' you can pay up to '+P(mx)+' after its fee and still clear your floor on that.':'; no price at '+bookLabel(r.book)+' clears your EV floor after its fee.'):'')+(over?' Look for a book whose price is a lower %.':'');
-  return '<span class="imp'+(ok?' ok':over?' over':'')+'" title="'+esc(tip)+'">'+P(p)+(ok?' · OK to '+P(mx):over?(mx!=null?' · need ≤ '+P(mx):'')+' · look elsewhere':'')+'</span>';
+  return '<span class="imp'+(ok?' ok':over?' over':'')+'" title="'+esc(tip)+'">price '+P(p)+(ok?' · OK to '+P(mx):over?(mx!=null?' · need ≤ '+P(mx):'')+' · look elsewhere':'')+'</span>';
 }
 function maxTagHtml(r){
   if(r.fairProb==null) return '';

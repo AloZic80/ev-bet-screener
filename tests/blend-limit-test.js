@@ -25,8 +25,8 @@ const ROWS=[row('lek','Jonathan Lekkerimaki','Novig',0.519,0.5546,0.526),
     return {w:c.mWeight, blend:+(okProbR(R.lek)*100).toFixed(2), model:+(maxPriceFor(R.lek.fairProb,'Novig',c.eMin)*100).toFixed(2), ok:+(maxPriceFor(okProbR(R.lek),'Novig',c.eMin)*100).toFixed(2),
       lek:tag('lek'), mid:tag('mid'), nomkt:tag('nomkt'), midStake:R.mid.stake, lekStake:R.lek.stake, midPass:R.mid.pass, kxOk:maxPriceFor(okProbR(R.kx),'Kalshi',c.eMin), kxModel:maxPriceFor(R.kx.fairProb,'Kalshi',c.eMin)}; });
   check('the conservative chance is the blend: 52.6 + 0.35 × (55.46 − 52.6) = 53.60%', m.w===0.35 && m.blend===53.6, m);
-  check('Lekkerimaki at 51.9%: "OK to 52.8%" (the blend), not 54.6% (the model)', /^51\.9% · OK to 52\.8%$/.test(m.lek) && Math.abs(m.model-54.64)<0.02, m.lek);
-  check('a price of 53.5%: the model would say OK, the blend says "need ≤ 52.8% · look elsewhere"', /^53\.5% · need ≤ 52\.8% · look elsewhere$/.test(m.mid), m.mid);
+  check('Lekkerimaki at 51.9%: "OK to 52.8%" (the blend), not 54.6% (the model)', /^price 51\.9% · OK to 52\.8%$/.test(m.lek) && Math.abs(m.model-54.64)<0.02, m.lek);
+  check('a price of 53.5%: the model would say OK, the blend says "need ≤ 52.8% · look elsewhere"', /^price 53\.5% · need ≤ 52\.8% · look elsewhere$/.test(m.mid), m.mid);
   check('with no market price the model\'s own limit stays: OK to 54.6%', /OK to 54\.6%$/.test(m.nomkt), m.nomkt);
   check('Kalshi: the limit price comes from the blend, lower than the model\'s', m.kxOk<m.kxModel && m.kxOk>0.5, [m.kxOk,m.kxModel]);
   await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(300);   /* v4.76: the approved bets are split into the tabs by La Contadora's chance: Quinn Hughes (58%), Lekkerimaki (53.6%) and Pettersson (55.5%) are under 🪙 Volado (50 to 60%), not the default 💪 Machín; the Kalshi card and the Place these head below are read there */

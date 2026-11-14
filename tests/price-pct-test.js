@@ -24,10 +24,10 @@ const ROWS=[row(), row({name:'Luka Doncic',team:'DAL',market:'4.5 Threes',fairPr
       const imps=[...document.querySelectorAll('.imp')], vw=document.documentElement.clientWidth;
       return {ok:t('Ja Morant'), over:t('Luka Doncic'), shown:imps.map(x=>x.textContent), spill:imps.filter(x=>{ const r=x.getBoundingClientRect(); return r.width>0 && (r.right>vw+1 || r.left<-1); }).length, scroll:document.documentElement.scrollWidth>vw+1}; });
     if(W===1280){
-      check('+230 reads 30.3%, green, with how much La Contadora allows', R.ok && /^30\.3% · OK to \d+\.\d%$/.test(R.ok.text) && /\bok\b/.test(R.ok.cls) && /100 \/ \(230 \+ 100\)/.test(R.ok.tip), R.ok);
-      check('the same +230 on a 29% bet: amber "need ≤ … · look elsewhere"', R.over && /^30\.3%( · need ≤ \d+\.\d%)? · look elsewhere$/.test(R.over.text) && /\bover\b/.test(R.over.cls) && /lower %/.test(R.over.tip), R.over);
+      check('+230 reads 30.3%, green, with how much La Contadora allows', R.ok && /^price 30\.3% · OK to \d+\.\d%$/.test(R.ok.text) && /\bok\b/.test(R.ok.cls) && /100 \/ \(230 \+ 100\)/.test(R.ok.tip), R.ok);
+      check('the same +230 on a 29% bet: amber "need ≤ … · look elsewhere"', R.over && /^price 30\.3%( · need ≤ \d+\.\d%)? · look elsewhere$/.test(R.over.text) && /\bover\b/.test(R.over.cls) && /lower %/.test(R.over.tip), R.over);
     }
-    check(W+' px: the % shows on the bets and nothing spills off the screen', R.shown.some(s=>/^30\.3%/.test(s)) && !R.spill && !R.scroll, R);
+    check(W+' px: the % shows on the bets and nothing spills off the screen', R.shown.some(s=>/^price 30\.3%/.test(s)) && !R.spill && !R.scroll, R);
     if(W===390){
       await p.evaluate(()=>{ const t=[...document.querySelectorAll('#placeCards .pcard')].find(x=>/Morant/.test(x.textContent)); (t.querySelector('.bet-btn')||t.querySelector('button')).click(); }); await p.waitForTimeout(400);
       const tag=async v=>{ await p.evaluate(v=>{ const i=document.querySelector('.editor .eb-odds'); i.value=v; i.dispatchEvent(new Event('input',{bubbles:true})); },v); await p.waitForTimeout(150); return p.evaluate(()=>(document.querySelector('.editor .eb-check')||{}).textContent||''); };
