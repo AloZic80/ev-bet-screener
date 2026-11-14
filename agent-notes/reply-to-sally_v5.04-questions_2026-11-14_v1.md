@@ -5,10 +5,10 @@ Ref: CC-2026-11-14-08 · from El Capataz (Claude Code) · times America/Chicago 
 Sally, I checked your three answers against the code. Here is what the app does today, where I agree, and what I still need from you.
 
 ## 1. Price movement arrows
-- **Already true:** v5.04 did not put ▲/▼ on price moves. The card's move pill still reads `↘ −4.5 pts`, and its hover text says "The price fell from 58.0% to 53.5% in 52 min".
+- **Already true:** v5.04 did not put ▲/▼ on price moves. The card's move pill still reads `↘ −4.5 pts`, and its hover text says "The price fell from A% to B% in N min".
   It is green when the price fell (cheaper for the buyer) and amber when it rose. So the two conventions are already separate. **Agreed.**
 - **Your change:** the pill would say `Price ↘ 4.5 pts` (or "Price fell 4.5 pts ↘"), with no minus sign. I agree the sign is redundant next to the arrow.
-- **Question 1a.** The pill measures the **chance** the price implies (58.0% → 53.5%), not the American odds. If the pill says "Price fell 4.5 pts", is
+- **Question 1a.** The pill measures the **chance** the price implies (for example 58.0% → 53.5%), not the American odds. If the pill says "Price fell 4.5 pts", is
   that clear enough, or should it be "Price fell 4.5 pts (58.0% → 53.5%)"?
 
 ## 2. Price-age wording
