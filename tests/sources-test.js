@@ -44,14 +44,14 @@ const SB={advantages:[0,1,2].map(i=>{ const t=['WIN','WIN','DRAW'][i], pk=['p1',
     if(/espn\.com.*scoreboard/.test(u)){ espn.push(u.replace(/^.*sports\//,'').replace(/\/scoreboard.*$/,'')); return J(r,{events:[]}); }
     return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1500);
-  const where=await p.evaluate(()=>{ const bar=document.getElementById('srcBar'); return {inHead:!!bar.closest('.head'), inSettings:!!bar.closest('#v-settings'), chips:[...bar.querySelectorAll('.src-chip')].map(c=>c.dataset.src), shown:bar.getBoundingClientRect().height>0}; });
-  check('sources row is on the main page (not in Settings), one button per source', where.inHead && !where.inSettings && where.shown && ['bettingpros','oddsapi','sbapi','sgo'].every(s=>where.chips.includes(s)), where);
+  const where=await p.evaluate(()=>{ const bar=document.getElementById('srcBar'); return {inHead:!!bar.closest('#apiDock'), inSettings:!!bar.closest('#v-settings'), chips:[...bar.querySelectorAll('.src-chip')].map(c=>c.dataset.src), shown:bar.getBoundingClientRect().height>0}; });
+  check('v4.92: the sources row is in the bottom dock under the tabs (not in Settings), one button per source', where.inHead && !where.inSettings && where.shown && ['bettingpros','oddsapi','sbapi','sgo'].every(s=>where.chips.includes(s)), where);
   check('Settings keeps only the passphrase', await p.evaluate(()=>!!document.querySelector('#v-settings #screenerPass') && !document.querySelector('#v-settings .src-chip')), true);
   await p.click('.src-chip[data-src="oddsapi"]'); await p.waitForTimeout(300);
   const menu=await p.evaluate(()=>Object.fromEntries([...document.querySelectorAll('#oaSport optgroup')].map(g=>[g.label,[...g.querySelectorAll('option')].map(o=>o.value)])));
   const n=Object.values(menu).reduce((t,a)=>t+a.length,0);
   check('The Odds API menu lists leagues by sport: '+n+' leagues', n>=60 && ['EPL','EREDIVISIE','BRASILEIRAO','ARGENTINA','JLEAGUE','LIBERTADORES','UECL'].every(c=>(menu.Soccer||[]).includes(c)) && (menu.Fighting||[]).includes('MMA') && (menu.Cricket||[]).includes('IPL') && (menu.Rugby||[]).includes('NRL'), Object.fromEntries(Object.entries(menu).map(([k,v])=>[k,v.length])));
-  check('the panel opens right under the row (main page)', await p.evaluate(()=>{ const pn=document.getElementById('srcPanel'); return pn.style.display==='block' && !!pn.closest('.head'); }), true);
+  check('v4.92: the panel opens in the sheet just above the dock', await p.evaluate(()=>{ const pn=document.getElementById('srcPanel'); return pn.style.display==='block' && !!pn.closest('#apiSheet') && !document.getElementById('apiSheet').hidden; }), true);
   const load=async(sel,typed)=>{ if(sel) await p.selectOption('#oaSport',sel); await p.fill('#oaKey',typed||''); await p.click('.oddsLoad[data-src="oddsapi"]'); await p.waitForTimeout(900); return p.textContent('#srcMsg'); };
   let m=await load('EREDIVISIE');
   const ere=await p.evaluate(()=>lastRows.filter(r=>r.sport==='EREDIVISIE').map(r=>({name:r.name,fair:+r.fairProb.toFixed(3),book:r.book,soccer:isSoccer(r.sport)})));
@@ -73,8 +73,8 @@ const SB={advantages:[0,1,2].map(i=>{ const t=['WIN','WIN','DRAW'][i], pk=['p1',
   check('Sportsbook API keeps a league it does not know (Belgian Pro League), 3-way, under its own name', sb.rows.length===3 && sb.rows.every(x=>x.sport==='BEL_PRO_LEAGUE' && x.soccer && x.label==='Belgian Pro League') && !/league not set up/.test(sb.out), sb);
   // phone: the row wraps, nothing runs off the screen
   await p.setViewportSize({width:390,height:844}); await p.click('.tab[data-view="v-board"]'); await p.waitForTimeout(300);
-  const ph=await p.evaluate(()=>{ const bar=document.getElementById('srcBar'), r=bar.getBoundingClientRect(); return {left:r.left, right:r.right, w:innerWidth, overflow:document.documentElement.scrollWidth>innerWidth+1}; });
-  check('phone: the sources row fits the screen', ph.left>=0 && ph.right<=ph.w+1 && !ph.overflow, ph);
+  const ph=await p.evaluate(()=>{ const bar=document.getElementById('apiRow'), r=bar.getBoundingClientRect(); return {left:r.left, right:r.right, w:innerWidth, overflow:document.documentElement.scrollWidth>innerWidth+1}; });
+  check('phone: the sources row fits the screen (v4.92: it scrolls sideways inside itself)', ph.left>=0 && ph.right<=ph.w+1 && !ph.overflow, ph);
   check('no page errors', errs.length===0, errs);
   console.log(`\n${pass} passed, ${fail} failed`); await b.close(); process.exit(fail?1:0);
 })();

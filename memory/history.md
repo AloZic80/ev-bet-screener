@@ -6,6 +6,16 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.93 (agreed with Sally 11/13, CC-2026-11-13-21/22, owner "BUILD, all"; Alonzo: "at 39.2, how do i have edge on a coin flip?"): `evDisplayState(r)`
+  = actionable | outlier_untrusted | stale_last_seen | outlier_and_stale | unavailable (AWOL or gone first; stale = rowOld, shopStale or a scan with no
+  fresh price). The card keeps the score number and actNet but shows "OUTLIER"/"STALE"/"—" in grey and "EST. EV … · not trusted — outlier",
+  "LAST-SEEN EV … · ⏱ price stale" or "no current price". mathTop requires actionable. Display only: actNet, stakes, sort and the score formula unchanged.
+  v4.92 also: the band chip shows "chance x%" beside it and the price line says "price x%".
+- v4.92 (Alonzo, 11/13 night: "the API's, bring them to the bottom ... across", "that includes BettingPros", "TODAY totals ... not by book",
+  "leagues, Parole, moneylines, can be removed or moved elsewhere"): `apiDockBuild` moves the five tabs, #bpLoadbar, #apiStatus, #loadApi, #refreshApi,
+  #srcLine and #srcPanel into #apiDock (fixed, a direct child of <body>; the v4.32 iPhone line moves the dock, not the tabs). Chips open their panel
+  in #apiSheet above the bar. The Today card folds its book tiles behind "by book ▾" at every width. No row under Board: `boardMorePaint` fills a
+  More menu in the board panel (it clicks the hidden subtab buttons, so their handlers are unchanged).
 - v4.91 (Sally 11/13, owner "BUILD"): Reports step 3. `rpClvHtml`: settled singles with a close; mean, median, stake-weighted (free = 0),
   beat / even (|CLV| < 0.001) / missed with record and profit; "CLV value proxy · if the closing price were fair" (never "expected earnings").
   `rpEdgeHtml`: La Contadora expected profit = Σ stake × snap.actNet saved before the start (`rpPregame`; no start time = left out, said in the

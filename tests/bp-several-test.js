@@ -20,7 +20,7 @@ const NOW=Date.parse('2026-11-07T18:00:00Z'), H=3600e3;
       if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'});
       return r.abort(); });
     await p.goto('http://app.test/'); await p.waitForTimeout(1500);
-    await p.evaluate(()=>{ const f=document.getElementById('bpFoldBtn'); if(f && getComputedStyle(f).display!=='none' && f.getAttribute('aria-expanded')!=='true') f.click(); }); await p.waitForTimeout(150);   // v4.63: on a phone the BettingPros panel opens from its line
+    await p.evaluate(()=>{ if(document.getElementById('apiSheet').hidden) document.getElementById('bpChip').click(); }); await p.waitForTimeout(150);   // v4.92: the BettingPros panel opens from its chip in the bottom dock   // v4.63: on a phone the BettingPros panel opens from its line
     // NBA tomorrow-ish (5 h), NHL in 3 h, NFL Sunday (> 24 h), WNBA none
     await p.evaluate(([N,H])=>{ sportNext={NHL:N+3*H, NBA:N+5*H, NFL:N+40*H, WNBA:null}; window._bpLeft=12; document.getElementById('apiPages').value='5'; paintSportSelects(); bmPaint(); },[NOW,H]);
     await p.click('#bpMultiBtn'); await p.waitForTimeout(150);
