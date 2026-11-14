@@ -12,6 +12,6 @@ let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?
   check('the DraftKings sportsbook keeps its own mark; FanDuel Predicts still has none', L.dk && L.fd, L);
   const img=await p.evaluate(async()=>{ const i=new Image(); i.src=LOGOS['dk predictions']; await new Promise(r=>{ i.onload=r; i.onerror=r; }); return {w:i.naturalWidth, h:i.naturalHeight}; });
   check('the logo is a real 40×40 image that draws', img.w===40 && img.h===40, img);
-  check('version v5.02 in the three places', await p.evaluate(()=>SCREENER_VERSION==='v5.02' && document.title.includes('v5.02') && document.getElementById('verTag').textContent==='v5.02'));
+  check('version v5.02 or later in the three places', await p.evaluate(()=>/^v5\.\d\d$/.test(SCREENER_VERSION) && SCREENER_VERSION>='v5.02' && document.title.includes(SCREENER_VERSION) && document.getElementById('verTag').textContent===SCREENER_VERSION));
   check('no page errors', !errs.length, errs);
   await b.close(); console.log('\n'+pass+' passed, '+fail+' failed'); process.exit(fail?1:0); })();
