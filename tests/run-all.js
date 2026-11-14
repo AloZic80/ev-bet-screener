@@ -86,6 +86,7 @@ const runs = [
   ['v4.98: the open Today card: a header row and tiles, same numbers, no repeat of the line above', 'v498-test.js', []],
   ['v5.00: Las Karens round 2 (A and B): TODAY in play, one #1 math pick, chips count bets to place, Save and Cancel above the bar, 16px fields, tabs open at the top, where the N to bet now are', 'v500-test.js', []],
   ['v5.01: Sally’s 8 (agreed, owner BUILD): outlier names its trigger, ⚠ VERIFY LINE/MARKET, PRICE PASSES · better at, Moneylines research only, capped at your max bet, Said vs won', 'v501-test.js', []],
+  ['v5.02: DK Predictions has its own logo (from its own header), the DraftKings sportsbook keeps its mark', 'v502-test.js', []],
   ['v4.60/v4.62: on a phone the Today’s games line, Cover bands, Show, Sort, Sport, the book chips, the tick boxes and Cards fold behind Filters, which names what is on', 'phone-filters-test.js', []],
   ['v4.63: on a phone the BettingPros panel and the Sources panel are one line each, closed when the app opens', 'phone-header-test.js', []],
   ['v4.64: on a phone the Today card is one line (day, bet, record, in play, to check), closed when the app opens', 'phone-today-test.js', []],
