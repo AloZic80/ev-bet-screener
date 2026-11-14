@@ -19,6 +19,8 @@
   like picky strangers (the newcomer, the phone-only one, the know-it-all bettor, and the professional bettor: owner, "and add the Professional bettor too") and list complaints worst first; they change nothing, the owner picks. Four is fine, no odd number needed for a tie (owner: "if Pro agrees
   with Karens, then we are good"): a complaint the Pro agrees with goes to the top of the list. The Pro can raise a complaint, never drop one
   (owner: "BUILD", 2026-11-13): one she disagrees with stays, marked "newcomer only" (the end game is people who may not know betting); one only she raises stays too.
+  El Diseñador (owner, 2026-11-13: "okie"): a designer agent who starts after Las Karens' first list: one look everywhere, a clear order on each screen,
+  mockups only (never the code); the owner picks one, El Capataz builds it. A real human designer for the logo and brand before any sale.
   Code word **"Frijolito"** (owner, 2026-11-11): show him the crew's first names from `agent-notes/crew-names_2026-11-11_v1.md` (Javiera's picks win).
 - Owner (2026-11-05): "build without my other agent". No relay blocks or reports for the other agents unless the owner asks;
   keep the record in the PR description. Still ask plainly before each publish.
