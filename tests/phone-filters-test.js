@@ -9,7 +9,7 @@ const NOW=Date.parse('2026-11-11T18:00:00Z'), iso=ms=>new Date(ms).toISOString()
 const T=(ha,abbr)=>({ha,id:abbr,abbr,name:abbr+' Team',loc:abbr,nick:'Team',logo:'',rec:'',color:'333333',alt:'ffffff'});
 const row=(id,name,g,book,sport)=>({name,team:'A'+g,game:'A'+g+' @ H'+g,matchup:'A'+g+' @ H'+g,side:'O',sport:sport||'NBA',market:'20.5 Points',kind:'prop',book,offeredRaw:'-108',offeredProb:0.52,fairProb:0.58,fairRaw:'-138',mktProb:0.56,stars:4,evModel:'projection',projValue:22,gameInfo:{state:'pre',startISO:iso(KO+g*60e3),eventId:'60600'+g,timeCT:'',detail:'',teams:[T('away','A'+g),T('home','H'+g)]},src:'api:NBA:props',apiKey:id,loadedAt:iso(NOW-60e3)});
 const R=[row('a','One Guy',1,'Novig'), row('b','Two Guy',2,'Bovada'), row('c','Three Guy',3,'Novig','NFL')];
-const IDS=['todayLine','cvLegendT','boardView','sortBy','filterSport','bookChips','swOnly','showRejects','onlyMyGames','notesAll','cardsOn'];   // v4.62: the Today's games line and Cover bands too
+const IDS=['todayLine','cvLegendT','boardView','sortBy','filterSport','swOnly','showRejects','onlyMyGames','notesAll','cardsOn'];   /* v4.96: bookChips left out: they stay on the board (Alonzo: "if anything, we need this") */   // v4.62: the Today's games line and Cover bands too
 async function open(b,W){ const ctx=await b.newContext({timezoneId:'America/Chicago',viewport:{width:W,height:900}}); await ctx.clock.install({time:new Date(NOW)});
   await ctx.addInitScript(([R])=>{ if(sessionStorage.getItem('s')) return; sessionStorage.setItem('s','1'); localStorage.clear(); localStorage.setItem('mbev.cfg',JSON.stringify({books:'Novig, Bovada, Kalshi',bank:'500',cfgVer:3.03})); localStorage.setItem('mbev.board',JSON.stringify({v:1,savedAt:new Date().toISOString(),slate:'2026-11-11',rows:R})); },[R]);
   const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
@@ -26,7 +26,7 @@ const tog=p=>p.evaluate(()=>{ const b=document.getElementById('barMoreBtn'); if(
   check('phone, closed: the Today’s games line, Cover bands, Show, Sort, Sport, the book chips, the tick boxes, Show all notes and Cards are folded away (v4.62: the first two were left out)', IDS.every(id=>v[id]===false), v);
   let ps=await pos(p,['filterPlayer','barMoreBtn','shopBtn']);
   const before=(a,c)=>a.y<c.y-2 || (Math.abs(a.y-c.y)<=2 && a.x<c.x);
-  check('phone: Send the Sentinels is on the row by itself', ps.shopBtn.y>0, ps);
+  check('phone: Send the Sentinels shows, and under it the book chips (v4.96: “if anything, we need this”)', ps.shopBtn.y>0 && (await seen(p,['bookChips'])).bookChips===true, ps);
   let t=await p.evaluate(()=>document.getElementById('barMoreBtn').textContent.trim());
   check('nothing on: the button reads "Filters ▾"', t==='Filters ▾', t);
   await tog(p); await p.waitForTimeout(200);
