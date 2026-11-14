@@ -1535,6 +1535,7 @@ button.cv-chip:hover{filter:brightness(1.06)} button.cv-chip:focus-visible{outli
   .rp-t td[data-l]::before{content:attr(data-l)': '; color:var(--soft); font-size:12px}
 }
 /* v4.92: the API dock (the five tabs with the APIs in a row under them, on every tab), the Today card folded to its totals, the Board row moved to a More menu */
+body{padding-bottom:var(--dockH, calc(110px + env(safe-area-inset-bottom,0px)))}
 .api-dock{-webkit-transform:translateZ(0); transform:translateZ(0); will-change:transform; position:fixed; left:0; right:0; bottom:0; z-index:60; background:var(--panel); border-top:1px solid var(--rule); box-shadow:0 -6px 18px rgba(16,24,40,.08); padding-bottom:env(safe-area-inset-bottom,0px)}
 .api-dock .tabs{position:static; left:auto; right:auto; bottom:auto; margin:0; box-shadow:none; border:0; border-radius:0; padding-top:4px; padding-bottom:4px}
 .api-row{display:flex; align-items:center; gap:6px; padding:5px max(12px, calc((100vw - 1320px) / 2)) 6px; border-top:1px solid var(--rule); background:var(--panel-2); overflow-x:auto; overflow-y:hidden; white-space:nowrap; scrollbar-width:none; -webkit-overflow-scrolling:touch}
@@ -4133,7 +4134,7 @@ function apiDockBuild(){ const dock=document.getElementById('apiDock'); if(!dock
   const btns=document.getElementById('apiBpBtns'); ['loadApi','refreshApi'].forEach(id=>{ const el=document.getElementById(id); if(el && btns) btns.appendChild(el); });
   const line=document.getElementById('srcLine'); if(line) row.appendChild(line);
   ['bpFoldBtn','srcFoldBtn'].forEach(id=>{ const el=document.getElementById(id); if(el) el.hidden=true; });   /* the fold lines of v4.63 are the dock now */
-  const pad=()=>{ try{ document.body.style.paddingBottom=(dock.offsetHeight+10)+'px'; }catch(e){} };
+  const pad=()=>{ try{ document.documentElement.style.setProperty('--dockH', (dock.offsetHeight+10)+'px'); }catch(e){} };   /* a variable, not an inline style, so page rules can still add room */
   try{ new ResizeObserver(pad).observe(dock); }catch(e){} pad();
   document.getElementById('bpChip').addEventListener('click', ()=>apiDockOpen(window._dockOpen==='bp'?'':'bp'));
   document.getElementById('apiSheetX').addEventListener('click', ()=>apiDockOpen(''));

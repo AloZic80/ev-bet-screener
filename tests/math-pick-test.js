@@ -28,7 +28,7 @@ const ROWS=[prop('Five Star','MIN','16.5 Points',5,0.52,0.54,0.535,'k1'), prop('
       const nm=st.cards.map(c=>c.name.replace(/ [A-Z]{2,3}$/,''));
       check('the cards are in math order (edge after blending, outliers last), not the stars order (5, 4, 3)', st.cards.length===3 && nm.join()===st.edge.join() && nm.join()!=='Five Star,Four Star,Three Star', {cards:nm, math:st.edge});
       check('exactly one card says ✅ #1 MATH PICK, the first', st.cards.filter(c=>c.top).length===1 && st.cards[0].top, st.cards.map(c=>c.top));
-      check('every score says what its colour means: STRONG / GOOD / THIN', st.cards.every(c=>/^(STRONG|GOOD|THIN)$/.test(c.word)), st.cards.map(c=>c.word));
+      check('every score says what its colour means: STRONG / GOOD / THIN (v4.93: OUTLIER or STALE in grey when the card is not trusted as shown)', st.cards.every(c=>/^(STRONG|GOOD|THIN|OUTLIER|STALE|OUTLIER · STALE)$/.test(c.word)) && st.cards.some(c=>/^(STRONG|GOOD|THIN)$/.test(c.word)), st.cards.map(c=>c.word));
       check('the header says the math says bet every card, best first, down to the daily max, and what the colours mean', /math says bet every card/i.test(st.head) && /daily max/.test(st.head) && /STRONG/.test(st.head) && /THIN/.test(st.head), st.head.slice(0,200));
       await p.selectOption('#sortBy','top'); await p.waitForTimeout(400);
       const t2=await p.evaluate(()=>[...document.querySelectorAll('#placeCards .sc-card')].map(c=>({top:!!c.querySelector('.sc-mathtop'), five:/Five Star/.test(c.innerText)})));
