@@ -81,6 +81,8 @@ const runs = [
   ['v4.90: Reports step 2: breakdowns, the price paid all in (never a forecast; Sally’s ten checks), the profit line, month tiles, Best / Worst behind the sample gates', 'v490-test.js', []],
   ['v4.91: Reports step 3: closing line (even within 0.1 point, the value proxy), La Contadora expected profit vs actual, expected wins by unique outcome, game-resampled ranges, no verdict', 'v491-test.js', []],
   ['v4.93: an outlier, stale or unavailable card keeps its numbers but loses the green (EST. EV · not trusted, LAST-SEEN EV · price stale, no current price) and is never #1 MATH PICK', 'v493-test.js', []],
+  ['v4.95: under the price, the same bet at your other books (also at), each with its own OK-to; only Send the Sentinels under the mode tabs; the API row on the tabs', 'v495-test.js', []],
+  ['v4.97: Las Karens: the bet form in view and a Saved note; wins = profit; open on the #1 math pick; the Brujo count; thumb-sized phone', 'v497-test.js', []],
   ['v4.60/v4.62: on a phone the Today’s games line, Cover bands, Show, Sort, Sport, the book chips, the tick boxes and Cards fold behind Filters, which names what is on', 'phone-filters-test.js', []],
   ['v4.63: on a phone the BettingPros panel and the Sources panel are one line each, closed when the app opens', 'phone-header-test.js', []],
   ['v4.64: on a phone the Today card is one line (day, bet, record, in play, to check), closed when the app opens', 'phone-today-test.js', []],

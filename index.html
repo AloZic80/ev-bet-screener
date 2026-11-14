@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.96</title>
+<title>0xBeta Screener v4.97</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1618,6 +1618,16 @@ body[data-view]:not([data-view="v-board"]) #tbFoldBtn{display:none !important}
 .sc-alt img.blogo{height:16px; width:auto} .sc-alt b{font-size:14px} .sc-alt small{color:var(--soft); font-weight:600}
 .sc-alt.ok{border-color:var(--live)} .sc-alt.ok small{color:var(--live)}
 .sc-alt.over{opacity:.6} .sc-alt.old{border-style:dashed}
+/* v4.97 (Las Karens): the Saved note above the bottom bar, a short tap guard, and thumb-sized buttons and 16px fields on a phone */
+#savedToast{position:fixed; left:50%; bottom:calc(var(--dockH,110px) + 14px); transform:translateX(-50%) translateY(20px); opacity:0; pointer-events:none; z-index:60; background:var(--live); color:#fff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:22px; box-shadow:0 6px 22px rgba(0,0,0,.25); transition:opacity .2s, transform .2s; max-width:calc(100vw - 32px); text-align:center}
+#savedToast.on{opacity:1; transform:translateX(-50%) translateY(0)}
+body.tap-guard #placeCards, body.tap-guard .board-panel table{pointer-events:none}
+.top-hint{margin:6px 0 10px; padding:10px 14px; border:1px solid var(--live); border-radius:12px; background:var(--panel-2); font-size:14px; display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px}
+.top-hint-go{margin-left:auto; min-height:36px; padding:6px 14px; border-radius:18px; border:1px solid var(--live); background:var(--live); color:#fff; font:inherit; font-weight:700; cursor:pointer}
+@media (max-width:760px){
+  input:not([type=checkbox]):not([type=radio]), select, textarea{font-size:16px}
+  .sc-act button, .sc-act button.log.sm, .editor button, .editor button.log.sm, .board-panel .book-chips button, #apiRow button, #todayBar .tb-day, #todayBar .tb-ref{min-height:40px}
+}
 </style>
 </head>
 <body>
@@ -1626,7 +1636,7 @@ body[data-view]:not([data-view="v-board"]) #tbFoldBtn{display:none !important}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.96</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.97</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2449,7 +2459,7 @@ body[data-view]:not([data-view="v-board"]) #tbFoldBtn{display:none !important}
 
 </div>
 <script>
-const SCREENER_VERSION='v4.96';
+const SCREENER_VERSION='v4.97';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3512,6 +3522,18 @@ function shPill(r){ const h=shNow(r); if(!h) return ''; const b=h.ok?shBand(h.fe
   return '<span class="sc-pill sh '+b+'" title="'+esc(tip)+'">'+esc(h.ok?shText(r):'Hold —')+'</span>'; }
 function shHow(r){ const h=shNow(r); if(!h) return ''; return '<div class="sh-how meta">'+esc(shText(r))+(h.ok?' ('+(h.quoted*100).toFixed(1)+'% before fees)':'')+'. A label only.</div>'; }
 function awolPill(r){ return rowAwol(r) ? '<span class="sc-pill awol" title="'+esc(awolWhy(r))+'. A 🦑 Sentinels press that finds it sends it back to its tab.">👻 AWOL · '+esc(awolWhy(r))+'</span>' : ''; }   /* v4.81 */
+/* v4.97 (Las Karens: "the app opens on a $1 untrusted card; the #1 math pick is hidden in another tab"): when the tab on screen has no #1 math pick
+   and another tab has one, a banner at the top says where it is, with one tap to go there. Nothing switches by itself (orders and bets you
+   already placed stay in view). Hoisted. */
+function topJumpOnce(mathTopHere){ const box=document.getElementById('placeCards'); if(!box || !box.parentNode) return;
+  let el=document.getElementById('topHint'); const hide=()=>{ if(el) el.hidden=true; };
+  if(mathTopHere || !(lastRows||[]).length) return hide();
+  const ok=r=>r.pass && r.stake>0 && !r.prior && !r.waitOrder && !r.removed && !r.moved && !r.glConflict && !rowAwol(r) && !rowOld(r) && evDisplayState(r)==='actionable';
+  const g=lastRows.filter(ok).reduce((a,r)=>!a||mathKey(r)>mathKey(a)?r:a, null); if(!g) return hide();
+  let fam=modeFamOf(g); if(fam==='hail') fam='clair'; if(!MODES[fam] || fam===betMode) return hide();
+  if(!el){ el=document.createElement('div'); el.id='topHint'; el.className='top-hint'; box.parentNode.insertBefore(el, box); }
+  el.innerHTML='⭐ <b>The #1 math pick is under '+esc(MODES[fam].label||fam)+'</b>: '+esc(g.name||'')+' <button type="button" class="top-hint-go" data-mode-go="'+fam+'">Show it ›</button>'; el.hidden=false; }
+document.addEventListener('click', e=>{ const b=e.target.closest && e.target.closest('.top-hint-go'); if(!b) return; setMode(b.dataset.modeGo); window.scrollTo(0, Math.max(0, (document.querySelector('.board-panel')||document.body).getBoundingClientRect().top+scrollY-8)); });
 function modeFamOf(r){ if(!r) return 'safe';
   if(r.prior){ const t=r.prior.tier; return (t==='lucky' || t==='hail') ? t : r.pass ? passFam(r) : 'safe'; }   /* v4.76 */
   if(r.waitOrder || r.moved) return 'safe';   /* an order waiting at a book, or the same bet at another line: with the best bets, so the "do not bet it twice" mark is in the default mode */
@@ -3920,6 +3942,7 @@ function renderCore(rows,cfg){
   }));
 
   try{ modeCountsPaint(rows,mN); }catch(e){}   // v4.50: what each mode would add, on its button   // v4.51: how many bets each mode holds
+  try{ topJumpOnce(mathTop); }catch(e){}   /* v4.97 */
   const dupes=passing.filter(r=>r.prior).length, corrs=passing.filter(r=>r.corr).length;
   document.getElementById('count').textContent=passW?passW.now:passing.length;   // v4.77 (Alonzo: "i want only live bets i can get"): the bets you can place now (was every approved bet)
   const alertBar=document.getElementById('alerts');
@@ -4725,7 +4748,7 @@ function placeCardHtml(r,cfg,o){
       '<div class="sc-game"><b>'+esc(giWhen(gi)||'game time not found')+'</b><span>'+esc(gameTxt)+'</span></div></div>'+
     '<div class="sc-tags">'+cvChipActHtml(r)+tags+'</div>'+   // v4.31: Augi's cover band; v4.88: La Contadora's chance
     '<div class="sc-bet"><div class="sc-pick">'+esc(pickTxt)+(X?'':impTagHtml(r))+'</div>'+   // v4.10's line: the price as a %, OK to / look elsewhere, the math on hover
-      '<div class="sc-money"><b>'+(st>0?'$'+st.toFixed(2):(r.hold&&!X)?'$0':'—')+'</b><span>'+((r.hold&&!X&&!(st>0))?(r.hold.why==='awol'?'if found':'if refreshed')+': up to $'+r.hold.stake.toFixed(2) /* v4.83 */:pay!=null?(isX?'pays $'+pay.toFixed(2):'wins $'+Math.max(0,pay-st).toFixed(2)):'stake')+'</span>'+(lim?'<span class="sc-lim">'+esc(lim)+'</span>':'')+'</div>'+
+      '<div class="sc-money"><b>'+(st>0?'$'+st.toFixed(2):(r.hold&&!X)?'$0':'—')+'</b><span>'+((r.hold&&!X&&!(st>0))?(r.hold.why==='awol'?'if found':'if refreshed')+': up to $'+r.hold.stake.toFixed(2) /* v4.83 */:pay!=null?('wins $'+Math.max(0,pay-st).toFixed(2)+(isX?' · back $'+pay.toFixed(2):'')):'stake' /* v4.97: "wins" is always the profit, as at the book; an exchange also says what comes back */)+'</span>'+(lim?'<span class="sc-lim">'+esc(lim)+'</span>':'')+'</div>'+
       (()=>{ const hl=slip?slipLinkFor(r,st):null;   // v4.42: one tap on a phone: the chip is a real link when the book's slip is already known
         return (hl?'<a class="sc-price book go sc-link'+(over?' over':'')+'" href="'+esc(hl)+'"'+(/^https:/.test(hl)?' target="_blank" rel="noopener"':''):'<span class="sc-price book'+(over?' over':'')+(slip?' go':'')+'" role="button" tabindex="0"')+' title="'+(slip?'Open this bet on '+esc(bk)+(st>0?' with $'+st.toFixed(2)+' filled':''):esc(bk))+(over?'. The price is over La Contadora’s most now: skip it or look elsewhere':'')+'">'+
         '<span class="scp-o">'+logo+'<b>'+esc(odds)+'</b></span><span class="scp-p">'+(okP?pp(p):'')+(over?' · over':'')+'</span>'+(hl?'</a>':'</span>'); })()+(X?'':altBooksHtml(r))+'</div>'+   /* v4.95 (Alonzo: "IMAGINE ANOTHER book under that saying, 53.7 etc. so, i can choose one or the other"): inside the price box, right under the price */
@@ -4877,7 +4900,7 @@ function openBetEditor(tr, r, opt){
     '<span class="pm-fields eb-pm">'+
       '<label>Cost $ <input class="eb-cost" type="number" step="0.01" placeholder="2.50"></label>'+
       '<label><span class="eb-pct-l">@</span> <input class="eb-pct" type="number" step="0.1" placeholder="62" style="width:60px"><span class="eb-pct-u">%</span></label>'+
-      '<label title="Type exactly what the slip says (what you get back if it wins: cost + profit; a number below the cost is read as profit). What you type stays — Cost + To win is the real deal, the @ % stays as the listed price."><span class="eb-win-l">To win $</span> <input class="eb-win" type="number" step="0.01" placeholder="3.93"></label>'+
+      '<label title="Type exactly what the slip says (what you get back if it wins: cost + profit; a number below the cost is read as profit). What you type stays — Cost + To win is the real deal, the @ % stays as the listed price."><span class="eb-win-l">Pays back $</span> <input class="eb-win" type="number" step="0.01" placeholder="3.93"></label>'+
       '<span class="pm-calc eb-calc"></span></span>'+
     (lateRow?'<label title="The game has started. Logging it after the fact? Set how it went and it is saved as graded by you.">Result <select class="eb-res-new"><option value="">Not settled yet</option><option value="win">Won</option><option value="loss">Lost</option><option value="push">Push / void</option></select></label>'+
       (late4?'<span class="meta eb-late" style="color:var(--warn)">Started over 4 hours ago, so it will not grade itself: set Result, or mark it later in the Bet log</span>':''):'')+   // v3.57
@@ -4894,6 +4917,7 @@ function openBetEditor(tr, r, opt){
     '<button class="log sm eb-save">'+(opt.edit?'Save changes':'Save bet')+'</button> <button class="log sm undo eb-cancel">Cancel</button>'+
     '<span class="meta eb-msg" role="status"></span></div>'+(isCard?'':'</td>');
   if(isCard){ const at=tr.querySelector(':scope > .sc-act'); if(at) at.after(ed); else tr.appendChild(ed); } else tr.after(ed);   // v4.21: under the card's buttons
+  try{ ebIntoView(ed); }catch(e){}   /* v4.97 (Las Karens, phone: "I bet this seems to do nothing": the form opened under the bottom bar) */
   if(opt.edit){ const B=opt.edit;   // v3.38: manual result + copy the book's bet ID
     ed.querySelectorAll('button.eb-res').forEach(btn=>btn.addEventListener('click',()=>{
       ebMoneyApply(ed,B,null);   // v4.03: what you set in Real money counts too
@@ -5057,7 +5081,7 @@ function openBetEditor(tr, r, opt){
   }
   ed.querySelectorAll('input,select').forEach(x=>{ x.addEventListener('input',showCheck); x.addEventListener('change',showCheck); });
   bookSel.addEventListener('change',bookDefault); modeSel.addEventListener('change',syncMode); bookDefault(); pmSync(null); showCheck();
-  { const kw=()=>{ const k=/kalshi/i.test(bookSel.value), t=(c,v)=>{ const e=ed.querySelector(c); if(e) e.textContent=v; }; t('.eb-pct-l', k?'Price':'@'); t('.eb-pct-u', k?'¢':'%'); t('.eb-win-l', k?'Max payout $':'To win $'); };   // v4.09: Kalshi's own words (Price in ¢ = %, Max payout = shares × $1)
+  { const kw=()=>{ const k=/kalshi/i.test(bookSel.value), t=(c,v)=>{ const e=ed.querySelector(c); if(e) e.textContent=v; }; t('.eb-pct-l', k?'Price':'@'); t('.eb-pct-u', k?'¢':'%'); t('.eb-win-l', k?'Max payout $':'Pays back $'); };   /* v4.97 (Las Karens: "To win means two things"): in % mode this box is what you get back (cost + profit), so it says so; To win is profit everywhere */   // v4.09: Kalshi's own words (Price in ¢ = %, Max payout = shares × $1)
     bookSel.addEventListener('change',kw); kw(); }
   // v2.88: live exchange price for this bet on Kalshi / Polymarket / Novig — EV re-checked at that price
   { const liveEl=document.createElement('span'); liveEl.className='meta eb-live'; ed.querySelector('.eb-rec').after(liveEl);
@@ -5197,8 +5221,17 @@ function openBetEditor(tr, r, opt){
     if(resNew){ const L=logged[logged.length-1]; L.result=resNew; L.gradedBy='manual'; L.resultSrc='you'; delete L.why; gradeRemember(L); saveLog(); renderTodayBar(); }   // v3.57
     ed.remove();
     renderLog(); renderPerf(); refresh();
+    try{ const L=logged[logged.length-1]; savedToast('✓ Saved: '+(L.betnow||L.name||'your bet')+' · $'+(+L.stake||0).toFixed(2)+(L.book?' at '+bookLabel(L.book):'')); }catch(e){}   /* v4.97 (Las Karens: "Save bet gives no confirmation and the page jumps") */
   });
 }
+/* v4.97: the bet form scrolls into the part of the screen the bottom bar does not cover; after Save, a "✓ Saved" note above the bar,
+   and the board ignores taps for a moment so the next card sliding up is not tapped by mistake. Hoisted. */
+function ebIntoView(ed){ setTimeout(()=>{ const r=ed.getBoundingClientRect(), dock=document.getElementById('apiDock'), dh=dock?dock.getBoundingClientRect().height:0, room=innerHeight-dh-12;
+  if(r.top<60) window.scrollBy(0, r.top-70); else if(r.bottom>room) window.scrollBy(0, Math.min(r.bottom-room, r.top-70));
+  const f=ed.querySelector('input:not([type=hidden]):not([disabled]), select'); if(f && window.matchMedia && !matchMedia('(max-width:760px)').matches){ try{ f.focus({preventScroll:true}); }catch(e){} } }, 60); }   /* after the form has its full height */
+function savedToast(t){ let el=document.getElementById('savedToast'); if(!el){ el=document.createElement('div'); el.id='savedToast'; el.setAttribute('role','status'); el.setAttribute('aria-live','polite'); document.body.appendChild(el); }
+  el.textContent=t; el.classList.add('on'); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('on'),3500);
+  document.body.classList.add('tap-guard'); clearTimeout(window._tapGuard); window._tapGuard=setTimeout(()=>document.body.classList.remove('tap-guard'),700); }
 /* ============ parlay marks (v2.47) ============ */
 let parlays={};
 function loadParlays(){ try{ parlays=JSON.parse(localStorage.getItem('mbev.parlay')||'{}'); }catch(e){ parlays={}; } }
@@ -6001,7 +6034,7 @@ function extrasCardsHtml(L,H,cfg,mN){ let h=''; const U=extrasUsed(), today=ctDa
   if((mode==='clair' && (H.length || any)) || (mode==='old' && H.length) || (mode==='awol' && H.length) /* v4.81 */){   /* v4.77 */ const used=U.hail[today]||0, G=[], by={}, q=String(filterPlayer||'').trim();
     H.forEach(x=>{ const r=x.r, gi=r.gameInfo||{}, k=(gi.eventId?'e'+gi.eventId:(r.game?gameKey(r.game):'?'))+'|'+String(gi.startISO||'').slice(0,13); if(!by[k]){ by[k]={k, r, L:[]}; G.push(by[k]); } by[k].L.push(x); });
     G.sort((a,b)=>(Date.parse((a.r.gameInfo||{}).startISO)||9e15)-(Date.parse((b.r.gameInfo||{}).startISO)||9e15));
-    h+='<div class="pc-head pc-x hail"><b>🔮 Hail Marys</b> · '+H.length+(H.length?' in '+G.length+' game'+(G.length===1?'':'s'):'')+'<span class="sc-sub">'+(H.length ? 'Long shots: +'+EXTRAS.hailOdds+' or longer, and touchdown, home-run or goal scorers from +200. Listed even when the math sees no edge; each card says what the math thinks. For the one from your dream: $'+EXTRAS.hailEach+' each, up to '+EXTRAS.hailDay+' a game day'+(used?' · '+used+' used today':'')+'. Search a player or team above to find it.'+(mode==='clair'?' Back to 💪 Machín at midnight.':'')
+    h+='<div class="pc-head pc-x hail"><b>🔮 Hail Marys</b> · '+H.length+(H.length?' in '+G.length+' game'+(G.length===1?'':'s'):'')+((mode==='clair' && mN && mN.hail>H.length)?' <span class="meta">· '+(mN.hail-H.length)+' approved long shot'+(mN.hail-H.length===1?'':'s')+' above (🔮 Brujo '+mN.hail+')</span>':'') /* v4.97 (Las Karens: "Brujo says 1, the heading says 0") */+'<span class="sc-sub">'+(H.length ? 'Long shots: +'+EXTRAS.hailOdds+' or longer, and touchdown, home-run or goal scorers from +200. Listed even when the math sees no edge; each card says what the math thinks. For the one from your dream: $'+EXTRAS.hailEach+' each, up to '+EXTRAS.hailDay+' a game day'+(used?' · '+used+' used today':'')+'. Search a player or team above to find it.'+(mode==='clair'?' Back to 💪 Machín at midnight.':'')
       : (mN && mN.xH) ? mN.xH+' here, hidden by the Show menu: choose Show › All groups.'+(mode==='clair'?' Back to 💪 Machín at midnight.':'') : (mN && mN.fullH) ? 'No more today: '+EXTRAS.hailDay+' a game day, and you have used them.'+(mode==='clair'?' Back to 💪 Machín at midnight.':'') : (mN && mN.lsmlH) ? 'The long shots on the board are moneylines, and the long-shot moneyline limit is used: '+LSML.day+' a game day and one a game, in every mode.' /* v4.80 (Los Chismosos) */ : 'No long shot on the board right now (+'+EXTRAS.hailOdds+' or longer, or a touchdown, home-run or goal scorer from +200).'+(mode==='clair'?' Back to 💪 Machín at midnight.':'') /* v4.77: Machín, and only in Brujo */)+'</span></div>'+
       G.map(g=>{ const gi=g.r.gameInfo||{}, T=gi.teams||[], aw=T.find(t=>t.ha==='away'), hm=T.find(t=>t.ha==='home');
         const name=aw&&hm?(aw.loc||aw.name||aw.abbr)+' @ '+(hm.loc||hm.name||hm.abbr):(g.r.game||g.r.matchup||'game');
