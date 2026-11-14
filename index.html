@@ -1622,6 +1622,8 @@ body[data-view]:not([data-view="v-board"]) #tbFoldBtn{display:none !important}
 #savedToast{position:fixed; left:50%; bottom:calc(var(--dockH,110px) + 14px); transform:translateX(-50%) translateY(20px); opacity:0; pointer-events:none; z-index:60; background:var(--live); color:#fff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:22px; box-shadow:0 6px 22px rgba(0,0,0,.25); transition:opacity .2s, transform .2s; max-width:calc(100vw - 32px); text-align:center}
 #savedToast.on{opacity:1; transform:translateX(-50%) translateY(0)}
 body.tap-guard #placeCards, body.tap-guard .board-panel table{pointer-events:none}
+.top-hint{margin:6px 0 10px; padding:10px 14px; border:1px solid var(--live); border-radius:12px; background:var(--panel-2); font-size:14px; display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px}
+.top-hint-go{margin-left:auto; min-height:36px; padding:6px 14px; border-radius:18px; border:1px solid var(--live); background:var(--live); color:#fff; font:inherit; font-weight:700; cursor:pointer}
 @media (max-width:760px){
   input:not([type=checkbox]):not([type=radio]), select, textarea{font-size:16px}
   .sc-act button, .sc-act button.log.sm, .editor button, .editor button.log.sm, .board-panel .book-chips button, #apiRow button, #todayBar .tb-day, #todayBar .tb-ref{min-height:40px}
@@ -3520,13 +3522,18 @@ function shPill(r){ const h=shNow(r); if(!h) return ''; const b=h.ok?shBand(h.fe
   return '<span class="sc-pill sh '+b+'" title="'+esc(tip)+'">'+esc(h.ok?shText(r):'Hold —')+'</span>'; }
 function shHow(r){ const h=shNow(r); if(!h) return ''; return '<div class="sh-how meta">'+esc(shText(r))+(h.ok?' ('+(h.quoted*100).toFixed(1)+'% before fees)':'')+'. A label only.</div>'; }
 function awolPill(r){ return rowAwol(r) ? '<span class="sc-pill awol" title="'+esc(awolWhy(r))+'. A 🦑 Sentinels press that finds it sends it back to its tab.">👻 AWOL · '+esc(awolWhy(r))+'</span>' : ''; }   /* v4.81 */
-/* v4.97 (Las Karens: "the app opens on a $1 untrusted card; the #1 math pick is hidden in another tab"): once per app open, if the tab on
-   screen has no #1 math pick and another tab has one, open that tab and say so. Never again that session, so a tab you pick stays. Hoisted. */
-function topJumpOnce(mathTopHere){ if(window._topJumpDone) return; if(!(lastRows||[]).length) return; window._topJumpDone=true; if(mathTopHere || betMode!=='safe') return;   /* only from the default 💪 Machín: a tab you chose on purpose (Suertudo, Brujo…) stays */
+/* v4.97 (Las Karens: "the app opens on a $1 untrusted card; the #1 math pick is hidden in another tab"): when the tab on screen has no #1 math pick
+   and another tab has one, a banner at the top says where it is, with one tap to go there. Nothing switches by itself (orders and bets you
+   already placed stay in view). Hoisted. */
+function topJumpOnce(mathTopHere){ const box=document.getElementById('placeCards'); if(!box || !box.parentNode) return;
+  let el=document.getElementById('topHint'); const hide=()=>{ if(el) el.hidden=true; };
+  if(mathTopHere || !(lastRows||[]).length) return hide();
   const ok=r=>r.pass && r.stake>0 && !r.prior && !r.waitOrder && !r.removed && !r.moved && !r.glConflict && !rowAwol(r) && !rowOld(r) && evDisplayState(r)==='actionable';
-  const g=lastRows.filter(ok).reduce((a,r)=>!a||mathKey(r)>mathKey(a)?r:a, null); if(!g) return;
-  let fam=modeFamOf(g); if(fam==='hail') fam='clair'; if(!MODES[fam] || fam===betMode) return;
-  setTimeout(()=>{ setMode(fam); try{ savedToast('Opened on '+(MODES[fam].label||fam)+': the #1 math pick is here'); }catch(e){} }, 0); }
+  const g=lastRows.filter(ok).reduce((a,r)=>!a||mathKey(r)>mathKey(a)?r:a, null); if(!g) return hide();
+  let fam=modeFamOf(g); if(fam==='hail') fam='clair'; if(!MODES[fam] || fam===betMode) return hide();
+  if(!el){ el=document.createElement('div'); el.id='topHint'; el.className='top-hint'; box.parentNode.insertBefore(el, box); }
+  el.innerHTML='⭐ <b>The #1 math pick is under '+esc(MODES[fam].label||fam)+'</b>: '+esc(g.name||'')+' <button type="button" class="top-hint-go" data-mode-go="'+fam+'">Show it ›</button>'; el.hidden=false; }
+document.addEventListener('click', e=>{ const b=e.target.closest && e.target.closest('.top-hint-go'); if(!b) return; setMode(b.dataset.modeGo); window.scrollTo(0, Math.max(0, (document.querySelector('.board-panel')||document.body).getBoundingClientRect().top+scrollY-8)); });
 function modeFamOf(r){ if(!r) return 'safe';
   if(r.prior){ const t=r.prior.tier; return (t==='lucky' || t==='hail') ? t : r.pass ? passFam(r) : 'safe'; }   /* v4.76 */
   if(r.waitOrder || r.moved) return 'safe';   /* an order waiting at a book, or the same bet at another line: with the best bets, so the "do not bet it twice" mark is in the default mode */

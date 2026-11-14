@@ -18,10 +18,11 @@ const ROWS=[row('vol','Clean Pick','Novig',0.54,0.585,0.575), row('out','Way Off
   const p=await ctx.newPage(); p.on('pageerror',e=>errs.push(W+': '+e.message));
   await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1500);
-  const st=await p.evaluate(()=>({mode:betMode, top:!!document.querySelector('.sc-mathtop'), toast:(document.getElementById('savedToast')||{}).textContent||''}));
-  check(W+' px: the app opened on the tab with the #1 math pick (🪙 Volado), not on Machín’s untrusted outlier, and said so', st.mode==='volado' && st.top && /#1 math pick/.test(st.toast), st);
-  const again=await p.evaluate(()=>{ setMode('safe'); return betMode; }); await p.waitForTimeout(200);
-  check(W+' px: once only: picking a tab afterwards stays on it', await p.evaluate(()=>betMode)==='safe' && again==='safe');
+  const st=await p.evaluate(()=>{ const h=document.getElementById('topHint'); return {mode:betMode, hint:h&&!h.hidden?h.textContent:''}; });
+  check(W+' px: Machín (no #1 math pick here) shows a banner: "⭐ The #1 math pick is under 🪙 Volado", and stays on Machín by itself', st.mode==='safe' && /#1 math pick is under 🪙 Volado/.test(st.hint) && /Clean Pick/.test(st.hint), st);
+  await p.click('#topHint .top-hint-go'); await p.waitForTimeout(300);
+  const st2=await p.evaluate(()=>{ const h=document.getElementById('topHint'); return {mode:betMode, top:!!document.querySelector('.sc-mathtop'), hint:!!(h&&!h.hidden)}; });
+  check(W+' px: one tap on "Show it" opens 🪙 Volado with the #1 math pick, and the banner goes away there', st2.mode==='volado' && st2.top && !st2.hint, st2);
   await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(250);
   const money=await p.evaluate(()=>{ const c=[...document.querySelectorAll('.sc-card')].find(x=>x.textContent.includes('Clean Pick')); return c?c.querySelector('.sc-money').textContent:''; });
   check(W+' px: the card says "wins $" = the profit, and an exchange also says what comes back', /wins \$[\d.]+ · back \$[\d.]+/.test(money), money);
