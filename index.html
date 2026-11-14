@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.02</title>
+<title>0xBeta Screener v5.03</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1676,7 +1676,7 @@ body.tap-guard #placeCards, body.tap-guard .board-panel table{pointer-events:non
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.02</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.03</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2501,7 +2501,7 @@ body.tap-guard #placeCards, body.tap-guard .board-panel table{pointer-events:non
 
 </div>
 <script>
-const SCREENER_VERSION='v5.02';
+const SCREENER_VERSION='v5.03';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -10052,12 +10052,12 @@ function rpStep3(S){ const set=(id,h)=>{ const el=document.getElementById(id); i
 const CAL_POLICY='calibration-v1';
 function wilson95(k,n){ if(!(n>0)) return null; const z=1.959964, p=k/n, d=1+z*z/n, c=(p+z*z/(2*n))/d, h=z*Math.sqrt(p*(1-p)/n+z*z/(4*n*n))/d; return {lo:Math.max(0,c-h), hi:Math.min(1,c+h)}; }
 function calWord(n,g){ return (n<30||g<15)?'too few to read':(n>=100&&g>=50)?'readable, still uncertain':'early sample'; }
-function calRows(L){ const O=new Map(); L.filter(b=>b && b.kind!=='parlay' && !heldValue(b).open && b.snap && b.snap.act!=null && +b.snap.act>0 && +b.snap.act<1 && rpPregame(b)).forEach(b=>{ const k=rpOutKey(b), o=O.get(k); if(!o || Date.parse(b.snap.at)<Date.parse(o.snap.at)) O.set(k,b); });
+function saidWonRows(L){ const O=new Map(); L.filter(b=>b && b.kind!=='parlay' && !heldValue(b).open && b.snap && b.snap.act!=null && +b.snap.act>0 && +b.snap.act<1 && rpPregame(b)).forEach(b=>{ const k=rpOutKey(b), o=O.get(k); if(!o || Date.parse(b.snap.at)<Date.parse(o.snap.at)) O.set(k,b); });
   const OW=[...O.values()].filter(b=>!b.sold && (b.result==='win'||b.result==='loss')), B=new Map();
   OW.forEach(b=>{ const q=+b.snap.act, lo=Math.min(19,Math.floor(q*20+1e-9)), x=B.get(lo)||{lo:lo*5, n:0, k:0, sum:0, g:new Set()}; x.n++; x.sum+=q; if(b.result==='win') x.k++; x.g.add(rpGameKey(b)); B.set(lo,x); });
   const rows=[...B.values()].sort((a,b)=>a.lo-b.lo).map(x=>{ const avg=x.sum/x.n, ci=wilson95(x.k,x.n), side=ci&&ci.hi<avg?'high':ci&&ci.lo>avg?'low':''; return {lo:x.lo, hi:x.lo+5, n:x.n, games:x.g.size, k:x.k, avg, rate:x.k/x.n, ci, side, word:calWord(x.n,x.g.size)}; });
   return {rows, n:OW.length, games:new Set(OW.map(rpGameKey)).size}; }
-function rpCalHtml(S){ const C=calRows(S.L), P=x=>(x*100).toFixed(1)+'%';
+function rpCalHtml(S){ const C=saidWonRows(S.L),   /* v5.03: renamed from calRows (v5.01 reused the name of Performance’s calRows and broke its tables) */ P=x=>(x*100).toFixed(1)+'%';
   if(!C.n) return '<div class="rp-cal"><p class="meta">No settled single has La Contadora’s chance saved before its game yet. Each one you log from the board adds a point here.</p></div>';
   const W=320, H=220, m=34, X=v=>m+v*(W-m-10), Y=v=>H-m+ -v*(H-m-10);
   let svg='<svg class="cal-svg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Said vs won: her average chance per band against the share that won, with 95% ranges">';
