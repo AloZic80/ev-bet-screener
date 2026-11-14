@@ -37,13 +37,13 @@ const LOG=[
   for(const w of [1960,1280,1000,390]){ await p.setViewportSize({width:w,height:1000}); await p.waitForTimeout(150); const sp=await spill(); check('v3.98: at '+w+' px wide, no Today card text runs into the next tile', !sp.length, sp.slice(0,4)); }
   await p.setViewportSize({width:1400,height:1000});
   // v4.02 (Alonzo: "on the Performance tab we do not need the API info"): the BettingPros bar and Sources show on the Board only, and Results by day comes first
-  const seen=()=>p.evaluate(()=>{ const v=sel=>{ const e=document.querySelector(sel); return !!e && e.getBoundingClientRect().height>0; }; return {bp:v('.loadbar'), src:v('#srcBar'), count:v('.statbox')}; });
-  let sn=await seen(); check('v4.02: on the Board, the BettingPros bar, Sources and the board count are there', sn.bp && sn.src && sn.count, sn);
+  const seen=()=>p.evaluate(()=>{ const v=sel=>{ const e=document.querySelector(sel); return !!e && e.getBoundingClientRect().height>0; }; return {bp:v('#bpChip'), src:v('#srcBar'), count:v('.statbox')}; });
+  let sn=await seen(); check('v4.02/v4.92: on the Board, the BettingPros chip, Sources and the board count are there', sn.bp && sn.src && sn.count, sn);
   await p.evaluate(()=>document.querySelector('.tab[data-view="v-perf"]').click())   /* v4.29: under its main tab now */; await p.waitForTimeout(300); sn=await seen();
   const order=await p.evaluate(()=>{ const c=document.getElementById('calPanel'), s=document.getElementById('scorePanel'); return !!(c.compareDocumentPosition(s) & Node.DOCUMENT_POSITION_FOLLOWING); });
-  check('v4.02: on Performance they are gone, and Results by day comes before the Scorecard', !sn.bp && !sn.src && !sn.count && order, {sn, order});
+  check('v4.92 (Alonzo: the APIs in the bottom bar): on Performance the API row stays (it is part of the bar), the board count is gone, and Results by day comes before the Scorecard', sn.bp && sn.src && !sn.count && order, {sn, order});
   for(const v of ['v-log','v-parlay','v-live','v-settings']){ await p.click('.tab[data-view="'+v+'"]'); await p.waitForTimeout(100); }
-  sn=await seen(); check('v4.02: and on the other tabs (Bet log, Parlays, Live, Settings)', !sn.bp && !sn.src, sn);
+  sn=await seen(); check('v4.92: and on the other tabs the API row stays, the count does not', sn.bp && sn.src && !sn.count, sn);
   await p.click('.tab[data-view="v-board"][data-src="api"]'); await p.waitForTimeout(200); sn=await seen();
   check('v4.02: back on the Board they come back', sn.bp && sn.src && sn.count, sn);
   // v4.01 (Alonzo: "toggle between days, a button to go back and forth")

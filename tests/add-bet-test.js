@@ -65,8 +65,8 @@ const route=r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/'))
   // phone: tabs pinned to the bottom of the screen, in view without scrolling
   const ph=await (await b.newContext(devices['iPhone 13'])).newPage(); const perr=[]; ph.on('pageerror',e=>perr.push(e.message)); await ph.route('**/*',route);
   await ph.goto('http://app.test/'); await ph.waitForTimeout(1000);
-  const bar=await ph.$eval('.tabs',e=>{ const r=e.getBoundingClientRect(); return {pos:getComputedStyle(e).position, top:Math.round(r.top), bottom:Math.round(r.bottom), vh:innerHeight}; });
-  check('phone: tab bar fixed at the bottom, in view', bar.pos==='fixed' && bar.bottom===bar.vh && bar.top>bar.vh-90, bar);
+  const bar=await ph.$eval('#apiDock',e=>{ const r=e.getBoundingClientRect(); return {pos:getComputedStyle(e).position, top:Math.round(r.top), bottom:Math.round(r.bottom), vh:innerHeight}; });
+  check('phone: tab bar fixed at the bottom, in view (v4.92: inside the API dock with the sources row)', bar.pos==='fixed' && bar.bottom===bar.vh && bar.top>bar.vh-140, bar);
   await ph.click('.tab[data-view="v-log"]'); await ph.waitForTimeout(300);
   check('phone: tapping a tab switches view', await ph.$eval('#v-log',e=>e.offsetParent!==null), true);
   const vm=await ph.evaluate(()=>{ const e=document.getElementById('verM'), r=e.getBoundingClientRect(), d=document.querySelector('.head .date').getBoundingClientRect(); return {text:e.textContent, shown:e.offsetParent!==null&&r.width>0, inRow:r.top>=d.top-1&&r.bottom<=d.bottom+1, fits:r.right<=innerWidth}; });
