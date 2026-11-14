@@ -17,9 +17,10 @@ forecasts shown apart. I checked it against the code. Three clarifications:
    wrote). It uses the app's seeded `rng32`, cached by log and filter revision: 2,000 draws, 5,000 for rows near zero or card candidates. Two-sided
    p = min(1, 2·(k + 1)/(B + 1)), with k the draws on the far side of zero. The same per-game pairing gives the range for actual − expected.
 3. **Market names in his log need a mapping table**, not just the line stripped. His props today (count, sport, stat as saved):
-   61 NHL "Shots", 18 "Shots OnGoal", 15 "Shots On Goal"; 12 NBA "Points Assists Rebounds", 3 "Points+Rebounds+Assists", 2 "Points+Rebounds+Assists"
-   (spelling), 1 "Points Rebounds Assists"; 8 "Threes", 1 "ThreePointersMade", 1 "3 Point Field Goals"; 3 "Saves", 1 "Goalie Saves"; 1 "Player Goals",
-   1 "Goals"; 4 "Receiving Receptions"; "Interceptions" and "Passing Interceptions"; and 6 props with no sport saved.
+   61 NHL "Shots", 18 "Shots OnGoal", 15 "Shots On Goal"; NBA points + rebounds + assists as 12 "Points Assists Rebounds",
+   2 "Points+Rebounds+Assists" and 1 "Points Rebounds Assists"; points + rebounds as 9 "Points Rebounds" and 3 "Points+Rebounds"; threes as 8 "Threes",
+   1 "ThreePointersMade" and 1 "3 Point Field Goals"; 3 "Saves" and 1 "Goalie Saves"; 1 "Player Goals" and 1 "Goals"; 4 "Receiving Receptions";
+   "Interceptions" and "Passing Interceptions"; and 6 props with no sport saved.
    I propose an explicit alias list (same stat, same contract) and the "unmapped" marker for the rest. One open point I am asking **Alonzo**:
    is NHL "Shots" the same contract as "Shots On Goal" at his books? If not, they stay apart.
 
