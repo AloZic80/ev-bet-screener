@@ -25,7 +25,7 @@ const txt=(p,sel)=>p.evaluate(s=>document.querySelector(s).textContent.replace(/
         text:a.textContent.replace(/\s+/g,' '), over:document.documentElement.scrollWidth-innerWidth}; });
     const wide=W>=1000;
     check(W+' px: v4.98 (Alonzo: "in ROWS not columns" … "make it nice"): open, the day is one header row'+(wide?' (one line)':' (wraps on a phone)'), wide ? r.kH<=80 : r.kH<=200, r);
-    check(W+' px: the same numbers and words as before: played → won vs lost, IN PLAY, to play, best · worst', /played \$4\.50 → won \$2\.00 vs lost \$1\.50/.test(r.text) && /IN PLAY \$2\.00/.test(r.text) && /to play \$4\.00/.test(r.text) && /best \+\$8\.50 · worst −\$1\.50/.test(r.text), r.text.slice(0,300));
+    check(W+' px: the same numbers and words as before: played → won vs lost, IN PLAY, to play, and (v5.01, Sally agreed) Settled · Open upside · In play (it was best +$8.50 · worst −$1.50: the same numbers, best = settled + in play + upside)', /played \$4\.50 → won \$2\.00 vs lost \$1\.50/.test(r.text) && /IN PLAY \$2\.00/.test(r.text) && /to play \$4\.00/.test(r.text) && /Settled \+\$0\.50 · Open upside \+\$6\.00 · In play \$2\.00/.test(r.text), r.text.slice(0,300));
     check(W+' px: '+(wide?'the four tiles side by side, no empty space under them':'the tiles one under another'), r.nTiles===4 && r.tileBox && (wide ? r.tilesRow===1 && r.aH<=260 : r.tilesRow===4), r);
     check(W+' px: while open, the one line does not repeat the totals; no sideways scroll', r.sumHidden && r.over<=0, r);
     check(W+' px: no page errors', !errs.length, errs); await ctx.close(); }
