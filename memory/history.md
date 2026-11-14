@@ -6,6 +6,11 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.95 (Alonzo, 11/13 night: "i want both bets. the more better, and the following"; "IMAGINE ANOTHER book under that saying, 53.7 etc."; "build cabron"):
+  `altBooksOf(r)` / `altBooksHtml(r)` put "also at" boxes under the card's price: the same bet (pxKey: sport, name, market, side, game day) at the
+  owner's other books, from lastRows, cheapest first, at most 4, games not started. Each is checked against maxPriceFor(okProbR(r), thatBook, eMin)
+  (its own fee): OK ✓ or greyed "over". A tap opens that book (data-alt-idx in the slip handler). Display only: stake, EV, order unchanged. tests/v495-test.js.
+- v4.94 (also): the Filters fold is on at every width ("all this should be together, minus sentinels"), search box included; phone-filters-test updated.
 - v4.94 (Alonzo, 11/13 night: "broken here. i cant load betting pros"; "make these 2 rows"): Load and Refresh in the dock open the BettingPros sheet,
   because their answer ("no game in the next 24 hours · Load anyway", errors) is written in #apiStatus inside it. The folded Today card is two rows:
   the day across, then All across (on a phone the rows wrap).
