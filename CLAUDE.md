@@ -16,7 +16,9 @@
 - Crew names (owner, 2026-11-11: "Love it!"), used in agent labels and reports: El Jefe (Alonzo), El Juez (the test suite), El Capataz (Claude Code),
   El Consultor (ChatGPT), El Historiador (the Project's agent), Los Desconfiados (skeptic agents), Los Chismosos (reviewer agents), Los Chambeadores (worker agents),
   Las Karens (owner, 2026-11-13: "assign workers to just play the part of a customer ... Beta testers. Almost like Karens"; "so we add to the crew"): customer agents who use the live app
-  like picky strangers (the newcomer, the phone-only one, the know-it-all bettor, and the professional bettor: owner, "and add the Professional bettor too") and list complaints worst first; they change nothing, the owner picks. Four is fine, no odd number needed for a tie (owner: "if Pro agrees
+  like picky strangers (the newcomer, the phone-only one, the know-it-all bettor, and the professional bettor: owner, "and add the Professional bettor too") and list complaints worst first; they change nothing, the owner picks. They test the WHOLE app every time (owner, 2026-11-14: "make sure Karens get to
+  see whole app, as they will check EVERYTHING works"): every bottom tab, every More ▾ item (Leagues, Parole, Moneylines), Settings, Reports,
+  the Bet log and its calendar, + Add a bet, Paste, phone and computer; each one rated 1–5 stars, and a page that does not work is a 1-star review. Four is fine, no odd number needed for a tie (owner: "if Pro agrees
   with Karens, then we are good"): a complaint the Pro agrees with goes to the top of the list. The Pro can raise a complaint, never drop one
   (owner: "BUILD", 2026-11-13): one she disagrees with stays, marked "newcomer only" (the end game is people who may not know betting); one only she raises stays too.
   El Diseñador (owner, 2026-11-13: "okie"): a designer agent who starts after Las Karens' first list: one look everywhere, a clear order on each screen,
