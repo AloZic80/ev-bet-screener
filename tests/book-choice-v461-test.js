@@ -187,7 +187,7 @@ const near=(a,b)=>Math.abs(a-b)<1e-6;
     S=await open(b, [pr], 'FanDuel, Novig', null, {cards:'1'});
     await S.p.evaluate(()=>setMode('volado')); await S.p.waitForTimeout(150);   /* v4.76: La Contadora 56.7% is a 🪙 Volado bet now: its tab is opened, so its card (and age pill) is on the pasted board */
     const pill=await S.p.evaluate(()=>{ boardSrc='paste'; refresh(); const c=document.querySelector('.sc-card .sc-pill.age'); return c?{t:c.title, x:c.textContent}:null; });
-    check('a pasted FanDuel bet, 45 minutes old: the age pill says "Paste the board again for a fresh one (the Sentinels read the exchanges, not FanDuel)" (it said "Refresh the board")', pill && /45m/.test(pill.x) && /Paste the board again for a fresh one \(the Sentinels read the exchanges, not FanDuel\)/.test(pill.t) && !/Refresh the board/.test(pill.t), pill);
+    check('a pasted FanDuel bet, 45 minutes old: the age pill says "Paste the board again for a fresh one (the Sentinels read the exchanges, not FanDuel)" (it said "Refresh the board"); v5.04: the pill reads “Price 45 min old” (was “⏱ 45m”)', pill && /Price 45 min old/.test(pill.x) && /Paste the board again for a fresh one \(the Sentinels read the exchanges, not FanDuel\)/.test(pill.t) && !/Refresh the board/.test(pill.t), pill);
     check('no page errors (pasted)', !S.errs.length, S.errs); await S.ctx.close(); }
   // ================= 8: a failed request =================
   { const rows=[prop('a','Row A','Points',0.52,1,'Novig',60e3), prop('b2','Row B','Rebounds',0.52,2,'Novig',60e3), prop('c','Row C','Assists',0.52,3,'Novig',60e3)];

@@ -22,7 +22,7 @@ const ROWS=[row('AKR','KENT','Kalshi','k1'), row('BGSU','TOL','Kalshi','k2'), ro
     await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(300);   /* v4.76: the four bets (model = market = 55%) are 🪙 Volado bets (50 to 60%), not in the opening tab, 💪 Machín; the book chips count the open tab's bets */
     const see=()=>p.evaluate(()=>({chips:[...document.querySelectorAll('#bookChips .bchip')].map(c=>c.textContent.replace(/\s+/g,' ').trim()+(c.classList.contains('on')?' *':'')),
       cards:[...document.querySelectorAll('#placeCards .pcard')].map(c=>{ const nm=((c.querySelector('.pc-nm')||{}).textContent||'').trim(); return ['AKR','BGSU','BALL','EMU'].find(t=>nm.startsWith(t))||'?'; }),
-      saved:localStorage.getItem('mbev.boardBooks'), vw:document.documentElement.clientWidth, sw:document.documentElement.scrollWidth, right:Math.max(...[...document.querySelectorAll('#bookChips .bchip')].map(e=>e.getBoundingClientRect().right))}));
+      saved:localStorage.getItem('mbev.boardBooks'), vw:document.documentElement.clientWidth, sw:document.documentElement.scrollWidth, right:Math.max(...[...document.querySelectorAll('#bookChips .bchip')].map(e=>e.getBoundingClientRect().right)), boxRight:document.getElementById('bookChips').getBoundingClientRect().right, rowScrolls:(b=>b.scrollWidth>b.clientWidth && /auto|scroll/.test(getComputedStyle(b).overflowX))(document.getElementById('bookChips'))}));   // v5.04: the chip row and whether it scrolls sideways
     const tap=b=>p.evaluate(b=>{ [...document.querySelectorAll('#bookChips .bchip')].find(c=>(c.dataset.book||'')===b).click(); }, b).then(()=>p.waitForTimeout(400));
     const A=await see();
     check(W+' px: a chip per book on the board, with counts, All on', JSON.stringify(A.chips)==='["All 4 *","Kalshi 2","Bovada 1","Novig 1"]' && A.cards.length===4, A.chips);
@@ -31,7 +31,7 @@ const ROWS=[row('AKR','KENT','Kalshi','k1'), row('BGSU','TOL','Kalshi','k2'), ro
     await tap('Kalshi'); const C=await see();
     check(W+' px: tap Kalshi too: Kalshi and Novig bets (3), both chips on, Bovada off', C.cards.length===3 && !C.cards.includes('EMU') && C.chips.includes('Kalshi 2 *') && C.chips.includes('Novig 1 *') && C.chips.includes('Bovada 1'), C);
     check(W+' px: the counts stay for every book, so you can switch', /Bovada 1/.test(C.chips.join('|')), C.chips);
-    check(W+' px: the chips wrap, nothing runs off the screen', C.sw<=C.vw+1 && C.right<=C.vw+1, {vw:C.vw, sw:C.sw, right:C.right});
+    check(W+' px: nothing runs off the screen: the chips wrap, or on a phone they sit in one row that scrolls sideways inside the screen (v5.04)', C.sw<=C.vw+1 && (C.right<=C.vw+1 || (C.rowScrolls && C.boxRight<=C.vw+1)), {vw:C.vw, sw:C.sw, right:C.right, boxRight:C.boxRight, rowScrolls:C.rowScrolls});
     await p.reload(); await p.waitForTimeout(1500); await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(300); const D=await see();   /* v4.76: their tab, 🪙 Volado, again (the book chips are what this checks) */
     check(W+' px: after a reload Kalshi and Novig are still the ones shown', D.cards.length===3 && !D.cards.includes('EMU') && D.saved==='["Novig","Kalshi"]', D);
     await tap('Novig'); const E=await see();

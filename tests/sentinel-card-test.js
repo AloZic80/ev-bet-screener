@@ -35,7 +35,7 @@ const PX={[key('rui hachimura','4 5 rebounds','O',NOW+7*H)]:[[t-50,0.405,0.40],[
     await p.evaluate(()=>setMode('clair')); await p.waitForTimeout(400);   /* v4.74: Rui (39.5%, an approved long shot) is listed under 🔮 Clairvoyant */   /* v4.76: 🔮 Brujo now (was Clairvoyant); La Contadora 39.7%, under 45% */
     const R=await card('Hachimura');
     if(W===390){
-      check('the short card: score, book + La Contadora’s EV after fees (+5.5%; v4.53: it showed the model’s +6.4%), ⏱ 55s, kickoff and game, who / what, the bet, stake, pays, price chip, I bet this', R && R.score>0 && /\+5\.5%/.test(R.text) && !/\+6\.4%/.test(R.text) && /⏱ 5\ds/.test(R.text) && /Today 7:50 PM CT/.test(R.text) && /Los Angeles @ Minnesota/.test(R.text) && /Rui Hachimura LAC/.test(R.text) && /Rebounds/.test(R.text) && /Over 4\.5/.test(R.text) && /\$\d+\.\d\d wins \$\d+\.\d\d( · back \$\d+\.\d\d)?/.test(R.text) && /\+178 36¢/.test(R.text) && R.bet, R&&R.text);
+      check('the short card: score, book + La Contadora’s EV after fees (+5.5%; v4.53: it showed the model’s +6.4%), ⏱ 55s, kickoff and game, who / what, the bet, stake, pays, price chip, I bet this (v5.04: the age reads “Price under 1 min old”, was “⏱ 55s”)', R && R.score>0 && /\+5\.5%/.test(R.text) && !/\+6\.4%/.test(R.text) && /Price under 1 min old/.test(R.text) && /Today 7:50 PM CT/.test(R.text) && /Los Angeles @ Minnesota/.test(R.text) && /Rui Hachimura LAC/.test(R.text) && /Rebounds/.test(R.text) && /Over 4\.5/.test(R.text) && /\$\d+\.\d\d wins \$\d+\.\d\d( · back \$\d+\.\d\d)?/.test(R.text) && /\+178 36¢/.test(R.text) && R.bet, R&&R.text);
       check('Why this play? is closed: the tiles, score parts and chart are not on the short card', R && !R.open && !/LA CONTADORA EV/i.test(R.text) && !/MODEL EV/i.test(R.text) && !/Score \d+ of 100/i.test(R.text), R&&R.open);
       // the score: Edge 50·min(1, EV/6%) + Market (vs the market price after fees) + Fresh (≤3 min 20, 0 at 90)
       const S=await p.evaluate(()=>{ const r=lastRows.find(x=>/Hachimura/.test(x.name)), n=lastRows.find(x=>/Naz/.test(x.name)); return {r:sentScore(r), n:sentScore(n), rNet:r.actNet, rMdl:r.net, rM:r.mktNet, rSharp:!!r.mktSharp, nNet:n.actNet, nMdl:n.net, nM:n.mktNet, nSharp:!!n.mktSharp, rAct:[r.fairProb,r.mktProb,r.offeredProb,r.fee], nAct:[n.fairProb,n.mktProb,n.offeredProb,n.fee]}; });   // v4.53: the Edge is on La Contadora's EV (it was the model's)
@@ -44,7 +44,7 @@ const PX={[key('rui hachimura','4 5 rebounds','O',NOW+7*H)]:[[t-50,0.405,0.40],[
       const eR=exp(S.rNet,S.rM,S.rSharp,55e3), eN=exp(S.nNet,S.nM,S.nSharp,40*M), eR1=exp(S.rMdl,S.rM,S.rSharp,55e3), eN1=exp(S.nMdl,S.nM,S.nSharp,40*M);
       const herOf=a=>{ const q=a[1]==null?a[0]:Math.min(a[0],a[1]+0.35*(a[0]-a[1])); return ((q/a[2]-1)-a[3])/(1+a[3]); };   // her EV by hand: min(model, market + 0.35 × (model − market)) at the price, after the fee
       check('the score adds up: edge + market + fresh, worked out here on its own, with the Edge on La Contadora’s EV (Rui '+eR.total+', Naz '+eN.total+'; on the model’s EV they were '+eR1.total+' and '+eN1.total+', kept as total1)', S.r.total===eR.total && S.r.e===eR.e && S.r.m===eR.m && S.r.f===eR.f && S.n.total===eN.total && S.n.f===eN.f && R.score===eR.total && S.r.total1===eR1.total && S.n.total1===eN1.total && Math.abs(herOf(S.rAct)-S.rNet)<1e-9 && Math.abs(herOf(S.nAct)-S.nNet)<1e-9 && eR.total===92 && eR1.total===96 && eN.total===71 && eN1.total===76, {S, eR, eN, eR1, eN1});
-      check('a price read 40 min ago is marked old (amber), with "Send the Sentinels" on hover', /\bold\b/.test(N.age) && /⏱ 40m/.test(N.text), N.age);
+      check('a price read 40 min ago is marked old (amber), with "Send the Sentinels" on hover (v5.04: the pill reads “Price 40 min old”, was “⏱ 40m”)', /\bold\b/.test(N.age) && /Price 40 min old/.test(N.text), N.age);
       check('the price fell 4.5 points in the last hour: "↘ −4.5 pts" on the card', /↘ −4\.5 pts/.test(R.mv), R.mv);
       // open it: tiles, the score's parts, the chart with its legend in the card's units
       await p.evaluate(()=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>/Hachimura/.test(x.textContent)); c.querySelector('details.sc-why summary').click(); }); await p.waitForTimeout(250);
@@ -66,7 +66,7 @@ const PX={[key('rui hachimura','4 5 rebounds','O',NOW+7*H)]:[[t-50,0.405,0.40],[
       // a price read live by the Sentinels makes it fresh
       await p.evaluate(()=>{ const r=lastRows.find(x=>/Naz/.test(x.name)); r._liveAt=Date.now(); setMode('volado'); }); await p.waitForTimeout(400);   /* v4.74: back to Safe, where Naz (a lean) is listed */   /* v4.76: back to 🪙 Volado, where Naz (54.2%) is listed now */
       const N2=await card('Naz Reid');
-      check('after a live check the age is "⏱ 0s" and no longer old', /⏱ 0s/.test(N2.text) && !/\bold\b/.test(N2.age), N2.age);
+      check('after a live check the age is "Price under 1 min old" and no longer old (v5.04: words, was “⏱ 0s”)', /Price under 1 min old/.test(N2.text) && !/\bold\b/.test(N2.age), N2.age);
       // I bet this opens under the buttons
       await p.click('#placeCards .sc-card .sc-act .bet-btn'); await p.waitForTimeout(250);
       check('I bet this opens its box under the card\'s buttons', await p.evaluate(()=>!!document.querySelector('#placeCards .sc-card .sc-act + .editor')), true);

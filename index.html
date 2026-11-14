@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.03</title>
+<title>0xBeta Screener v5.04</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1668,6 +1668,42 @@ body.tap-guard #placeCards, body.tap-guard .board-panel table{pointer-events:non
 .cal-t{fill:var(--soft); font-size:12px}
 .cal-tab{font-size:13px; margin-top:6px} .cal-tab td,.cal-tab th{padding:4px 8px}
 .rp-cal{overflow-x:auto}
+/* v5.04 (El Diseñador round 3, plan step v5.03): tabular digits, nothing under 12px. Display only: no number, stake or rule changes. */
+body, button, input, select, textarea, svg text{font-variant-numeric:tabular-nums}
+.pk-draft, .lf-pintx, .lf-pilltx, .lf-num, .lspark text{font-variant-numeric:tabular-nums}   /* v5.04: these use the font: shorthand, which resets the digits; set them again */
+/* v5.04: every rule that set 7–11.5px (generated from the first <style>, selectors copied exactly), raised to 12px. Exceptions, not raised:
+   .lteam .tos (7px decorative timeout dots, aria-hidden); SVG chart text (.sc-svg text, .lf-pintx, .lf-num, .lspark text, renderCal font-size attributes: checked for overlap instead);
+   the phone .cal-c day amounts (Performance, Results by day: the v4.08 640px rule for .v and .cal-tp-s; .cal-tp-s is raised above 640px only); .lc-d small (Bet log calendar amounts, lifted in a later step). */
+thead th, .kick, .ntog, .sweet, button.log.sm, th.sortable .arrow, .meta, .tag, .sport, .src-tag, .ss-at, .cal-dow, .lv-chip, .shop-was, .max-pay, .jail, .par-tbl th, .mb-tbl th, .fill-diff, .fills-at, .tab-n, .lg-bets, .lg-end, .lprob .k, .lticks, .lbs-cat, .lbs-kv span, table.lbs-t thead th, .tb-k, .tb-k .tb-n, .tb-k .tb-st, .tb-l2, .tb-motto, .tb-pill small, .statbox .cut, .statbox .alert, .loadline .ll-k, .ss-h, .ss-r .rec, .ss-r .w, .ss-dd, .pc-sport, .pc-tm span, .pc-k, .pc-c .meta, tr.group-row .glabel, .sync-chip, .pp-sub, .pp-open, .mk-wait, .mk-sub, .sc-box .k, .sc-box .r, .sc-tag, .pred-tag, .src-bar .k, .bchip small, .src-panel pre, .todaybar .tb-k, .todaybar .tb-k .tb-st, .pk-best, .pk-chk, .pk-fits-k, .pk-dot, .pk-app-k, .av-sport, .ss-note, .inj, .wx, .imp, .pk-mo, .shop-stale, .pk-settle, .sc-ringb small, .ring-chip, .leg-tag, .x-chip, .kx-l, .kx-n, .tb-day.tb-back, .sc-sport, .sc-tm, .sc-pick .imp, .sc-money span, .sc-price .scp-p, .sc-kx-h, .sc-tk, .sc-ts, .sc-h, .sc-sbx, .sc-leg, details.help>summary::before, .ss-risk, .ss-all, .sc-word, .sc-mathtop, .cv-chip, .ln-btn.ln-sm, .hub-dec, .lc-dow, .lc-imp label.f, .cn-chip, .rg-t small, button.cv-chip, #apiDock .srcline .src-bar .k, #tbFoldBtn .hf-k, .sc-alts-k, #todayBar>.tb-k{font-size:12px}
+@media (max-width:900px){ .tb-l2{font-size:12px} }
+@media (max-width:760px){ .hd-fold .hf-k{font-size:12px} }
+@media (max-width:640px){ .head h1 .ver, .head h1 .sync-chip{font-size:12px} }
+.cal-c .t, .cal-c .n{font-size:12px}   /* v5.04: the day box W / L letter and bet count at every width (the .n is hidden on a phone) */
+@media (max-width:640px){ .cal-c .t{right:4px; top:4px} }   /* v5.04: on a phone the 12px W / L sits nearer the corner, so it does not touch a two-digit day number (it already touched at 11px) */
+@media (min-width:641px){ .cal-c .v .cal-tp-s{font-size:12px} }   /* v5.04: only the phone amounts rule (v4.08, 10px / 9px) stays as it is */
+thead th, .par-tbl th, .mb-tbl th, table.lbs-t thead th{letter-spacing:.02em}   /* v5.04: 12px headers with tighter spacing (was .06em / .04em at 10.5–11px) */
+@media (min-width:641px){ #v-log .scroll thead th, #v-log .scroll tbody tr:not(.group-row):not(.notes-row) > td, #v-money .scroll thead th, #v-money .scroll tbody tr:not(.group-row):not(.notes-row) > td{padding-left:6px; padding-right:6px} }   /* v5.04: 1–2px less side padding in the Bet log and Moneylines tables on a computer, so the 12px text does not make them scroll sideways more than before (1024px: none; 1000px and 900px: less than before) */
+.pk-legs li > span{min-width:0} .pk-legs .pk-bet{white-space:normal} .pk-legs li > b{flex:none}   /* v5.04: the 12px “you bet this” tag may wrap, so the leg’s chance stays inside its card */
+small{font-size:max(12px, calc(1em / 1.2))}   /* v5.04: the browser’s own small (smaller, 1/1.2) never under 12px; any rule of the app’s own for a small still wins */
+@media (max-width:640px){ .lc-d small{font-variant-numeric:normal} }   /* v5.04: the Bet log calendar amounts on a phone keep their narrow digits, so +10.00 still fits its day box (part of the .lc-d small exception, lifted with it) */
+@container (max-width:360px){ .sc-money span{white-space:normal} .sc-money{white-space:normal; min-width:0} .sc-pick{min-width:min-content} }   /* v5.04: on a narrow card the 12px “wins … · back …” line (and “capped at your max bet”) may wrap, and the pick column never gets narrower than its longest word, so the money no longer runs over “price … · OK to …” */
+/* v5.04 (plan step: ▲/▼ next to every signed gain or loss): an arrow before each signed amount, so a gain and a loss differ by more than colour. Display only; colours unchanged (wins green, losses red). */
+.d-up::before{content:"▲\00a0"; font-size:.8em}
+.d-dn::before{content:"▼\00a0"; font-size:.8em}
+@media (max-width:640px){ .rp-t td[data-l].d-up::before{content:attr(data-l) ": ▲\00a0"} .rp-t td[data-l].d-dn::before{content:attr(data-l) ": ▼\00a0"} }   /* v5.04: on a phone a Reports cell already draws its label (Profit: ) with ::before, so the arrow joins the label there */
+/* v5.04 (plan step v5.05: price age in words on every card): "Price 4 min old" top right, a dot filled in the accent colour, hollow when old (over 30 min) or when the time is unknown. Display only. */
+.sc-pill.age{margin-left:auto}   /* v5.04: the age pill is the last pill in the score row, so this puts it at the right end of the row it lands on (at 390 px: the right end of the second pill row; on a computer: the right of the narrow score column, under Hold) */
+.sc-pill.age .age-dot{display:inline-block; flex:none; width:8px; height:8px; border-radius:50%; box-sizing:border-box; background:var(--accent); border:1.5px solid var(--accent)}
+.sc-pill.age.old .age-dot, .sc-pill.age.unk .age-dot{background:transparent; border-color:currentColor}
+/* v5.04 (plan step v5.06: book chips at 44 px): the board’s book chips are a 44 px tap target at every width, rounder, with even-width counts. CSS only; the counts are unchanged. */
+.board-panel .book-chips .bchip{min-height:44px; border-radius:22px; padding:0 14px}
+.board-panel .book-chips .bchip small{font-variant-numeric:tabular-nums}
+/* v5.04 (review of the 44 px chips: with 8 to 10 books they wrapped to 5 rows on a phone and pushed the first card below the first screen): on a phone the chips sit in one row
+   that scrolls sideways inside the board (the page itself does not scroll sideways); every chip and every count is still there, in the same order. The 3px padding keeps the focus ring visible. */
+@media (max-width:640px){
+  .board-panel .board-bar>.book-chips{flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch; min-width:0; max-width:100%; box-sizing:border-box; padding:3px}
+  .board-panel .board-bar>.book-chips .bchip{flex:none; white-space:nowrap}
+}
 </style>
 </head>
 <body>
@@ -1676,7 +1712,7 @@ body.tap-guard #placeCards, body.tap-guard .board-panel table{pointer-events:non
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.03</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.04</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2062,7 +2098,7 @@ body.tap-guard #placeCards, body.tap-guard .board-panel table{pointer-events:non
     <span class="meta" id="fillsMsg"></span>
   </div>
   <div class="copy-bar" id="fillsCopyTop" style="display:none"><button type="button" class="copy-big" data-copy-from="fillsRaw">📋 Copy all for Claude</button><span class="meta" id="fillsSize"></span></div>
-  <pre id="fillsRaw" style="display:none;max-height:320px;overflow:auto;font-size:11px;white-space:pre-wrap;background:var(--bg2,#0001);padding:8px;border-radius:8px"></pre>
+  <pre id="fillsRaw" style="display:none;max-height:320px;overflow:auto;font-size:12px;white-space:pre-wrap;background:var(--bg2,#0001);padding:8px;border-radius:8px"></pre>   <!-- v5.04: 12px floor (was 11px) -->
   <div class="copy-bar" id="fillsCopyBot" style="display:none"><button type="button" class="copy-big" data-copy-from="fillsRaw">📋 Copy all for Claude</button></div>
   <div class="row" style="gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px">
     <span class="meta"><b>Posting (maker) fee</b>, as a % coefficient like Kalshi's 7 (fee = c·p·(1−p) per contract):</span>
@@ -2501,7 +2537,7 @@ body.tap-guard #placeCards, body.tap-guard .board-panel table{pointer-events:non
 
 </div>
 <script>
-const SCREENER_VERSION='v5.03';
+const SCREENER_VERSION='v5.04';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -4286,6 +4322,7 @@ document.addEventListener('toggle', e=>{ const d=e.target; if(!d || !d.classList
 /* how fresh the price is: the last time a price for this bet was read (the load, a Sentinels check, the open-market check, line shopping) */
 function rowSeenAt(r){ const m=Math.max((r&&r.priceAt)?(Date.parse(r.priceAt)||0):(Date.parse(r&&r.loadedAt)||0) /* v4.61 (owner: "You can decide if you think it is the best thing to do"): a saved answer counts from when it was fetched, not from when it was put on the board; no time = unknown */, +(r&&r._liveAt)||0, +(r&&r.swap&&r.swap.at)||0 /* v4.61: a swap card: when its price was read */, Date.parse(r&&r.shop&&r.shop.at)||0); return m>0?m:null; }   /* v4.61: not exOpen.at: the open-market check reads the exchange but leaves the card's price as it was, so it does not make that price new (it hid a saved answer's real age) */
 function ageTxt(ms){ if(ms==null || !isFinite(ms)) return ''; const s=Math.max(0,Math.round(ms/1000)); return s<60?s+'s':s<3600?Math.round(s/60)+'m':s<86400?Math.round(s/3600)+'h':Math.round(s/86400)+'d'; }
+function ageWords(ms){ if(ms==null || !isFinite(ms)) return ''; const s=Math.max(0,Math.round(ms/1000)); return s<60?'under 1 min':s<3600?Math.round(s/60)+' min':s<86400?Math.round(s/3600)+' h':Math.round(s/86400)+' d'; }   // v5.04: the card’s price age in words (same steps as ageTxt, so the pill and its tooltip agree)
 /* The Sentinel score, 0-100, in three parts you can check in Why this play?:
    Edge (50): EV after fees, full at +6% or more. Market (30): the same bet against the market's own fair price after fees (r.mktNet): 20 at
    break-even, 30 at +4% or more, falling to 0 at -3%; x0.85 when the market price is consensus, not sharp; 8 when there is no market price.
@@ -4347,7 +4384,7 @@ function renderEntryBands(list){ const el=document.getElementById('entryRows'); 
     if(r==='win') g.w++; else if(r==='loss') g.l++; else if(r==='push') g.pu++; else if(r!=='sold') g.pend++;
     if(r==='win'||r==='loss'){ g.be+=p; g.ng++; } const pr=betProfit(b); if(pr!=null){ g.pl+=pr; g.st+=b.free?0:(+b.stake||0); } });
   const pc=x=>(x*100).toFixed(1)+'%', usd=x=>(x>=0?'+':'−')+'$'+Math.abs(x).toFixed(2);
-  el.innerHTML=[1,2,3,4,5,6,7,8,9].filter(k=>G[k]).map(k=>{ const g=G[k]; return '<tr><td><span class="cv-chip ep-chip">'+cvNames()[k]+'</span> <span class="meta">'+cvRanges()[k]+'</span></td><td class="num">'+g.n+'</td><td class="num">'+g.pend+'</td><td class="num">'+g.w+'–'+g.l+'–'+g.pu+'</td><td class="num">'+(g.ng?pc(g.be/g.ng):'—')+'</td><td class="num">'+(g.ng?pc(g.w/g.ng):'—')+'</td><td class="num">$'+g.st.toFixed(2)+'</td><td class="num"><b class="'+(g.pl>=0?'pl-up':'pl-down')+'">'+usd(g.pl)+'</b></td><td class="num">'+(g.st>0?(g.pl>=0?'+':'−')+Math.abs(g.pl/g.st*100).toFixed(1)+'%':'—')+'</td></tr>'; }).join(''); }
+  el.innerHTML=[1,2,3,4,5,6,7,8,9].filter(k=>G[k]).map(k=>{ const g=G[k]; return '<tr><td><span class="cv-chip ep-chip">'+cvNames()[k]+'</span> <span class="meta">'+cvRanges()[k]+'</span></td><td class="num">'+g.n+'</td><td class="num">'+g.pend+'</td><td class="num">'+g.w+'–'+g.l+'–'+g.pu+'</td><td class="num">'+(g.ng?pc(g.be/g.ng):'—')+'</td><td class="num">'+(g.ng?pc(g.w/g.ng):'—')+'</td><td class="num">$'+g.st.toFixed(2)+'</td><td class="num"><b class="'+(g.pl>=0?'pl-up':'pl-down')+dClsR(g.pl,0.01)+'">'+usd(g.pl)+'</b></td><td class="num">'+(g.st>0?(g.pl>=0?'+':'−')+Math.abs(g.pl/g.st*100).toFixed(1)+'%':'—')+'</td></tr>'; }).join(''); }   /* v5.04: ▲/▼ on the entry band profit */
 function logBandChip(b){ const k=logBandOf(b); if(k==null) return ''; if(k===0 && isEntryBet(b)) return entryChip(b);   /* v4.87 */ const c=bandCover(b,'act'), p=c?c.p:null, m=betCover(b);
   return '<button type="button" class="cv-chip cv-'+k+' lbf" data-band="'+k+'" title="'+(k?(c.source==='act'?'La Contadora ':c.typed?'Cover you typed ':'Model (no La Contadora chance saved) ')+(p*100).toFixed(1)+'%'+(c.typed?(c.cal?' before the game':' · added after the game started: shown, not judged'):' when you took it')+' · '+cvRanges()[k]+(c.source==='act' && m && !m.typed && Math.abs(m.p-p)>=0.0005?' · the model said '+(m.p*100).toFixed(1)+'% ('+cvNames()[cvBand(m.p)]+')':''):'No cover was saved with this bet')+'. Tap to see only '+(k?cvNames()[k]:'these')+' bets, with their record">'+(k?cvNames()[k]:'no band')+'</button>'; }
 function cvChipActHtml(r){ if(!r) return ''; const a=r.actProb!=null ? r.actProb : null, p=a!=null ? a : r.fairProb, b=cvBand(p); if(!b || p==null) return '';
@@ -4366,7 +4403,7 @@ function renderStudy(){ const el=document.getElementById('studyRows'); if(!el) r
   try{ renderEntryBands(inS); }catch(e){ console.error(e); }   /* v4.87: the same game days */
   const pc=x=>(x*100).toFixed(1)+'%', usd=x=>(x>=0?'+':'−')+'$'+Math.abs(x).toFixed(2);
   el.innerHTML=[1,2,3,4,5,6,7,8,9,0].map(k=>{ const g=G[k]; if(!g.n) return ''; const avg=g.g?g.pred/g.g:null, hit=g.g?g.cw/g.g:null;   /* v4.68: the same bets for both */
-    return '<tr><td>'+(k?(V==='model'?'<span class="cv-chip cv-'+k+'">'+cvNames()[k]+'</span>':'<button type="button" class="cv-chip cv-'+k+' lbf" data-band="'+k+'" title="Tap to see these bets in the Bet log">'+cvNames()[k]+'</button>')+' <span class="meta">'+cvRanges()[k]+'</span>':(V==='model'?'<span>'+cvRanges()[0]+'</span>':'<button type="button" class="linkbtn lbf" data-band="0" title="Tap to see these bets in the Bet log">'+cvRanges()[0]+'</button>'))+'</td><td class="num">'+g.n+'</td><td class="num">'+g.pend+'</td><td class="num">'+g.w+'–'+g.l+'–'+g.p+'</td><td class="num">'+(avg==null?'—':pc(avg))+'</td><td class="num">'+(hit==null?'—':pc(hit)+(()=>{ const n=g.g, z=1.96, ph=g.cw/n, d=1+z*z/n, c=(ph+z*z/(2*n))/d, h=z*Math.sqrt(ph*(1-ph)/n+z*z/(4*n*n))/d; return '<div class="meta" title="95% Wilson range: with '+n+' outcomes the true rate is likely in here">'+Math.round(Math.max(0,c-h)*100)+'–'+Math.round(Math.min(1,c+h)*100)+'%</div>'; })() /* v4.88 */)+'</td><td class="num">'+(avg==null||hit==null?'—':(hit>=avg?'+':'−')+(Math.abs(hit-avg)*100).toFixed(1)+' pts')+'</td><td class="num '+(g.net>=0?'pl-up':'pl-down')+'">'+(g.money?usd(g.net):'—')+'</td></tr>'; }).join('')||'<tr><td colspan="8" class="meta">No singles in this range yet.</td></tr>';
+    return '<tr><td>'+(k?(V==='model'?'<span class="cv-chip cv-'+k+'">'+cvNames()[k]+'</span>':'<button type="button" class="cv-chip cv-'+k+' lbf" data-band="'+k+'" title="Tap to see these bets in the Bet log">'+cvNames()[k]+'</button>')+' <span class="meta">'+cvRanges()[k]+'</span>':(V==='model'?'<span>'+cvRanges()[0]+'</span>':'<button type="button" class="linkbtn lbf" data-band="0" title="Tap to see these bets in the Bet log">'+cvRanges()[0]+'</button>'))+'</td><td class="num">'+g.n+'</td><td class="num">'+g.pend+'</td><td class="num">'+g.w+'–'+g.l+'–'+g.p+'</td><td class="num">'+(avg==null?'—':pc(avg))+'</td><td class="num">'+(hit==null?'—':pc(hit)+(()=>{ const n=g.g, z=1.96, ph=g.cw/n, d=1+z*z/n, c=(ph+z*z/(2*n))/d, h=z*Math.sqrt(ph*(1-ph)/n+z*z/(4*n*n))/d; return '<div class="meta" title="95% Wilson range: with '+n+' outcomes the true rate is likely in here">'+Math.round(Math.max(0,c-h)*100)+'–'+Math.round(Math.min(1,c+h)*100)+'%</div>'; })() /* v4.88 */)+'</td><td class="num">'+(avg==null||hit==null?'—':(hit>=avg?'+':'−')+(Math.abs(hit-avg)*100).toFixed(1)+' pts')+'</td><td class="num '+(g.net>=0?'pl-up':'pl-down')+(g.money?dClsR(g.net,0.01):'')+'">'+(g.money?usd(g.net):'—')+'</td></tr>'; }).join('')||'<tr><td colspan="8" class="meta">No singles in this range yet.</td></tr>';   /* v5.04: ▲/▼ on the band study net */
   const graded=G.reduce((t,g)=>t+g.w+g.l,0), n=G.reduce((t,g)=>t+g.n,0), sm=document.getElementById('studySum');
   const oc=outcomeCounts(inS);
   if(sm) sm.textContent='Band source: '+(V==='model'?'Model':'La Contadora')+' · '+SRC.act+' La Contadora · '+SRC.typed+' typed · '+SRC.model+' model'+(SRC.none?' · '+SRC.none+' none':'')+' · '+n+' singles · '+oc.tickets+' settled tickets · '+oc.outcomes+' unique outcomes · '+oc.games+' unique games · '+graded+' graded wins and losses'+(graded<30?' · early sample: small groups swing a lot, so do not change rules from this yet':' · a band whose hit rate stays below its average prediction over hundreds of bets is the model being too sure'); }
@@ -4408,14 +4445,14 @@ function lcRender(){ const cal=document.getElementById('lcCal'); if(!cal) return
   /* v4.88 (Alonzo: "i dont see anything like a month so far report ... no total bets so far, staked, profit"): the month shown and all time,
      by game day, from lcStats (betProfit: the same money as the days and the Track by table). Parlays included, like the days. */
   try{ const tot=document.getElementById('lcTotals'); if(tot){ const row=(lab,L,R)=>{ const g=lcStats(L); (R||[]).forEach(b=>{ g.profit-=b.lost; g.stSet+=0; }); const roi=g.stSet>0?g.profit/g.stSet:null;   /* v4.88 review: a cancelled bet that lost money counts, as on the days and in Track by */
-      return '<div class="lc-tot"><b class="lc-tot-h">'+lab+'</b><span>'+g.n+' bet'+(g.n===1?'':'s')+'</span><span>'+g.w+'–'+g.l+'–'+g.p+'</span><span>staked $'+g.staked.toFixed(2)+'</span><span>settled <b class="'+(g.profit>0.005?'pl-up':g.profit<-0.005?'pl-down':'')+'">'+lcUsd(g.profit)+'</b></span><span>ROI '+(roi==null?'—':(roi>=0?'+':'−')+Math.abs(roi*100).toFixed(1)+'%')+'</span><span>'+g.pend+' open</span></div>'; };
+      return '<div class="lc-tot"><b class="lc-tot-h">'+lab+'</b><span>'+g.n+' bet'+(g.n===1?'':'s')+'</span><span>'+g.w+'–'+g.l+'–'+g.p+'</span><span>staked $'+g.staked.toFixed(2)+'</span><span>settled <b class="'+(g.profit>0.005?'pl-up':g.profit<-0.005?'pl-down':'')+dClsR(g.profit,0.01)+'">'+lcUsd(g.profit)+'</b></span><span>ROI '+(roi==null?'—':(roi>=0?'+':'−')+Math.abs(roi*100).toFixed(1)+'%')+'</span><span>'+g.pend+' open</span></div>'; }; /* v5.04: ▲/▼ on the month and all-time settled */
     const mName=first.toLocaleDateString('en-US',{month:'long',timeZone:'UTC'});
     tot.innerHTML=row(mName+(lcMonth===today.slice(0,7)?' so far':''), logged.filter(b=>String(gameDayOf(b)||'').slice(0,7)===lcMonth), removedBets.filter(b=>b.lost>0 && String(gameDayOf(b)||'').slice(0,7)===lcMonth))+row('All time', logged.filter(b=>gameDayOf(b)), removedBets.filter(b=>b.lost>0 && gameDayOf(b))); } }catch(e){ console.error(e); }
   const x=days[lcDay], ds=(dayStats()[lcDay])||null, cfg=cfgRead();
   document.getElementById('lcDayTitle').textContent=new Date(lcDay+'T12:00:00Z').toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric',timeZone:'UTC'})+(lcDay===today?' · today':'');
   const tile=(l,v,c)=>'<div>'+l+'<strong'+(c?' class="'+c+'"':'')+'>'+v+'</strong></div>';
   document.getElementById('lcSum').innerHTML=x?
-    tile('Bets',x.n)+tile('Staked','$'+x.staked.toFixed(2))+tile('Settled profit',x.settled?lcUsd(x.profit):'—',x.settled?(x.profit>0.005?'pl-up':x.profit<-0.005?'pl-down':''):'lc-grey')+
+    tile('Bets',x.n)+tile('Staked','$'+x.staked.toFixed(2))+tile('Settled profit',x.settled?lcUsd(x.profit):'—',x.settled?(x.profit>0.005?'pl-up':x.profit<-0.005?'pl-down':'')+dClsR(x.profit,0.01):'lc-grey')+ /* v5.04: ▲/▼ on the day’s settled profit */
     tile('▶ In play','$'+(x.playingAmt||0).toFixed(2),'lc-grey')+tile('⏳ To play','$'+(x.toPlayAmt||0).toFixed(2),'lc-grey')+tile('Open bets',x.open,'lc-grey')
     : tile('Bets',0)+tile('Staked','$0.00');
   const used=logged.filter(b=>!b.sold && gameDayOf(b)===lcDay && poolOf(b)==='proj').reduce((a,b)=>a+(+b.stake||0),0) /* v5.00 (Karens: $12.50 here vs $10.50 in + Add a bet): parlays stay out of the daily max, as everywhere (poolOf, v2.73) */, mx=+cfg.dayMax||0, bar=document.getElementById('lcMax'); void ds;
@@ -4432,7 +4469,7 @@ function lcRender(){ const cal=document.getElementById('lcCal'); if(!cal) return
   const keys=[...new Set([...G.keys(),...lost.keys()])].sort().reverse().slice(0,60);
   const lbl=k=>lcPeriod==='month'?new Date(k+'-01T12:00:00Z').toLocaleDateString('en-US',{month:'long',year:'numeric',timeZone:'UTC'}):(lcPeriod==='week'?'Week of ':'')+new Date(k+'T12:00:00Z').toLocaleDateString('en-US',{weekday:'short',month:'numeric',day:'numeric',timeZone:'UTC'});
   document.getElementById('lcPerf').innerHTML=keys.map(k=>{ const g=lcStats(G.get(k)||[]), lo=lost.get(k)||0, pr=g.profit-lo, roi=g.stSet>0?pr/g.stSet*100:null;
-    return '<tr><td>'+esc(lbl(k))+'</td><td class="num">'+g.n+'</td><td class="num">'+g.pend+'</td><td class="num">'+g.w+'–'+g.l+'–'+g.p+'</td><td class="num">$'+g.staked.toFixed(2)+'</td><td class="num '+(pr>0.005?'pl-up':pr<-0.005?'pl-down':'')+'">'+(g.n-g.pend||lo?lcUsd(pr):'—')+'</td><td class="num">'+(roi==null?'—':(roi>=0?'+':'−')+Math.abs(roi).toFixed(1)+'%')+'</td></tr>'; }).join('')||'<tr><td colspan="7" class="meta">No bets logged yet.</td></tr>';
+    return '<tr><td>'+esc(lbl(k))+'</td><td class="num">'+g.n+'</td><td class="num">'+g.pend+'</td><td class="num">'+g.w+'–'+g.l+'–'+g.p+'</td><td class="num">$'+g.staked.toFixed(2)+'</td><td class="num '+(pr>0.005?'pl-up':pr<-0.005?'pl-down':'')+(g.n-g.pend||lo?dClsR(pr,0.01):'')+'">'+(g.n-g.pend||lo?lcUsd(pr):'—')+'</td><td class="num">'+(roi==null?'—':(roi>=0?'+':'−')+Math.abs(roi).toFixed(1)+'%')+'</td></tr>'; }).join('')||'<tr><td colspan="7" class="meta">No bets logged yet.</td></tr>'; /* v5.04: ▲/▼ on Track by profit */
 }
 /* the import: Augi's augi-bet-import v1 (singles and parlays with exact legs), read on this device only, never sent anywhere */
 function lcValidDay(d){ return typeof d==='string' && /^\d{4}-\d{2}-\d{2}$/.test(d) && new Date(d+'T12:00:00Z').toISOString().slice(0,10)===d; }
@@ -4769,7 +4806,7 @@ function placeCardHtml(r,cfg,o){
   const chart=pxChartSvg(r,mx,bk,okTo);
   const why='<details class="sc-why" data-pck="'+esc(pxKey(r))+'"'+(open?' open':'')+'><summary>Why this play?</summary><div class="sc-why-b">'+
       '<div class="sc-grid2">'+
-        tile('La Contadora EV', evA==null?'—':(evA>0?'+':'')+pct(evA), r.mktProb!=null?'after fees, with the market':'after fees, the model alone', evA>0?'up':'down')+
+        tile('La Contadora EV', evA==null?'—':(evA>0?'+':'')+pct(evA), r.mktProb!=null?'after fees, with the market':'after fees, the model alone', (evA>0?'up':'down')+(evSt==='actionable'?dCls(evA):''))+ /* v5.04: ▲/▼ on the La Contadora EV tile (actionable only) */
         tile('Model EV', r.net==null?'—':(r.net>0?'+':'')+pct(r.net), (r.evModel?(r.evModel==='market'?'market model':'projection model'):'the model alone')+(r.mktProb!=null && r.net!=null && Math.abs(r.net-evA)>=0.0005?' · not used for the stake':''), '')+
         tile('Fair', r.fairProb!=null?esc(fmtOdds(Math.round(americanOf(r.fairProb)))):'—', r.fairProb!=null?pct(r.fairProb)+' to hit':'')+
         tile('OK up to', mx!=null?esc(okTo(mx)):'—', mx!=null?'La Contadora’s most at '+esc(bk):'nothing passes here')+
@@ -4800,8 +4837,8 @@ function placeCardHtml(r,cfg,o){
     '<div class="sc-top">'+(X?'<span class="sc-score x" title="'+(X==='lucky'?'Just missed: La Contadora says NO · optional, smallest bet' /* v4.76 */:'A Hail Mary: your call, not the math’s')+'">'+(X==='lucky'?'🍀':'🔮')+'<small class="sc-word">'+(X==='lucky'?'JUST MISSED':'HAIL MARY')+'</small></span>'
       :(evSt==='actionable'?'<span class="sc-score '+scCls+'" title="Sentinel score: edge '+sc.e+'/50, market '+sc.m+'/30, fresh '+sc.f+'/20'+(sc.s?', signal +'+sc.s:'')+'. Open Why this play? for the parts.">'+sc.total+'<small class="sc-word">'+scWord(sc.total)+'</small></span>'
         :'<span class="sc-score muted" title="Underlying Sentinel score kept for audit (edge '+sc.e+'/50, market '+sc.m+'/30, fresh '+sc.f+'/20). Its strength word is replaced because this card is not trusted or not actionable as shown.">'+sc.total+'<small class="sc-word">'+({outlier_untrusted:'OUTLIER', stale_last_seen:'STALE', outlier_and_stale:'OUTLIER · STALE', unavailable:'—'})[evSt]+'</small></span>'))+   /* v4.93 */
-      ('<span class="sc-pill ev" title="La Contadora’s EV after fees at '+esc(bk)+(r.mktProb!=null?' (with the market)':' (no market price: the model alone)')+': the number the stake, the order and the score use. Model EV: '+(r.net==null?'—':(r.net>0?'+':'')+pct(r.net))+'">'+logo+(evSt==='actionable'?'<b class="'+(evA>0?'up':'down')+'">'+(evA==null?'—':(evA>0?'+':'')+pct(evA))+'</b>':evSt==='unavailable'?'<b class="muted">no current price</b>':'<b class="muted" title="'+(evSt==='stale_last_seen'?'Calculated from the last price read. The book has not confirmed that price is still available. Refresh the board or check the book before acting.':'Arithmetic at La Contadora’s chance and the shown price. The model is too far from the market, so this estimate is not trusted for sizing. Stake capped at the minimum.')+'">'+(evSt==='stale_last_seen'?'LAST-SEEN EV ':'EST. EV ')+(evA==null?'—':(evA>0?'+':'')+pct(evA))+'<small> · '+({outlier_untrusted:'not trusted — outlier', stale_last_seen:'⏱ price stale', outlier_and_stale:'outlier + stale price · not actionable as shown'})[evSt]+'</small></b>')+'</span>')+   /* v4.93 */   /* v4.53: every card shows her EV (best bets showed the model's) */
-      (sc.age!=null?'<span class="sc-pill age'+(sc.age>30*60e3?' old':'')+'" title="This price was read '+ageTxt(sc.age)+' ago'+(sc.age>30*60e3?(LIVE_BOOK(r.book)?'. Send the Sentinels for a fresh one.':String(r.src||'').startsWith('paste')?'. Paste the board again for a fresh one (the Sentinels read the exchanges, not '+esc(bookLabel(r.book)||'this book')+').':'. Refresh the board for a fresh one (the Sentinels read the exchanges, not '+esc(bookLabel(r.book)||'this book')+').'):'')+'">⏱ '+ageTxt(sc.age)+'</span>':'')+mvTxt+sgTxt+awolPill(r) /* v4.81 */+shPill(r) /* v4.84 */+
+      ('<span class="sc-pill ev" title="La Contadora’s EV after fees at '+esc(bk)+(r.mktProb!=null?' (with the market)':' (no market price: the model alone)')+': the number the stake, the order and the score use. Model EV: '+(r.net==null?'—':(r.net>0?'+':'')+pct(r.net))+'">'+logo+(evSt==='actionable'?'<b class="'+(evA>0?'up':'down')+dCls(evA)+'">'+(evA==null?'—':(evA>0?'+':'')+pct(evA))+'</b>':evSt==='unavailable'?'<b class="muted">no current price</b>':'<b class="muted" title="'+(evSt==='stale_last_seen'?'Calculated from the last price read. The book has not confirmed that price is still available. Refresh the board or check the book before acting.':'Arithmetic at La Contadora’s chance and the shown price. The model is too far from the market, so this estimate is not trusted for sizing. Stake capped at the minimum.')+'">'+(evSt==='stale_last_seen'?'LAST-SEEN EV ':'EST. EV ')+(evA==null?'—':(evA>0?'+':'')+pct(evA))+'<small> · '+({outlier_untrusted:'not trusted — outlier', stale_last_seen:'⏱ price stale', outlier_and_stale:'outlier + stale price · not actionable as shown'})[evSt]+'</small></b>')+'</span>')+   /* v4.93 */   /* v4.53: every card shows her EV (best bets showed the model's) */ /* v5.04: ▲/▼ on the card EV (actionable only; muted EV gets none) */
+      mvTxt+sgTxt+awolPill(r) /* v4.81 */+shPill(r) /* v4.84 */+(sc.age!=null?'<span class="sc-pill age'+(sc.age>30*60e3?' old':'')+'" title="This price was read '+ageTxt(sc.age)+' ago'+(sc.age>30*60e3?(LIVE_BOOK(r.book)?'. Send the Sentinels for a fresh one.':String(r.src||'').startsWith('paste')?'. Paste the board again for a fresh one (the Sentinels read the exchanges, not '+esc(bookLabel(r.book)||'this book')+').':'. Refresh the board for a fresh one (the Sentinels read the exchanges, not '+esc(bookLabel(r.book)||'this book')+').'):'')+'"><i class="age-dot" aria-hidden="true"></i>Price '+ageWords(sc.age)+' old</span>' /* v5.04: the age in words (was “⏱ 55s”) */:'<span class="sc-pill age unk" title="When this price was read is not known. Check it at the book (or refresh the board) before you place it."><i class="age-dot" aria-hidden="true"></i>Price time unknown</span>' /* v5.04: no price time: say so (it showed nothing) */) /* v5.04: the age pill comes last in the row, so margin-left:auto puts it at the right end of the row it lands on */+
       '</div>'+
     '<div class="sc-who">'+avatar+'<div class="sc-id"><div class="sc-sport">'+esc(r.sport)+'</div>'+
       '<div class="pc-nm" title="'+esc(r.name)+'">'+esc(r.name)+(code&&code!==String(r.name||'').toUpperCase()?' <span class="sc-tm">'+esc(code)+'</span>':'')+'</div>'+
@@ -6233,7 +6270,7 @@ function renderLog(){ setTimeout(()=>{ try{ csvDays(); }catch(e){} try{ lcRender
   tb.innerHTML='';
   { const lf=document.getElementById('logFilter'); if(lf){ const bf=logBandFilter!=null; lf.style.display=(logDayFilter||bf)?'flex':'none';
     let bandTxt=''; if(bf){ let n=0,w=0,l=0,ps=0,pend=0,net=0,pred=0,g=0,cw=0; const oS=new Set(); let pN=0; logged.forEach(b=>{ if(!logInBand(b,logBandFilter)) return; /* v4.99: the same bets the list shows */ if(logDayFilter && (gameDayOf(b)||b.date||'')!==logDayFilter) return; if(b.kind==='parlay'){ pN++; return; } /* v5.00 (Karens: a 2-bet day showed 4 bets): a parlay is listed, not added to a band's totals */ n++; const r=b.sold?'sold':b.result; if(r==='win') w++; else if(r==='loss') l++; else if(r==='push') ps++; else if(r!=='sold') pend++; const c=bandCover(b,'act') /* v4.88 review */; if((r==='win'||r==='loss') && logBandFilter && c && c.cal && !oS.has(outcomeKey(b))){ oS.add(outcomeKey(b)); g++; pred+=c.p; if(r==='win') cw++; } const pr=betProfit(b); if(pr!=null) net+=pr; });   /* v4.66 */   /* v4.68: won % and expected % on the same bets: once per outcome, covers known before the game */
-      bandTxt=(logBandFilter?'<span class="cv-chip cv-'+logBandFilter+'">'+cvNames()[logBandFilter]+'</span> <span class="meta">'+cvRanges()[logBandFilter]+'</span>':'<b>no band</b> <span class="meta">(no cover saved)</span>')+' <span class="lbf-stats">· '+n+' bet'+(n===1?'':'s')+' · '+w+'–'+l+'–'+ps+(pend?' · '+pend+' open':'')+(g?' · won '+Math.round(cw/g*100)+'% vs '+Math.round(pred/g*100)+'% expected':'')+' · <b class="'+(net>=0?'pl-up':'pl-down')+'">'+(net>=0?'+':'−')+'$'+Math.abs(net).toFixed(2)+'</b>'+(pN?' · + '+pN+' parlay'+(pN===1?'':'s')+' with a leg in this band (listed, not in these totals)':'')+'</span>'; }
+      bandTxt=(logBandFilter?'<span class="cv-chip cv-'+logBandFilter+'">'+cvNames()[logBandFilter]+'</span> <span class="meta">'+cvRanges()[logBandFilter]+'</span>':'<b>no band</b> <span class="meta">(no cover saved)</span>')+' <span class="lbf-stats">· '+n+' bet'+(n===1?'':'s')+' · '+w+'–'+l+'–'+ps+(pend?' · '+pend+' open':'')+(g?' · won '+Math.round(cw/g*100)+'% vs '+Math.round(pred/g*100)+'% expected':'')+' · <b class="'+(net>=0?'pl-up':'pl-down')+dClsR(net,0.01)+'">'+(net>=0?'+':'−')+'$'+Math.abs(net).toFixed(2)+'</b>'+(pN?' · + '+pN+' parlay'+(pN===1?'':'s')+' with a leg in this band (listed, not in these totals)':'')+'</span>'; } /* v5.04: ▲/▼ on the band net */
     if(logDayFilter||bf) lf.innerHTML='<span>Showing '+(bf?bandTxt+' ':'bets ')+(logDayFilter?(bf?'· ':'')+'played <b>'+esc(new Date(logDayFilter+'T12:00:00Z').toLocaleDateString('en-US',{weekday:'short',month:'numeric',day:'numeric',timeZone:'UTC'}))+'</b>':'')+'</span><button type="button" class="ghost sm" id="logFilterOff">show all</button>'; } }
   // v3.57: newest first, one row per game day that opens and closes (days still open, yesterday and later, and days with a bet to check start open)
   const yday=ctDay(Date.now()-86400e3), dst=dayStats(), atv=t=>isNaN(t)?0:t, look=new Map(), seen=new Set();
@@ -6260,7 +6297,7 @@ function renderLog(){ setTimeout(()=>{ try{ csvDays(); }catch(e){} try{ lcRender
         '<div class="meta">'+(bookLogo(b.book)||isPredBook(b.book)?logoTag(b.book,'sm')+' ':'')+'<span class="book">'+esc(bookLabel(b.book))+'</span>'+(b.free?' <span class="tag eb-freetag" title="Free bet: not your money. A miss costs $0.">🎁 free bet</span>':'')+'</div></td>'+   /* v4.03: free parlays show it too */
         '<td><span class="sport">PARLAY</span></td><td class="num">'+esc(fmtOdds(b.odds))+'</td><td class="num">—</td><td class="num">—</td>'+
         '<td class="num">$'+(+b.stake||0).toFixed(2)+'</td>'+
-        '<td class="num">'+sel+(pr!=null?'<div class="meta '+(pr>=0?'pl-up':'pl-down')+'">'+money(pr,true)+'</div>':'')+'</td><td class="num">—</td><td class="num">—</td>'+
+        '<td class="num">'+sel+(pr!=null?'<div class="meta '+(pr>=0?'pl-up':'pl-down')+dClsR(pr,0.01)+'">'+money(pr,true)+'</div>':'')+'</td><td class="num">—</td><td class="num">—</td>'+ /* v5.04: ▲/▼ on a parlay’s profit */
         '<td style="white-space:nowrap"><button class="kill edit pl-edit" data-i="'+i+'">edit</button> <button class="kill remove" data-i="'+i+'">remove</button></td>';   // v3.85: edit a parlay
       tb.appendChild(tr); return;
     }
@@ -6279,7 +6316,7 @@ function renderLog(){ setTimeout(()=>{ try{ csvDays(); }catch(e){} try{ lcRender
          : b.closingSnap&&b.closingSnap.note ? '<div class="meta">'+esc(b.closingSnap.note)+'</div>'
          : b.closing && /^live:/.test(b.closingSource||'') ? '<div class="meta">'+esc({'live:kalshi':'Kalshi','live:poly':'Polymarket','live:novig':'Novig'}[b.closingSource]||'exchange')+' at kickoff</div>'
          : b.closing ? '<div class="meta">typed by you</div>' : '')+'</td>'+
-      '<td class="num">'+(c===null?'—':'<span class="net '+(c>0?'up':'down')+'" style="font-size:17px">'+pct(c)+'</span>')+'</td>'+
+      '<td class="num">'+(c===null?'—':'<span class="net '+(c>0?'up':'down')+dClsR(c,0.001)+'" style="font-size:17px">'+pct(c)+'</span>')+'</td>'+ /* v5.04: ▲/▼ on the CLV, from the shown 0.1% */
       '<td style="white-space:nowrap">'+(b.edits&&b.edits.length?'<span class="meta" title="'+esc(b.edits.map(e=>new Date(e.at).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'})+': was '+(e.before.odds||'')+' $'+(+e.before.stake||0).toFixed(2)+' '+(e.before.book||'')).join('\n'))+'">edited</span> ':'')+
         '<button class="kill edit" data-i="'+i+'">edit</button>'+(b.kind==='total'?' <button class="kill sharp" data-i="'+i+'" title="Compare with Pinnacle, the sharp book (OddsPapi, uses 1 of your monthly calls)">vs Pinnacle</button>':'')+' <button class="kill sell" data-i="'+i+'">'+(b.sold?'undo sold':'Mark sold…')+'</button> '+
         ' <button class="kill void" data-i="'+i+'" title="Cancelled by the book: stake back, counts as a push">'+(b.voided?'unvoid':'void')+'</button>'+
@@ -6332,7 +6369,7 @@ function logDayHtml(day, d, open, nLook){
   const n=d?d.bets:0, parts=[n+' bet'+(n===1?'':'s')];
   if(d && d.w+d.l+d.p) parts.push(d.w+'–'+d.l+'–'+d.p);
   if(d && d.pend) parts.push(d.pend+' open');
-  if(d && d.settled) parts.push('<b class="'+(d.profit>=0?'pl-up':'pl-down')+'">'+money(d.profit,true)+'</b>');
+  if(d && d.settled) parts.push('<b class="'+(d.profit>=0?'pl-up':'pl-down')+dClsR(d.profit,0.01)+'">'+money(d.profit,true)+'</b>'); /* v5.04: ▲/▼ on the day net */
   if(nLook) parts.push('<span class="lo-n">⚠ '+nLook+' to check</span>');
   return '<td colspan="11"><button type="button" class="log-day-btn" data-day="'+esc(day)+'" aria-expanded="'+open+'"><span class="ld-arrow" aria-hidden="true">'+(open?'▾':'▸')+'</span><b>'+(day?dayLabel(day):'No date')+'</b>'+
     (day===ctDay(Date.now())?' <span class="tag t-live">today</span>':'')+'<span class="meta">'+parts.join(' · ')+'</span></button></td>';
@@ -6465,6 +6502,8 @@ function heldValue(b){
   return {v:0, open:true, d:st, why:'in play'};   // v4.07 (Alonzo: "do not say lost, say IN PLAY and put it in grey, unless I already lost it"): a game playing is in play ($0 so far, d = the stake in play), only a settled loss counts   // v3.08: an open bet counts as LOST — the whole stake — until it wins   // v3.98: once its game has started
 }
 function money(x,signed){ return (x<0?'−':(signed&&x>0?'+':''))+'$'+Math.abs(x).toFixed(2); }
+function dCls(x){ return (x==null||typeof x!=='number'||!isFinite(x)||x===0)?'':x>0?' d-up':' d-dn'; }   // v5.04: the ▲ / ▼ class for a signed gain or loss (CSS ::before, colours unchanged); zero, null and NaN get none
+function dClsR(x,step){ return (x==null||typeof x!=='number'||!isFinite(x)||!(Math.abs(x)>step/2))?'':dCls(x); }   // v5.04: the same, from the value as shown (rounded to step), so a shown 0.0% or $0.00 gets no arrow and the arrow always agrees with the sign
 function dayLabel(day){
   const d=new Date(day+'T12:00:00');
   return isNaN(d)?esc(day):d.toLocaleDateString('en-US',{weekday:'short',month:'numeric',day:'numeric'});
@@ -6507,7 +6546,7 @@ function renderTodayLine(){
   const parts=["Today's games: <b>"+d.bets+(goal>0?' / '+goal:'')+'</b> bets', money(d.staked)+(cfg.dayMax>0?' of '+money(cfg.dayMax)+' max':' staked')+(cfg.bank?' ('+(100*d.staked/cfg.bank).toFixed(1)+'% of bankroll)':'')];
   if(d.w+d.l+d.p) parts.push(d.w+'–'+d.l+'–'+d.p);
   if(d.pend) parts.push(d.pend+' pending');
-  if(d.settled||d.risk) parts.push('<b class="'+(d.profit>=0?'pl-up':'pl-down')+'">'+money(d.profit,true)+'</b>'+(d.risk?' <span class="meta">(on the line counted as gone)</span>':''));
+  if(d.settled||d.risk) parts.push('<b class="'+(d.profit>=0?'pl-up':'pl-down')+dClsR(d.profit,0.01)+'">'+money(d.profit,true)+'</b>'+(d.risk?' <span class="meta">(on the line counted as gone)</span>':'')); /* v5.04: ▲/▼ on the day net */
   if(d.against) parts.push('<span class="pl-down">'+d.against+' against the screener</span>');
   if(d.extra) parts.push(d.extra+' 🍀🔮 extra'+(d.extra===1?'':'s'));   // v4.50
   el.innerHTML=parts.join(' · ');
@@ -6654,7 +6693,7 @@ function liveGameHead(ev, g){
     const tos=live&&(g.sport==='NFL'||g.sport==='NCAAF') ? (c===a?sit.awayTimeouts:sit.homeTimeouts) : null, nT=tos==null?null:Math.max(0,Math.min(3,+tos||0));
     return '<div class="lteam'+(dim?' dim':'')+'">'+(teamLogo(g.sport,t.abbreviation,t.logo)?'<img src="'+esc(teamLogo(g.sport,t.abbreviation,t.logo))+'" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'">':'<span class="nologo"></span>')+
       '<b>'+esc(ab)+'</b>'+(live&&has?'<span class="ball" title="has the ball">🏈</span>':'')+
-      (nT!=null?'<span class="tos" title="'+nT+' timeout'+(nT==1?'':'s')+' left">'+'●'.repeat(nT)+'<span>'+'●'.repeat(3-nT)+'</span></span>':'')+
+      (nT!=null?'<span class="tos" aria-hidden="true" title="'+nT+' timeout'+(nT==1?'':'s')+' left">'+'●'.repeat(nT)+'<span>'+'●'.repeat(3-nT)+'</span></span>':'')+   /* v5.04: aria-hidden on the decorative 7px timeout dots (kept small) */
       '<span class="lscore">'+(st.state==='pre'?'':esc(val(c)))+'</span></div>'; };
   let side='';
   if(live && (g.sport==='NFL'||g.sport==='NCAAF') && (sit.shortDownDistanceText||sit.downDistanceText)){
@@ -7450,12 +7489,12 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
   });
   removedBets.forEach(b=>{ if(!(b.lost>0) || gameDayOf(b)!==today) return; const x=at(ribbonBook(b.book)); x.lost+=b.lost; x.net-=b.lost; x.cancel+=b.lost; });
   const usd=x=>'$'+Math.abs(x).toFixed(2);
-  const z=x=>Math.abs(x)<0.005, up=x=>z(x)?'<span class="open">$0.00</span>':'<span class="tb-up">+'+usd(x)+'</span>', dn=x=>z(x)?'<span class="open">$0.00</span>':'<span class="tb-down">−'+usd(x)+'</span>';
+  const z=x=>Math.abs(x)<0.005, up=x=>z(x)?'<span class="open">$0.00</span>':'<span class="tb-up d-up">+'+usd(x)+'</span>', dn=x=>z(x)?'<span class="open">$0.00</span>':'<span class="tb-down d-dn">−'+usd(x)+'</span>'; /* v5.04: ▲/▼ on Settled */
   const sgn=v=>v>=0?up(v):dn(-v);
   const counts=x=>'<div class="tb-l2 tb-cnt"><span title="has a result">✓ '+x.played+' played</span> <span class="live" title="game started, no result yet">▶ '+x.playing+' playing</span> <span title="game not started">⏳ '+x.toPlay+' to play</span></div>';
-  const wl=x=>'<div class="tb-l2"><span class="open">won</span> <span class="tb-up" title="winnings (your stake not included)">'+usd(x.won)+'</span> <span class="open">vs lost</span> <span class="tb-down" title="money lost">'+usd(x.lost)+'</span></div>';
+  const wl=x=>'<div class="tb-l2"><span class="open">won</span> <span class="tb-up'+(z(x.won)?'':' d-up')+'" title="winnings (your stake not included)">'+usd(x.won)+'</span> <span class="open">vs lost</span> <span class="tb-down'+(z(x.lost)?'':' d-dn')+'" title="money lost">'+usd(x.lost)+'</span></div>'; /* v5.04: ▲/▼ on won and lost per book (none on $0.00) */
   const amts=x=>(x.playingAmt||x.toPlayAmt)?'<div class="tb-l2">'+(x.playingAmt?'<span class="tb-inplay" title="games playing: not won or lost yet">▶ '+usd(x.playingAmt)+' in play</span> ':'')+(x.toPlayAmt?'<span class="open" title="games not started: not counted as lost">⏳ '+usd(x.toPlayAmt)+' not started</span>':'')+'</div>':'';
-  const pill=x=>'<div class="tb-l2">'+((x.played||x.cancel)?(z(x.net)?'<span class="open">even</span>':'<span class="tb-pill '+(x.net>0?'good':'bad')+'" title="Won − lost, on bets already settled"><small>'+(x.net>0?'UP':'DOWN')+'</small> '+(x.net>0?'+':'−')+usd(x.net)+'</span>'):'')+(x.playingAmt?' <span class="tb-pill inplay" title="Games playing: not won or lost yet"><small>IN PLAY</small> '+usd(x.playingAmt)+'</span>':'')+'</div>';   // v4.07: UP/DOWN only for what is settled; in play in grey
+  const pill=x=>'<div class="tb-l2">'+((x.played||x.cancel)?(z(x.net)?'<span class="open">even</span>':'<span class="tb-pill '+(x.net>0?'good':'bad')+dCls(x.net)+'" title="Won − lost, on bets already settled"><small>'+(x.net>0?'UP':'DOWN')+'</small> '+(x.net>0?'+':'−')+usd(x.net)+'</span>'):'')+(x.playingAmt?' <span class="tb-pill inplay" title="Games playing: not won or lost yet"><small>IN PLAY</small> '+usd(x.playingAmt)+'</span>':'')+'</div>'; /* v5.04: ▲/▼ on the per-book UP / DOWN pill */   // v4.07: UP/DOWN only for what is settled; in play in grey
   const order=RIBBON_BOOKS.concat(Object.keys(by).filter(k=>!RIBBON_BOOKS.includes(k)).sort());
   const tot=blank('All');
   const tile=k=>{ const x=by[k]; if(!x && !RIBBON_BOOKS.includes(k)) return '';
@@ -7475,15 +7514,15 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
     const q=['No bets today. Your bankroll thanks you for the day off.','Nothing riding today. The sportsbooks will have to wait.','No action yet. Patience is a position too.','Zero bets, zero bad beats.'];
     el.innerHTML='<span class="tb-k"><span>'+lbl+' '+espnBtn+navBtns+'</span>'+lookChip()+'</span><span class="tb-empty">'+(isToday?esc(q[Math.floor(Date.parse(today)/864e5)%q.length]):'No bets on '+esc(dayLabel(today))+'.')+'</span>'; return; }   // v3.57: + bets to check
   const allCard='<div class="tb-t all"><div class="tb-l1"><b>All</b> <span class="open">'+tot.w+'–'+tot.l+(tot.p?'–'+tot.p:'')+'</span></div>'+
-    '<div class="tb-l2"><span class="open">✓ played</span> <b>'+usd(tot.playedAmt)+'</b> → <span class="open">won</span> <span class="tb-up">'+usd(tot.won)+'</span> <span class="open">vs lost</span> <span class="tb-down">'+usd(tot.lost)+'</span></div>'+
+    '<div class="tb-l2"><span class="open">✓ played</span> <b>'+usd(tot.playedAmt)+'</b> → <span class="open">won</span> <span class="tb-up'+(z(tot.won)?'':' d-up')+'">'+usd(tot.won)+'</span> <span class="open">vs lost</span> <span class="tb-down'+(z(tot.lost)?'':' d-dn')+'">'+usd(tot.lost)+'</span></div>'+ /* v5.04: ▲/▼ on All won and lost (none on $0.00) */
     (tot.playing?'<div class="tb-l2"><span class="tb-inplay">▶ IN PLAY '+usd(tot.playingAmt)+'</span> <span class="open">not won or lost yet</span></div>':'')+   // v4.07
     (tot.toPlay?'<div class="tb-l2"><span class="open">⏳ to play '+usd(tot.toPlayAmt)+': not counted yet</span></div>':'')+
-    (tot.open?'<div class="tb-l2 tb-scen" title="Settled = won − lost on bets with a result. Open upside = the profit if every open bet wins (to play and in play, at each ticket’s own payout; your stake back is not profit). In play = your own money on games started and not settled (free bets count $0).">Settled '+sgn(now)+' · Open upside <span class="tb-up">+'+usd(tot.toWin)+'</span> · In play <span class="tb-inplay">'+usd(tot.playingAmt)+'</span></div>':'')+   // v4.07: worst is not a loss yet: grey   /* v5.01 (Sally, agreed): Settled · Open upside · In play (it was best · worst) */
+    (tot.open?'<div class="tb-l2 tb-scen" title="Settled = won − lost on bets with a result. Open upside = the profit if every open bet wins (to play and in play, at each ticket’s own payout; your stake back is not profit). In play = your own money on games started and not settled (free bets count $0).">Settled '+sgn(now)+' · Open upside <span class="tb-up'+(z(tot.toWin)?'':' d-up')+'">+'+usd(tot.toWin)+'</span> · In play <span class="tb-inplay">'+usd(tot.playingAmt)+'</span></div>':'')+ /* v5.04: ▲/▼ on Open upside */   // v4.07: worst is not a loss yet: grey   /* v5.01 (Sally, agreed): Settled · Open upside · In play (it was best · worst) */
     '<div class="tb-motto" title="Only settled bets count as won or lost; games playing are in play, games not started are not counted">Hope for the best, expect the worst.</div>'+
     '<button type="button" class="tb-more" aria-expanded="'+tbBooksOpen()+'" title="Show or hide the money per book">'+(tbBooksOpen()?'by book ▴':'by book ▾')+'</button></div>';   // v4.25
   el.innerHTML='<span class="tb-k"><span>'+lbl+' '+espnBtn+navBtns+'</span>'+lookChip()+'<b class="tb-tot">'+usd(tot.bet)+'</b><span class="tb-n">'+tot.n+' bet'+(tot.n===1?'':'s')+'</span>'+(tot.free?'<span class="tb-st" title="free bets: not your money">🎁 '+usd(tot.free)+' free</span>':'')+
     (tot.n?'<span class="tb-st" title="has a result">✓ '+tot.played+' played</span><span class="tb-st live" title="game started, no result yet">▶ '+tot.playing+' playing</span><span class="tb-st" title="game not started">⏳ '+tot.toPlay+' to play</span>':'')+
-    (z(now)?'<span class="tb-pill even" title="Nothing won or lost yet">$0.00</span>':'<span class="tb-pill '+(now>0?'good':'bad')+'" title="Won − lost, on bets already settled">'+(now>0?'+':'−')+usd(now)+'</span>')+(tot.playingAmt?'<span class="tb-pill inplay" title="Games playing: not won or lost yet"><small>IN PLAY</small> '+usd(tot.playingAmt)+'</span>':'')+'</span>'+allCard+tiles;   // v4.07
+    (z(now)?'<span class="tb-pill even" title="Nothing won or lost yet">$0.00</span>':'<span class="tb-pill '+(now>0?'good':'bad')+dCls(now)+'" title="Won − lost, on bets already settled">'+(now>0?'+':'−')+usd(now)+'</span>')+(tot.playingAmt?'<span class="tb-pill inplay" title="Games playing: not won or lost yet"><small>IN PLAY</small> '+usd(tot.playingAmt)+'</span>':'')+'</span>'+allCard+tiles; /* v5.04: ▲/▼ on the TODAY pill */   // v4.07
 }
 /* v2.73: grade finished games in the background (ESPN, no BettingPros calls) */
 let agBusy=false; const sbStamp={};
@@ -7588,19 +7627,19 @@ function betTimeTxt(b){ const p=Date.parse(b.placedAt), t=isNaN(p)?loggedAtOf(b)
 function whyHtml(b){ return ''; /* v3.37: why text moved to the ? badge tooltip */ const w=b.why;
   return '<div class="meta" style="color:var(--warn)" title="Why the grader could not finish this bet">why ?: '+esc(w.reason)+(w.stat!=null?' · stat read '+w.stat:'')+(w.line?' · line '+w.line.line+' '+w.line.side:'')+(w.market?' · market "'+esc(w.market)+'"':'')+'</div>'; }
 function playedHtml(b){   // v2.84: "plays" before kickoff, "in progress" until graded, "played" once settled
-  if(b.wrongGame18 && !b.start) return '<div style="font-size:11.5px;color:var(--warn)" title="This book fill was first attached to '+esc(b.wrongGame18)+', which had already been played">game unknown · the book\'s result will grade it</div>';
+  if(b.wrongGame18 && !b.start) return '<div style="font-size:12px;color:var(--warn)" title="This book fill was first attached to '+esc(b.wrongGame18)+', which had already been played">game unknown · the book\'s result will grade it</div>';   // v5.04: 12px floor (was 11.5px)
   const done=b.sold || b.result==='win' || b.result==='loss' || b.result==='push';
   if(!b.start || isNaN(Date.parse(b.start))){   // v3.57: no game time (a typed game): go by the date you chose
     if(!b.date || !(b.manual || b.dateSet)) return '';
     const today=ctDay(Date.now()), dd=new Date(b.date+'T12:00:00Z').toLocaleDateString('en-US',{timeZone:'UTC',weekday:'short',month:'numeric',day:'numeric'});
     const late=!done && b.date<today && b.result!=='?';
     const tx = done ? 'played '+dd : b.result==='?' ? 'final · can\u2019t auto-grade · '+dd : b.date>today ? 'plays '+dd : b.date===today ? 'today · '+dd : 'over · '+dd+' · set the result';
-    return '<div style="font-size:11.5px;'+(late?'color:var(--warn)':'')+'" title="game day">'+esc(tx)+'</div>'; }
+    return '<div style="font-size:12px;'+(late?'color:var(--warn)':'')+'" title="game day">'+esc(tx)+'</div>'; }   // v5.04: 12px floor (was 11.5px)
   const t=Date.parse(b.start), d=gameDayOf(b), opt={timeZone:'America/Chicago'};
   const day=new Date(t).toLocaleDateString('en-US',{...opt,weekday:'short',month:'numeric',day:'numeric'});
   const tm=new Date(t).toLocaleTimeString('en-US',{...opt,hour:'numeric',minute:'2-digit'});
   const txt = (Date.now()<t ? 'plays ' : done ? 'played ' : b.result==='?' ? 'final · can\'t auto-grade · ' : Date.now()>t+overAfterH(b)*3600e3 ? 'over · result pending · ' : 'in progress · ')+day+' · '+tm;   // v3.35: game time always; v3.57: over once it is surely finished
-  return '<div style="font-size:11.5px;'+(d!==b.date?'color:var(--warn)':'')+'" title="game day">'+esc(txt)+'</div>';
+  return '<div style="font-size:12px;'+(d!==b.date?'color:var(--warn)':'')+'" title="game day">'+esc(txt)+'</div>';   // v5.04: 12px floor (was 11.5px)
 }
 /* v3.36: when ESPN can't grade a bet that came from a book fill, use the book's own settlement (Kalshi, Polymarket, Novig) */
 function settlementFor(b){ if(!b||!b.fillBook||!b.fillRef) return null;
@@ -7811,12 +7850,12 @@ function renderScorecard(){
     '<div class="sc-prog"><i style="width:'+Math.min(100,100*n/PROOF_N).toFixed(1)+'%"></i></div>'+
     '<details class="help" data-help="sc-stages"><summary>What the stages mean</summary><div class="meta">Under 100 = stories · 100–299 = directional · 300–999 = comparison · 1,000 = evidence. No raising stakes or claims to buyers before 1,000. Ranges re-draw whole games 10,000 times (same-game bets move together).</div></details>';   // v4.25: a drop-down
   h+='<div class="sc-grid">'+
-    '<div class="sc-box"><div class="k">Profit</div><div class="v '+(profit>=0?'pl-up':'pl-down')+'">'+money(profit,true)+'</div><div class="r">on '+money(staked)+' staked</div></div>'+
-    '<div class="sc-box"><div class="k">ROI</div><div class="v">'+(roi==null?'—':sp(roi))+'</div>'+rng(roiB,sp)+'</div>'+
+    '<div class="sc-box"><div class="k">Profit</div><div class="v '+(profit>=0?'pl-up':'pl-down')+dClsR(profit,0.01)+'">'+money(profit,true)+'</div><div class="r">on '+money(staked)+' staked</div></div>'+ /* v5.04: ▲/▼ on Profit and ROI */
+    '<div class="sc-box"><div class="k">ROI</div><div class="v'+dClsR(roi,0.001)+'">'+(roi==null?'—':sp(roi))+'</div>'+rng(roiB,sp)+'</div>'+ /* v5.04: ▲/▼ on Profit and ROI */
     '<div class="sc-box"><div class="k">Beat the close</div><div class="v">'+(C.length?Math.round(100*beat/C.length)+'%':'—')+'</div><div class="r">'+beat+' of '+C.length+' with a closing price</div></div>'+
     '<div class="sc-box"><div class="k">Median CLV</div><div class="v">'+(med==null?'—':sp(med))+'</div>'+(medB?'<div class="r">range '+sp(medB.lo25)+' to '+sp(medB.hi975)+' (95%)</div>':'<div class="r">range after 20 closes</div>')+'</div>'+
     '<div class="sc-box"><div class="k">Mean CLV</div><div class="v">'+(mean==null?'—':sp(mean))+'</div>'+rng(meanB,sp)+'</div>'+
-    '<div class="sc-box"><div class="k">Worst drawdown</div><div class="v pl-down">'+(dd<0?money(dd,true):'$0.00')+'</div><div class="r">deepest drop from a high</div></div></div>';
+    '<div class="sc-box"><div class="k">Worst drawdown</div><div class="v pl-down'+(dd<0?dClsR(dd,0.01):'')+'">'+(dd<0?money(dd,true):'$0.00')+'</div><div class="r">deepest drop from a high</div></div></div>'; /* v5.04: ▲/▼ on the worst drawdown */
   // the verdict — and the honest read of a bad stretch (luck vs broken)
   let vc='', vt='';
   if(n>=PROOF_N){ const okR=roiB&&roiB.lo>0, okC=medB&&medB.lo25>0;
@@ -7845,7 +7884,7 @@ function renderScorecard(){
   const weeks=Object.keys(W).sort().reverse().slice(0,8);
   if(weeks.length) h+='<h3 style="margin:14px 0 6px;font-size:14px">Weekly review</h3><div class="scroll"><table><thead><tr><th>Week of</th><th class="num">Settled</th><th class="num">Staked</th><th class="num">Profit</th><th class="num">ROI</th><th class="num">Beat close</th><th class="num">Median CLV</th></tr></thead><tbody>'+
     weeks.map(w=>{ const v=W[w], st=v.s.reduce((t,x)=>t+x._st,0), pl=v.s.reduce((t,x)=>t+x._pl,0), m=medOf(v.c), bt=v.c.filter(x=>x._clv>0).length;
-      return '<tr><td>'+dayLabel(w)+'</td><td class="num">'+v.s.length+'</td><td class="num">'+money(st)+'</td><td class="num"><b class="'+(pl>=0?'pl-up':'pl-down')+'">'+money(pl,true)+'</b></td><td class="num">'+(st>0?sp(pl/st):'—')+'</td><td class="num">'+(v.c.length?Math.round(100*bt/v.c.length)+'%':'—')+'</td><td class="num">'+(m==null?'—':sp(m))+'</td></tr>'; }).join('')+'</tbody></table></div>';
+      return '<tr><td>'+dayLabel(w)+'</td><td class="num">'+v.s.length+'</td><td class="num">'+money(st)+'</td><td class="num"><b class="'+(pl>=0?'pl-up':'pl-down')+dClsR(pl,0.01)+'">'+money(pl,true)+'</b></td><td class="num'+(st>0?dClsR(pl/st,0.001):'')+'">'+(st>0?sp(pl/st):'—')+'</td><td class="num">'+(v.c.length?Math.round(100*bt/v.c.length)+'%':'—')+'</td><td class="num">'+(m==null?'—':sp(m))+'</td></tr>'; }).join('')+'</tbody></table></div>'; /* v5.04: ▲/▼ on the week profit and ROI */
   // research Makes
   const rs=researchState();
   { const nx=logged.filter(b=>b && b.tier && b.kind!=='parlay').length; if(nx) h+='<p class="meta" style="margin-top:10px">🍀 <b>Just missed</b> and 🔮 <b>Hail Marys</b> ('+nx+' logged) are kept out of everything above: this test only judges the best bets. Their record is under ◎ Rings and extras.</p>'; }   // v4.50
@@ -9886,7 +9925,7 @@ function rpSet(){ const R=rpRange(); let noDay=0, noDayRm=0;
   return {R, L, Rm, noDay, noDayRm}; }
 function rpSample(n){ return n<10?'too few to rank':n<30?'extremely preliminary':n<100?'early sample':''; }
 function rpPct(x){ return x==null?'—':(x>=0?'+':'−')+Math.abs(x*100).toFixed(1)+'%'; }
-function rpCls(v){ return v>0.005?'pl-up':v<-0.005?'pl-down':''; }
+function rpCls(v,step){ return (v>0.005?'pl-up':v<-0.005?'pl-down':'')+dClsR(v,step||0.01); } /* v5.04: ▲/▼ from the shown rounding: $ to the cent, ROI (step 0.001) to 0.1%; colour rule unchanged */
 function rpToWin(b){ if(b.kind==='parlay'){ const pay=b.parlay&&b.parlay.payout; return b.towin>0?+b.towin:(pay>0?(+pay)-(+b.stake||0):null); } if(b.towin>0) return +b.towin; const p=toProb(b.odds); if(p==null||!(p>0&&p<1)) return null; const fee=+b.fee||0; return (+b.stake||0)*((1/p)-1-fee)/(1+fee); }   /* review: the same fee formula as betProfit */
 function rpPick(b){ return b.kind==='parlay' ? ('Parlay'+(b.parlay&&b.parlay.legs?' · '+b.parlay.legs+' legs':'')) : (b.betnow || [(b.side==='O'?'Over':b.side==='U'?'Under':''), b.market].join(' ').trim()); }
 function rpOptions(){ const uniq=fn=>[...new Set(logged.map(fn).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b)));
@@ -9927,12 +9966,12 @@ function rpRender(){ const box=document.getElementById('rpPanel'); if(!box) retu
   document.getElementById('rpHead').innerHTML=(g.n||g.cancelled)?
     '<div class="rp-line"><b>Settled:</b> $'+g.stSet.toFixed(2)+' risked, <b class="'+rpCls(g.profit)+'">'+lcUsd(g.profit)+'</b> · <b>To play:</b> $'+g.toPlay.toFixed(2)+' · <b>In play:</b> $'+g.inPlay.toFixed(2)+'</div>'+
     '<div class="rp-ks">'+tile('Tickets',g.n)+tile('W–L–P',g.w+'–'+g.l+'–'+g.p,'',g.hit==null?'':'won '+(g.hit*100).toFixed(1)+'% of the bets that won or lost')+tile('Hit rate',g.hit==null?'—':(g.hit*100).toFixed(1)+'%')+tile('Settled risked','$'+g.stSet.toFixed(2),'','your own money on settled bets (free bets are $0)')+
-      tile('Settled profit',lcUsd(g.profit),rpCls(g.profit))+tile('ROI',rpPct(g.roi),rpCls(g.roi||0),'settled profit ÷ settled risked: open bets are never in it')+tile('⏳ To play','$'+g.toPlay.toFixed(2),'rp-grey')+tile('▶ In play','$'+g.inPlay.toFixed(2),'rp-grey')+tile('Open total','$'+(g.toPlay+g.inPlay).toFixed(2)+' · '+g.pend+' open','rp-grey')+'</div>'+
+      tile('Settled profit',lcUsd(g.profit),rpCls(g.profit))+tile('ROI',rpPct(g.roi),rpCls(g.roi||0,0.001),'settled profit ÷ settled risked: open bets are never in it')+tile('⏳ To play','$'+g.toPlay.toFixed(2),'rp-grey')+tile('▶ In play','$'+g.inPlay.toFixed(2),'rp-grey')+tile('Open total','$'+(g.toPlay+g.inPlay).toFixed(2)+' · '+g.pend+' open','rp-grey')+'</div>'+ /* v5.04: ▲/▼ ROI arrow from the shown 0.1% */
     '<div class="meta">'+[sett?sett+' settled ticket'+(sett===1?'':'s'):'nothing settled yet', g.cancelled?g.cancelled+' cancelled bet'+(g.cancelled===1?'':'s')+' that lost $'+g.cancelLost.toFixed(2)+' (counted, as on the calendar)':'', smp?'<b class="rp-smp">'+smp+'</b>: '+(g.w+g.l+g.p)+' won, lost or pushed':''].filter(Boolean).join(' · ')+'</div>'
     : '<p class="meta">No bets in this report. Change the period or the filters.</p>';
   const parts=[['Overall',S.L,S.Rm],['Singles',S.L.filter(b=>b.kind!=='parlay'),S.Rm.filter(b=>b.kind!=='parlay')],['Parlays',S.L.filter(b=>b.kind==='parlay'),S.Rm.filter(b=>b.kind==='parlay')]];
   document.getElementById('rpSplit').innerHTML=(g.n||g.cancelled)?'<div class="rp-tw"><table class="rp-t rp-sp"><thead><tr><th></th><th class="num">Tickets</th><th class="num">W–L–P</th><th class="num">Settled risked</th><th class="num">Profit</th><th class="num">ROI</th><th class="num">Open</th></tr></thead><tbody>'+
-    parts.map(([lab,L,Rm])=>{ const x=rpAgg(L,Rm); return '<tr'+(lab==='Overall'?' class="rp-all"':'')+'><td class="rp-bet">'+(lab==='Overall'?'<b>Overall</b>':'· '+lab)+'</td><td class="num" data-l="Tickets">'+x.n+'</td><td class="num" data-l="W–L–P">'+x.w+'–'+x.l+'–'+x.p+'</td><td class="num" data-l="Settled risked">$'+x.stSet.toFixed(2)+'</td><td class="num '+rpCls(x.profit)+'" data-l="Profit">'+lcUsd(x.profit)+'</td><td class="num" data-l="ROI">'+rpPct(x.roi)+'</td><td class="num" data-l="Open">'+x.pend+'</td></tr>'; }).join('')+'</tbody></table></div>':'';
+    parts.map(([lab,L,Rm])=>{ const x=rpAgg(L,Rm); return '<tr'+(lab==='Overall'?' class="rp-all"':'')+'><td class="rp-bet">'+(lab==='Overall'?'<b>Overall</b>':'· '+lab)+'</td><td class="num" data-l="Tickets">'+x.n+'</td><td class="num" data-l="W–L–P">'+x.w+'–'+x.l+'–'+x.p+'</td><td class="num" data-l="Settled risked">$'+x.stSet.toFixed(2)+'</td><td class="num '+rpCls(x.profit)+'" data-l="Profit">'+lcUsd(x.profit)+'</td><td class="num'+dClsR(x.roi,0.001)+'" data-l="ROI">'+rpPct(x.roi)+'</td><td class="num" data-l="Open">'+x.pend+'</td></tr>'; }).join('')+'</tbody></table></div>':''; /* v5.04: ▲/▼ on the ROI cell, from the shown 0.1% (no colour, as before) */
   const byDay=(a,b)=>String(rpDayOf(b)||'').localeCompare(String(rpDayOf(a)||''));
   const tS=b=>{ const t=Date.parse(b.start||(b.gameInfo&&b.gameInfo.startISO)); return isNaN(t)?Infinity:t; }, O=S.L.filter(b=>heldValue(b).open).sort((a,b)=>tS(a)-tS(b)),   /* open: by start time, soonest first */ D=S.L.filter(b=>!heldValue(b).open).sort(byDay);
   document.getElementById('rpOpenN').textContent=O.length?'· '+O.length:''; document.getElementById('rpSetN').textContent=D.length?'· '+D.length:'';
@@ -9969,7 +10008,7 @@ function rpBreakHtml(S){ const by=RP.by||'sport', G=new Map(), R=new Map(); S.L.
   const head=by==='price'?'<p class="meta rp-px-note"><b>Price paid · all-in break-even chance · not a forecast</b>'+(RP.px==='american'?' (shown as the all-in equivalent American price, fees included)':'')+'. It shows how hard each price was to beat, not whether the bet had an edge.</p>':'';
   return head+'<div class="rp-tw"><table class="rp-t rp-br"><thead><tr><th></th><th class="num">Tickets (incl. open)</th><th class="num">Settled outcomes</th><th class="num">W–L–P</th><th class="num">Settled risked</th><th class="num">Profit</th><th class="num">ROI</th><th>Sample</th></tr></thead><tbody>'+
     keys.map(k=>{ const L=G.get(k)||[], x=rpAgg(L,R.get(k)||[]), c=rpCounts(L), smp=rpSample(c.outcomes);
-      return '<tr><td class="rp-bet"><b>'+esc(k)+'</b></td><td class="num" data-l="Tickets (incl. open)">'+x.n+'</td><td class="num" data-l="Settled outcomes">'+c.outcomes+'</td><td class="num" data-l="W–L–P">'+x.w+'–'+x.l+'–'+x.p+'</td><td class="num" data-l="Settled risked">$'+x.stSet.toFixed(2)+'</td><td class="num '+rpCls(x.profit)+'" data-l="Profit">'+lcUsd(x.profit)+'</td><td class="num" data-l="ROI">'+rpPct(x.roi)+'</td><td class="meta" data-l="Sample">'+(smp||'—')+'</td></tr>'; }).join('')+'</tbody></table></div>'; }
+      return '<tr><td class="rp-bet"><b>'+esc(k)+'</b></td><td class="num" data-l="Tickets (incl. open)">'+x.n+'</td><td class="num" data-l="Settled outcomes">'+c.outcomes+'</td><td class="num" data-l="W–L–P">'+x.w+'–'+x.l+'–'+x.p+'</td><td class="num" data-l="Settled risked">$'+x.stSet.toFixed(2)+'</td><td class="num '+rpCls(x.profit)+'" data-l="Profit">'+lcUsd(x.profit)+'</td><td class="num'+dClsR(x.roi,0.001)+'" data-l="ROI">'+rpPct(x.roi)+'</td><td class="meta" data-l="Sample">'+(smp||'—')+'</td></tr>'; }).join('')+'</tbody></table></div>'; } /* v5.04: ▲/▼ on the ROI cell, from the shown 0.1% (no colour, as before) */
 /* settled profit, added up day by day in the order of the chosen basis; open bets do not move it */
 function rpChartHtml(S){ const M=new Map(); S.L.forEach(b=>{ const pr=betProfit(b); if(pr==null) return; const d=rpDayOf(b); M.set(d,(M.get(d)||0)+pr); }); S.Rm.forEach(b=>{ const d=rpDayOf(b); M.set(d,(M.get(d)||0)-b.lost); });
   const days=[...M.keys()].filter(Boolean).sort(); if(days.length<2) return '<p class="meta">The line needs settled bets on at least two days in this period.</p>';
@@ -9988,7 +10027,7 @@ function rpBwHtml(S){ const who=RP.bwWho==='players'?'players':'teams', of=who==
   const pf=(a,b)=>RP.bwDir==='worst'?a.x.profit-b.x.profit:b.x.profit-a.x.profit, tier=r=>r.rank?0:r.show?1:2;   /* review: ranked first, then listed-only, then small samples; a small one never pushes a ranked one off */
   const list=rows.filter(r=>RP.small||r.show).sort((a,b)=>(tier(a)-tier(b))||pf(a,b)).slice(0,10);
   const hid=rows.filter(r=>!r.show).length;
-  const body=list.length?'<div class="rp-tw"><table class="rp-t rp-bw"><thead><tr><th>'+(who==='players'?'Player':'Team')+'</th><th class="num">W–L–P</th><th class="num">Profit</th><th class="num">ROI</th><th>Sample</th></tr></thead><tbody>'+list.map(r=>'<tr><td class="rp-bet"><b>'+esc(r.k)+'</b><br><span class="meta">'+r.st+' ticket'+(r.st===1?'':'s')+' · '+r.c.outcomes+' unique outcome'+(r.c.outcomes===1?'':'s')+' · '+r.c.games+' game'+(r.c.games===1?'':'s')+'</span></td><td class="num" data-l="W–L–P">'+r.x.w+'–'+r.x.l+'–'+r.x.p+'</td><td class="num '+rpCls(r.x.profit)+'" data-l="Profit">'+lcUsd(r.x.profit)+'</td><td class="num" data-l="ROI">'+rpPct(r.x.roi)+'</td><td class="meta" data-l="Sample">'+(r.rank?(rpSample(r.c.outcomes)||'—'):r.show?'listed, not ranked: '+rpSample(r.c.outcomes):'too few to rank')+'</td></tr>').join('')+'</tbody></table></div>'
+  const body=list.length?'<div class="rp-tw"><table class="rp-t rp-bw"><thead><tr><th>'+(who==='players'?'Player':'Team')+'</th><th class="num">W–L–P</th><th class="num">Profit</th><th class="num">ROI</th><th>Sample</th></tr></thead><tbody>'+list.map(r=>'<tr><td class="rp-bet"><b>'+esc(r.k)+'</b><br><span class="meta">'+r.st+' ticket'+(r.st===1?'':'s')+' · '+r.c.outcomes+' unique outcome'+(r.c.outcomes===1?'':'s')+' · '+r.c.games+' game'+(r.c.games===1?'':'s')+'</span></td><td class="num" data-l="W–L–P">'+r.x.w+'–'+r.x.l+'–'+r.x.p+'</td><td class="num '+rpCls(r.x.profit)+'" data-l="Profit">'+lcUsd(r.x.profit)+'</td><td class="num'+dClsR(r.x.roi,0.001)+'" data-l="ROI">'+rpPct(r.x.roi)+'</td><td class="meta" data-l="Sample">'+(r.rank?(rpSample(r.c.outcomes)||'—'):r.show?'listed, not ranked: '+rpSample(r.c.outcomes):'too few to rank')+'</td></tr>').join('')+'</tbody></table></div>' /* v5.04: ▲/▼ on the ROI cell, from the shown 0.1% (no colour, as before) */
     : '<p class="meta">No '+(who==='players'?'player':'team')+' has 10 settled tickets on 5 different outcomes yet, the size needed to be listed.</p>';
   return body+(hid?'<p class="meta">'+hid+' '+(who==='players'?'player':'team')+(hid===1?' has':'s have')+' fewer than 10 settled tickets or 5 outcomes'+(RP.small?' and '+(hid===1?'is':'are')+' shown above with a warning.':'. Tick "Show small samples" to see them.')+'</p>':'')+'<p class="meta">Ranked at 20 settled tickets and 10 outcomes or games; listed at 10 and 5. Sorted by profit; ROI beside it.</p>'; }
 function rpStep2(S){ const set=(id,h)=>{ const el=document.getElementById(id); if(el) el.innerHTML=h; };
@@ -10013,7 +10052,7 @@ function rpBootGames0(S, len, B){ const n=S.length;
 function rpStage(n, games){ return n<30?'extremely preliminary':n<100?'descriptive only':n<300||games<150?'directional':'may be informative'; }
 function rpMed(a){ if(!a.length) return null; const s=a.slice().sort((x,y)=>x-y), m=s.length>>1; return s.length%2?s[m]:(s[m-1]+s[m])/2; }
 function rpPctP(x){ if(x==null) return '—'; const r=+(x*100).toFixed(2); return (r>0?'+':r<0?'−':'')+Math.abs(r).toFixed(2)+'%'; }   /* review: never −0.00% */
-function rpClvCls(x){ return x==null?'':x>=0.001?'pl-up':x<=-0.001?'pl-down':''; }
+function rpClvCls(x){ return x==null?'':(x>=0.001?'pl-up':x<=-0.001?'pl-down':'')+dClsR(x,0.0001); } /* v5.04: ▲/▼ CLV arrow from the shown 0.01%; colour rule unchanged */
 function rpClvHtml(S){ const M=S.L.filter(b=>b.kind!=='parlay' && !heldValue(b).open), C=M.filter(b=>clv(b)!=null);
   if(!M.length) return '<p class="meta">No settled single bets in this report.</p>';
   if(!C.length) return '<p class="meta">None of the '+M.length+' settled single bets has a closing price yet.</p>';
@@ -10022,7 +10061,7 @@ function rpClvHtml(S){ const M=S.L.filter(b=>b.kind!=='parlay' && !heldValue(b).
   const c=rpCounts(C), tile=(l,x,cl,t)=>'<div class="rp-k"'+(t?' title="'+esc(t)+'"':'')+'><span>'+l+'</span><strong'+(cl?' class="'+cl+'"':'')+'>'+x+'</strong></div>';
   return '<div class="rp-ks">'+tile('With a closing price',C.length+' of '+M.length,'', 'settled single bets with a closing price on the same side and line')+tile('Average CLV',rpPctP(mean),rpClvCls(mean))+tile('Median CLV',rpPctP(rpMed(v)),rpClvCls(rpMed(v)))+tile('Stake-weighted CLV',rpPctP(wmean),rpClvCls(wmean),'each bet counted by its own-money stake; free bets weigh 0')+'</div>'+
     '<div class="rp-tw"><table class="rp-t rp-clv"><thead><tr><th></th><th class="num">Tickets</th><th class="num">Share</th><th class="num">W–L–P</th><th class="num">Profit</th><th class="num">ROI</th></tr></thead><tbody>'+
-    grp.map(([lab,L])=>{ const x=rpAgg(L,[]); return '<tr><td class="rp-bet"><b>'+lab+'</b></td><td class="num" data-l="Tickets">'+L.length+'</td><td class="num" data-l="Share">'+(L.length/C.length*100).toFixed(1)+'%</td><td class="num" data-l="W–L–P">'+x.w+'–'+x.l+'–'+x.p+'</td><td class="num '+rpCls(x.profit)+'" data-l="Profit">'+lcUsd(x.profit)+'</td><td class="num" data-l="ROI">'+rpPct(x.roi)+'</td></tr>'; }).join('')+'</tbody></table></div>'+
+    grp.map(([lab,L])=>{ const x=rpAgg(L,[]); return '<tr><td class="rp-bet"><b>'+lab+'</b></td><td class="num" data-l="Tickets">'+L.length+'</td><td class="num" data-l="Share">'+(L.length/C.length*100).toFixed(1)+'%</td><td class="num" data-l="W–L–P">'+x.w+'–'+x.l+'–'+x.p+'</td><td class="num '+rpCls(x.profit)+'" data-l="Profit">'+lcUsd(x.profit)+'</td><td class="num'+dClsR(x.roi,0.001)+'" data-l="ROI">'+rpPct(x.roi)+'</td></tr>'; }).join('')+'</tbody></table></div>'+ /* v5.04: ▲/▼ on the ROI cell, from the shown 0.1% (no colour, as before) */
     '<div class="rp-box"><b>CLV value proxy · if the closing price were fair:</b> <b class="'+rpCls(proxy)+'">'+lcUsd(proxy)+'</b> <span class="meta">(each bet’s own stake × its CLV, added up). The close still has the book’s margin in it, so this is a sign of price quality, not money expected.</span></div>'+
     '<p class="meta">'+c.outcomes+' unique outcome'+(c.outcomes===1?'':'s')+' on '+c.games+' game'+(c.games===1?'':'s')+(rpSample(c.outcomes)?' · <b class="rp-smp">'+rpSample(c.outcomes)+'</b>':'')+'</p>'; }
 function rpEdgeHtml(S){ const sing=S.L.filter(b=>b.kind!=='parlay' && !heldValue(b).open), settledN=sing.length;
@@ -10781,7 +10820,7 @@ function pkCard(title,legs,e,id,best){
     '<div class="pk-h"><b>'+esc(title)+'</b><span class="meta">'+esc(pkPaysTxt(e.arr))+'</span></div>'+
     (best?(prov?'<div class="pk-best prov" title="The best of these entries only if the app has every line shown: check the lines marked check line">PROVISIONAL BEST · check that the app has this exact line</div>':'<div class="pk-best" title="Of these entries, this one grows your bankroll most at its suggested stake: the return weighed against how often it loses">Best for your bankroll</div>'):'')+
     (moL.length?'<div class="pk-mo-warn" role="note">⚠ '+moL.map(l=>esc(l.name)).join(', ')+': model only, no market check. Not a recommended entry.</div>':'')+
-    '<div class="pk-ev '+(up?'up':'down')+'">'+(up?'+':'−')+(Math.abs(e.ev)*100).toFixed(1)+'%<small> expected return'+ifm+'</small></div>'+
+    '<div class="pk-ev '+(up?'up':'down')+dCls(e.ev)+'">'+(up?'+':'−')+(Math.abs(e.ev)*100).toFixed(1)+'%<small> expected return'+ifm+'</small></div>'+ /* v5.04: ▲/▼ on the parlay expected return */
     '<div class="pk-meter" role="img" aria-label="Picks average '+pct(e.avg)+', break-even '+(e.be!=null?pct(e.be):'n/a')+'"><i style="width:'+pos(e.avg)+'"></i>'+(e.be!=null?'<b style="left:'+pos(e.be)+'"></b>':'')+'</div>'+
     '<div class="meta">Picks average <b>'+pct(e.avg)+'</b>, break-even '+(e.be!=null?pct(e.be):'n/a')+'. All '+e.n+' hit '+pct(e.pAll)+' of the time'+(e.pAll>0?' (about 1 in '+Math.max(1,Math.round(1/e.pAll))+')':'')+'.</div>'+   // v3.64
     '<ul class="pk-legs">'+legs.map(l=>'<li><span>'+esc(l.name)+' <span class="meta">'+esc(pkPick(l))+'</span>'+pkBetTag(l)+(l.own?'':' <span class="pk-chk" title="This line is from '+esc(bookLabel(l.book))+'. Check the app has the same line.">check line</span>')+'<span class="pk-where">'+esc(pkWhere(l))+'</span></span><b>'+pct(l.p)+'</b></li>').join('')+'</ul>'+   // v3.63: sport, team, game
@@ -11075,9 +11114,9 @@ function renderCal(){
   const tot=inMonth.reduce((a,d)=>{ const x=days[d]; a.p+=x.profit; a.n+=x.n; a.st+=x.staked; a.w+=x.w; a.l+=x.l; a.pu+=x.p; if(x.settled){ if(x.profit>0.005)a.up++; else if(x.profit<-0.005)a.dn++; } a.best=Math.max(a.best,x.settled?x.profit:-Infinity); a.worst=Math.min(a.worst,x.settled?x.profit:Infinity); /* v4.00 (Alonzo): a day whose games have not started is not a best or worst day */ return a; },{p:0,n:0,st:0,w:0,l:0,pu:0,up:0,dn:0,best:-Infinity,worst:Infinity});
   const td=days[today];
   const tEl=document.getElementById('calToday'), tCnt=td&&td.settled, tIP=td&&td.playingAmt||0, tTP=td&&td.toPlayAmt||0;   // v4.00: money on games not started is grey, not green or red   // v4.07: and money in play
-  tEl.className='cal-big '+(tCnt&&td.profit>0.005?'up':tCnt&&td.profit<-0.005?'dn':'');
+  tEl.className='cal-big '+(tCnt&&td.profit>0.005?'up':tCnt&&td.profit<-0.005?'dn':'')+(tCnt?dClsR(td.profit,0.01):'');   // v5.04: ▲/▼ on today’s settled amount (none on grey to-play money)
   tEl.innerHTML=(tCnt?usd(td.profit):(tIP+tTP?'<span class="cal-tp">$'+(tIP+tTP).toFixed(2)+'</span>':'$0.00'))+' <span class="meta">today</span>'+(tIP?' <span class="cal-tp" title="games playing: not won or lost yet">· $'+tIP.toFixed(2)+' in play</span>':'')+(tTP?' <span class="cal-tp" title="games not started: not counted yet">· $'+tTP.toFixed(2)+' to play</span>':'');
-  const mEl=document.getElementById('calMonthTot'); mEl.className='cal-big '+(tot.p>0.005?'up':tot.p<-0.005?'dn':''); mEl.textContent=usd(tot.p);
+  const mEl=document.getElementById('calMonthTot'); mEl.className='cal-big '+(tot.p>0.005?'up':tot.p<-0.005?'dn':'')+dClsR(tot.p,0.01); /* v5.04: ▲/▼ on the month total */ mEl.textContent=usd(tot.p);
   document.getElementById('calSub').textContent=(calBook==='All'?'all books':calBook);
   document.getElementById('calFoot').innerHTML='<span>Days: <b>'+tot.up+' up · '+tot.dn+' down</b></span><span>Bets: <b>'+tot.n+'</b> · W–L'+(tot.pu?'–P':'')+' <b>'+tot.w+'–'+tot.l+(tot.pu?'–'+tot.pu:'')+'</b></span><span>Staked <b>$'+tot.st.toFixed(2)+'</b></span>'+
     (()=>{ /* v4.08 (Alonzo: "worst is only REAL DATA ... the worst day in history"): best and worst count settled bets only (money in play is not a loss), with their day; plus the worst day ever */
@@ -11085,8 +11124,8 @@ function renderCal(){
       const pick=(keys,f)=>keys.filter(d=>days[d].settled).reduce((a,d)=>a==null||f(days[d].profit,days[a].profit)?d:a,null);
       const all=Object.keys(days).filter(d=>d<=today), bD=pick(inMonth,(x,y)=>x>y), wD=pick(inMonth,(x,y)=>x<y), eB=pick(all,(x,y)=>x>y), eD=pick(all,(x,y)=>x<y);   // v4.08: + best and worst day ever
       const col=v=>v>=0?'var(--live)':'var(--out)';
-      return (bD?'<span>Best day <b style="color:'+col(days[bD].profit)+'">'+usd(days[bD].profit)+'</b> <span class="meta">'+esc(dl(bD))+'</span> · worst <b style="color:'+col(days[wD].profit)+'">'+usd(days[wD].profit)+'</b> <span class="meta">'+esc(dl(wD))+'</span></span>':'')+
-        (eB?'<span>Ever: best <b style="color:'+col(days[eB].profit)+'">'+usd(days[eB].profit)+'</b> <span class="meta">'+esc(dl(eB))+'</span> · worst <b style="color:'+col(days[eD].profit)+'">'+usd(days[eD].profit)+'</b> <span class="meta">'+esc(dl(eD))+'</span></span>':''); })();
+      return (bD?'<span>Best day <b class="'+dClsR(days[bD].profit,0.01)+'" style="color:'+col(days[bD].profit)+'">'+usd(days[bD].profit)+'</b> <span class="meta">'+esc(dl(bD))+'</span> · worst <b class="'+dClsR(days[wD].profit,0.01)+'" style="color:'+col(days[wD].profit)+'">'+usd(days[wD].profit)+'</b> <span class="meta">'+esc(dl(wD))+'</span></span>':'')+ /* v5.04: ▲/▼ on the best and worst days */
+        (eB?'<span>Ever: best <b class="'+dClsR(days[eB].profit,0.01)+'" style="color:'+col(days[eB].profit)+'">'+usd(days[eB].profit)+'</b> <span class="meta">'+esc(dl(eB))+'</span> · worst <b class="'+dClsR(days[eD].profit,0.01)+'" style="color:'+col(days[eD].profit)+'">'+usd(days[eD].profit)+'</b> <span class="meta">'+esc(dl(eD))+'</span></span>':''); })(); /* v5.04: ▲/▼ on the best and worst days ever */
   document.querySelectorAll('.cal-seg button').forEach(b=>b.classList.toggle('on',b.dataset.v===calView));
   if(calView==='chart'){
     let run=0; const pts=[]; for(let d=1; d<=nd; d++){ const k=calMonth+'-'+String(d).padStart(2,'0'); const x=days[k]; const has=!!(x&&x.settled); /* v4.00 */ /* v4.07: settled only */ const v=has?x.profit:0; run+=v; pts.push({d,v,run,has,fut:k>today}); }
@@ -12637,7 +12676,7 @@ function renderMyBooks(){
   const sum=Object.entries(tot).map(([k,t])=>{ const pl=t.back-t.settled;
     const logPl=logged.filter(b=>b.fillBook===k).reduce((s,b)=>{ const v=heldValue(b); return s+(v&&!v.open?v.v:0); },0);
     return '<span class="mb-sum">'+(bookLogo(FILL_NAME[k])?logoTag(FILL_NAME[k],'sm'):'')+' <b>'+esc(FILL_NAME[k])+'</b> '+t.n+' bets · staked $'+t.staked.toFixed(2)+(t.open?' · open $'+t.open.toFixed(2):'')+
-      ' · settled <b class="'+(pl>=0?'tb-up':'tb-down')+'">'+(pl>=0?'+':'−')+'$'+Math.abs(pl).toFixed(2)+'</b> <span class="meta">(log says '+(logPl>=0?'+':'−')+'$'+Math.abs(logPl).toFixed(2)+')</span></span>'; }).join('');
+      ' · settled <b class="'+(pl>=0?'tb-up':'tb-down')+dClsR(pl,0.01)+'">'+(pl>=0?'+':'−')+'$'+Math.abs(pl).toFixed(2)+'</b> <span class="meta">(log says '+(logPl>=0?'+':'−')+'$'+Math.abs(logPl).toFixed(2)+')</span></span>'; }).join(''); /* v5.04: ▲/▼ on the settled P/L */
   const cbar='<div class="copy-bar"><button type="button" class="copy-big" data-copy-fn="myBooksText">📋 Copy My books</button></div>';
   el.innerHTML='<div class="mb-sums">'+sum+'</div>'+cbar+'<div style="overflow-x:auto"><table class="mb-tbl"><thead><tr><th></th><th>Bet (as the book reports it)</th><th>Placed</th><th>Price</th><th>Cost</th><th>Status</th><th>Paid / back</th><th>Your log</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
     (F.length>=6?cbar:'')+'<p class="hint" style="margin-top:6px">Wins pay $1 per contract. Results: the book\'s own settlement first (Kalshi, Polymarket US), then your log (ESPN). Last 3 days — Settings → Re-read reads 14.</p>';

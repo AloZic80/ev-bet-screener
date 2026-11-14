@@ -120,6 +120,10 @@ const runs = [
   ['v4.11: BettingPros ☰ Several: tick sports, calls vs left today, load soonest first, stop before going over', 'bp-several-test.js', []],
   ['v4.10: the price as a % (+230 = 30.3%), OK to / look elsewhere, on the board, Place cards and I bet this', 'price-pct-test.js', []],
   ['Kalshi: what to type (YES/NO, Shares, Limit price, Cost and Max payout) for La Contadora\'s bet; the form in Kalshi\'s words', 'kalshi-how-test.js', []],
+  ['v5.04: tabular digits and a 12px text floor on every page (4 widths, light and dark); exceptions named: timeout dots, SVG chart text, phone calendar cells', 'v504a-test.js', []],
+  ['v5.04: ▲/▼ next to every signed gain or loss (TODAY, Bet log, Scorecard, Reports, cards, parlays); none on zero, null, muted EV or a shown 0.0%; colours unchanged', 'v504b-test.js', []],
+  ['v5.04: price age in words on every card ("Price 4 min old", "Price 13 h old", "Price time unknown"); dot hollow when old or unknown; no overlap at 4 widths, light and dark', 'v504c-test.js', []],
+  ['v5.04: book chips at 44 px (22 px corners, 0 14px padding, tabular counts) at 4 widths, light and dark; chip counts still add up to All = cards with a Bet button on every tab; phone order kept', 'v504d-test.js', []],
 ];
 const run = (file, args) => spawnSync(process.execPath, [path.join(__dirname, file), ...args], { encoding: 'utf8', timeout: 300000 });
 const last = r => ((r.stdout || '') + (r.stderr || '')).trim().split('\n').pop();
