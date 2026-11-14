@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.92</title>
+<title>0xBeta Screener v4.93</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1573,6 +1573,11 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
 .board-more-list button:hover{background:var(--panel-2)}
 .board-more[hidden]{display:none}
 .cv-her{margin-left:6px; font-size:12px; font-weight:700; color:var(--soft); white-space:nowrap}   /* v4.92: the chance beside its band, so the price is never read as the band */
+/* v4.93: an outlier, stale or unavailable card: the score and EV keep their numbers, in grey, with the words that say why */
+.sc-score.muted{color:var(--soft); border-color:var(--rule); background:transparent}
+.sc-score.muted .sc-word{color:var(--warn)}
+.sc-pill.ev b.muted{color:var(--soft); font-weight:700; white-space:normal}
+.sc-pill.ev b.muted small{font-weight:600; color:var(--warn)}
 </style>
 </head>
 <body>
@@ -1581,7 +1586,7 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.92</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.93</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2404,7 +2409,7 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
 
 </div>
 <script>
-const SCREENER_VERSION='v4.92';
+const SCREENER_VERSION='v4.93';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3744,7 +3749,7 @@ function renderCore(rows,cfg){
   const cardsOn=boardCardsOn(), cardsHtml=[], luckyHtml=[], hailRows=[];   // v2.69   // v4.50: the extras have their own card groups
   const bandN={}; shown.forEach(r=>{ if(grpOf(r)===0){ const k=rowBand(r); bandN[k]=(bandN[k]||0)+1; } }); let lastBand=-1, nCards=0;   /* v4.76 */
   const bandHead=k=>'<span class="cv-chip cv-'+k+'">'+(k?cvNames()[k]:'No band')+'</span> <span class="meta">'+(k?cvRanges()[k]:'')+' · '+(bandN[k]||0)+'</span>';
-  const mathTop=(shown||[]).filter(r=>r.pass && r.stake>0 && !r.prior && !r.waitOrder && !r.removed && !r.moved && !r.glConflict && !rowAwol(r) /* v4.82: never an AWOL card */ && !rowOld(r) /* v4.83: nor a ⏱ Old one */).reduce((a,r)=>!a||mathKey(r)>mathKey(a)?r:a, null);   // v4.28
+  const mathTop=(shown||[]).filter(r=>r.pass && r.stake>0 && !r.prior && !r.waitOrder && !r.removed && !r.moved && !r.glConflict && !rowAwol(r) /* v4.82: never an AWOL card */ && !rowOld(r) /* v4.83: nor a ⏱ Old one */ && evDisplayState(r)==='actionable' /* v4.93: nor an outlier or a stale price */).reduce((a,r)=>!a||mathKey(r)>mathKey(a)?r:a, null);   // v4.28
   shown.forEach(r=>{
     const g=grpOf(r);
     if(g!==lastGroup && !(cardsOn && (g===0||g===6||g===7))){
@@ -4501,6 +4506,14 @@ document.addEventListener('input',e=>{ if(e.target && e.target.id==='hubQ'){ con
 setInterval(()=>{ try{ const h=hubState(); if(h.f==='live' && document.visibilityState==='visible' && document.getElementById('v-live').classList.contains('on')) hubLoad(true); }catch(e){} }, 30000);
 function mathKey(r){ return (r&&r.outlier?-1:0)+(r&&(r.noMkt||(r.mktProb==null&&r.src!=='paste:mev'))?-0.5:0)+(r&&r.actNet!=null?r.actNet:(r&&r.net!=null?r.net:-1)); }   /* v4.54: market-checked bets first, then the model-only ones (after them, before outliers) */   /* v4.53: La Contadora's EV (it was the blend) */
 function scWord(t){ return t>=75?'STRONG':t>=50?'GOOD':'THIN'; }
+/* v4.93 (agreed with Sally 11/13, CC-2026-11-13-21/22, owner "BUILD, all"; Alonzo: "at 39.2, how do i have edge on a coin flip?"): how a card's EV
+   and score are SHOWN. actNet, the stake, the order and the score itself never change; only the words and the colour.
+   unavailable = the book did not show it (AWOL, gone); stale = an old price or a best book no longer confirmed; outlier = the model too far from
+   the market (the existing rule that caps the stake). Hoisted: the cards call it. */
+function evDisplayState(r){ if(!r) return 'actionable';
+  if(rowAwol(r) || r.qGone) return 'unavailable';
+  let st=false; try{ st=rowOld(r) || !!shopStale(r) || !!((r.shopChk && r.shopChk.none) || r.swapNone); }catch(e){ st=false; }
+  return r.outlier ? (st?'outlier_and_stale':'outlier_untrusted') : (st?'stale_last_seen':'actionable'); }
 function sentScore(r){ const mdl=r&&r.net!=null&&isFinite(r.net)?r.net:null, net=r&&r.actNet!=null&&isFinite(r.actNet)?r.actNet:mdl, eOf=x=>x==null?0:Math.round(50*Math.max(0,Math.min(1,x/0.06))), noM=!!(r && (r.noMkt || (r.mktProb==null && r.src!=='paste:mev'))), e=noM?Math.round(eOf(net)*0.5):eOf(net), e1=eOf(mdl);   /* v4.54: with no market price to check it against the Edge counts half, so a model-only bet cannot read STRONG (25 + 8 + 20 = 53 at most) */   /* v4.53 (POLICY.sent): Edge on La Contadora's EV; e1 = what it was on the model's EV, kept to see which bands the change moved */
   let m=8, mTxt='no market price to check it against';
   if(r && r.mktNet!=null && isFinite(r.mktNet)){ const x=r.mktNet; m=x>0?20+10*Math.min(1,x/0.04):20*Math.max(0,1+x/0.03); if(!r.mktSharp) m*=0.85; m=Math.round(m);
@@ -4590,7 +4603,7 @@ function placeCardHtml(r,cfg,o){
   const pickTxt=r.kind==='moneyline'?(drawR?'Draw (tie)' /* v4.80 */:(code||r.name)+' to win') : r.kind==='spread'?(code||r.name)+' '+line : (sideW?(line?sideW+' '+line:(r.side==='O'?'Yes':'No')):(r.market||''));   // v4.50: no number (Anytime TD): Yes / No, not a bare "Over"
   const statTxt=r.kind==='moneyline'?'Moneyline':r.kind==='spread'?'Spread':r.kind==='total'?'Game total':mname;
   const gameTxt=away&&home?(away.loc||away.name||away.abbr)+' @ '+(home.loc||home.name||home.abbr):(r.game||r.matchup||'');
-  const sc=sentScore(r), scCls=sc.total>=75?'hi':sc.total>=50?'mid':'lo';
+  const sc=sentScore(r), scCls=sc.total>=75?'hi':sc.total>=50?'mid':'lo', evSt=evDisplayState(r);   /* v4.93 */
   const X=o.tier||null, XL=X?extraLine(r):null, R=!X&&r.ring&&r.ring.n>=5?r.ring:null;   // v4.50: a 🍀 / 🔮 extra card, or a best bet with a ◎ ring (5 or 6 of 6)
   const p=r.offeredProb, okP=p>0&&p<1, isX=!!LIVE_BOOK(r.book), mx=r.fairProb!=null?maxPriceFor(okProbR(r), r.book, cfg.eMin):null, over=!X && okP && (mx==null || p>mx+1e-9);
   const st=+(X?r.xStake:r.stake)||0, fee=okP?feeRate(r.book,p,cfg.fees):0, pay=st>0&&okP?Math.floor(st/(p*(1+fee))*100+1e-6)/100:null;
@@ -4645,8 +4658,9 @@ function placeCardHtml(r,cfg,o){
                      :'<div class="sc-ringb" title="Five of the six Perfecta checks pass. The list is in Why this play?">◎ 5 of 6 · <b>'+esc(R.miss[0]||'')+'</b></div>'):'')+   // v4.50
     (o.top?'<div class="sc-mathtop" title="The best edge in this tab right now (edge after blending the market with the model, what the stake is sized on). Bet the cards top to bottom on Sort › Math until your daily max.">✅ #1 MATH PICK</div>':'')+   // v4.28
     '<div class="sc-top">'+(X?'<span class="sc-score x" title="'+(X==='lucky'?'Just missed: La Contadora says NO · optional, smallest bet' /* v4.76 */:'A Hail Mary: your call, not the math’s')+'">'+(X==='lucky'?'🍀':'🔮')+'<small class="sc-word">'+(X==='lucky'?'JUST MISSED':'HAIL MARY')+'</small></span>'
-      :'<span class="sc-score '+scCls+'" title="Sentinel score: edge '+sc.e+'/50, market '+sc.m+'/30, fresh '+sc.f+'/20'+(sc.s?', signal +'+sc.s:'')+'. Open Why this play? for the parts.">'+sc.total+'<small class="sc-word">'+scWord(sc.total)+'</small></span>')+
-      ('<span class="sc-pill ev" title="La Contadora’s EV after fees at '+esc(bk)+(r.mktProb!=null?' (with the market)':' (no market price: the model alone)')+': the number the stake, the order and the score use. Model EV: '+(r.net==null?'—':(r.net>0?'+':'')+pct(r.net))+'">'+logo+'<b class="'+(evA>0?'up':'down')+'">'+(evA==null?'—':(evA>0?'+':'')+pct(evA))+'</b></span>')+   /* v4.53: every card shows her EV (best bets showed the model's) */
+      :(evSt==='actionable'?'<span class="sc-score '+scCls+'" title="Sentinel score: edge '+sc.e+'/50, market '+sc.m+'/30, fresh '+sc.f+'/20'+(sc.s?', signal +'+sc.s:'')+'. Open Why this play? for the parts.">'+sc.total+'<small class="sc-word">'+scWord(sc.total)+'</small></span>'
+        :'<span class="sc-score muted" title="Underlying Sentinel score kept for audit (edge '+sc.e+'/50, market '+sc.m+'/30, fresh '+sc.f+'/20). Its strength word is replaced because this card is not trusted or not actionable as shown.">'+sc.total+'<small class="sc-word">'+({outlier_untrusted:'OUTLIER', stale_last_seen:'STALE', outlier_and_stale:'OUTLIER · STALE', unavailable:'—'})[evSt]+'</small></span>'))+   /* v4.93 */
+      ('<span class="sc-pill ev" title="La Contadora’s EV after fees at '+esc(bk)+(r.mktProb!=null?' (with the market)':' (no market price: the model alone)')+': the number the stake, the order and the score use. Model EV: '+(r.net==null?'—':(r.net>0?'+':'')+pct(r.net))+'">'+logo+(evSt==='actionable'?'<b class="'+(evA>0?'up':'down')+'">'+(evA==null?'—':(evA>0?'+':'')+pct(evA))+'</b>':evSt==='unavailable'?'<b class="muted">no current price</b>':'<b class="muted" title="'+(evSt==='stale_last_seen'?'Calculated from the last price read. The book has not confirmed that price is still available. Refresh the board or check the book before acting.':'Arithmetic at La Contadora’s chance and the shown price. The model is too far from the market, so this estimate is not trusted for sizing. Stake capped at the minimum.')+'">'+(evSt==='stale_last_seen'?'LAST-SEEN EV ':'EST. EV ')+(evA==null?'—':(evA>0?'+':'')+pct(evA))+'<small> · '+({outlier_untrusted:'not trusted — outlier', stale_last_seen:'⏱ price stale', outlier_and_stale:'outlier + stale price · not actionable as shown'})[evSt]+'</small></b>')+'</span>')+   /* v4.93 */   /* v4.53: every card shows her EV (best bets showed the model's) */
       (sc.age!=null?'<span class="sc-pill age'+(sc.age>30*60e3?' old':'')+'" title="This price was read '+ageTxt(sc.age)+' ago'+(sc.age>30*60e3?(LIVE_BOOK(r.book)?'. Send the Sentinels for a fresh one.':String(r.src||'').startsWith('paste')?'. Paste the board again for a fresh one (the Sentinels read the exchanges, not '+esc(bookLabel(r.book)||'this book')+').':'. Refresh the board for a fresh one (the Sentinels read the exchanges, not '+esc(bookLabel(r.book)||'this book')+').'):'')+'">⏱ '+ageTxt(sc.age)+'</span>':'')+mvTxt+sgTxt+awolPill(r) /* v4.81 */+shPill(r) /* v4.84 */+
       '</div>'+
     '<div class="sc-who">'+avatar+'<div class="sc-id"><div class="sc-sport">'+esc(r.sport)+'</div>'+

@@ -80,6 +80,7 @@ const runs = [
   ['v4.89: 📊 Reports (step 1): game day or date placed, periods, filters, settled vs open money, singles and parlays, lists, the filtered CSV; the same money as the Bet calendar', 'v489-test.js', []],
   ['v4.90: Reports step 2: breakdowns, the price paid all in (never a forecast; Sally’s ten checks), the profit line, month tiles, Best / Worst behind the sample gates', 'v490-test.js', []],
   ['v4.91: Reports step 3: closing line (even within 0.1 point, the value proxy), La Contadora expected profit vs actual, expected wins by unique outcome, game-resampled ranges, no verdict', 'v491-test.js', []],
+  ['v4.93: an outlier, stale or unavailable card keeps its numbers but loses the green (EST. EV · not trusted, LAST-SEEN EV · price stale, no current price) and is never #1 MATH PICK', 'v493-test.js', []],
   ['v4.60/v4.62: on a phone the Today’s games line, Cover bands, Show, Sort, Sport, the book chips, the tick boxes and Cards fold behind Filters, which names what is on', 'phone-filters-test.js', []],
   ['v4.63: on a phone the BettingPros panel and the Sources panel are one line each, closed when the app opens', 'phone-header-test.js', []],
   ['v4.64: on a phone the Today card is one line (day, bet, record, in play, to check), closed when the app opens', 'phone-today-test.js', []],
