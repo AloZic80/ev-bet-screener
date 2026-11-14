@@ -33,6 +33,9 @@ const ROWS=[row('nv','Two Books','Novig',0.52), row('dk','Two Books','DraftKings
   check(W+' px: each box points to its own book’s row (a tap opens that book), fits inside the card and is big enough to tap', C && C.keys[0]==='dk' && C.keys[1]==='pm' && C.fits, C);
   const after=await p.evaluate(()=>{ const r=lastRows.find(x=>x.apiKey==='nv'); return {stake:r.stake, net:r.actNet}; });
   check(W+' px: display only: the card’s stake and EV did not move', after.stake===before.stake && after.net===before.net, {before, after});
+  const ty=()=>p.evaluate(()=>{ const t=document.querySelector('#apiDock .tabs'), r=document.getElementById('apiRow'); return {top:Math.round(t.getBoundingClientRect().top), rowAbove:r.getBoundingClientRect().bottom<=t.getBoundingClientRect().top+1}; });
+  const t0=await ty(); await p.click('#bpChip'); await p.waitForTimeout(300); const t1=await ty(); await p.click('#bpChip'); await p.waitForTimeout(200);
+  check(W+' px: the API row sits on the tabs; opening BettingPros does not move Board / Live Games / Parlay (Alonzo: \u201cthe APIs on top of Board, Live games, parlay\u201d)', t0.rowAbove && t1.top===t0.top, {t0,t1});
   const over=await p.evaluate(()=>document.documentElement.scrollWidth-innerWidth); check(W+' px: no sideways scroll', over<=0, over);
   await ctx.close(); }
   check('no page errors', !errs.length, errs);
