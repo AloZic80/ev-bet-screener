@@ -27,14 +27,14 @@ const ROWS=[row('lek','Jonathan Lekkerimaki','VAN',0.519,0.5546,0.526),   // ble
   /* v4.76: Place these is split into the tabs by La Contadora's chance (Lekkerimaki 53.6% and Pettersson 55.5% are under 🪙 Volado, 50 to 60%): read it in every tab and combine. Only its own cards: the 🍀 Just missed and 🔮 Hail Mary cards (.sc-x) are the extras of their tab, not Place these (before v4.76 they were never in Safe's list) */
   const cards=[]; for(const m of ['boring','safe','volado','lucky','clair']){ await p.evaluate(m=>setMode(m),m); await p.waitForTimeout(300); cards.push(...await p.evaluate(()=>[...document.querySelectorAll('#placeCards .sc-card:not(.sc-x)')].map(c=>c.textContent.match(/Lekkerimaki|Cuylle|Pettersson|Hughes/)?.[0]))); }
   check('Place these: Lekkerimaki and Pettersson only (no Cuylle)', cards.includes('Lekkerimaki') && cards.includes('Pettersson') && !cards.includes('Cuylle') && !cards.includes('Hughes'), cards);
-  await p.uncheck('#cardsOn'); await p.waitForTimeout(300);
+  await p.evaluate(()=>{ if(!window._barOpen){ window._barOpen=true; barMoreApply(); } }) /* v4.94: the board controls are behind Filters; tap it first */; await p.uncheck('#cardsOn'); await p.waitForTimeout(300);
   /* v4.76: Safe's best bets are now split into 😴 Boring, 💪 Machín (Safe's key, the default tab) and 🪙 Volado (where these two are): read the three and combine */
   const safeG={g:[], cu:false}; for(const m of ['boring','safe','volado']){ await p.evaluate(m=>setMode(m),m); await p.waitForTimeout(300); const t=await p.evaluate(()=>({g:[...document.querySelectorAll('#tbody tr.group-row')].map(g=>g.innerText.replace(/\s+/g,' ').trim()), cu:/Cuylle/.test(document.getElementById('tbody').textContent)})); safeG.g.push(...t.g); safeG.cu=safeG.cu||t.cu; }
   check('v4.51: the best-bet tabs (Boring, Machín, Volado; was Safe) list only the best bets: no Watch group and no Cuylle (he is under Suertudo)', !safeG.g.some(g=>/^Watch|JUST MISSED/i.test(g)) && !safeG.cu, safeG);
   await p.evaluate(()=>setMode('lucky')); await p.waitForTimeout(300);
   const groups=await p.evaluate(()=>[...document.querySelectorAll('#tbody tr.group-row')].map(g=>g.innerText.replace(/\s+/g,' ').trim()));
   check('v4.51: 🍀 Suertudo (was Feeling Lucky) lists him; v4.80 (owner: near-misses option A): as a 👀 Watch row, not offered as 🍀 Just missed (his EV with the market is +0.2%, under the floor), and no Place these there', groups.length===1 && /^WATCH/i.test(groups[0]) && !/JUST MISSED/i.test(groups[0]) && await p.evaluate(()=>/Cuylle/.test(document.getElementById('tbody').textContent) && !/Lekkerimaki/.test(document.getElementById('tbody').textContent)), groups);
-  await p.selectOption('#boardView','watch'); await p.waitForTimeout(300);
+  await p.evaluate(()=>{ if(!window._barOpen){ window._barOpen=true; barMoreApply(); } }) /* v4.94: the board controls are behind Filters; tap it first */; await p.selectOption('#boardView','watch'); await p.waitForTimeout(300);
   const only=await p.evaluate(()=>[...document.querySelectorAll('#tbody tr:not(.group-row)')].map(t=>t.textContent.match(/Lekkerimaki|Cuylle|Pettersson|Hughes/)?.[0]).filter(Boolean));
   check('Show › 👀 Watch lists only the watch rows (Cuylle)', only.length===1 && only[0]==='Cuylle', only);
   check('no page errors', !errs.length, errs);

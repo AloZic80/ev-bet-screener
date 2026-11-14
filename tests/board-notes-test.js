@@ -26,7 +26,7 @@ const LOG=[{id:'p1',key:'p1',name:'Anthony Edwards',sport:'NBA',kind:'prop',mark
        (min(model, market + 0.35 × (model − market)), e.g. min(.545, .54 + .35 × .005)), so they are under 🪙 Volado (50–60%); Kris Dunn has no edge
        (not approved), so he stays under 💪 Machín, the opening tab. Each Show check reads both tabs and adds them up, so it still sees the whole sample. */
     const both=async()=>{ await tab('volado'); const v=await seen(); await tab('safe'); const m=await seen(); return {cards:v.cards.concat(m.cards), rows:v.rows.concat(m.rows)}; };
-    const view=async v=>{ await p.selectOption('#boardView',v); await p.waitForTimeout(300); return both(); };   /* v4.76: both tabs */
+    const view=async v=>{ await p.evaluate(()=>{ if(!window._barOpen){ window._barOpen=true; barMoreApply(); } }) /* v4.94: the board controls are behind Filters; tap it first */; await p.selectOption('#boardView',v); await p.waitForTimeout(300); return both(); };   /* v4.76: both tabs */
     if(W===1280){
       let s=await both();   /* v4.76: Volado + Machín */
       check('All groups (the default): the two passing bets as cards, Edwards under Already bet', s.cards.length===2 && s.rows.some(x=>/Edwards/.test(x)), s);
@@ -52,7 +52,7 @@ const LOG=[{id:'p1',key:'p1',name:'Anthony Edwards',sport:'NBA',kind:'prop',mark
     await p.reload(); await p.waitForTimeout(1200); await tab('volado'); c=await card();   /* v4.76: read the card in its own tab (Volado) after the reload */
     check(W+' px: the note is still there after a reload (this device)', c && /lineup news/.test(c.note), c);
     if(W===1280){
-      await p.uncheck('#cardsOn'); await p.waitForTimeout(400);
+      await p.evaluate(()=>{ if(!window._barOpen){ window._barOpen=true; barMoreApply(); } }) /* v4.94: the board controls are behind Filters; tap it first */; await p.uncheck('#cardsOn'); await p.waitForTimeout(400);
       const row=await p.evaluate(()=>{ const t=[...document.querySelectorAll('#tbody tr')].find(x=>/Naz Reid/.test(x.textContent)); return t?(t.querySelector('.ln-text')||{}).textContent||'':null; });
       check('with Cards off, the same note shows on the table row', /lineup news/.test(row||''), row);
       await p.evaluate(()=>{ const t=[...document.querySelectorAll('#tbody tr')].find(x=>/Naz Reid/.test(x.textContent)); t.querySelector('.ln-btn').click(); }); await p.waitForTimeout(200);

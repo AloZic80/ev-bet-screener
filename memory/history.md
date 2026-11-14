@@ -6,6 +6,18 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.95 (Alonzo, 11/13 night: "i want both bets. the more better, and the following"; "IMAGINE ANOTHER book under that saying, 53.7 etc."; "build cabron"):
+  `altBooksOf(r)` / `altBooksHtml(r)` put "also at" boxes under the card's price: the same bet (pxKey: sport, name, market, side, game day) at the
+  owner's other books, from lastRows, cheapest first, at most 4, games not started. Each is checked against maxPriceFor(okProbR(r), thatBook, eMin)
+  (its own fee): OK ✓ or greyed "over". A tap opens that book (data-alt-idx in the slip handler). Display only: stake, EV, order unchanged. tests/v495-test.js.
+- v4.95 (also, Alonzo: "the APIs on top of Board, Live games, parlay"): apiDockBuild appends the tabs after #apiRow, so the API row sits on the tabs and opening its panel never moves them.
+- v4.95 (also, Alonzo: "if its a drop down, dont open it by default, unless told to"): the 11 `details.panel.fold` that started open (Settings panels, + Add a bet, Paste) start closed; the + Add a bet and Paste tabs open their own panel when tapped. settings-connect-test taps its panels open.
+- v4.95 (also, Alonzo: "only the button for Send the Sentinels"): with Filters closed, #contadora and the `.pc-head .sc-sub` notes are hidden (CSS :has on .board-bar:not(.bar-open)); the "also at" boxes moved inside .sc-bet (wraps under the price).
+- v4.95 (also, Alonzo: "put it on More"; "i only need the TODAY but across"; "just SEND the Sentinels"): Filters moved into More ▾ (🔎 Filters & sort, first item); #barMoreBtn shows only while Filters is open; the Today card is the one #tbFoldBtn line at every width (was phone only); the Sentinels heading also waits behind Filters. phone-filters and phone-today tests updated.
+- v4.94 (also): the Filters fold is on at every width ("all this should be together, minus sentinels"), search box included; phone-filters-test updated.
+- v4.94 (Alonzo, 11/13 night: "broken here. i cant load betting pros"; "make these 2 rows"): Load and Refresh in the dock open the BettingPros sheet,
+  because their answer ("no game in the next 24 hours · Load anyway", errors) is written in #apiStatus inside it. The folded Today card is two rows:
+  the day across, then All across (on a phone the rows wrap).
 - v4.93 (agreed with Sally 11/13, CC-2026-11-13-21/22, owner "BUILD, all"; Alonzo: "at 39.2, how do i have edge on a coin flip?"): `evDisplayState(r)`
   = actionable | outlier_untrusted | stale_last_seen | outlier_and_stale | unavailable (AWOL or gone first; stale = rowOld, shopStale or a scan with no
   fresh price). The card keeps the score number and actNet but shows "OUTLIER"/"STALE"/"—" in grey and "EST. EV … · not trusted — outlier",

@@ -20,7 +20,7 @@ let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?
         fit:[...document.querySelectorAll('.tabs .tab')].every(t=>t.getBoundingClientRect().right<=document.documentElement.clientWidth+1), sw:document.documentElement.scrollWidth, cw:document.documentElement.clientWidth}; });
     let s=await st();
     check(W+' px: the bar has Augi\'s five tabs, in his order', s.main.join('|')==='Board|Live Games|Parlay|Bet log|Settings', s.main);
-    check(W+' px: v4.92: no row under Board; Leagues, Parole and Moneylines are in the board panel\'s More menu', !s.sub.length && await p.evaluate(()=>[...document.querySelectorAll('#boardMoreList button')].map(b=>b.textContent.trim()).join('|'))==='🌍 Leagues|🔓 Parole|Moneylines', s.sub);
+    check(W+' px: v4.92/v4.95: no row under Board; the board panel\'s More menu has Filters & sort (Alonzo: "put it on More"), then Leagues, Parole and Moneylines', !s.sub.length && await p.evaluate(()=>[...document.querySelectorAll('#boardMoreList button')].map(b=>b.textContent.trim()).join('|'))==='🔎 Filters & sort|🌍 Leagues|🔓 Parole|Moneylines', s.sub);
     check(W+' px: the active tab is his solid green (#087B44), and the page uses the phone\'s own font', s.acc==='rgb(8, 123, 68)' && /system-ui/.test(s.font), {acc:s.acc, font:s.font});
     check(W+' px: the five tabs fit the width, nothing scrolls sideways', s.fit && s.sw<=s.cw+1, {sw:s.sw, cw:s.cw});
     await p.evaluate(()=>{ document.getElementById('boardMore').open=true; [...document.querySelectorAll('#boardMoreList button')].find(t=>/Leagues/.test(t.textContent)).click(); }); await p.waitForTimeout(200); s=await st();

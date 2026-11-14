@@ -20,7 +20,7 @@ const ROWS=[row('a','Fresh Machin',0.62,0.58,60e3), row('b','Stale Machin',0.62,
     await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html});
       if(/\/live\?/.test(u)){ const bets=JSON.parse(decodeURIComponent(u.split('bets=')[1])), R={}; bets.forEach(d=>{ if(fresh && d.name==='Stale Machin' && d.book==='novig') R[d.id]={ok:true, price:0.58, bid:0.56, at:Date.now()}; }); return r.fulfill({contentType:'application/json',body:JSON.stringify({results:R})}); }
       if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
-    await p.goto('http://app.test/'); await p.waitForTimeout(1300);
+    await p.addInitScript(()=>{ window._barOpen=true; }) /* v4.95: these checks read the notes behind Filters, so Filters is open */; await p.goto('http://app.test/'); await p.waitForTimeout(1300);
     await p.evaluate(()=>{ addToLog(lastRows.find(r=>r.name==='Held Old')); refresh(); }); await p.waitForTimeout(300);
     const tabs=()=>p.evaluate(()=>[...document.querySelectorAll('#modeBar button')].map(x=>x.textContent.replace(/\s+/g,' ').trim()));
     const t1=await tabs();
@@ -50,7 +50,7 @@ const ROWS=[row('a','Fresh Machin',0.62,0.58,60e3), row('b','Stale Machin',0.62,
     await ctx.addInitScript(([R,d])=>{ try{ if(sessionStorage.getItem('s')) return; sessionStorage.setItem('s','1'); localStorage.clear(); localStorage.setItem('mbev.cfg',JSON.stringify({books:'Novig',bank:'500',cfgVer:3.03})); localStorage.setItem('mbev.cards','1'); localStorage.setItem('mbev.board',JSON.stringify({v:1,savedAt:new Date().toISOString(),slate:d,rows:R})); }catch(e){} },[R,DAY]);
     const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
     await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
-    await p.goto('http://app.test/'); await p.waitForTimeout(1300);
+    await p.addInitScript(()=>{ window._barOpen=true; }) /* v4.95: these checks read the notes behind Filters, so Filters is open */; await p.goto('http://app.test/'); await p.waitForTimeout(1300);
     const tabs=()=>p.evaluate(()=>[...document.querySelectorAll('#modeBar button')].map(x=>x.textContent.replace(/\s+/g,' ').trim()));
     const t1=await tabs();
     check('v4.78: a price read at an unknown time, loaded 13 hours ago, is old (⏱ Old 1); 11 h 59 m is not yet (💪 Machín 2)', /^⏱ Old 1$/.test(t1[5]) && /^💪 Machín 2$/.test(t1[1]), t1);
@@ -68,7 +68,7 @@ const ROWS=[row('a','Fresh Machin',0.62,0.58,60e3), row('b','Stale Machin',0.62,
     await ctx.addInitScript(([R,d])=>{ try{ if(sessionStorage.getItem('s')) return; sessionStorage.setItem('s','1'); localStorage.clear(); localStorage.setItem('mbev.cfg',JSON.stringify({books:'Novig',bank:'500',cfgVer:3.03})); localStorage.setItem('mbev.cards','1'); localStorage.setItem('mbev.board',JSON.stringify({v:1,savedAt:new Date().toISOString(),slate:d,rows:R})); }catch(e){} },[R,DAY]);
     const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
     await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
-    await p.goto('http://app.test/'); await p.waitForTimeout(1300);
+    await p.addInitScript(()=>{ window._barOpen=true; }) /* v4.95: these checks read the notes behind Filters, so Filters is open */; await p.goto('http://app.test/'); await p.waitForTimeout(1300);
     const tabs=()=>p.evaluate(()=>[...document.querySelectorAll('#modeBar button')].map(x=>x.textContent.replace(/\s+/g,' ').trim()));
     const ed=await p.evaluate(()=>{ window._rr=0; const f=window.refresh; window.refresh=function(){ if(/ringRecheck/.test(new Error().stack||'')) window._rr++; return f.apply(this,arguments); };
       const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>x.textContent.includes('Almost Old')); if(c) c.querySelector('.bet-btn').click(); return boardEditorOpen(); });

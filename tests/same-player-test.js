@@ -31,7 +31,7 @@ async function run(log, rows, mode){ rows=rows||ROWS;   // v4.48: other boards a
   const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
   await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html});
     if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
-  await p.goto('http://app.test/'); await p.waitForTimeout(1300);
+  await p.addInitScript(()=>{ window._barOpen=true; }) /* v4.95: these checks read the notes behind Filters, so Filters is open */; await p.goto('http://app.test/'); await p.waitForTimeout(1300);
   const st=await p.evaluate(()=>lastRows.map(r=>({k:r.apiKey, stake:r.stake, sp:!!r.samePlayer, corr:r.corr||0, flags:(r.flags||[]).filter(f=>f[0]==='warn'||f[0]==='corr').map(f=>f[1]).join(' | ')})));
   const cards=await p.evaluate(()=>[...document.querySelectorAll('#placeCards .sc-card')].map(c=>c.innerText.replace(/\s+/g,' ')));
   const head=await p.evaluate(()=>{ const h=document.querySelector('#placeCards .pc-head'); return h?h.innerText.replace(/\s+/g,' '):''; });

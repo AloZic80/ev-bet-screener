@@ -34,7 +34,7 @@ const BOARD=[
   await p.goto('http://app.test/'); await p.waitForTimeout(1500);
   check('Bet log tab shows 4 bets to check', (await p.textContent('#logTabN'))==='4', await p.textContent('#logTabN'));
   check('the Today card says so too', ((await p.textContent('#todayBar .tb-look'))||'').trim()==='⚠ 4 to check', await p.textContent('#todayBar .tb-look').catch(()=>null));
-  await p.click('#todayBar .tb-look'); await p.waitForTimeout(300);
+  await p.evaluate(()=>{ const t=document.getElementById('tbFoldBtn'); if(t && t.getAttribute('aria-expanded')!=='true') t.click(); }) /* v4.95: the Today card opens from its one line on every width */; await p.click('#todayBar .tb-look'); await p.waitForTimeout(300);
   check('and opens the Bet log at the Look out list', await p.evaluate(()=>document.getElementById('v-log').classList.contains('on') && !document.getElementById('lookOut').hidden), true);
   await p.click('.tab[data-view="v-log"]'); await p.waitForTimeout(400);
   const lo=await p.$$eval('#lookOut .lo-row',r=>r.map(x=>x.querySelector('.lo-why').textContent));

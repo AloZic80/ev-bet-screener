@@ -36,6 +36,6 @@ const txt=(p,sel)=>p.evaluate(s=>document.querySelector(s).textContent.replace(/
   check('a day with no bets: "TODAY · no bets ▾"', /^TODAY\s*no bets\s*▾$/.test(te), te);
   check('no page errors (no bets)', !errs.length, errs); await ctx.close();
   for(const W of [1000,1280,1960]){ ({ctx,p,errs}=await open(b,W,LOG));
-    check(W+' px: unchanged: no Today line, the card shows as before', await vis(p,'#tbFoldBtn')===false && await vis(p,'#todayBar')===true, null);
+    check(W+' px: v4.96 (Alonzo: “i only need the TODAY but across”): the same one line as the phone, the card folded until tapped', await vis(p,'#tbFoldBtn')===true && await vis(p,'#todayBar')===false, null);
     check('no page errors ('+W+')', !errs.length, errs); await ctx.close(); }
   await b.close(); console.log('\n'+pass+' passed, '+fail+' failed'); process.exit(fail?1:0); })();

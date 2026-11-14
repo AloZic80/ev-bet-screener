@@ -14,7 +14,16 @@
   ChatGPT gives second opinions; the owner decides, deploys the Worker and carries notes. Code drafted elsewhere comes in
   as a note to merge and test, never as an upload over `main`.
 - Crew names (owner, 2026-11-11: "Love it!"), used in agent labels and reports: El Jefe (Alonzo), El Juez (the test suite), El Capataz (Claude Code),
-  El Consultor (ChatGPT), El Historiador (the Project's agent), Los Desconfiados (skeptic agents), Los Chismosos (reviewer agents), Los Chambeadores (worker agents).
+  El Consultor (ChatGPT), El Historiador (the Project's agent), Los Desconfiados (skeptic agents), Los Chismosos (reviewer agents), Los Chambeadores (worker agents),
+  Las Karens (owner, 2026-11-13: "assign workers to just play the part of a customer ... Beta testers. Almost like Karens"; "so we add to the crew"): customer agents who use the live app
+  like picky strangers (the newcomer, the phone-only one, the know-it-all bettor, and the professional bettor: owner, "and add the Professional bettor too") and list complaints worst first; they change nothing, the owner picks. Four is fine, no odd number needed for a tie (owner: "if Pro agrees
+  with Karens, then we are good"): a complaint the Pro agrees with goes to the top of the list. The Pro can raise a complaint, never drop one
+  (owner: "BUILD", 2026-11-13): one she disagrees with stays, marked "newcomer only" (the end game is people who may not know betting); one only she raises stays too.
+  El Diseñador (owner, 2026-11-13: "okie"): a designer agent who starts after Las Karens' first list: one look everywhere, a clear order on each screen,
+  mockups only (never the code); the owner picks one, El Capataz builds it. A real human designer for the logo and brand before any sale.
+  Added by El Capataz on the owner's "Add what you feel we need" (2026-11-13): La Guardia, a security and privacy reviewer agent, read-only, run before any
+  sale and after any change to keys, sync or the Worker (no key, passphrase or user email ever on screen, in a log, a URL or a file); and El Licenciado,
+  a seat kept for a real lawyer (not an agent): legal advice is asked for before the app is offered to anyone else.
   Code word **"Frijolito"** (owner, 2026-11-11): show him the crew's first names from `agent-notes/crew-names_2026-11-11_v1.md` (Javiera's picks win).
 - Owner (2026-11-05): "build without my other agent". No relay blocks or reports for the other agents unless the owner asks;
   keep the record in the PR description. Still ask plainly before each publish.

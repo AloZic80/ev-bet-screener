@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.93</title>
+<title>0xBeta Screener v4.95</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1562,7 +1562,13 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
 /* the Today card: the day and All, the book tiles behind "by book ▾" at every width (they were behind it on a phone only, v4.25) */
 .tb-more{display:inline-block; align-self:flex-start; margin-top:8px; font:inherit; font-size:12px; font-weight:600; color:var(--accent); background:transparent; border:1px solid var(--rule); border-radius:14px; padding:4px 11px; cursor:pointer}
 .todaybar.tb-fold>.tb-t:not(.all){display:none}
-.todaybar.tb-fold{grid-template-columns:minmax(150px,auto) 1fr}
+.todaybar.tb-fold{grid-template-columns:1fr}
+/* v4.94 (Alonzo: "make these 2 rows"): row 1 the day across (TODAY ⟳ ‹ › · total · bets · played / playing / to play · won-lost · in play), row 2 All */
+.todaybar.tb-fold>.tb-k{flex-direction:row; flex-wrap:wrap; align-items:center; gap:6px 14px; border-left:0; border-bottom:1px solid var(--rule); padding:10px 16px}
+.todaybar.tb-fold>.tb-k .tb-pill{margin:0}
+.todaybar.tb-fold>.tb-t.all{border-left:0; padding:10px 16px}
+@media (min-width:761px){ .todaybar.tb-fold>.tb-t.all{flex-direction:row; flex-wrap:wrap; align-items:center; gap:4px 18px} .todaybar.tb-fold>.tb-t.all .tb-more{margin-top:0} }
+.todaybar.tb-fold>.tb-t.all .tb-motto{display:none}
 /* the Board row (Board · Leagues · Parole · Moneylines) is gone; a More menu in the board panel holds Leagues, Parole and Moneylines */
 .board-panel{position:relative}
 .board-more{position:absolute; right:14px; top:12px; z-index:5; font-size:12.5px}
@@ -1579,6 +1585,37 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
 .sc-score.muted .sc-word{color:var(--warn)}
 .sc-pill.ev b.muted{color:var(--soft); font-weight:700; white-space:normal}
 .sc-pill.ev b.muted small{font-weight:600; color:var(--warn)}
+/* v4.94 (Alonzo, Mac: "all this should be together, minus sentinels"): Cover bands, the Today's games line, Show, Sort, Sport, the book chips,
+   the search box, the tick boxes, Show all notes and Cards fold behind one Filters button at every width; Send the Sentinels stays out */
+.board-panel .board-bar:not(.bar-open)>.bar-item, .board-panel .board-bar:not(.bar-open)>.book-chips, .board-panel .board-bar:not(.bar-open)>.bar-check,
+.board-panel .board-bar:not(.bar-open)>#todayLine, .board-panel .board-bar:not(.bar-open)>.cv-legend-box, .board-panel .board-bar:not(.bar-open)>.bar-search{display:none}
+.board-panel .board-bar>#todayLine, .board-panel .board-bar>.cv-legend-box{flex-basis:100%; margin:0}
+/* v4.95 (Alonzo, Mac: "dont need to see all this. only the button for Send the Sentinels"): La Contadora's mode sentence and the long notes under
+   The Sentinels / Just missed / Hail Marys headers show only while Filters is open; the headers and their counts stay */
+.board-panel:has(.board-bar:not(.bar-open)) #contadora, .board-panel:has(.board-bar:not(.bar-open)) .pc-head .sc-sub{display:none}
+/* v4.96: Filters is in More; the bar keeps the button only while Filters is open (to close it) */
+.board-panel .board-bar:not(.bar-open)>#barMoreBtn{display:none}
+/* v4.96 (Alonzo: "dont need this info, just SEND the Sentinels"): the "🦑 The Sentinels · Place these · N" heading also waits behind Filters */
+.board-panel:has(.board-bar:not(.bar-open)) #placeCards>.pc-head:not(.pc-x){display:none}
+/* v4.96 (Alonzo, Mac, the Today card: "i SAID 1 or 2 lines. i only need the TODAY but across"): on every width the Today card is the one line
+   (the day, what was bet, the record, what is in play ▾), closed each time the app opens; a tap opens the whole card (days, by book) */
+#tbFoldBtn{display:flex; align-items:center; gap:10px; width:100%; margin-top:10px; padding:10px 14px; border:1px solid var(--rule); border-radius:12px; background:var(--panel); color:var(--ink); font:inherit; font-size:13.5px; font-weight:600; text-align:left; cursor:pointer}
+#tbFoldBtn .hf-k{font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--soft); flex:none}
+#tbFoldBtn .hf-sum{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500; color:var(--soft)}
+#tbFoldBtn .hf-warn{color:var(--warn); font-weight:600} #tbFoldBtn .hf-ar{flex:none} #tbFoldBtn .hf-live{color:var(--live); font-weight:700} #tbFoldBtn .hf-bad{color:var(--out); font-weight:700} #tbFoldBtn .hf-look{color:var(--warn); font-weight:700}
+.head:not(.tb-open) #todayBar{display:none !important}
+body[data-view]:not([data-view="v-board"]) #tbFoldBtn{display:none !important}
+.board-panel .board-bar>.bar-more-btn{display:inline-flex; align-items:center; order:-2} .board-panel .board-bar>#shopBtn, .board-panel .board-bar>#shopMsg{order:-1}
+.board-panel .board-bar>.bar-search{order:0}
+.bar-more:not(.open){display:none}
+/* v4.95: the same bet at your other books, under the card's price */
+.sc-bet:has(.sc-alts){flex-wrap:wrap} .sc-bet>.sc-alts{flex-basis:100%; order:9}
+.sc-alts{grid-column:1/-1; display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:6px 0 0; font-size:12.5px}
+.sc-alts-k{font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--soft)}
+.sc-alt{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border:1px solid var(--rule); border-radius:10px; background:var(--panel-2); cursor:pointer; min-height:32px}
+.sc-alt img.blogo{height:16px; width:auto} .sc-alt b{font-size:14px} .sc-alt small{color:var(--soft); font-weight:600}
+.sc-alt.ok{border-color:var(--live)} .sc-alt.ok small{color:var(--live)}
+.sc-alt.over{opacity:.6} .sc-alt.old{border-style:dashed}
 </style>
 </head>
 <body>
@@ -1587,7 +1624,7 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.93</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.95</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1690,7 +1727,7 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
 
 <div class="panel board-panel">
   <h2 id="boardTitle">The board</h2>
-  <details class="board-more" id="boardMore"><summary title="Leagues, Parole, Moneylines (they were a row under Board)">More ▾</summary><div class="board-more-list" id="boardMoreList"></div></details><!-- v4.92 (Alonzo: "leagues, Parole, moneylines, can be removed or moved elsewhere. i have board on the bottom already") -->
+  <details class="board-more" id="boardMore"><summary title="Filters &amp; sort, Leagues, Parole, Moneylines">More ▾</summary><div class="board-more-list" id="boardMoreList"></div></details><!-- v4.92 (Alonzo: "leagues, Parole, moneylines, can be removed or moved elsewhere. i have board on the bottom already") -->
   <div class="psrc-note" id="pasteNote" style="display:none"></div>
   <div class="modes" id="modeBar" role="group" aria-label="Betting mode">
     <button type="button" data-mode="boring">😴 Boring</button><button type="button" data-mode="safe">💪 Machín</button><button type="button" data-mode="volado">🪙 Volado</button><button type="button" data-mode="lucky">🍀 Suertudo</button><button type="button" data-mode="clair">🔮 Brujo</button><button type="button" data-mode="old">⏱ Old</button><button type="button" data-mode="awol">👻 AWOL</button><!-- v4.76 --><!-- v4.77: ⏱ Old (prices read over 12 hours ago) --><!-- v4.81: 👻 AWOL (the book could not find it) -->
@@ -1776,7 +1813,7 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
 
 <!-- v3.06: + Add a bet and Paste a board have their own tabs (moved off the Board, nothing removed) -->
 <div class="view" id="v-add">
-<details class="panel fold" id="addBetPanel" open>
+<details class="panel fold" id="addBetPanel">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>+ Add a bet <span class="sub">take a price or post your own — it tells you BET or SKIP and how much, then ESPN grades it</span></h2></summary>
   <div class="ab-grid">
     <div class="field"><label for="abSport">Sport</label><select id="abSport"><option>NFL</option><option>NCAAF</option><option>NBA</option><option>WNBA</option><option>NCAAB</option><option>MLB</option><option>NHL</option></select></div>
@@ -1810,7 +1847,7 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
 </details>
 </div>
 <div class="view" id="v-paste">
-<details class="panel fold" id="pastePanel" open>
+<details class="panel fold" id="pastePanel">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>Paste a board <span class="sub">from the BettingPros site — doesn't use the API</span></h2></summary>
   <p class="hint">On the BettingPros Prop Bet Cheat Sheet, select everything (Cmd+A) and copy. The book names have to come through or the fees can't be charged, so grab the whole page rather than just the rows.</p>
   <textarea id="input" placeholder="Paste here…" spellcheck="false"></textarea>
@@ -1913,7 +1950,7 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
 </div>
 
 <div class="view" id="v-settings">
-<details class="panel fold" id="srcSettings" open>   <!-- v3.54: moved here from the header; v3.57: the sources went back to the main page, the passphrase stays -->
+<details class="panel fold" id="srcSettings">   <!-- v3.54: moved here from the header; v3.57: the sources went back to the main page, the passphrase stays -->  <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>Connect <span class="sub">your Worker and passphrase · test it for free</span></h2></summary>   <!-- v4.38: Augi's Connect screen -->
   <div class="row" id="passBox" style="display:flex;margin-top:4px">
     <input type="password" id="screenerPass" aria-label="Screener passphrase" placeholder="passphrase" style="max-width:220px" autocomplete="new-password">
@@ -1928,7 +1965,7 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
     <p class="hint" style="margin:6px 0 0">No API keys are typed here: every key stays a secret on the Worker in Cloudflare. The passphrase only unlocks your Worker.</p>
   </div>
 </details>
-<details class="panel fold" id="credPanel" open>   <!-- v4.38: Augi's API credits page -->
+<details class="panel fold" id="credPanel">   <!-- v4.38: Augi's API credits page -->  <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>API credits &amp; usage <span class="sub">last reported, not a live poll · refresh is free</span></h2></summary>
   <div class="cr-grid" id="crGrid"></div>
   <div class="row" style="margin-top:10px"><button type="button" class="ghost sm" id="crRefresh">⟳ Refresh (free)</button> <span class="meta" id="crMsg" role="status"></span></div>
@@ -1938,7 +1975,7 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
   <div class="rg-grid" id="rgGrid"></div>
   <p class="hint" style="margin:6px 0 0">Change any of them in Screens and Stake sizing below; this updates as you type. A mode does not change any of them. Each tab lists only its own bets, by La Contadora’s chance: 😴 Boring = High Cover + Heavy Favorite (75%+), 💪 Machín = Strong + Solid + Lean (60–75%), 🪙 Volado = Slight Lean + On the Line (50–60%), 🍀 Suertudo = Coin Flip (45–50%) and the ones that just missed (the smallest bet, 5 a day), 🔮 Brujo = Unlikely (under 45%) and the Hail Marys ($1 each, 3 a day).</p>
 </div>
-<details class="panel fold" id="layoutPanel" open>   <!-- v3.54 -->
+<details class="panel fold" id="layoutPanel">   <!-- v3.54 -->  <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>Layout <span class="sub">how the screener fits this device</span></h2></summary>
   <div class="ab-seg" id="layoutSeg" role="radiogroup" aria-label="Layout"><button type="button" role="radio" data-l="auto">Auto</button><button type="button" role="radio" data-l="phone">Phone</button><button type="button" role="radio" data-l="desktop">Desktop</button></div>
   <p class="hint" style="margin:10px 0 0">Auto picks the layout from your screen size. Phone shows the phone layout, even on a computer. Desktop shows the full layout, even on a phone. Saved on this device only.</p>
@@ -1951,7 +1988,7 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
   </div>
   <p class="hint" style="margin:10px 0 0">A whole scheme for light and dark: page, panels, tabs and buttons. Green is Augi's. Wins stay green and losses red in every scheme. Saved on this device only.</p>
 </details>
-<details class="panel fold" id="syncPanel" open>
+<details class="panel fold" id="syncPanel">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>☁ Your bets on every device <span class="sub">phone, other PCs — locked with your own sync password</span></h2></summary>
   <div class="row" style="gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px">
     <input type="password" id="syncPw" aria-label="Sync password" placeholder="sync password" autocomplete="new-password" style="max-width:220px;padding:8px 10px;font-size:14px">
@@ -1997,7 +2034,7 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
   </div>
   <div id="tlList" class="tl-list"></div>
 </details>
-<details class="panel fold" open>
+<details class="panel fold">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>Screens <span class="sub">odds range, EV floor, books, fees</span></h2></summary>
   <p class="hint">A bet has to clear all of these. Widening them until something appears is how you end up on the rows that only look good.</p>
   <div class="grid">
@@ -2036,7 +2073,7 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
   </details>
 </details>
 
-<details class="panel fold" open>
+<details class="panel fold">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>Stake sizing <span class="sub">bankroll and Kelly</span></h2></summary>
   <p class="hint">Kelly scales a bet to its edge. The haircut shrinks that edge first, because the fair values behind it move and the biggest ones move most. What survives gets clamped to the range you actually bet in.</p>
   <div class="grid">
@@ -2054,7 +2091,7 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
   <details class="help" data-help="stake-how"><summary>How stakes are sized</summary><p class="hint" style="margin:12px 0 0"><b>One daily max for everything</b> (v3.11): the API board, the pasted Market EV page and exchange fills all count against the same %, so a big paste can't stack on top of the board. Stakes size off a blend: the market's no-vig price pulled toward BettingPros' number by the model weight (0.35 = mostly market). If there's no market price for a bet, the model number is used with the haircut. Bets on a game you already have money on are trimmed so the game stays under the per-game max.</p></details>   <!-- v4.25: a drop-down -->
 </details>
 
-<details class="panel fold" id="sportsPanel" open>
+<details class="panel fold" id="sportsPanel">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>🌎 Sports <span class="sub">your default sport · every league BettingPros has · year-round</span></h2></summary>
   <div class="pl-form" style="align-items:flex-end">
     <div class="field"><label for="defSport" title="The sport the BettingPros bar starts on when you open the screener. Auto = the sport whose next game starts soonest.">Default sport</label><select id="defSport"><option value="">Auto — soonest games</option><option value="MLB">MLB</option><option value="NFL">NFL</option><option value="NCAAF">NCAAF</option><option value="NBA">NBA</option><option value="NHL">NHL</option><option value="NCAAB">NCAAB</option><option value="WNBA">WNBA</option><option value="MLS">MLS</option><option value="EPL">EPL</option><option value="LALIGA">LALIGA</option><option value="SERIEA">SERIEA</option><option value="BUNDESLIGA">BUNDESLIGA</option><option value="LIGUE1">LIGUE1</option><option value="UCL">UCL</option><option value="UEL">UEL</option><option value="LIGAMX">LIGAMX</option></select></div>
@@ -2066,7 +2103,7 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
   <details class="help" data-help="sports-how"><summary>How the list is sorted, and soccer grading</summary><p class="hint">The sport list is sorted by the next game (ESPN, free): sports playing soonest on top, off-season ones at the bottom marked <i>no games</i>. A load for a sport with no game in the next 24 hours is skipped so it doesn't spend calls (you can still load it anyway). Soccer is graded on regular time (90' + stoppage): extra time and penalties don't count, a draw loses a team's moneyline, and quarter-goal handicaps (±0.25 / ±0.75) are left for you to grade.</p></details>   <!-- v4.25: a drop-down -->
 </details>
 
-<details class="panel fold" open>
+<details class="panel fold">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>Sweet spot &amp; outliers <span class="sub">what gets the 🎯 badge, what counts as an outlier, risk bets</span></h2></summary>
   <details class="help" data-help="sweet-how"><summary>What these change</summary><p class="hint">The sweet spot only marks rows. The outlier and risk-bet settings change stakes: an outlier is capped at the minimum, and one that is also below the market is skipped unless it fits the risk-bet allowance.</p></details>   <!-- v4.25: a drop-down -->
   <div class="sweetbar">
@@ -2080,7 +2117,7 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
   </div>
 </details>
 
-<details class="panel fold" open>
+<details class="panel fold">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>Board filters <span class="sub">hide rows on the board · reset when the page reloads</span></h2></summary>
   <p class="hint">These only hide rows; they never change a decision or a stake. When one is hiding rows, the board says so above the table.</p>
   <div class="filter-panel">
@@ -2410,7 +2447,7 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
 
 </div>
 <script>
-const SCREENER_VERSION='v4.93';
+const SCREENER_VERSION='v4.95';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -4085,12 +4122,12 @@ document.addEventListener('change', e=>{ if(e.target && e.target.closest && e.ta
 document.addEventListener('click', e=>{ if(e.target && e.target.closest && e.target.closest('#bookChips')) setTimeout(barSumPaint,0); });
 document.addEventListener('toggle', e=>{ const d=e.target; if(!d || !d.classList || !d.classList.contains('help') || !d.dataset.help) return; const S=helpOpenSet(); if(d.open) S.add(d.dataset.help); else S.delete(d.dataset.help); helpOpenSave(); }, true);
 document.addEventListener('click', e=>{ const t=e.target.closest && e.target.closest('.tb-more, #barMoreBtn'); if(!t) return;
-  if(t.id==='barMoreBtn'){ window._barOpen=!window._barOpen; barMoreApply(); return; }   // v4.62: not remembered
+  if(t.id==='barMoreBtn'){ window._barOpen=!window._barOpen; barMoreApply(); try{ boardMorePaint(); }catch(_){} return; }   /* v4.96: keeps More's "(open)" in step */   // v4.62: not remembered
   e.stopPropagation(); e.preventDefault(); try{ localStorage.setItem('mbev.tbBooks', tbBooksOpen()?'0':'1'); }catch(e){} try{ renderTodayBar(); }catch(e){} }, true);   // capture: before the Today card's own click (which opens the Bet log)
 /* v4.62 (Alonzo: "what's on the screenshot should all be in a drop down because I don't need to see it all the time"): on a phone the Today's games line
    and Cover bands move into the board bar, first among what Filters opens; on a computer they go back above the bar, where they always were. Hoisted. */
 function barPhonePlace(){ try{ const bar=document.querySelector('.board-panel .board-bar'), tl=document.getElementById('todayLine'), cv=document.querySelector('.board-panel .cv-legend-box'); if(!bar || !tl || !cv) return;
-    const phone=!!(window.matchMedia && window.matchMedia('(max-width:760px)').matches);
+    const phone=true;   /* v4.94 (Alonzo: "all this should be together, minus sentinels"): every width folds like the phone */
     if(phone){ if(tl.parentNode!==bar || cv.parentNode!==bar){ bar.insertBefore(cv, bar.firstChild); bar.insertBefore(tl, bar.firstChild); } }
     else if(tl.parentNode===bar || cv.parentNode===bar){ bar.parentNode.insertBefore(tl, bar); bar.parentNode.insertBefore(cv, bar); } }catch(e){} }
 /* v4.63 (Alonzo, phone: "And these, make them cleaner as well. I don't need to have them open all the time"): the BettingPros panel and the Sources panel
@@ -4128,7 +4165,7 @@ try{ localStorage.removeItem('mbev.barMore'); }catch(e){}   // v4.62: the old re
    listener and the v4.63 code keep working. Hoisted; reads the page only. */
 function apiDockBuild(){ const dock=document.getElementById('apiDock'); if(!dock || dock.dataset.built) return; dock.dataset.built='1';
   const tabs=document.querySelector('.tabs'), row=document.getElementById('apiRow'), sheet=document.getElementById('apiSheet'), bp=document.getElementById('dockBp'), sr=document.getElementById('dockSrc');
-  if(tabs) dock.insertBefore(tabs, row);
+  if(tabs) dock.appendChild(tabs);   /* v4.95 (Alonzo: "or the APIs on top of Board, Live games, parlay etc, since they move up when clicked?"): the API row sits on the tabs, its panel opens up from it, and the tabs stay at the bottom */
   ['bpLoadbar','apiStatus','apiWeekHint'].forEach(id=>{ const el=document.getElementById(id); if(el) bp.appendChild(el); });
   const pn=document.getElementById('srcPanel'); if(pn) sr.appendChild(pn);
   const btns=document.getElementById('apiBpBtns'); ['loadApi','refreshApi'].forEach(id=>{ const el=document.getElementById(id); if(el && btns) btns.appendChild(el); });
@@ -4139,6 +4176,7 @@ function apiDockBuild(){ const dock=document.getElementById('apiDock'); if(!dock
   document.getElementById('bpChip').addEventListener('click', ()=>apiDockOpen(window._dockOpen==='bp'?'':'bp'));
   document.getElementById('apiSheetX').addEventListener('click', ()=>apiDockOpen(''));
   if(tabs) tabs.addEventListener('click', ()=>apiDockOpen(''));
+  ['loadApi','refreshApi'].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('click', ()=>{ if(window._dockOpen!=='bp') apiDockOpen('bp'); }); });   /* v4.94 (Alonzo: "broken here. i cant load betting pros"): the answer (loading, "no game in the next 24 hours · Load anyway", an error) is in the panel's status line, so pressing Load or Refresh opens it */
   document.addEventListener('keydown', e=>{ if(e.key==='Escape' && window._dockOpen) apiDockOpen(''); });
   if(pn){ try{ new MutationObserver(()=>{ const open=pn.style.display==='block'; if(open && window._dockOpen!=='src') apiDockOpen('src'); else if(!open && window._dockOpen==='src') apiDockOpen(''); }).observe(pn,{attributes:true, attributeFilter:['style']}); }catch(e){} }
   try{ const ob=new MutationObserver(()=>apiDockPaint()); ['apiBudget','savedNote','srcBar'].forEach(id=>{ const el=document.getElementById(id); if(el) ob.observe(el,{childList:true, subtree:true, characterData:true}); }); }catch(e){}
@@ -4157,8 +4195,9 @@ function apiDockPaint(){ const chip=document.getElementById('bpChip'); if(!chip)
    its views open from a More menu in the board panel (the Board tab in the bar brings the board back). Hoisted. */
 function boardMorePaint(){ const list=document.getElementById('boardMoreList'), box=document.getElementById('boardMore'); if(!list || !box) return;
   const items=[...document.querySelectorAll('#subTabs .tab[data-group="board"]')].filter(t=>!t.hidden);
-  list.innerHTML=items.map((t,i)=>'<button type="button" data-i="'+i+'">'+t.innerHTML+'</button>').join(''); box.hidden=!items.length; }
+  list.innerHTML='<button type="button" data-f="1">🔎 Filters &amp; sort'+(window._barOpen?' (open)':'')+'</button>'+items.map((t,i)=>'<button type="button" data-i="'+i+'">'+t.innerHTML+'</button>').join(''); box.hidden=false; }   /* v4.96 (Alonzo: "only Send the Sentinels button" ... "put it on More"): Filters lives in More; the bar shows Filters only while it is open, to close it */
 document.addEventListener('click', e=>{ const b=e.target.closest && e.target.closest('#boardMoreList button'); if(!b) return;
+  if(b.dataset.f){ const box=document.getElementById('boardMore'); if(box) box.open=false; window._barOpen=!window._barOpen; barMoreApply(); boardMorePaint(); const bar=document.querySelector('.board-panel .board-bar'); if(bar && window._barOpen) bar.scrollIntoView({block:'nearest'}); return; }
   const items=[...document.querySelectorAll('#subTabs .tab[data-group="board"]')].filter(t=>!t.hidden), t=items[+b.dataset.i]; const box=document.getElementById('boardMore'); if(box) box.open=false; if(t) t.click(); window.scrollTo(0,0); });
 try{ helpApply(); barPhonePlace(); barMoreApply(); hdFoldPaint(); }catch(e){}
 try{ apiDockBuild(); boardMorePaint(); }catch(e){ console.error(e); }   /* v4.92 */
@@ -4506,6 +4545,20 @@ document.addEventListener('input',e=>{ if(e.target && e.target.id==='hubQ'){ con
   if(e.target && e.target.id==='hubDate'){ const h=hubState(); h.ev=null; document.getElementById('hubGame').hidden=true; hubLoad(); } });
 setInterval(()=>{ try{ const h=hubState(); if(h.f==='live' && document.visibilityState==='visible' && document.getElementById('v-live').classList.contains('on')) hubLoad(true); }catch(e){} }, 30000);
 function mathKey(r){ return (r&&r.outlier?-1:0)+(r&&(r.noMkt||(r.mktProb==null&&r.src!=='paste:mev'))?-0.5:0)+(r&&r.actNet!=null?r.actNet:(r&&r.net!=null?r.net:-1)); }   /* v4.54: market-checked bets first, then the model-only ones (after them, before outliers) */   /* v4.53: La Contadora's EV (it was the blend) */
+/* v4.95 (Alonzo: "i want both bets. the more better, and the following"; "IMAGINE ANOTHER book under that saying, 53.7 etc. so, i can choose one or
+   the other"): the same bet (same player or team, stat, line and side, same game day: pxKey) at your other books, cheapest first, under the card's price.
+   Each is checked against La Contadora's "OK to" for that book (its own fee), from the card's chance. Display only: the card's stake, order and
+   decision are unchanged; a tap opens that book's slip. Hoisted: the cards call it. */
+function altBooksOf(r){ if(!r || r.kind==='parlay' || !(r.offeredProb>0)) return []; const k=pxKey(r), cfg=cfgRead(), mine=String(cfg.books||'').split(',').map(x=>x.trim()).filter(Boolean);
+  const seen=new Set([bookLabel(r.book)]), out=[];
+  (lastRows||[]).forEach(x=>{ if(!x || x===r || !(x.offeredProb>0) || x.offeredProb>=1 || pxKey(x)!==k) return; const bl=bookLabel(x.book); if(!bl || seen.has(bl)) return;
+    if(mine.length && !mine.some(m=>bookIsMine(x.book,m))) return; if(x.removed || (x.gameInfo && (x.gameInfo.state==='in'||x.gameInfo.state==='post'))) return;
+    seen.add(bl); const mx=r.fairProb!=null?maxPriceFor(okProbR(r), x.book, cfg.eMin):null; out.push({x, book:bl, p:x.offeredProb, odds:x.offeredRaw, ok:mx!=null && x.offeredProb<=mx+1e-9, mx, old:(()=>{ try{ return rowOld(x); }catch(e){ return false; } })()}); });
+  return out.sort((a,b)=>a.p-b.p).slice(0,4); }
+function altBooksHtml(r){ const A=altBooksOf(r); if(!A.length) return ''; const P=x=>(x*100).toFixed(1)+'%';
+  return '<div class="sc-alts"><span class="sc-alts-k">also at</span>'+A.map(a=>{ const logo=(()=>{ try{ const u=bookLogo(a.book); return u?'<img class="blogo" src="'+u+'" alt="">':''; }catch(e){ return ''; } })();
+    const tip=bookLabel(a.book)+' '+fmtOdds(Math.round(americanOf(a.p)))+': price '+P(a.p)+(a.mx!=null?(a.ok?' · under La Contadora\u2019s OK to '+P(a.mx)+' at this book (its fee included)':' · over La Contadora\u2019s OK to '+P(a.mx)+' at this book: look elsewhere'):'')+(a.old?' · this price is old: check it':'')+'. Tap to open it.';
+    return '<span class="sc-alt book'+(a.ok?' ok':' over')+(a.old?' old':'')+'" role="button" tabindex="0" data-alt-idx="'+a.x.idx+'" title="'+esc(tip)+'">'+logo+'<b>'+esc(String(a.odds||fmtOdds(Math.round(americanOf(a.p)))))+'</b><small>'+P(a.p)+(a.ok?' · OK ✓':' · over')+(a.old?' · ⏱':'')+'</small></span>'; }).join('')+'</div>'; }
 function scWord(t){ return t>=75?'STRONG':t>=50?'GOOD':'THIN'; }
 /* v4.93 (agreed with Sally 11/13, CC-2026-11-13-21/22, owner "BUILD, all"; Alonzo: "at 39.2, how do i have edge on a coin flip?"): how a card's EV
    and score are SHOWN. actNet, the stake, the order and the score itself never change; only the words and the colour.
@@ -4673,7 +4726,7 @@ function placeCardHtml(r,cfg,o){
       '<div class="sc-money"><b>'+(st>0?'$'+st.toFixed(2):(r.hold&&!X)?'$0':'—')+'</b><span>'+((r.hold&&!X&&!(st>0))?(r.hold.why==='awol'?'if found':'if refreshed')+': up to $'+r.hold.stake.toFixed(2) /* v4.83 */:pay!=null?(isX?'pays $'+pay.toFixed(2):'wins $'+Math.max(0,pay-st).toFixed(2)):'stake')+'</span>'+(lim?'<span class="sc-lim">'+esc(lim)+'</span>':'')+'</div>'+
       (()=>{ const hl=slip?slipLinkFor(r,st):null;   // v4.42: one tap on a phone: the chip is a real link when the book's slip is already known
         return (hl?'<a class="sc-price book go sc-link'+(over?' over':'')+'" href="'+esc(hl)+'"'+(/^https:/.test(hl)?' target="_blank" rel="noopener"':''):'<span class="sc-price book'+(over?' over':'')+(slip?' go':'')+'" role="button" tabindex="0"')+' title="'+(slip?'Open this bet on '+esc(bk)+(st>0?' with $'+st.toFixed(2)+' filled':''):esc(bk))+(over?'. The price is over La Contadora’s most now: skip it or look elsewhere':'')+'">'+
-        '<span class="scp-o">'+logo+'<b>'+esc(odds)+'</b></span><span class="scp-p">'+(okP?pp(p):'')+(over?' · over':'')+'</span>'+(hl?'</a>':'</span>'); })()+'</div>'+
+        '<span class="scp-o">'+logo+'<b>'+esc(odds)+'</b></span><span class="scp-p">'+(okP?pp(p):'')+(over?' · over':'')+'</span>'+(hl?'</a>':'</span>'); })()+(X?'':altBooksHtml(r))+'</div>'+   /* v4.95 (Alonzo: "IMAGINE ANOTHER book under that saying, 53.7 etc. so, i can choose one or the other"): inside the price box, right under the price */
     (X?'<div class="sc-kx sc-xline'+(XL.agree?' ok':'')+'" title="'+esc(XL.short)+'">'+esc(XL.t)+'</div>':scKalshiLine(r)||scPolyLine(r) /* v4.79: or Polymarket US */)+   // v4.50: what the math thinks, in the Kalshi line's place (an extra never has one)
     (lnGet(pxKey(r))?'<div class="ln-text" title="Your note on this line">📝 '+esc(lnGet(pxKey(r)))+'</div>':'')+   // v4.34: your note
     '<div class="sc-act"><button class="log sm bet-btn" data-idx="'+r.idx+'">'+(r.moved?'Add this line too':'I bet this')+'</button>'+lnBtnHtml(r)+
@@ -11428,6 +11481,7 @@ document.addEventListener('click', async e=>{
   let obj=null;
   const kb=host.querySelector('button.kill[data-i]'); if(kb) obj=logged[+kb.dataset.i];
   let slipRow=null;   /* v4.81 */
+  if(!obj){ const al=img.closest('[data-alt-idx]'); if(al){ const r=lastRows.find(x=>x.idx===+al.dataset.altIdx); if(r){ obj=rowAsBet(r); slipRow=r; } } }   /* v4.95: an "also at" book opens its own slip */
   if(!obj){ const bb=host.querySelector('[data-idx]'); if(bb){ const r=lastRows.find(x=>x.idx===+bb.dataset.idx); if(r){ obj=rowAsBet(r); slipRow=r; } } }
   if(!obj) return;
   const src=LIVE_BOOK(obj.book) || (/draftkings/i.test(obj.book||'')?'dk':/prizepicks/i.test(obj.book||'')?'pp':null); if(!src) return;   // v4.04: PrizePicks opens too (its app or site; it has no prefilled slip)
@@ -12606,6 +12660,7 @@ setTimeout(()=>{
 document.querySelector('.tab[data-view="v-live"]').addEventListener('click',()=>renderLive(true));
 // v3.07: + Add a bet lives on its own tab — opening the tab loads the games and the editor (the panel's own "open" can fire before the page is listening)
 document.querySelector('.tab[data-view="v-add"]').addEventListener('click',()=>{ const p=document.getElementById('addBetPanel'); if(p){ p.open=true; p.dispatchEvent(new Event('toggle')); } });
+document.querySelectorAll('.tab[data-view="v-paste"]').forEach(t=>t.addEventListener('click',()=>{ const p=document.getElementById('pastePanel'); if(p) p.open=true; }));   /* v4.95: the Paste tab is that one panel, so tapping the tab opens it; everything else stays closed until tapped */
 document.addEventListener('click',e=>{ if(e.target.closest('#logFilterOff')){ logDayFilter=null; logBandFilter=null; renderLog(); } });
 document.addEventListener('click',e=>{ const t=e.target.closest && e.target.closest('button.lbf'); if(!t) return; e.preventDefault(); e.stopPropagation();   /* v4.66: a band: only its bets, in the Bet log */
   const k=+t.dataset.band; logBandFilter=(logBandFilter===k && t.closest('#logBody'))?null:k; if(!t.closest('#logBody')) logDayFilter=null;
