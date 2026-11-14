@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.93</title>
+<title>0xBeta Screener v4.94</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1562,7 +1562,13 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
 /* the Today card: the day and All, the book tiles behind "by book ▾" at every width (they were behind it on a phone only, v4.25) */
 .tb-more{display:inline-block; align-self:flex-start; margin-top:8px; font:inherit; font-size:12px; font-weight:600; color:var(--accent); background:transparent; border:1px solid var(--rule); border-radius:14px; padding:4px 11px; cursor:pointer}
 .todaybar.tb-fold>.tb-t:not(.all){display:none}
-.todaybar.tb-fold{grid-template-columns:minmax(150px,auto) 1fr}
+.todaybar.tb-fold{grid-template-columns:1fr}
+/* v4.94 (Alonzo: "make these 2 rows"): row 1 the day across (TODAY ⟳ ‹ › · total · bets · played / playing / to play · won-lost · in play), row 2 All */
+.todaybar.tb-fold>.tb-k{flex-direction:row; flex-wrap:wrap; align-items:center; gap:6px 14px; border-left:0; border-bottom:1px solid var(--rule); padding:10px 16px}
+.todaybar.tb-fold>.tb-k .tb-pill{margin:0}
+.todaybar.tb-fold>.tb-t.all{border-left:0; padding:10px 16px}
+@media (min-width:761px){ .todaybar.tb-fold>.tb-t.all{flex-direction:row; flex-wrap:wrap; align-items:center; gap:4px 18px} .todaybar.tb-fold>.tb-t.all .tb-more{margin-top:0} }
+.todaybar.tb-fold>.tb-t.all .tb-motto{display:none}
 /* the Board row (Board · Leagues · Parole · Moneylines) is gone; a More menu in the board panel holds Leagues, Parole and Moneylines */
 .board-panel{position:relative}
 .board-more{position:absolute; right:14px; top:12px; z-index:5; font-size:12.5px}
@@ -1587,7 +1593,7 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.93</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.94</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2410,7 +2416,7 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
 
 </div>
 <script>
-const SCREENER_VERSION='v4.93';
+const SCREENER_VERSION='v4.94';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -4139,6 +4145,7 @@ function apiDockBuild(){ const dock=document.getElementById('apiDock'); if(!dock
   document.getElementById('bpChip').addEventListener('click', ()=>apiDockOpen(window._dockOpen==='bp'?'':'bp'));
   document.getElementById('apiSheetX').addEventListener('click', ()=>apiDockOpen(''));
   if(tabs) tabs.addEventListener('click', ()=>apiDockOpen(''));
+  ['loadApi','refreshApi'].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('click', ()=>{ if(window._dockOpen!=='bp') apiDockOpen('bp'); }); });   /* v4.94 (Alonzo: "broken here. i cant load betting pros"): the answer (loading, "no game in the next 24 hours · Load anyway", an error) is in the panel's status line, so pressing Load or Refresh opens it */
   document.addEventListener('keydown', e=>{ if(e.key==='Escape' && window._dockOpen) apiDockOpen(''); });
   if(pn){ try{ new MutationObserver(()=>{ const open=pn.style.display==='block'; if(open && window._dockOpen!=='src') apiDockOpen('src'); else if(!open && window._dockOpen==='src') apiDockOpen(''); }).observe(pn,{attributes:true, attributeFilter:['style']}); }catch(e){} }
   try{ const ob=new MutationObserver(()=>apiDockPaint()); ['apiBudget','savedNote','srcBar'].forEach(id=>{ const el=document.getElementById(id); if(el) ob.observe(el,{childList:true, subtree:true, characterData:true}); }); }catch(e){}

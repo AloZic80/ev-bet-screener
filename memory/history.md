@@ -6,6 +6,9 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.94 (Alonzo, 11/13 night: "broken here. i cant load betting pros"; "make these 2 rows"): Load and Refresh in the dock open the BettingPros sheet,
+  because their answer ("no game in the next 24 hours · Load anyway", errors) is written in #apiStatus inside it. The folded Today card is two rows:
+  the day across, then All across (on a phone the rows wrap).
 - v4.93 (agreed with Sally 11/13, CC-2026-11-13-21/22, owner "BUILD, all"; Alonzo: "at 39.2, how do i have edge on a coin flip?"): `evDisplayState(r)`
   = actionable | outlier_untrusted | stale_last_seen | outlier_and_stale | unavailable (AWOL or gone first; stale = rowOld, shopStale or a scan with no
   fresh price). The card keeps the score number and actNet but shows "OUTLIER"/"STALE"/"—" in grey and "EST. EV … · not trusted — outlier",
