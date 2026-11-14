@@ -20,13 +20,13 @@ let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?
         fit:[...document.querySelectorAll('.tabs .tab')].every(t=>t.getBoundingClientRect().right<=document.documentElement.clientWidth+1), sw:document.documentElement.scrollWidth, cw:document.documentElement.clientWidth}; });
     let s=await st();
     check(W+' px: the bar has Augi\'s five tabs, in his order', s.main.join('|')==='Board|Live Games|Parlay|Bet log|Settings', s.main);
-    check(W+' px: under Board, the row: Board · Leagues · Parole · Moneylines', s.sub.join('|')==='Board|🌍 Leagues|🔓 Parole|Moneylines', s.sub);
+    check(W+' px: v4.92: no row under Board; Leagues, Parole and Moneylines are in the board panel\'s More menu', !s.sub.length && await p.evaluate(()=>[...document.querySelectorAll('#boardMoreList button')].map(b=>b.textContent.trim()).join('|'))==='🌍 Leagues|🔓 Parole|Moneylines', s.sub);
     check(W+' px: the active tab is his solid green (#087B44), and the page uses the phone\'s own font', s.acc==='rgb(8, 123, 68)' && /system-ui/.test(s.font), {acc:s.acc, font:s.font});
     check(W+' px: the five tabs fit the width, nothing scrolls sideways', s.fit && s.sw<=s.cw+1, {sw:s.sw, cw:s.cw});
-    await p.evaluate(()=>[...document.querySelectorAll('#subTabs .tab')].find(t=>/Leagues/.test(t.textContent)).click()); await p.waitForTimeout(200); s=await st();
+    await p.evaluate(()=>{ document.getElementById('boardMore').open=true; [...document.querySelectorAll('#boardMoreList button')].find(t=>/Leagues/.test(t.textContent)).click(); }); await p.waitForTimeout(200); s=await st();
     check(W+' px: Leagues opens its view and Board stays lit', s.view==='v-leagues' && s.lit.join()==='Board', {view:s.view, lit:s.lit});
-    await p.evaluate(()=>document.querySelector('#subTabs .subhome[data-group="board"]').click()); await p.waitForTimeout(200); s=await st();
-    check(W+' px: the Board pill in the row goes back to the board', s.view==='v-board', s.view);
+    await p.click('.tabs .tab[data-view="v-board"]'); await p.waitForTimeout(200); s=await st();
+    check(W+' px: the Board tab in the bar goes back to the board', s.view==='v-board', s.view);
     await p.click('.tabs .tab[data-view="v-log"]'); await p.waitForTimeout(200); s=await st();
     check(W+' px: Bet log shows its row: Bet log · + Add a bet · Performance · 📊 Reports (v4.89)', s.view==='v-log' && s.sub.join('|')==='Bet log|+ Add a bet|Performance|📊 Reports', {view:s.view, sub:s.sub});
     await p.evaluate(()=>[...document.querySelectorAll('#subTabs .tab')].find(t=>/Performance/.test(t.textContent)).click()); await p.waitForTimeout(200); s=await st();
@@ -34,12 +34,12 @@ let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?
     for(const v of ['v-live','v-parlay','v-settings']){ await p.click('.tabs .tab[data-view="'+v+'"]'); await p.waitForTimeout(150); s=await st();
       check(W+' px: '+v+' opens with no row under it', s.view===v && !s.sub.length, {view:s.view, sub:s.sub}); }
     await p.evaluate(()=>window.scrollTo(0, document.documentElement.scrollHeight/2)); await p.waitForTimeout(150);
-    const pin=await p.evaluate(()=>{ const t=document.querySelector('.tabs').getBoundingClientRect(), sel=document.getElementById('ssSport').getBoundingClientRect(), g=document.getElementById('ssGames').getBoundingClientRect();
-      return {bottom:Math.round(t.bottom), vh:window.innerHeight, pos:getComputedStyle(document.querySelector('.tabs')).position, menuAbove:sel.bottom<=g.top+1}; });
-    check(W+' px: v4.30: the five tabs stay pinned to the bottom of the screen while scrolling', pin.pos==='fixed' && Math.abs(pin.bottom-pin.vh)<=1, pin);
+    const pin=await p.evaluate(()=>{ const t=document.getElementById('apiDock').getBoundingClientRect(), sel=document.getElementById('ssSport').getBoundingClientRect(), g=document.getElementById('ssGames').getBoundingClientRect();
+      return {bottom:Math.round(t.bottom), vh:window.innerHeight, pos:getComputedStyle(document.getElementById('apiDock')).position, menuAbove:sel.bottom<=g.top+1}; });
+    check(W+' px: v4.30/v4.92: the five tabs (in the API dock) stay pinned to the bottom of the screen while scrolling', pin.pos==='fixed' && Math.abs(pin.bottom-pin.vh)<=1, pin);
     await p.mouse.wheel(0,-3000); await p.waitForTimeout(200);   // v4.32: and after scrolling back up to the top
-    const up=await p.evaluate(()=>{ const t=document.querySelector('.tabs'); return {bottom:Math.round(t.getBoundingClientRect().bottom), vh:window.innerHeight, parentIsBody:t.parentNode===document.body, y:Math.round(scrollY)}; });
-    check(W+' px: v4.32: scrolled back up, the bar is still at the bottom, and it sits directly in the page body (iPhone Safari)', Math.abs(up.bottom-up.vh)<=1 && up.parentIsBody, up);
+    const up=await p.evaluate(()=>{ const t=document.querySelector('.tabs'), d=document.getElementById('apiDock'); return {bottom:Math.round(d.getBoundingClientRect().bottom), tabsInDock:t.parentNode===d, vh:window.innerHeight, parentIsBody:d.parentNode===document.body, y:Math.round(scrollY)}; });
+    check(W+' px: v4.32: scrolled back up, the bar is still at the bottom, and it sits directly in the page body (iPhone Safari)', Math.abs(up.bottom-up.vh)<=1 && up.parentIsBody && up.tabsInDock, up);
     check(W+' px: v4.30: the ribbon menu (My games, Top events, NBA...) sits above the scores', pin.menuAbove, pin);
     check(W+' px: no page errors', !errs.length, errs);
     await ctx.close();

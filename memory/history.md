@@ -6,6 +6,11 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.92 (Alonzo, 11/13 night: "the API's, bring them to the bottom ... across", "that includes BettingPros", "TODAY totals ... not by book",
+  "leagues, Parole, moneylines, can be removed or moved elsewhere"): `apiDockBuild` moves the five tabs, #bpLoadbar, #apiStatus, #loadApi, #refreshApi,
+  #srcLine and #srcPanel into #apiDock (fixed, a direct child of <body>; the v4.32 iPhone line moves the dock, not the tabs). Chips open their panel
+  in #apiSheet above the bar. The Today card folds its book tiles behind "by book ▾" at every width. No row under Board: `boardMorePaint` fills a
+  More menu in the board panel (it clicks the hidden subtab buttons, so their handlers are unchanged).
 - v4.91 (Sally 11/13, owner "BUILD"): Reports step 3. `rpClvHtml`: settled singles with a close; mean, median, stake-weighted (free = 0),
   beat / even (|CLV| < 0.001) / missed with record and profit; "CLV value proxy · if the closing price were fair" (never "expected earnings").
   `rpEdgeHtml`: La Contadora expected profit = Σ stake × snap.actNet saved before the start (`rpPregame`; no start time = left out, said in the
