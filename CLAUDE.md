@@ -50,6 +50,9 @@
   always a profit, but over enough bets the math says it is. So every change should keep it simple to follow:
   find the edge (La Contadora), size the stake, say exactly what to type at the book (like the Kalshi strip), and track results
   honestly (only settled bets win or lose; the Scorecard's 1,000-bet test shows whether the edge is real or luck so far).
+- Owner, 2026-11-14: "we are not selling them the product they want to buy (bet) we want to facilitate how they buy the product." The app is a buyer's tool
+  (price checker and receipt book), not a seller: no pressure, urgency or hype; calm verbs ("Compare", "Place at …", "Log my bet"); the fair price, the best book,
+  what to type and how fresh the price is come first; "skip / not worth it" is shown as plainly as a good price.
 - Legal advice will be asked for before it is offered to anyone else.
 
 ## Data sources (behind the Worker unless noted)
