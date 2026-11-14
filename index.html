@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.94</title>
+<title>0xBeta Screener v4.95</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1593,6 +1593,13 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
 .board-panel .board-bar>.bar-more-btn{display:inline-flex; align-items:center; order:-2} .board-panel .board-bar>#shopBtn, .board-panel .board-bar>#shopMsg{order:-1}
 .board-panel .board-bar>.bar-search{order:0}
 .bar-more:not(.open){display:none}
+/* v4.95: the same bet at your other books, under the card's price */
+.sc-alts{grid-column:1/-1; display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:6px 0 0; font-size:12.5px}
+.sc-alts-k{font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--soft)}
+.sc-alt{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border:1px solid var(--rule); border-radius:10px; background:var(--panel-2); cursor:pointer; min-height:32px}
+.sc-alt img.blogo{height:16px; width:auto} .sc-alt b{font-size:14px} .sc-alt small{color:var(--soft); font-weight:600}
+.sc-alt.ok{border-color:var(--live)} .sc-alt.ok small{color:var(--live)}
+.sc-alt.over{opacity:.6} .sc-alt.old{border-style:dashed}
 </style>
 </head>
 <body>
@@ -1601,7 +1608,7 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.94</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.95</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2424,7 +2431,7 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
 
 </div>
 <script>
-const SCREENER_VERSION='v4.94';
+const SCREENER_VERSION='v4.95';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -4521,6 +4528,20 @@ document.addEventListener('input',e=>{ if(e.target && e.target.id==='hubQ'){ con
   if(e.target && e.target.id==='hubDate'){ const h=hubState(); h.ev=null; document.getElementById('hubGame').hidden=true; hubLoad(); } });
 setInterval(()=>{ try{ const h=hubState(); if(h.f==='live' && document.visibilityState==='visible' && document.getElementById('v-live').classList.contains('on')) hubLoad(true); }catch(e){} }, 30000);
 function mathKey(r){ return (r&&r.outlier?-1:0)+(r&&(r.noMkt||(r.mktProb==null&&r.src!=='paste:mev'))?-0.5:0)+(r&&r.actNet!=null?r.actNet:(r&&r.net!=null?r.net:-1)); }   /* v4.54: market-checked bets first, then the model-only ones (after them, before outliers) */   /* v4.53: La Contadora's EV (it was the blend) */
+/* v4.95 (Alonzo: "i want both bets. the more better, and the following"; "IMAGINE ANOTHER book under that saying, 53.7 etc. so, i can choose one or
+   the other"): the same bet (same player or team, stat, line and side, same game day: pxKey) at your other books, cheapest first, under the card's price.
+   Each is checked against La Contadora's "OK to" for that book (its own fee), from the card's chance. Display only: the card's stake, order and
+   decision are unchanged; a tap opens that book's slip. Hoisted: the cards call it. */
+function altBooksOf(r){ if(!r || r.kind==='parlay' || !(r.offeredProb>0)) return []; const k=pxKey(r), cfg=cfgRead(), mine=String(cfg.books||'').split(',').map(x=>x.trim()).filter(Boolean);
+  const seen=new Set([bookLabel(r.book)]), out=[];
+  (lastRows||[]).forEach(x=>{ if(!x || x===r || !(x.offeredProb>0) || x.offeredProb>=1 || pxKey(x)!==k) return; const bl=bookLabel(x.book); if(!bl || seen.has(bl)) return;
+    if(mine.length && !mine.some(m=>bookIsMine(x.book,m))) return; if(x.removed || (x.gameInfo && (x.gameInfo.state==='in'||x.gameInfo.state==='post'))) return;
+    seen.add(bl); const mx=r.fairProb!=null?maxPriceFor(okProbR(r), x.book, cfg.eMin):null; out.push({x, book:bl, p:x.offeredProb, odds:x.offeredRaw, ok:mx!=null && x.offeredProb<=mx+1e-9, mx, old:(()=>{ try{ return rowOld(x); }catch(e){ return false; } })()}); });
+  return out.sort((a,b)=>a.p-b.p).slice(0,4); }
+function altBooksHtml(r){ const A=altBooksOf(r); if(!A.length) return ''; const P=x=>(x*100).toFixed(1)+'%';
+  return '<div class="sc-alts"><span class="sc-alts-k">also at</span>'+A.map(a=>{ const logo=(()=>{ try{ const u=bookLogo(a.book); return u?'<img class="blogo" src="'+u+'" alt="">':''; }catch(e){ return ''; } })();
+    const tip=bookLabel(a.book)+' '+fmtOdds(Math.round(americanOf(a.p)))+': price '+P(a.p)+(a.mx!=null?(a.ok?' · under La Contadora\u2019s OK to '+P(a.mx)+' at this book (its fee included)':' · over La Contadora\u2019s OK to '+P(a.mx)+' at this book: look elsewhere'):'')+(a.old?' · this price is old: check it':'')+'. Tap to open it.';
+    return '<span class="sc-alt book'+(a.ok?' ok':' over')+(a.old?' old':'')+'" role="button" tabindex="0" data-alt-idx="'+a.x.idx+'" title="'+esc(tip)+'">'+logo+'<b>'+esc(String(a.odds||fmtOdds(Math.round(americanOf(a.p)))))+'</b><small>'+P(a.p)+(a.ok?' · OK ✓':' · over')+(a.old?' · ⏱':'')+'</small></span>'; }).join('')+'</div>'; }
 function scWord(t){ return t>=75?'STRONG':t>=50?'GOOD':'THIN'; }
 /* v4.93 (agreed with Sally 11/13, CC-2026-11-13-21/22, owner "BUILD, all"; Alonzo: "at 39.2, how do i have edge on a coin flip?"): how a card's EV
    and score are SHOWN. actNet, the stake, the order and the score itself never change; only the words and the colour.
@@ -4689,6 +4710,7 @@ function placeCardHtml(r,cfg,o){
       (()=>{ const hl=slip?slipLinkFor(r,st):null;   // v4.42: one tap on a phone: the chip is a real link when the book's slip is already known
         return (hl?'<a class="sc-price book go sc-link'+(over?' over':'')+'" href="'+esc(hl)+'"'+(/^https:/.test(hl)?' target="_blank" rel="noopener"':''):'<span class="sc-price book'+(over?' over':'')+(slip?' go':'')+'" role="button" tabindex="0"')+' title="'+(slip?'Open this bet on '+esc(bk)+(st>0?' with $'+st.toFixed(2)+' filled':''):esc(bk))+(over?'. The price is over La Contadora’s most now: skip it or look elsewhere':'')+'">'+
         '<span class="scp-o">'+logo+'<b>'+esc(odds)+'</b></span><span class="scp-p">'+(okP?pp(p):'')+(over?' · over':'')+'</span>'+(hl?'</a>':'</span>'); })()+'</div>'+
+    (X?'':altBooksHtml(r))+   /* v4.95 (Alonzo: "IMAGINE ANOTHER book under that saying, 53.7 etc. so, i can choose one or the other") */
     (X?'<div class="sc-kx sc-xline'+(XL.agree?' ok':'')+'" title="'+esc(XL.short)+'">'+esc(XL.t)+'</div>':scKalshiLine(r)||scPolyLine(r) /* v4.79: or Polymarket US */)+   // v4.50: what the math thinks, in the Kalshi line's place (an extra never has one)
     (lnGet(pxKey(r))?'<div class="ln-text" title="Your note on this line">📝 '+esc(lnGet(pxKey(r)))+'</div>':'')+   // v4.34: your note
     '<div class="sc-act"><button class="log sm bet-btn" data-idx="'+r.idx+'">'+(r.moved?'Add this line too':'I bet this')+'</button>'+lnBtnHtml(r)+
@@ -11443,6 +11465,7 @@ document.addEventListener('click', async e=>{
   let obj=null;
   const kb=host.querySelector('button.kill[data-i]'); if(kb) obj=logged[+kb.dataset.i];
   let slipRow=null;   /* v4.81 */
+  if(!obj){ const al=img.closest('[data-alt-idx]'); if(al){ const r=lastRows.find(x=>x.idx===+al.dataset.altIdx); if(r){ obj=rowAsBet(r); slipRow=r; } } }   /* v4.95: an "also at" book opens its own slip */
   if(!obj){ const bb=host.querySelector('[data-idx]'); if(bb){ const r=lastRows.find(x=>x.idx===+bb.dataset.idx); if(r){ obj=rowAsBet(r); slipRow=r; } } }
   if(!obj) return;
   const src=LIVE_BOOK(obj.book) || (/draftkings/i.test(obj.book||'')?'dk':/prizepicks/i.test(obj.book||'')?'pp':null); if(!src) return;   // v4.04: PrizePicks opens too (its app or site; it has no prefilled slip)

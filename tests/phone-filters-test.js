@@ -21,7 +21,7 @@ const pos=(p,ids)=>p.evaluate(ids=>Object.fromEntries(ids.map(id=>{ const r=docu
 (async()=>{ const b=await chromium.launch();
   let {ctx,p,errs}=await open(b,390);
   let v=await seen(p,['filterPlayer','barMoreBtn','shopBtn',...IDS]);
-  check('phone, closed: the search box, Filters and Send the Sentinels show', v.filterPlayer && v.barMoreBtn && v.shopBtn, v);
+  check('phone, closed: Filters and Send the Sentinels show (v4.94: the search box folds in with the rest)', v.barMoreBtn && v.shopBtn, v);
   check('phone, closed: the Today’s games line, Cover bands, Show, Sort, Sport, the book chips, the tick boxes, Show all notes and Cards are folded away (v4.62: the first two were left out)', IDS.every(id=>v[id]===false), v);
   let ps=await pos(p,['filterPlayer','barMoreBtn','shopBtn']);
   const before=(a,c)=>a.y<c.y-2 || (Math.abs(a.y-c.y)<=2 && a.x<c.x);
@@ -67,7 +67,7 @@ const pos=(p,ids)=>p.evaluate(ids=>Object.fromEntries(ids.map(id=>{ const r=docu
   const wide=await p.evaluate(()=>{ const bar=document.querySelector('.board-panel .board-bar'); return {tlIn:document.getElementById('todayLine').parentNode===bar, cvIn:document.getElementById('cvLegendT').parentNode===bar}; });
   await p.setViewportSize({width:390,height:900}); await p.waitForTimeout(300);
   const narrow=await p.evaluate(()=>{ const bar=document.querySelector('.board-panel .board-bar'); return {tlIn:document.getElementById('todayLine').parentNode===bar, cvIn:document.getElementById('cvLegendT').parentNode===bar}; });
-  check('turning the screen wide puts the Today’s games line and Cover bands back above the bar; narrow again folds them back in', !wide.tlIn && !wide.cvIn && narrow.tlIn && narrow.cvIn, {wide, narrow});
+  check('v4.94 (Alonzo: "all this should be together, minus sentinels"): turning the screen wide keeps the Today’s games line and Cover bands folded in with the rest', wide.tlIn && wide.cvIn && narrow.tlIn && narrow.cvIn, {wide, narrow});
   const over=await p.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
   check('phone: no sideways scroll', over<=0, over);
   check('no page errors (phone)', !errs.length, errs); await ctx.close();
@@ -75,6 +75,6 @@ const pos=(p,ids)=>p.evaluate(ids=>Object.fromEntries(ids.map(id=>{ const r=docu
     v=await seen(p,['filterPlayer','barMoreBtn','shopBtn',...IDS]);
     const pp=await pos(p,['bookChips','filterPlayer','shopBtn']);
     const place=await p.evaluate(()=>{ const bar=document.querySelector('.board-panel .board-bar'), tl=document.getElementById('todayLine'), cv=document.getElementById('cvLegendT'); return {tlOut:tl.parentNode!==bar, cvOut:cv.parentNode!==bar, order:!!(tl.compareDocumentPosition(cv)&Node.DOCUMENT_POSITION_FOLLOWING) && !!(cv.compareDocumentPosition(bar)&Node.DOCUMENT_POSITION_FOLLOWING)}; });
-    check(W+' px: unchanged: every control shows, no Filters button, the search box still after the book chips; the Today’s games line and Cover bands above the bar, where they were', v.barMoreBtn===false && v.filterPlayer && v.shopBtn && IDS.every(id=>v[id]===true) && pp.filterPlayer.y>=pp.bookChips.y && place.tlOut && place.cvOut && place.order, {v,pp,place});
+    check(W+' px: v4.94: the same as the phone: Filters shows, Send the Sentinels stays out, the rest (search, chips, Show, Sort, Today’s games, Cover bands) folded behind Filters until it is opened', v.barMoreBtn===true && v.shopBtn && v.filterPlayer===false && IDS.every(id=>v[id]===false) && !place.tlOut && !place.cvOut, {v,pp,place});
     check('no page errors ('+W+')', !errs.length, errs); await ctx.close(); }
   await b.close(); console.log('\n'+pass+' passed, '+fail+' failed'); process.exit(fail?1:0); })();
