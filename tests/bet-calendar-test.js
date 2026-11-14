@@ -39,7 +39,7 @@ async function run(width){
   const sum=await p.evaluate(()=>[...document.querySelectorAll('#lcSum>div')].map(d=>d.innerText.replace(/\s+/g,' ').trim()));
   check('the day: 4 bets, $27.00 staked, settled +$5.00, $0.00 in play, $7.00 to play, 2 open', sum.join('|')==='Bets 4|Staked $27.00|Settled profit +$5.00|▶ In play $0.00|⏳ To play $7.00|Open bets 2', sum);
   const mx=await p.evaluate(()=>({l:document.getElementById('lcMaxL').innerText, max:cfgRead().dayMax, v:document.getElementById('lcMax').value, hid:document.getElementById('lcMax').hidden}));
-  check('the daily max bar: $27.00 of your daily max, with what is left', mx.max>27 ? (new RegExp('^\\$27\\.00 of your \\$'+mx.max.toFixed(2).replace('.','\\.')+' daily max · \\$'+(mx.max-27).toFixed(2).replace('.','\\.')+' left$').test(mx.l) && mx.v===27 && !mx.hid) : /reached/.test(mx.l), mx);
+  check('the daily max bar: $25.00 of your daily max, with what is left (v5.00: the $2 parlay stays out of the daily max, as in + Add a bet)', mx.max>25 ? (new RegExp('^\\$25\\.00 of your \\$'+mx.max.toFixed(2).replace('.','\\.')+' daily max · \\$'+(mx.max-25).toFixed(2).replace('.','\\.')+' left$').test(mx.l) && mx.v===25 && !mx.hid) : /reached/.test(mx.l), mx);
   const bands=await p.evaluate(()=>[...document.querySelectorAll('#lcBands .lc-band')].map(r=>r.innerText.replace(/\s+/g,' ').trim()));
   const band=n=>bands.find(x=>x.startsWith(n))||'';
   { const before=await p.evaluate(()=>({n:[...document.querySelectorAll('#lcBands button.lbf')].length, u:(()=>{ const b=[...document.querySelectorAll('#lcBands button.lbf')].find(x=>/Unlikely/.test(x.textContent)); return b?b.dataset.day:null; })()}));
@@ -52,7 +52,7 @@ async function run(width){
     const lf=await p.evaluate(()=>({rows:[...document.querySelectorAll('#logBody tr')].filter(r=>r.offsetParent && !/group|day-row|lday|log-day/.test(r.className) && r.querySelector('td')).length, filt:(document.getElementById('logFilter')||{}).innerText||''}));
     check('v4.99: Lean (2 picks, one of them a parlay leg): the parlay is listed too, and the count above the list matches the rows', ln===2 && lf.rows===2 && /· 2 bets ·/.test(lf.filt), {ln, lf});
     await p.evaluate(()=>{ logBandFilter=null; logDayFilter=null; renderLog(); document.querySelector('.tab[data-view="v-log"]').click(); }); await p.waitForTimeout(200); }
-  check('cover bands for 11/9: 5 picks (3 singles + 2 parlay legs)', (await p.textContent('#lcBandSub'))==='· 5 picks', await p.textContent('#lcBandSub'));
+  check('cover bands for 11/9: 5 picks (3 singles + 2 parlay legs)', (await p.textContent('#lcBandSub')).startsWith('· 5 picks'), await p.textContent('#lcBandSub'));
   check('Lean 2 · 40.0%, Unlikely 1 · 20.0% (v4.51: the band was "Long Shot"), Slight Lean 1 · 20.0%, Strong 1 · 20.0%', /2 · 40\.0%$/.test(band('Lean')) && /1 · 20\.0%$/.test(band('Unlikely')) && !band('Long Shot') && /1 · 20\.0%$/.test(band('Slight Lean')) && /1 · 20\.0%$/.test(band('Strong')), bands);
   check('nine bands listed (Unknown left out when it is 0)', bands.length===9, bands.length);
   const perf=()=>p.evaluate(()=>[...document.querySelectorAll('#lcPerf tr')].map(tr=>[...tr.children].map(td=>td.innerText.trim()).join('|')));

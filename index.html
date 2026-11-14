@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.99</title>
+<title>0xBeta Screener v5.00</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1642,6 +1642,15 @@ body[data-view]:not([data-view="v-board"]) #tbFoldBtn{display:none !important}
 #todayBar>.tb-t.all::after{content:''; order:8; flex:1 1 100%; height:0}
 #todayBar>.tb-t:not(.all){margin:0; padding:10px 18px; border:0; border-top:1px solid var(--rule); width:auto}
 #todayBar>.tb-empty{padding:14px 18px}
+.board-score .count-where{display:block; font-size:12px; color:var(--soft); margin-top:2px; white-space:normal}
+/* v5.00 (Las Karens round 2, phone): every field 16px (the bet form's Book and "Enter as" menus and + Add a bet were 13-14px, so iPhone zoomed);
+   the bottom API row wraps instead of running off the screen; thumb-sized band buttons, CSV, tick boxes and row buttons */
+@media (max-width:760px){
+  input:not([type=checkbox]):not([type=radio]), select, textarea{font-size:16px !important}
+  #apiRow{flex-wrap:wrap; row-gap:6px; overflow-x:visible}
+  #lcBands button.lbf, #logBody button, #v-reports button, #v-live .chip, #v-live button{min-height:40px}
+  .board-panel input[type=checkbox], #v-settings input[type=checkbox]{width:22px; height:22px}
+}
 @media (max-width:760px){ #todayBar>.tb-k, #todayBar>.tb-t.all{padding:12px 14px} #todayBar>.tb-t.all>.tb-l2{flex-basis:100%} #todayBar>.tb-k .tb-pill.good, #todayBar>.tb-k .tb-pill.bad, #todayBar>.tb-k .tb-pill.even{margin-left:0} }
 body.tap-guard #placeCards, body.tap-guard .board-panel table{pointer-events:none}
 .top-hint{margin:6px 0 10px; padding:10px 14px; border:1px solid var(--live); border-radius:12px; background:var(--panel-2); font-size:14px; display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px}
@@ -1658,7 +1667,7 @@ body.tap-guard #placeCards, body.tap-guard .board-panel table{pointer-events:non
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.99</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.00</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2481,7 +2490,7 @@ body.tap-guard #placeCards, body.tap-guard .board-panel table{pointer-events:non
 
 </div>
 <script>
-const SCREENER_VERSION='v4.99';
+const SCREENER_VERSION='v5.00';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3547,14 +3556,14 @@ function awolPill(r){ return rowAwol(r) ? '<span class="sc-pill awol" title="'+e
 /* v4.97 (Las Karens: "the app opens on a $1 untrusted card; the #1 math pick is hidden in another tab"): when the tab on screen has no #1 math pick
    and another tab has one, a banner at the top says where it is, with one tap to go there. Nothing switches by itself (orders and bets you
    already placed stay in view). Hoisted. */
-function topJumpOnce(mathTopHere){ const box=document.getElementById('placeCards'); if(!box || !box.parentNode) return;
+function topJumpOnce(mathTopHere, gAll){ const box=document.getElementById('placeCards'); if(!box || !box.parentNode) return;
   let el=document.getElementById('topHint'); const hide=()=>{ if(el) el.hidden=true; };
   if(mathTopHere || !(lastRows||[]).length) return hide();
   const ok=r=>r.pass && r.stake>0 && !r.prior && !r.waitOrder && !r.removed && !r.moved && !r.glConflict && !rowAwol(r) && !rowOld(r) && evDisplayState(r)==='actionable';
-  const g=lastRows.filter(ok).reduce((a,r)=>!a||mathKey(r)>mathKey(a)?r:a, null); if(!g) return hide();
+  const g=gAll!==undefined?gAll:lastRows.filter(ok).reduce((a,r)=>!a||mathKey(r)>mathKey(a)?r:a, null); if(!g) return hide();
   let fam=modeFamOf(g); if(fam==='hail') fam='clair'; if(!MODES[fam] || fam===betMode) return hide();
   if(!el){ el=document.createElement('div'); el.id='topHint'; el.className='top-hint'; box.parentNode.insertBefore(el, box); }
-  el.innerHTML='⭐ <b>The #1 math pick is under '+esc(MODES[fam].label||fam)+'</b>: '+esc(g.name||'')+' <button type="button" class="top-hint-go" data-mode-go="'+fam+'">Show it ›</button>'; el.hidden=false; }
+  el.innerHTML='⭐ <b>The #1 math pick is under '+esc(String(MODES[fam].label||fam).trim())+'</b>'+(String(g.name||'').trim()?' · '+esc(String(g.name).trim()):'')+' <button type="button" class="top-hint-go" data-mode-go="'+fam+'">Show it ›</button>'; el.hidden=false; }
 document.addEventListener('click', e=>{ const b=e.target.closest && e.target.closest('.top-hint-go'); if(!b) return; setMode(b.dataset.modeGo); window.scrollTo(0, Math.max(0, (document.querySelector('.board-panel')||document.body).getBoundingClientRect().top+scrollY-8)); });
 function modeFamOf(r){ if(!r) return 'safe';
   if(r.prior){ const t=r.prior.tier; return (t==='lucky' || t==='hail') ? t : r.pass ? passFam(r) : 'safe'; }   /* v4.76 */
@@ -3752,9 +3761,10 @@ function renderCore(rows,cfg){
      was counted before the search, the Settings filters, Only sweet spot, Only games I already bet and the Show menu, so it did not match the list.
      Now the chips are counted after all of those: each number is what you see when you pick that book. */
   { const box=document.getElementById('bookChips'), bk=r=>bookLabel(r.book)||'?';   // v4.13 (Alonzo: "only choose by book"); v4.24 (Alonzo: "buttons so I can choose certain books to display, instead of All or just one"): chips, several at once
-    const on=new Set(boardBooks), cnt={}; shown.forEach(r=>{ cnt[bk(r)]=(cnt[bk(r)]||0)+1; });
+    const on=new Set(boardBooks), cnt={}, seenB={}; const toPlace=r=>r.pass && r.stake>0 && !r.prior && !r.waitOrder && !r.moved;   /* v5.00 (Karens: "Machín 2" over "All 6"): a chip counts the bets to place on this tab, like the tab button */
+    shown.forEach(r=>{ seenB[bk(r)]=1; if(toPlace(r)) cnt[bk(r)]=(cnt[bk(r)]||0)+1; }); Object.keys(seenB).forEach(b=>{ if(!(b in cnt)) cnt[b]=0; });
     if(box){ const L=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]||a.localeCompare(b)); boardBooks.forEach(b=>{ if(!cnt[b]) L.push(b); });
-      const h='<button type="button" class="bchip'+(on.size?'':' on')+'" data-book="" aria-pressed="'+(!on.size)+'">All <small>'+shown.length+'</small></button>'+
+      const h='<button type="button" class="bchip'+(on.size?'':' on')+'" data-book="" aria-pressed="'+(!on.size)+'" title="Bets to place on this tab, every book">All <small>'+shown.filter(toPlace).length+'</small></button>'+
         L.map(b=>'<button type="button" class="bchip'+(on.has(b)?' on':'')+'" data-book="'+esc(b)+'" aria-pressed="'+on.has(b)+'">'+(bookLogo(b)?logoTag(b,'sm'):'')+esc(b)+' <small>'+(cnt[b]||0)+'</small></button>').join('');
       if(box.innerHTML!==h) box.innerHTML=h; }
     if(on.size) shown=shown.filter(r=>on.has(bk(r))); }
@@ -3833,7 +3843,8 @@ function renderCore(rows,cfg){
   const cardsOn=boardCardsOn(), cardsHtml=[], luckyHtml=[], hailRows=[];   // v2.69   // v4.50: the extras have their own card groups
   const bandN={}; shown.forEach(r=>{ if(grpOf(r)===0){ const k=rowBand(r); bandN[k]=(bandN[k]||0)+1; } }); let lastBand=-1, nCards=0;   /* v4.76 */
   const bandHead=k=>'<span class="cv-chip cv-'+k+'">'+(k?cvNames()[k]:'No band')+'</span> <span class="meta">'+(k?cvRanges()[k]:'')+' · '+(bandN[k]||0)+'</span>';
-  const mathTop=(shown||[]).filter(r=>r.pass && r.stake>0 && !r.prior && !r.waitOrder && !r.removed && !r.moved && !r.glConflict && !rowAwol(r) /* v4.82: never an AWOL card */ && !rowOld(r) /* v4.83: nor a ⏱ Old one */ && evDisplayState(r)==='actionable' /* v4.93: nor an outlier or a stale price */).reduce((a,r)=>!a||mathKey(r)>mathKey(a)?r:a, null);   // v4.28
+  const mathTopAll=(lastRows||[]).filter(r=>r.pass && r.stake>0 && !r.prior && !r.waitOrder && !r.removed && !r.moved && !r.glConflict && !rowAwol(r) /* v4.82: never an AWOL card */ && !rowOld(r) /* v4.83: nor a ⏱ Old one */ && evDisplayState(r)==='actionable' /* v4.93: nor an outlier or a stale price */).reduce((a,r)=>!a||mathKey(r)>mathKey(a)?r:a, null);   // v4.28
+  const mathTop=(shown||[]).includes(mathTopAll)?mathTopAll:null;   /* v5.00 (Karens: two #1 MATH PICK cards, one per tab): one #1 across every tab; it is marked only where it is listed */
   shown.forEach(r=>{
     const g=grpOf(r);
     if(g!==lastGroup && !(cardsOn && (g===0||g===6||g===7))){
@@ -3964,8 +3975,8 @@ function renderCore(rows,cfg){
   }));
 
   try{ modeCountsPaint(rows,mN); }catch(e){}   // v4.50: what each mode would add, on its button   // v4.51: how many bets each mode holds
-  try{ topJumpOnce(mathTop); }catch(e){}   /* v4.97 */
-  const dupes=passing.filter(r=>r.prior).length, corrs=passing.filter(r=>r.corr).length;
+  try{ topJumpOnce(mathTop, mathTopAll); }catch(e){}   /* v4.97; v5.00: the one #1 across every tab */
+  const dupes=new Set(passing.filter(r=>r.prior).map(r=>pxKey(r))).size /* v5.00 (Karens: "3 already bet" became 6 after one moneyline: it counted book rows) */, corrs=passing.filter(r=>r.corr).length;
   document.getElementById('count').textContent=passW?passW.now:passing.length;   // v4.77 (Alonzo: "i want only live bets i can get"): the bets you can place now (was every approved bet)
   const alertBar=document.getElementById('alerts');
   let bits=[];
@@ -3981,6 +3992,8 @@ function renderCore(rows,cfg){
     : 'to bet now · of '+rows.length;   // v4.77: was "pass · of"
   if(rows.dupes>0) note += ' · '+rows.dupes+' repeats dropped';
   document.getElementById('countNote').textContent=note;
+  { let cw=document.getElementById('countWhere'); const sc=document.getElementById('countNote'); if(!cw && sc){ cw=document.createElement('span'); cw.id='countWhere'; cw.className='count-where'; sc.after(cw); }   /* v5.00 (Alonzo: "it says 24 bets to bet now...i dont see that amount on the board. So, WTF?"): where the N are, tab by tab */
+    if(cw){ const F=(passW&&passW.fam)||{}, M=[['boring','😴 Boring'],['safe','💪 Machín'],['volado','🪙 Volado'],['lucky','🍀 Suertudo'],['hail','🔮 Brujo']].filter(x=>F[x[0]]).map(x=>x[1]+' '+F[x[0]]); cw.textContent=(passW && passW.now && M.length)?'in '+M.join(' · '):''; cw.title='The '+((passW&&passW.now)||0)+' bets to place now, by tab. A tab button counts everything it lists (Hail Marys, old prices…), so it can show more.'; } }
 
   const reasons={};
   rows.filter(r=>!r.pass).forEach(r=>r.flags.filter(f=>f[0]==='out').forEach(f=>{
@@ -4200,7 +4213,7 @@ function hdFoldPaint(){ const h=document.querySelector('.head'); if(!h) return; 
     ss.innerHTML='<span class="hf-k">Scores</span><span class="hf-sum">'+esc(sp)+(G.length?' · '+G.length+' game'+(G.length===1?'':'s')+(live?' · <span class="hf-live">'+live+' live</span>':'')+(mine?' · '+mine+' yours':''):(emp?' · '+esc(emp):''))+'</span><span class="hf-ar">'+(sso?'▴':'▾')+'</span>'; }
   const t=document.getElementById('tbFoldBtn');   /* v4.64 (Alonzo, phone, the Today card: "Even this"): the day, its record, what is in play, and bets to check */
   if(t){ const kk=document.querySelector('#todayBar .tb-k>span'), day=kk?((kk.firstChild && kk.firstChild.nodeType===3)?kk.firstChild.textContent:kk.textContent).replace(/\s+/g,' ').trim():'TODAY';
-    const rec=txt('#todayBar .tb-t.all .tb-l1 .open'), tot=txt('#todayBar .tb-k .tb-tot'), n=txt('#todayBar .tb-k .tb-n'), inPlay=txt('#todayBar .tb-t.all .tb-inplay').replace(/^▶\s*IN PLAY\s*/i,''), look=txt('#todayBar .tb-look'), none=!!document.querySelector('#todayBar .tb-empty');
+    const rec=txt('#todayBar .tb-t.all .tb-l1 .open'), tot=txt('#todayBar .tb-k .tb-tot'), n=txt('#todayBar .tb-k .tb-n'), inPlay=(()=>{ const e=[...document.querySelectorAll('#todayBar .tb-t.all .tb-inplay')].find(x=>/IN PLAY/i.test(x.textContent)); return e?e.textContent.replace(/\s+/g,' ').trim().replace(/^▶\s*IN PLAY\s*/i,''):''; })() /* v5.00 (Karens: "$0.50 in play" when nothing is: it read the grey "worst" number) */, look=txt('#todayBar .tb-look'), none=!!document.querySelector('#todayBar .tb-empty');
     const bits=[]; if(none) bits.push('no bets'); else { if(tot) bits.push(tot+(n?' · '+n:'')); if(rec) bits.push(rec); if(inPlay) bits.push(inPlay+' in play'); }
     t.setAttribute('aria-expanded', String(to)); t.title=(to?'Close':'Open')+' the day’s card: played, won and lost, in play, best and worst, by book';
     t.innerHTML='<span class="hf-k">'+esc(day||'TODAY')+'</span><span class="hf-sum">'+esc(bits.join(' · '))+(look?' · <span class="hf-look">'+esc(look)+'</span>':'')+'</span><span class="hf-ar">'+(to?'▴':'▾')+'</span>'; } }
@@ -4385,10 +4398,10 @@ function lcRender(){ const cal=document.getElementById('lcCal'); if(!cal) return
     tile('Bets',x.n)+tile('Staked','$'+x.staked.toFixed(2))+tile('Settled profit',x.settled?lcUsd(x.profit):'—',x.settled?(x.profit>0.005?'pl-up':x.profit<-0.005?'pl-down':''):'lc-grey')+
     tile('▶ In play','$'+(x.playingAmt||0).toFixed(2),'lc-grey')+tile('⏳ To play','$'+(x.toPlayAmt||0).toFixed(2),'lc-grey')+tile('Open bets',x.open,'lc-grey')
     : tile('Bets',0)+tile('Staked','$0.00');
-  const used=ds?ds.staked:0, mx=+cfg.dayMax||0, bar=document.getElementById('lcMax');
+  const used=logged.filter(b=>!b.sold && gameDayOf(b)===lcDay && poolOf(b)==='proj').reduce((a,b)=>a+(+b.stake||0),0) /* v5.00 (Karens: $12.50 here vs $10.50 in + Add a bet): parlays stay out of the daily max, as everywhere (poolOf, v2.73) */, mx=+cfg.dayMax||0, bar=document.getElementById('lcMax'); void ds;
   document.getElementById('lcMaxL').innerHTML=mx>0?'<b>$'+used.toFixed(2)+'</b> of your $'+mx.toFixed(2)+' daily max'+(used>=mx-1e-9?' · <b>reached</b>':' · $'+(mx-used).toFixed(2)+' left'):'Daily max is off (Settings › Stakes)';
   bar.hidden=!(mx>0); bar.max=mx>0?mx:1; bar.value=Math.min(used,mx>0?mx:1);
-  const B=lcBands(lcDay); document.getElementById('lcBandSub').textContent=B.n?'· '+B.n+' pick'+(B.n===1?'':'s'):'';
+  const B=lcBands(lcDay); document.getElementById('lcBandSub').textContent=B.n?'· '+B.n+' pick'+(B.n===1?'':'s')+(logged.some(b=>b.kind==='parlay' && gameDayOf(b)===lcDay)?' (each parlay leg counted as a pick; Reports counts tickets)':''):'';   /* v5.00 (Karens: calendar and Reports band counts differ) */
   document.getElementById('lcBands').innerHTML=B.n?[1,2,3,4,5,6,7,8,9,0].map(k=>{ const c=B.C[k], pc=c/B.n*100; if(!c&&!k) return '';
     const tap=c?' title="Tap to see these '+c+' bet'+(c===1?'':'s')+' of '+esc(dayLabel(lcDay))+' in the Bet log" data-day="'+esc(lcDay)+'"':'';   /* v4.99 (Alonzo: "i want to click on the Unlikely and see which ones they are") */
     return '<div class="lc-band"><span>'+(k?(c?'<button type="button" class="cv-chip cv-'+k+' lbf"'+tap+' data-band="'+k+'">'+cvNames()[k]+'</button>':'<span class="cv-chip cv-'+k+'">'+cvNames()[k]+'</span>')+' <span class="meta">'+cvRanges()[k]+'</span>':(c?'<button type="button" class="linkbtn lbf"'+tap+' data-band="0">Unknown</button>':'Unknown')+' <span class="meta">· '+cvRanges()[0]+'</span>')+'</span><div class="lc-track"><div class="lc-fill" style="width:'+pc.toFixed(1)+'%"></div></div><b>'+c+' · '+pc.toFixed(1)+'%</b></div>'; }).join('')
@@ -4758,7 +4771,7 @@ function placeCardHtml(r,cfg,o){
     '</div></details>';
   return '<div class="pcard sc-card'+(X?' sc-x '+X:R?(R.n===R.of?' sc-perf':' sc-perf5'):'')+'" data-idx="'+r.idx+'" data-pck="'+esc(pxKey(r))+'">'+
     (X?'<div class="sc-xtop '+X+'" title="'+esc(XL.t)+'">'+(X==='lucky'?'🍀 ':'🔮 HAIL MARY · ')+esc(XL.short)+'</div>' /* v4.76: 🍀 La Contadora: NO · … */
-      :R?(R.n===R.of?'<div class="sc-ringb gold" title="All six checks pass: zone, edge, room for error, lined up with the market, a fresh price, nothing flagged. The list is in Why this play?">◎ PERFECTA · '+(rowAwol(r)?'👻 AWOL · look at the book first' /* v4.82: never BET NOW when the book could not find it */:'BET NOW')+' <small>6 of 6 · '+esc(String((R.checks.find(c=>c.k==='fresh')||{}).t||'').replace(/^fresh: /,''))+'</small></div>'
+      :R?(R.n===R.of?'<div class="sc-ringb gold" title="All six checks pass: zone, edge, room for error, lined up with the market, a fresh price, nothing flagged. The list is in Why this play?">◎ PERFECTA · '+(rowAwol(r)?'👻 AWOL · look at the book first' /* v4.82: never BET NOW when the book could not find it */:evDisplayState(r)!=='actionable'?'⏱ check the price first' /* v5.00 (Karens: BET NOW next to STALE · no price could be read; v4.93: only an actionable card says go) */:'BET NOW')+' <small>6 of 6 · '+esc(String((R.checks.find(c=>c.k==='fresh')||{}).t||'').replace(/^fresh: /,''))+'</small></div>'
                      :'<div class="sc-ringb" title="Five of the six Perfecta checks pass. The list is in Why this play?">◎ 5 of 6 · <b>'+esc(R.miss[0]||'')+'</b></div>'):'')+   // v4.50
     (o.top?'<div class="sc-mathtop" title="The best edge in this tab right now (edge after blending the market with the model, what the stake is sized on). Bet the cards top to bottom on Sort › Math until your daily max.">✅ #1 MATH PICK</div>':'')+   // v4.28
     '<div class="sc-top">'+(X?'<span class="sc-score x" title="'+(X==='lucky'?'Just missed: La Contadora says NO · optional, smallest bet' /* v4.76 */:'A Hail Mary: your call, not the math’s')+'">'+(X==='lucky'?'🍀':'🔮')+'<small class="sc-word">'+(X==='lucky'?'JUST MISSED':'HAIL MARY')+'</small></span>'
@@ -5253,6 +5266,8 @@ function openBetEditor(tr, r, opt){
    and the board ignores taps for a moment so the next card sliding up is not tapped by mistake. Hoisted. */
 function ebIntoView(ed){ setTimeout(()=>{ const r=ed.getBoundingClientRect(), dock=document.getElementById('apiDock'), dh=dock?dock.getBoundingClientRect().height:0, room=innerHeight-dh-12;
   if(r.top<60) window.scrollBy(0, r.top-70); else if(r.bottom>room) window.scrollBy(0, Math.min(r.bottom-room, r.top-70));
+  const sv=ed.querySelector('.eb-cancel')||ed.querySelector('.eb-save'); if(sv){ const b=sv.getBoundingClientRect(); if(b.bottom>room) window.scrollBy(0, b.bottom-room+8); }   /* v5.00 (Karens: Cancel under the bottom bar on a 664 px phone): Save and Cancel always above the bar */
+  const sg=document.getElementById('slipGo'); if(sg) sg.remove();   /* v5.00 (Karens: the "also at" pop-up stayed over the form) */
   const f=ed.querySelector('input:not([type=hidden]):not([disabled]), select'); if(f && window.matchMedia && !matchMedia('(max-width:760px)').matches){ try{ f.focus({preventScroll:true}); }catch(e){} } }, 60); }   /* after the form has its full height */
 function savedToast(t){ let el=document.getElementById('savedToast'); if(!el){ el=document.createElement('div'); el.id='savedToast'; el.setAttribute('role','status'); el.setAttribute('aria-live','polite'); document.body.appendChild(el); }
   el.textContent=t; el.classList.add('on'); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('on'),3500);
@@ -6191,8 +6206,8 @@ function renderLog(){ setTimeout(()=>{ try{ csvDays(); }catch(e){} try{ lcRender
   const tb=document.getElementById('logBody'), empty=document.getElementById('logEmpty');
   tb.innerHTML='';
   { const lf=document.getElementById('logFilter'); if(lf){ const bf=logBandFilter!=null; lf.style.display=(logDayFilter||bf)?'flex':'none';
-    let bandTxt=''; if(bf){ let n=0,w=0,l=0,ps=0,pend=0,net=0,pred=0,g=0,cw=0; const oS=new Set(); logged.forEach(b=>{ if(!logInBand(b,logBandFilter)) return; /* v4.99: the same bets the list shows */ if(logDayFilter && (gameDayOf(b)||b.date||'')!==logDayFilter) return; n++; const r=b.sold?'sold':b.result; if(r==='win') w++; else if(r==='loss') l++; else if(r==='push') ps++; else if(r!=='sold') pend++; const c=bandCover(b,'act') /* v4.88 review */; if((r==='win'||r==='loss') && logBandFilter && c && c.cal && !oS.has(outcomeKey(b))){ oS.add(outcomeKey(b)); g++; pred+=c.p; if(r==='win') cw++; } const pr=betProfit(b); if(pr!=null) net+=pr; });   /* v4.66 */   /* v4.68: won % and expected % on the same bets: once per outcome, covers known before the game */
-      bandTxt=(logBandFilter?'<span class="cv-chip cv-'+logBandFilter+'">'+cvNames()[logBandFilter]+'</span><span class="meta">'+cvRanges()[logBandFilter]+'</span>':'<b>no band</b> <span class="meta">(no cover saved)</span>')+' <span class="lbf-stats">· '+n+' bet'+(n===1?'':'s')+' · '+w+'–'+l+'–'+ps+(pend?' · '+pend+' open':'')+(g?' · won '+Math.round(cw/g*100)+'% vs '+Math.round(pred/g*100)+'% expected':'')+' · <b class="'+(net>=0?'pl-up':'pl-down')+'">'+(net>=0?'+':'−')+'$'+Math.abs(net).toFixed(2)+'</b></span>'; }
+    let bandTxt=''; if(bf){ let n=0,w=0,l=0,ps=0,pend=0,net=0,pred=0,g=0,cw=0; const oS=new Set(); let pN=0; logged.forEach(b=>{ if(!logInBand(b,logBandFilter)) return; /* v4.99: the same bets the list shows */ if(logDayFilter && (gameDayOf(b)||b.date||'')!==logDayFilter) return; if(b.kind==='parlay'){ pN++; return; } /* v5.00 (Karens: a 2-bet day showed 4 bets): a parlay is listed, not added to a band's totals */ n++; const r=b.sold?'sold':b.result; if(r==='win') w++; else if(r==='loss') l++; else if(r==='push') ps++; else if(r!=='sold') pend++; const c=bandCover(b,'act') /* v4.88 review */; if((r==='win'||r==='loss') && logBandFilter && c && c.cal && !oS.has(outcomeKey(b))){ oS.add(outcomeKey(b)); g++; pred+=c.p; if(r==='win') cw++; } const pr=betProfit(b); if(pr!=null) net+=pr; });   /* v4.66 */   /* v4.68: won % and expected % on the same bets: once per outcome, covers known before the game */
+      bandTxt=(logBandFilter?'<span class="cv-chip cv-'+logBandFilter+'">'+cvNames()[logBandFilter]+'</span> <span class="meta">'+cvRanges()[logBandFilter]+'</span>':'<b>no band</b> <span class="meta">(no cover saved)</span>')+' <span class="lbf-stats">· '+n+' bet'+(n===1?'':'s')+' · '+w+'–'+l+'–'+ps+(pend?' · '+pend+' open':'')+(g?' · won '+Math.round(cw/g*100)+'% vs '+Math.round(pred/g*100)+'% expected':'')+' · <b class="'+(net>=0?'pl-up':'pl-down')+'">'+(net>=0?'+':'−')+'$'+Math.abs(net).toFixed(2)+'</b>'+(pN?' · + '+pN+' parlay'+(pN===1?'':'s')+' with a leg in this band (listed, not in these totals)':'')+'</span>'; }
     if(logDayFilter||bf) lf.innerHTML='<span>Showing '+(bf?bandTxt+' ':'bets ')+(logDayFilter?(bf?'· ':'')+'played <b>'+esc(new Date(logDayFilter+'T12:00:00Z').toLocaleDateString('en-US',{weekday:'short',month:'numeric',day:'numeric',timeZone:'UTC'}))+'</b>':'')+'</span><button type="button" class="ghost sm" id="logFilterOff">show all</button>'; } }
   // v3.57: newest first, one row per game day that opens and closes (days still open, yesterday and later, and days with a bet to check start open)
   const yday=ctDay(Date.now()-86400e3), dst=dayStats(), atv=t=>isNaN(t)?0:t, look=new Map(), seen=new Set();
@@ -9116,7 +9131,7 @@ function lgPaint(){
   const groups=list=>{ const G={}; list.forEach(l=>{ (G[l.group]=G[l.group]||[]).push(l); });
     return Object.keys(G).sort((a,b)=>(LG_ORDER.indexOf(a)+1||99)-(LG_ORDER.indexOf(b)+1||99)).map(g=>'<h3 class="lg-group">'+esc(g)+' <span class="meta">'+G[g].length+'</span></h3><ul class="lg-list">'+G[g].map(row).join('')+'</ul>').join(''); };
   el.innerHTML = (!LG.at && !LG.busy ? '<div class="meta">Press Check again to ask your sources.</div>' : '')+
-    (on.length ? groups(on) : (LG.at?'<div class="meta">No league has games in the next 3 days, from what the sources said.</div>':''))+
+    (on.length ? groups(on) : (LG.at?(L.some(l=>checked(l) && ((l.x.espn||0)+(l.x.oa||0))>=0 && (l.x.espn!=null))?'<div class="meta">No league has games in the next 3 days, from what the sources said.</div>':'<div class="meta">⚠ Your sources did not answer, so this cannot tell which leagues have games. Press Check again.</div>' /* v5.00 (Karens: it said "no games" when nothing came back) */):''))+
     (unk.length ? '<details class="lg-off"><summary>Not checked: no free schedule for these yet ('+unk.length+')</summary><ul class="lg-list">'+unk.map(row).join('')+'</ul></details>' : '')+
     (none.length ? '<details class="lg-off"><summary>No games in the next 3 days ('+none.length+')</summary><div class="lg-names">'+none.map(l=>esc(l.name)).join(' · ')+'</div></details>' : ''); }
 document.addEventListener('click',e=>{
@@ -9519,11 +9534,11 @@ async function loadMoneylines(){
     }else if(pin.status==='no_key'){
       pinNote=' — Pinnacle not configured on the Worker yet (using consensus)';
     }else{
-      pinNote=' — Pinnacle unavailable ('+(pin.status||'unknown')+'), using consensus';
+      pinNote=' — Pinnacle (the sharp book we use as the fair price) did not answer, so the fair price is the other books\u2019 average (consensus)';   /* v5.00 (Karens: "Pinnacle unavailable (unknown)" was jargon) */
     }
     // If Pinnacle gave us nothing usable, don't leave the table judged against
     // an empty column — switch the basis to consensus so results still show.
-    if(pinMatched===0) document.getElementById('moneyBasis').value='consensus';
+    /* v5.00 (Karens: it switched my "Judge value against" by itself): your choice stays; rows with no Pinnacle number show — and the note says why */
     const extras=[];
     if(startedCount) extras.push(startedCount+' started game'+(startedCount===1?'':'s')+' excluded');
     if(data.stale_quotes_dropped) extras.push(data.stale_quotes_dropped+' stale quote'+(data.stale_quotes_dropped===1?'':'s')+' dropped');
@@ -9555,6 +9570,8 @@ function netEdge(fair, cost, bookLabel, fees){
   const fee=feeRate(bookLabel, offered, fees);
   return {gross:gross, fee:fee, net:(gross-fee)/(1+fee)};
 }
+/* v5.00: the board already knows when your per-game cap is reached for a game. Hoisted. */
+function mlGameCapped(m){ const k=nrmT(m||''); if(!k) return false; return (lastRows||[]).some(x=>nrmT(x.game||x.matchup||'')===k && (x.flags||[]).some(f=>/^game cap reached/.test(f[1]))); }
 function renderMoneylines(){
   const tbody=document.getElementById('moneyBody'), empty=document.getElementById('moneyEmpty');
   const minEdgeRaw=document.getElementById('moneyMinEv').value.trim();
@@ -9592,6 +9609,7 @@ function renderMoneylines(){
     return;
   }
   empty.style.display='none';
+  if(rows.length<scored.length){ empty.style.display='block'; empty.textContent='Showing '+rows.length+' of '+scored.length+' lines: '+(scored.length-rows.length)+' under your edge floor are hidden (clear the floor box to see all).'; }   /* v5.00 (Karens: "4 lines" and 3 shown) */
   const edgeCell=(e)=>{
     if(!e) return '<td class="num" style="color:var(--soft)">—</td>';
     const v=e.net;
@@ -9620,7 +9638,7 @@ function renderMoneylines(){
       '<td class="num">'+coverPct+'</td>'+
       '<td class="num" style="color:'+bpEvColor+'">'+bpEvStr+'</td>'+
       '<td class="num">'+(r.bet_rating??'—')+'</td>'+
-      '<td style="text-align:center">'+(r.link?('<a class="betnow" href="'+r.link+'" target="_blank" rel="noopener">Bet</a>'):'—')+'</td>'+
+      '<td style="text-align:center">'+(mlGameCapped(r.matchup)?'<span class="meta" title="The board says your per-game cap is reached for this game">cap reached</span>':r.link?('<a class="betnow" href="'+r.link+'" target="_blank" rel="noopener">Bet</a>'):'—')+'</td>'+   /* v5.00 (Karens: a Bet link where the board blocks the bet) */
       '</tr>';
   }).join('');
 }
@@ -9645,8 +9663,10 @@ document.querySelector('.tabs').addEventListener('click',()=>setTimeout(()=>docu
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
+  const viewChanged=document.body.dataset.view!==t.dataset.view;   /* v5.00 (Karens: every tab opened where the last page was scrolled) */
   t.classList.add('on'); document.getElementById(t.dataset.view).classList.add('on');
   document.body.dataset.view=t.dataset.view;   // v4.02: the BettingPros bar and Sources show on the Board only
+  if(viewChanged) window.scrollTo(0,0);
   tabGroupPaint(t);   // v4.29: Augi's five tabs, the rest in the row under theirs
   if(t.dataset.src && t.dataset.src!==boardSrc){ boardSrc=t.dataset.src; refresh(); }   // v2.86: Board (API) vs Pasted
 }));
@@ -10552,7 +10572,7 @@ function pkSentBE(){ const pays=pkPays(pkState.app,pkState.play), be={}; Object.
 function pkSentLegs(){ const be=pkSentBE(), need=Object.values(be).filter(x=>x!=null), floor=need.length?Math.min(...need):1;
   return pkLegs(window._pkRows||[]).filter(l=>pkPlayable(l) && !l.prior && !l.mo && l.p>=floor)   /* v4.56: no model-only picks */
     .map(l=>Object.assign(l,{fits:Object.keys(be).filter(n=>be[n]!=null && l.p>=be[n]-1e-9).map(Number),
-      good:pkAlone(l.r), alone:pkAlone(l.r) ? '' : l.r.pass ? (l.r.stake>0?'held back by your limits':'no stake left today (caps)') : l.why})); }   // v3.62: props good alone are in too (Alonzo), marked
+      good:pkAlone(l.r), alone:pkAlone(l.r) ? '' : l.r.pass ? (l.r.stake>0?'held back by your limits':pkNoStakeWhy(l.r)) : l.why})); }   // v3.62: props good alone are in too (Alonzo), marked
 function pkSentPick(S,n){ const out=[], games=new Set();
   for(const l of S){ if(out.length===n) break; const g=l.game||l.name.toUpperCase(); if(pkState.oneGame && games.has(g)) continue; out.push(l); games.add(g); }
   return out.length===n?out:null; }
@@ -10639,14 +10659,18 @@ function pkSegHit(r,t){ const n=' '+nrmT(t)+' ', raw=' '+String(t)+' ';
   const sd=/\b(over|o)\s*\+?\d/i.test(t)?'O':/\b(under|u)\s*\+?\d/i.test(t)?'U':/\bover\b/i.test(t)?'O':/\bunder\b/i.test(t)?'U':'';
   if(sd && r.side && sd!==r.side) return false;
   return true; }
+/* v5.00 (Karens: "✓ you bet this" for settled bets from other nights): only bets still open, on the same game day as the pick. Hoisted. */
+function pkSameDay(r,b){ const rd=r&&r.gameInfo&&r.gameInfo.startISO?ctDay(Date.parse(r.gameInfo.startISO)):''; const bd=(typeof gameDayOf==='function'&&gameDayOf(b))||b.date||''; return !rd || !bd || rd===bd; }
+/* v5.00 (Karens: "no stake left today (caps)" with $2,400 left, on a 20-hour-old price): the real reason a passing pick has no stake. Hoisted. */
+function pkNoStakeWhy(r){ try{ if(rowOld(r)) return 'old price: refresh it first'; if(rowAwol(r)) return 'the book cannot find it now'; }catch(e){} if(r.hold && r.hold.why) return r.hold.why==='awol'?'the book cannot find it now':'old price: refresh it first'; if(r.prior) return 'you already bet it'; return 'no stake: one of your caps (per game, per player or daily) is reached'; }
 function pkParlaysWith(r){ const from=ctDay(Date.now()-2*86400e3);
-  return logged.filter(b=>b.kind==='parlay' && b.parlay && (b.date||'')>=from && pkSegs(b).some(t=>pkSegHit(r,t))); }
+  return logged.filter(b=>b.kind==='parlay' && b.parlay && !b.result && !b.sold && (b.date||'')>=from && pkSameDay(r,b) && pkSegs(b).some(t=>pkSegHit(r,t))); }
 function pkBetTag(l){ const r=l&&l.r; if(!r) return ''; const out=[];
   if(r.prior) out.push('single $'+(+r.prior.stake||0).toFixed(2)+' on '+bookLabel(r.prior.book||'?'));
   else if(r.waitOrder) out.push('order waiting on '+bookLabel(r.book||'?'));
   pkParlaysWith(r).forEach(b=>out.push('in your '+bookLabel(b.book||'?')+' parlay ('+(b.parlay.picks||pkSegs(b).length)+' picks)'));
   if(!r.prior && r.kind==='prop'){ const from=ctDay(Date.now()-2*86400e3), fam=statFam(statOfMarket(r.market));   // v4.19: a single you typed in (+ Add a bet), worded differently ("15.5 Rush Att")
-    const one=logged.find(b=>b.kind!=='parlay' && !b.sold && (b.date||'')>=from && statFam(statOfMarket(b.market))===fam && pkSegHit(r,[b.name,b.side==='O'?'Over':b.side==='U'?'Under':'',b.market].join(' ')));
+    const one=logged.find(b=>b.kind!=='parlay' && !b.sold && !b.result && pkSameDay(r,b) && (b.date||'')>=from && statFam(statOfMarket(b.market))===fam && pkSegHit(r,[b.name,b.side==='O'?'Over':b.side==='U'?'Under':'',b.market].join(' ')));
     if(one) out.push('single $'+(+one.stake||0).toFixed(2)+' on '+bookLabel(one.book||'?')); }
   return out.length ? ' <span class="tag t-warn pk-bet" title="You already have this pick">✓ you bet this: '+esc(out.join(' · '))+'</span>' : ''; }
 function pkWhere(l){   // v3.63 (Alonzo: "you give me the names, but not the sports or team"): sport · team · game · when
@@ -12631,10 +12655,10 @@ function paroleOf(r){   // v3.02: 🎣 bait — you are the Maker; whoever takes
     return Object.assign({}, g, {k:i+1, stake:sk, payout:Math.floor(sk/g.p*100+1e-6)/100}); });
   return {book, src:pick, q, rungs:R2, total:R2.reduce((t,g)=>t+g.stake,0), max:cap, capFair, capMkt, outlierMode, research, shrinkWhy, ask, topBid};
 }
-function jailWhy(r){ const f=(r.flags||[]).find(x=>x[0]==='out'||x[0]==='warn'); return f?f[1]:(r.pass?'below the minimum':'didn\'t pass'); }
+function jailWhy(r){ const f=(r.flags||[]).find(x=>x[0]==='out'||x[0]==='warn'); const t=f?f[1]:(r.pass?'below the minimum':'didn\'t pass'); return /^×\d+$/.test(t)?t.slice(1)+' bets on the board in this game':t; }   /* v5.00 (Karens: "jailed: ×11" said nothing) */
 function renderParole(){
   const el=document.getElementById('parList'); if(!el) return;
-  const C=paroleCandidates(), msg=document.getElementById('parMsg');
+  const C=(()=>{ const seen=new Set(); return paroleCandidates().filter(r=>{ const k=pxKey(r); if(seen.has(k)) return false; seen.add(k); return true; }); })() /* v5.00 (Karens: Parole listed the same bet twice): one row per bet */, msg=document.getElementById('parMsg');
   if(!C.length){ el.innerHTML='<p class="hint">Nobody in Jail that a better price could free — load or paste a board first.</p>'; if(msg) msg.textContent=''; setParoleN(0); return; }
   const out=[], stay=[], takeNow=[];
   C.forEach(r=>{ if(!r._par){ stay.push([r,'not checked yet']); return; } const P=paroleOf(r); if(P.why) stay.push([r,P.why]); else if(P.take) takeNow.push([r,P]); else out.push([r,P]); });
@@ -12719,7 +12743,7 @@ setTimeout(()=>{
 },0);
 document.querySelector('.tab[data-view="v-live"]').addEventListener('click',()=>renderLive(true));
 // v3.07: + Add a bet lives on its own tab — opening the tab loads the games and the editor (the panel's own "open" can fire before the page is listening)
-document.querySelector('.tab[data-view="v-add"]').addEventListener('click',()=>{ const p=document.getElementById('addBetPanel'); if(p){ p.open=true; p.dispatchEvent(new Event('toggle')); } });
+document.querySelector('.tab[data-view="v-add"]').addEventListener('click',()=>{ const p=document.getElementById('addBetPanel'); if(p){ p.open=true; p.dispatchEvent(new Event('toggle')); setTimeout(()=>{ const r=p.getBoundingClientRect(); if(r.top<0 || r.top>innerHeight*0.4) window.scrollTo(0, Math.max(0, r.top+scrollY-8)); },80); } });   /* v5.00 (Karens: + Add a bet opened mid-form, Sport and Game out of sight) */
 document.querySelectorAll('.tab[data-view="v-paste"]').forEach(t=>t.addEventListener('click',()=>{ const p=document.getElementById('pastePanel'); if(p) p.open=true; }));   /* v4.95: the Paste tab is that one panel, so tapping the tab opens it; everything else stays closed until tapped */
 document.addEventListener('click',e=>{ if(e.target.closest('#logFilterOff')){ logDayFilter=null; logBandFilter=null; renderLog(); } });
 document.addEventListener('click',e=>{ const t=e.target.closest && e.target.closest('button.lbf'); if(!t) return; e.preventDefault(); e.stopPropagation();   /* v4.66: a band: only its bets, in the Bet log */
