@@ -24,6 +24,8 @@
   Added by El Capataz on the owner's "Add what you feel we need" (2026-11-13): La Guardia, a security and privacy reviewer agent, read-only, run before any
   sale and after any change to keys, sync or the Worker (no key, passphrase or user email ever on screen, in a log, a URL or a file); and El Licenciado,
   a seat kept for a real lawyer (not an agent): legal advice is asked for before the app is offered to anyone else.
+  La Chamba (the crew page, artifact c448ccbe-…): owner, 2026-11-14: "workers never texted me" … "fixx". At every step (each ~20 test files, each failure,
+  each publish, each Karens report) update `world/state` AND post a crew message in #todos (and complaints in 🎥 Quejas); timestamps never in the future.
   Code word **"Frijolito"** (owner, 2026-11-11): show him the crew's first names from `agent-notes/crew-names_2026-11-11_v1.md` (Javiera's picks win).
 - Owner (2026-11-05): "build without my other agent". No relay blocks or reports for the other agents unless the owner asks;
   keep the record in the PR description. Still ask plainly before each publish.
