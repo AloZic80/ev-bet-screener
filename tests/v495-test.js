@@ -35,7 +35,8 @@ const ROWS=[row('nv','Two Books','Novig',0.52), row('dk','Two Books','DraftKings
   check(W+' px: display only: the card’s stake and EV did not move', after.stake===before.stake && after.net===before.net, {before, after});
   const clean=await p.evaluate(()=>{ const vis=e=>!!(e && e.offsetParent); const sub=[...document.querySelectorAll('.board-panel .pc-head .sc-sub')]; const c=document.getElementById('contadora');
     const inBox=!!document.querySelector('.sc-bet .sc-alts'); document.getElementById('barMoreBtn').click(); const subOpen=sub.some(vis); document.getElementById('barMoreBtn').click();
-    return {subHidden:sub.length>0 && !sub.some(vis), contadoraHidden:!vis(c), subOpen, inBox}; });
+    const hd=document.querySelector('#placeCards>.pc-head:not(.pc-x)'); return {subHidden:sub.length>0 && !sub.some(vis), contadoraHidden:!vis(c), subOpen, inBox, headHidden:!vis(hd)}; });
+  check(W+' px: the “The Sentinels · Place these” heading waits behind Filters too (Alonzo: “just SEND the Sentinels”)', clean.headHidden, clean);
   check(W+' px: with Filters closed only the buttons show: La Contadora’s sentence and the long notes under The Sentinels are hidden, and come back when Filters is opened (Alonzo: “only the button for Send the Sentinels”)', clean.subHidden && clean.contadoraHidden && clean.subOpen, clean);
   check(W+' px: “also at” sits inside the price box, right under the price', clean.inBox, clean);
   const ty=()=>p.evaluate(()=>{ const t=document.querySelector('#apiDock .tabs'), r=document.getElementById('apiRow'); return {top:Math.round(t.getBoundingClientRect().top), rowAbove:r.getBoundingClientRect().bottom<=t.getBoundingClientRect().top+1}; });

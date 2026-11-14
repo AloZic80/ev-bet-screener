@@ -1593,6 +1593,18 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
 /* v4.95 (Alonzo, Mac: "dont need to see all this. only the button for Send the Sentinels"): La Contadora's mode sentence and the long notes under
    The Sentinels / Just missed / Hail Marys headers show only while Filters is open; the headers and their counts stay */
 .board-panel:has(.board-bar:not(.bar-open)) #contadora, .board-panel:has(.board-bar:not(.bar-open)) .pc-head .sc-sub{display:none}
+/* v4.96: Filters is in More; the bar keeps the button only while Filters is open (to close it) */
+.board-panel .board-bar:not(.bar-open)>#barMoreBtn{display:none}
+/* v4.96 (Alonzo: "dont need this info, just SEND the Sentinels"): the "🦑 The Sentinels · Place these · N" heading also waits behind Filters */
+.board-panel:has(.board-bar:not(.bar-open)) #placeCards>.pc-head:not(.pc-x){display:none}
+/* v4.96 (Alonzo, Mac, the Today card: "i SAID 1 or 2 lines. i only need the TODAY but across"): on every width the Today card is the one line
+   (the day, what was bet, the record, what is in play ▾), closed each time the app opens; a tap opens the whole card (days, by book) */
+#tbFoldBtn{display:flex; align-items:center; gap:10px; width:100%; margin-top:10px; padding:10px 14px; border:1px solid var(--rule); border-radius:12px; background:var(--panel); color:var(--ink); font:inherit; font-size:13.5px; font-weight:600; text-align:left; cursor:pointer}
+#tbFoldBtn .hf-k{font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--soft); flex:none}
+#tbFoldBtn .hf-sum{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500; color:var(--soft)}
+#tbFoldBtn .hf-warn{color:var(--warn); font-weight:600} #tbFoldBtn .hf-ar{flex:none} #tbFoldBtn .hf-live{color:var(--live); font-weight:700} #tbFoldBtn .hf-bad{color:var(--out); font-weight:700} #tbFoldBtn .hf-look{color:var(--warn); font-weight:700}
+.head:not(.tb-open) #todayBar{display:none !important}
+body[data-view]:not([data-view="v-board"]) #tbFoldBtn{display:none !important}
 .board-panel .board-bar>.bar-more-btn{display:inline-flex; align-items:center; order:-2} .board-panel .board-bar>#shopBtn, .board-panel .board-bar>#shopMsg{order:-1}
 .board-panel .board-bar>.bar-search{order:0}
 .bar-more:not(.open){display:none}
@@ -1715,7 +1727,7 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
 
 <div class="panel board-panel">
   <h2 id="boardTitle">The board</h2>
-  <details class="board-more" id="boardMore"><summary title="Leagues, Parole, Moneylines (they were a row under Board)">More ▾</summary><div class="board-more-list" id="boardMoreList"></div></details><!-- v4.92 (Alonzo: "leagues, Parole, moneylines, can be removed or moved elsewhere. i have board on the bottom already") -->
+  <details class="board-more" id="boardMore"><summary title="Filters &amp; sort, Leagues, Parole, Moneylines">More ▾</summary><div class="board-more-list" id="boardMoreList"></div></details><!-- v4.92 (Alonzo: "leagues, Parole, moneylines, can be removed or moved elsewhere. i have board on the bottom already") -->
   <div class="psrc-note" id="pasteNote" style="display:none"></div>
   <div class="modes" id="modeBar" role="group" aria-label="Betting mode">
     <button type="button" data-mode="boring">😴 Boring</button><button type="button" data-mode="safe">💪 Machín</button><button type="button" data-mode="volado">🪙 Volado</button><button type="button" data-mode="lucky">🍀 Suertudo</button><button type="button" data-mode="clair">🔮 Brujo</button><button type="button" data-mode="old">⏱ Old</button><button type="button" data-mode="awol">👻 AWOL</button><!-- v4.76 --><!-- v4.77: ⏱ Old (prices read over 12 hours ago) --><!-- v4.81: 👻 AWOL (the book could not find it) -->
@@ -4110,7 +4122,7 @@ document.addEventListener('change', e=>{ if(e.target && e.target.closest && e.ta
 document.addEventListener('click', e=>{ if(e.target && e.target.closest && e.target.closest('#bookChips')) setTimeout(barSumPaint,0); });
 document.addEventListener('toggle', e=>{ const d=e.target; if(!d || !d.classList || !d.classList.contains('help') || !d.dataset.help) return; const S=helpOpenSet(); if(d.open) S.add(d.dataset.help); else S.delete(d.dataset.help); helpOpenSave(); }, true);
 document.addEventListener('click', e=>{ const t=e.target.closest && e.target.closest('.tb-more, #barMoreBtn'); if(!t) return;
-  if(t.id==='barMoreBtn'){ window._barOpen=!window._barOpen; barMoreApply(); return; }   // v4.62: not remembered
+  if(t.id==='barMoreBtn'){ window._barOpen=!window._barOpen; barMoreApply(); try{ boardMorePaint(); }catch(_){} return; }   /* v4.96: keeps More's "(open)" in step */   // v4.62: not remembered
   e.stopPropagation(); e.preventDefault(); try{ localStorage.setItem('mbev.tbBooks', tbBooksOpen()?'0':'1'); }catch(e){} try{ renderTodayBar(); }catch(e){} }, true);   // capture: before the Today card's own click (which opens the Bet log)
 /* v4.62 (Alonzo: "what's on the screenshot should all be in a drop down because I don't need to see it all the time"): on a phone the Today's games line
    and Cover bands move into the board bar, first among what Filters opens; on a computer they go back above the bar, where they always were. Hoisted. */
@@ -4183,8 +4195,9 @@ function apiDockPaint(){ const chip=document.getElementById('bpChip'); if(!chip)
    its views open from a More menu in the board panel (the Board tab in the bar brings the board back). Hoisted. */
 function boardMorePaint(){ const list=document.getElementById('boardMoreList'), box=document.getElementById('boardMore'); if(!list || !box) return;
   const items=[...document.querySelectorAll('#subTabs .tab[data-group="board"]')].filter(t=>!t.hidden);
-  list.innerHTML=items.map((t,i)=>'<button type="button" data-i="'+i+'">'+t.innerHTML+'</button>').join(''); box.hidden=!items.length; }
+  list.innerHTML='<button type="button" data-f="1">🔎 Filters &amp; sort'+(window._barOpen?' (open)':'')+'</button>'+items.map((t,i)=>'<button type="button" data-i="'+i+'">'+t.innerHTML+'</button>').join(''); box.hidden=false; }   /* v4.96 (Alonzo: "only Send the Sentinels button" ... "put it on More"): Filters lives in More; the bar shows Filters only while it is open, to close it */
 document.addEventListener('click', e=>{ const b=e.target.closest && e.target.closest('#boardMoreList button'); if(!b) return;
+  if(b.dataset.f){ const box=document.getElementById('boardMore'); if(box) box.open=false; window._barOpen=!window._barOpen; barMoreApply(); boardMorePaint(); const bar=document.querySelector('.board-panel .board-bar'); if(bar && window._barOpen) bar.scrollIntoView({block:'nearest'}); return; }
   const items=[...document.querySelectorAll('#subTabs .tab[data-group="board"]')].filter(t=>!t.hidden), t=items[+b.dataset.i]; const box=document.getElementById('boardMore'); if(box) box.open=false; if(t) t.click(); window.scrollTo(0,0); });
 try{ helpApply(); barPhonePlace(); barMoreApply(); hdFoldPaint(); }catch(e){}
 try{ apiDockBuild(); boardMorePaint(); }catch(e){ console.error(e); }   /* v4.92 */

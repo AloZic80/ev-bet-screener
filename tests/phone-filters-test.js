@@ -18,17 +18,18 @@ async function open(b,W){ const ctx=await b.newContext({timezoneId:'America/Chic
   await p.evaluate(()=>{ const c=document.querySelector('.board-panel .cv-legend-box'); if(c) c.id='cvLegendT'; }); return {ctx,p,errs}; }   /* the test names Cover bands so it can find it */
 const seen=(p,ids)=>p.evaluate(ids=>Object.fromEntries(ids.map(id=>{ const e=document.getElementById(id); if(!e) return [id,null]; const r=e.getBoundingClientRect(); return [id, r.width>0 && r.height>0 && getComputedStyle(e).display!=='none']; })), ids);
 const pos=(p,ids)=>p.evaluate(ids=>Object.fromEntries(ids.map(id=>{ const r=document.getElementById(id).getBoundingClientRect(); return [id,{x:Math.round(r.left),y:Math.round(r.top)}]; })), ids);
+const tog=p=>p.evaluate(()=>{ const b=document.getElementById('barMoreBtn'); if(b.offsetParent) b.click(); else document.querySelector('#boardMoreList button[data-f]').click(); });   /* v4.96: Filters opens from More, closes from its own button */
 (async()=>{ const b=await chromium.launch();
   let {ctx,p,errs}=await open(b,390);
   let v=await seen(p,['filterPlayer','barMoreBtn','shopBtn',...IDS]);
-  check('phone, closed: Filters and Send the Sentinels show (v4.94: the search box folds in with the rest)', v.barMoreBtn && v.shopBtn, v);
+  check('phone, closed: only Send the Sentinels shows; Filters is in More ▾ (v4.96, Alonzo: “only Send the Sentinels button” … “put it on More”)', !v.barMoreBtn && v.shopBtn && await p.evaluate(()=>!!document.querySelector('#boardMoreList button[data-f]')), v);
   check('phone, closed: the Today’s games line, Cover bands, Show, Sort, Sport, the book chips, the tick boxes, Show all notes and Cards are folded away (v4.62: the first two were left out)', IDS.every(id=>v[id]===false), v);
   let ps=await pos(p,['filterPlayer','barMoreBtn','shopBtn']);
   const before=(a,c)=>a.y<c.y-2 || (Math.abs(a.y-c.y)<=2 && a.x<c.x);
-  check('phone: in that order: search, Filters, Send the Sentinels', before(ps.filterPlayer,ps.barMoreBtn) && before(ps.barMoreBtn,ps.shopBtn), ps);
+  check('phone: Send the Sentinels is on the row by itself', ps.shopBtn.y>0, ps);
   let t=await p.evaluate(()=>document.getElementById('barMoreBtn').textContent.trim());
   check('nothing on: the button reads "Filters ▾"', t==='Filters ▾', t);
-  await p.click('#barMoreBtn'); await p.waitForTimeout(200);
+  await tog(p); await p.waitForTimeout(200);
   v=await seen(p,IDS);
   check('one tap opens all of them', IDS.every(id=>v[id]===true), v);
   ps=await pos(p,['shopBtn','todayLine','cvLegendT','boardView','cardsOn']);
@@ -44,10 +45,10 @@ const pos=(p,ids)=>p.evaluate(ids=>Object.fromEntries(ids.map(id=>{ const r=docu
   await p.click('#bookChips .bchip[data-book="Novig"]'); await p.waitForTimeout(150);
   t=await p.evaluate(()=>document.getElementById('barMoreBtn').textContent.trim());
   check('and the Novig chip: three things on, "Filters · 3 on ▴", and the tooltip names them', t==='Filters · 3 on ▴' && /On: NFL, Novig, Sweet spot/.test(await p.evaluate(()=>document.getElementById('barMoreBtn').title)), t);
-  await p.click('#barMoreBtn'); await p.waitForTimeout(150);
+  await tog(p); await p.waitForTimeout(150);
   v=await seen(p,IDS); t=await p.evaluate(()=>document.getElementById('barMoreBtn').textContent.trim());
   check('closed again: all folded, and the button still says what is on: "Filters · 3 on ▾"', IDS.every(id=>v[id]===false) && t==='Filters · 3 on ▾', {t,v});
-  await p.click('#barMoreBtn'); await p.waitForTimeout(150);   /* left open, as on the owner's phone */
+  await tog(p); await p.waitForTimeout(150);   /* left open, as on the owner's phone */
   await p.evaluate(()=>{ localStorage.setItem('mbev.barMore','1'); });   /* and the old remembered "open" from before v4.62 */
   await p.reload(); await p.waitForTimeout(1300); await p.evaluate(()=>{ const c=document.querySelector('.board-panel .cv-legend-box'); if(c) c.id='cvLegendT'; });
   v=await seen(p,IDS);
@@ -59,10 +60,10 @@ const pos=(p,ids)=>p.evaluate(ids=>Object.fromEntries(ids.map(id=>{ const r=docu
   check('on the pasted board the button names only what that board filters on: "Filters · 3 on ▾" becomes "Filters · Novig ▾", and comes back', pv.api==='Filters · 3 on ▾' && pv.paste==='Filters · Novig ▾' && pv.back==='Filters · 3 on ▾', pv);
   const old=await p.evaluate(()=>{ const keep=boardBooks.slice(); boardBooks.length=0; boardBooks.push('Bovada','Novig'); barSumPaint(); const t=document.getElementById('barMoreBtn').title; boardBooks.length=0; keep.forEach(x=>boardBooks.push(x)); barSumPaint(); return t; });
   check('the books named are the ones the board is really showing (not only what was saved)', /2 books/.test(old), old);
-  await p.click('#barMoreBtn'); await p.waitForTimeout(150);
+  await tog(p); await p.waitForTimeout(150);
   const sm=await p.evaluate(()=>{ document.getElementById('shopMsg').textContent='🦑 Sentinels are back'; const y=id=>Math.round(document.getElementById(id).getBoundingClientRect().top); return {btn:y('shopBtn'), msg:y('shopMsg'), show:y('boardView'), ctl:document.getElementById('barMoreBtn').getAttribute('aria-controls')}; });
   check('opened: the Sentinels’ status line stays right under its button, above Show; and the button names everything it opens', sm.msg>=sm.btn && sm.msg<sm.show && /boardView/.test(sm.ctl) && /cardsOn/.test(sm.ctl), sm);
-  await p.click('#barMoreBtn'); await p.waitForTimeout(150);
+  await tog(p); await p.waitForTimeout(150);
   await p.setViewportSize({width:1280,height:900}); await p.waitForTimeout(300);
   const wide=await p.evaluate(()=>{ const bar=document.querySelector('.board-panel .board-bar'); return {tlIn:document.getElementById('todayLine').parentNode===bar, cvIn:document.getElementById('cvLegendT').parentNode===bar}; });
   await p.setViewportSize({width:390,height:900}); await p.waitForTimeout(300);
@@ -75,6 +76,6 @@ const pos=(p,ids)=>p.evaluate(ids=>Object.fromEntries(ids.map(id=>{ const r=docu
     v=await seen(p,['filterPlayer','barMoreBtn','shopBtn',...IDS]);
     const pp=await pos(p,['bookChips','filterPlayer','shopBtn']);
     const place=await p.evaluate(()=>{ const bar=document.querySelector('.board-panel .board-bar'), tl=document.getElementById('todayLine'), cv=document.getElementById('cvLegendT'); return {tlOut:tl.parentNode!==bar, cvOut:cv.parentNode!==bar, order:!!(tl.compareDocumentPosition(cv)&Node.DOCUMENT_POSITION_FOLLOWING) && !!(cv.compareDocumentPosition(bar)&Node.DOCUMENT_POSITION_FOLLOWING)}; });
-    check(W+' px: v4.94: the same as the phone: Filters shows, Send the Sentinels stays out, the rest (search, chips, Show, Sort, Today’s games, Cover bands) folded behind Filters until it is opened', v.barMoreBtn===true && v.shopBtn && v.filterPlayer===false && IDS.every(id=>v[id]===false) && !place.tlOut && !place.cvOut, {v,pp,place});
+    check(W+' px: v4.96: the same as the phone: only Send the Sentinels shows (Filters is in More), the rest (search, chips, Show, Sort, Today’s games, Cover bands) folded behind Filters until it is opened', v.barMoreBtn===false && v.shopBtn && v.filterPlayer===false && IDS.every(id=>v[id]===false) && !place.tlOut && !place.cvOut, {v,pp,place});
     check('no page errors ('+W+')', !errs.length, errs); await ctx.close(); }
   await b.close(); console.log('\n'+pass+' passed, '+fail+' failed'); process.exit(fail?1:0); })();
