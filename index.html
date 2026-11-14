@@ -1590,10 +1590,14 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
 .board-panel .board-bar:not(.bar-open)>.bar-item, .board-panel .board-bar:not(.bar-open)>.book-chips, .board-panel .board-bar:not(.bar-open)>.bar-check,
 .board-panel .board-bar:not(.bar-open)>#todayLine, .board-panel .board-bar:not(.bar-open)>.cv-legend-box, .board-panel .board-bar:not(.bar-open)>.bar-search{display:none}
 .board-panel .board-bar>#todayLine, .board-panel .board-bar>.cv-legend-box{flex-basis:100%; margin:0}
+/* v4.95 (Alonzo, Mac: "dont need to see all this. only the button for Send the Sentinels"): La Contadora's mode sentence and the long notes under
+   The Sentinels / Just missed / Hail Marys headers show only while Filters is open; the headers and their counts stay */
+.board-panel:has(.board-bar:not(.bar-open)) #contadora, .board-panel:has(.board-bar:not(.bar-open)) .pc-head .sc-sub{display:none}
 .board-panel .board-bar>.bar-more-btn{display:inline-flex; align-items:center; order:-2} .board-panel .board-bar>#shopBtn, .board-panel .board-bar>#shopMsg{order:-1}
 .board-panel .board-bar>.bar-search{order:0}
 .bar-more:not(.open){display:none}
 /* v4.95: the same bet at your other books, under the card's price */
+.sc-bet:has(.sc-alts){flex-wrap:wrap} .sc-bet>.sc-alts{flex-basis:100%; order:9}
 .sc-alts{grid-column:1/-1; display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:6px 0 0; font-size:12.5px}
 .sc-alts-k{font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--soft)}
 .sc-alt{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border:1px solid var(--rule); border-radius:10px; background:var(--panel-2); cursor:pointer; min-height:32px}
@@ -4709,8 +4713,7 @@ function placeCardHtml(r,cfg,o){
       '<div class="sc-money"><b>'+(st>0?'$'+st.toFixed(2):(r.hold&&!X)?'$0':'—')+'</b><span>'+((r.hold&&!X&&!(st>0))?(r.hold.why==='awol'?'if found':'if refreshed')+': up to $'+r.hold.stake.toFixed(2) /* v4.83 */:pay!=null?(isX?'pays $'+pay.toFixed(2):'wins $'+Math.max(0,pay-st).toFixed(2)):'stake')+'</span>'+(lim?'<span class="sc-lim">'+esc(lim)+'</span>':'')+'</div>'+
       (()=>{ const hl=slip?slipLinkFor(r,st):null;   // v4.42: one tap on a phone: the chip is a real link when the book's slip is already known
         return (hl?'<a class="sc-price book go sc-link'+(over?' over':'')+'" href="'+esc(hl)+'"'+(/^https:/.test(hl)?' target="_blank" rel="noopener"':''):'<span class="sc-price book'+(over?' over':'')+(slip?' go':'')+'" role="button" tabindex="0"')+' title="'+(slip?'Open this bet on '+esc(bk)+(st>0?' with $'+st.toFixed(2)+' filled':''):esc(bk))+(over?'. The price is over La Contadora’s most now: skip it or look elsewhere':'')+'">'+
-        '<span class="scp-o">'+logo+'<b>'+esc(odds)+'</b></span><span class="scp-p">'+(okP?pp(p):'')+(over?' · over':'')+'</span>'+(hl?'</a>':'</span>'); })()+'</div>'+
-    (X?'':altBooksHtml(r))+   /* v4.95 (Alonzo: "IMAGINE ANOTHER book under that saying, 53.7 etc. so, i can choose one or the other") */
+        '<span class="scp-o">'+logo+'<b>'+esc(odds)+'</b></span><span class="scp-p">'+(okP?pp(p):'')+(over?' · over':'')+'</span>'+(hl?'</a>':'</span>'); })()+(X?'':altBooksHtml(r))+'</div>'+   /* v4.95 (Alonzo: "IMAGINE ANOTHER book under that saying, 53.7 etc. so, i can choose one or the other"): inside the price box, right under the price */
     (X?'<div class="sc-kx sc-xline'+(XL.agree?' ok':'')+'" title="'+esc(XL.short)+'">'+esc(XL.t)+'</div>':scKalshiLine(r)||scPolyLine(r) /* v4.79: or Polymarket US */)+   // v4.50: what the math thinks, in the Kalshi line's place (an extra never has one)
     (lnGet(pxKey(r))?'<div class="ln-text" title="Your note on this line">📝 '+esc(lnGet(pxKey(r)))+'</div>':'')+   // v4.34: your note
     '<div class="sc-act"><button class="log sm bet-btn" data-idx="'+r.idx+'">'+(r.moved?'Add this line too':'I bet this')+'</button>'+lnBtnHtml(r)+

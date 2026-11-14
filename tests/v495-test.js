@@ -33,6 +33,11 @@ const ROWS=[row('nv','Two Books','Novig',0.52), row('dk','Two Books','DraftKings
   check(W+' px: each box points to its own book’s row (a tap opens that book), fits inside the card and is big enough to tap', C && C.keys[0]==='dk' && C.keys[1]==='pm' && C.fits, C);
   const after=await p.evaluate(()=>{ const r=lastRows.find(x=>x.apiKey==='nv'); return {stake:r.stake, net:r.actNet}; });
   check(W+' px: display only: the card’s stake and EV did not move', after.stake===before.stake && after.net===before.net, {before, after});
+  const clean=await p.evaluate(()=>{ const vis=e=>!!(e && e.offsetParent); const sub=[...document.querySelectorAll('.board-panel .pc-head .sc-sub')]; const c=document.getElementById('contadora');
+    const inBox=!!document.querySelector('.sc-bet .sc-alts'); document.getElementById('barMoreBtn').click(); const subOpen=sub.some(vis); document.getElementById('barMoreBtn').click();
+    return {subHidden:sub.length>0 && !sub.some(vis), contadoraHidden:!vis(c), subOpen, inBox}; });
+  check(W+' px: with Filters closed only the buttons show: La Contadora’s sentence and the long notes under The Sentinels are hidden, and come back when Filters is opened (Alonzo: “only the button for Send the Sentinels”)', clean.subHidden && clean.contadoraHidden && clean.subOpen, clean);
+  check(W+' px: “also at” sits inside the price box, right under the price', clean.inBox, clean);
   const ty=()=>p.evaluate(()=>{ const t=document.querySelector('#apiDock .tabs'), r=document.getElementById('apiRow'); return {top:Math.round(t.getBoundingClientRect().top), rowAbove:r.getBoundingClientRect().bottom<=t.getBoundingClientRect().top+1}; });
   const t0=await ty(); await p.click('#bpChip'); await p.waitForTimeout(300); const t1=await ty(); await p.click('#bpChip'); await p.waitForTimeout(200);
   check(W+' px: the API row sits on the tabs; opening BettingPros does not move Board / Live Games / Parlay (Alonzo: \u201cthe APIs on top of Board, Live games, parlay\u201d)', t0.rowAbove && t1.top===t0.top, {t0,t1});
