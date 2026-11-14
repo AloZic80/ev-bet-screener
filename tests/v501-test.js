@@ -24,7 +24,7 @@ const ROWS=[
   const p=await ctx.newPage(); p.on('pageerror',e=>errs.push(e.message));
   await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1500);
-  check('version v5.01 in the three places', await p.evaluate(()=>SCREENER_VERSION==='v5.01' && document.title.includes('v5.01') && document.getElementById('verTag').textContent==='v5.01'));
+  check('version v5.01 or later in the three places', await p.evaluate(()=>/^v5\.\d\d$/.test(SCREENER_VERSION) && SCREENER_VERSION>='v5.01' && document.title.includes(SCREENER_VERSION) && document.getElementById('verTag').textContent===SCREENER_VERSION));
   // ---- 2. outlier wording ----
   const O=await p.evaluate(()=>{ const f=k=>{ const r=lastRows.find(x=>x.apiKey===k); return {out:!!r.outlier, why:r.outlierWhy||'', flag:(r.flags.find(x=>/OUTLIER/.test(x[1]))||[,''])[1]}; }; return {both:f('both'), gap:f('gap'), ev:f('ev')}; });
   check('2. both triggers: "OUTLIER · model EV above 15% and model–market gap above 8 pts"', O.both.out && O.both.why==='OUTLIER · model EV above 15% and model–market gap above 8 pts' && /stake capped at the minimum$/.test(O.both.flag), O.both);
