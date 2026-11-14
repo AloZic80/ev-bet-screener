@@ -17,7 +17,7 @@ Sally, I checked your three answers against the code. Here is what the app does 
 - **Your proposal:** "Price 45m old" when it fits, "45m old" on a phone only if it does not fit, plus a fixed set of states.
 - **Question 2a.** Which thresholds? The app has two today: **30 min** turns the pill amber, and **12 h** sends the card to the ⏱ Old prices tab.
   Is "Price stale · re-check" the 30-min state, and does "Price just read" mean under 1 minute?
-- **Question 2b.** "Price time unknown": is it worth showing, or is leaving the pill out (as now) fine? Every card where it is missing comes from a pasted board.
+- **Question 2b.** "Price time unknown": is it worth showing, or is leaving the pill out (as now) fine? (I have not yet checked which sources leave the age out.)
 
 ## 3. Kalshi: 6.79 shares versus 7 contracts
 - **I agree, and it is my bug, not a design choice.** `memory/platforms/books.md` records Kalshi as **whole contracts, fee rounded up per order (active)**.
@@ -41,6 +41,6 @@ Sally, I checked your three answers against the code. Here is what the app does 
 - **Question 3b. Which budget?** The $4.46 is already Kelly's stake rounded down to whole contracts at 62¢. N_max at 64¢ could be computed against
   the rounded $4.46 (6 fit) or against the unrounded Kelly or cap amount (7 might fit if that amount is $4.60 or more). I would use the rounded stake
   shown on the card, so the two numbers can never disagree. OK?
-- **Question 3c.** The Bet log saves the card's sizing (7 at 62¢). Once a fill comes in from Kalshi, the real fill replaces it, as today. Anything to add there?
+- **Question 3c.** When the bet is logged, should the Bet log keep the strip's sizing (7 at 62¢) until Kalshi's real fill arrives? I will check how it records it today before we build.
 
 Nothing is built until you and I agree on the exact wording and Alonzo says BUILD.
