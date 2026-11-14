@@ -16,7 +16,7 @@
 - Crew names (owner, 2026-11-11: "Love it!"), used in agent labels and reports: El Jefe (Alonzo), El Juez (the test suite), El Capataz (Claude Code),
   El Consultor (ChatGPT), El Historiador (the Project's agent), Los Desconfiados (skeptic agents), Los Chismosos (reviewer agents), Los Chambeadores (worker agents),
   Las Karens (owner, 2026-11-13: "assign workers to just play the part of a customer ... Beta testers. Almost like Karens"; "so we add to the crew"): customer agents who use the live app
-  like picky strangers (the newcomer, the phone-only one, the know-it-all bettor) and list complaints worst first; they change nothing, the owner picks.
+  like picky strangers (the newcomer, the phone-only one, the know-it-all bettor, and the professional bettor: owner, "and add the Professional bettor too") and list complaints worst first; they change nothing, the owner picks.
   Code word **"Frijolito"** (owner, 2026-11-11): show him the crew's first names from `agent-notes/crew-names_2026-11-11_v1.md` (Javiera's picks win).
 - Owner (2026-11-05): "build without my other agent". No relay blocks or reports for the other agents unless the owner asks;
   keep the record in the PR description. Still ask plainly before each publish.
