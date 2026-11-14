@@ -121,7 +121,7 @@ const heavyOk=(live,n)=>live.filter(g=>g.some(b=>b.book==='novig'&&/^(moneyline|
     await ctx.close(); }
   { const {ctx,p,errs}=await open(b,1280);
     const vis=sel=>p.evaluate(s=>{ const e=document.querySelector(s); if(!e) return null; if([...document.querySelectorAll('details:not([open])')].some(d=>d.contains(e) && !d.firstElementChild.contains(e))) return false; const r=e.getBoundingClientRect(); return r.width>0 && r.height>0 && getComputedStyle(e).display!=='none'; }, sel);   // Chromium keeps a box for the content of a closed details
-    check('computer: the tick boxes are simply there (no Filters button); v4.92 (Alonzo: "i just need the TODAY totals, or and All, but not by book"): the book tiles wait behind "by book ▾" on a computer too', (await vis('#swOnly'))===true && (await vis('#notesAll'))===true && (await vis('#barMoreBtn'))===false && (await vis('#todayBar .tb-t:not(.all)'))===false && (await vis('#todayBar .tb-more'))===true, null);
+    check('computer, v4.94 (Alonzo: "all this should be together, minus sentinels"): the tick boxes fold behind Filters, Send the Sentinels stays out; v4.92 (Alonzo: "i just need the TODAY totals, or and All, but not by book"): the book tiles wait behind "by book ▾" on a computer too', (await vis('#swOnly'))===false && (await vis('#barMoreBtn'))===true && (await vis('#shopBtn'))===true && (await vis('#todayBar .tb-t:not(.all)'))===false && (await vis('#todayBar .tb-more'))===true, null);
     check('no page errors', !errs.length, errs);
     await ctx.close(); }
   console.log(`\n${pass} passed, ${fail} failed`); await b.close(); process.exit(fail?1:0);

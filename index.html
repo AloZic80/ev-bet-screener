@@ -1585,6 +1585,14 @@ body[data-view]:not([data-view="v-board"]) #apiDock #apiStatus, body[data-view]:
 .sc-score.muted .sc-word{color:var(--warn)}
 .sc-pill.ev b.muted{color:var(--soft); font-weight:700; white-space:normal}
 .sc-pill.ev b.muted small{font-weight:600; color:var(--warn)}
+/* v4.94 (Alonzo, Mac: "all this should be together, minus sentinels"): Cover bands, the Today's games line, Show, Sort, Sport, the book chips,
+   the search box, the tick boxes, Show all notes and Cards fold behind one Filters button at every width; Send the Sentinels stays out */
+.board-panel .board-bar:not(.bar-open)>.bar-item, .board-panel .board-bar:not(.bar-open)>.book-chips, .board-panel .board-bar:not(.bar-open)>.bar-check,
+.board-panel .board-bar:not(.bar-open)>#todayLine, .board-panel .board-bar:not(.bar-open)>.cv-legend-box, .board-panel .board-bar:not(.bar-open)>.bar-search{display:none}
+.board-panel .board-bar>#todayLine, .board-panel .board-bar>.cv-legend-box{flex-basis:100%; margin:0}
+.board-panel .board-bar>.bar-more-btn{display:inline-flex; align-items:center; order:-2} .board-panel .board-bar>#shopBtn, .board-panel .board-bar>#shopMsg{order:-1}
+.board-panel .board-bar>.bar-search{order:0}
+.bar-more:not(.open){display:none}
 </style>
 </head>
 <body>
@@ -4096,7 +4104,7 @@ document.addEventListener('click', e=>{ const t=e.target.closest && e.target.clo
 /* v4.62 (Alonzo: "what's on the screenshot should all be in a drop down because I don't need to see it all the time"): on a phone the Today's games line
    and Cover bands move into the board bar, first among what Filters opens; on a computer they go back above the bar, where they always were. Hoisted. */
 function barPhonePlace(){ try{ const bar=document.querySelector('.board-panel .board-bar'), tl=document.getElementById('todayLine'), cv=document.querySelector('.board-panel .cv-legend-box'); if(!bar || !tl || !cv) return;
-    const phone=!!(window.matchMedia && window.matchMedia('(max-width:760px)').matches);
+    const phone=true;   /* v4.94 (Alonzo: "all this should be together, minus sentinels"): every width folds like the phone */
     if(phone){ if(tl.parentNode!==bar || cv.parentNode!==bar){ bar.insertBefore(cv, bar.firstChild); bar.insertBefore(tl, bar.firstChild); } }
     else if(tl.parentNode===bar || cv.parentNode===bar){ bar.parentNode.insertBefore(tl, bar); bar.parentNode.insertBefore(cv, bar); } }catch(e){} }
 /* v4.63 (Alonzo, phone: "And these, make them cleaner as well. I don't need to have them open all the time"): the BettingPros panel and the Sources panel
