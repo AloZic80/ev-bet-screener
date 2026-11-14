@@ -6,6 +6,7 @@ Search this file by function name or version (`grep -n "propSame" memory/history
 New builds add their line at the top of the right section.
 
 ## Gotchas
+- v4.97 (Las Karens, owner "build"): `ebIntoView` scrolls the bet form above the bottom bar (setTimeout 60, not rAF: the form is not full height yet); `savedToast` "✓ Saved" + a 0.7 s body.tap-guard; "wins $" is always profit (exchanges add "· back $"), the % box is "Pays back $" (same value, cost + profit); `topJumpOnce` opens the tab with the #1 math pick once per app open, only from the default Machín; Brujo heading adds "N approved long shots above"; phone: 16px fields, 40px buttons. tests/v497-test.js.
 - v4.96 (Alonzo, the book chips: "if anything, we need this"): .book-chips stay on the board under Send the Sentinels with Filters closed (CSS override after the v4.94 fold); the selection was already remembered in mbev.boardBooks. v4.95 published 11/13 night as PR #137 (owner: "Publish NOW, chips next", run 112/113 with the 1 an outdated tabs-test, fixed).
 - v4.95 (Alonzo, 11/13 night: "i want both bets. the more better, and the following"; "IMAGINE ANOTHER book under that saying, 53.7 etc."; "build cabron"):
   `altBooksOf(r)` / `altBooksHtml(r)` put "also at" boxes under the card's price: the same bet (pxKey: sport, name, market, side, game day) at the
