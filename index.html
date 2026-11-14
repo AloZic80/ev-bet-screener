@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v4.98</title>
+<title>0xBeta Screener v4.99</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1658,7 +1658,7 @@ body.tap-guard #placeCards, body.tap-guard .board-panel table{pointer-events:non
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v4.98</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v4.99</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2481,7 +2481,7 @@ body.tap-guard #placeCards, body.tap-guard .board-panel table{pointer-events:non
 
 </div>
 <script>
-const SCREENER_VERSION='v4.98';
+const SCREENER_VERSION='v4.99';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -4282,6 +4282,8 @@ function bandCover(b, view){ if(!b || b.kind==='parlay') return null; if(view===
   const f=toProb(b.fair); if(f>0 && f<1 && !unpriced) return {p:f, cal:true, typed:false, source:'model'}; return null; }
 function bandSrcWord(s){ return s==='act'?'La Contadora':s==='typed'?'typed cover':s==='model'?'model':'none'; }
 function studyView(){ const el=document.getElementById('studyBand'); return el && el.value==='model' ? 'model' : 'act'; }
+/* v4.99: in a band: a single by its own band; a parlay when one of its legs is (as the calendar's Cover range breakdown counts legs). Hoisted. */
+function logInBand(b,k){ if(!b) return false; if(b.kind==='parlay'){ const L=b.parlay&&b.parlay.pk&&b.parlay.pk.legs; return Array.isArray(L)&&L.length ? L.some(l=>cvBand(+l.p)===k) : k===0; } return logBandOf(b)===k; }
 function logBandOf(b, view){ if(!b || b.kind==='parlay') return null; const c=bandCover(b, view||'act'); return c?cvBand(c.p):0; }   /* v4.68: the fair odds saved with it, else the cover you typed; v4.88: La Contadora first */
 /* v4.68 (agreed with ChatGPT, owner "BUILD" 11/11): a logged single's cover: the fair odds saved with it, else the Cover % typed in the bet editor.
    cal: it may be used for hit rate, calibration and Brier (a saved fair, or a cover typed before the game started); a cover typed after kickoff,
@@ -4388,7 +4390,8 @@ function lcRender(){ const cal=document.getElementById('lcCal'); if(!cal) return
   bar.hidden=!(mx>0); bar.max=mx>0?mx:1; bar.value=Math.min(used,mx>0?mx:1);
   const B=lcBands(lcDay); document.getElementById('lcBandSub').textContent=B.n?'· '+B.n+' pick'+(B.n===1?'':'s'):'';
   document.getElementById('lcBands').innerHTML=B.n?[1,2,3,4,5,6,7,8,9,0].map(k=>{ const c=B.C[k], pc=c/B.n*100; if(!c&&!k) return '';
-    return '<div class="lc-band"><span>'+(k?'<span class="cv-chip cv-'+k+'">'+cvNames()[k]+'</span> <span class="meta">'+cvRanges()[k]+'</span>':'<span class="meta">Unknown · '+cvRanges()[0]+'</span>')+'</span><div class="lc-track"><div class="lc-fill" style="width:'+pc.toFixed(1)+'%"></div></div><b>'+c+' · '+pc.toFixed(1)+'%</b></div>'; }).join('')
+    const tap=c?' title="Tap to see these '+c+' bet'+(c===1?'':'s')+' of '+esc(dayLabel(lcDay))+' in the Bet log" data-day="'+esc(lcDay)+'"':'';   /* v4.99 (Alonzo: "i want to click on the Unlikely and see which ones they are") */
+    return '<div class="lc-band"><span>'+(k?(c?'<button type="button" class="cv-chip cv-'+k+' lbf"'+tap+' data-band="'+k+'">'+cvNames()[k]+'</button>':'<span class="cv-chip cv-'+k+'">'+cvNames()[k]+'</span>')+' <span class="meta">'+cvRanges()[k]+'</span>':(c?'<button type="button" class="linkbtn lbf"'+tap+' data-band="0">Unknown</button>':'Unknown')+' <span class="meta">· '+cvRanges()[0]+'</span>')+'</span><div class="lc-track"><div class="lc-fill" style="width:'+pc.toFixed(1)+'%"></div></div><b>'+c+' · '+pc.toFixed(1)+'%</b></div>'; }).join('')
     : '<div class="meta">No bets on this game day.</div>';
   const sel=document.getElementById('lcPeriod'); if(sel.value!==lcPeriod) sel.value=lcPeriod;
   const G=new Map(); logged.forEach(b=>{ const k=lcPeriodOf(gameDayOf(b),lcPeriod); if(!k) return; if(!G.has(k)) G.set(k,[]); G.get(k).push(b); });
@@ -6188,7 +6191,7 @@ function renderLog(){ setTimeout(()=>{ try{ csvDays(); }catch(e){} try{ lcRender
   const tb=document.getElementById('logBody'), empty=document.getElementById('logEmpty');
   tb.innerHTML='';
   { const lf=document.getElementById('logFilter'); if(lf){ const bf=logBandFilter!=null; lf.style.display=(logDayFilter||bf)?'flex':'none';
-    let bandTxt=''; if(bf){ let n=0,w=0,l=0,ps=0,pend=0,net=0,pred=0,g=0,cw=0; const oS=new Set(); logged.forEach(b=>{ if(logBandOf(b)!==logBandFilter) return; if(logDayFilter && (gameDayOf(b)||b.date||'')!==logDayFilter) return; n++; const r=b.sold?'sold':b.result; if(r==='win') w++; else if(r==='loss') l++; else if(r==='push') ps++; else if(r!=='sold') pend++; const c=bandCover(b,'act') /* v4.88 review */; if((r==='win'||r==='loss') && logBandFilter && c && c.cal && !oS.has(outcomeKey(b))){ oS.add(outcomeKey(b)); g++; pred+=c.p; if(r==='win') cw++; } const pr=betProfit(b); if(pr!=null) net+=pr; });   /* v4.66 */   /* v4.68: won % and expected % on the same bets: once per outcome, covers known before the game */
+    let bandTxt=''; if(bf){ let n=0,w=0,l=0,ps=0,pend=0,net=0,pred=0,g=0,cw=0; const oS=new Set(); logged.forEach(b=>{ if(!logInBand(b,logBandFilter)) return; /* v4.99: the same bets the list shows */ if(logDayFilter && (gameDayOf(b)||b.date||'')!==logDayFilter) return; n++; const r=b.sold?'sold':b.result; if(r==='win') w++; else if(r==='loss') l++; else if(r==='push') ps++; else if(r!=='sold') pend++; const c=bandCover(b,'act') /* v4.88 review */; if((r==='win'||r==='loss') && logBandFilter && c && c.cal && !oS.has(outcomeKey(b))){ oS.add(outcomeKey(b)); g++; pred+=c.p; if(r==='win') cw++; } const pr=betProfit(b); if(pr!=null) net+=pr; });   /* v4.66 */   /* v4.68: won % and expected % on the same bets: once per outcome, covers known before the game */
       bandTxt=(logBandFilter?'<span class="cv-chip cv-'+logBandFilter+'">'+cvNames()[logBandFilter]+'</span><span class="meta">'+cvRanges()[logBandFilter]+'</span>':'<b>no band</b> <span class="meta">(no cover saved)</span>')+' <span class="lbf-stats">· '+n+' bet'+(n===1?'':'s')+' · '+w+'–'+l+'–'+ps+(pend?' · '+pend+' open':'')+(g?' · won '+Math.round(cw/g*100)+'% vs '+Math.round(pred/g*100)+'% expected':'')+' · <b class="'+(net>=0?'pl-up':'pl-down')+'">'+(net>=0?'+':'−')+'$'+Math.abs(net).toFixed(2)+'</b></span>'; }
     if(logDayFilter||bf) lf.innerHTML='<span>Showing '+(bf?bandTxt+' ':'bets ')+(logDayFilter?(bf?'· ':'')+'played <b>'+esc(new Date(logDayFilter+'T12:00:00Z').toLocaleDateString('en-US',{weekday:'short',month:'numeric',day:'numeric',timeZone:'UTC'}))+'</b>':'')+'</span><button type="button" class="ghost sm" id="logFilterOff">show all</button>'; } }
   // v3.57: newest first, one row per game day that opens and closes (days still open, yesterday and later, and days with a bet to check start open)
@@ -6199,7 +6202,7 @@ function renderLog(){ setTimeout(()=>{ try{ csvDays(); }catch(e){} try{ lcRender
     .sort((x,y)=>x.day!==y.day ? (x.day<y.day?1:-1) : (atv(y.at)-atv(x.at)) || (y.i-x.i))
     .forEach(({b,i,day})=>{
     if(logDayFilter && day!==logDayFilter) return;   // v2.88: from the calendar
-    if(logBandFilter!=null && logBandOf(b)!==logBandFilter) return;   // v4.66: one cover band (a parlay has none)
+    if(logBandFilter!=null && !logInBand(b,logBandFilter)) return;   // v4.66: one cover band (a parlay has none)   /* v4.99: a parlay is listed when one of its legs is in that band, as the calendar counts it */
     if(!seen.has(day)){ seen.add(day); const h=document.createElement('tr'); h.className='log-day'; h.innerHTML=logDayHtml(day, dst[day], isOpen(day), look.get(day)||0); tb.appendChild(h); }
     const c=clv(b);
     const tr=document.createElement('tr'); tr.dataset.day=day; if(!isOpen(day)) tr.hidden=true;
@@ -12720,7 +12723,7 @@ document.querySelector('.tab[data-view="v-add"]').addEventListener('click',()=>{
 document.querySelectorAll('.tab[data-view="v-paste"]').forEach(t=>t.addEventListener('click',()=>{ const p=document.getElementById('pastePanel'); if(p) p.open=true; }));   /* v4.95: the Paste tab is that one panel, so tapping the tab opens it; everything else stays closed until tapped */
 document.addEventListener('click',e=>{ if(e.target.closest('#logFilterOff')){ logDayFilter=null; logBandFilter=null; renderLog(); } });
 document.addEventListener('click',e=>{ const t=e.target.closest && e.target.closest('button.lbf'); if(!t) return; e.preventDefault(); e.stopPropagation();   /* v4.66: a band: only its bets, in the Bet log */
-  const k=+t.dataset.band; logBandFilter=(logBandFilter===k && t.closest('#logBody'))?null:k; if(!t.closest('#logBody')) logDayFilter=null;
+  const k=+t.dataset.band; logBandFilter=(logBandFilter===k && t.closest('#logBody'))?null:k; if(!t.closest('#logBody')) logDayFilter=t.dataset.day||null;   /* v4.99: from the calendar's breakdown, that day only */
   const tab=document.querySelector('.tab[data-view="v-log"]'); if(document.body.dataset.view!=='v-log' && tab) tab.click(); renderLog();
   setTimeout(()=>{ const f=document.getElementById('logFilter'); if(f && f.style.display!=='none') f.scrollIntoView({block:'start',behavior:'smooth'}); },60); }, true);
 document.getElementById('ssRef').addEventListener('click',async e=>{   // v2.87: manual refresh for the scores strip
