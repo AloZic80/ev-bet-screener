@@ -36,7 +36,7 @@ const LOG=[bet('w',{stake:3,odds:'-150',result:'win',gradedBy:'manual',start:iso
   if(W===390) check('phone: no field in the bet form is under 16px (the Book and "Enter as" menus were 13px)', ed.small===0, ed);
   await p.evaluate(()=>window.scrollTo(0,1200)); await p.click('.tab[data-view="v-settings"]'); await p.waitForTimeout(250);
   check(W+' px: a tab opens at the top, not where the last page was scrolled', await p.evaluate(()=>scrollY)===0, await p.evaluate(()=>scrollY));
-  if(W===390){ await p.evaluate(()=>window.scrollTo(0,900)); await p.evaluate(()=>document.querySelector('.tab[data-view="v-add"]').click()); await p.waitForTimeout(400);
+  if(W===390){ await p.evaluate(()=>window.scrollTo(0,900)); await p.evaluate(()=>document.querySelector('.tab[data-view="v-add"]').click()); await p.waitForTimeout(800);
     const ab=await p.evaluate(()=>({small:[...document.querySelectorAll('#addBetPanel input:not([type=checkbox]):not([type=radio]), #addBetPanel select')].filter(x=>x.offsetParent && parseFloat(getComputedStyle(x).fontSize)<16).length, sport:Math.round(document.getElementById('abSport').getBoundingClientRect().top)}));
     check('phone: + Add a bet opens with Sport in view, and no field under 16px', ab.small===0 && ab.sport>=0 && ab.sport<500, ab); }
   const over=await p.evaluate(()=>document.documentElement.scrollWidth-innerWidth); check(W+' px: no sideways scroll', over<=0, over);
