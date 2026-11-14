@@ -24,6 +24,9 @@ async function run(width){
     if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1000);
   await p.click('.tab[data-view="v-settings"]'); await p.waitForTimeout(300);
+  check('v4.95: Settings opens with every panel closed (Alonzo: "if its a drop down, dont open it by default, unless told to")', await p.evaluate(()=>[...document.querySelectorAll('#v-settings details.panel.fold')].every(d=>!d.open)));
+  for(const sel of ['#srcSettings > summary','#credPanel > summary']) await p.click(sel);   /* the user taps them open */
+  await p.evaluate(()=>{ const b=document.getElementById('bank'); const d=b&&b.closest('details'); if(d && !d.open) d.querySelector('summary').click(); }); await p.waitForTimeout(200);
   return {b,p,errs,calls};
 }
 (async()=>{
