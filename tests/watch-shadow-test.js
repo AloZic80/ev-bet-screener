@@ -24,7 +24,7 @@ async function page(seed){
   // 1. recording
   let {b,p,errs}=await page(null);
   let W=await p.evaluate(()=>JSON.parse(localStorage.getItem('mbev.watchObs')||'[]'));
-  check('the Watch bet (Cuylle at 53.5%) is saved once, with the shown price and the model, market and blend chances; the placed one is not', W.length===1 && W[0].name==='Will Cuylle' && W[0].price===0.535 && W[0].model===0.5546 && W[0].mkt===0.526 && Math.abs(W[0].blend-0.536)<0.0005 && W[0].result===null && /NHL\|will cuylle\|/.test(W[0].k) && /^v4\.(4[4-9]|[5-9]\d)$/.test(W[0].ver), W[0]);   // v4.45: the key also has the stat family, line and start
+  check('the Watch bet (Cuylle at 53.5%) is saved once, with the shown price and the model, market and blend chances; the placed one is not', W.length===1 && W[0].name==='Will Cuylle' && W[0].price===0.535 && W[0].model===0.5546 && W[0].mkt===0.526 && Math.abs(W[0].blend-0.536)<0.0005 && W[0].result===null && /NHL\|will cuylle\|/.test(W[0].k) && /^v(4\.(4[4-9]|[5-9]\d)|[5-9]\.\d\d)$/ /* v5.00: versions go on past v4.99 */.test(W[0].ver), W[0]);   // v4.45: the key also has the stat family, line and start
   await p.evaluate(()=>{ refresh(); refresh(); }); await p.waitForTimeout(200);
   W=await p.evaluate(()=>JSON.parse(localStorage.getItem('mbev.watchObs')||'[]'));
   check('redraws do not add copies (still 1)', W.length===1, W.length);
