@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.12</title>
+<title>0xBeta Screener v5.13</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1827,6 +1827,28 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 :root[data-theme="dark"] .rp-seg button.on{background:var(--brand,#087B44)}   /* v5.11 (bug L5): the chosen Reports period (Day, Month, Year, All, Custom) in dark mode: white on the scheme's dark button colour, like the other chosen buttons (white on the light accent colour was 1.5 to 2.1:1 across the five schemes, now 5.3 to 7.6:1). Light mode unchanged */
 /* v5.12 (bug fixes, screen and words): the pop-up message in dark mode (white on the light green was 1.8:1; dark text on it is well over 4.5:1). Light mode is as before. */
 :root[data-theme="dark"] #savedToast{color:#06130B}   /* v5.12 (bug): dark mode contrast of the pop-up message */
+/* v5.13 (Las Karens 11/15, item 5): the Bet log's "Add a parlay / Pick 6" panel. Its boxes sit inside a drop-down (details), where the page's border-box sizing
+   did not reach, so each box was 18 to 22 px wider than its field and ran over the next one at every width (Picks, Stake, Pays, "…if 1 misses"); the Book list
+   is wide enough for "DraftKings Predictions"; Entry type and the Free entry tick as in + Add a bet; the Flex payouts show only for Flex. Display only. */
+#parlayPanel .pl-form .field input, #parlayPanel .pl-form .field select{box-sizing:border-box; max-width:100%}
+#parlayPanel .pl-form .field.pl-book{max-width:230px; flex:1 1 200px}
+#parlayPanel .pl-form .field.pl-kind{max-width:230px; flex:1 1 200px}
+#parlayPanel .pl-form .pl-freef{display:flex; align-items:center; min-height:38px}
+#parlayPanel .pl-form .pl-free{display:flex; align-items:center; gap:6px; margin:0; font-size:13px; color:var(--ink); cursor:pointer; white-space:nowrap}
+#parlayPanel .pl-form .pl-free input{width:16px; height:16px; padding:0; margin:0; flex:none; accent-color:var(--accent)}
+#parlayPanel:not(.pl-flexon) .pl-flex{display:none!important}
+#parlayPanel .pl-note{margin:8px 0 0; font-size:13.5px; color:var(--soft); overflow-wrap:break-word}
+#parlayPanel .pl-note:empty{display:none}
+@media (max-width:640px){ #parlayPanel .pl-form .field{max-width:none; flex:1 1 140px} #parlayPanel .pl-form .field.pl-book, #parlayPanel .pl-form .field.pl-kind, #parlayPanel .pl-form .field.wide{flex:1 1 100%; max-width:none} #parlayPanel .pl-form .pl-free{min-height:44px} }
+/* v5.13 (first run and words; owner 11/15: "Yes", from the Karens review): the first-run note about the passphrase sits above the dock (its height is --dockH), calm (no red), one short line with a button; its x is 44 px wide;
+   the small-sample note under the Reports profit and ROI tiles. Display only: no number, stake or saved field changes. */
+.fill-warn{bottom:calc(var(--dockH,84px) + 6px + env(safe-area-inset-bottom,0px))}
+.fill-warn[hidden]{display:none!important}
+.fill-warn.calm:not([hidden]){display:flex; align-items:center; flex-wrap:wrap; gap:4px 10px; padding:6px 6px 6px 12px; border-color:var(--rule); box-shadow:0 2px 10px rgba(0,0,0,.12); font-size:13px}
+.fill-warn.calm .fw-note{flex:1 1 200px; color:var(--ink)} .fill-warn.calm .linkbtn{min-height:36px} .fill-warn.calm .fw-x{margin-left:auto; min-width:44px; min-height:44px}
+.rp-k .rp-tn{display:block; margin-top:2px; font-size:12px; font-weight:400; font-style:normal; color:var(--warn,var(--soft))}
+.sc-parlay-note{margin:6px 0}
+#boardMore[open]{z-index:61}   /* the open More ▾ list stays above the note, so it never hides a menu item */
 </style>
 </head>
 <body>
@@ -1835,7 +1857,7 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.12</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.13</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2001,7 +2023,7 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
     </tr></thead>
     <tbody id="tbody"></tbody>
   </table></div>
-  <div class="empty" id="emptyMsg">Nothing on the board yet. Pick a sport above and hit <b>Load</b>: the bets worth taking land here, the rest stay hidden unless you switch rejects on.</div>
+  <div class="empty" id="emptyMsg">Nothing on the board yet. Pick a sport above and hit <b>Load</b>: the bets worth taking land here, the rest stay hidden unless you switch rejects on. Or <button type="button" class="linkbtn" id="emptyPaste">paste a board</button> from the BettingPros site.</div>   <!-- v5.13: Paste is reachable on an empty board -->
 </div>
 
 <div class="panel" style="display:none">   <!-- v2.79: replaced by + Add a bet -->
@@ -2204,7 +2226,7 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 <div class="panel rg-panel" id="rulesGlance">   <!-- v4.38: Augi's rules layout: everything La Contadora uses, in one place -->
   <h2>Your rules at a glance <span class="cn-chip">saved in this browser · no secrets</span></h2>
   <div class="rg-grid" id="rgGrid"></div>
-  <p class="hint" style="margin:6px 0 0">Change any of them in Screens and Stake sizing below; this updates as you type. A mode does not change any of them. Each tab lists only its own bets, by La Contadora’s chance: 😴 Boring = High Cover + Heavy Favorite (75%+), 💪 Machín = Strong + Solid + Lean (60–75%), 🪙 Volado = Slight Lean + On the Line (50–60%), 🍀 Suertudo = Coin Flip (45–50%) and the ones that just missed (the smallest bet, 5 a day), 🔮 Brujo = Unlikely (under 45%) and the Hail Marys ($1 each, 3 a day).</p>
+  <p class="hint" style="margin:6px 0 0">Change any of them in Screens and Stake sizing below; this updates as you type. A mode does not change any of them. Each tab lists only its own bets, by La Contadora’s chance: 😴 Boring = High Cover + Heavy Favorite (75%+), 💪 Machín = Strong + Solid + Lean (60–75%), 🪙 Volado = Slight Lean + On the Line (50–60%), 🍀 Suertudo = Coin Flip (45–50%), 🔮 Brujo = Unlikely (under 45%). The ones that just missed and the Hail Marys are not offered as bets: they stay in 👀 Watch, and you can log one yourself with + Add a bet.<!-- v5.13 (owner: no daily Suertudo/Brujo bets) --></p>
 </div>
 <div class="panel plan-panel" id="planPanel">   <!-- v5.10 (owner, Sun 11/15: "id say 11/11 ... BUILD IT ALL"): My plan, a reminder only (saved and synced with the settings) -->
   <h2>My plan <span class="sub">a reminder only</span></h2>
@@ -2299,8 +2321,8 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
     <div class="grid" style="margin-top:12px">
       <div class="field"><label for="fKalshi">Kalshi % of price</label><input id="fKalshi" type="number" value="7" step="0.5"></div>
       <div class="field"><label for="fProphet">ProphetX % of stake</label><input id="fProphet" type="number" value="1" step="0.25"></div>
-      <div class="field"><label for="fPoly">Polymarket US % of price</label><input id="fPoly" type="number" value="6.95" step="0.05"></div>
-      <div class="field"><label for="fNovig" title="Novig charges nothing before the game. Once it's live, takers pay 6% × price × (1 − price) per contract — the screener adds that itself for live bets.">Novig % of stake (extra)</label><input id="fNovig" type="number" value="0" step="0.25"></div>
+      <div class="field"><label for="fPoly" title="Charged as 6.95% × (1 − price) of what you put up, the same way as Kalshi (not a flat 6.95% of the price).">Polymarket US % of price (× (1 − price))</label><input id="fPoly" type="number" value="6.95" step="0.05"></div>
+      <div class="field"><label for="fNovig" title="Novig charges nothing before the game. Once the game has started, takers pay 6% × price × (1 − price) per contract, which is 6% × (1 − price) of what you put up; the screener adds that itself to a bet on a game that has started (the board, + Add a bet and the bet editor). This box is only an extra on top.">Novig % of stake (extra)</label><input id="fNovig" type="number" value="0" step="0.25"></div>
       <div class="field"><label for="fFliff">Fliff % of stake</label><input id="fFliff" type="number" value="0" step="0.25"></div>
       <div class="field"><label for="fFdp" title="FanDuel Predicts charges a fee on the potential payout (shown on the slip before you confirm). 2 is the higher of what reviews report — change it to what your slips show.">FanDuel Predicts % of payout</label><input id="fFdp" type="number" value="2" step="0.25"></div>
       <div class="field"><label for="fBook">Licensed books % of stake</label><input id="fBook" type="number" value="0" step="0.25"></div>
@@ -2311,7 +2333,7 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 
 <details class="panel fold">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>Stake sizing <span class="sub">bankroll and Kelly</span></h2></summary>
-  <p class="hint">Kelly scales a bet to its edge. The haircut shrinks that edge first, because the fair values behind it move and the biggest ones move most. What survives gets clamped to the range you actually bet in.</p>
+  <p class="hint">Kelly scales a bet to its edge. The haircut shrinks that edge first, because the fair values behind it move and the biggest ones move most. The two multiply: Kelly 0.25 with a haircut of 0.5 stakes 0.125 of what full Kelly would. What survives gets clamped to the range you actually bet in.</p>
   <div class="grid">
     <div class="field"><label for="bank">Bankroll $</label><input id="bank" type="number" value="1000" step="25"></div>
     <div class="field"><label for="kelly">Kelly fraction</label><input id="kelly" type="number" value="0.25" step="0.05"></div>
@@ -2524,16 +2546,19 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
   <summary><h2>Add a parlay / Pick 6 <span class="sub">logged and tallied; graded by hand ("how many hit")</span></h2></summary>
   <p class="hint">The screener only prices single bets, so a parlay gets no value check. It shows in the Today ribbon (pick’em apps such as PrizePicks get their own tile) and stays out of the screener's stake sizes. Its entry does count in today's total for your daily max (the Hard stop).</p><!-- v5.11 (bug): the hint said it was not against the daily max, but the Hard stop counts it -->
   <div class="pl-form">
-    <div class="field"><label for="plBook">Book</label><select id="plBook"><option>DraftKings Pick 6</option><option>DraftKings</option><option>DraftKings Predictions</option><option>FanDuel Predicts</option><option>Novig</option><option>Kalshi</option><option>Polymarket</option><option>Underdog Predict</option><option>Other</option><option>Bovada</option><option>PrizePicks</option><option>Underdog</option><option>Sleeper</option><option>Betr</option><option>ParlayPlay</option></select></div><!-- v5.10 (owner: "you dont even have PrizePicks"): pick-em apps added at the end; the old options keep their order -->
+    <div class="field pl-book"><label for="plBook">Book</label><select id="plBook"><option>DraftKings Pick 6</option><option>DraftKings</option><option>DraftKings Predictions</option><option>FanDuel Predicts</option><option>Novig</option><option>Kalshi</option><option>Polymarket</option><option>Underdog Predict</option><option>Other</option><option>Bovada</option><option>PrizePicks</option><option>Underdog</option><option>Sleeper</option><option>Betr</option><option>ParlayPlay</option></select></div><!-- v5.10 (owner: "you dont even have PrizePicks"): pick-em apps added at the end; the old options keep their order -->
+    <div class="field pl-kind"><label for="plKind">Entry type</label><select id="plKind"><option value="power">Power (all must hit)</option><option value="flex">Flex (pays if 1 or 2 miss)</option></select></div><!-- v5.13 (Las Karens 11/15): Power or Flex, as + Add a bet’s Entry type -->
     <div class="field" style="max-width:90px"><label for="plPicks">Picks</label><input id="plPicks" type="number" min="2" max="12" value="4"></div>
     <div class="field" style="max-width:110px"><label for="plStake">Stake $</label><input id="plStake" type="number" step="0.01" min="0" placeholder="5.00"></div>
+    <div class="pl-freef"><label class="pl-free" title="A free entry (a promo or bonus) is not your money: it costs you $0. If all hit you get the winnings, what it pays minus the entry, as the app counts free bets."><input type="checkbox" id="plFree"> 🎁 Free entry</label></div><!-- v5.13 (Las Karens 11/15): the Free entry tick, as + Add a bet -->
     <div class="field"><label for="plAll">Pays if all hit $</label><input id="plAll" type="number" step="0.01" min="0" placeholder="50.00"></div>
-    <div class="field"><label for="plM1">…if 1 misses $</label><input id="plM1" type="number" step="0.01" min="0" placeholder="optional"></div>
-    <div class="field"><label for="plM2">…if 2 miss $</label><input id="plM2" type="number" step="0.01" min="0" placeholder="optional"></div>
+    <div class="field pl-flex"><label for="plM1">…if 1 misses $</label><input id="plM1" type="number" step="0.01" min="0" placeholder="optional"></div><!-- v5.13: Flex only -->
+    <div class="field pl-flex"><label for="plM2">…if 2 miss $</label><input id="plM2" type="number" step="0.01" min="0" placeholder="optional"></div><!-- v5.13: Flex only -->
     <div class="field" style="max-width:160px"><label for="plDay">Game day</label><input id="plDay" type="date"></div>
     <div class="field wide"><label for="plLegs">Legs (optional note)</label><input id="plLegs" placeholder="Mahomes O 1.5 TD, Bijan O 70.5 rush…"></div>
     <button class="act" id="plAdd">Add parlay</button> <span class="meta" id="plMsg"></span>
   </div>
+  <p class="pl-note" id="plNote" aria-live="polite"></p><!-- v5.13: the free entry note and the known payouts used -->
 </details>
 
 <div class="panel">
@@ -2576,6 +2601,7 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 </div>
 <div class="panel sc-panel" id="scorePanel">
   <h2>📏 Scorecard <span class="sub">the 1,000-bet test · beat the close, then profit · research Makes and parlays kept out</span></h2>
+  <p class="meta sc-parlay-note" id="scParlayNote"></p>   <!-- v5.13 -->
   <div id="scoreBody"></div>
 </div>
 <div class="panel pb-panel" id="planBlocksPanel">   <!-- v5.10 (owner, 11/15: "id say 11/11 ... BUILD IT ALL"): Your 1,000-bet blocks, right under the Scorecard; worked out when Performance opens -->
@@ -2689,7 +2715,7 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 
 </div>
 <script>
-const SCREENER_VERSION='v5.12';
+const SCREENER_VERSION='v5.13';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3025,7 +3051,7 @@ const MODES={
   awol:  {label:'👻 AWOL', lucky:true, hail:true},   // v4.81: its book could not find it on the last check
 };
 const OLD_PRICE={ms:12*3600e3};   // v4.77 (Alonzo: "put the older bets in another category. or Tab in itself"): a price read more than 12 hours ago
-const EXTRAS={luckyDay:5, hailDay:3, hailEach:1, hailOdds:300, nearMiss:false};   // v4.50   /* v4.80 (owner: near-misses "A", "what you seems better"): nearMiss false = no 🍀 Just missed offers on the board; they stay 👀 Watch records (no money). true brings the offers back */
+const EXTRAS={luckyDay:5, hailDay:3, hailEach:1, hailOdds:300, nearMiss:false, hailBets:false};   // v4.50   /* v5.13 (owner, 11/15: "Remove the suertudo or brujo daily allowed. Since I shouldn't be doing any unless I see or now something from my end."): hailBets false = no 🔮 Hail Mary offers (no stake, no daily count); the long shots stay listed in 🔮 Brujo as 👀 Watch. true brings the offers back */   /* v4.80 (owner: near-misses "A", "what you seems better"): nearMiss false = no 🍀 Just missed offers on the board; they stay 👀 Watch records (no money). true brings the offers back */
 const RING={pLo:0.50, pHi:0.75, evLo:0.04, evHi:0.12, room:0.025, freshMs:10*60e3, leg:0.70};   // v4.50: the ◎ PERFECTA checks, and the 🎟 parlay-leg chance   // v4.51: legEv, and the six checks are frozen as they are (ChatGPT, 11/10: "freeze whichever rule you choose before seeing results")
 /* v4.53 (owner, 11/10, passing on ChatGPT's "Yes—build it"): ONE number for every actionable decision. La Contadora's EV (r.actNet: the EV at the
    conservative chance okProb = min(model, market + mWeight × (model − market)), after the book's fee) drives the floor, OK up to, the stake, the Math
@@ -3045,12 +3071,13 @@ let betMode='safe';
 const CONTADORA={safe:'', boring:'<b>La Contadora:</b> "75% or better: High Cover and Heavy Favorite. They win often, pay little, and one loss eats several wins."', volado:'<b>La Contadora:</b> "50 to 60%: On the Line and Slight Lean. Close to a coin toss; the edge is real, any one can lose."',   /* v4.76 */
   lucky:'<b>La Contadora:</b> "45 to 50%: the Coin Flips I say YES to. The ones that just missed my floor are a NO, so they are not offered: 👀 Watch keeps their record."',   // v4.50   // v4.78: + the Coin Flips   // v4.80: near-misses not offered (option A)
   luckyNM:'<b>La Contadora:</b> "45 to 50%: the Coin Flips I say YES to. And a few that just missed: NO, the smallest bet if you want them. Five a day, not more."',   // v4.80: the words when EXTRAS.nearMiss is on again
-  clair:'<b>La Contadora:</b> "Two of these, maybe three. Not thirty-six." · $1 each · back to Machín at midnight',
+  clair:'<b>La Contadora:</b> "Under 45%: the long shots I say YES to. Hail Marys are not offered as bets: 👀 Watch keeps them in view." · back to Machín at midnight',   /* v5.13 (owner: no daily Suertudo/Brujo bets) */
+  clairHM:'<b>La Contadora:</b> "Two of these, maybe three. Not thirty-six." · $1 each · back to Machín at midnight',   /* v5.13: the words when EXTRAS.hailBets is on again */
   old:'<b>La Contadora:</b> "These prices are more than 12 hours old. My YES was for those prices, not today’s, and the 🍀 Just missed and 🔮 Hail Mary cards never had it. Check each one first: send the Sentinels, reload the board or paste it again, and the fresh ones go back to their tabs."',
   awol:'<b>La Contadora:</b> "The book could not find these on its last check: no market at your line, not listed, or nobody selling. My YES was for a price that may not be there now. Look at the book first: there at your price or better, it is still a YES. A 🦑 Sentinels press that finds one sends it back to its tab."'};   // v4.77   /* v4.81: + AWOL */   // v4.79 (Los Chismosos): the 🍀 and 🔮 cards listed here are NO or long shots
 function paintModes(){ document.querySelectorAll('#modeBar button').forEach(b=>b.classList.toggle('on', b.dataset.mode===betMode));
   const c=document.getElementById('contadora'); if(c) c.innerHTML=contadoraText(betMode); }
-function contadoraText(m){ return (m==='lucky' && EXTRAS.nearMiss ? CONTADORA.luckyNM : CONTADORA[m])||''; }   /* v4.80: 🍀 follows EXTRAS.nearMiss */
+function contadoraText(m){ return (m==='lucky' && EXTRAS.nearMiss ? CONTADORA.luckyNM : m==='clair' && EXTRAS.hailBets /* v5.13 */ ? CONTADORA.clairHM : CONTADORA[m])||''; }   /* v4.80: 🍀 follows EXTRAS.nearMiss */   /* v5.13: 🔮 follows EXTRAS.hailBets */
 function setMode(m){ betMode=MODES[m]?m:'safe';
   try{ localStorage.setItem('mbev.mode',JSON.stringify({mode:betMode, day:new Date().toLocaleDateString('en-CA',{timeZone:'America/Chicago'})})); }catch(e){}
   paintModes(); refresh(); }
@@ -3379,7 +3406,7 @@ function auditCore(rows,cfg){
       if(r.noMkt){ if(s>cfg.sMin+1e-9){ r.capBy='modelonly'; r.capAudit.push('model-only minimum'); } s = Math.min(s, cfg.sMin); }   // v3.12   /* v5.01: + the cap label */
       // v2.65: long shots are off unless you're in Clairvoyant mode — and then they're small
       // v4.50: a long shot is never a best bet; in Clairvoyant it is a 🔮 Hail Mary, in its own group ($1, extrasAssign)
-      if(isLongShot(r)){ r.longShot=true; s=0; r.flags.push(['warn','long shot — only in 🔮 Brujo, as a Hail Mary']); }
+      if(isLongShot(r)){ r.longShot=true; s=0; r.flags.push(['warn',EXTRAS.hailBets?'long shot — only in 🔮 Brujo, as a Hail Mary':'long shot — only in 🔮 Brujo, to watch: not offered as a bet' /* v5.13 */]); }
       // v2.52: an outlier that's ALSO below the market price is a skip — except a few small "risk bets"
       // a day (picked after the loop), and only when it's close to the market
       if(r.outlier && r.mktNet!=null && r.mktNet<=0){
@@ -3657,6 +3684,7 @@ function extrasAssign(rows,cfg,slateDay){
       if(L){ const d=rowDay(r,slateDay), g=L.gk(d,r.game); if((L.used[d]||0)>=LSML.day || (L.inGame[g]||0)>=LSML.game){ r.xCap=1; if((U[r.xc][d]||0)>=(r.xc==='lucky'?EXTRAS.luckyDay:EXTRAS.hailDay)) r.xCapDay=1; /* v4.79: the day count is used too */ r.xWhy='LONG-SHOT ML: '+LSML.day+' a game day and one a game, in every mode'; if(r.xc==='lucky'?cfg.lucky:cfg.hail) r.flags.push(['warn',r.xWhy]); return; }
         r._lsmlTake=()=>{ L.used[d]=(L.used[d]||0)+1; L.inGame[g]=(L.inGame[g]||0)+1; r.lsmlN=L.used[d]; }; } }
     if(r.xc==='lucky' && !EXTRAS.nearMiss) return;   /* v4.80 (owner: option A): a near-miss is not offered; it stays a 👀 Watch row */
+    if(r.xc==='hail' && !EXTRAS.hailBets) return;   /* v5.13 (owner: no daily Suertudo/Brujo bets): a Hail Mary is not offered; it stays a 👀 Watch row in 🔮 Brujo (no stake, no daily count) */
     const on=r.xc==='lucky'?cfg.lucky:cfg.hail;   /* v4.51: its own mode is open. The offer is worked out whatever the mode (r.xFit, the number on its mode button); it is given (r.tier) only there */
     const day=rowDay(r,slateDay), used=U[r.xc][day]||0, cap=r.xc==='lucky'?EXTRAS.luckyDay:EXTRAS.hailDay;
     if(used>=cap){ r.xCap=1; r.xCapDay=1; /* v4.79: the day count itself ("No more today" reads this, not the long-shot ML allowance) */ if(on){ r.xWhy=(r.xc==='lucky'?'🍀 Just missed':'🔮 Hail Marys')+': '+cap+' a day, and you have '+used+' on '+dayLabel(day)+'\'s games'; r.flags.push(['warn',r.xWhy]); } return; }
@@ -3714,6 +3742,11 @@ function listedOf(r){ const board=/^(api:|paste)/.test(String(r && r.src || ''))
   const seen=rowSeenAt(r), age=seen ? Date.now()-seen : 0, awol=(r.awol && LIVE_BOOK(r.awol.book)===LIVE_BOOK(r.book)) || (r.exClosed && (!r.exClosedBook || LIVE_BOOK(r.exClosedBook)===LIVE_BOOK(r.book)));
   return {tab:tabOfChance(a), status, classification: tier==='hail' ? 'hail_mary' : tier==='lucky' ? 'near_miss' : (status==='approved' && a!=null && a<0.45-1e-9) ? 'approved_longshot' : null,
     availability: awol ? 'awol' : age>OLD_PRICE.ms ? 'old_price' : 'live' /* v4.86 review: read on the row itself, also for a bet you hold at another line */, riskPolicy: r.lsmlN ? 'longshot_ml_v1' : undefined, policy:'tabs-v476'}; }
+/* v5.13 (Las Karens 11/15, item 6): your own bet (typed, a book fill or imported: betOwn) that had no fair price when it was saved: no model chance, no fair odds and
+   no La Contadora chance in its record. New ones typed in + Add a bet are saved as NO FAIR PRICE; older ones were saved as SKIP and are read the same way here
+   (display only: the saved record is not rewritten). Never a parlay. Hoisted: dayStats reads it. */
+function saidUnpriced(b){ const S=b && b.snap, s=S && S.said; if(!s || b.kind==='parlay') return false; if(s.unpriced || s.decision==='NO FAIR PRICE') return true;
+  return s.decision==='SKIP' && betOwn(b) && S.model==null && S.act==null && !b.fair; }
 function betOwn(b){ const L=b && b.snap && b.snap.listed; return L ? L.status==='own' : !!(b && (b.manual || b.autoFrom || b.imported || b.made)); }   /* older bets: typed, a book fill or imported */
 function inScorecard(b){ return !!(b && b.kind!=='parlay' && !b.research && !b.tier && !b.gapRes); }   /* the same population as scoreSet */
 function inScorecardTxt(b){ return b.kind==='parlay' ? '' : !inScorecard(b) ? 'no' : b.free ? 'CLV only (free bet)' : 'yes'; }
@@ -3938,7 +3971,7 @@ function renderCore(rows,cfg){
   const tb=document.getElementById('tbody'), empty=document.getElementById('emptyMsg');
   tb.innerHTML='';
   const passing=rows.filter(r=>r.pass);
-  let shown=(showRejects||boardView==='skip'||boardView==='legs')?rows.slice():passing.concat(rows.filter(x=>(x.watch||x.tier||x.xFit||(x.prior&&x.prior.tier)) && passing.indexOf(x)<0));   /* v4.50: the mode's extras are listed too; Parlay legs lists every 70%+ prop, passing or not */   /* v4.51: + the other modes' offers (r.xFit), only to count them for the mode buttons; the mode filter below takes them out again. + a 🍀 or 🔮 bet you hold (prior.tier), so it shows as ALREADY BET in its mode even when its row fails a screen (a Hail Mary usually does) */   // v4.34: Skipped also lists the rejected rows   // v4.43: Watch rows are always listed (their own group)
+  let shown=(showRejects||boardView==='skip'||boardView==='legs')?rows.slice():passing.concat(rows.filter(x=>(x.watch||x.tier||x.xFit||(x.prior&&x.prior.tier)||(x.xc==='hail' && !EXTRAS.hailBets) /* v5.13: a long shot not offered is still listed in 🔮 Brujo, as 👀 Watch */) && passing.indexOf(x)<0));   /* v4.50: the mode's extras are listed too; Parlay legs lists every 70%+ prop, passing or not */   /* v4.51: + the other modes' offers (r.xFit), only to count them for the mode buttons; the mode filter below takes them out again. + a 🍀 or 🔮 bet you hold (prior.tier), so it shows as ALREADY BET in its mode even when its row fails a screen (a Hail Mary usually does) */   // v4.34: Skipped also lists the rejected rows   // v4.43: Watch rows are always listed (their own group)
   const isStarted=r=>{ const s=liveState(r); return s==='started'||s==='closed'; };   /* v4.81: a closed market keeps its v2.97 rule (no money, this group); its tab is 👻 AWOL (rowAwol) */
   // v2.86: two boards from one audit — ALREADY BET, one-per-player, game caps and the daily max are shared
   const pv=boardSrc==='paste';
@@ -3971,15 +4004,15 @@ function renderCore(rows,cfg){
   if(!pv && swc.only) shown=shown.filter(r=>r.tier || r.xFit || (r.prior&&r.prior.tier) || isSweet(r,swc));   // v4.50: Only sweet spot narrows the best bets; a mode's extras keep their own groups
   // v2.62: three groups — bets to place, bets you already have, then everything to skip.
   // Your sort (or a column-header click) applies inside each group.
-  const grpOf=x=> (x.prior||x.waitOrder) ? 1 : isStarted(x) ? 3 : liveState(x)==='unconfirmed' ? 4 : (x.pass && (x.stake>0 || !!x.hold /* v4.83: AWOL / Old at $0, still listed in their tab */) && !x.removed) ? 0 : x.tier==='lucky' ? 6 : x.tier==='hail' ? 7 : x.watch ? 5 : 2;   // v4.43: 5 = Watch   // v4.50: 6 = Just missed, 7 = Hail Marys
+  const grpOf=x=> (x.prior||x.waitOrder) ? 1 : isStarted(x) ? 3 : liveState(x)==='unconfirmed' ? 4 : (x.pass && (x.stake>0 || !!x.hold /* v4.83: AWOL / Old at $0, still listed in their tab */) && !x.removed) ? 0 : x.tier==='lucky' ? 6 : x.tier==='hail' ? 7 : (x.watch || (x.xc==='hail' && !EXTRAS.hailBets) /* v5.13: a Hail Mary not offered is a 👀 Watch row */) ? 5 : 2;   // v4.43: 5 = Watch   // v4.50: 6 = Just missed, 7 = Hail Marys
   const GRP_RANK=[0,3,5,6,7,4,1,2];   // v4.43: Place these, Already bet, Watch, Skip, Started, Can't confirm   // v4.50: Just missed and Hail Marys right after Place these
   /* v4.51 (owner: "they aren't supposed to be under the same either - show on Safe, Feeling Lucky, etc. only where they fit"): a mode lists only its
      own rows (modeFamOf): Safe the best bets, Feeling Lucky the ones that just missed, Clairvoyant the Hail Marys; a bet you hold stays where you took
      it. The number on each mode button is counted here, under the same sport, search, Settings and book-chip filters, so it is what you see there. */
   const mN={safe:0, lucky:0, hail:0, boring:0, volado:0, old:0, awol:0, xL:0, xH:0, all:rows.filter(r=>pv?isPasteRow(r):!isPasteRow(r)).length};
   { const cOn=new Set(boardBooks); shown.forEach(r=>{ if(cOn.size && !cOn.has(bookLabel(r.book)||'?')) return; const f=modeFamOf(r); if(f==='old' || f==='awol' /* v4.81 */){ if(r.xFit==='lucky' || r.xFit==='hail' || grpOf(r)===0) mN[f]++; } else if(r.xFit==='lucky' || r.xFit==='hail'){ mN[r.xFit]++; mN[r.xFit==='lucky'?'xL':'xH']++; } else if(grpOf(r)===0) mN[f]++; /* v4.77: an old card counts under ⏱ only; xL and xH count the extras alone (Suertudo also lists approved Coin Flips) */ });   /* v4.76: each tab counts its own */   /* v4.74: an approved long shot counts under Clairvoyant */
-    const full=k=>!mN[k==='lucky'?'xL':'xH'] /* v4.78: the extras alone */ && rows.some(r=>r.xc===k && r.xCapDay /* v4.79 (Los Chismosos): the day count, not the long-shot ML allowance */ && !r.hiddenDup && (pv?isPasteRow(r):!isPasteRow(r))); mN.fullL=full('lucky'); mN.fullH=full('hail');
-    mN.lsmlH=!mN.xH && !mN.fullH && rows.some(r=>r.xc==='hail' && r.xCap && !r.xCapDay && /^LONG-SHOT ML/.test(r.xWhy||'') && !r.hiddenDup && (pv?isPasteRow(r):!isPasteRow(r))); }   /* v4.80 (Los Chismosos): held back only by the long-shot moneyline limit: say so */   // candidates on the board, none offered: the day's count is used
+    const full=k=>!mN[k==='lucky'?'xL':'xH'] /* v4.78: the extras alone */ && rows.some(r=>r.xc===k && r.xCapDay /* v4.79 (Los Chismosos): the day count, not the long-shot ML allowance */ && !r.hiddenDup && (pv?isPasteRow(r):!isPasteRow(r))); mN.fullL=full('lucky'); mN.fullH=EXTRAS.hailBets && full('hail') /* v5.13: no daily count when Hail Marys are not offered */;
+    mN.lsmlH=EXTRAS.hailBets /* v5.13 */ && !mN.xH && !mN.fullH && rows.some(r=>r.xc==='hail' && r.xCap && !r.xCapDay && /^LONG-SHOT ML/.test(r.xWhy||'') && !r.hiddenDup && (pv?isPasteRow(r):!isPasteRow(r))); }   /* v4.80 (Los Chismosos): held back only by the long-shot moneyline limit: say so */   // candidates on the board, none offered: the day's count is used
   rows.forEach(r=>{ if(r) r._old=rowOld(r); });
   try{ const cOn=new Set(boardBooks), sig=JSON.stringify([!!pv, filterSport||'', filterPlayer||'', activeSettingsFilters(), !!filterCorrOnly, !!swc.only, !!(cfg&&cfg.hideStarted), boardBooks.slice().sort()]);
     perfNotifyCheck(shown.filter(x=>x && grpOf(x)===0 && x.ring && x.ring.n===x.ring.of && !rowAwol(x) && !rowOld(x) && (!cOn.size || cOn.has(bookLabel(x.book)||'?'))), pv, sig); }catch(e){}   /* v4.83 (agreed with Sally): only what Show › ◎ Perfectas would list under your filters and book chips */   /* v4.81: never an AWOL or old card; which board */   /* v4.80: 🔔 a new ◎ Perfecta, once each */   /* v4.78: what each row was at this draw (ringRecheck moves a card that turns 12 hours old) */
@@ -4066,7 +4099,7 @@ function renderCore(rows,cfg){
   lastShown=shown;
   renderTodayLine();
   const rb=document.getElementById('refreshApi'); if(rb) rb.disabled=!lastRows.some(x=>String(x.src||'').startsWith('api:'));
-  const GROUP_NAMES=['Place these','Already bet','Skip','Started, over or closed — can\'t bet','Can\'t confirm — check the app','Watch · the model likes these, the edge with the market is too small: not placed','🍀 Just missed · La Contadora: NO, just under your floor · optional: the smallest bet each, up to '+EXTRAS.luckyDay+' a day' /* v4.76 */,'🔮 Hail Marys · long shots, math edge or not: $'+EXTRAS.hailEach+' each, up to '+EXTRAS.hailDay+' a day'];   // v4.43   // v4.50
+  const GROUP_NAMES=['Place these','Already bet','Skip','Started, over or closed — can\'t bet','Can\'t confirm — check the app',(famNow==='hail' && !EXTRAS.hailBets ? '👀 Watch · long shots, not offered as bets: La Contadora only offers the bets she approves' /* v5.13 (owner: no daily Suertudo/Brujo bets) */ : 'Watch · the model likes these, the edge with the market is too small: not placed'),'🍀 Just missed · La Contadora: NO, just under your floor · optional: the smallest bet each, up to '+EXTRAS.luckyDay+' a day' /* v4.76 */,'🔮 Hail Marys · long shots, math edge or not: $'+EXTRAS.hailEach+' each, up to '+EXTRAS.hailDay+' a day'];   // v4.43   // v4.50
   const groupCount=[0,0,0,0,0,0,0,0]; shown.forEach(r=>groupCount[grpOf(r)]++);
   let lastGroup=-1;
   const cardsOn=boardCardsOn(), cardsHtml=[], luckyHtml=[], hailRows=[];   // v2.69   // v4.50: the extras have their own card groups
@@ -4632,7 +4665,7 @@ function lcRender(){ const cal=document.getElementById('lcCal'); if(!cal) return
     tile('Bets',x.n)+tile('Staked','$'+x.staked.toFixed(2))+tile('Settled profit',x.settled?lcUsd(x.profit):'—',x.settled?(x.profit>0.005?'pl-up':x.profit<-0.005?'pl-down':'')+dClsR(x.profit,0.01):'lc-grey')+ /* v5.04: ▲/▼ on the day’s settled profit */
     tile('▶ In play','$'+(x.playingAmt||0).toFixed(2),'lc-grey')+tile('⏳ To play','$'+(x.toPlayAmt||0).toFixed(2),'lc-grey')+tile('Open bets',x.open,'lc-grey')
     : tile('Bets',0)+tile('Staked','$0.00');
-  const used=logged.filter(b=>!b.sold && gameDayOf(b)===lcDay && poolOf(b)==='proj').reduce((a,b)=>a+(+b.stake||0),0) /* v5.00 (Karens: $12.50 here vs $10.50 in + Add a bet): parlays stay out of the daily max, as everywhere (poolOf, v2.73) */, mx=+cfg.dayMax||0, bar=document.getElementById('lcMax'); void ds;
+  const used=ds?(+ds.staked||0):0 /* v5.13 (Las Karens 11/15, item 4): exactly what the Hard stop counts (dayStats().staked of the game day): every bet of the day, parlay and pick’em entries and sold bets included, a free bet or free entry at $0. Before, parlays and sold bets were left out and a free bet counted ($45.00 shown with $65.01 staked) */ /* v5.00 (Karens: $12.50 here vs $10.50 in + Add a bet): parlays stay out of the daily max, as everywhere (poolOf, v2.73) */, mx=+cfg.dayMax||0, bar=document.getElementById('lcMax');
   document.getElementById('lcMaxL').innerHTML=mx>0?'<b>$'+used.toFixed(2)+'</b> of your $'+mx.toFixed(2)+' daily max'+(used>=mx-1e-9?' · <b>reached</b>':' · $'+(mx-used).toFixed(2)+' left'):'Daily max is off (Settings › Stakes)';
   bar.hidden=!(mx>0); bar.max=mx>0?mx:1; bar.value=Math.min(used,mx>0?mx:1);
   const B=lcBands(lcDay); document.getElementById('lcBandSub').textContent=B.n?'· '+B.n+' pick'+(B.n===1?'':'s')+(logged.some(b=>b.kind==='parlay' && gameDayOf(b)===lcDay)?' (each parlay leg counted as a pick; Reports counts tickets)':''):'';   /* v5.00 (Karens: calendar and Reports band counts differ) */
@@ -5363,6 +5396,7 @@ function openBetEditor(tr, r, opt){
     const out=ed.querySelector('.eb-calc'); const pr=pmMode()?pmPrice():null;
     if(!pr){ out.textContent=''; return; }
     let t='= '+fmtOdds(Math.round(americanOf(pr.prob)));
+    if(!pr.allIn){ const x=paidOddsOf({book:bookSel.value, odds:fmtOdds(Math.round(americanOf(pr.prob))), stake:pr.cost, fee:feeRate(bookSel.value, pr.prob, cfgRead().fees, liveG())}); if(x) t='= '+x.txt+' paid'; }   // v5.13 (Las Karens 11/15): the price paid, fee included, as Save books it (40¢ + fee = +140), not the +150 of the 40¢ alone
     if(pr.allIn && pr.listed!=null){ const cut=(pr.prob-pr.listed)*100;
       t+=' real · slip '+(pr.listed*100).toFixed(1)+'% → you pay '+(pr.prob*100).toFixed(1)+'%'+(Math.abs(cut)>=0.05?' ('+(cut>0?'the book keeps '+cut.toFixed(1):'bonus '+(-cut).toFixed(1))+' pts)':' (no cut)')+(Math.abs(cut)>5?' ⚠ that far from the slip\'s % is usually a typo — check Cost and To win':''); }
     else if(pr.allIn) t+=' real (from Cost and To win'+(pr.read==='profit'?', read as profit':'')+')';
@@ -5591,6 +5625,7 @@ function openBetEditor(tr, r, opt){
     if(pmMode() && ed._slip) extra.slip=ed._slip;   // v3.17: what the slip said (listed %, real price) — teaches each book's real cut
     // v2.63: what the screener said about the row you clicked (before your own stake/odds replace it)
     extra.said=saidOf(r);
+    if(extra.said && extra.said.decision==='SKIP' && r.src==='manual' && fairUse==null) extra.said={decision:'NO FAIR PRICE', stake:0, onList:false, unpriced:true};   // v5.13 (Las Karens 11/15, item 6): your own bet typed in + Add a bet with no fair price to judge it ("Can’t judge it yet") is saved as not priced, not as the screener’s SKIP
     if(extra.said){
       if(v) extra.said.check=v.level;                      // the "worth it?" check when you saved
       if(v && v.level==='bad') extra.said.onList=false;    // saved against a red flag = not on the list
@@ -5688,6 +5723,7 @@ function decisionHtml(r,cfg){
   if(r.prior) return r.prior.sold ? d('dec-done','SOLD','cashed out')
     : dl('dec-done','ALREADY BET', [$(r.prior.stake||0)+' on', esc(bookLabel(r.prior.book)||'?')]);
   if(r.tier){ const x=extraLine(r); return dl('dec-lim', (r.tier==='lucky'?'🍀 JUST MISSED ':'🔮 HAIL MARY ')+$(+r.xStake||0), (r.tier==='lucky'?[esc(x.short)]:[esc(x.short), 'your call, not the math’s']) /* v4.76: the NO line says it all */); }   // v4.50
+  if(r.xc==='hail' && !EXTRAS.hailBets) return dl('dec-skip','👀 WATCH', ['long shot · not offered as a bet', 'log it yourself: + Add a bet']);   /* v5.13 (owner: no daily Suertudo/Brujo bets): no stake, no daily count */
   if(r.xWhy) return d('dec-skip','SKIP', esc(r.xWhy));   // v4.50: an extra past its daily count
   if(!r.pass && r.gapRes) return dl('dec-skip','RESEARCH', ['model 8+ pts above market', 'no automatic stake']);   /* v4.68 */
   if(!r.pass) return d('dec-skip','SKIP', (r.flags.find(f=>f[0]==='out')||[,''])[1]);
@@ -6438,6 +6474,7 @@ function modeEmptyText(mode,mN){ const el=modeElse(mN,mode), bv=(typeof boardVie
     : '🍀 Suertudo lists the Coin Flips La Contadora approves (45 to 50%), and none is on the board right now. The ones that just missed her floor are not offered (👀 Watch keeps their record). '+el;   /* v4.80 */
   if(mode==='awol') return '👻 AWOL lists the bets whose book could not find them on its last check, and none is on the board right now. '+el;   /* v4.81 */
   if(mode==='old') return '⏱ Old lists the bets whose price was read more than 12 hours ago, and none is on the board right now. '+el;   /* v4.77 */
+  if(mode==='clair' && !EXTRAS.hailBets) return '🔮 Brujo lists the long shots under 45% that La Contadora approves, and none is on the board right now. Hail Marys are not offered as bets (👀 Watch only). '+el;   /* v5.13 (owner: no daily Suertudo/Brujo bets) */
   if(mode==='clair') return '🔮 Brujo lists the long shots under 45% and the Hail Marys, and '+(mN&&mN.fullH?'you have used today’s '+EXTRAS.hailDay:mN&&mN.lsmlH?'the long-shot moneyline limit is used ('+LSML.day+' a game day, one a game)' /* v4.80 */:'none is on the board right now')+'. '+el;
   if(mode==='safe' && mN && (mN.boring||mN.volado||mN.lucky||mN.hail||mN.old||mN.awol /* v4.81 */)) return '💪 Machín lists the bets La Contadora approves at 60 to 75%, and none is on the board right now. '+el;   /* v4.77: the other tabs have bets */
   return 'Every bet failed a screen. Switch on the rejects to see why each one died.'+(el?' '+el:''); }
@@ -6452,7 +6489,8 @@ function extrasCardsHtml(L,H,cfg,mN){ let h=''; const U=extrasUsed(), today=ctDa
   if((mode==='clair' && (H.length || any)) || (mode==='old' && H.length) || (mode==='awol' && H.length) /* v4.81 */){   /* v4.77 */ const used=U.hail[today]||0, G=[], by={}, q=String(filterPlayer||'').trim();
     H.forEach(x=>{ const r=x.r, gi=r.gameInfo||{}, k=(gi.eventId?'e'+gi.eventId:(r.game?gameKey(r.game):'?'))+'|'+String(gi.startISO||'').slice(0,13); if(!by[k]){ by[k]={k, r, L:[]}; G.push(by[k]); } by[k].L.push(x); });
     G.sort((a,b)=>(Date.parse((a.r.gameInfo||{}).startISO)||9e15)-(Date.parse((b.r.gameInfo||{}).startISO)||9e15));
-    h+='<div class="pc-head pc-x hail"><b>🔮 Hail Marys</b> · '+H.length+(H.length?' in '+G.length+' game'+(G.length===1?'':'s'):'')+((mode==='clair' && mN && mN.hail>H.length)?' <span class="meta">· '+(mN.hail-H.length)+' approved long shot'+(mN.hail-H.length===1?'':'s')+' above (🔮 Brujo '+mN.hail+')</span>':'') /* v4.97 (Las Karens: "Brujo says 1, the heading says 0") */+'<span class="sc-sub">'+(H.length ? 'Long shots: +'+EXTRAS.hailOdds+' or longer, and touchdown, home-run or goal scorers from +200. Listed even when the math sees no edge; each card says what the math thinks. For the one from your dream: $'+EXTRAS.hailEach+' each, up to '+EXTRAS.hailDay+' a game day'+(used?' · '+used+' used today':'')+'. Search a player or team above to find it.'+(mode==='clair'?' Back to 💪 Machín at midnight.':'')
+    const hW=!EXTRAS.hailBets && !H.length;   /* v5.13 (owner: no daily Suertudo/Brujo bets): Hail Marys are not offered: one plain line, no count, no amount */
+    h+='<div class="pc-head pc-x hail"><b>🔮 Hail Marys</b> · '+(hW?'👀 Watch only':H.length)+(H.length?' in '+G.length+' game'+(G.length===1?'':'s'):'')+((mode==='clair' && mN && mN.hail>H.length)?' <span class="meta">· '+(mN.hail-H.length)+' approved long shot'+(mN.hail-H.length===1?'':'s')+' above (🔮 Brujo '+mN.hail+')</span>':'') /* v4.97 (Las Karens: "Brujo says 1, the heading says 0") */+'<span class="sc-sub">'+(hW ? 'Not offered as bets: the app only offers the bets La Contadora approves. The long shots (+'+EXTRAS.hailOdds+' or longer, and touchdown, home-run or goal scorers from +200) are listed under 👀 Watch, with no stake. If you decide on one yourself, log it with + Add a bet.'+(mode==='clair'?' Back to 💪 Machín at midnight.':'') /* v5.13 */ : H.length ? 'Long shots: +'+EXTRAS.hailOdds+' or longer, and touchdown, home-run or goal scorers from +200. Listed even when the math sees no edge; each card says what the math thinks. For the one from your dream: $'+EXTRAS.hailEach+' each, up to '+EXTRAS.hailDay+' a game day'+(used?' · '+used+' used today':'')+'. Search a player or team above to find it.'+(mode==='clair'?' Back to 💪 Machín at midnight.':'')
       : (mN && mN.xH) ? mN.xH+' here, hidden by the Show menu: choose Show › All groups.'+(mode==='clair'?' Back to 💪 Machín at midnight.':'') : (mN && mN.fullH) ? 'No more today: '+EXTRAS.hailDay+' a game day, and you have used them.'+(mode==='clair'?' Back to 💪 Machín at midnight.':'') : (mN && mN.lsmlH) ? 'The long shots on the board are moneylines, and the long-shot moneyline limit is used: '+LSML.day+' a game day and one a game, in every mode.' /* v4.80 (Los Chismosos) */ : 'No long shot on the board right now (+'+EXTRAS.hailOdds+' or longer, or a touchdown, home-run or goal scorer from +200).'+(mode==='clair'?' Back to 💪 Machín at midnight.':'') /* v4.77: Machín, and only in Brujo */)+'</span></div>'+
       G.map(g=>{ const gi=g.r.gameInfo||{}, T=gi.teams||[], aw=T.find(t=>t.ha==='away'), hm=T.find(t=>t.ha==='home');
         const name=aw&&hm?(aw.loc||aw.name||aw.abbr)+' @ '+(hm.loc||hm.name||hm.abbr):(g.r.game||g.r.matchup||'game');
@@ -6469,7 +6507,7 @@ function modeCountsPaint(rows,mN){ mN=mN||{safe:0, lucky:0, hail:0, boring:0, vo
   set('volado', mN.volado||0, 'Slight Lean and On the Line: bets La Contadora approves at 50 to 60% ('+(mN.volado||0)+' now).');
   set('safe', mN.safe, 'Strong, Solid and Lean: bets La Contadora approves at 60 to 75% ('+mN.safe+' to place now).');
   set('lucky', mN.lucky, EXTRAS.nearMiss ? 'Coin Flip (45 to 50%) and the bets that just missed her floor ('+mN.lucky+' now; the near-misses at the smallest bet, up to '+EXTRAS.luckyDay+' a day).' : 'Coin Flips La Contadora approves (45 to 50%): '+mN.lucky+' now. The ones that just missed her floor are not offered (👀 Watch).');   /* v4.81 (Los Chismosos) */
-  set('clair', mN.hail, 'Unlikely (under 45%) and Hail Marys: long shots ('+mN.hail+' now). Back to Machín at midnight.');
+  set('clair', mN.hail, EXTRAS.hailBets ? 'Unlikely (under 45%) and Hail Marys: long shots ('+mN.hail+' now). Back to Machín at midnight.' : 'Unlikely: long shots under 45% that La Contadora approves ('+mN.hail+' now). Hail Marys are not offered as bets (👀 Watch only). Back to Machín at midnight.');   /* v5.13 (owner: no daily Suertudo/Brujo bets) */
   set('old', mN.old||0, 'Prices read more than 12 hours ago, from any tab ('+(mN.old||0)+' now). Check each price first: a Sentinels press, a reload or a new paste that reads it fresh sends it back to its tab.');   /* v4.77 */
   set('awol', mN.awol||0, 'Bets whose book could not find them on its last check ('+(mN.awol||0)+' now): no market at your line, not listed, game not found or nobody selling. A Sentinels press that finds one sends it back to its tab.');   /* v4.81 */
   try{ planTabsPaint(); }catch(e){}   /* v5.10: “· outside your plan” on the tabs under My plan (after the counts) */
@@ -6477,6 +6515,7 @@ function modeCountsPaint(rows,mN){ mN=mN||{safe:0, lucky:0, hail:0, boring:0, vo
   const U=extrasUsed(), today=ctDay(Date.now()), uL=U.lucky[today]||0, uH=U.hail[today]||0, el=modeElse(mN,betMode);
   c.innerHTML=contadoraText(betMode) /* v4.80 */+' <span class="mode-info">· '+(betMode==='lucky'
       ? (!EXTRAS.nearMiss ? '🍀 '+(mN.lucky?mN.lucky+' Coin Flip'+(mN.lucky===1?'':'s')+' on the board':'no Coin Flip right now')+' · near-misses: 👀 Watch only' /* v4.80 */ : '🍀 '+(mN.xL?mN.xL+' just missed on the board' /* v4.77: the near-misses only */:mN.fullL?'no more today ('+EXTRAS.luckyDay+' a day)':'none just missed right now')+(uL?', '+uL+' of '+EXTRAS.luckyDay+' used today':''))
+      : !EXTRAS.hailBets ? '🔮 '+(mN.hail?mN.hail+' approved long shot'+(mN.hail===1?'':'s')+' on the board':'no approved long shot right now')+' · Hail Marys: 👀 Watch only' /* v5.13 (owner: no daily Suertudo/Brujo bets) */
       : '🔮 '+(mN.xH?mN.xH+' Hail Mary'+(mN.xH===1?'':'s')+' on the board' /* v4.77: the Hail Marys only */:mN.fullH?'no more today ('+EXTRAS.hailDay+' a day)':mN.lsmlH?'long-shot moneyline limit used ('+LSML.day+' a game day, one a game)' /* v4.80 */:'no Hail Marys right now')+(uH?', '+uH+' of '+EXTRAS.hailDay+' used today':''))+
     (el && mN.all?' · '+esc(el):'')+'</span>'; }
 function playerBetLabel(L){ const sd=L&&(L.side||sideOf(L)); return [String((L&&L.name)||'').trim().split(/\s+/).slice(-1)[0], sd==='O'?'Over':sd==='U'?'Under':'', String((L&&L.market)||'').trim()].filter(Boolean).join(' '); }
@@ -6631,10 +6670,10 @@ function renderLog(){ setTimeout(()=>{ try{ csvDays(); }catch(e){} try{ lcRender
     }
     tr.innerHTML=
       '<td class="meta" style="white-space:nowrap">'+esc(b.date)+'<div class="meta">bet '+esc(betTimeTxt(b))+'</div>'+(b.start?'':'<div class="meta" style="color:var(--warn)">game time unknown</div>')+playedHtml(b)+whyHtml(b)+'</td>'+
-      '<td><div class="c-who">'+avatarHtml(b,'b:'+i)+'<div><div class="pick">'+esc(b.name)+'</div><div class="meta" style="color:var(--ink)" title="'+esc(b.betnow||'')+'">'+esc(betLabel(b))+' <span class="meta">'+esc(fmtOdds(b.odds))+'</span></div>'+srcTagHtml(b)+logBandChip(b)+lsmlChip(b)+(b.free?' <span class="tag eb-freetag" title="Free bet: not your money. A loss costs $0.">🎁 free bet</span>':'')+(b.paidReal?' <span class="meta" title="The winnings you typed: what the book really paid">paid as typed</span>':'')+(b.lostAmt>=0&&b.result==="loss"?' <span class="meta">lost $'+(+b.lostAmt).toFixed(2)+' (typed)</span>':'')+liveChipHtml(b)+fillDiffHtml(b,i)+nvFillNote(b)+
+      '<td><div class="c-who">'+avatarHtml(b,'b:'+i)+'<div><div class="pick">'+esc(b.name)+'</div><div class="meta" style="color:var(--ink)" title="'+esc(b.betnow||'')+'">'+esc(betLabel(b))+' <span class="meta">'+esc(oddsShownTxt(b)) /* v5.13: the price paid, fee included */+'</span></div>'+srcTagHtml(b)+logBandChip(b)+lsmlChip(b)+(b.free?' <span class="tag eb-freetag" title="Free bet: not your money. A loss costs $0.">🎁 free bet</span>':'')+(b.paidReal?' <span class="meta" title="The winnings you typed: what the book really paid">paid as typed</span>':'')+(b.lostAmt>=0&&b.result==="loss"?' <span class="meta">lost $'+(+b.lostAmt).toFixed(2)+' (typed)</span>':'')+liveChipHtml(b)+fillDiffHtml(b,i)+nvFillNote(b)+
       '<div class="meta">'+(bookLogo(b.book)||isPredBook(b.book)?logoTag(b.book,'sm')+' ':'')+'<span class="book">'+esc(bookLabel(b.book))+'</span></div>'+lgTwHtml(b)+'</div></div></td>'+   /* v5.10: an open single shows to win · total */   // v3.57: PREDICTS tag on prediction apps without a logo too (FanDuel Predicts); a picture
       '<td><span class="sport s-'+esc(b.sport)+'">'+esc(b.sport)+'</span></td>'+
-      '<td class="num">'+esc(fmtOdds(b.odds))+'</td>'+
+      '<td class="num">'+oddsShownHtml(b)+'</td>'+   /* v5.13 (Las Karens 11/15): the price paid, fee included, and under it the listed price + fee (40¢ + fee) */
       '<td class="num">'+esc(fmtOdds(b.fair))+'</td>'+
       '<td class="num">'+(b.snap&&b.snap.actNet!=null?'<span title="La Contadora’s EV when you took it">'+pct(b.snap.actNet)+'</span>'+(b.net!=null&&Math.abs(b.net-b.snap.actNet)>=0.0005?'<div class="meta" title="The model’s own EV">model '+pct(b.net)+'</div>':''):(b.net!=null?'<span title="The model’s EV (bets before v4.53 did not save La Contadora’s)">'+pct(b.net)+'</span>':'—'))+'</td>'+   /* v4.53 */
       '<td class="num"><input class="stake-in" aria-label="Stake" type="number" step="0.01" min="0" data-i="'+i+'" value="'+(b.stake||0).toFixed(2)+'" style="width:60px"></td>'+
@@ -6781,6 +6820,17 @@ function gameDayOf(b){
   return (sd && (!b.date || sd>b.date)) ? sd : (b.date || '');
 }
 function betFeeOf(b){ const f=(b && b.fee!=null) ? +b.fee : (b && b.snap && b.snap.fee!=null) ? +b.snap.fee : 0; return isFinite(f) ? f : 0; }   // v5.11 (bug): the fee rate on top of the price (stake = cost × (1 + fee)): the one Bet log › edit saved (b.fee), else the one saved with the bet (snap.fee: addToLog writes the fee only there); hoisted
+/* v5.13 (Las Karens 11/15, item 3; owner "Yes"): the price a bet was really paid at, fee included, the one betProfit counts a win at. A Kalshi bet of $10.00
+   at 40¢ pays its fee on top (0.07 × (1 − 0.40) = 4.2% of the cost), so a win is $10 × (2.5 − 1 − 0.042) ÷ 1.042 = +$13.99: +140, not the +150 the 40¢ alone
+   reads. Display only: the saved odds, the fee and every profit are as before. paidOddsOf: null when no fee was paid (a sportsbook, Novig, a fee of 0) or
+   the price is unknown; with a To win typed the price is stake ÷ (stake + To win), as betProfit counts it. Hoisted: the Bet log, Reports and the bet form call it. */
+function paidOddsOf(b){ if(!b || b.kind==='parlay') return null; const fee=betFeeOf(b), p=toProb(b.odds); if(!(fee>1e-9) || p==null || !(p>0 && p<1)) return null;
+  const st=+b.stake||0, q=(b.towin>0 && st>0) ? st/(st+(+b.towin)) : p*(1+fee); if(!(q>0 && q<1)) return null;
+  const am=fmtOdds(Math.round(americanOf(q))), listed=(()=>{ try{ return PM_BOOK.test(String(b.book||'')); }catch(e){ return false; } })() ? String(+(p*100).toFixed(1))+'¢' : fmtOdds(b.odds);
+  return {odds:am, listed, fee, q, txt:listed+' + fee = '+am}; }
+function oddsShownTxt(b){ const x=paidOddsOf(b); return x ? x.odds : fmtOdds(b && b.odds); }   /* the price shown for a bet: the one paid */
+function oddsShownHtml(b){ const x=paidOddsOf(b); if(!x) return esc(fmtOdds(b && b.odds));
+  return '<span title="The price you paid, fee included: '+esc(x.txt)+'. A win pays at this price.">'+esc(x.odds)+'</span><div class="meta odds-paid">'+esc(x.listed)+' + fee</div>'; }
 function betProfit(b){
   const st=b.free?0:(+b.stake||0);   // v3.98: a free bet (bonus bet) is not your money: it costs nothing when it loses, and a win is the winnings only
   if(b.kind==='parlay'){ const stR=+b.stake||0, pay=b.parlay&&b.parlay.payout;   // v4.03: a free parlay that wins pays its winnings (payout − stake: the stake does not come back); one that misses costs nothing
@@ -6803,7 +6853,7 @@ function betProfit(b){
    has not started I can get out of for a small loss"): locked in = settled, sold, or its game has started (a typed game
    with no time: its day has passed). Everything else is "not started": still yours to get out of. */
 function betLocked(b){ if(b.sold || betProfit(b)!=null) return true; const t=Date.parse(b.start); if(!isNaN(t)) return t<=Date.now(); const d=gameDayOf(b); return !!d && d<ctDay(Date.now()); }
-function blankDay(day){ return {day,bets:0,staked:0,locked:0,notStarted:0,w:0,l:0,p:0,sold:0,pend:0,profit:0,settled:0,on:0,against:0,unknown:0,cancelled:0,cancelLost:0,extra:0}; }   /* v4.50: extra = 🍀 / 🔮 bets a mode offered */
+function blankDay(day){ return {day,bets:0,staked:0,locked:0,notStarted:0,w:0,l:0,p:0,sold:0,pend:0,profit:0,settled:0,on:0,against:0,unknown:0,cancelled:0,cancelLost:0,extra:0,unpriced:0}; }   /* v5.13: unpriced = your own bets with no fair price (saidUnpriced) */   /* v4.50: extra = 🍀 / 🔮 bets a mode offered */
 function dayStats(){
   const days={};
   const at=day=>days[day]||(days[day]=blankDay(day));
@@ -6815,7 +6865,7 @@ function dayStats(){
     else if(b.result==='win') d.w++; else if(b.result==='loss') d.l++; else if(b.result==='push') d.p++; else d.pend++;
     const hv=heldValue(b); d.profit+=hv.v; if(hv.open){ d.risk=(d.risk||0)+hv.d; } else d.settled++;
     const s=b.snap&&b.snap.said;
-    if(b.kind==='parlay'){ /* v5.12 (bug): a parlay is not priced by the screener: neither with it nor against it */ } else if(!s) d.unknown++; else if(s.onList) d.on++; else if(s.tier) d.extra++; else d.against++;   // v4.50: a mode's extra is not against the screener
+    if(b.kind==='parlay'){ /* v5.12 (bug): a parlay is not priced by the screener: neither with it nor against it */ } else if(!s) d.unknown++; else if(saidUnpriced(b)) d.unpriced++; /* v5.13: your own bet with no fair price is neither with the screener nor against it */ else if(s.onList) d.on++; else if(s.tier) d.extra++; else d.against++;   // v4.50: a mode's extra is not against the screener
   });
   removedBets.forEach(b=>{ if(!(b.lost>0)) return; const d=at(gameDayOf(b)); d.cancelled++; d.cancelLost+=b.lost; d.profit-=b.lost; d.settled++; });
   return days;
@@ -6878,6 +6928,7 @@ function renderTodayLine(){
   if(d.pend) parts.push(d.pend+' pending');
   if(d.settled||d.risk) parts.push('<b class="'+(d.profit>=0?'pl-up':'pl-down')+dClsR(d.profit,0.01)+'">'+money(d.profit,true)+'</b>'+(d.risk?' <span class="meta">(on the line counted as gone)</span>':'')); /* v5.04: ▲/▼ on the day net */
   if(d.against) parts.push('<span class="pl-down">'+d.against+' against the screener</span>');
+  if(d.unpriced) parts.push('<span class="meta" title="Bets you placed yourself that had no fair price to judge them by (saved before v5.13 as SKIP)">'+d.unpriced+' of your own not priced</span>');   // v5.13 (Las Karens 11/15, item 6)
   if(d.extra) parts.push(d.extra+' 🍀🔮 extra'+(d.extra===1?'':'s'));   // v4.50
   el.innerHTML=parts.join(' · ');
 }
@@ -7823,7 +7874,7 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
   const z=x=>Math.abs(x)<0.005, up=x=>z(x)?'<span class="open">$0.00</span>':'<span class="tb-up d-up">+'+usd(x)+'</span>', dn=x=>z(x)?'<span class="open">$0.00</span>':'<span class="tb-down d-dn">−'+usd(x)+'</span>'; /* v5.04: ▲/▼ on Settled */
   const sgn=v=>v>=0?up(v):dn(-v);
   const counts=x=>'<div class="tb-l2 tb-cnt"><span title="has a result">✓ '+x.played+' played</span> <span class="live" title="game started, no result yet">▶ '+x.playing+' playing</span> <span title="game not started">⏳ '+x.toPlay+' to play</span></div>';
-  const wl=x=>'<div class="tb-l2"><span class="open">won</span> <span class="tb-up'+(z(x.won)?'':' d-up')+'" title="winnings (your stake not included)">'+usd(x.won)+'</span> <span class="open">vs lost</span> <span class="tb-down'+(z(x.lost)?'':' d-dn')+'" title="money lost">'+usd(x.lost)+'</span></div>'; /* v5.04: ▲/▼ on won and lost per book (none on $0.00) */
+  const wl=x=>'<div class="tb-l2"><span class="open">won</span> <span class="tb-up'+(z(x.won)?'':' d-up')+'" title="winnings (your stake not included)">'+(z(x.won)?'':'+')+usd(x.won)+'</span> <span class="open">profit vs lost</span> <span class="tb-down'+(z(x.lost)?'':' d-dn')+'" title="money lost">'+usd(x.lost)+'</span></div>'; /* v5.04: ▲/▼ on won and lost per book (none on $0.00) */
   const amts=x=>(x.playingAmt||x.toPlayAmt)?'<div class="tb-l2">'+(x.playingAmt?'<span class="tb-inplay" title="games playing: not won or lost yet">▶ '+usd(x.playingAmt)+' in play</span> ':'')+(x.toPlayAmt?'<span class="open" title="games not started: not counted as lost">⏳ '+usd(x.toPlayAmt)+' not started</span>':'')+'</div>':'';
   const pill=x=>'<div class="tb-l2">'+((x.played||x.cancel)?(z(x.net)?'<span class="open">even</span>':'<span class="tb-pill '+(x.net>0?'good':'bad')+dCls(x.net)+'" title="Won − lost, on bets already settled"><small>'+(x.net>0?'UP':'DOWN')+'</small> '+(x.net>0?'+':'−')+usd(x.net)+'</span>'):'')+(x.playingAmt?' <span class="tb-pill inplay" title="Games playing: not won or lost yet"><small>IN PLAY</small> '+usd(x.playingAmt)+'</span>':'')+'</div>'; /* v5.04: ▲/▼ on the per-book UP / DOWN pill */   // v4.07: UP/DOWN only for what is settled; in play in grey
   const order=RIBBON_BOOKS.concat(Object.keys(by).filter(k=>!RIBBON_BOOKS.includes(k)).sort());
@@ -7845,7 +7896,7 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
     const q=['No bets today. Your bankroll thanks you for the day off.','Nothing riding today. The sportsbooks will have to wait.','No action yet. Patience is a position too.','Zero bets, zero bad beats.'];
     el.innerHTML='<span class="tb-k"><span>'+lbl+' '+espnBtn+navBtns+'</span>'+lookChip()+'</span><span class="tb-empty">'+(isToday?esc(q[Math.floor(Date.parse(today)/864e5)%q.length]):'No bets on '+esc(dayLabel(today))+'.')+'</span>'; return; }   // v3.57: + bets to check
   const allCard='<div class="tb-t all"><div class="tb-l1"><b>All</b> <span class="open">'+tot.w+'–'+tot.l+(tot.p?'–'+tot.p:'')+'</span></div>'+
-    '<div class="tb-l2"><span class="open">✓ played</span> <b>'+usd(tot.playedAmt)+'</b> → <span class="open">won</span> <span class="tb-up'+(z(tot.won)?'':' d-up')+'">'+usd(tot.won)+'</span> <span class="open">vs lost</span> <span class="tb-down'+(z(tot.lost)?'':' d-dn')+'">'+usd(tot.lost)+'</span></div>'+ /* v5.04: ▲/▼ on All won and lost (none on $0.00) */
+    '<div class="tb-l2"><span class="open">✓ played</span> <b>'+usd(tot.playedAmt)+'</b> → <span class="open">won</span> <span class="tb-up'+(z(tot.won)?'':' d-up')+'" title="profit on the winning bets: your stake coming back is not in it">'+(z(tot.won)?'':'+')+usd(tot.won)+'</span> <span class="open">profit vs lost</span> <span class="tb-down'+(z(tot.lost)?'':' d-dn')+'">'+usd(tot.lost)+'</span></div>'+ /* v5.04: ▲/▼ on All won and lost (none on $0.00) */
     (tot.playing?'<div class="tb-l2"><span class="tb-inplay">▶ IN PLAY '+usd(tot.playingAmt)+'</span> <span class="open">not won or lost yet</span></div>':'')+   // v4.07
     (tot.toPlay?'<div class="tb-l2"><span class="open">⏳ to play '+usd(tot.toPlayAmt)+': not counted yet</span></div>':'')+
     (tot.open?'<div class="tb-l2 tb-scen" title="Settled = won − lost on bets with a result. Open upside = the profit if every open bet wins (to play and in play, at each ticket’s own payout; your stake back is not profit). In play = your own money on games started and not settled (free bets count $0).">Settled '+sgn(now)+' · Open upside <span class="tb-up'+(z(tot.toWin)?'':' d-up')+'">+'+usd(tot.toWin)+'</span> · In play <span class="tb-inplay">'+usd(tot.playingAmt)+'</span></div>':'')+ /* v5.04: ▲/▼ on Open upside */   // v4.07: worst is not a loss yet: grey   /* v5.01 (Sally, agreed): Settled · Open upside · In play (it was best · worst) */
@@ -8182,6 +8233,7 @@ function researchState(){
 function renderScorecard(){
   const el=document.getElementById('scoreBody'); if(!el) return;
   const {settled:S, withClose:C}=scoreSet(logged), n=S.length;
+  { const nt=document.getElementById('scParlayNote'); if(nt){ const P=logged.filter(b=>b && b.kind==='parlay').map(b=>betProfit(b)).filter(x=>x!=null), pp=P.reduce((t,x)=>t+x,0); nt.innerHTML='Parlays are left out of this Scorecard (it tests single bets), but <b>Results by day</b> and Reports count them'+(P.length?': your '+P.length+' settled parlay'+(P.length===1?'':'s')+' came to <b>'+money(pp,true)+'</b>, so the profit totals differ by that much (plus any Just missed, Hail Mary and research bets, also left out here).':'.'); } }   /* v5.13 (owner: Karens review): why this profit and the one in Results by day can differ; outside #scoreBody, so the Scorecard itself is byte for byte as before */
   const stage=n>=1000?'Evidence':n>=300?'Comparison':n>=100?'Directional':'Anecdotal';
   const staked=S.reduce((t,x)=>t+x._st,0), profit=S.reduce((t,x)=>t+x._pl,0), roi=staked>0?profit/staked:null;
   const ck=n+':'+C.length+':'+S.reduce((t,x)=>t+x._pl,0).toFixed(2)+':'+C.reduce((t,x)=>t+x._clv,0).toFixed(4);
@@ -9023,12 +9075,14 @@ function paintSportSelects(){
     if(def.innerHTML!==dh){ def.innerHTML=dh; def.value=dv; if(def.value!==dv){ const o=document.createElement('option'); o.value=dv; o.textContent=dv; def.appendChild(o); def.value=dv; } } }
 }
 let _sportPicked=false;
+function seasonSport(){ const m=+String(ctDay(Date.now())).slice(5,7); return (m>=9||m===1)?'NFL':m===2?'NBA':m===3?'NCAAB':'MLB'; }   // v5.13: the sport in season by the calendar (Sep to Jan NFL, Feb NBA, Mar NCAAB, Apr to Aug MLB), used only when no schedule is known
 function savedDefSport(){ try{ return (JSON.parse(localStorage.getItem('mbev.cfg')||'{}')||{}).defSport||''; }catch(e){ return ''; } }
 function pickStartSport(){
   if(_sportPicked) return; const sel=document.getElementById('apiSport'), def=document.getElementById('defSport'); if(!sel) return;
   const d=(def&&def.value)||savedDefSport();
   if(d){ if(![...sel.options].some(o=>o.value===d)) return; sel.value=d; _sportPicked=true; }
-  else { const known=allSports().filter(sp=>sportNext[sp]); if(!known.length) return; sel.value=known.sort((a,b)=>sportNext[a]-sportNext[b])[0]; _sportPicked=true; }
+  else { const known=allSports().filter(sp=>sportNext[sp]); if(!known.length){ if(!pickStartSport._fb){ pickStartSport._fb=1; const fb=seasonSport(); if([...sel.options].some(o=>o.value===fb)){ sel.value=fb; try{ toggleApiWeekFields(); }catch(e){} } } return; }   /* v5.13 (owner: Karens review): MLB was selected in November when no schedule was known (ESPN not answered yet or blocked); until a real schedule says otherwise, the sport in season by the calendar. Your Default sport in Settings still wins, and a schedule that is known still picks the soonest game. */
+    sel.value=known.sort((a,b)=>sportNext[a]-sportNext[b])[0]; _sportPicked=true; }
   try{ toggleApiWeekFields(); }catch(e){}
 }
 async function scanSportTimes(){
@@ -9547,11 +9601,11 @@ function lgLeagues(){ const m=new Map(), add=(code,name,group,key)=>{ if(code &&
   return [...m.values()]; }
 async function lgScan(){
   if(LG.busy) return; LG.busy=true; lgPaint();
-  const msg=document.getElementById('lgMsg'), now=Date.now(), rows={};
+  const msg=document.getElementById('lgMsg'), now=Date.now(), rows={}; LG.locked=false;   // v5.13
   try{
     try{ const {data}=await srcFetch('src=oddsapi_sports'); const A=Array.isArray(data)?data:((data&&data.data)||[]);   // free: every league The Odds API has in season
       LG.oa=A.filter(x=>x && x.key && x.active!==false && !/_winner$/.test(x.key)).map(x=>({key:x.key, title:x.title, group:x.group})); LG.oaNote=LG.oa.length+' leagues listed by The Odds API'; }
-    catch(e){ LG.oaNote=/have this yet/.test(e.message) ? 'league list: built in until the Worker passes The Odds API list through' : 'The Odds API list: '+e.message; }
+    catch(e){ if(/locked/.test(e.message)) LG.locked=true; LG.oaNote=/locked/.test(e.message) ? 'The Odds API: could not check: not connected' /* v5.13 */ : /have this yet/.test(e.message) ? 'league list: built in until the Worker passes The Odds API list through' : 'The Odds API list: '+e.message; }
     const L=lgLeagues(), today=ctDay(now), days=[0,1,2].map(n=>dayPlus(today,n));
     const E=L.filter(l=>ESPN_MAP[l.code]); let i=0;
     const espn=async()=>{ while(i<E.length){ const l=E[i++]; try{ const ev=[].concat(...await Promise.all(days.map(d=>fetchScoreboardDay(l.code,d))));
@@ -9563,7 +9617,7 @@ async function lgScan(){
     const oa=async()=>{ while(evOK && j<K.length){ const l=K[j++]; try{ const {data}=await srcFetch('src=oddsapi_events&sport='+encodeURIComponent(l.key)); const A=Array.isArray(data)?data:((data&&data.events)||[]);
         const T=A.map(x=>Date.parse(x.commence_time)).filter(t=>t>now-60e3 && t<now+3*864e5).sort((a,b)=>a-b), r=rows[l.code]=Object.assign(rows[l.code]||{}, {oa:T.length});
         if(T.length && !(r.next && r.next<=T[0])) r.next=T[0]; }
-      catch(e){ if(/have this yet|locked/.test(e.message)){ evOK=false; LG.evNote=/locked/.test(e.message)?'The Odds API: locked, check the passphrase':'The Odds API game list: after the Worker update'; } } } };
+      catch(e){ if(/have this yet|locked/.test(e.message)){ evOK=false; if(/locked/.test(e.message)) LG.locked=true; LG.evNote=/locked/.test(e.message)?'The Odds API: could not check: not connected (add your passphrase in Settings › Connect)' /* v5.13 */:'The Odds API game list: after the Worker update'; } } } };
     if(msg) msg.textContent='checking The Odds API…';
     await Promise.all([0,1,2,3].map(oa));
     LG.rows=rows; LG.at=Date.now(); try{ localStorage.setItem('mbev.lgScan',JSON.stringify({at:LG.at, rows, oa:LG.oa})); }catch(e){}
@@ -9586,9 +9640,9 @@ function lgPaint(){
       (l.bp?'<button type="button" class="log sm undo lg-bp" data-code="'+esc(l.code)+'" title="Uses your BettingPros calls (a load within 30 minutes is free)">BettingPros board</button>':'')+'</div></li>';
   const groups=list=>{ const G={}; list.forEach(l=>{ (G[l.group]=G[l.group]||[]).push(l); });
     return Object.keys(G).sort((a,b)=>(LG_ORDER.indexOf(a)+1||99)-(LG_ORDER.indexOf(b)+1||99)).map(g=>'<h3 class="lg-group">'+esc(g)+' <span class="meta">'+G[g].length+'</span></h3><ul class="lg-list">'+G[g].map(row).join('')+'</ul>').join(''); };
-  el.innerHTML = (!LG.at && !LG.busy ? '<div class="meta">Press Check again to ask your sources.</div>' : '')+
+  el.innerHTML = (!LG.at && !LG.busy ? '<div class="meta">Press Check again to ask your sources.</div>' : '')+(LG.locked&&LG.at?'<div class="meta lg-locked">Could not check The Odds API: not connected. Its leagues are not counted as having no games. Add your screener passphrase in Settings › Connect, then press Check again.</div>':'')+   /* v5.13 */
     (on.length ? groups(on) : (LG.at?(L.some(l=>checked(l) && ((l.x.espn||0)+(l.x.oa||0))>=0 && (l.x.espn!=null))?'<div class="meta">No league has games in the next 3 days, from what the sources said.</div>':'<div class="meta">⚠ Your sources did not answer, so this cannot tell which leagues have games. Press Check again.</div>' /* v5.00 (Karens: it said "no games" when nothing came back) */):''))+
-    (unk.length ? '<details class="lg-off"><summary>Not checked: no free schedule for these yet ('+unk.length+')</summary><ul class="lg-list">'+unk.map(row).join('')+'</ul></details>' : '')+
+    (unk.length ? '<details class="lg-off"><summary>'+(LG.locked?'Could not check: not connected (':'Not checked: no free schedule for these yet (')+unk.length+')</summary><ul class="lg-list">'+unk.map(row).join('')+'</ul></details>' : '')+
     (none.length ? '<details class="lg-off"><summary>No games in the next 3 days ('+none.length+')</summary><div class="lg-names">'+none.map(l=>esc(l.name)).join(' · ')+'</div></details>' : ''); }
 document.addEventListener('click',e=>{
   if(e.target.closest('#lgScan')){ lgScan(); return; }
@@ -9912,11 +9966,11 @@ function rgPaint(){ const el=document.getElementById('rgGrid'); if(!el) return; 
   const usd=x=>'$'+(+x).toFixed(2), od=x=>(x>0?'+':'')+x, F=c.fees||{};
   const T=(k,v,n)=>'<div class="rg-t"><span>'+esc(k)+'</span><b>'+esc(v)+'</b>'+(n?'<small>'+esc(n)+'</small>':'')+'</div>';
   el.innerHTML=
-    '<div class="rg-g"><h3>Screens</h3>'+T('Odds',od(c.oMin)+' to '+od(c.oMax))+T('Net EV floor',(c.eMin*100).toFixed(1)+'%','after fees')+T('Gross EV ceiling',(c.eMax*100).toFixed(0)+'%','higher is likely a wrong match')+T('Devig tolerance',(c.devig*100).toFixed(1)+'%')+
+    '<div class="rg-g"><h3>Screens</h3>'+T('Odds',od(c.oMin)+' to '+od(c.oMax))+T('Net EV floor',(c.eMin*100).toFixed(1)+'%','after fees')+T('Gross EV ceiling',(c.eMax*100).toFixed(0)+'%','higher is likely a wrong match')+T('Devig tolerance',(c.devig*100).toFixed(1)+'%')+T('Devig method','Multiplicative','each side’s price is divided by both sides added up ('+DEVIG_METHOD+')')+
       T('Books you bet',c.books.length?c.books.length+' books':'all books',c.books.slice(0,6).join(', ')+(c.books.length>6?'…':''))+'</div>'+
-    '<div class="rg-g"><h3>Stake sizing</h3>'+T('Bankroll',usd(c.bank))+T('Kelly',String(c.kelly),'× edge after a '+String(c.shrink)+' haircut')+T('Bets',usd(c.sMin)+' to '+usd(c.sMax))+T('Model weight',String(c.mWeight),'0 = market only, 1 = model only')+'</div>'+
+    '<div class="rg-g"><h3>Stake sizing</h3>'+T('Bankroll',usd(c.bank))+T('Kelly',String(c.kelly),'× edge after a '+String(c.shrink)+' haircut: together '+String(+((+c.kelly)*(+c.shrink)).toFixed(4))+' of full Kelly')+T('Bets',usd(c.sMin)+' to '+usd(c.sMax))+T('Model weight',String(c.mWeight),'0 = market only, 1 = model only')+'</div>'+
     '<div class="rg-g"><h3>Limits</h3>'+T('Per game',c.gameCapPct+'%',usd(c.gameCap))+T('Daily max',c.dayMaxPct+'%',c.dayMax>0?usd(c.dayMax)+' · the Hard stop asks past it':'off')+T('Daily bet goal',c.dayGoal?String(c.dayGoal):'off')+T('Mode',(MODES[c.mode]&&MODES[c.mode].label)||c.mode||'Safe')+'</div>'+
-    '<div class="rg-g"><h3>Fees</h3>'+T('Kalshi',F.kalshi+'% of price','× (1 − price)')+T('Polymarket US',F.poly+'% of price')+T('Novig',F.novig+'% extra','live: 6% × p × (1 − p)')+T('ProphetX',F.prophet+'% of stake')+T('Licensed books',F.book+'% of stake')+'</div>'; }
+    '<div class="rg-g"><h3>Fees</h3>'+T('Kalshi',F.kalshi+'% of price','× (1 − price)')+T('Polymarket US',F.poly+'% of price','× (1 − price), the same way as Kalshi')+T('Novig',F.novig+'% extra','only that extra before the game; once the game has started, 6% × (1 − price) more')+T('ProphetX',F.prophet+'% of stake')+T('Licensed books',F.book+'% of stake')+'</div>'; }
 try{ cnPaint(); crPaint(); rgPaint();
   document.getElementById('cnTest').addEventListener('click',cnTest);
   document.getElementById('crRefresh').addEventListener('click',crRefresh);
@@ -10314,6 +10368,7 @@ function rpSet(){ const R=rpRange(); let noDay=0, noDayRm=0;
   const L=logged.filter(b=>{ if(!rpPass(b)) return false; const d=rpDayOf(b); if(!d){ noDay++; return false; } return inR(d); });
   const Rm=removedBets.filter(b=>{ if(!(b.lost>0) || !rpPass(b)) return false; const d=rpDayOf(b); if(!d){ noDayRm++; return false; } return inR(d); });
   return {R, L, Rm, noDay, noDayRm}; }
+function rpTn(w){ return w?'<em class="rp-tn">'+esc(w)+': read with care</em>':''; }   /* v5.13 (owner: Karens review): the page's own small-sample word (rpSample, unchanged) next to the profit and ROI tiles */
 function rpSample(n){ return n<10?'too few to rank':n<30?'extremely preliminary':n<100?'early sample':''; }
 function rpPct(x){ return x==null?'—':(x>=0?'+':'−')+Math.abs(x*100).toFixed(1)+'%'; }
 function rpCls(v,step){ return (v>0.005?'pl-up':v<-0.005?'pl-down':'')+dClsR(v,step||0.01); } /* v5.04: ▲/▼ from the shown rounding: $ to the cent, ROI (step 0.001) to 0.1%; colour rule unchanged */
@@ -10340,7 +10395,7 @@ function rpListHtml(list, open, all){ if(!list.length) return '<p class="meta">'
   const max=100, shown=all?list:list.slice(0,max);
   const rows=shown.map(b=>{ const st=b.free?0:(+b.stake||0), d=rpDayOf(b)||'', pr=betProfit(b), tw=rpToWin(b);
     const res=b.sold?'sold':b.result==='win'?'won':b.result==='loss'?'lost':b.result==='push'?'push':(betLocked(b)?'▶ in play':'⏳ to play');
-    return '<tr><td data-l="'+(RP.basis==='placed'?'Placed':'Game day')+'">'+esc(d)+'</td><td class="rp-bet"><b>'+esc(b.name||'')+'</b><br><span class="meta">'+esc(rpPick(b))+'</span></td><td data-l="Book">'+esc(bookLabel(b.book||''))+'</td><td class="num" data-l="Odds">'+esc(b.odds||'')+'</td><td class="num" data-l="Risked">$'+st.toFixed(2)+(b.free?' <span class="meta">free</span>':'')+'</td>'+
+    return '<tr><td data-l="'+(RP.basis==='placed'?'Placed':'Game day')+'">'+esc(d)+'</td><td class="rp-bet"><b>'+esc(b.name||'')+'</b><br><span class="meta">'+esc(rpPick(b))+'</span></td><td data-l="Book">'+esc(bookLabel(b.book||''))+'</td><td class="num" data-l="Odds">'+(paidOddsOf(b)?oddsShownHtml(b):esc(b.odds||'')) /* v5.13: the price paid, fee included */+'</td><td class="num" data-l="Risked">$'+st.toFixed(2)+(b.free?' <span class="meta">free</span>':'')+'</td>'+
       (open?'<td class="num" data-l="To win">'+(tw==null?'—':'$'+tw.toFixed(2)+(b.kind!=='parlay'?'<span class="meta tw-tot"> ·&nbsp;total&nbsp;$'+twTotal(b,tw).toFixed(2)+'</span>':''))+'</td>':'<td class="num '+rpCls(pr||0)+'" data-l="Profit">'+(pr==null?'—':lcUsd(pr))+'</td>')+'<td data-l="'+(open?'Status':'Result')+'">'+esc(res)+'</td><td class="meta" data-l="Band">'+esc(rpBandTxt(b))+'</td></tr>'; }).join('');   /* v5.10: a single’s To win also shows its total payout in small print ("$1.52 · total $3.04") */
   return '<div class="rp-tw"><table class="rp-t rp-list"><thead><tr><th>'+(RP.basis==='placed'?'Placed':'Game day')+'</th><th>Bet</th><th>Book</th><th class="num">Odds</th><th class="num">Risked</th><th class="num">'+(open?'To win':'Profit')+'</th><th>'+(open?'Status':'Result')+'</th><th>Band (source)</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
     (list.length>max?'<button type="button" class="btn-sm rp-more" data-w="'+(open?'open':'set')+'">'+(all?'Show the first '+max:'Show all '+list.length)+'</button><span class="meta"> '+(all?'':'showing '+max+' of '+list.length)+'</span>':''); }
@@ -10356,11 +10411,11 @@ function rpRender(){ const box=document.getElementById('rpPanel'); if(!box) retu
   document.getElementById('rpFiltN').textContent=nf?'· '+nf+' on':'· none';
   document.getElementById('rpAsOf').textContent='As of '+new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:'America/Chicago'})+' · '+logged.length+' ticket'+(logged.length===1?'':'s')+' in the current log · counted by '+(RP.basis==='placed'?'date placed':'game day (as the Bet calendar)')+(nf?' · '+nf+' filter'+(nf===1?'':'s')+' on':'');
   const miss=S.noDay+S.noDayRm; document.getElementById('rpCover').textContent=miss?(miss+(miss===1?' bet has':' bets have')+(RP.basis==='placed'?' no saved placed time: not in this view (never guessed).':' no game day: not in this view.')):'';
-  const sett=g.n-g.pend, smp=rpSample(g.w+g.l+g.p), tile=(l,v,c,t)=>'<div class="rp-k"'+(t?' title="'+esc(t)+'"':'')+'><span>'+l+'</span><strong'+(c?' class="'+c+'"':'')+'>'+v+'</strong></div>';
+  const sett=g.n-g.pend, smp=rpSample(g.w+g.l+g.p), tile=(l,v,c,t,nt)=>'<div class="rp-k"'+(t?' title="'+esc(t)+'"':'')+'><span>'+l+'</span><strong'+(c?' class="'+c+'"':'')+'>'+v+'</strong>'+(nt||'')+'</div>';   /* v5.13: nt = the small-sample note under the tile */
   document.getElementById('rpHead').innerHTML=(g.n||g.cancelled)?
     '<div class="rp-line"><b>Settled:</b> $'+g.stSet.toFixed(2)+' risked, <b class="'+rpCls(g.profit)+'">'+lcUsd(g.profit)+'</b> · <b>To play:</b> $'+g.toPlay.toFixed(2)+' · <b>In play:</b> $'+g.inPlay.toFixed(2)+'</div>'+
     '<div class="rp-ks">'+tile('Tickets',g.n)+tile('W–L–P',g.w+'–'+g.l+'–'+g.p,'',g.hit==null?'':'won '+(g.hit*100).toFixed(1)+'% of the bets that won or lost')+tile('Hit rate',g.hit==null?'—':(g.hit*100).toFixed(1)+'%')+tile('Settled risked','$'+g.stSet.toFixed(2),'','your own money on settled bets (free bets are $0)')+
-      tile('Settled profit',lcUsd(g.profit),rpCls(g.profit))+tile('ROI',rpPct(g.roi),rpCls(g.roi||0,0.001),'settled profit ÷ settled risked: open bets are never in it')+tile('⏳ To play','$'+g.toPlay.toFixed(2),'rp-grey')+tile('▶ In play','$'+g.inPlay.toFixed(2),'rp-grey')+tile('Open total','$'+(g.toPlay+g.inPlay).toFixed(2)+' · '+g.pend+' open','rp-grey')+'</div>'+ /* v5.04: ▲/▼ ROI arrow from the shown 0.1% */
+      tile('Settled profit',lcUsd(g.profit),rpCls(g.profit),'',rpTn(smp))+tile('ROI',rpPct(g.roi),rpCls(g.roi||0,0.001),'settled profit ÷ settled risked: open bets are never in it',rpTn(smp))+tile('⏳ To play','$'+g.toPlay.toFixed(2),'rp-grey')+tile('▶ In play','$'+g.inPlay.toFixed(2),'rp-grey')+tile('Open total','$'+(g.toPlay+g.inPlay).toFixed(2)+' · '+g.pend+' open','rp-grey')+'</div>'+ /* v5.04: ▲/▼ ROI arrow from the shown 0.1% */
     '<div class="meta">'+[sett?sett+' settled ticket'+(sett===1?'':'s'):'nothing settled yet', g.cancelled?g.cancelled+' cancelled bet'+(g.cancelled===1?'':'s')+' that lost $'+g.cancelLost.toFixed(2)+' (counted, as on the calendar)':'', smp?'<b class="rp-smp">'+smp+'</b>: '+(g.w+g.l+g.p)+' won, lost or pushed':''].filter(Boolean).join(' · ')+'</div>'
     : '<p class="meta">No bets in this report. Change the period or the filters.</p>';
   const parts=[['Overall',S.L,S.Rm],['Singles',S.L.filter(b=>b.kind!=='parlay'),S.Rm.filter(b=>b.kind!=='parlay')],['Parlays',S.L.filter(b=>b.kind==='parlay'),S.Rm.filter(b=>b.kind==='parlay')]];
@@ -10802,104 +10857,47 @@ async function checkResultsRun(){
   document.getElementById('checkOddsApi').addEventListener('click', checkMarketOdds);
 })();
 
-const SAMPLE=`Connecticut Logo
-Washington Logo
-Over 157.5
-CON @ WAS
-WNBA
-157.5
-Total Points
--104
-Logo for Kalshi
--117	
+/* v5.13 (owner: Karens review): the built-in Sample read 0 props. It was a Market EV style paste of team bets with no "(price)" and no "Market Based EV" heading, so the Cheat Sheet reader skipped every row (and the Market EV reader skips team bets). It is now a few made-up Cheat Sheet rows in the format the reader takes, in NFL (in season in November), and it says it is a sample. */
+const SAMPLE=`Sample board (made-up players and prices, to show how Paste works)
+Sample Receiver
+WR
+KC @ BUF
+NFL
+68.5 Receiving Yards
+O 68.5
 +6%
-
-Connecticut Logo
-Washington Logo
-Under 157.5
-CON @ WAS
-WNBA
-157.5
-Total Points
-+111
-Logo for Novig
-+102	
-+4%
-
-Rice Logo
-Rice
-RICE @ FRE
-NCAAF
-+13.5
-Spread
-+111
-Logo for Polymarket US
-+104	
-+3%
-
-Fresno St. Logo
-Fresno St.
-RICE @ FRE
-NCAAF
--13.5
-Spread
--104
-Logo for Novig
--108	
-+2%
-
-UMass
-NCAAF
-27.5
-Total Points
--130
-Logo for Novig
--146	
-+5%
-
-U 27.5
--130
-Logo for Novig
-Napheesa CollierLogo for MIN
-Napheesa Collier
-F - MIN @ IND
-WNBA
-2.5
-Assists
--122
+(-110)
 Logo for DraftKings
--137	
-+5%
-
-O 2.5
--122
+Sample Receiver
+WR
+KC @ BUF
+NFL
+68.5 Receiving Yards
+U 68.5
+-2%
+(+120)
 Logo for DraftKings
-Pittsburgh Logo
-Pirates
-STL @ PIT
-MLB
--1.5
-Run Line
-+167
-Logo for Polymarket US
-+161	
-+2%
-
--1.5
-+167
-Logo for Polymarket US
-UTSA Logo
-UTSA
-CSU @ UTSA
-NCAAF
--3.5
-2Q Spread
-EVEN
-Logo for Hard Rock
--112	
-+6%`;
+Sample Runner
+RB
+DAL @ PHI
+NFL
+54.5 Rushing Yards
+O 54.5
++7%
+(-110)
+Logo for DraftKings
+Sample Runner
+RB
+DAL @ PHI
+NFL
+54.5 Rushing Yards
+U 54.5
+-2%
+(+125)
+Logo for DraftKings`;
 document.getElementById('demo').addEventListener('click',()=>{
   document.getElementById('input').value=SAMPLE; run();
+  { const d=document.getElementById('diag'); if(d) d.innerHTML='<b>This is a sample:</b> made-up players and prices, only to show how Paste works. Press <b>Clear</b> to remove it. '+d.innerHTML; }   /* v5.13: it says it is a sample */
 });
 
 const KEYS=NUMS.concat(['books','defSport','bpSportsList','planMin','planSince','planSetAt']);   /* v5.10: + My plan (planMin, planSince), saved and synced like the other settings */   /* v5.10 (fixer): + planSetAt, when the date was last changed */   // v3.12: default sport + the leagues BettingPros answered (synced with settings)
@@ -11059,18 +11057,44 @@ function parlayRecord(o){ const stake=+(+o.stake).toFixed(2), all=+o.all, id=(se
     book:o.book, odds:fmtOdds(Math.round(americanOf(stake/all))), fair:'', stake, result:'pending', closing:'',
     parlay:Object.assign({picks:o.picks, legs:o.legs||'', pays:{all:+all.toFixed(2), m1:o.m1>0?+(+o.m1).toFixed(2):0, m2:o.m2>0?+(+o.m2).toFixed(2):0}, hits:null, payout:null}, o.pk?{pk:o.pk}:{}),
     snap:{at:new Date().toISOString(), screener:SCREENER_VERSION, said:{decision:'PARLAY', onList:!!o.onList}} }; }
+/* v5.13 (Las Karens 11/15, item 5; owner "Yes"): the panel at + Add a bet's level, with its rules, not new ones: Entry type Power or Flex (Power keeps no partial
+   payouts, as abParSave; the Flex payouts show only for Flex), Picks 2 to 12, and the Free entry tick (the entry is still typed and must be above $0 and under
+   Pays if all hit, as + Add a bet; the record keeps free:true, so betProfit counts a win as the winnings only and a miss as $0, and the daily max leaves it out).
+   Pays if all hit (and the Flex payouts) are filled in from the Parlays tab's payout table (pkPays: the app's own payouts there, edits included) once Picks and
+   Stake are set, for a pick'em app that has one; a box you typed in is never filled over. Hoisted: the panel's listeners call these. */
+function plOwnPays(){ const P=document.getElementById('parlayPanel'); return (P && P._own) || {}; }
+function plPayTable(book, kind, picks){ if(!PK_DEFAULT[book] || pkPriced(book)) return null; const arr=pkPays(book, kind)[picks]; return (arr && arr[0]>0) ? arr : null; }   /* the Parlays tab's table: pick'em apps only (a combo app pays its legs' odds) */
+function plSync(){ const g=id=>document.getElementById(id), P=g('parlayPanel'), note=g('plNote'); if(!P || !note) return;
+  const book=g('plBook').value, kind=g('plKind').value, flex=kind==='flex', picks=Math.round(parseFloat(g('plPicks').value)), st=parseFloat(g('plStake').value), free=g('plFree').checked, own=plOwnPays();
+  P.classList.toggle('pl-flexon', flex);
+  let filled='';
+  const arr=st>0 ? plPayTable(book, kind, picks) : null;
+  if(arr){ const put=(id,x)=>{ if(own[id]) return false; const v=x>0 ? (st*x).toFixed(2) : ''; if(g(id).value!==v){ g(id).value=v; } return x>0; };
+    const a=put('plAll', arr[0]); if(flex){ put('plM1', arr[1]); put('plM2', arr[2]); }
+    if(a) filled='Pays if all hit is filled in from the Parlays tab’s '+pkAppLabel(book)+' '+(flex?'Flex':'Power')+' payouts ('+picks+' picks: '+arr.map(x=>String(+(+x).toFixed(2))+'x').join(' / ')+'). Type over it if your entry pays something else.'; }
+  const all=parseFloat(g('plAll').value);
+  const freeTxt=free ? '🎁 Free entry: it costs you $0, and a miss costs $0. If all hit you get the winnings'+(st>0 && all>st ? ', $'+(all-st).toFixed(2)+' (the $'+st.toFixed(2)+' entry does not come back)' : ' (what it pays minus the entry)')+'.' : '';   /* the words of + Add a bet’s note (abParSync) */
+  const t=[freeTxt, filled].filter(Boolean).join(' ');
+  if(note.textContent!==t) note.textContent=t; }
+(function(){ const g=id=>document.getElementById(id), P=g('parlayPanel'); if(!P || !g('plKind')) return; P._own={};
+  ['plAll','plM1','plM2'].forEach(id=>g(id).addEventListener('input',e=>{ if(e.isTrusted) P._own[id]=g(id).value!==''; }));   /* a payout you typed is yours; emptying the box hands it back */
+  ['plBook','plKind','plPicks','plStake','plFree','plAll'].forEach(id=>['input','change'].forEach(k=>g(id).addEventListener(k,plSync)));
+  plSync(); })();
 document.getElementById('plAdd').addEventListener('click',()=>{
   const v=id=>parseFloat(document.getElementById(id).value), msg=document.getElementById('plMsg');
   const book=document.getElementById('plBook').value, picks=Math.round(v('plPicks')), stake=v('plStake'), all=v('plAll');
-  if(!(picks>=2)){ msg.textContent='Picks: 2 or more.'; return; }
-  if(!(stake>0) || !(all>stake)){ msg.textContent='Enter the stake and what it pays if all hit (more than the stake).'; return; }
+  const flex=document.getElementById('plKind').value==='flex', free=document.getElementById('plFree').checked;   // v5.13: as + Add a bet (abParSave)
+  if(!(picks>=2 && picks<=12)){ msg.textContent='Picks: 2 to 12.'; return; }   // v5.13: as + Add a bet
+  if(!(stake>0) || !(all>stake)){ msg.textContent=free?'Enter the free entry’s amount (above $0) and what it pays if all hit (more than the entry). A free entry costs you $0 all the same.':'Enter the stake and what it pays if all hit (more than the stake).'; return; }   // v5.13: a free entry is typed at its amount, as + Add a bet
   const day=document.getElementById('plDay').value||ctDay(Date.now()), legs=document.getElementById('plLegs').value.trim();
-  const m1=v('plM1'), m2=v('plM2');
+  const m1=flex?v('plM1'):NaN, m2=flex?v('plM2'):NaN;   // v5.13: Power: no partial payouts (as + Add a bet)
   const rec=parlayRecord({book, picks, stake, all, m1, m2, legs, day}); if(document.getElementById('plDay').value) rec.dateSet=true;   /* v5.11 (bug): the Game day typed is the day it counts on, as in + Add a bet; before, an entry for a past day counted on the day it was saved */
+  if(free) rec.free=true;   // v5.13: as + Add a bet
   logged.push(rec);
   saveLog(); renderLog(); renderPerf();
   ['plStake','plAll','plM1','plM2','plLegs'].forEach(id=>document.getElementById(id).value='');
-  msg.textContent='Added — grade it in the log with "how many hit".';
+  document.getElementById('plFree').checked=false; { const P=document.getElementById('parlayPanel'); if(P) P._own={}; } plSync();   // v5.13: as + Add a bet after Save
+  msg.textContent='Added'+(free?' (free entry)':'')+' — grade it in the log with "how many hit".';   // v5.13
 });
 /* ============ v3.54: Parlays — PrizePicks and DraftKings Pick6 entries built from the board ============
    Pick'em pays a fixed multiple, so the price a sportsbook offers doesn't matter: only the chance each pick hits.
@@ -12736,8 +12760,8 @@ async function syncFills(force){
     try{ if(localStorage.getItem('mbev.fillV')!=='95'){ fillPending=[]; fillSeen={}; lsSafeSet('mbev.fillV','95'); } }catch(e){}   // v3.89: a failed write here wiped what you ignored on every read
     fillAt=Date.now();   // v4.24: a failed read waits its turn too (before, a failing Worker was asked again every 20 s)
     const res=await fetch(API_BASE+'/mine/fills?since='+(Date.now()-days*86400e3), {headers:apiHeaders()});
-    if(!res.ok){ let t=''; try{ t=String(await res.text()||'').replace(/\s+/g,' ').slice(0,120); }catch(_){} window._fillReadErr='the Worker answered HTTP '+res.status+(res.status===401?' (passphrase)':res.status===429?' (over its daily limit)':'')+(t?': '+t:''); return; }   // v4.46: said nowhere before
-    const j=await res.json(); fillAt=Date.now(); window._fillReadErr=''; window._fillOkAt=Date.now(); try{ if(wkPaused()){ const w=wkState(); w.pause=0; wkSave(); wkChipPaint(); } }catch(_){}   // v4.46: the Worker answered, so background checks go again
+    if(!res.ok){ window._fillReadCode=res.status; window._fillReadErr=res.status===401?'the Worker did not accept the screener passphrase':res.status===429?'the Worker is over its daily limit':res.status>=500?'the Worker had a problem (error '+res.status+')':'the Worker answered with error '+res.status; return; }   // v4.46: said now   // v5.13 (owner: Karens review): plain words, no raw HTTP text or JSON; the code is kept so a missing passphrase reads calmlyhere before
+    const j=await res.json(); fillAt=Date.now(); window._fillReadErr=''; window._fillReadCode=0; window._fillOkAt=Date.now(); try{ if(wkPaused()){ const w=wkState(); w.pause=0; wkSave(); wkChipPaint(); } }catch(_){}   // v4.46: the Worker answered, so background checks go again
     (j.fills||[]).forEach(normFillBet);   // v3.01
     let changed=false;
     window._fillErrors=j.errors||{};
@@ -12808,7 +12832,7 @@ async function syncFills(force){
     saveFills();
     if(changed){ saveLog(); renderLog(); renderPerf(); refresh(); }
     renderFromBooks(); syncOrders(); renderMyBooks();
-  }catch(e){ console.warn('syncFills', e); if(!window._fillOkAt || Date.now()-window._fillOkAt>5000) window._fillReadErr='could not reach the Worker ('+String(e&&e.message||e).slice(0,80)+')'; } finally{ fillBusy=false; try{ renderFillWarn(); }catch(_){} try{ renderFromBooks(); }catch(_){} }   // v4.46   // v4.49: From your books says it too
+  }catch(e){ console.warn('syncFills', e); if(!window._fillOkAt || Date.now()-window._fillOkAt>5000) window._fillReadErr='could not reach the Worker: check your internet connection'; /* v5.13: plain words */ } finally{ fillBusy=false; try{ renderFillWarn(); }catch(_){} try{ renderFromBooks(); }catch(_){} }   // v4.46   // v4.49: From your books says it too
 }
 /* v4.46 (owner, 11/10: "my bets are not getting picked up ... they still show at the board", "another one ... was NOT logged"): when the read of your
    books failed (Worker HTTP error or unreachable), nothing said so: no From your books, and Check my books now still said "all 3 books answered".
@@ -12823,6 +12847,10 @@ function fillWarnState(){ const tm=ms=>new Date(ms).toLocaleTimeString('en-US',{
   const e=window._fillReadErr||'', ok=window._fillOkAt||0, BE=Object.entries(window._fillErrors||{}).filter(([k])=>use(k)), be=BE.map(([k,v])=>(FILL_NAME[k]||k)+': '+cl(v)).join(' · ');
   let paused=false; try{ paused=wkPaused(); }catch(_){}
   const stale=!!(ok && Date.now()-ok>6*60e3 && document.visibilityState==='visible');
+  if(e && (window._fillReadCode|0)===401){   /* v5.13 (owner: Karens review): no passphrase yet, or one the Worker does not know: a calm note with a way to fix it, not a red warning; a passphrase that worked this session and stopped keeps the warning, in plain words */
+    let has=''; try{ has=localStorage.getItem('mbev.pass')||''; }catch(_){}
+    if(ok) return {msg:'Your books were not read since '+tm(ok)+': the Worker no longer accepts your screener passphrase (it worked before). Check it in Settings › Connect.', sig:'worker'};
+    return {calm:true, sig:'locked', msg:has?'Not connected yet: the Worker did not accept your screener passphrase. Check it in Settings › Connect':'Not connected yet: add your screener passphrase in Settings › Connect'}; }
   if(e) return {msg:'Your books were not read'+(ok?' since '+tm(ok):'')+': '+cl(e)+'.', sig:'worker'};
   if(be) return {msg:'Not read from '+be+'.', sig:'books:'+BE.map(x=>x[0]).sort().join(',')};
   if(paused) return {msg:'Background checks of your books are paused (the Worker is over its limit).', sig:'paused'};
@@ -12830,12 +12858,15 @@ function fillWarnState(){ const tm=ms=>new Date(ms).toLocaleTimeString('en-US',{
   return {msg:'', sig:''}; }
 function renderFillWarn(){ const el=document.getElementById('fillWarn'); if(!el) return; const S=fillWarnState(), tab=document.querySelector('.tab[data-view="v-log"]');
   let hid=''; try{ hid=localStorage.getItem('mbev.fillWarnHid')||''; }catch(_){}
-  if(tab){ tab.classList.toggle('tab-alert', !!S.msg); if(S.msg) tab.title='⚠ '+S.msg+' Open the Bet log to check.'; else tab.removeAttribute('title'); }
+  if(tab){ tab.classList.toggle('tab-alert', !!S.msg && !S.calm); if(S.msg && !S.calm) tab.title='⚠ '+S.msg+' Open the Bet log to check.'; else tab.removeAttribute('title'); }   // v5.13: no red ring for a missing passphrase
   if(!S.msg){ el.hidden=true; el.innerHTML=''; if(hid){ try{ localStorage.removeItem('mbev.fillWarnHid'); }catch(_){} } return; }
   if(hid===S.sig){ el.hidden=true; el.innerHTML=''; return; }   // hidden by you: the Bet log tab keeps its red ring until it is fixed
-  el.hidden=false;
+  el.hidden=false; el.classList.toggle('calm', !!S.calm); el.setAttribute('role', S.calm?'status':'alert');   // v5.13
+  if(S.calm){ el.innerHTML='<span class="fw-note">'+esc(S.msg)+'.</span> <button type="button" class="linkbtn" id="fillWarnSet">Open Settings › Connect</button>'+
+    '<button type="button" class="fw-x" id="fillWarnX" aria-label="Hide this message" title="Hide this note">×</button>'; return; }   /* v5.13 */
   el.innerHTML='<span class="ot-err">⚠ '+esc(S.msg)+'</span> A bet you just placed may still show as bettable: press <b>I bet this</b> on its card, or <b>+ Add a bet</b>. <button type="button" class="linkbtn" id="fillWarnGo">Check now</button>'+
     '<button type="button" class="fw-x" id="fillWarnX" aria-label="Hide this message" title="Hide it until something changes; the Bet log tab keeps a red ring until it is fixed">×</button>'; }
+document.addEventListener('click',e=>{ if(!e.target.closest('#fillWarnSet')) return; const t=document.querySelector('.tab[data-view="v-settings"]'); if(t) t.click(); const d=document.getElementById('srcSettings'); if(d){ d.open=true; try{ d.scrollIntoView({block:'start'}); }catch(_){} } const i=document.getElementById('screenerPass'); if(i) setTimeout(()=>{ try{ i.focus(); }catch(_){} },60); });   // v5.13: the note's button opens Settings › Connect
 document.addEventListener('click',e=>{ if(!e.target.closest('#fillWarnX')) return; const S=fillWarnState(); try{ localStorage.setItem('mbev.fillWarnHid', S.sig||''); }catch(_){} renderFillWarn(); });   // v4.49
 document.addEventListener('click',async e=>{ const b=e.target.closest('#fillWarnGo, .fw-go'); if(!b) return; b.disabled=true; b.textContent='checking…'; try{ await syncFills(true); }finally{ try{ renderFillWarn(); }catch(_){} } });
 setInterval(()=>{ try{ renderFillWarn(); }catch(_){} }, 30000);
@@ -12847,7 +12878,7 @@ function renderFromBooks(){
   let fw={msg:''}; try{ fw=fillWarnState(); }catch(_){}   // v4.49: the red bar's message, also here
   if(!fillPending.length && !errTxt && !fw.msg){ el.style.display='none'; el.innerHTML=''; return; }
   el.style.display='block';
-  el.innerHTML=(fw.msg?'<div class="fb-warn"><span class="ot-err">⚠ '+esc(fw.msg)+'</span> <button type="button" class="linkbtn fw-go">Check now</button></div>':'')+'<b>From your books</b> — '+(fillPending.length?fillPending.length+' bet'+(fillPending.length===1?'':'s')+' not matched to your log or board.':(fw.msg?'nothing new could be read.':'all matched.'))+
+  el.innerHTML=(fw.msg?'<div class="fb-warn">'+(fw.calm?'<span class="meta">'+esc(fw.msg)+'.</span>':'<span class="ot-err">⚠ '+esc(fw.msg)+'</span> <button type="button" class="linkbtn fw-go">Check now</button>')+'</div>':'')   /* v5.13: a missing passphrase is a calm note */+'<b>From your books</b> — '+(fillPending.length?fillPending.length+' bet'+(fillPending.length===1?'':'s')+' not matched to your log or board.':(fw.msg?'nothing new could be read.':'all matched.'))+
     (errTxt && !fw.msg?' <span class="meta">('+errTxt+')</span>':'')+   // v4.49: said once, above
     (fillPending.length?'<div class="copy-bar"><button type="button" class="copy-big" data-copy-fn="fromBooksText">📋 Copy this list</button></div><div class="fb-wrap"><table>'+fillPending.map((f,i)=>{ const L=fillLabel(f);
       return '<tr><td>'+(bookLogo(FILL_NAME[f.book])?logoTag(FILL_NAME[f.book],'sm'):esc(FILL_NAME[f.book]))+'</td>'+
@@ -13487,6 +13518,7 @@ setInterval(()=>{ if(document.visibilityState==='visible') syncFills(false); }, 
 setTimeout(()=>syncFills(true), 2500);
 setTimeout(()=>{ renderTodayBar(); autoGradeLog(); },50);
 // v2.71: Paste ▸ / Passphrase ▸ links on the load line
+document.addEventListener('click',e=>{ if(e.target.closest('#emptyPaste')){ const pl=document.getElementById('pasteLink'); if(pl) pl.click(); } });   // v5.13: "paste a board" in the empty-board text
 document.getElementById('pasteLink').addEventListener('click',()=>{ const t=document.querySelector('.tab[data-view="v-paste"]'); if(t) t.click(); const pp=document.getElementById('pastePanel'); if(pp){ pp.open=true; pp.scrollIntoView({behavior:'smooth', block:'start'}); } });
 document.getElementById('passLink').addEventListener('click',()=>{ const pb=document.getElementById('passBox'); pb.style.display=pb.style.display==='none'?'flex':'none'; });
 // v2.71: score strip — picks the sport you have the most open bets in (or your last pick), refreshes on the

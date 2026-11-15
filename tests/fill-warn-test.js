@@ -16,11 +16,11 @@ let FILLS={status:500, body:'Internal error'};
   await p.goto('http://app.test/'); await p.waitForTimeout(3500);   // the first read runs 2.5 s after load
   const w=()=>p.evaluate(()=>{ const el=document.getElementById('fillWarn'); return {hidden:el.hidden, txt:el.innerText.replace(/\s+/g,' ')}; });
   let W=await w();
-  check('the Worker answers HTTP 500: a red line under the Today card says your books were not read, why, and what to do', !W.hidden && /Your books were not read: the Worker answered HTTP 500: Internal error/.test(W.txt) && /I bet this/.test(W.txt) && /Check now/.test(W.txt), W);
+  check('the Worker answers HTTP 500: a red line under the Today card says your books were not read, why, and what to do', !W.hidden && /Your books were not read: the Worker had a problem \(error 500\)/.test(W.txt) && !/HTTP|Internal error/.test(W.txt) && /I bet this/.test(W.txt) && /Check now/.test(W.txt), W);  // v5.13 (owner: Karens review): the wording (plain words, no raw HTTP text)
   const msg=await p.evaluate(async()=>{ document.getElementById('fillsNow').click(); await new Promise(r=>setTimeout(r,400)); return document.getElementById('fillsMsg').textContent; });
-  check('Check my books now says it could not read them (it used to say "all 3 books answered")', /^could not read your books: the Worker answered HTTP 500/.test(msg) && !/all 3 books answered/.test(msg), msg);
+  check('Check my books now says it could not read them (it used to say "all 3 books answered")', /^could not read your books: the Worker had a problem \(error 500\)/.test(msg) && !/all 3 books answered/.test(msg), msg);
   FILLS={status:429, body:'Error 1027'}; await p.evaluate(async()=>{ await syncFills(true); }); W=await w();
-  check('HTTP 429 says the Worker is over its daily limit', !W.hidden && /HTTP 429 \(over its daily limit\)/.test(W.txt), W.txt);
+  check('HTTP 429 says the Worker is over its daily limit', !W.hidden && /the Worker is over its daily limit/.test(W.txt) && !/HTTP/.test(W.txt), W.txt);  // v5.13 (owner: Karens review): the wording
   FILLS={status:200, body:{fills:[], settlements:[], errors:{}}};
   await p.evaluate(async()=>{ document.getElementById('fillWarnGo').click(); await new Promise(r=>setTimeout(r,400)); }); W=await w();
   check('Check now on the red line reads again; when the books answer, the line goes away', W.hidden, W);
@@ -38,7 +38,7 @@ let FILLS={status:500, body:'Internal error'};
   const fb=await p.evaluate(()=>{ const el=document.getElementById('fromBooks'); return {shown:el.style.display!=='none', txt:el.innerText.replace(/\s+/g,' '), btn:!!el.querySelector('.fw-go'), ids:document.querySelectorAll('#fillWarnGo').length}; });
   check('v4.49: the Bet log (From your books) says it too, with Check now, and not "all matched"', fb.shown && /⚠ Not read from Novig: 429 error code: 1015\./.test(fb.txt) && fb.btn && !/all matched/.test(fb.txt) && fb.ids<=1, fb);
   FILLS={status:500, body:'Internal error'}; await p.evaluate(async()=>{ await syncFills(true); }); W=await w();
-  check('v4.49: a different problem (the Worker itself) shows the bar again', !W.hidden && /HTTP 500/.test(W.txt), W.txt.slice(0,90));
+  check('v4.49: a different problem (the Worker itself) shows the bar again', !W.hidden && /error 500/.test(W.txt), W.txt.slice(0,90));  // v5.13 (owner: Karens review): the wording
   FILLS={status:200, body:{fills:[], settlements:[], errors:{}}}; await p.evaluate(async()=>{ await syncFills(true); }); W=await w(); T=await tab();
   const hid=await p.evaluate(()=>localStorage.getItem('mbev.fillWarnHid'));
   check('v4.49: fixed: the bar and the ring go, and the hidden choice is forgotten (a new problem will show)', W.hidden && !T.ring && !hid, {W:W.hidden, ring:T.ring, hid});

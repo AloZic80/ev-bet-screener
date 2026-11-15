@@ -21,6 +21,7 @@ const ROWS=[row('a','Fresh Machin',0.62,0.58,60e3), row('b','Stale Machin',0.62,
       if(/\/live\?/.test(u)){ const bets=JSON.parse(decodeURIComponent(u.split('bets=')[1])), R={}; bets.forEach(d=>{ if(fresh && d.name==='Stale Machin' && d.book==='novig') R[d.id]={ok:true, price:0.58, bid:0.56, at:Date.now()}; }); return r.fulfill({contentType:'application/json',body:JSON.stringify({results:R})}); }
       if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
     await p.addInitScript(()=>{ window._barOpen=true; }) /* v4.95: these checks read the notes behind Filters, so Filters is open */; await p.goto('http://app.test/'); await p.waitForTimeout(1300);
+    await p.evaluate(()=>{ EXTRAS.hailBets=true; refresh(); }); await p.waitForTimeout(250);   /* v5.13 (owner: no daily Suertudo/Brujo bets): Hail Mary offers are off by default (EXTRAS.hailBets false); on here, so the old Hail Mary card under ⏱ Old stays covered */
     await p.evaluate(()=>{ addToLog(lastRows.find(r=>r.name==='Held Old')); refresh(); }); await p.waitForTimeout(300);
     const tabs=()=>p.evaluate(()=>[...document.querySelectorAll('#modeBar button')].map(x=>x.textContent.replace(/\s+/g,' ').trim()));
     const t1=await tabs();

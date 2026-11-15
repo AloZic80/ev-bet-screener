@@ -57,7 +57,7 @@ async function run(width){
   check('Your Worker: today\'s calls (1,234 and the ones this test made) and the busiest paths', wn>=1234 && wn<1260 && /\/live 9\d\d/.test(wk), wk);
   const rg=()=>p.evaluate(()=>Object.fromEntries([...document.querySelectorAll('#rgGrid .rg-t')].map(t=>[t.querySelector('span').textContent, t.querySelector('b').textContent+(t.querySelector('small')?' | '+t.querySelector('small').textContent:'')])));
   let R=await rg();
-  check('rules at a glance: odds, EV floor, bankroll, Kelly, bets, daily max, fees', R['Odds']==='-300 to +500' && R['Net EV floor']==='1.5% | after fees' && R['Bankroll']==='$1000.00' && /^0\.25 \| × edge after a 0\.5 haircut$/.test(R['Kelly']) && R['Bets']==='$1.00 to $10.00' && R['Daily max']==='10% | $100.00 · the Hard stop asks past it' && R['Kalshi']==='7% of price | × (1 − price)' && R['Books you bet']==='2 books | novig, kalshi', R);
+  check('rules at a glance: odds, EV floor, bankroll, Kelly, bets, daily max, fees', R['Odds']==='-300 to +500' && R['Net EV floor']==='1.5% | after fees' && R['Bankroll']==='$1000.00' && /^0\.25 \| × edge after a 0\.5 haircut: together 0\.125 of full Kelly$/.test(R['Kelly']) /* v5.13 (owner: Karens review) */ && R['Bets']==='$1.00 to $10.00' && R['Daily max']==='10% | $100.00 · the Hard stop asks past it' && R['Kalshi']==='7% of price | × (1 − price)' && R['Books you bet']==='2 books | novig, kalshi', R);
   await p.fill('#bank','500'); await p.waitForTimeout(150); R=await rg();
   check('it follows what you type: bankroll $500 → per game $10.00, daily max $50.00', R['Bankroll']==='$500.00' && R['Per game']==='2% | $10.00' && /^10% \| \$50\.00/.test(R['Daily max']), [R['Bankroll'],R['Per game'],R['Daily max']]);
   check('no page errors', !errs.length, errs);

@@ -23,7 +23,7 @@ const LOG=[{id:'old',key:'old',sport:'NFL',kind:'moneyline',name:'NEP',team:'NEP
     const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
     await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
     await p.addInitScript(()=>{ window._barOpen=true; }) /* v4.95: these checks read the notes behind Filters, so Filters is open */; await p.goto('http://app.test/'); await p.waitForTimeout(1300);
-    await p.evaluate(()=>setMode('clair')); await p.waitForTimeout(300);
+    await p.evaluate(()=>{ EXTRAS.hailBets=true; setMode('clair'); }); await p.waitForTimeout(300);   /* v5.13 (owner: no daily Suertudo/Brujo bets): Hail Mary offers and their day count are off by default (EXTRAS.hailBets false); on here, so the v4.79 / v4.80 words stay covered */
     const look=()=>p.evaluate(()=>{ const r=k=>lastRows.find(x=>x.apiKey===k)||{}, X=r('X');
       return {A:+(r('A').stake||0).toFixed(2), C:+(r('C').stake||0).toFixed(2), X:{xc:X.xc||null, cap:!!X.xCap, day:!!X.xCapDay, why:X.xWhy||'', stake:+(X.stake||0)},
         info:((document.getElementById('contadora')||{}).textContent||'').replace(/\s+/g,' ').trim(), page:/No more today/i.test((document.getElementById('placeCards')||{}).textContent||'')}; });

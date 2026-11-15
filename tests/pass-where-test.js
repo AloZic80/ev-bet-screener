@@ -30,6 +30,7 @@ const ROWS=[row('a','Alpha Machin',0.62,0.58), row('b','Bravo Volado',0.55,0.51)
     const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
     await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
     await p.goto('http://app.test/'); await p.waitForTimeout(1300);
+    await p.evaluate(()=>{ EXTRAS.hailBets=true; refresh(); }); await p.waitForTimeout(250);   /* v5.13 (owner: no daily Suertudo/Brujo bets): Hail Mary offers are off by default (EXTRAS.hailBets false); on here, so this test's Hail Mary checks stay covered */
     // Delta: already bet. NHL only (the sport menu). Book chips: Novig only.
     await p.evaluate(()=>{ addToLog(lastRows.find(r=>r.name==='Delta Bet')); filterSport='NHL'; boardBooks=['Novig']; refresh(); }); await p.waitForTimeout(400);
     const v=await p.evaluate(()=>{ const t=x=>x?x.textContent.replace(/\s+/g,' ').trim():null, d=document.querySelector('#cuts .pass-where');

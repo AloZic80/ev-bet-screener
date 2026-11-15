@@ -197,7 +197,8 @@ async function newPage(b, file, W, dev){
   // ---- 4. The same record as the Bet log's "Add a parlay / Pick 6" panel for the same inputs
   async function panel(o){ await p.evaluate(()=>{ document.querySelector('.tab[data-view="v-log"]').click(); document.getElementById('parlayPanel').open=true; }); await pause(400);
     await p.selectOption('#plBook', o.book); await p.fill('#plPicks', String(o.picks)); await p.fill('#plStake', String(o.stake)); await p.fill('#plAll', String(o.all));
-    await p.fill('#plM1', o.m1==null?'':String(o.m1)); await p.fill('#plM2', o.m2==null?'':String(o.m2)); await p.fill('#plDay', o.day); await p.fill('#plLegs', o.legs||'');
+    const flexP=o.m1!=null || o.m2!=null; if(await p.$('#plKind')) await p.selectOption('#plKind', flexP?'flex':'power');   // v5.13: the panel has Power / Flex now; the Flex payouts show only for Flex
+    if(flexP || !(await p.$('#plKind'))){ await p.fill('#plM1', o.m1==null?'':String(o.m1)); await p.fill('#plM2', o.m2==null?'':String(o.m2)); } await p.fill('#plDay', o.day); await p.fill('#plLegs', o.legs||'');
     const n0=await p.evaluate(()=>logged.length); await p.click('#plAdd'); await pause(300);
     return p.evaluate(n0=>logged.length>n0?{rec:JSON.parse(JSON.stringify(logged[logged.length-1])), i:logged.length-1}:null, n0); }
   const IGN=['id','key','at'], IGD=IGN.concat(['dateSet']);   // v5.11 (review): the form also keeps the Game day typed (dateSet), which the panel leaves out (asked of the owner)   // v5.11 (bug fixes): a parlay's key is made from its own id (parlay|+id), so it differs as the id does
