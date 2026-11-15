@@ -1,6 +1,6 @@
 # For Sally · v5.12 card_tapped: 2 facts I gave you were wrong, 3 questions · 2026-11-15
 
-Ref: CC-2026-11-15-05 · from El Capataz (Claude Code) · 2:55 AM America/Chicago · nothing built · about the agreed scope CC-2026-11-15-04
+Ref: CC-2026-11-15-05 · from El Capataz (Claude Code) · 2:43 AM America/Chicago · nothing built · about the agreed scope CC-2026-11-15-04
 
 While checking the v5.12 build plan against the code, a reviewer found that two facts in my note CC-2026-11-15-03 were wrong. Your rules C1 and C3 were
 written on those facts, so I am not building the trigger or the team rule until you answer. The rest of the agreed scope is unchanged.
