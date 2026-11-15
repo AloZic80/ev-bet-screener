@@ -191,8 +191,8 @@ Walker ($3.04) and Portland ($1.68).
 - All time, the bets judged here made +$7.39 against +$44.01 expected (−0.9 SD): ordinary bad luck, or a forecast that runs high. 267 bets cannot tell which yet.
 - **What the bets should earn if La Contadora is right: about +5% to +7% of the money staked.** Since 11/11, +7.0% (+$2.93 on the $42.10 judged above).
   On her chances the app's Reports judge, from 11/10 on, +5.6% (+$3.17 on $56.12, from the EV saved with each bet). Her rule over the wider set, with
-  the older bets rebuilt: +5.08% (+$27.35 on $538.66; both in the full evaluation, section 3). The last row's +8.2% is mostly the model's own chance, which the app keeps only
-  as a check. Over many bets, results drift toward what the bets are really worth: single digits, not +70%.
+  the older bets rebuilt: +5.08% (+$27.35 on $538.66; both in the full evaluation, section 3). The last row's +8.2% is mostly the model's own chance,
+  which the app keeps only as a check. Over many bets, results drift toward what the bets are really worth: single digits, not +70%.
 
 The ranges:
 - Volado since 11/11: ROI range +3.8% to +112.5% (90%: +14.3% to +107.7%). The low end is just above zero, but it rests on 12 games. Without the two biggest
@@ -207,7 +207,7 @@ The closing line, the other half of the app's test. CLV asks: did you get a bett
 | Since 11/11 | 18 | 11 / 3 / 4 | +0.93% (0.00% to +2.75%) |
 | Volado since 11/11 | 7 | 5 / 1 / 1 | +0.93% (0.00% to +4.10%) |
 
-All time the median is exactly 0.00%: 72 beat the close, 71 did not, and 25 were the same price. Since 11/11 it is +0.93%, but on 18 closes, and its range
+All time the median is exactly 0.00%: 72 beat the close, 71 were below it, and 25 were the same price. Since 11/11 it is +0.93%, but on 18 closes, and its range
 still starts at 0. The math policy (`docs/EV-CALCULATOR.md`): "Beating the closing line comes first; profit follows over time."
 
 ## 5. The 1K / 2K / 3K plan
@@ -303,6 +303,8 @@ Which reading counts (each block alone, or the three together) is best set befor
 - `docs/EV-CALCULATOR.md` says the 1,000-bet test needs the 95% ranges for ROI and median CLV above zero. The code (`renderScorecard`) uses the ROI 90%
   range (the one the Scorecard's ROI box shows) and the median-CLV 95% range. This note follows the code.
 - At exactly 0.00%, the warning's "That isn't luck" says more than the data shows.
+- The band study (`bandCover`) counts a bet with no start time as saved before the game; the Reports (`rpPregame`) leave it out. Paul George is the one
+  such bet here.
 
 ## How this was checked
 
