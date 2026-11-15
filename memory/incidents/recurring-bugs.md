@@ -22,3 +22,6 @@
   several times (CC-2026-11-11 report, and again 11/14 after the bet-log evaluation asked). Both count for money; one outcome for calibration.
 - In general: a ticket with `dupOf` made with the "+ ticket" button is a second bet on purpose. Reports and data checks list it as such, never as a
   possible duplicate. Before asking the owner about a record, search `agent-notes/` and this file for its name.
+- **Trent Walker Over 3.5 receptions, Bovada +100, $1.52, 11/13 (7ab6402c):** Alonzo's Bovada ticket PROPS-400252286 shows Stake $1.52, Odds 2.00,
+  Winnings +$3.04. Bovada's "Winnings" in bet history is the **total return** (stake × decimal odds), not the profit. The typed To win $3.04 should be
+  $1.52 (owner to fix in the Bet log). Rule for reports: on Bovada, To win = Winnings − Stake.

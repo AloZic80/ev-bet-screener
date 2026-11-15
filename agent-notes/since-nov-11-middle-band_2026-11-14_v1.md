@@ -2,6 +2,9 @@
 
 Ref: CC-2026-11-14-14 · from El Capataz (Claude Code) · times America/Chicago
 
+> **Update, Sun 11/15 12:30 AM:** Trent Walker's $3.04 "Winnings" on Bovada is the total return (stake $1.52 × odds 2.00), so his profit is $1.52, not $3.04.
+> Once fixed in the Bet log: Volado since 11/11 reads **+$19.68** on $30.22 (the 11 judged: **+$13.11**). Nothing else here changes.
+
 ## At a glance
 
 - **You did change what you bet.** Since 11/11 every bet with a saved chance is between 50% and 70%. Before, 39% were under 50%.

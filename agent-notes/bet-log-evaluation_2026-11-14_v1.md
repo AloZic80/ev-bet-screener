@@ -2,6 +2,10 @@
 
 Ref: CC-2026-11-14-13 · from El Capataz (Claude Code) · times America/Chicago
 
+> **Update, Sun 11/15 12:30 AM (from your Bovada ticket PROPS-400252286):** Trent Walker's "Winnings +$3.04" is Bovada's **total return** (stake $1.52 × odds 2.00);
+> the real profit is **$1.52**. Once you set its To win to 1.52 in the Bet log, the totals here read: all settled **+$41.55**, the Scorecard **+$20.43**, Bovada
+> **+$62.34**. It was the only Bovada bet with a typed To win; the other 26 are worked out from the odds, so no other Bovada bet is affected.
+
 ## At a glance
 
 - **You are up $43.07 on 333 settled bets** ($693.59 staked: about 6 cents per dollar). With this many bets, luck alone could still hide a losing record.
@@ -237,8 +241,8 @@ profit would move if the record is wrong in the way it looks.
 - **00bcd9f1** Jared McCain Over 1.5 threes, Polymarket US −161. The same. Change −$0.19.
 
 **B. Needs your ticket or your memory**
-- **7ab6402c** Trent Walker Over 3.5 receptions, Bovada +100, $1.52, 11/13. The typed to-win, $3.04, looks like stake plus winnings: at +100 the winnings
-  are $1.52. A guess from the numbers: check the Bovada ticket; a boosted price would make it right. Change if so: −$1.52 if $3.04 was the payout.
+- **7ab6402c** Trent Walker Over 3.5 receptions, Bovada +100, $1.52, 11/13. **Confirmed from your Bovada ticket (PROPS-400252286): Stake $1.52, Odds 2.00,
+  "Winnings +$3.04" is the total return.** The real profit is $1.52: set To win to 1.52 in the Bet log. Change: −$1.52.
 - **b1793588** Tuli Tuipulotu Over 0.5 sacks, Bovada +135, $3.16, 11/1, "ticket 2". **Confirmed by you: two bets on the same play** (you had said so
   before; this report should not have asked). Both count for money (+$4.27 each); as an outcome it counts once. No change.
 - **a48fbcc7** Bovada 3-pick parlay, 11/4. The odds changed from +1112 to +1266 on 11/5 at 5:57 PM, after its legs had started; graded by hand.
