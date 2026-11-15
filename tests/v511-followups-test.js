@@ -24,7 +24,7 @@ async function open(b, log){ const ctx=await b.newContext({timezoneId:'America/C
   check('TODAY: a free pending $5 entry that pays $25 shows Open upside +$20.00 (its winnings; the entry does not come back), not +$25.00', up==='+$20.00', up);
   // (3) the two hints
   const hints=await S.p.evaluate(()=>[...document.querySelectorAll('#addBetPanel .hint, #parlayPanel .hint')].map(x=>x.textContent.replace(/\s+/g,' ').trim()).filter(t=>/prices single bets/.test(t)));
-  check('both parlay hints say it counts in today’s total for the daily max (the Hard stop) and that apps without their own tile show under Other', hints.length===2 && hints.every(t=>/Its entry does count in today’s total for your daily max \(the Hard stop\)\./.test(t.replace(/'/g,'’')) && /such as PrizePicks, under Other/.test(t) && !/not against the screener/.test(t)), hints);
+  check('both parlay hints say it counts in today’s total for the daily max (the Hard stop) and that pick’em apps get their own tile (v5.12)', hints.length===2 && hints.every(t=>/Its entry does count in today’s total for your daily max \(the Hard stop\)\./.test(t.replace(/'/g,'’')) && /pick’em apps such as PrizePicks get their own tile/.test(t) && !/not against the screener/.test(t)), hints);
   // (1) the Bet log panel: Game day 11/14 typed on 11/15
   await S.p.evaluate(()=>{ const d=document.getElementById('parlayPanel'); if(d) d.open=true; });
   const rec=await S.p.evaluate(()=>{ const g=id=>document.getElementById(id); g('plBook').value='PrizePicks'; g('plPicks').value='3'; g('plStake').value='5'; g('plAll').value='25'; g('plDay').value='2026-11-14'; g('plLegs').value='x; y; z';
