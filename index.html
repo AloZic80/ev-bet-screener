@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.08</title>
+<title>0xBeta Screener v5.09</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1729,6 +1729,27 @@ small{font-size:max(12px, calc(1em / 1.2))}   /* v5.04: the browser’s own smal
   .rp-br td[data-l]::before{content:attr(data-l)': '; color:var(--soft); font-size:12px}
   .rp-br td[data-l].d-up::before{content:attr(data-l) ": ▲\00a0"} .rp-br td[data-l].d-dn::before{content:attr(data-l) ": ▼\00a0"}
 }
+/* v5.09 (owner 11/15: "i want it to show both. Because it does say, TOTAL WIN or To Win."): the bet form's Total payout box next to To win, its free-bet note and
+   the gentle check line under the boxes; the total payout in small print in the Bet log row and Reports › Open bets. Display only. */
+.eb-tw-chk{flex-basis:100%; color:var(--warn); white-space:normal}   /* its own line under the boxes */
+.eb-tw-chk:empty{display:none}
+.eb-tw-chk>span{display:block; max-width:calc(100vw - 48px); box-sizing:border-box; position:sticky; left:0}   /* fits a phone screen inside the scrolling Bet log table, like .eb-money */
+.eb-tw-chk .eb-tw-use{margin-left:6px}
+.eb-tot-free, .lg-tw, .tw-tot{white-space:normal}   /* the small print wraps instead of widening a column */
+/* v5.09 (review): the pair stays together, and Bet log › edit keeps the new lines inside the part of its sideways-scrolling table you can see */
+.eb-tw-pair{display:inline-flex; flex-wrap:wrap; align-items:center; gap:10px; max-width:100%}   /* To win and Total payout side by side; they wrap to the next row together */
+.eb-tw-brk, .eb-money-brk{display:none}
+tr.editor .eb-money-brk{display:block; flex-basis:100%; height:0}   /* Bet log › edit: the Real money box always starts a new line at the left (the new boxes pushed it sideways, off the screen) */
+tr.editor .eb-money-brk+.eb-money{margin-top:-6px}   /* the same 14 px above it as before */
+tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of the log table: about 48 px in from the left edge of the screen and 19 px from the right */
+.eb-tw-chk .eb-tot-free{color:var(--soft)}   /* the free-bet note is a plain note, not a warning */
+@media (max-width:760px){
+  .editor-row .eb-win-o, .editor-row .eb-tot-o{width:108px!important; box-sizing:border-box}   /* "optional" fits at the phone’s 16 px type (90 px showed "optiona"); + Add a bet was already 108 px */
+  tr.editor .eb-tw-brk{display:block; flex-basis:100%; height:0}   /* a phone: the pair starts a new line at the left, where the screen shows it */
+  tr.editor .eb-tw-pair{max-width:calc(100vw - 67px)}
+}
+@media (max-width:999px){ tr.editor .eb-tw-chk:empty{display:block; height:0} }   /* phone and tablet: with no line to show it still ends the row, so Game day starts at the left, on the screen (as before v5.09) */
+#tbody tr.editor .eb-tw-chk>span{max-width:calc(100vw - 93px)}   /* v5.09 (final check): the board shown as a table: its scrolling area is 42 px in on both sides and the line starts 9 px into the cell, so a long line stays on the screen (it lost 13 to 27 px on a phone) */
 </style>
 </head>
 <body>
@@ -1737,7 +1758,7 @@ small{font-size:max(12px, calc(1em / 1.2))}   /* v5.04: the browser’s own smal
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.08</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.09</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2563,7 +2584,7 @@ small{font-size:max(12px, calc(1em / 1.2))}   /* v5.04: the browser’s own smal
 
 </div>
 <script>
-const SCREENER_VERSION='v5.08';
+const SCREENER_VERSION='v5.09';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -4999,6 +5020,38 @@ function coverApply(L, inp, before, now){ if(!L || !inp) return; const v=parseFl
   if(L.cover && L.cover.pre && !pre){ (L.coverHist=L.coverHist||[]).push(rec); return; }   // the forecast made before the game stands
   if(L.cover) (L.coverHist=L.coverHist||[]).push(L.cover);
   if(before) before.cover=L.cover||null; L.cover=rec; }
+/* v5.09 (owner 11/15: "i want it to show both. Because it does say, TOTAL WIN or To Win."; Trent Walker 11/13: Bovada's "Winnings +$3.04" on a $1.52 bet at 2.00
+   is the total return, and it went into To win): the sportsbook boxes of the bet form (I bet this, + Add a bet, Bet log › edit) show To win (the profit, what Save
+   keeps as towin, unchanged) and Total payout (the stake back included), linked both ways: typing one fills the other; a new Stake (or Odds) keeps the one you
+   typed last (ed._own.pay: 'win' or 'tot') and moves the other. Emptying To win empties both (To win is what Save keeps); emptying a Total payout that was
+   filled in for you keeps the To win you typed, and that box stays empty until the Stake changes (review S14). A free bet's stake does not come back, so there Total payout = To win. Two gentle lines, never
+   blocking: a To win equal to Stake × decimal odds (± 1¢) looks like a total payout ("Use $X" moves it to Total payout); a Total payout under the stake.
+   Display and input only: Save, betProfit, the saved fields and the % boxes (Cost, @ %, Pays back / Max payout) are unchanged. Hoisted: openBetEditor calls it. */
+function ebTwWire(ed){
+  const q=c=>ed.querySelector(c), wI=q('.eb-win-o'), tI=q('.eb-tot-o'), sI=q('.eb-stake'), oI=q('.eb-odds'), chk=q('.eb-tw-chk');
+  if(!wI || !tI || !sI || !chk) return;
+  (ed._own=ed._own||{}).pay='';
+  const c2=x=>(Math.round(x*100)/100).toFixed(2), isFree=()=>{ const f=q('.eb-free'); return !!(f && f.checked); };
+  const decOf=()=>{ const t=String((oI&&oI.value)||'').trim(); if(/^\d+\.\d+$/.test(t) && parseFloat(t)>1) return parseFloat(t);   // a decimal price as typed (2.00, 1.91)
+    const p=toProb(priceText(t).replace(/^(\d)/,'+$1')); return p>0 && p<1 ? 1/p : null; };   // American or %, read as Save reads it
+  let held=null; const pairIn=()=>(parseFloat(sI.value)||0)+'|'+isFree();   // v5.09 (review S14): a box you emptied by hand stays empty until the Stake or the Free bet tick really changes (+ Add a bet re-sends Stake events with no change)
+  const sync=hold=>{ if(hold) held={el:hold, at:pairIn()}; else if(held && held.at!==pairIn()) held=null;
+    const s=parseFloat(sI.value), S=s>0?s:null, free=isFree(), back=free?0:S, src=ed._own.pay, keep=held&&held.el;
+    if(src==='win' && keep!==tI){ const w=parseFloat(wI.value); tI.value=(isNaN(w) || back==null) ? '' : c2(w+back); }   // To win typed: Total payout = Stake + To win
+    else if(src==='tot' && keep!==wI){ const t=parseFloat(tI.value); wI.value=(isNaN(t) || back==null) ? '' : c2(Math.max(0,t-back)); }   // Total payout typed: To win = Total payout − Stake, never below 0
+    const W=parseFloat(wI.value), T=parseFloat(tI.value); let h=free?'<span class="eb-tot-free">(free bet: the stake does not come back)</span>':'';   // v5.09 (review): the free-bet note is shown on the line under the boxes (it ran off a phone screen next to Total payout)
+    if(!free && S!=null && src==='tot' && T>=0 && T<S-0.004) h='<span>Total payout is less than the stake: a total payout includes the stake.</span>';
+    else if(!free && S!=null && src==='win' && W>0){ const d=decOf();
+      if(d!=null && Math.abs(W-S*d)<=0.0100001 && Math.abs(W-S*(d-1))>0.0100001){ const x=c2(Math.max(0,W-S)); h='<span>This looks like the total payout (stake included). To win would be $'+x+'. <button type="button" class="log sm eb-tw-use">Use $'+x+'</button></span>'; } }
+    if(chk.innerHTML!==h) chk.innerHTML=h; };
+  wI.addEventListener('input',()=>{ held=null; if(wI.value!==''){ ed._own.pay='win'; } else { ed._own.pay=''; tI.value=''; } sync(); });   // v5.09 (review S14): To win is what Save keeps, so emptying it empties Total payout too (the screen shows what Save will keep)
+  tI.addEventListener('input',()=>{ const was=ed._own.pay; held=null;   // v5.09 (review S14): emptying a Total payout that was filled in for you keeps the To win you typed (a boost: Save keeps it); it fills again when the Stake changes
+    if(tI.value!==''){ ed._own.pay='tot'; sync(); } else if(was==='win') sync(tI); else { ed._own.pay=''; wI.value=''; sync(); } });   // the Total payout you typed, emptied: the To win that came from it goes too
+  const resync=()=>sync();   // v5.09 (review S14): listeners pass an event, not a box to hold
+  ['input','change'].forEach(k=>{ sI.addEventListener(k,resync); if(oI) oI.addEventListener(k,resync); });   // + Add a bet also fills Stake for you: the same
+  { const f=q('.eb-free'); if(f) f.addEventListener('change',resync); }   // Bet log › edit: the Free bet tick
+  chk.addEventListener('click',e=>{ const u=e.target.closest('.eb-tw-use'); if(!u) return; e.preventDefault(); held=null; tI.value=c2(parseFloat(wI.value)); ed._own.pay='tot'; sync(); });   // v5.09 (review S14): held=null
+  sync(); }   // a bet saved as free shows its note at once
 function openBetEditor(tr, r, opt){
   opt=opt||{};
   const isCard=tr.classList.contains('pcard')||tr.classList.contains('ab-host');   // v2.79: + Add a bet hosts one too   // v2.69: the card holds its own editor
@@ -5021,7 +5074,9 @@ function openBetEditor(tr, r, opt){
     '<span class="eb-plain" style="display:contents">'+
       '<label title="American (-110, +120), decimal (1.91) or a percentage (52.4%)">Odds <input class="eb-odds" type="text" placeholder="-110 · 1.91 · 52%" value="'+esc(r.offeredRaw)+'"></label>'+
       '<label>Stake $ <input class="eb-stake" type="number" step="0.25" value="'+(st0?st0.toFixed(2):'')+'"></label>'+
-      '<label title="The profit (your stake not included). When you type it, that is what the bet pays, fee or no fee. Leave Odds blank and this + Stake gives the odds.">To win $ <input class="eb-win-o" type="number" step="0.01" placeholder="optional" style="width:90px"></label></span>'+
+      '<span class="eb-tw-brk" aria-hidden="true"></span><span class="eb-tw-pair"><label title="The profit only (your stake not included). Some books call it To Win.">To win $ <input class="eb-win-o" type="number" step="0.01" placeholder="optional" style="width:90px"></label>'+   // v5.09: the tip says what books call it (scope wording)   // v5.09 (review): To win and Total payout in one group (eb-tw-pair) that wraps together; Bet log › edit on a phone starts it on a new line (eb-tw-brk)
+      '<label class="eb-tot-l" title="What comes back if it wins: your stake plus the profit. Some books call it Total Win, Payout, Return or (Bovada) Winnings.">Total payout $ <input class="eb-tot-o" type="number" step="0.01" placeholder="optional" style="width:90px"></label></span>'+   // v5.09 (owner: "i want it to show both"): linked to To win both ways (ebTwWire)   // v5.09 (review): the free-bet note moved to the line under the boxes (eb-tw-chk), where a phone shows it
+      '<span class="meta eb-tw-chk" role="status"></span></span>'+   // v5.09: the gentle checks (looks like a total payout / less than the stake), never blocking   // v5.09 (review): and the free-bet note
     '<span class="pm-fields eb-pm">'+
       '<label>Cost $ <input class="eb-cost" type="number" step="0.01" placeholder="2.50"></label>'+
       '<label><span class="eb-pct-l">@</span> <input class="eb-pct" type="number" step="0.1" placeholder="62" style="width:60px"><span class="eb-pct-u">%</span></label>'+
@@ -5032,7 +5087,7 @@ function openBetEditor(tr, r, opt){
     (opt.edit?'<label title="The day the game is played. Change it if you picked the wrong one.">Game day <input class="eb-date" type="date" value="'+esc(gameDayOf(opt.edit)||opt.edit.date||'')+'"></label>':'')+   // v3.88: the date can be fixed when editing
     (opt.edit?(opt.edit.placedAtSource==='book_fill'?'<span class="meta" title="The time the book says you placed it">Placed '+esc(new Date(opt.edit.placedAt).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}))+' (book)</span>':'<label title="When you placed it at the book (your time). Optional.">Placed at <input class="eb-placed" type="datetime-local" value="'+esc(placedLocalVal(opt.edit.placedAt))+'"></label>'):'')+   /* v4.73 */
     (opt.edit && opt.edit.kind!=='parlay'?'<label title="Optional. The chance you saw for this bet (for example on BettingPros). It gives the bet its cover band when no La Contadora chance was saved (v4.88). Typed before the game: it counts in the hit rate and calibration. Typed after the game started: shown only.">Cover % <input class="eb-cover" type="number" step="0.1" min="1" max="99" placeholder="optional" style="width:70px" value="'+(opt.edit.cover&&+opt.edit.cover.p>0?(+opt.edit.cover.p*100).toFixed(1):'')+'"></label>':'')+   /* v4.68 */
-    (opt.edit?'<span class="eb-money"><b class="eb-money-h">Real money</b>'+   // v3.98 (Alonzo: "I want to have the real total amounts I get back"): boosts, free bets, what the book really paid
+    (opt.edit?'<span class="eb-money-brk" aria-hidden="true"></span><span class="eb-money"><b class="eb-money-h">Real money</b>'+   // v3.98 (Alonzo: "I want to have the real total amounts I get back"): boosts, free bets, what the book really paid   // v5.09 (review): eb-money-brk starts the Real money box on a new line at the left in Bet log › edit (the new boxes pushed it sideways, off a phone or tablet screen)
       '<label class="bar-check" title="A free bet (bonus bet) is not your money: if it loses you lose $0, if it wins you get the winnings. It does not count as money you staked."><input type="checkbox" class="eb-free"'+(opt.edit.free?' checked':'')+'> 🎁 Free bet</label>'+
       '<label title="Everything the book paid you, your stake included (a boost: the boosted amount). Type this or Winnings: the other one fills in.">Got back $ <input class="eb-back" type="number" step="0.01" min="0" style="width:90px"></label>'+
       '<label title="Only the winnings, your stake not included. Performance and ROI use this one.">Winnings $ <input class="eb-prof" type="number" step="0.01" min="0" style="width:90px"></label>'+
@@ -5131,6 +5186,7 @@ function openBetEditor(tr, r, opt){
   };
   const own=(cls,k)=>ed.querySelector(cls).addEventListener('input',e=>{ if(e.isTrusted){ ed._own[k]=ed.querySelector(cls).value!==''; } pmSync(); });
   own('.eb-cost','cost'); own('.eb-pct','pct'); own('.eb-win','win');
+  ebTwWire(ed);   // v5.09: To win and Total payout fill each other (sportsbook boxes only; the % boxes above are unchanged)
   bookSel.addEventListener('change',()=>pmSync());
   /* v2.59: is it still worth it? Re-checked as you type and again on Save. Same line → the
      model's own cover %. Different line → a rough shift for NFL/college game totals and spreads
@@ -6367,7 +6423,7 @@ function renderLog(){ setTimeout(()=>{ try{ csvDays(); }catch(e){} try{ lcRender
     tr.innerHTML=
       '<td class="meta" style="white-space:nowrap">'+esc(b.date)+'<div class="meta">bet '+esc(betTimeTxt(b))+'</div>'+(b.start?'':'<div class="meta" style="color:var(--warn)">game time unknown</div>')+playedHtml(b)+whyHtml(b)+'</td>'+
       '<td><div class="c-who">'+avatarHtml(b,'b:'+i)+'<div><div class="pick">'+esc(b.name)+'</div><div class="meta" style="color:var(--ink)" title="'+esc(b.betnow||'')+'">'+esc(betLabel(b))+' <span class="meta">'+esc(fmtOdds(b.odds))+'</span></div>'+srcTagHtml(b)+logBandChip(b)+lsmlChip(b)+(b.free?' <span class="tag eb-freetag" title="Free bet: not your money. A loss costs $0.">🎁 free bet</span>':'')+(b.paidReal?' <span class="meta" title="The winnings you typed: what the book really paid">paid as typed</span>':'')+(b.lostAmt>=0&&b.result==="loss"?' <span class="meta">lost $'+(+b.lostAmt).toFixed(2)+' (typed)</span>':'')+liveChipHtml(b)+fillDiffHtml(b,i)+nvFillNote(b)+
-      '<div class="meta">'+(bookLogo(b.book)||isPredBook(b.book)?logoTag(b.book,'sm')+' ':'')+'<span class="book">'+esc(bookLabel(b.book))+'</span></div></div></div></td>'+   // v3.57: PREDICTS tag on prediction apps without a logo too (FanDuel Predicts); a picture
+      '<div class="meta">'+(bookLogo(b.book)||isPredBook(b.book)?logoTag(b.book,'sm')+' ':'')+'<span class="book">'+esc(bookLabel(b.book))+'</span></div>'+lgTwHtml(b)+'</div></div></td>'+   /* v5.09: an open single shows to win · total */   // v3.57: PREDICTS tag on prediction apps without a logo too (FanDuel Predicts); a picture
       '<td><span class="sport s-'+esc(b.sport)+'">'+esc(b.sport)+'</span></td>'+
       '<td class="num">'+esc(fmtOdds(b.odds))+'</td>'+
       '<td class="num">'+esc(fmtOdds(b.fair))+'</td>'+
@@ -9990,6 +10046,9 @@ function rpSample(n){ return n<10?'too few to rank':n<30?'extremely preliminary'
 function rpPct(x){ return x==null?'—':(x>=0?'+':'−')+Math.abs(x*100).toFixed(1)+'%'; }
 function rpCls(v,step){ return (v>0.005?'pl-up':v<-0.005?'pl-down':'')+dClsR(v,step||0.01); } /* v5.04: ▲/▼ from the shown rounding: $ to the cent, ROI (step 0.001) to 0.1%; colour rule unchanged */
 function rpToWin(b){ if(b.kind==='parlay'){ const pay=b.parlay&&b.parlay.payout; return b.towin>0?+b.towin:(pay>0?(+pay)-(+b.stake||0):null); } if(b.towin>0) return +b.towin; const p=toProb(b.odds); if(p==null||!(p>0&&p<1)) return null; const fee=+b.fee||0; return (+b.stake||0)*((1/p)-1-fee)/(1+fee); }   /* review: the same fee formula as betProfit */
+function twTotal(b, tw){ return +(+(+tw).toFixed(2)+(b.free?0:(+b.stake||0))).toFixed(2); }   /* v5.09: a single bet's total payout if it wins: the To win as shown + the stake back (a free bet's stake does not come back). Display only */
+function lgTwHtml(b){ if(!b || b.kind==='parlay' || b.sold || betProfit(b)!=null) return ''; const tw=rpToWin(b); if(tw==null || !(tw>0)) return '';   /* v5.09: the Bet log row of an open single: to win and the total, small print (the same To win as Reports) */
+  return '<div class="meta lg-tw" title="If it wins: the profit (To win) and what comes back with your stake (Total payout)">to&nbsp;win&nbsp;$'+tw.toFixed(2)+' ·&nbsp;total&nbsp;$'+twTotal(b,tw).toFixed(2)+'</div>'; }
 function rpPick(b){ return b.kind==='parlay' ? ('Parlay'+(b.parlay&&b.parlay.legs?' · '+b.parlay.legs+' legs':'')) : (b.betnow || [(b.side==='O'?'Over':b.side==='U'?'Under':''), b.market].join(' ').trim()); }
 function rpOptions(){ const uniq=fn=>[...new Set(logged.map(fn).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b)));
   const sel=(id,all,opts)=>{ const el=document.getElementById(id); if(!el) return; const v=RP.f[el.dataset.k]||''; if(v && !opts.some(o=>o[0]===v)){ delete RP.f[el.dataset.k]; rpSaveUi(); }   /* review: a saved filter no menu can show is dropped, never left on unseen */
@@ -10010,7 +10069,7 @@ function rpListHtml(list, open, all){ if(!list.length) return '<p class="meta">'
   const rows=shown.map(b=>{ const st=b.free?0:(+b.stake||0), d=rpDayOf(b)||'', pr=betProfit(b), tw=rpToWin(b);
     const res=b.sold?'sold':b.result==='win'?'won':b.result==='loss'?'lost':b.result==='push'?'push':(betLocked(b)?'▶ in play':'⏳ to play');
     return '<tr><td data-l="'+(RP.basis==='placed'?'Placed':'Game day')+'">'+esc(d)+'</td><td class="rp-bet"><b>'+esc(b.name||'')+'</b><br><span class="meta">'+esc(rpPick(b))+'</span></td><td data-l="Book">'+esc(bookLabel(b.book||''))+'</td><td class="num" data-l="Odds">'+esc(b.odds||'')+'</td><td class="num" data-l="Risked">$'+st.toFixed(2)+(b.free?' <span class="meta">free</span>':'')+'</td>'+
-      (open?'<td class="num" data-l="To win">'+(tw==null?'—':'$'+tw.toFixed(2))+'</td>':'<td class="num '+rpCls(pr||0)+'" data-l="Profit">'+(pr==null?'—':lcUsd(pr))+'</td>')+'<td data-l="'+(open?'Status':'Result')+'">'+esc(res)+'</td><td class="meta" data-l="Band">'+esc(rpBandTxt(b))+'</td></tr>'; }).join('');
+      (open?'<td class="num" data-l="To win">'+(tw==null?'—':'$'+tw.toFixed(2)+(b.kind!=='parlay'?'<span class="meta tw-tot"> ·&nbsp;total&nbsp;$'+twTotal(b,tw).toFixed(2)+'</span>':''))+'</td>':'<td class="num '+rpCls(pr||0)+'" data-l="Profit">'+(pr==null?'—':lcUsd(pr))+'</td>')+'<td data-l="'+(open?'Status':'Result')+'">'+esc(res)+'</td><td class="meta" data-l="Band">'+esc(rpBandTxt(b))+'</td></tr>'; }).join('');   /* v5.09: a single’s To win also shows its total payout in small print ("$1.52 · total $3.04") */
   return '<div class="rp-tw"><table class="rp-t rp-list"><thead><tr><th>'+(RP.basis==='placed'?'Placed':'Game day')+'</th><th>Bet</th><th>Book</th><th class="num">Odds</th><th class="num">Risked</th><th class="num">'+(open?'To win':'Profit')+'</th><th>'+(open?'Status':'Result')+'</th><th>Band (source)</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
     (list.length>max?'<button type="button" class="btn-sm rp-more" data-w="'+(open?'open':'set')+'">'+(all?'Show the first '+max:'Show all '+list.length)+'</button><span class="meta"> '+(all?'':'showing '+max+' of '+list.length)+'</span>':''); }
 function rpRender(){ const box=document.getElementById('rpPanel'); if(!box) return;
