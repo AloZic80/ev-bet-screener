@@ -98,6 +98,7 @@ const runs = [
   ['v4.33: colour schemes (Green, Blue, Red, Purple, Graphite) in light and dark, all AA; remembered', 'palette-test.js', []],
   ['v4.31: Augi\'s 5-point cover bands (chips on the board and cards) and the Bet result study in Performance', 'cover-study-test.js', []],
   ['v4.30: the five tabs pinned to the bottom at every width; the ribbon menu above the scores, every sport again (in tabs-test and ribbon-risk-test)', 'tabs-test.js', []],
+  ['v5.09: the parlay form lists PrizePicks, Underdog, Sleeper, Betr and ParlayPlay (old options keep their order)', 'pickem-books-test.js', []],
   ['v4.28: Sort › Math (edge first) is the default, the #1 MATH PICK card, the score colours in words', 'math-pick-test.js', []],
   ['v4.27: the hard stop: past the daily max, Save stops and says so; a second press is your call', 'hard-stop-test.js', []],
   ['v4.26: the score ribbon: My games, only the sports you bet in (All sports brings the rest back), each tile says what your open bets risk', 'ribbon-risk-test.js', []],
