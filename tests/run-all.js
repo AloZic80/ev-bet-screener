@@ -98,6 +98,7 @@ const runs = [
   ['v4.33: colour schemes (Green, Blue, Red, Purple, Graphite) in light and dark, all AA; remembered', 'palette-test.js', []],
   ['v4.31: Augi\'s 5-point cover bands (chips on the board and cards) and the Bet result study in Performance', 'cover-study-test.js', []],
   ['v4.30: the five tabs pinned to the bottom at every width; the ribbon menu above the scores, every sport again (in tabs-test and ribbon-risk-test)', 'tabs-test.js', []],
+  ['v5.10: the parlay form lists PrizePicks, Underdog, Sleeper, Betr and ParlayPlay (old options keep their order)', 'pickem-books-test.js', []],
   ['v4.28: Sort › Math (edge first) is the default, the #1 MATH PICK card, the score colours in words', 'math-pick-test.js', []],
   ['v4.27: the hard stop: past the daily max, Save stops and says so; a second press is your call', 'hard-stop-test.js', []],
   ['v4.26: the score ribbon: My games, only the sports you bet in (All sports brings the rest back), each tile says what your open bets risk', 'ribbon-risk-test.js', []],
@@ -127,6 +128,8 @@ const runs = [
   ['v5.05: Kalshi in 0.01 shares (the stake stays the cash budget; shares fit it at La Contadora’s limit with the fee rounded up to the cent as a sizing buffer; EV on the smooth fee) on the board, Hail Mary, Just missed, I bet this, + Add a bet, card and strip; snap.kalshiFee; price words ("Price fell 4.5 pts", "Price just read", "Price 8m old", "Price stale · re-check", "Price time unknown · check book")', 'v505-test.js', []],
   ['v5.09: also at: the exchange prices the Sentinels read and a one-tap check; confirmed / over / verify / last seen / reference only; only no offer or line moved removes a price; display only', 'v509-test.js', []],
   ['v5.07: Reports › So far (Sally agreed, owner BUILD): Market and Sport · type · market (market-alias-v1), ROI 95% range by whole games, Expected vs actual, CLV coverage, Read replaces Sample, the many-group check (BH 10%), the So far card; Scorecard and Said vs won unchanged', 'v507-test.js', []],
+  ['v5.10: To win and Total payout side by side in the bet form (+ Add a bet, I bet this, Bet log › edit), linked both ways; a free bet\'s total = to win; "looks like the total payout" with Use $X; % boxes unchanged; Bet log row and Reports show "· total"', 'towin-total-test.js', []],
+  ['v5.10: My plan (Settings: La Contadora’s chance at least 50% since 11/11, a reminder only): “Outside your plan” on cards, rows and the bet form under it, “· outside your plan” on 🍀 Suertudo and 🔮 Brujo; stakes and BET / SKIP unchanged; Performance › Your 1,000-bet blocks (each block judged by the Scorecard’s own functions, the head-start note); Reports › Band, 2.5% steps (exploratory); the Scorecard and Said vs won unchanged', 'v510-test.js', []],
 ];
 const run = (file, args) => spawnSync(process.execPath, [path.join(__dirname, file), ...args], { encoding: 'utf8', timeout: 300000 });
 const last = r => ((r.stdout || '') + (r.stderr || '')).trim().split('\n').pop();

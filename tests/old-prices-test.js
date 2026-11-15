@@ -25,7 +25,7 @@ const ROWS=[row('a','Fresh Machin',0.62,0.58,60e3), row('b','Stale Machin',0.62,
     const tabs=()=>p.evaluate(()=>[...document.querySelectorAll('#modeBar button')].map(x=>x.textContent.replace(/\s+/g,' ').trim()));
     const t1=await tabs();
     if(W===1280){
-      check('six tabs: ⏱ Old after 🔮 Brujo; it holds 3 (Stale Machin 13 h, Stale Brujo 5 d, the Stale Hail Hail Mary 20 h); v4.81: then 👻 AWOL (0 here)', t1.length===7 && /^👻 AWOL 0$/.test(t1[6]) && /^⏱ Old 3$/.test(t1[5]) && /^💪 Machín 1$/.test(t1[1]) && /^🪙 Volado 1$/.test(t1[2]) && /^🔮 Brujo 1$/.test(t1[4]), t1);
+      check('six tabs: ⏱ Old after 🔮 Brujo; it holds 3 (Stale Machin 13 h, Stale Brujo 5 d, the Stale Hail Hail Mary 20 h); v4.81: then 👻 AWOL (0 here)', t1.length===7 && /^👻 AWOL 0$/.test(t1[6]) && /^⏱ Old 3$/.test(t1[5]) && /^💪 Machín 1$/.test(t1[1]) && /^🪙 Volado 1$/.test(t1[2]) && /^🔮 Brujo 1 · outside your plan$/.test(t1[4]) /* v5.10: My plan (50% and up since 11/11) marks 🔮 Brujo */, t1);
       const st=await p.evaluate(()=>{ const g=n=>lastRows.find(r=>r.name===n); return {fresh:g('Fresh Machin').stake, stale:g('Stale Machin').stake, hold:g('Stale Machin').hold||null, held:modeFamOf(g('Held Old')), eleven:modeFamOf(g('Eleven Volado'))}; });
       check('v4.83 (agreed with Sally): Stale Machin is $0 and holds no daily max; "if refreshed: up to $X" is what Fresh Machin gets (same chance, same price)', st.stale===0 && st.hold && st.hold.why==='old' && Math.abs(st.hold.stake-st.fresh)<0.005, st);
       check('a bet you hold stays where it is (Held Old, 2 days old, already bet: 💪 Machín); 11 hours is not old (🪙 Volado)', st.held==='safe' && st.eleven==='volado', st);
