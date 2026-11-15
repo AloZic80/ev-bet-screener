@@ -118,7 +118,7 @@ async function newPage(b, file, W, dev){
   const L1=await par({picks:3, stake:5, all:25, result:'loss'}); const rl=L1.rec||{};
   check('the same entry Lost: profit −$5.00, result loss, payout 0, 0 hit', L1.saved===1 && rl.result==='loss' && rl.parlay.payout===0 && rl.parlay.hits===0 && L1.profit===-5 && rl.stake===5, L1);
   const F1=await par({kind:'flex', picks:3, stake:5, all:25, m1:2, result:'partial', paid:2}); const rf=F1.rec||{};
-  check('3-pick Flex $5 (pays $25, $2 if 1 misses), Partial payout with Paid $2: profit −$3.00, result win (the scope), payout 2, 2 of 3 hit', F1.saved===1 && rf.result==='win' && rf.parlay.payout===2 && rf.parlay.hits===2 && F1.profit===-3 && rf.parlay.pays.m1===2 && rf.parlay.pays.m2===0, F1);
+  check('3-pick Flex $5 (pays $25, $2 if 1 misses), Partial payout with Paid $2: profit −$3.00, result loss (less back than the entry, as the Bet log list grades it; v5.11 integration), payout 2, 2 of 3 hit', F1.saved===1 && rf.result==='loss' && rf.parlay.payout===2 && rf.parlay.hits===2 && F1.profit===-3 && rf.parlay.pays.m1===2 && rf.parlay.pays.m2===0, F1);
   const F2=await par({kind:'flex', picks:5, stake:5, all:50, m1:10, m2:2, result:'partial', paid:2}); const rf2=F2.rec||{};
   check('5-pick Flex ($10 if 1 misses, $2 if 2 miss), Paid $2: 3 of 5 hit (the nearest Flex payout), profit −$3.00', F2.saved===1 && rf2.parlay.hits===3 && rf2.parlay.payout===2 && F2.profit===-3, F2);
   const FR1=await par({picks:3, stake:5, all:25, result:'win', free:true}); const rfr=FR1.rec||{};
@@ -172,6 +172,11 @@ async function newPage(b, file, W, dev){
   check('free entry $5 paying $25, Won, Paid $20 typed (the winnings the note says you get): the record keeps $25 with the entry, profit +$20.00 (it was +$15.00)', FP.saved===1 && FP.rec.free===true && FP.rec.parlay.payout===25 && FP.rec.parlay.pays.all===25 && FP.profit===20 && FP.ab==='Saved: Parlay · 3 picks · $5.00 free entry at PrizePicks · WON +$20.00. It is in your Bet log.', FP);
   const FX=await par({kind:'flex', picks:3, stake:5, all:11.25, m1:6.25, result:'partial', paid:1.25, free:true});
   check('free 3-pick Flex $5 (pays $11.25, $6.25 if 1 misses), Partial, Paid $1.25 (the winnings): 2 of 3 hit, payout $6.25, profit +$1.25 (it was $0.00), "PARTIAL PAYOUT +$1.25"', FX.saved===1 && FX.rec.free===true && FX.rec.parlay.hits===2 && FX.rec.parlay.payout===6.25 && FX.profit===1.25 && / · PARTIAL PAYOUT \+\$1\.25\. It is in your Bet log\.$/.test(FX.ab), FX);
+  // v5.11 (integration): a partial is graded like the Bet log's how-many-hit list: the entry back is a push, more back is a win
+  const FE=await par({kind:'flex', picks:3, stake:5, all:25, m1:5, result:'partial', paid:5}); const rfe=FE.rec||{};
+  check('3-pick Flex $5 (pays $5 if 1 misses), Partial, Paid $5: result push, profit $0.00, 2 of 3 hit', FE.saved===1 && rfe.result==='push' && rfe.parlay.hits===2 && rfe.parlay.payout===5 && FE.profit===0, FE);
+  const FW=await par({kind:'flex', picks:3, stake:5, all:11.25, m1:6.25, result:'partial', paid:6.25}); const rfw=FW.rec||{};
+  check('3-pick Flex $5 (pays $6.25 if 1 misses), Partial, Paid $6.25: result win, profit +$1.25', FW.saved===1 && rfw.result==='win' && rfw.parlay.payout===6.25 && FW.profit===1.25, FW);
   const tip=()=>p.evaluate(()=>({ph:document.getElementById('abParPaid').placeholder, tip:document.querySelector('#addBetPanel label[for="abParPaid"]').title}));
   await p.selectOption('#abParKind','power'); await p.fill('#abParPicks','3'); await p.fill('#abParStake','5'); await p.fill('#abParAll','25'); await p.setChecked('#abParFree',true); await p.selectOption('#abParResult','win'); await pause(100); const phF=await tip();
   await p.selectOption('#abParResult','partial'); await pause(100); const phFp=await tip();
@@ -207,7 +212,7 @@ async function newPage(b, file, W, dev){
   const AH=await par({picks:3, stake:5, all:25, legs:LEGS});   // Power: the Flex boxes still hold 9 and 3, out of sight
   check('a Power entry ignores Flex payouts left in the boxes (m1 and m2 0, as the panel with them blank)', AH.rec && canon(AH.rec,IGD)===canon(PP.rec,IGD), AH.rec&&AH.rec.parlay);
   const AW=JSON.parse(JSON.stringify(W1.rec)), extra=diffs(PP.rec, AW, IGN);
-  check('Won with a placed time: the panel\'s record plus only dateSet, placedAt, placedAtSource, placedTz, the result and the "how many hit" fields', JSON.stringify(extra.sort())===JSON.stringify(['dateSet','parlay.hits','parlay.payout','placedAt','placedAtSource','placedTz','result']), extra);
+  check('Won with a placed time: the panel\'s record plus only placedAt, placedAtSource, placedTz, the result and the "how many hit" fields (v5.11 integration: the panel now keeps the Game day typed too, so dateSet is in both)', JSON.stringify(extra.sort())===JSON.stringify(['parlay.hits','parlay.payout','placedAt','placedAtSource','placedTz','result']), extra);
   // graded the way the Bet log's "how many hit" list grades the panel's parlay
   await p.evaluate(()=>document.querySelector('.tab[data-view="v-log"]').click()); await pause(400);
   const hitSel=async(i,v)=>{ await p.selectOption('#logBody select.pl-hit[data-i="'+i+'"]', v); await pause(300); return p.evaluate(i=>{ const x=logged[i]; return {result:x.result, hits:x.parlay.hits, payout:x.parlay.payout, profit:betProfit(x)}; }, i); };
@@ -217,7 +222,7 @@ async function newPage(b, file, W, dev){
   check('Lost: the same as the panel\'s parlay set to "lost — $0"', JSON.stringify(g0)===JSON.stringify(fL), {list:g0, form:fL});
   const PQ=await panel({book:'PrizePicks', picks:3, stake:5, all:25, m1:2, day:'2026-11-15', legs:LEGS}); await p.evaluate(()=>document.querySelector('.tab[data-view="v-log"]').click()); await pause(300);
   const g2=await hitSel(PQ.i,'2');
-  check('Partial: the same hits (2), payout ($2) and profit (−$3.00) as "2 of 3 — $2.00" in the Bet log; result win as the scope says (the list itself calls a payout under the entry a loss)', g2.hits===rf.parlay.hits && g2.payout===rf.parlay.payout && g2.profit===F1.profit && rf.result==='win' && g2.result==='loss', {list:g2, form:{result:rf.result, hits:rf.parlay.hits, payout:rf.parlay.payout, profit:F1.profit}});
+  check('Partial: the same hits (2), payout ($2), profit (−$3.00) and result (loss: less back than the entry) as "2 of 3 — $2.00" in the Bet log (v5.11 integration: graded like the list)', g2.hits===rf.parlay.hits && g2.payout===rf.parlay.payout && g2.profit===F1.profit && rf.result==='loss' && g2.result==='loss', {list:g2, form:{result:rf.result, hits:rf.parlay.hits, payout:rf.parlay.payout, profit:F1.profit}});
   // the Bet log shows each like any other parlay
   const rows=await p.evaluate(ids=>ids.map(id=>{ const i=logged.findIndex(x=>x.id===id), s=document.querySelector('#logBody select.pl-hit[data-i="'+i+'"]'), pr=s&&s.parentElement.querySelector('.pl-up, .pl-down');
     return {sel:s?s.value:null, txt:s?s.options[s.selectedIndex].textContent:null, pr:pr?pr.textContent:null}; }), [W1.rec.id, L1.rec.id, F1.rec.id, N1.rec.id, FR1.rec.id]);

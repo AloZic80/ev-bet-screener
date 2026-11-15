@@ -2048,7 +2048,7 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
   </div>
   <div class="ab-par ab-par-foot"><!-- v5.11: the parlay note (a free entry, a pay under the entry), the hint and Save -->
     <div class="ab-par-note" id="abParNote" role="status"></div>
-    <p class="hint">The screener only prices single bets, so a parlay gets no value check. It counts in that book's slot in the Today ribbon, but not against the screener's daily max or in the Scorecard.</p>
+    <p class="hint">The screener only prices single bets, so a parlay gets no value check. It shows in the Today ribbon (apps without their own tile, such as PrizePicks, under Other) and stays out of the Scorecard and the screener's stake sizes. Its entry does count in today's total for your daily max (the Hard stop).</p><!-- v5.11 (bug): the hint said it was not against the daily max, but the Hard stop counts it -->
     <div class="ab-par-act"><button type="button" class="act" id="abParSave">Save parlay</button><span class="ab-par-msg" id="abParMsg" role="status"></span></div>
   </div>
   <div id="abHost" class="ab-host"></div>
@@ -2514,7 +2514,7 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 
 <details class="panel fold" id="parlayPanel">
   <summary><h2>Add a parlay / Pick 6 <span class="sub">logged and tallied; graded by hand ("how many hit")</span></h2></summary>
-  <p class="hint">The screener only prices single bets, so a parlay gets no value check. It counts in that book's slot in the Today ribbon, but not against the screener's daily max.</p>
+  <p class="hint">The screener only prices single bets, so a parlay gets no value check. It shows in the Today ribbon (apps without their own tile, such as PrizePicks, under Other) and stays out of the screener's stake sizes. Its entry does count in today's total for your daily max (the Hard stop).</p><!-- v5.11 (bug): the hint said it was not against the daily max, but the Hard stop counts it -->
   <div class="pl-form">
     <div class="field"><label for="plBook">Book</label><select id="plBook"><option>DraftKings Pick 6</option><option>DraftKings</option><option>DraftKings Predictions</option><option>FanDuel Predicts</option><option>Novig</option><option>Kalshi</option><option>Polymarket</option><option>Underdog Predict</option><option>Other</option><option>Bovada</option><option>PrizePicks</option><option>Underdog</option><option>Sleeper</option><option>Betr</option><option>ParlayPlay</option></select></div><!-- v5.10 (owner: "you dont even have PrizePicks"): pick-em apps added at the end; the old options keep their order -->
     <div class="field" style="max-width:90px"><label for="plPicks">Picks</label><input id="plPicks" type="number" min="2" max="12" value="4"></div>
@@ -7793,7 +7793,7 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
     else {
       x.open++;
       if(betLocked(b)){ x.playing++; x.playingAmt+=mine; } else { x.toPlay++; x.toPlayAmt+=mine; }
-      if(b.kind==='parlay') x.toWin+=Math.max(0,(+(b.parlay&&b.parlay.pays&&b.parlay.pays.all)||0)-mine);
+      if(b.kind==='parlay') x.toWin+=Math.max(0,(+(b.parlay&&b.parlay.pays&&b.parlay.pays.all)||0)-(+b.stake||0));   // v5.11 (bug): the profit if it wins is Pays − entry for a free entry too (betProfit); mine is $0 for a free bet, so a free $5 entry paying $25 showed +$25.00 instead of +$20.00
       else if(b.towin>0) x.toWin+=+b.towin;   // v3.54: the To win you typed
       else { const q=toProb(b.odds), f=+b.fee||0; if(q) x.toWin+=st*((1/q)-1-f)/(1+f); }
     }
@@ -11046,7 +11046,8 @@ document.getElementById('plAdd').addEventListener('click',()=>{
   if(!(stake>0) || !(all>stake)){ msg.textContent='Enter the stake and what it pays if all hit (more than the stake).'; return; }
   const day=document.getElementById('plDay').value||ctDay(Date.now()), legs=document.getElementById('plLegs').value.trim();
   const m1=v('plM1'), m2=v('plM2');
-  logged.push(parlayRecord({book, picks, stake, all, m1, m2, legs, day}));
+  const rec=parlayRecord({book, picks, stake, all, m1, m2, legs, day}); if(document.getElementById('plDay').value) rec.dateSet=true;   /* v5.11 (bug): the Game day typed is the day it counts on, as in + Add a bet; before, an entry for a past day counted on the day it was saved */
+  logged.push(rec);
   saveLog(); renderLog(); renderPerf();
   ['plStake','plAll','plM1','plM2','plLegs'].forEach(id=>document.getElementById(id).value='');
   msg.textContent='Added — grade it in the log with "how many hit".';
@@ -11638,7 +11639,7 @@ function fillManualFromRow(L, r){   // next Load: an unchecked manual bet picks 
    linked both ways by v5.09's ebTwWire (To win = Pays − Entry, as betProfit counts a parlay, a free one too). Save builds the record with parlayRecord,
    exactly as the Bet log's "Add a parlay / Pick 6" panel does, then adds: free:true for a free entry (as the parlay editor), the placed time
    (placedRead / placedSet, as the single form: user_entered when typed, placed_now from the button) and the result in the fields the Bet log's
-   "how many hit" list uses: Won → hits = picks, payout = Paid $ (or Pays if all hit); Lost → hits 0, payout 0; Partial (Flex) → result win (the scope),
+   "how many hit" list uses: Won → hits = picks, payout = Paid $ (or Pays if all hit); Lost → hits 0, payout 0; Partial (Flex) → win, push or loss by what came back against the entry (as the list; v5.11 integration),
    payout = Paid $, hits = the Flex payout it equals; Not played yet → pending. Saved like the panel (pushed, then saveLog: not through addToLog).
    No value check (the screener prices single bets only); not in the daily max or the Scorecard (poolOf, inScorecard). Hoisted: abFields, abUpdate94
    and abAsk call these.
@@ -11693,7 +11694,7 @@ function abParSave(){ const g=id=>document.getElementById(id), msg=g('abParMsg')
     if(!T.length){ say('Type what it pays if 1 misses (or if 2 miss), so the Bet log can show how many hit.'); return; }
     const L=T.find(x=>Math.abs(+(+x[1]).toFixed(2)-back)<0.005);   // v5.11 (review): Paid $ is one of the Flex payouts typed, to the cent, so the Bet log row ("2 of 3 — $6.25") and a later pick in its list give the same money
     if(!L){ say('Paid $'+paid.toFixed(2)+' is not '+T.map(x=>'the '+(free?'winnings':'payout')+' if '+(picks-x[0]===1?'1 misses':'2 miss')+' ($'+(free?Math.max(0,x[1]-stake):+x[1]).toFixed(2)+')').join(' or ')+'. Check Paid $ and the Flex payouts, so the Bet log shows how many hit.'); return; }
-    G={hits:L[0], payout:back, result:'win'}; }
+    G={hits:L[0], payout:back, result: back>stake+0.004?'win':Math.abs(back-stake)<0.005?'push':'loss'}; }   /* v5.11 (integration): graded like the Bet log’s how-many-hit list: more back than the entry is a win, the entry back is a push, less is a loss (the scope said win for every partial; the money was already right) */
   const rec=parlayRecord({book, picks, stake, all:allS, m1, m2, legs, day});   // the panel's own record
   if(g('abParDay').value) rec.dateSet=true;   // v5.11 (review): the Game day you typed is the day it counts on (gameDayOf: the Bet log day, TODAY, the calendar, Reports), also when it is logged the day after; the single form sets it the same way
   if(free) rec.free=true;
