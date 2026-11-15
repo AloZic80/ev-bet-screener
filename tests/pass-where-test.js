@@ -15,10 +15,14 @@ const row=(id,player,c,price,o)=>Object.assign({name:player,team:'T'+id,game:'T'
   gameInfo:{state:'pre',startISO:iso(TIP),eventId:'7'+id,timeCT:'',detail:'',teams:[T('away','T'+id),T('home','H'+id)]},src:'api:NHL:props',apiKey:id,loadedAt:iso(NOW-60e3)}, o||{});
 // one approved bet per place it can be, and one Hail Mary (+700, the math says no: not approved, offered in 🔮 Brujo). India Tiny: Kalshi at 52¢ against
 // 62% is too far from the market (an outlier: the $1.00 minimum), and one whole contract costs $0.54: a $0 stake
+// v5.05: Kalshi takes 0.01 shares now, so India Tiny keeps its $1.00 budget (by hand: OK up to 59.4% → a 59¢ limit, 1.64 shares, 1.64 × 0.59 = 0.9676 + fee 7% × 1.64 × 0.59 × 0.41 = 0.0278 → 0.03 = $0.9976): a bet, hidden by the Novig-only chips, not a $0 stake
 const ROWS=[row('a','Alpha Machin',0.62,0.58), row('b','Bravo Volado',0.55,0.51),
   row('c','Charlie Started',0.62,0.58,{gameInfo:{state:'in',startISO:iso(NOW-40*60e3),eventId:'7c',timeCT:'',detail:'',teams:[T('away','Tc'),T('home','Hc')]}}),
   row('d','Delta Bet',0.62,0.58), row('e','Echo Nba',0.62,0.58,{sport:'NBA',market:'4.5 Assists',src:'api:NBA:props'}), row('f','Foxtrot Kalshi',0.62,0.58,{book:'Kalshi'}), row('i','India Tiny',0.62,0.52,{book:'Kalshi'}),
-  row('g','Golf NoTime',0.62,0.58,{gameInfo:{state:'pre',eventId:'',timeCT:'',detail:'',teams:[]}}), row('h','Hotel Hail',0.10,0.125,{market:'0.5 Goals'})];
+  row('g','Golf NoTime',0.62,0.58,{gameInfo:{state:'pre',eventId:'',timeCT:'',detail:'',teams:[]}}), row('h','Hotel Hail',0.10,0.125,{market:'0.5 Goals'}),
+  // v5.05 (fixer, Los Desconfiados): India Tiny no longer ends at $0, so the "$0 stake" line kept no check. Juliet: a second prop on Alpha Machin in the same
+  // game at 60¢ (+3.3%, under Alpha's +6.9%): approved, and one bet per player leaves it a $0 stake (Novig, not Kalshi)
+  row('j','Alpha Machin',0.62,0.60,{team:'Ta',game:'Ta @ Ha',matchup:'Ta @ Ha',market:'0.5 Points',gameInfo:{state:'pre',startISO:iso(TIP),eventId:'7a',timeCT:'',detail:'',teams:[T('away','Ta'),T('home','Ha')]}})];
 (async()=>{ const b=await chromium.launch();
   for(const W of [1280,390,1000,1960]){
     const ctx=await b.newContext({timezoneId:'America/Chicago',viewport:{width:W,height:1000}}); await ctx.clock.install({time:new Date(NOW)});
@@ -32,17 +36,17 @@ const ROWS=[row('a','Alpha Machin',0.62,0.58), row('b','Bravo Volado',0.55,0.51)
       return {count:t(document.getElementById('count')), sum:t(d&&d.querySelector('summary')), lines:d?[...d.querySelectorAll('.cut-list > div')].map(t):[],
         tabs:[...document.querySelectorAll('#modeBar button')].map(t), pass:lastRows.filter(r=>r.pass).map(r=>r.name).sort(), hail:(lastRows.find(r=>r.name==='Hotel Hail')||{}).xFit||null}; });
     if(W===1280){
-      check('eight approved bets (Hotel Hail is a Hail Mary, not approved); v4.77 (Alonzo: "i want only live bets i can get"): the big number is the 2 you can bet now', v.count==='2' && v.pass.length===8 && !v.pass.includes('Hotel Hail') && v.hail==='hail', {count:v.count, pass:v.pass, hail:v.hail});
+      check('nine approved bets (Hotel Hail is a Hail Mary, not approved; v5.05 fixer: + Juliet, Alpha Machin\'s second prop); v4.77 (Alonzo: "i want only live bets i can get"): the big number is the 2 you can bet now', v.count==='2' && v.pass.length===9 && !v.pass.includes('Hotel Hail') && v.hail==='hail', {count:v.count, pass:v.pass, hail:v.hail});
       check('the tabs hold 2 of them (💪 Machín 1, 🪙 Volado 1); 🔮 Brujo shows 1, the Hail Mary', /Machín 1$/.test(v.tabs[1]) && /Volado 1$/.test(v.tabs[2]) && /Brujo 1$/.test(v.tabs[4]) && /Boring( 0)?$/.test(v.tabs[0]) && /Suertudo( 0)?$/.test(v.tabs[3]), v.tabs);
-      check('next to it: "6 elsewhere ▸" (v4.76 said "2 in the tabs ▸")', v.sum==='6 elsewhere ▸', v.sum);
-      const want=['2 to bet now: 💪 1 · 🪙 1. The other 6 approved by La Contadora:','1 in games that started or closed: can’t bet now','1 already bet (or an order waiting)','1 can’t confirm the game on ESPN: check the app','1 $0 stake: daily max, game cap, one per player or under the minimum',
-        '1 hidden by your filters (sport, search, Settings, only my games, only sweet spot)','1 hidden by the book chips: tap All','The tab buttons also count 1 🔮 Hail Mary offered to you: not approved by La Contadora.'];
+      check('next to it: "7 elsewhere ▸" (v4.76 said "2 in the tabs ▸"; v5.05 fixer: + Juliet)', v.sum==='7 elsewhere ▸', v.sum);
+      const want=['2 to bet now: 💪 1 · 🪙 1. The other 7 approved by La Contadora:','1 in games that started or closed: can’t bet now','1 already bet (or an order waiting)','1 can’t confirm the game on ESPN: check the app','1 $0 stake: daily max, game cap, one per player or under the minimum',   /* v5.05: India Tiny (Kalshi) is sized in 0.01 shares, so it is the 2nd one hidden by the book chips; the $0 stake is now Juliet (fixer) */
+        '1 hidden by your filters (sport, search, Settings, only my games, only sweet spot)','2 hidden by the book chips: tap All','The tab buttons also count 1 🔮 Hail Mary offered to you: not approved by La Contadora.'];
       check('it lists each one under why it is not in a tab: started, already bet, can’t confirm, $0 stake, sport filter, book chips; and says what else the tab buttons count', JSON.stringify(v.lines)===JSON.stringify(want), v.lines);
       const sum=v.lines.map(x=>+(x.match(/^(\d+) (?!🔮|🍀)/)||[])[1]||0).reduce((a,b)=>a+b,0);
-      check('the lines add up to every approved bet: 2 to bet now + 1 + 1 + 1 + 1 + 1 + 1 = 8', sum===8, sum);
+      check('the lines add up to every approved bet: 2 to bet now + 1 + 1 + 1 + 1 + 1 + 2 = 9 (v5.05: India Tiny moved from $0 stake to the book chips; Juliet is the $0 stake)', sum===9, sum);
       await p.evaluate(()=>{ boardBooks=[]; filterSport=''; refresh(); }); await p.waitForTimeout(300);
       const v2=await p.evaluate(()=>{ const d=document.querySelector('#cuts .pass-where'); return {sum:d&&d.querySelector('summary').textContent.trim(), lines:d?[...d.querySelectorAll('.cut-list > div')].map(x=>x.textContent.trim()):[]}; });
-      check('with every book chip and every sport: Echo (NBA, 💪) and Foxtrot (Kalshi, 💪) can be bet too: 4 to bet now, "4 elsewhere ▸"', v2.sum==='4 elsewhere ▸' && v2.lines[0]==='4 to bet now: 💪 3 · 🪙 1. The other 4 approved by La Contadora:', v2);
+      check('with every book chip and every sport: Echo (NBA, 💪), Foxtrot (Kalshi, 💪) and (v5.05: 0.01 Kalshi shares) India Tiny (Kalshi, 💪) can be bet too: 5 to bet now, "4 elsewhere ▸" (Juliet stays a $0 stake)', v2.sum==='4 elsewhere ▸' && v2.lines[0]==='5 to bet now: 💪 4 · 🪙 1. The other 4 approved by La Contadora:' && v2.lines.includes('1 $0 stake: daily max, game cap, one per player or under the minimum'), v2);   // v5.05: was 4 to bet now (India Tiny was a $0 stake in whole contracts); fixer: + Juliet
       /* v4.77 (Los Chismosos): an approved long shot with no stake of its own, offered as a $1 Hail Mary, is listed (and counted) in 🔮 Brujo: it belongs
          in the tabs, not under "$0 stake", and not again among the extras; a bet you removed is its own line. Checked on passWhere directly. */
       const u=await p.evaluate(()=>{ const fut=new Date(Date.now()+6*3600e3).toISOString(), mk=o=>Object.assign({pass:true, stake:5, book:'Novig', gameInfo:{state:'pre',startISO:fut}, game:'AAA @ HHH'}, o);
