@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.10</title>
+<title>0xBeta Screener v5.11</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1786,6 +1786,45 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 @media (min-width:641px){ #modeBar .mode-plan{display:block} }
 @media (max-width:640px){ #modeBar .mode-plan{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap} #modeBar .mode-plan-line{display:block} }
 .top-hint .th-plan{color:var(--soft); font-weight:400}
+/* v5.11 (bug fixes; owner 11/15: "You found bugs but left alone ? Why not address them?"): the #1 math pick banner hides when the code says so (its
+   display:flex beat the hidden attribute, so it stayed on the tab it points to); an "also at" price with no link is plain text, not a slip opener. */
+.top-hint[hidden]{display:none}
+.sc-alt.nolink{cursor:default}
+/* v5.11 (owner 11/15: "Add a Bet needs to allow me to do Parlay. I did a PrizePick parlay and won, and i want to add it."): + Add a bet's Type Parlay / pick'em
+   shows the parlay fields (.ab-par) and hides the single-bet ones (.ab-par-hide, set by abParShow; what you typed in them stays); Flex shows its two payouts,
+   Won and Partial show Paid $. Display only. */
+#addBetPanel:not(.ab-par-on) .ab-par{display:none!important}
+#addBetPanel .ab-par-hide{display:none!important}
+#addBetPanel:not(.ab-par-flexon) .ab-par-flex, #addBetPanel:not(.ab-par-paidon) .ab-par-paid{display:none!important}
+#addBetPanel .ab-par-twchk{display:none!important}   /* ebTwWire's own line under the pair: the parlay note says it in the parlay's words */
+#addBetPanel .ab-par-legs{grid-column:span 2}
+#addBetPanel .ab-grid .ab-par-free{display:flex; align-items:center; gap:6px; margin:4px 0 0; font-size:13px; color:var(--ink); cursor:pointer}
+#addBetPanel .ab-grid .ab-par-free input{width:16px; height:16px; padding:0; margin:0; flex:none; accent-color:var(--accent)}
+#addBetPanel .ab-par-foot{margin-top:12px}
+#addBetPanel .ab-par-note{margin:0 0 8px; font-size:13.5px; color:var(--soft); overflow-wrap:break-word}
+#addBetPanel .ab-par-note:empty{display:none}
+#addBetPanel .ab-par-note.warn{color:var(--warn)}
+#addBetPanel .ab-par-foot .hint{margin:0 0 10px}
+#addBetPanel .ab-par-act{display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px}
+#addBetPanel .ab-par-msg{font-size:13px; color:var(--soft); overflow-wrap:break-word; max-width:100%}
+#addBetPanel .ab-par-msg:empty{display:none}
+#addBetPanel .ab-par-msg.warn{display:block; width:100%; box-sizing:border-box; padding:8px 12px; border-radius:8px; background:var(--warn-bg); color:var(--warn); font-weight:600; font-size:14px}   /* as the bet form's own warning */
+@media (max-width:900px){ #addBetPanel .ab-par-legs{grid-column:1/-1} }
+/* v5.11 (review): while the Type is a parlay the panel's subtitle is the parlay's own (the BET or SKIP line is for single bets); a Save warning stops above
+   the bottom bars (scrollIntoView counts the margin); on a phone the Type, App / book, Entry type and Result boxes take the whole row, so their words are
+   not cut ("Parlay / pick'e", "Power (all mus"), and Save parlay, Placed now and the Free entry tick are thumb-sized (44 px). Display only. */
+#addBetPanel.ab-par-on summary .sub:not(.ab-par-sub){display:none}
+#addBetPanel .ab-par-msg{scroll-margin-bottom:var(--dockH,110px)}
+@media (max-width:900px){
+  #addBetPanel.ab-par-on .ab-par-type, #addBetPanel .ab-par-wide{grid-column:1/-1}
+  #addBetPanel #abParSave, #addBetPanel #abParPlacedNow, #addBetPanel .ab-grid .ab-par-free{min-height:44px; box-sizing:border-box}
+}
+/* v5.11 (bug fixes, layout; owner 11/15: "Fix all 8"): L1 the Bet log table fits a 900 px window; L2 every box of Bet log › edit on the part of the table you can see;
+   L3 + Add a bet's boxes as wide as in the other bet forms; L5 the chosen Reports period readable in dark mode. Display only: no number, stake or saved field changes. */
+@media (min-width:641px) and (max-width:1179px){ #logBody td:first-child, #logBody td:nth-child(2), #logBody td:last-child{min-width:0} #logBody td:first-child{white-space:nowrap!important} #logBody td:first-child>*{white-space:normal} }   /* v5.11 (bug L1): the Date, Bet and button columns kept fixed widths (118, 180 and 150 px) that only fit the full 1,180 px page: at 900 px the table ran 111 px past its box and cut off the buttons. From 641 to 1179 px they are as wide as what they hold (the date itself stays on one line, the lines under it wrap); phones and the full-width page unchanged */
+#logBody tr.editor .editor-row{max-width:calc(100vw - 67px); position:sticky; left:0}   /* v5.11 (bug L2): Bet log › edit wraps inside the part of the log table you can see (48 px in from the left of the screen, 19 px from the right, as the v5.10 lines) and stays there when the table is scrolled to its buttons: Book, Enter as, Odds, Stake and Cover % were off the right of a phone, the Real money box 18 to 19 px past the edge from 390 to 1000 px. The board and + Add a bet are not touched */
+#abHost{box-sizing:border-box}   /* v5.11 (bug L3): + Add a bet sits in a drop-down (details); the browser's own box inside it does not take the page's border-box sizing, so the form's boxes were 18 px wider (padding and border added to the width). Its boxes now measure as in I bet this and Bet log › edit */
+:root[data-theme="dark"] .rp-seg button.on{background:var(--brand,#087B44)}   /* v5.11 (bug L5): the chosen Reports period (Day, Month, Year, All, Custom) in dark mode: white on the scheme's dark button colour, like the other chosen buttons (white on the light accent colour was 1.5 to 2.1:1 across the five schemes, now 5.3 to 7.6:1). Light mode unchanged */
 </style>
 </head>
 <body>
@@ -1794,7 +1833,7 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.10</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.11</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1984,10 +2023,10 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 <!-- v3.06: + Add a bet and Paste a board have their own tabs (moved off the Board, nothing removed) -->
 <div class="view" id="v-add">
 <details class="panel fold" id="addBetPanel">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
-  <summary><h2>+ Add a bet <span class="sub">take a price or post your own — it tells you BET or SKIP and how much, then ESPN grades it</span></h2></summary>
+  <summary><h2>+ Add a bet <span class="sub">take a price or post your own — it tells you BET or SKIP and how much, then ESPN grades it</span><span class="sub ab-par ab-par-sub">log a parlay or pick'em entry — no value check; you grade it (Result here, or “how many hit” in the Bet log)</span></h2></summary><!-- v5.11 (review): while the Type is a parlay, its own subtitle (the BET or SKIP one is for single bets) -->
   <div class="ab-grid">
     <div class="field"><label for="abSport">Sport</label><select id="abSport"><option>NFL</option><option>NCAAF</option><option>NBA</option><option>WNBA</option><option>NCAAB</option><option>MLB</option><option>NHL</option></select></div>
-    <div class="field"><label for="abType">Type</label><select id="abType"><option value="prop">Player prop</option><option value="spread">Spread</option><option value="total">Game total</option><option value="moneyline">Moneyline</option></select></div>
+    <div class="field"><label for="abType">Type</label><select id="abType"><option value="prop">Player prop</option><option value="spread">Spread</option><option value="total">Game total</option><option value="moneyline">Moneyline</option><option value="parlay">Parlay / pick'em (2+ picks)</option></select></div><!-- v5.11 (owner 11/15: "Add a Bet needs to allow me to do Parlay"): a parlay or pick'em entry, with its own fields (abPar*) -->
     <div class="field ab-wide"><label for="abGame">Game</label><select id="abGame"><option value="">loading…</option></select><input id="abGameFree" type="text" aria-label="Game, typed in" placeholder="Not listed? Type it: TOR @ UTA" style="margin-top:4px" autocomplete="off"></div>
     <div class="field"><label for="abDate">Game date</label><input id="abDate" type="date"></div>
     <div class="field ab-placed"><label for="abPlaced" title="When you placed the bet at the book (your time). Optional. Lets the 3-a-day long-shot moneyline check use the board as it was before you bet.">Placed at</label><input id="abPlaced" type="datetime-local"><button type="button" class="ghost sm" id="abPlacedNow" title="Saves this moment as the time you placed it">Placed now</button></div><!-- v4.73 -->
@@ -1997,6 +2036,26 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
     <div class="field ab-ou"><label for="abPick">Pick</label><select id="abPick"><option value="O">Over</option><option value="U">Under</option></select></div>
     <div class="field ab-line"><label for="abLine">Line</label><input id="abLine" type="number" step="0.5" placeholder="e.g. 249.5"></div>
     <div class="field"><label for="abResult" title="Logging a bet after the fact? Set how it went and it's saved as graded by you.">Result</label><select id="abResult"><option value="">Not played yet</option><option value="win">Won 🎉</option><option value="loss">Lost</option><option value="push">Push / void</option></select></div>
+    <!-- v5.11 (owner 11/15: "Add a Bet needs to allow me to do Parlay. I did a PrizePick parlay and won, and i want to add it."): the parlay fields, shown only while Type is Parlay / pick'em (abParShow); the apps in the scope's order, then Underdog Predict (also in the Bet log's parlay panel), then Other -->
+    <div class="field ab-par ab-par-wide"><label for="abParBook">App / book</label><select id="abParBook"><option>PrizePicks</option><option>Underdog</option><option>Sleeper</option><option>DraftKings Pick 6</option><option>Betr</option><option>ParlayPlay</option><option>Bovada</option><option>Novig</option><option>Kalshi</option><option>Polymarket</option><option>DraftKings Predictions</option><option>FanDuel Predicts</option><option>DraftKings</option><option>Underdog Predict</option><option>Other</option></select></div>
+    <div class="field ab-par ab-par-wide"><label for="abParKind">Entry type</label><select id="abParKind"><option value="power">Power (all must hit)</option><option value="flex">Flex (pays if 1 or 2 miss)</option></select></div>
+    <div class="field ab-par"><label for="abParPicks">Picks</label><input id="abParPicks" type="number" min="2" max="12" step="1" inputmode="numeric" placeholder="2 to 12"></div>
+    <div class="field ab-par"><label for="abParStake" title="What you paid for the entry">Entry $</label><input id="abParStake" class="eb-stake" type="number" step="0.01" min="0" placeholder="e.g. 5.00"><label class="bar-check ab-par-free" title="A free entry (a promo or bonus) is not your money: it costs you $0. If all hit you get the winnings, what it pays minus the entry, as the app counts free bets."><input type="checkbox" id="abParFree"> 🎁 Free entry</label></div>
+    <div class="field ab-par"><label for="abParWin" title="The profit only: what it pays if all hit, minus the entry">To win $</label><input id="abParWin" class="eb-win-o" type="number" step="0.01" min="0" placeholder="optional"></div><!-- v5.11 (review): To win first, as v5.09's To win | Total payout, so the Flex payouts come right after Pays if all hit (they read "Pays if all hit $ …if 1 misses $", not "To win $ …if 1 misses $") -->
+    <div class="field ab-par"><label for="abParAll" title="The total it pays if every pick hits, your entry included">Pays if all hit $</label><input id="abParAll" class="eb-tot-o" type="number" step="0.01" min="0" placeholder="e.g. 25.00"></div>
+    <div class="field ab-par ab-par-flex"><label for="abParM1" title="The total it pays if exactly 1 pick misses, your entry included (as Pays if all hit)">…if 1 misses $</label><input id="abParM1" type="number" step="0.01" min="0" placeholder="optional"></div><!-- v5.11 (review): the tips say it is the total, as Pays if all hit -->
+    <div class="field ab-par ab-par-flex"><label for="abParM2" title="The total it pays if exactly 2 picks miss, your entry included (as Pays if all hit)">…if 2 miss $</label><input id="abParM2" type="number" step="0.01" min="0" placeholder="optional"></div>
+    <div class="field ab-par"><label for="abParDay">Game day</label><input id="abParDay" type="date"></div>
+    <div class="field ab-par"><label for="abParPlaced" title="When you placed the entry at the app (your time). Optional.">Placed at</label><input id="abParPlaced" type="datetime-local"><button type="button" class="ghost sm" id="abParPlacedNow" title="Saves this moment as the time you placed it">Placed now</button></div>
+    <div class="field ab-par ab-par-wide"><label for="abParResult" title="Logging an entry that is already over? Set how it went and it saves graded.">Result</label><select id="abParResult"><option value="">Not played yet</option><option value="win">Won (all hit)</option><option value="loss">Lost</option><option value="partial">Partial payout (Flex)</option></select></div>
+    <div class="field ab-par ab-par-paid"><label for="abParPaid" title="Everything the app paid you back, your entry included">Paid $</label><input id="abParPaid" type="number" step="0.01" min="0" placeholder="it paid back"></div>
+    <div class="field ab-par ab-par-legs"><label for="abParLegs">Legs (optional note)</label><input id="abParLegs" type="text" placeholder="Mahomes O 1.5 TD, Bijan O 70.5 rush…" autocomplete="off"></div>
+    <div class="eb-tw-chk ab-par ab-par-twchk" id="abParChk"></div><!-- v5.11: the To win / Pays if all hit link is v5.09's ebTwWire; its own check line stays out of sight (the parlay note below says it in the parlay's words) -->
+  </div>
+  <div class="ab-par ab-par-foot"><!-- v5.11: the parlay note (a free entry, a pay under the entry), the hint and Save -->
+    <div class="ab-par-note" id="abParNote" role="status"></div>
+    <p class="hint">The screener only prices single bets, so a parlay gets no value check. It shows in the Today ribbon (apps without their own tile, such as PrizePicks, under Other) and stays out of the Scorecard and the screener's stake sizes. Its entry does count in today's total for your daily max (the Hard stop).</p><!-- v5.11 (bug): the hint said it was not against the daily max, but the Hard stop counts it -->
+    <div class="ab-par-act"><button type="button" class="act" id="abParSave">Save parlay</button><span class="ab-par-msg" id="abParMsg" role="status"></span></div>
   </div>
   <div id="abHost" class="ab-host"></div>
   <details class="ab-more" id="abMore"><summary>Model numbers <span class="meta">optional · projection, cover %, consensus</span></summary>
@@ -2461,7 +2520,7 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 
 <details class="panel fold" id="parlayPanel">
   <summary><h2>Add a parlay / Pick 6 <span class="sub">logged and tallied; graded by hand ("how many hit")</span></h2></summary>
-  <p class="hint">The screener only prices single bets, so a parlay gets no value check. It counts in that book's slot in the Today ribbon, but not against the screener's daily max.</p>
+  <p class="hint">The screener only prices single bets, so a parlay gets no value check. It shows in the Today ribbon (apps without their own tile, such as PrizePicks, under Other) and stays out of the screener's stake sizes. Its entry does count in today's total for your daily max (the Hard stop).</p><!-- v5.11 (bug): the hint said it was not against the daily max, but the Hard stop counts it -->
   <div class="pl-form">
     <div class="field"><label for="plBook">Book</label><select id="plBook"><option>DraftKings Pick 6</option><option>DraftKings</option><option>DraftKings Predictions</option><option>FanDuel Predicts</option><option>Novig</option><option>Kalshi</option><option>Polymarket</option><option>Underdog Predict</option><option>Other</option><option>Bovada</option><option>PrizePicks</option><option>Underdog</option><option>Sleeper</option><option>Betr</option><option>ParlayPlay</option></select></div><!-- v5.10 (owner: "you dont even have PrizePicks"): pick-em apps added at the end; the old options keep their order -->
     <div class="field" style="max-width:90px"><label for="plPicks">Picks</label><input id="plPicks" type="number" min="2" max="12" value="4"></div>
@@ -2628,7 +2687,7 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 
 </div>
 <script>
-const SCREENER_VERSION='v5.10';
+const SCREENER_VERSION='v5.11';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -4634,7 +4693,7 @@ function lcHave(t){ return logged.some(b=>{ if(b.id===t.id) return true;
 function lcRecord(t){ const ret=t.ret, odds=fmtOdds(Math.round(americanOf(t.stake/ret))), at=t.at||new Date().toISOString();
   let r;
   if(t.kind==='parlay'){ r=parlayRecord({book:t.book, picks:t.legs.length||t.picks, stake:t.stake, all:ret, legs:t.legs.length?t.legs.map(lcLegText).join('; '):t.legsText, day:t.day});
-    r.id=t.id; r.dateSet=true; r.imported={file:t.id, note:t.note||undefined}; r.snap.at=at; r.snap.said={decision:'IMPORTED', onList:false}; }
+    r.id=t.id; r.key='parlay|'+t.id; r.dateSet=true; r.imported={file:t.id, note:t.note||undefined}; r.snap.at=at; r.snap.said={decision:'IMPORTED', onList:false}; }   // v5.11 (bug): its key follows the id it is saved under (the same on every device that imports the file)
   else { const k=t.bk||'prop', mk=lcMkt(t);
     r={ id:t.id, key:'import|'+t.id, date:t.day, dateSet:true, name:t.player, sport:t.sport||'', market:mk, side:t.side, betnow:(k==='moneyline'?t.player+' ML':k==='spread'?t.player+' '+(t.point>0?'+':'')+t.point:t.side+' '+t.point)+' '+odds,
     book:t.book, game:t.game, team:t.team||null, odds, fair:'', stake:t.stake, kind:k, closing:'', srcType:'import', manual:true, start:null,
@@ -4837,7 +4896,7 @@ function altBooksHtml(r){ if(!r || r.kind==='parlay' || !(r.offeredProb>0)) retu
     const body=logo+'<b>'+esc(String(a.odds||fmtOdds(Math.round(americanOf(a.p)))))+'</b><small>'+P(a.p)+' · '+word+(a.old&&a.at?' · ⏱ '+ag:a.old?' · ⏱ ?':'')+'</small>';
     if(a.x) return '<span class="'+cls+'" role="button" tabindex="0" data-alt-idx="'+a.x.idx+'" title="'+esc(tip)+'">'+body+'</span>';
     const src=LIVE_BOOK(a.book), u=(()=>{ try{ const v=bookUrl(src, a.q, 0); return v && /^(https:\/\/|novigapp:\/\/)/.test(v)?v:null; }catch(e){ return null; } })();
-    return u?'<a class="'+cls.replace(' book',' sc-link')+'" href="'+esc(u)+'"'+(/^https:/.test(u)?' target="_blank" rel="noopener"':'')+' title="'+esc(tip)+'">'+body+'</a>':'<span class="'+cls+'" title="'+esc(tip)+'">'+body+'</span>'; };
+    return u?'<a class="'+cls.replace(' book',' sc-link')+'" href="'+esc(u)+'"'+(/^https:/.test(u)?' target="_blank" rel="noopener"':'')+' title="'+esc(tip)+'">'+body+'</a>':'<span class="'+cls+' nolink" title="'+esc(tip.replace(/\. Tap to open it; I bet this sizes the stake at its price\.$/,'. No direct link here: open '+bookLabel(a.book)+' and search for this bet.'))+'">'+body+'</span>'; };   /* v5.11 (bug): no link, so the words no longer say Tap to open it */
   const show=A.slice(0,4), more=A.slice(4), top=A.find(a=>a.ok), cardNet=r.actNet!=null&&isFinite(r.actNet)?r.actNet:null;
   const notes=[];
   if(top && top.net!=null && (cardNet==null || top.net>cardNet+0.003)) notes.push('<span class="sc-alt-n good">Better confirmed price at '+esc(bookLabel(top.book))+' · Send the Sentinels to update the card</span>');
@@ -5030,7 +5089,7 @@ function placeCardHtml(r,cfg,o){
       '<div class="sc-stat" title="'+esc(mname)+'">'+esc(statTxt)+'</div></div>'+
       '<div class="sc-game"><b>'+esc(giWhen(gi)||'game time not found')+'</b><span>'+esc(gameTxt)+'</span></div></div>'+
     '<div class="sc-tags">'+cvChipActHtml(r)+planOutHtml(r.actProb) /* v5.10: My plan’s reminder, under her chance */+tags+'</div>'+   // v4.31: Augi's cover band; v4.88: La Contadora's chance
-    '<div class="sc-bet"><div class="sc-pick">'+esc(pickTxt)+(X?'':impTagHtml(r))+'</div>'+   // v4.10's line: the price as a %, OK to / look elsewhere, the math on hover
+    '<div class="sc-bet"><div class="sc-pick">'+esc(pickTxt)+(X?'':impTagHtml(r,true))+'</div>'+   /* v5.11 (bug L4): true = on the card (a Kalshi card names the limit) */   // v4.10's line: the price as a %, OK to / look elsewhere, the math on hover
       '<div class="sc-money"><b>'+(st>0?'$'+st.toFixed(2):(r.hold&&!X)?'$0':'—')+'</b><span>'+((r.hold&&!X&&!(st>0))?(r.hold.why==='awol'?'if found':'if refreshed')+': up to $'+r.hold.stake.toFixed(2) /* v4.83 */:pay!=null?('wins $'+Math.max(0,pay-st).toFixed(2)+(isX?' · back $'+pay.toFixed(2):'')):'stake' /* v4.97: "wins" is always the profit, as at the book; an exchange also says what comes back */)+'</span>'+(lim?'<span class="sc-lim"'+(r.capBy&&!X?' title="'+esc(capDetail(r))+'"':'')+'>'+esc(lim)+'</span>':'')+'</div>'+   /* v5.01: the detail on hover */
       (()=>{ const hl=slip?slipLinkFor(r,st):null;   // v4.42: one tap on a phone: the chip is a real link when the book's slip is already known
         return (hl?'<a class="sc-price book go sc-link'+(over?' over':'')+'" href="'+esc(hl)+'"'+(/^https:/.test(hl)?' target="_blank" rel="noopener"':''):'<span class="sc-price book'+(over?' over':'')+(slip?' go':'')+'" role="button" tabindex="0"')+' title="'+(slip?'Open this bet on '+esc(bk)+(st>0?' with $'+st.toFixed(2)+' filled':''):esc(bk))+(over?'. The price is over La Contadora’s most now: skip it or look elsewhere':'')+'">'+
@@ -5124,6 +5183,7 @@ function rowFromBet(L){   // v2.71: a saved bet, shaped like a board row, for th
   return {name:L.name, market:L.market, side:L.side||sideOf(L)||'', book:L.book, offeredRaw:L.odds, offeredProb:toProb(L.odds), stake:+L.stake||0,
     fairProb:fairP, mktProb:L.mkt!=null?L.mkt:null, net:L.net, kind:L.kind, sport:L.sport, idx:-1, flags:[], pass:true, team:L.team, apiKey:L.apiKey};
 }
+function ebMoney0(L){ return {st:+(+L.stake||0).toFixed(2), p:toProb(L.odds), tw:L.towin>0?+(+L.towin).toFixed(2):0, book:L.book}; }   // v5.11 (bug): the money of a saved bet as Bet log › edit opens with it (stake, price, To win, book); its Save compares with this to tell a change you made from none. Hoisted
 /* v3.38: for a bet the grader can't finish (?), you can mark it WIN or LOSS by hand, and the book's bet ID shows here */
 function ebResultHtml(b){
   const idTxt = b.fillRef
@@ -5266,6 +5326,7 @@ function openBetEditor(tr, r, opt){
     if(st0>0) ed.querySelector('.eb-cost').value=st0.toFixed(2);
     if(pr0>0 && pr0<1) ed.querySelector('.eb-pct').value=(pr0*100).toFixed(1);
     if(opt.edit && r.stake>0 && pr0>0) ed.querySelector('.eb-win').value=(r.stake/pr0).toFixed(2); }
+  if(opt.edit) ed._m0=ebMoney0(opt.edit);   // v5.11 (bug): taken as the form opens with these numbers, so a re-read of the fills or a sync while it is open is not taken for a change you made
   const bookSel=ed.querySelector('.eb-book'), plain=ed.querySelector('.eb-plain'), pm=ed.querySelector('.eb-pm');
   const modeSel=ed.querySelector('.eb-mode');
   const pmMode=()=>modeSel.value==='pct';
@@ -5440,7 +5501,7 @@ function openBetEditor(tr, r, opt){
         h+='<b>'+esc(bookLabel(book))+' now '+(q.price*100).toFixed(1)+'%</b> ('+esc(fmtOdds(Math.round(americanOf(q.price))))+')'+
           (net!=null?' · EV <b class="'+(net>=cfg.eMin?'tb-up':net>0?'':'tb-down')+'">'+(net>=0?'+':'')+(net*100).toFixed(1)+'%</b>':''); }
       else if(q) h+='live: '+esc(String(q.note||'no match').replace(/^(Kalshi|Polymarket|Novig): /,''));
-      if(mx!=null) h+=' · <b>pay up to '+(mx*100).toFixed(1)+'% max</b>'+(cur!=null?(cur<=mx+1e-9?' <span class="under">✓ '+(cur*100).toFixed(1)+'% is OK</span>':' <span class="over">✗ '+(cur*100).toFixed(1)+'% is too high — skip</span>'):'');
+      if(mx!=null) h+=' · <b>pay up to '+(mx*100).toFixed(1)+'% max</b>'+(LIVE_BOOK(book)==='kalshi'?' <span class="kx-lim">(a '+Math.min(99,Math.floor(mx*100+1e-9))+'¢ limit on Kalshi: whole cents, rounded down)</span>':'')+(cur!=null?(cur<=mx+1e-9?' <span class="under">✓ '+(cur*100).toFixed(1)+'% is OK</span>':' <span class="over">✗ '+(cur*100).toFixed(1)+'% is too high — skip</span>'):'');   /* v5.11 (bug L4): on Kalshi her most is said with the limit it becomes, so "pay up to 64.9%" no longer sits next to "a limit of 64¢" as a second number (same rounding as the strip) */
       else if(fair==null) h+=' · no cover % — can\'t say if it passes';
       if(others && others.length) h+='<br>🦑 best odds: '+others.map(o=>esc(bookLabel(o.book))+' '+esc(fmtOdds(Math.round(americanOf(o.p))))+' ('+(o.p*100).toFixed(1)+'%)').join(' · ');
       liveEl.innerHTML=h;
@@ -5539,13 +5600,18 @@ function openBetEditor(tr, r, opt){
     }
     if(opt.edit){   // v2.71: change the saved bet in place, keep a record of what it was
       const L=opt.edit, before={book:L.book, odds:L.odds, stake:L.stake, market:L.market};
-      L.book=book; L.odds=odds; L.stake=+(+stake).toFixed(2); L.fee=fee; if(pmMode() && ed._slip) L.slip=ed._slip;
+      const m0=ed._m0||(ed._m0=ebMoney0(L));   // v5.11 (bug): the money as the form opened with it (taken when it opened; kept on the form: a second press after a message compares with the same)
+      const pxSame=m0.p!=null && Math.abs(prob-(pmMode()?parseFloat((m0.p*100).toFixed(1))/100:m0.p))<=1e-9;   // v5.11 (bug): the price saved is the one the form opened with. In % mode that is the @ % box as it opened (0.1 point), not the odds saved from it: whole odds re-rounded from the box can move a hair (+330 saves as +329, +220 as +219, +100 as −100) with nothing typed. In odds mode, the odds
+      const keepFee=pxSame && Math.abs(fee-feeRate(m0.book, prob, cfg.fees, liveG()))<=1e-9 && (L.fee!=null || !!(L.snap && L.snap.fee!=null));   // v5.11 (bug): the same book, price and pricing: the fee the bet already has stays (the form only estimates it; a fill saved what the book charged), so a Save with nothing changed moves no money
+      L.book=book; L.odds=odds; L.stake=+(+stake).toFixed(2); if(!keepFee) L.fee=fee; if(pmMode() && ed._slip) L.slip=ed._slip;   // v5.11 (bug): keepFee
       { const di=ed.querySelector('.eb-date'), nd=di&&/^\d{4}-\d{2}-\d{2}$/.test(di.value)?di.value:null, od=gameDayOf(L)||L.date||'';   // v3.88 (Alonzo: "if I mess up the date, let me edit it again")
         if(nd && nd!==od){ before.date=od; const t=Date.parse(L.start);
           if(!isNaN(t)){ const shift=Date.parse(nd+'T12:00:00Z')-Date.parse(ctDay(t)+'T12:00:00Z'); L.start=new Date(t+shift).toISOString(); }   // same kickoff time, on the new day
           L.date=nd; L.dateSet=true; if(L.result==='?'){ delete L.result; delete L.why; } } }
-      if(extra.towin>0) L.towin=extra.towin; else if(!L.paidReal && (L.stake!==+(+before.stake||0).toFixed(2) || L.odds!==before.odds)) delete L.towin;   // v3.54: a new To win replaces the old one; a new stake or odds drops a stale one   // v3.98: not what the book really paid
+      if(extra.towin>0) L.towin=extra.towin; else if(!L.paidReal && (L.stake!==+(+before.stake||0).toFixed(2) || (L.odds!==before.odds && !pxSame))) delete L.towin;   // v3.54: a new To win replaces the old one; a new stake or odds drops a stale one   // v3.98: not what the book really paid   // v5.11 (bug): odds re-rounded from an @ % box nobody changed (pxSame) are not new odds: the To win stays
       ebMoneyApply(ed,L,before);   // v3.98: Real money   // v4.03: one helper, also used by the result buttons
+      if(L.autoFrom && L.accountingSource!=='import'){ const tw1=L.towin>0?+(+L.towin).toFixed(2):0;   // v5.11 (bug): a stake, price, To win or fee you changed by hand on a bet the app logged from a book fill (autoFrom: the only bets a re-read of the fills puts back) is yours (accountingSource user): the re-read (linkFill) leaves it alone and only says when the order grew; the Novig fill note and the entry price leave it alone too. Nothing changed: nothing marked (the price as the form opened: pxSame; the fee only changes with the book or Cost + Pays back). An import mark stays. A bet you logged and linked to a fill later (fillBook only) is not marked: a re-read never changes it, and its Fix / Keep mine line stays on
+        if(Math.abs(L.stake-m0.st)>=0.005 || !pxSame || Math.abs(tw1-m0.tw)>=0.005 || Math.abs(fee-feeRate(m0.book, prob, cfg.fees, liveG()))>1e-9) L.accountingSource='user'; }   // v5.11 (bug)
       coverApply(L, ed.querySelector('.eb-cover'), before, Date.now());   /* v4.68 */
       { const pi=ed.querySelector('.eb-placed'); if(pi && pi.value!==placedLocalVal(L.placedAt)){ const pr=placedRead(pi); if(pr && pr.err){ ebSay&&ebSay(pr.err); return; } if(pr) placedSet(L, pr.iso, pr.src, pr.tz); } }   /* v4.73 */
       if(gross!=null){ L.gross=gross; L.net=net; }
@@ -6593,6 +6659,7 @@ function renderLog(){ setTimeout(()=>{ try{ csvDays(); }catch(e){} try{ lcRender
   }));
   tb.querySelectorAll('input.stake-in').forEach(inp=>inp.addEventListener('change',()=>{
     logged[parseInt(inp.dataset.i,10)].stake=parseFloat(inp.value)||0;
+    { const b=logged[parseInt(inp.dataset.i,10)]; if(b && b.autoFrom && b.accountingSource!=='import' && Math.abs((+b.stake||0)-(parseFloat(inp.defaultValue)||0))>=0.005) b.accountingSource='user'; }   // v5.11 (bug): a stake typed here on a bet the app logged from a book fill is yours too, as in Bet log › edit (a re-read of the fills leaves it alone); the box as it was drawn is the stake before
     saveLog(); renderLog(); renderPerf();
   }));
   tb.querySelectorAll('input.close-in').forEach(inp=>inp.addEventListener('change',()=>{
@@ -6709,6 +6776,7 @@ function gameDayOf(b){
   const at=(typeof loggedAtOf==='function')?loggedAtOf(b):NaN, sd=isNaN(at)?'':ctDay(at);
   return (sd && (!b.date || sd>b.date)) ? sd : (b.date || '');
 }
+function betFeeOf(b){ const f=(b && b.fee!=null) ? +b.fee : (b && b.snap && b.snap.fee!=null) ? +b.snap.fee : 0; return isFinite(f) ? f : 0; }   // v5.11 (bug): the fee rate on top of the price (stake = cost × (1 + fee)): the one Bet log › edit saved (b.fee), else the one saved with the bet (snap.fee: addToLog writes the fee only there); hoisted
 function betProfit(b){
   const st=b.free?0:(+b.stake||0);   // v3.98: a free bet (bonus bet) is not your money: it costs nothing when it loses, and a win is the winnings only
   if(b.kind==='parlay'){ const stR=+b.stake||0, pay=b.parlay&&b.parlay.payout;   // v4.03: a free parlay that wins pays its winnings (payout − stake: the stake does not come back); one that misses costs nothing
@@ -6722,7 +6790,7 @@ function betProfit(b){
   if(b.result==='win'){
     if(b.towin>0) return +(+b.towin).toFixed(2);   // v3.51: the To win $ you typed — v3.54: on any book, fee or not   // v3.98: or the winnings you typed after it won (a boost pays more than the odds)
     const p=toProb(b.odds); if(p==null) return null;
-    const fee=+b.fee||0, st0=+b.stake||0;   // fee charged on top of the price (Kalshi): stake = cost × (1 + fee)
+    const fee=betFeeOf(b), st0=+b.stake||0;   // fee charged on top of the price (Kalshi): stake = cost × (1 + fee)   // v5.11 (bug): b.fee, else snap.fee (a Kalshi or Polymarket US fill never edited counted its win as if no fee was paid)
     return +(st0*((1/p)-1-fee)/(1+fee)).toFixed(2);   // v3.98: a free bet wins the same winnings (its stake does not come back)
   }
   return null;   // not settled yet
@@ -7740,9 +7808,9 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
     else {
       x.open++;
       if(betLocked(b)){ x.playing++; x.playingAmt+=mine; } else { x.toPlay++; x.toPlayAmt+=mine; }
-      if(b.kind==='parlay') x.toWin+=Math.max(0,(+(b.parlay&&b.parlay.pays&&b.parlay.pays.all)||0)-mine);
+      if(b.kind==='parlay') x.toWin+=Math.max(0,(+(b.parlay&&b.parlay.pays&&b.parlay.pays.all)||0)-(+b.stake||0));   // v5.11 (bug): the profit if it wins is Pays − entry for a free entry too (betProfit); mine is $0 for a free bet, so a free $5 entry paying $25 showed +$25.00 instead of +$20.00
       else if(b.towin>0) x.toWin+=+b.towin;   // v3.54: the To win you typed
-      else { const q=toProb(b.odds), f=+b.fee||0; if(q) x.toWin+=st*((1/q)-1-f)/(1+f); }
+      else { const q=toProb(b.odds), f=betFeeOf(b); if(q) x.toWin+=st*((1/q)-1-f)/(1+f); }   // v5.11 (bug): the fee saved with the bet too (snap.fee), as betProfit
     }
   });
   removedBets.forEach(b=>{ if(!(b.lost>0) || gameDayOf(b)!==today) return; const x=at(ribbonBook(b.book)); x.lost+=b.lost; x.net-=b.lost; x.cancel+=b.lost; });
@@ -10244,7 +10312,7 @@ function rpSet(){ const R=rpRange(); let noDay=0, noDayRm=0;
 function rpSample(n){ return n<10?'too few to rank':n<30?'extremely preliminary':n<100?'early sample':''; }
 function rpPct(x){ return x==null?'—':(x>=0?'+':'−')+Math.abs(x*100).toFixed(1)+'%'; }
 function rpCls(v,step){ return (v>0.005?'pl-up':v<-0.005?'pl-down':'')+dClsR(v,step||0.01); } /* v5.04: ▲/▼ from the shown rounding: $ to the cent, ROI (step 0.001) to 0.1%; colour rule unchanged */
-function rpToWin(b){ if(b.kind==='parlay'){ const pay=b.parlay&&b.parlay.payout; return b.towin>0?+b.towin:(pay>0?(+pay)-(+b.stake||0):null); } if(b.towin>0) return +b.towin; const p=toProb(b.odds); if(p==null||!(p>0&&p<1)) return null; const fee=+b.fee||0; return (+b.stake||0)*((1/p)-1-fee)/(1+fee); }   /* review: the same fee formula as betProfit */
+function rpToWin(b){ if(b.kind==='parlay'){ const pay=b.parlay&&b.parlay.payout; return b.towin>0?+b.towin:(pay>0?(+pay)-(+b.stake||0):null); } if(b.towin>0) return +b.towin; const p=toProb(b.odds); if(p==null||!(p>0&&p<1)) return null; const fee=betFeeOf(b); return (+b.stake||0)*((1/p)-1-fee)/(1+fee); }   /* review: the same fee formula as betProfit */   // v5.11 (bug): and the same fee (b.fee, else snap.fee)
 function twTotal(b, tw){ return +(+(+tw).toFixed(2)+(b.free?0:(+b.stake||0))).toFixed(2); }   /* v5.10: a single bet's total payout if it wins: the To win as shown + the stake back (a free bet's stake does not come back). Display only */
 function lgTwHtml(b){ if(!b || b.kind==='parlay' || b.sold || betProfit(b)!=null) return ''; const tw=rpToWin(b); if(tw==null || !(tw>0)) return '';   /* v5.10: the Bet log row of an open single: to win and the total, small print (the same To win as Reports) */
   return '<div class="meta lg-tw" title="If it wins: the profit (To win) and what comes back with your stake (Total payout)">to&nbsp;win&nbsp;$'+tw.toFixed(2)+' ·&nbsp;total&nbsp;$'+twTotal(b,tw).toFixed(2)+'</div>'; }
@@ -10307,7 +10375,7 @@ function rpRender(){ const box=document.getElementById('rpPanel'); if(!box) retu
    paid odds with the saved fee): never a forecast, never in Brier, calibration, expected wins or the Scorecard. Parlays: Unknown price. */
 function rpNorm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9.+-]+/g,' ').trim(); }
 function rpGameKey(b){ const ev=(b.gameInfo&&b.gameInfo.eventId)||b.eventId||b.nvEvent||''; if(ev) return 'e'+ev; const d=gameDayOf(b)||'';   /* review: a doubleheader stays two games by its start hour; a bet with no game is its day and team, never its own id */   /* v5.07: sfKeySig lists every field this reads (with gameDayOf, loggedAtOf, rpOutKey); add a new one there too */
-  return b.game ? 'g'+d+'|'+gameKey(b.game)+'|'+String(b.start||'').slice(0,13) : 'x'+d+'|'+rpNorm(b.team||b.name); }
+  return b.game ? 'g'+d+'|'+gameKey(b.game)+'|'+String(b.start||'').slice(0,13) : 'x'+d+'|'+(b.kind==='parlay' && (b.key || b.id) ? (b.key || 'parlay|'+b.id) : rpNorm(b.team||b.name)); }   // v5.11 (bug): a parlay is its own game and outcome (two parlays with the same name on the same day were one): its key, or for one saved before v5.11 (no key) the same made from its id here, read only (nothing is rewritten; the sync keys stay as they were)
 function rpOutKey(b, gk){ return (gk||rpGameKey(b))+'|'+(b.kind||'')+'|'+rpNorm(b.name)+'|'+rpNorm(b.market)+'|'+(b.side||''); }   /* the same outcome: game, who, market and line, side; never book, odds or stake */   /* v5.07: gk = the game key when it is already worked out (same result) */
 function rpPxBand(b){ const p=b.kind==='parlay'?null:entryP(b); if(p==null) return 'u'; return p<0.40?'p1':p<0.50?'p2':p<0.60?'p3':p<0.70?'p4':'p5'; }   /* half-open: 40.0% is in 40–<50 */
 var RP_PX={p1:'under 40%', p2:'40–<50%', p3:'50–<60%', p4:'60–<70%', p5:'70% or more', u:'Unknown price (parlays, no price)'};
@@ -10435,7 +10503,7 @@ function sfMemoGet(key, fn){ if(sfMemo.has(key)) return sfMemo.get(key); if(sfMe
 function sfTuples(items){ const G=new Map(); items.forEach(([g,a,b])=>{ (G.get(g)||G.set(g,[]).get(g)).push([a,b]); }); const keys=[...G.keys()].sort(), X=new Float64Array(keys.length), Y=new Float64Array(keys.length);   /* v5.07: sorted by game key, and each game’s items added in a fixed order (Los Desconfiados C9): the log order never changes a sum */
   keys.forEach((g,i)=>{ const t=G.get(g); if(t.length>2) t.sort((u,w)=>(u[0]-w[0])||(u[1]-w[1])); let x=0, y=0; t.forEach(([a,b])=>{ x+=a; y+=b; }); X[i]=x; Y[i]=y; }); return {keys, X, Y, sig:keys.map((g,i)=>g+'='+X[i].toFixed(6)+'/'+Y[i].toFixed(6)).join(';')}; }
 var sfKeyMemo=new WeakMap();   // v5.07: each bet’s game and outcome keys, kept while the fields they are made from stay the same
-function sfKeySig(b){ const s=b.snap||{}, gi=b.gameInfo||{}; return [gi.eventId, b.eventId, b.nvEvent, b.dateSet?1:0, b.date, b.start, b.manual?1:0, s.at, b.id, b.game, b.team, b.name, b.kind, b.market, b.side].join('\u0001'); }   /* v5.07: every field rpGameKey, gameDayOf, loggedAtOf and rpOutKey read: a new one there must be added here */
+function sfKeySig(b){ const s=b.snap||{}, gi=b.gameInfo||{}; return [gi.eventId, b.eventId, b.nvEvent, b.dateSet?1:0, b.date, b.start, b.manual?1:0, s.at, b.id, b.game, b.team, b.name, b.kind, b.market, b.side, b.key].join('\u0001'); }   // v5.11 (bug): rpGameKey reads a parlay's key now   /* v5.07: every field rpGameKey, gameDayOf, loggedAtOf and rpOutKey read: a new one there must be added here */
 function sfKeys(list, K){ K=K||new Map(); list.forEach(b=>{ if(K.has(b)) return; const sig=sfKeySig(b); let m=sfKeyMemo.get(b); if(!m || m.sig!==sig){ const g=rpGameKey(b); m={sig, g, o:rpOutKey(b,g)}; sfKeyMemo.set(b,m); } const pr=betProfit(b); K.set(b,{g:m.g, o:m.o, pr, open:pr==null}); }); return K; }   /* v5.07: game, outcome and profit once per paint (gameDayOf is the slow part); open = heldValue(b).open */
 function sfFlat1(L, K){ K=sfKeys(L,K); let n=0, t=0; L.forEach(b=>{ if(b.kind==='parlay' || b.sold || b.free) return; const st=+b.stake||0, pr=K.get(b).pr; if(pr==null || !(st>0)) return; n++; t+=pr/st; }); return n?{roi:t/n, n}:null; }   /* v5.07: each ordinary settled ticket at $1 at the price it got */
 function sfClv(L, K){ K=sfKeys(L,K); const M=L.filter(b=>b.kind!=='parlay' && !K.get(b).open), v=M.map(clv).filter(x=>x!=null); return {med:rpMed(v), n:v.length, of:M.length, par:L.filter(b=>b.kind==='parlay' && !K.get(b).open).length}; }   /* v5.07: the app’s clv(), as Closing line counts it (settled singles) */   /* v5.07 (fixer): par = settled parlays, so a parlay-only row says why it has no close */
@@ -10980,8 +11048,8 @@ function plEditOpen(tr, i){
   recalc();
 }
 /* v3.54: one shape for a parlay in the Bet log, from the form here or the Parlays tab */
-function parlayRecord(o){ const stake=+(+o.stake).toFixed(2), all=+o.all;
-  return { id:(self.crypto&&crypto.randomUUID)?crypto.randomUUID():('p'+Date.now()+Math.random().toString(36).slice(2)), kind:'parlay', date:o.day, start:null,
+function parlayRecord(o){ const stake=+(+o.stake).toFixed(2), all=+o.all, id=(self.crypto&&crypto.randomUUID)?crypto.randomUUID():('p'+Date.now()+Math.random().toString(36).slice(2));   // v5.11 (bug): the id first, so the key can be made from it
+  return { id, key:'parlay|'+id, kind:'parlay', date:o.day, start:null,   // v5.11 (bug): every new parlay its own key (from its own id), never shared: two parlays with the same name on the same day are two bets in the sync join (betSig) and in Reports (rpGameKey); parlays saved before keep none, and so the keys they had
     name:o.name||((o.book==='DraftKings Pick 6'?'Pick 6':'Parlay')+' · '+o.picks+' picks'), sport:'PARLAY', market:o.picks+'-pick parlay', betnow:o.picks+' picks',
     book:o.book, odds:fmtOdds(Math.round(americanOf(stake/all))), fair:'', stake, result:'pending', closing:'',
     parlay:Object.assign({picks:o.picks, legs:o.legs||'', pays:{all:+all.toFixed(2), m1:o.m1>0?+(+o.m1).toFixed(2):0, m2:o.m2>0?+(+o.m2).toFixed(2):0}, hits:null, payout:null}, o.pk?{pk:o.pk}:{}),
@@ -10993,7 +11061,8 @@ document.getElementById('plAdd').addEventListener('click',()=>{
   if(!(stake>0) || !(all>stake)){ msg.textContent='Enter the stake and what it pays if all hit (more than the stake).'; return; }
   const day=document.getElementById('plDay').value||ctDay(Date.now()), legs=document.getElementById('plLegs').value.trim();
   const m1=v('plM1'), m2=v('plM2');
-  logged.push(parlayRecord({book, picks, stake, all, m1, m2, legs, day}));
+  const rec=parlayRecord({book, picks, stake, all, m1, m2, legs, day}); if(document.getElementById('plDay').value) rec.dateSet=true;   /* v5.11 (bug): the Game day typed is the day it counts on, as in + Add a bet; before, an entry for a past day counted on the day it was saved */
+  logged.push(rec);
   saveLog(); renderLog(); renderPerf();
   ['plStake','plAll','plM1','plM2','plLegs'].forEach(id=>document.getElementById(id).value='');
   msg.textContent='Added — grade it in the log with "how many hit".';
@@ -11473,6 +11542,7 @@ async function abLoadGames(){
 }
 function abFields(){
   const ty=$ab('abType').value, ev=abGameSel(), t=ev?abTeams(ev):null;
+  abParShow(ty==='parlay'); if(ty==='parlay') return;   // v5.11: a parlay shows its own fields; the single-bet ones keep what you typed, out of sight, and come back as they were
   if(ev && ev.date && !isNaN(Date.parse(ev.date)) && $ab('abDate')) $ab('abDate').value=ctDay(Date.parse(ev.date));   // v3.52: the picked game's day, editable
   document.querySelectorAll('#addBetPanel .ab-prop').forEach(e=>e.style.display=ty==='prop'?'':'none');
   document.querySelectorAll('#addBetPanel .ab-team').forEach(e=>e.style.display=(ty==='spread'||ty==='moneyline')?'':'none');
@@ -11558,7 +11628,7 @@ function fillManualFromRow(L, r){   // next Load: an unchecked manual bet picks 
   $ab('abGame').addEventListener('change',()=>{ if($ab('abGameFree')) $ab('abGameFree').value=''; abFields(); });   // v3.54: a game picked from the list replaces a typed one
   $ab('abGameFree').addEventListener('input',abFields);   // v3.54
   $ab('abPlacedNow').addEventListener('click',()=>{ const i=$ab('abPlaced'), now=Date.now(); i.dataset.at=new Date(now).toISOString(); i.value=placedLocalVal(i.dataset.at); i.dataset.v=i.value; });   /* v4.73: the moment you press it */
-  $ab('addBetPanel').addEventListener('input',e=>{ if(!e.target.closest('.editor')) { abUpdate(); const s=$ab('abHost').querySelector('.eb-stake'); if(s) s.dispatchEvent(new Event('change')); } else setTimeout(()=>{ abUpdate(); const s=$ab('abHost').querySelector('.eb-stake'); if(s && e.target!==s) s.dispatchEvent(new Event('change')); },0); });
+  $ab('addBetPanel').addEventListener('input',e=>{ if(e.target.closest('.ab-par')) return; if(!e.target.closest('.editor')) { abUpdate(); const s=$ab('abHost').querySelector('.eb-stake'); if(s) s.dispatchEvent(new Event('change')); } else setTimeout(()=>{ abUpdate(); const s=$ab('abHost').querySelector('.eb-stake'); if(s && e.target!==s) s.dispatchEvent(new Event('change')); },0); });   // v5.11: typing in the parlay fields leaves the single-bet form and its verdict alone
   $ab('addBetPanel').addEventListener('change',e=>{ if(e.target.closest('.editor')) setTimeout(abUpdate,0); });
   let loaded=false;
   $ab('addBetPanel').addEventListener('toggle',()=>{ if($ab('addBetPanel').open && !loaded){ loaded=true; abLoadGames().then(()=>{ if(!$ab('abHost').querySelector('.editor')) abOpenEditor(); }); } });
@@ -11576,6 +11646,93 @@ function fillManualFromRow(L, r){   // next Load: an unchecked manual bet picks 
     }
     abOpenEditor();
   }).observe($ab('abHost'),{childList:true});
+})();
+/* ============ v5.11: + Add a bet › Type "Parlay / pick'em (2+ picks)" ============
+   (owner 11/15: "remember, Add a Bet needs to allow me to do Parlay. I did a PrizePick parlay and won, and i want to add it."; agreed scope v5.11 Q1)
+   While the Type is a parlay, its own fields (App / book, Entry type, Picks, Entry $ with Free entry, Pays if all hit $ and To win $, the Flex payouts,
+   Game day, Placed at, Legs, Result and Paid $) replace the single-bet ones, which keep what you typed, out of sight. Pays if all hit and To win are
+   linked both ways by v5.09's ebTwWire (To win = Pays − Entry, as betProfit counts a parlay, a free one too). Save builds the record with parlayRecord,
+   exactly as the Bet log's "Add a parlay / Pick 6" panel does, then adds: free:true for a free entry (as the parlay editor), the placed time
+   (placedRead / placedSet, as the single form: user_entered when typed, placed_now from the button) and the result in the fields the Bet log's
+   "how many hit" list uses: Won → hits = picks, payout = Paid $ (or Pays if all hit); Lost → hits 0, payout 0; Partial (Flex) → win, push or loss by what came back against the entry (as the list; v5.11 integration),
+   payout = Paid $, hits = the Flex payout it equals; Not played yet → pending. Saved like the panel (pushed, then saveLog: not through addToLog).
+   No value check (the screener prices single bets only); not in the daily max or the Scorecard (poolOf, inScorecard). Hoisted: abFields, abUpdate94
+   and abAsk call these.
+   v5.11 (review, before release): a Paid $ typed on a Won entry is saved as its Pays if all hit too, with the odds from it (the Bet log row, its edit and
+   "how many hit" went back to Pays and dropped the money typed); for a free entry Paid $ is the winnings, as Got back $ in Bet log › edit, so the record
+   keeps Paid $ + Entry and the profit is what you typed ($20 typed was +$15.00); Won refuses a Paid $ at or under the entry, and says before Save when
+   Paid $ is not Pays if all hit; a Partial's Paid $ must be one of the Flex payouts typed, to the cent; Paid $ is emptied when the Result or the Free
+   entry tick changes (a $2 Partial left in it was saved as WON −$3.00); the Game day typed is kept (dateSet, as the single form), so an entry logged
+   the day after counts on its own day. */
+function abIsPar(){ const t=document.getElementById('abType'); return !!(t && t.value==='parlay'); }
+function abParSingles(){ const g=id=>document.getElementById(id), fld=id=>{ const e=g(id); return e?e.closest('.field'):null; }, mb=g('abMode');   // the single-bet parts of + Add a bet
+  return ['abSport','abGame','abDate','abPlaced','abPlayer','abTeam','abStat','abPick','abLine','abResult'].map(fld)
+    .concat([g('abHost'), g('abMore'), mb?mb.closest('.ab-modebar'):null, g('abVerdict'), document.querySelector('#addBetPanel [data-help="add-help"]')]).filter(Boolean); }
+function abParShow(on){ const P=document.getElementById('addBetPanel'); if(!P) return; on=!!on;
+  P.classList.toggle('ab-par-on', on); abParSingles().forEach(e=>e.classList.toggle('ab-par-hide', on));
+  { const t=document.getElementById('abType'), f=t?t.closest('.field'):null; if(f) f.classList.toggle('ab-par-type', on); }   // v5.11 (review): on a phone the Type box takes the whole row while it shows the parlay (CSS), so its words are not cut
+  if(on){ const d=document.getElementById('abParDay'); if(d && !d.value) d.value=ctDay(Date.now()); abParSync(); } }
+function abParSync(){ const g=id=>document.getElementById(id), P=g('addBetPanel'), note=g('abParNote'); if(!P || !note) return;   // Flex payouts, Paid $, and the note
+  const flex=g('abParKind').value==='flex', res=g('abParResult').value, st=parseFloat(g('abParStake').value), all=parseFloat(g('abParAll').value), free=g('abParFree').checked;
+  P.classList.toggle('ab-par-flexon', flex); P.classList.toggle('ab-par-paidon', res==='win' || res==='partial');
+  const pi=g('abParPaid'), pl=document.querySelector('#addBetPanel label[for="abParPaid"]'), paid=parseFloat(pi.value), exp=free ? (st>0 && all>st ? all-st : NaN) : all;   // v5.11 (review): a free entry's Paid $ is the winnings (the entry does not come back), as Got back $ in Bet log › edit
+  pi.placeholder = res==='win' && exp>0 ? exp.toFixed(2) : free ? 'the winnings' : 'it paid back';
+  if(pl) pl.title = free ? 'A free entry: the winnings the app paid you (the entry does not come back)' : 'Everything the app paid you back, your entry included';
+  let t='', warn=false;
+  if(st>0 && all>=0 && all<st-0.004){ t='Pays if all hit is less than the entry: it is everything you get back if every pick hits, your entry included.'; warn=true; }
+  else if(res==='win' && paid>0 && st>0 && exp>0 && Math.abs(paid-exp)>0.0050001){ warn=true;   // v5.11 (review): a Paid $ typed on a Won entry is what Save keeps, so it is said before Save (a slip: $250 for $25, or the entry typed in it)
+    t = !free && paid<=st+0.004 ? 'Won means every pick hit, so it paid back more than the $'+st.toFixed(2)+' entry: check Paid $.'
+      : 'Paid $'+paid.toFixed(2)+' is not the $'+exp.toFixed(2)+(free?' in winnings':'')+' it pays if all hit. Save keeps '+money(free?paid:paid-st,true)+': fix Paid $ if that is a typo.'; }
+  else if(free) t='🎁 Free entry: it costs you $0, and a miss costs $0. If all hit you get the winnings'+(st>0 && all>st ? ', $'+(all-st).toFixed(2)+' (the $'+st.toFixed(2)+' entry does not come back)' : ' (what it pays minus the entry)')+'.';
+  if(note.textContent!==t) note.textContent=t; note.classList.toggle('warn', warn); }
+function abParSave(){ const g=id=>document.getElementById(id), msg=g('abParMsg'), v=id=>parseFloat(g(id).value);
+  const say=t=>{ msg.textContent=t; msg.classList.add('warn'); try{ msg.scrollIntoView({block:'nearest'}); }catch(e){} };
+  msg.textContent=''; msg.classList.remove('warn');
+  const book=g('abParBook').value, picks=Math.round(v('abParPicks')), stake=v('abParStake'), all=v('abParAll'), flex=g('abParKind').value==='flex', free=g('abParFree').checked;
+  if(!(picks>=2 && picks<=12)){ say('Picks: 2 to 12.'); return; }
+  if(!(stake>0) || !(all>stake)){ say('Enter the entry and what it pays if all hit (more than the entry).'); return; }
+  const day=g('abParDay').value||ctDay(Date.now()), legs=g('abParLegs').value.trim(), m1=flex?v('abParM1'):NaN, m2=flex?v('abParM2'):NaN;   // Power: no partial payouts (as the panel with them left blank)
+  const res=g('abParResult').value, paidIn=g('abParPaid').value.trim()!=='', paid=v('abParPaid'), pr=placedRead(g('abParPlaced'));
+  const back=paid>0 ? +(free?paid+stake:paid).toFixed(2) : NaN;   // v5.11 (review): what came back, entry included, as the record keeps it (a free entry: Paid $ is the winnings, and betProfit takes the entry off again)
+  if(pr && pr.err){ say('The placed time is in the future: check Placed at.'); return; }
+  let G=null, allS=all;   // v5.11 (review): allS = the Pays if all hit that is saved
+  if(res==='win'){
+    if(paidIn){ if(!(back>stake+0.004)){ say(free ? 'Won means every pick hit, so the free entry paid you winnings. Leave Paid $ empty to use $'+(all-stake).toFixed(2)+' (what it pays if all hit, less the entry), or type the winnings the app paid you.' : 'Won means every pick hit, so it paid back more than the $'+stake.toFixed(2)+' entry. Leave Paid $ empty to use Pays if all hit ($'+all.toFixed(2)+'), or type everything the app paid back.'); return; }
+      allS=back; }   // v5.11 (review): a Paid $ typed on a Won entry is its Pays if all hit too (and the odds come from it), so the Bet log row, its edit and "how many hit" keep that money
+    G={hits:picks, payout:allS, result:'win'}; }
+  else if(res==='loss') G={hits:0, payout:0, result:'loss'};
+  else if(res==='partial'){
+    if(!flex){ say('A partial payout is for a Flex entry: choose Flex (pays if 1 or 2 miss) and type what it pays.'); return; }
+    if(!(paid>0)){ say('Type what it paid in Paid $. If it paid nothing, choose Lost.'); return; }
+    if(back>=all-0.004){ say(free ? 'Paid $ for a free entry is the winnings: what it paid, less the $'+stake.toFixed(2)+' entry. A partial payout is less than the $'+(all-stake).toFixed(2)+' it wins if all hit; if every pick hit, choose Won.' :'A partial payout is less than what it pays if all hit ($'+all.toFixed(2)+'). If every pick hit, choose Won.'); return; }
+    const T=[[picks-1,m1],[picks-2,m2]].filter(x=>x[1]>0 && x[0]>=1);   // the lines the Bet log's "how many hit" list offers
+    if(!T.length){ say('Type what it pays if 1 misses (or if 2 miss), so the Bet log can show how many hit.'); return; }
+    const L=T.find(x=>Math.abs(+(+x[1]).toFixed(2)-back)<0.005);   // v5.11 (review): Paid $ is one of the Flex payouts typed, to the cent, so the Bet log row ("2 of 3 — $6.25") and a later pick in its list give the same money
+    if(!L){ say('Paid $'+paid.toFixed(2)+' is not '+T.map(x=>'the '+(free?'winnings':'payout')+' if '+(picks-x[0]===1?'1 misses':'2 miss')+' ($'+(free?Math.max(0,x[1]-stake):+x[1]).toFixed(2)+')').join(' or ')+'. Check Paid $ and the Flex payouts, so the Bet log shows how many hit.'); return; }
+    G={hits:L[0], payout:back, result: back>stake+0.004?'win':Math.abs(back-stake)<0.005?'push':'loss'}; }   /* v5.11 (integration): graded like the Bet log’s how-many-hit list: more back than the entry is a win, the entry back is a push, less is a loss (the scope said win for every partial; the money was already right) */
+  const rec=parlayRecord({book, picks, stake, all:allS, m1, m2, legs, day});   // the panel's own record
+  if(g('abParDay').value) rec.dateSet=true;   // v5.11 (review): the Game day you typed is the day it counts on (gameDayOf: the Bet log day, TODAY, the calendar, Reports), also when it is logged the day after; the single form sets it the same way
+  if(free) rec.free=true;
+  if(pr) placedSet(rec, pr.iso, pr.src, pr.tz);
+  if(G){ rec.parlay.hits=G.hits; rec.parlay.payout=+(+G.payout).toFixed(2); rec.result=G.result; }
+  logged.push(rec); abLogLen=logged.length;   // the + Add a bet watcher (above) only finishes bets its own editor saved
+  { const sb=g('abParSave'); sb.disabled=true; setTimeout(()=>{ sb.disabled=false; },700); }   // a double tap saves once (the second tap would find the boxes empty and warn)
+  saveLog(); renderLog(); renderPerf();
+  ['abParStake','abParAll','abParWin','abParM1','abParM2','abParLegs','abParPaid'].forEach(id=>{ g(id).value=''; });
+  g('abParFree').checked=false; g('abParResult').value='';
+  { const pi=g('abParPlaced'); pi.value=''; delete pi.dataset.at; delete pi.dataset.v; }
+  { const gr=g('abType').closest('.ab-grid'); if(gr && gr._own) gr._own.pay=''; }
+  abParSync();
+  const pf=betProfit(rec), base='<b>Saved:</b> '+esc(rec.name)+' · $'+stake.toFixed(2)+(rec.free?' free entry':'')+' at '+esc(bookLabel(book));
+  g('abMsg').innerHTML=base+(res==='win'?' · <b>WON</b> '+money(pf,true)+'. It is in your Bet log.' : res==='loss'?' · <b>LOST</b> '+money(pf,true)+'. It is in your Bet log.' : res==='partial'?' · <b>PARTIAL PAYOUT</b> '+(rec.free?money(pf,true):'$'+rec.parlay.payout.toFixed(2)+' ('+money(pf,true)+')')+'. It is in your Bet log.' /* v5.11 (review): a free entry shows its winnings only */ : ' · not played yet. It is in your Bet log: when it is over, set how many hit there.');
+  try{ savedToast('✓ Saved: '+rec.name+' · $'+stake.toFixed(2)+' at '+bookLabel(book)); }catch(e){} }
+(function(){ const g=id=>document.getElementById(id); if(!g('addBetPanel') || !g('abParSave')) return;
+  const grid=g('abType').closest('.ab-grid'); ebTwWire(grid);   // v5.09's link, as for single bets (no Odds box here, and Free entry is not its Free bet tick: To win = Pays − Entry either way)
+  { const d=g('abParDay'); if(d && !d.value) d.value=ctDay(Date.now()); }
+  g('abParPlacedNow').addEventListener('click',()=>{ const i=g('abParPlaced'), now=Date.now(); i.dataset.at=new Date(now).toISOString(); i.value=placedLocalVal(i.dataset.at); i.dataset.v=i.value; });   // as Placed now above (v4.73)
+  ['abParResult','abParFree'].forEach(id=>g(id).addEventListener('change',()=>{ g('abParPaid').value=''; }));   // v5.11 (review): a Paid $ typed for one result, or before the Free entry tick (it then means the winnings), is not carried over (a $2 Partial left in it was saved as WON −$3.00); runs before the grid's abParSync below
+  ['input','change'].forEach(k=>grid.addEventListener(k,e=>{ if(e.target.closest('.ab-par')) abParSync(); }));
+  g('abParSave').addEventListener('click',abParSave);
 })();
 
 /* ============ v2.88: results calendar (Performance tab) ============ */
@@ -11823,13 +11980,13 @@ function orderTagHtml(r){ const t=o=>(o.qty!=null?(+o.qty)+' at ':'')+(o.price!=
   if(r.otherGameOrder){ const o=r.otherGameOrder; return '<span class="ord-tag">⏳ You have a '+esc(bk(o))+' order on this team: “'+esc(o.title||o.ref||'')+'”'+(day(o)?' ('+esc(day(o))+')':'')+', '+esc(t(o))+'. That is another game: this one is not placed</span>'; }
   if(r.otherSideOrder){ const o=r.otherSideOrder; return '<span class="ord-tag">⚠ Your '+esc(bk(o))+' order in this game is on the other team: “'+esc(o.title||o.ref||'')+'”, '+esc(t(o))+'</span>'; }
   return ''; }
-function impTagHtml(r){
+function impTagHtml(r, card){   /* v5.11 (bug L4): card = the Sentinels card, where the Kalshi limit sits right under this tag */
   const p=r.offeredProb; if(!(p>0 && p<1)) return '';
   const cfg=cfgRead(), mx=r.fairProb!=null?maxPriceFor(okProbR(r), r.book, cfg.eMin):null, P=x=>(x*100).toFixed(1)+'%';
-  const over=r.fairProb!=null && (mx==null || p>mx+1e-9), ok=mx!=null && !over;
+  const over=r.fairProb!=null && (mx==null || p>mx+1e-9), ok=mx!=null && !over, kx=card && ok && LIVE_BOOK(r.book)==='kalshi' ? Math.min(99,Math.floor(mx*100+1e-9)) : null;   /* v5.11 (bug L4): on a Kalshi card, the limit that OK to becomes (whole cents, rounded down, as the strip under it) */
   const am=Math.round(americanOf(p)), how=am>0?'100 / ('+am+' + 100)':(-am)+' / ('+(-am)+' + 100)';
-  const tip=fmtOdds(am)+' means the book charges for a '+P(p)+' chance ('+how+').'+(r.fairProb!=null?' The model puts it at '+P(r.fairProb)+(r.mktProb!=null?', the market at '+P(r.mktProb)+', and La Contadora sizes on '+P(okProbR(r)):'')+(mx!=null?'; at '+bookLabel(r.book)+' you can pay up to '+P(mx)+' after its fee and still clear your floor on that.':'; no price at '+bookLabel(r.book)+' clears your EV floor after its fee.'):'')+(over?' Look for a book whose price is a lower %.':'');
-  return '<span class="imp'+(ok?' ok':over?' over':'')+'" title="'+esc(tip)+'">price '+P(p)+(ok?' · OK to '+P(mx):over?(mx!=null?' · need ≤ '+P(mx):'')+' · look elsewhere':'')+'</span>';
+  const tip=fmtOdds(am)+' means the book charges for a '+P(p)+' chance ('+how+').'+(r.fairProb!=null?' The model puts it at '+P(r.fairProb)+(r.mktProb!=null?', the market at '+P(r.mktProb)+', and La Contadora sizes on '+P(okProbR(r)):'')+(mx!=null?'; at '+bookLabel(r.book)+' you can pay up to '+P(mx)+' after its fee and still clear your floor on that.':'; no price at '+bookLabel(r.book)+' clears your EV floor after its fee.'):'')+(over?' Look for a book whose price is a lower %.':'')+(kx!=null?' On Kalshi that is a '+kx+'¢ limit: Kalshi takes whole cents, so '+P(mx)+' rounds down.':'');   /* v5.11 (bug L4) */
+  return '<span class="imp'+(ok?' ok':over?' over':'')+'" title="'+esc(tip)+'">price '+P(p)+(ok?' · OK to '+P(mx)+(kx!=null?' ('+kx+'¢ limit)':''):over?(mx!=null?' · need ≤ '+P(mx):'')+' · look elsewhere':'')+'</span>';   /* v5.11 (bug L4): "OK to 64.9% (64¢ limit)" over the strip’s "Limit 64¢" */
 }
 function maxTagHtml(r){
   if(r.fairProb==null) return '';
@@ -12149,6 +12306,7 @@ function rowAsBet(r){ return {id:'row'+r.idx, idx:r.idx, book:r.book, sport:r.sp
 document.addEventListener('click', async e=>{
   const img=e.target.closest('img.blogo, .book, .pp-open'); if(!img) return;
   { const lk=img.closest('a.sc-link[href]'); if(lk){ const h=lk.getAttribute('href'); if(/^novigapp:\/\//.test(h)) setTimeout(()=>{ try{ slipReady(h,'novig'); }catch(_){} },400); return; } }   // v4.42: a real slip link (phone): the tap opens it; for Novig the bar then offers the website too
+  { const sa=img.closest('.sc-alt'); if(sa && !sa.hasAttribute('data-alt-idx') && !sa.classList.contains('ref')) return; }   /* v5.11 (bug): a live "also at" price with no link is ANOTHER book: before, the tap fell through to this card and opened the card’s own book slip */
   const host=img.closest('tr, .pcard'); if(!host) return;
   let obj=null;
   const kb=host.querySelector('button.kill[data-i]'); if(kb) obj=logged[+kb.dataset.i];
@@ -12531,8 +12689,10 @@ function linkFill(b,f){   // you saved it already — link, and flag differences
   const ids=[f.id].concat(f.ids||[]);
   const had=(b.fills||[]).filter(id=>ids.includes(id));
   b.fills=(b.fills||[]).filter(id=>!ids.includes(id)).concat(f.id);
+  const q0=+b.fillQty||0;   // v5.11 (bug): the contracts this bet had before this read
   if(had.length){ b.fillQty=+f.qty||0; b.fillCost=stake; }   // re-read of the same order: replace, don't add
   else { b.fillQty=(b.fillQty||0)+(+f.qty||0); b.fillCost=+(((b.fillCost||0)+stake)).toFixed(2); }
+  if(b.accountingSource==='user'){ const m1=toProb(b.odds), p1=+f.price||0; if((+b.fillQty||0)>q0+1e-9 && (m1==null || (p1 && Math.abs(p1-m1)>0.006) || Math.abs(b.fillCost-(+b.stake||0))>0.06)) b.fillDiff={price:p1||m1, stake:b.fillCost, fee:had.length?(+f.fee||0):0, at:f.ts}; return; }   // v5.11 (bug): a stake or price you corrected (accountingSource user) is never put back, but when the order grew (more contracts than before) and the book now says another price or cost, the Fix / Keep mine line says so, so the extra money is not hidden. Its fee is the book's total only on a re-read of the same order; for another order it is left out, so Fix keeps the fee the bet has
   if(b.accountingSource==='import' || b.accountingSource==='user'){ delete b.fillDiff; return; }   /* v4.71: a stake and odds you corrected (import fix) are never put back by a re-read of the book's fills */
   if(b.autoFrom){ b.stake=b.fillCost; if(f.price) b.odds=fmtOdds(Math.round(americanOf(f.price))); delete b.fillDiff; return; }
   const mine=toProb(b.odds), px=f.price;
@@ -12856,6 +13016,7 @@ function abFair(f){
   return {fair, mkt, src, ex, X, mktSrc};
 }
 async function abAsk(manual){
+  if(abIsPar()) return;   // v5.11: a parlay is not priced, so nothing is asked of the exchanges (the single-bet fields under it are out of sight)
   const f=abRowFields(), msg=$ab('abAskMsg');
   if(!f.game){ if(manual) msg.textContent='pick the game first'; return; }
   if(f.kind==='prop' && (!f.name||f._line==null||!String(f.market).replace(/^[+-]?[\d.]+\s*/,''))){ if(manual) msg.textContent='add the player, stat and line'; return; }
@@ -12889,7 +13050,7 @@ async function abAsk(manual){
 }
 function abScheduleAsk(){ clearTimeout(abAskTimer); abAskTimer=setTimeout(()=>abAsk(false), 1200); }
 function abUpdate94(){
-  if(!abR) return;
+  if(!abR || abIsPar()) return;   // v5.11: no BET / SKIP verdict for a parlay; switching back to a single-bet Type works it out again (abFields)
   const f=abRowFields(); Object.assign(abR, f);
   const cfg=cfgRead(), out=$ab('abVerdict'), L=[];
   const outCut=(parseFloat($ab('swOutlier').value)||15)/100, gapCut=(parseFloat($ab('swGap').value)||8)/100;
@@ -12932,6 +13093,7 @@ function abUpdate94(){
       level='ok'; head='🟢 BET $'+typed.st.s.toFixed(2)+' — '+SG94(typed.her)+' net';
       top.push('<b>'+lbl(typed)+'</b>'+(typed.st.n?' · '+(typed.st.kal?typed.st.n.toFixed(2)+' shares at a limit of '+typed.st.kal.limitCents+'¢':typed.st.n+' contracts') /* v5.05 */:'')+(typed.st.pctBank!=null?' · '+(typed.st.pctBank*100).toFixed(1)+'% of your $'+cfg.bank.toFixed(0)+' bankroll':''));
       if(mx!=null) top.push('Pay up to '+P94(mx)+' — above that it stops clearing your '+pct(cfg.eMin)+' floor'+mdlOf(typed));
+      if(mx!=null && typed.st.kal) top.push('<span class="meta kx-lim">On Kalshi that is the '+typed.st.kal.limitCents+'¢ limit above: Kalshi takes whole cents, so '+(mx*100).toFixed(1)+'% rounds down.</span>');   /* v5.11 (bug L4): "Pay up to 64.9%" and "a limit of 64¢" are one order: this line says so (no number changes) */
       (typed.st.notes||[]).filter(n=>!/contracts/.test(n)).forEach(n=>top.push('<span class="meta">'+esc(n)+'</span>'));
       if(best && best!==typed && best.her>typed.her+0.01) top.push('<div class="ab-alt">🦑 Better: BET $'+best.st.s.toFixed(2)+' — '+lbl(best)+' → '+SG94(best.her)+' net</div>');
     } else if(typed){
@@ -13338,7 +13500,7 @@ setTimeout(()=>{
 },0);
 document.querySelector('.tab[data-view="v-live"]').addEventListener('click',()=>renderLive(true));
 // v3.07: + Add a bet lives on its own tab — opening the tab loads the games and the editor (the panel's own "open" can fire before the page is listening)
-document.querySelector('.tab[data-view="v-add"]').addEventListener('click',()=>{ const p=document.getElementById('addBetPanel'); if(p){ p.open=true; p.dispatchEvent(new Event('toggle')); const toSport=()=>{ const sp=document.getElementById('abSport')||p; const r=sp.getBoundingClientRect(); if(r.top<0 || r.top>innerHeight*0.5) window.scrollTo(0, Math.max(0, r.top+scrollY-90)); }; setTimeout(toSport,150); setTimeout(toSport,450); } });   /* v5.00 (Karens: + Add a bet opened mid-form, Sport and Game out of sight) */
+document.querySelector('.tab[data-view="v-add"]').addEventListener('click',()=>{ const p=document.getElementById('addBetPanel'); if(p){ p.open=true; p.dispatchEvent(new Event('toggle')); const toSport=()=>{ const sp=document.getElementById(abIsPar()?'abType':'abSport')||p; /* v5.11: a parlay hides Sport, so its Type box (the same row) is the one brought into view */ const r=sp.getBoundingClientRect(); if(r.top<0 || r.top>innerHeight*0.5) window.scrollTo(0, Math.max(0, r.top+scrollY-90)); }; setTimeout(toSport,150); setTimeout(toSport,450); } });   /* v5.00 (Karens: + Add a bet opened mid-form, Sport and Game out of sight) */
 document.querySelectorAll('.tab[data-view="v-paste"]').forEach(t=>t.addEventListener('click',()=>{ const p=document.getElementById('pastePanel'); if(p) p.open=true; }));   /* v4.95: the Paste tab is that one panel, so tapping the tab opens it; everything else stays closed until tapped */
 document.addEventListener('click',e=>{ if(e.target.closest('#logFilterOff')){ logDayFilter=null; logBandFilter=null; renderLog(); } });
 document.addEventListener('click',e=>{ const t=e.target.closest && e.target.closest('button.lbf'); if(!t) return; e.preventDefault(); e.stopPropagation();   /* v4.66: a band: only its bets, in the Bet log */
@@ -13443,7 +13605,7 @@ function syncMetaSave(){ const M=SY.meta;
   Object.values(M.c).forEach(st=>{ st.B={}; });   // storage full: drop the merge bases (merges fall back to newer-wins) rather than lose the meta
   syncLS('mbev.syncMeta', JSON.stringify(M)); }
 function syncSt(c){ const M=SY.meta, st=M.c[c]||(M.c[c]={S:{},T:{},B:{},H:{}}); ['S','T','B','H'].forEach(k=>{ st[k]=st[k]||{}; }); return st; }
-function betSig(b){ return [b.date, nrm(b.name), String(b.market||'').toLowerCase(), b.side||'', LIVE_BOOK(b.book)||String(b.book||'').toLowerCase(), b.odds, (+b.stake||0).toFixed(2)].join('|'); }
+function betSig(b){ return [b.date, nrm(b.name), String(b.market||'').toLowerCase(), b.side||'', LIVE_BOOK(b.book)||String(b.book||'').toLowerCase(), b.odds, (+b.stake||0).toFixed(2)].concat(b.kind==='parlay' && b.key ? [b.key] : []).join('|'); }   // v5.11 (bug): a parlay with its own key (saved from v5.11 on) is never taken for a copy of another parlay with the same day, name, book, price and stake when a device joins the sync; others keep their sig
 function syncEnsureIds(){ let n=0;   // older bets saved without an id get one built from what they are — the same on every device
   logged.forEach(b=>{ if(b && !b.id){ b.id='h'+syncHashStr([b.date,b.name,b.market,b.side,b.book,b.odds,b.stake,b.snap&&b.snap.at].join('|')); n++; } });
   if(n) syncLS('mbev.log', JSON.stringify(logged));

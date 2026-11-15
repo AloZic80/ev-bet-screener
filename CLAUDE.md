@@ -80,6 +80,10 @@
   start time, or typed with a chosen date) and is graded against it even when saved after kickoff. Board bets and exchange
   fills can't name their game, so they keep the rule: a game that started more than 4 hours before the bet was saved is ignored.
 - No new external dependencies, CDNs or build tools.
+- **Save tokens** (owner, 2026-11-15: "save tokens with what we are doing"; "LETS CHOOSE SONNET instead of Haiku"): helper agents that read, list,
+  measure or run tests use `model: 'sonnet'`; Opus only for the math, money, grading and the final review. Fewest agents that do the job (one skeptic
+  where two add little); read files in parts (grep, offset/limit), never `index.html` whole; check with the tests before sending another reviewer.
+  No prompts or data to services outside Anthropic (the ARMS guide's OpenRouter "Jev" router is out).
 
 ## Rules that hold in every session
 - **The file:** much of the HTML is built inside single-quoted JavaScript strings. An apostrophe in that text ("it's") ends the string and breaks the
