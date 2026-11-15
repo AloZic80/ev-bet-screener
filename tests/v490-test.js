@@ -37,7 +37,7 @@ for(let i=0;i<3;i++) LOG.push(bet('phx'+i,{name:'Phx Player', team:'PHX', game:'
   check('9. a parlay and a bet with no price stay Unknown', E.band[4]==='u' && E.band[5]==='u', E.band);
   await p.evaluate(()=>{ document.querySelector('.tab[data-view="v-reports"]').click(); }); await p.waitForTimeout(300);
   await p.evaluate(()=>{ RP.per='all'; RP.f={}; RP.by='price'; RP.px='chance'; rpRender(); });
-  const rows=async()=>p.evaluate(()=>[...document.querySelectorAll('#rpBreak tbody tr')].map(r=>({k:r.children[0].textContent, n:+r.children[1].textContent, pr:r.children[5].textContent})));
+  const rows=async()=>p.evaluate(()=>[...document.querySelectorAll('#rpBreak tbody tr')].map(r=>({k:r.children[0].textContent, n:+r.children[1].textContent, pr:r.querySelector('td[data-l="Profit"]').textContent})));   // v5.07: the profit cell by its label (Games is a new column)
   const ch=await rows(); await p.evaluate(()=>{ RP.px='american'; rpRender(); }); const am=await rows();
   const tot=await p.evaluate(()=>+document.querySelector('#rpHead .rp-k strong').textContent);
   const sum=a=>a.reduce((t,x)=>t+x.n,0);
@@ -49,7 +49,7 @@ for(let i=0;i<3;i++) LOG.push(bet('phx'+i,{name:'Phx Player', team:'PHX', game:'
   check('10. price bands never enter calibration (or expected wins, Brier, the Scorecard)', cal && await p.evaluate(()=>!String(scoreSet).includes('entryP')), cal);
   // breakdown by sport adds up
   await p.evaluate(()=>{ RP.by='sport'; rpRender(); }); const sp=await rows();
-  check('by sport: the rows add up to the headline tickets, with outcomes and a sample label', sum(sp)===tot && await p.evaluate(()=>document.querySelectorAll('#rpBreak thead th').length===8), sp);
+  check('by sport: the rows add up to the headline tickets, with outcomes, games, ranges and a Read label', sum(sp)===tot && await p.evaluate(()=>document.querySelectorAll('#rpBreak thead th').length===12 && [...document.querySelectorAll('#rpBreak thead th')].pop().textContent==='Read'), sp);   // v5.07: Read replaced Sample; Games, ROI 95% range, Expected vs actual and CLV added
   // chart and months
   const cm=await p.evaluate(()=>({svg:!!document.querySelector('#rpChart svg polyline'), cap:(document.querySelector('#rpChart figcaption')||{}).textContent||'', prof:[...document.querySelectorAll('#rpHead .rp-k')].find(k=>k.children[0].textContent==='Settled profit').children[1].textContent, mo:[...document.querySelectorAll('#rpMonths .rp-mo span')].map(x=>x.textContent)}));
   check('the profit line ends at the settled profit; open bets do not move it', cm.svg && cm.cap.includes('now '+cm.prof) && /open bets do not move it/.test(cm.cap), cm);
