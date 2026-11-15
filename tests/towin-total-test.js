@@ -1,10 +1,10 @@
-// node tests/v509-test.js — v5.09 (owner 11/15: "i want it to show both. Because it does say, TOTAL WIN or To Win."). Bovada's bet history says "Winnings +$3.04"
+// node tests/towin-total-test.js — v5.10 (owner 11/15: "i want it to show both. Because it does say, TOTAL WIN or To Win."). Bovada's bet history says "Winnings +$3.04"
 // for a $1.52 bet at 2.00: that is the total return (stake back included), and it went into To win (Trent Walker, 11/13). The sportsbook boxes of the bet form
 // (+ Add a bet, I bet this, Bet log › edit) now show To win (the profit, what is saved as towin, unchanged) and Total payout (stake included), linked both ways;
 // a new Stake keeps the one typed last and moves the other; a free bet's Total payout = To win; a To win that equals Stake × decimal odds says it looks like a
 // total payout, and "Use $X" moves it. The % boxes (Cost, @ %, Pays back / Max payout) are unchanged. The Bet log row of an open single and Reports › Open bets
 // show "$1.52 · total $3.04". Display and input only: Save, betProfit and the saved fields do not change.
-// v5.09 review fixes: emptying a Total payout that was filled in for you keeps the To win you typed (S14), emptying To win empties both; the pair wraps together;
+// v5.10 review fixes: emptying a Total payout that was filled in for you keeps the To win you typed (S14), emptying To win empties both; the pair wraps together;
 // the free-bet note sits on the line under the boxes; the boxes are 108 px on a phone; in Bet log › edit on a phone the new lines and the Real money box start at the left.
 const path=require('path'); const INDEX=path.join(__dirname,'..','index.html');
 const { chromium } = require('playwright'); const fs=require('fs');
@@ -51,7 +51,7 @@ const TT_TIP='What comes back if it wins: your stake plus the profit. Some books
     await p.waitForTimeout(800); return p.evaluate(n0=>{ if(logged.length<=n0) return null; const x=logged[logged.length-1]; return {odds:x.odds, stake:x.stake, towin:x.towin, book:x.book, ifWin:betProfit(Object.assign({},x,{result:'win'}))}; }, n0); }
   await setup('Bovada');
   const ui=await p.evaluate(()=>{ const h=document.getElementById('abHost'), lab=c=>{ const i=h.querySelector(c), l=i&&i.closest('label'); return l?{t:l.textContent.trim(), tip:l.title}:null; };
-    return {mode:h.querySelector('.eb-mode').value, win:lab('.eb-win-o'), tot:lab('.eb-tot-o'), freeHidden:!h.querySelector('.eb-tot-free'), chk:h.querySelector('.eb-tw-chk').textContent, chkShown:getComputedStyle(h.querySelector('.eb-tw-chk')).display!=='none'}; });   // v5.09 (review): the free-bet note is only there (in the check line) when Free bet is ticked
+    return {mode:h.querySelector('.eb-mode').value, win:lab('.eb-win-o'), tot:lab('.eb-tot-o'), freeHidden:!h.querySelector('.eb-tot-free'), chk:h.querySelector('.eb-tw-chk').textContent, chkShown:getComputedStyle(h.querySelector('.eb-tw-chk')).display!=='none'}; });   // v5.10 (review): the free-bet note is only there (in the check line) when Free bet is ticked
   check('+ Add a bet, odds: To win $ and Total payout $ side by side, with the tips the scope gives', ui.mode==='odds' && ui.win && ui.win.t==='To win $' && ui.win.tip===TW_TIP && ui.tot && ui.tot.t==='Total payout $' && ui.tot.tip===TT_TIP, ui);
   check('nothing typed: no free-bet note, no check line', ui.freeHidden && ui.chk==='' && !ui.chkShown, ui);
   await fill('.eb-odds','+100'); await fill('.eb-stake','1.52');
@@ -76,7 +76,7 @@ const TT_TIP='What comes back if it wins: your stake plus the profit. Some books
   await fill('.eb-tot-o','');
   s={win:await v('.eb-win-o'), tot:await v('.eb-tot-o'), pay:await pay(), chk:await T('.eb-tw-chk')};
   check('Total payout emptied: To win (which came from it) empties too, no line', s.win==='' && s.tot==='' && s.pay==='' && s.chk==='', s);
-  // v5.09 (review S14, Los Desconfiados): To win typed (a boost), then the Total payout that was filled in for you is emptied: the To win you typed stays, and Save keeps it
+  // v5.10 (review S14, Los Desconfiados): To win typed (a boost), then the Total payout that was filled in for you is emptied: the To win you typed stays, and Save keeps it
   await fill('.eb-odds','-110'); await fill('.eb-stake','10'); await fill('.eb-win-o','9.50');
   const b14={tot:await v('.eb-tot-o'), pay:await pay()};
   await fill('.eb-tot-o','');
@@ -133,7 +133,7 @@ const TT_TIP='What comes back if it wins: your stake plus the profit. Some books
     return {side:document.documentElement.scrollWidth>innerWidth, right:Math.round(r.right), inner:innerWidth, out, small, chk:!!e.querySelector('.eb-tw-chk button')}; });
   check('390 px: + Add a bet with Total payout and the check line: no sideways scroll, every box inside the screen, text 12 px or more', !ph.side && ph.right<=ph.inner && !ph.out.length && ph.chk && ph.small.every(x=>x>=12), ph);
   const pw=await p.evaluate(()=>{ const e=document.querySelector('#abHost .editor'), f=e.getBoundingClientRect(), w=e.querySelector('.eb-win-o').getBoundingClientRect(), t=e.querySelector('.eb-tot-o').getBoundingClientRect(); return {wW:Math.round(w.width), tW:Math.round(t.width), inside:w.left>=f.left && t.left>=f.left && w.right<=f.right && t.right<=f.right}; });
-  check('390 px, + Add a bet: the To win and Total payout boxes are 104 px or wider ("optional" fits at the phone type size), inside the form', pw.wW>=104 && pw.tW>=104 && pw.inside, pw);   // v5.09 (review)
+  check('390 px, + Add a bet: the To win and Total payout boxes are 104 px or wider ("optional" fits at the phone type size), inside the form', pw.wW>=104 && pw.tW>=104 && pw.inside, pw);   // v5.10 (review)
   await fill('.eb-win-o',''); await p.setViewportSize({width:1280,height:900});
   // ---- I bet this on a board card: the same pair (the Kalshi card switched to odds)
   await p.evaluate(()=>{ document.querySelector('.tab[data-view="v-board"]').click(); setMode('volado'); }); await p.waitForTimeout(500);
@@ -151,17 +151,17 @@ const TT_TIP='What comes back if it wins: your stake plus the profit. Some books
   check('Bet log row of the open $1.52 bet: "to win $1.52 · total $3.04" in small print (12 px); the parlay row has none', lg.txt==='to win $1.52 · total $3.04' && lg.size>=12 && lg.parlay===false, lg);
   await p.evaluate(i=>document.querySelector('#logBody button.kill.edit[data-i="'+i+'"]').click(), lg.i); await pause();
   const eq=s=>'#logBody tr.editor '+s;
-  const e0=await p.evaluate(()=>{ const e=document.querySelector('#logBody tr.editor'); return {win:e.querySelector('.eb-win-o').value, tot:e.querySelector('.eb-tot-o').value, freeHidden:!e.querySelector('.eb-tot-free')}; });   // v5.09 (review): the note lives in the check line, only while Free bet is ticked
+  const e0=await p.evaluate(()=>{ const e=document.querySelector('#logBody tr.editor'); return {win:e.querySelector('.eb-win-o').value, tot:e.querySelector('.eb-tot-o').value, freeHidden:!e.querySelector('.eb-tot-free')}; });   // v5.10 (review): the note lives in the check line, only while Free bet is ticked
   check('Bet log › edit: To win and Total payout start empty (as To win did), no free note', e0.win==='' && e0.tot==='' && e0.freeHidden, e0);
   await p.check(eq('.eb-free')); await pause();
   await p.fill(eq('.eb-win-o'),'1.52'); await pause();
   const e1=await p.evaluate(()=>{ const e=document.querySelector('#logBody tr.editor'); return {tot:e.querySelector('.eb-tot-o').value, note:(e.querySelector('.eb-tw-chk .eb-tot-free')||{}).textContent||null, chk:e.querySelector('.eb-tw-chk').textContent}; });
-  check('free bet: To win 1.52 → Total payout 1.52 (the stake does not come back), with the note on the line under the boxes (and nothing else there)', e1.tot==='1.52' && e1.note==='(free bet: the stake does not come back)' && e1.chk==='(free bet: the stake does not come back)', e1);   // v5.09 (review): the note moved to the check line
+  check('free bet: To win 1.52 → Total payout 1.52 (the stake does not come back), with the note on the line under the boxes (and nothing else there)', e1.tot==='1.52' && e1.note==='(free bet: the stake does not come back)' && e1.chk==='(free bet: the stake does not come back)', e1);   // v5.10 (review): the note moved to the check line
   await p.fill(eq('.eb-win-o'),'3.04'); await pause();
   const e2=await p.evaluate(()=>{ const e=document.querySelector('#logBody tr.editor'); return {tot:e.querySelector('.eb-tot-o').value, chk:e.querySelector('.eb-tw-chk').textContent}; });
   await p.fill(eq('.eb-tot-o'),'1.00'); await pause();
   const e3=await p.evaluate(()=>{ const e=document.querySelector('#logBody tr.editor'); return {win:e.querySelector('.eb-win-o').value, chk:e.querySelector('.eb-tw-chk').textContent}; });
-  check('free bet: no "looks like the total payout" line, Total 1.00 under the stake → To win 1.00 and no warning (only the free-bet note)', e2.tot==='3.04' && e2.chk==='(free bet: the stake does not come back)' && e3.win==='1.00' && e3.chk==='(free bet: the stake does not come back)', {e2, e3});   // v5.09 (review): the note sits in the check line
+  check('free bet: no "looks like the total payout" line, Total 1.00 under the stake → To win 1.00 and no warning (only the free-bet note)', e2.tot==='3.04' && e2.chk==='(free bet: the stake does not come back)' && e3.win==='1.00' && e3.chk==='(free bet: the stake does not come back)', {e2, e3});   // v5.10 (review): the note sits in the check line
   await p.uncheck(eq('.eb-free')); await pause();
   const e4=await p.evaluate(()=>{ const e=document.querySelector('#logBody tr.editor'); return {win:e.querySelector('.eb-win-o').value, tot:e.querySelector('.eb-tot-o').value, freeHidden:!e.querySelector('.eb-tot-free'), chk:e.querySelector('.eb-tw-chk').textContent}; });
   check('free bet ticked off again: Total 1.00 (typed last) stays, To win 0.00 and the "less than the stake" warning', e4.tot==='1.00' && e4.win==='0.00' && e4.freeHidden && /less than the stake/.test(e4.chk), e4);
@@ -179,11 +179,11 @@ const TT_TIP='What comes back if it wins: your stake plus the profit. Some books
     for(const view of ['v-log','v-reports','v-add']){ await p.evaluate(vw=>document.querySelector('.tab[data-view="'+vw+'"]').click(), view); await p.waitForTimeout(350);
       if(view==='v-add'){ await setup('Bovada'); await fill('.eb-odds','+100'); await fill('.eb-stake','1.52'); await fill('.eb-win-o','3.04'); }
       out[view]=await p.evaluate(vw=>{ const sel=vw==='v-add'?'#abHost .editor':vw==='v-reports'?'#rpPanel .rp-tw':null, e=sel?document.querySelector(sel):null; const o={side:document.documentElement.scrollWidth>innerWidth, right:e?Math.round(e.getBoundingClientRect().right):null};
-        if(vw==='v-add' && e){ const w=e.querySelector('.eb-win-o').closest('label').getBoundingClientRect(), t=e.querySelector('.eb-tot-o').closest('label').getBoundingClientRect(); o.pair={same:Math.abs(w.top-t.top)<4, gap:Math.round(t.left-w.right)}; }   // v5.09 (review): where the pair sits
+        if(vw==='v-add' && e){ const w=e.querySelector('.eb-win-o').closest('label').getBoundingClientRect(), t=e.querySelector('.eb-tot-o').closest('label').getBoundingClientRect(); o.pair={same:Math.abs(w.top-t.top)<4, gap:Math.round(t.left-w.right)}; }   // v5.10 (review): where the pair sits
         return o; }, view); }
     check(W+' px: no sideways scroll on the Bet log, Reports and + Add a bet; the form and the Reports table inside the screen', Object.values(out).every(o=>!o.side && (o.right==null || o.right<=W)), out);
-    if(W>=1000) check(W+' px, + Add a bet: To win $ and Total payout $ on one line, next to each other', !!out['v-add'].pair && out['v-add'].pair.same && out['v-add'].pair.gap>=0 && out['v-add'].pair.gap<=12, out['v-add']); }   // v5.09 (review): the pair was split across two rows at 1000 px
-  // ---- I bet this on a card (v5.09 review: there the pair was split, To win at the end of one row and Total payout at the start of the next): side by side on a computer;
+    if(W>=1000) check(W+' px, + Add a bet: To win $ and Total payout $ on one line, next to each other', !!out['v-add'].pair && out['v-add'].pair.same && out['v-add'].pair.gap>=0 && out['v-add'].pair.gap<=12, out['v-add']); }   // v5.10 (review): the pair was split across two rows at 1000 px
+  // ---- I bet this on a card (v5.10 review: there the pair was split, To win at the end of one row and Total payout at the start of the next): side by side on a computer;
   //      at 390 px the two boxes are 104 px or wider and inside the card
   for(const W of [390,1000,1280,1960]){ await p.setViewportSize({width:W,height:900});
     await p.evaluate(()=>{ document.querySelector('.tab[data-view="v-board"]').click(); setMode('volado'); }); await p.waitForTimeout(500);
@@ -192,7 +192,7 @@ const TT_TIP='What comes back if it wins: your stake plus the profit. Some books
     const pr=ok?await p.evaluate(()=>{ const e=document.querySelector('#placeCards .editor'), f=e.getBoundingClientRect(), wi=e.querySelector('.eb-win-o'), ti=e.querySelector('.eb-tot-o'), w=wi.closest('label').getBoundingClientRect(), t=ti.closest('label').getBoundingClientRect();
       const x={same:Math.abs(w.top-t.top)<4, gap:Math.round(t.left-w.right), wW:Math.round(wi.getBoundingClientRect().width), tW:Math.round(ti.getBoundingClientRect().width), inside:w.left>=f.left && t.left>=f.left && w.right<=f.right && t.right<=f.right}; e.querySelector('.eb-cancel').click(); return x; }):null;
     check(W+' px, I bet this on a card: '+(W<=390?'the To win and Total payout boxes are 104 px or wider, inside the card':'To win $ and Total payout $ on one line, next to each other'), !!(ok && pr && pr.inside && (W<=390 ? pr.wW>=104 && pr.tW>=104 : pr.same && pr.gap>=0 && pr.gap<=12)), {ok, pr}); }
-  // ---- 390 px, Bet log › edit (the log table scrolls sideways; v5.09 review): the two boxes, the check line, the free-bet note and the Real money box start at the left,
+  // ---- 390 px, Bet log › edit (the log table scrolls sideways; v5.10 review): the two boxes, the check line, the free-bet note and the Real money box start at the left,
   //      inside the part of the table you can see (the boxes had run off the right edge, the check line lost 19 px, the note and the Real money box were pushed off the screen)
   await p.setViewportSize({width:390,height:860}); await p.evaluate(()=>document.querySelector('.tab[data-view="v-log"]').click()); await p.waitForTimeout(400);
   await p.evaluate(i=>document.querySelector('#logBody button.kill.edit[data-i="'+i+'"]').click(), lg.i); await pause();
@@ -210,7 +210,7 @@ const TT_TIP='What comes back if it wins: your stake plus the profit. Some books
   check('390 px, Bet log › edit: "This looks like the total payout" under the boxes, inside the part you can see (nothing cut at the right)', /^This looks like the total payout/.test(g1.txt) && inVis(g1,g1.chk) && g1.chk.t>=g1.tot.b-1, g1);
   check('390 px, Bet log › edit, Free bet ticked: "(free bet: the stake does not come back)" under the boxes, inside the part you can see', g2.txt==='(free bet: the stake does not come back)' && inVis(g2,g2.note) && g2.note.t>=g2.tot.b-1, g2);
   check('390 px, Bet log › edit: the Real money box starts its own line at the left (not pushed sideways by the new lines), 14 px under the line above, as before', [g0,g1,g2].every(g=>!!g.money && g.money.l===g.rowL && g.gapAbove===14), [g0,g1,g2].map(g=>({money:g.money, rowL:g.rowL, gap:g.gapAbove})));
-  // ---- v5.09 (final check): the board shown as a table (cards off) on a phone: I bet this on a table row. Its scrolling area is 42 px in on both sides and the
+  // ---- v5.10 (final check): the board shown as a table (cards off) on a phone: I bet this on a table row. Its scrolling area is 42 px in on both sides and the
   //      line starts 9 px into the cell, so "This looks like the total payout" lost 13 to 27 px at the right; it now ends inside the part you can see
   { const c2=await b.newContext({timezoneId:'America/Chicago',viewport:{width:390,height:900}}); await c2.clock.install({time:new Date(NOW)});
     await c2.addInitScript(([rows,d])=>{ try{ if(sessionStorage.getItem('s')) return; sessionStorage.setItem('s','1'); localStorage.clear(); localStorage.setItem('mbev.board',JSON.stringify({v:1,savedAt:new Date().toISOString(),slate:d,rows})); localStorage.setItem('mbev.log','[]'); localStorage.setItem('mbev.cards','0'); }catch(e){} }, [ROWS,'2026-11-15']);

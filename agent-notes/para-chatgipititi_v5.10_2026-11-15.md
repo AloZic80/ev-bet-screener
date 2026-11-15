@@ -1,4 +1,4 @@
-# Para ChatGiPiTiTi · v5.08 and v5.09 · 2026-11-15
+# Para ChatGiPiTiTi · v5.08 and v5.10 · 2026-11-15
 
 Ref: CC-2026-11-15-07 · from El Capataz (Claude Code) · times America/Chicago
 
@@ -6,16 +6,19 @@ Ref: CC-2026-11-15-07 · from El Capataz (Claude Code) · times America/Chicago
 The 0xBeta Screener (props.0xbeta.dev) is a one-file price checker for sports bets, built for Alonzo and Augi. It finds bets priced better than their true chance
 (La Contadora: min(model, market + 0.35 × (model − market))), sizes the stake and says what to type at the book. It also keeps an honest record. It is a buyer's tool, not a seller.
 
+## Version note
+This build was made as "v5.09", but another session published a different v5.09 first (the "also at" strip with exchange prices, PR #150, 1:14 AM). So the To win / Total payout build ships as **v5.10**, together with the plan reminder and the 1,000-bet blocks (also v5.10). The numbers after it do not move: v5.11 parlays in + Add a bet, v5.12 forecast recovery, v5.13 Paper money. Notes sent before this one (CC-2026-11-15-06 part F) call it v5.09.
+
 ## What was asked
 - **v5.08:** Alonzo sent his Novig slip ("Adam Fantilli 3+ Yes · Shots On Goal"). Novig's plain NHL "Shots" is shots on goal. All 61 NHL "Shots" bets in his log were placed at Novig.
-- **v5.09:** "i want it to show both. Because it does say, TOTAL WIN or To Win." The trigger was a Bovada ticket (Trent Walker, 11/13): a $1.52 stake at 2.00 shows
+- **v5.10:** "i want it to show both. Because it does say, TOTAL WIN or To Win." The trigger was a Bovada ticket (Trent Walker, 11/13): a $1.52 stake at 2.00 shows
   "Winnings +$3.04". That is the total return, stake included, and it had been typed into To win, so the bet showed $3.04 profit instead of $1.52.
   He also found that the parlay form had no PrizePicks: "you dont even have PrizePicks".
 
 ## What was built
 - **v5.08 (live 12:44 AM):** one switch. Reports › Market now merges plain NHL "Shots" into Shots on goal, with evidence "book-rule-confirmed" (your rule for the
   alias). Grading was already the same.
-- **v5.09 (display and input only):**
+- **v5.10 (display and input only):**
   - The bet form (I bet this, + Add a bet, Bet log › edit) shows **To win** (the profit; still the only box Save keeps) and a new **Total payout** (stake included)
     side by side, linked both ways. Type one and the other fills in. A new stake keeps the box typed last and moves the other one. For a free bet, Total payout = To win.
   - **Two gentle lines, never blocking:**
@@ -37,7 +40,7 @@ The 0xBeta Screener (props.0xbeta.dev) is a one-file price checker for sports be
   - A boost: To win typed as 9.50 at −110 stays 9.50 after the auto-filled Total payout is emptied.
   - A free bet with To win 1.52 gives Total 1.52.
 - **Tests:** tests/v509-test.js has 48 checks, including the board table on a phone at 360, 390 and 414 px. tests/pickem-books-test.js has 4.
-  The full suite (`node tests/run-all.js`): 128 of 128 files, "All tests passed" (Sun 11/15, 4:53 to 5:18 AM). Published under the owner's standing rule ("Always publish if it passes").
+  The full suite (`node tests/run-all.js`) passed on the build alone: 128 of 128 files, "All tests passed" (Sun 11/15, 4:53 to 5:18 AM). It runs again on v5.10 with main's v5.09 merged in before publishing.
 
 ## Questions to check
 These 4 were already sent in CC-2026-11-15-06 (part F), and Sally answered them (F1 a Free bet tick in both forms, F2 rename to Profit $, F3 a soft reverse check, F4 keep the line with new words). They are kept here for the record; the follow-up waits for El Capataz's check and the owner's BUILD.

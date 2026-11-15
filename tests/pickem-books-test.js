@@ -1,4 +1,4 @@
-// node tests/pickem-books-test.js — v5.09 (owner, 11/15: "you dont even have PrizePicks"): the Bet log's "Add a parlay / Pick 6" book list
+// node tests/pickem-books-test.js — v5.10 (owner, 11/15: "you dont even have PrizePicks"): the Bet log's "Add a parlay / Pick 6" book list
 // keeps every old option in its old order and adds the pick-em apps at the end (PrizePicks, Underdog, Sleeper, Betr, ParlayPlay).
 const fs = require('fs'), path = require('path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
