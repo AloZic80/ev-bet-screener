@@ -36,7 +36,8 @@ const style=html.slice(html.indexOf('<style>')+7, html.indexOf('</style>'));
 const mark=style.indexOf('/* v5.04 (El Diseñador round 3');
 const EXC=new Set(['.lteam .tos','.lf-pintx','.lf-num','.lspark text','.sc-svg text','.lc-d small']);
 (async()=>{
-  check('the v5.04 block sits just before the first </style>', mark>0 && !/\/\* v\d\.(?!04)\d\d/.test(style.slice(mark)) && /small\{font-size:max\(12px, calc\(1em \/ 1\.2\)\)\}/.test(style.slice(mark)), mark);
+  /* v5.05: later versioned blocks (v5.05 and up) now follow it, as the file's rule says (new CSS just before the first </style>); none older may */
+  check('the v5.04 block sits just before the first </style> (only later blocks, v5.05 and up, after it)', mark>0 && !/\/\* v(?:[0-4]\.\d\d|5\.0[0-3])/.test(style.slice(mark)) && /small\{font-size:max\(12px, calc\(1em \/ 1\.2\)\)\}/.test(style.slice(mark)), mark);
   const before=cssRules(style.slice(0,mark)), after=cssRules(style.slice(mark));
   const raised=new Set(); for(const r of after) if(sizeOf(r.body)==='12px') for(const s of r.sel.split(/\s*,\s*/)) raised.add(r.at+'|'+s);
   const missing=[], wrongExc=[]; let n=0;

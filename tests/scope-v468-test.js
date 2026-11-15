@@ -36,7 +36,9 @@ async function open(b, o){ const ctx=await b.newContext({timezoneId:'America/Chi
     const evH=(p,f)=>((0.567/p-1)-f)/(1+f);
     check('by hand: Kalshi 54.05% +'+(evH(0.5405,0.07*0.4595)*100).toFixed(2)+'%, Polymarket US 54.1% +'+(evH(0.541,0.0695*0.459)*100).toFixed(2)+'%; Kalshi 53% +'+(evH(0.53,0.07*0.47)*100).toFixed(2)+'%, Polymarket US 53.5% +'+(evH(0.535,0.0695*0.465)*100).toFixed(2)+'%',
       near(+(evH(0.5405,0.07*0.4595)*100).toFixed(2),1.63) && near(+(evH(0.541,0.0695*0.459)*100).toFixed(2),1.57) && near(+(evH(0.53,0.07*0.47)*100).toFixed(2),3.57) && near(+(evH(0.535,0.0695*0.465)*100).toFixed(2),2.66), null);
-    for(const [tag,q,want] of [['Kalshi fails after rounding',{kalshi:0.5405, poly:0.541},'Polymarket US'],['Kalshi passes after rounding',{kalshi:0.53, poly:0.535},'Kalshi']]){
+    /* v5.05 (Sally agreed, owner "bUILD" 11/14): Kalshi EV stays on the smooth fee (the rounding is a sizing buffer only), so in a) Kalshi 54.05% (+1.63%, the best)
+       is shown and stays there on every press (from v4.61 to v5.04 the rounding moved it to Polymarket US). The check is still that three presses agree. */
+    for(const [tag,q,want] of [['Kalshi 54.05% (v5.05: no rounded-fee drop)',{kalshi:0.5405, poly:0.541},'Kalshi'],['Kalshi passes after rounding',{kalshi:0.53, poly:0.535},'Kalshi']]){
       S=await open(b,{NOW,day:'2026-11-11',rows:[prop('k',0.53)],live:(k,i,bk)=>q[bk]||null});
       const seen=[]; for(let i=0;i<3;i++){ await S.p.evaluate(async()=>{ await shopExchanges(); }); await S.p.waitForTimeout(250);
         seen.push(await S.p.evaluate(()=>{ const r=lastRows.find(x=>x.apiKey==='k'); return r.book+' '+r.offeredProb+(r.pass?' pass':' no'); })); }

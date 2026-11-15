@@ -1,6 +1,8 @@
 // node tests/v504c-test.js — v5.04 (El Diseñador round 3b, build plan step "v5.05 Price age in words on every card"): every board card says how old its
 // price is in words, top right: "Price under 1 min old", "Price 40 min old", "Price 13 h old"; a card with no price time says "Price time unknown".
 // A dot in the accent colour, hollow when old (over 30 min, the same amber rule as before) or unknown. Display only: no chance, EV, stake or rule changes.
+// v5.05 (P2, Sally agreed, owner "bUILD" 11/14): the words changed: "Price just read" (under 1 min), "Price 4m old" (1 to 29 min), "Price stale · re-check"
+// (30 min or more, amber), "Price time unknown · check book" (amber); tooltip "Price was last read 40 minutes ago". The checks below expect the new words.
 const path=require('path'); const INDEX=path.join(__dirname,'..','index.html');
 const { chromium } = require('playwright'); const fs=require('fs');
 const html=fs.readFileSync(process.argv[2]||INDEX,'utf8');
@@ -49,11 +51,11 @@ const NAMES=['Fresh Anders','Four Bergman','Forty Castillo','Thirteen Dahl','Unk
     check(tag+': every card on every tab has exactly one age pill, and it starts "Price "', perCard.length>0 && perCard.every(g=>g.n===1 && /^Price /.test(g.t||'')), perCard.map(g=>[g.nm,g.n,g.t]));
     check(tag+': all five test cards were seen', NAMES.every(n=>all[n]), Object.keys(all));
     const A=all['Fresh Anders']||{}, B=all['Four Bergman']||{}, C=all['Forty Castillo']||{}, D=all['Thirteen Dahl']||{}, E=all['Unknown Eriksen']||{};
-    check(tag+': a price read 20 s ago reads "Price under 1 min old", not old, dot filled', A.t==='Price under 1 min old' && !/\bold\b/.test(A.cls) && A.dot && A.dotBg!=='rgba(0, 0, 0, 0)', A);
-    check(tag+': a price read 4 min ago reads "Price 4 min old", not old', B.t==='Price 4 min old' && !/\bold\b/.test(B.cls), B);
-    check(tag+': a price read 40 min ago reads "Price 40 min old" with .old (amber, as before) and a hollow dot; the tooltip still says when and what to do', C.t==='Price 40 min old' && /\bold\b/.test(C.cls) && C.dotBg==='rgba(0, 0, 0, 0)' && /This price was read 40m ago/.test(C.title), C);
-    check(tag+': a 13 h row (⏱ Old tab) reads "Price 13 h old" with .old', D.t==='Price 13 h old' && /\bold\b/.test(D.cls), D);
-    check(tag+': a row with no price time reads "Price time unknown" (.unk, hollow dot, tooltip says to check the price)', E.t==='Price time unknown' && /\bunk\b/.test(E.cls) && !/\bold\b/.test(E.cls) && E.dotBg==='rgba(0, 0, 0, 0)' && /Check it at the book/.test(E.title), E);
+    check(tag+': a price read 20 s ago reads "Price just read" (v5.05; was "Price under 1 min old"), not old, dot filled', A.t==='Price just read' && !/\bold\b/.test(A.cls) && A.dot && A.dotBg!=='rgba(0, 0, 0, 0)', A);
+    check(tag+': a price read 4 min ago reads "Price 4m old" (v5.05; was "Price 4 min old"), not old', B.t==='Price 4m old' && !/\bold\b/.test(B.cls), B);
+    check(tag+': a price read 40 min ago reads "Price stale · re-check" (v5.05; was "Price 40 min old") with .old (amber, as before) and a hollow dot; the tooltip still says when ("Price was last read 40 minutes ago", v5.05) and what to do', C.t==='Price stale · re-check' && /\bold\b/.test(C.cls) && C.dotBg==='rgba(0, 0, 0, 0)' && /Price was last read 40 minutes ago\. Send the Sentinels/.test(C.title), C);
+    check(tag+': a 13 h row (⏱ Old tab) reads "Price stale · re-check" (v5.05; was "Price 13 h old") with .old', D.t==='Price stale · re-check' && /\bold\b/.test(D.cls), D);
+    check(tag+': a row with no price time reads "Price time unknown · check book" (v5.05; was "Price time unknown") (.unk, hollow dot, tooltip says to check the price)', E.t==='Price time unknown · check book' && /\bunk\b/.test(E.cls) && !/\bold\b/.test(E.cls) && E.dotBg==='rgba(0, 0, 0, 0)' && /Check it at the book/.test(E.title), E);
     check(tag+': no card shows the old "⏱ 55s"-style age', perCard.every(g=>!/^⏱/.test(g.t||'')), perCard.map(g=>g.t));
     check(tag+': the age pill stays inside its card and covers no other text (v4.84 no-overlap rule)', perCard.every(g=>g.inside && !g.overlaps), perCard.map(g=>[g.nm,g.inside,g.overlaps]));
     check(tag+': the age pill is the last pill in the score row and ends at the row’s right edge (top right of the pill area)', perCard.every(g=>g.last && g.atEnd), perCard.map(g=>[g.nm,g.last,g.atEnd]));

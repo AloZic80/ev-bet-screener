@@ -124,6 +124,7 @@ const runs = [
   ['v5.04: ▲/▼ next to every signed gain or loss (TODAY, Bet log, Scorecard, Reports, cards, parlays); none on zero, null, muted EV or a shown 0.0%; colours unchanged', 'v504b-test.js', []],
   ['v5.04: price age in words on every card ("Price 4 min old", "Price 13 h old", "Price time unknown"); dot hollow when old or unknown; no overlap at 4 widths, light and dark', 'v504c-test.js', []],
   ['v5.04: book chips at 44 px (22 px corners, 0 14px padding, tabular counts) at 4 widths, light and dark; chip counts still add up to All = cards with a Bet button on every tab; phone order kept', 'v504d-test.js', []],
+  ['v5.05: Kalshi in 0.01 shares (the stake stays the cash budget; shares fit it at La Contadora’s limit with the fee rounded up to the cent as a sizing buffer; EV on the smooth fee) on the board, Hail Mary, Just missed, I bet this, + Add a bet, card and strip; snap.kalshiFee; price words ("Price fell 4.5 pts", "Price just read", "Price 8m old", "Price stale · re-check", "Price time unknown · check book")', 'v505-test.js', []],
 ];
 const run = (file, args) => spawnSync(process.execPath, [path.join(__dirname, file), ...args], { encoding: 'utf8', timeout: 300000 });
 const last = r => ((r.stdout || '') + (r.stderr || '')).trim().split('\n').pop();

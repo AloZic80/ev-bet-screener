@@ -66,7 +66,7 @@ const strip=(p,name)=>p.evaluate(n=>{ const c=[...document.querySelectorAll('#pl
       const tile=await p.evaluate(()=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>x.textContent.includes('Sebastian Aho')); const d=c&&c.querySelector('details.sc-why'); if(d) d.open=true; const t=d?d.innerText.replace(/\s+/g,' '):''; if(d) d.open=false; return ((t.match(/OK up to \S+/i)||[])[0]||'').replace(/^OK up to/i,'OK up to')||null; });
       check('v4.79 (Los Chismosos): "OK up to" says 47¢ like the strip (her most, 47.68¢, rounded down), not 48¢', tile==='OK up to 47¢', tile);
       const K=await strip(p,'Quinn Hughes'), N=await strip(p,'Jonathan Lekkerimaki');
-      check('a Kalshi card keeps the Kalshi line (On Kalshi … Limit …¢) and gets no Polymarket strip', K && /^On Kalshi YES Shares [\d.]+ Limit \d+¢ Cost ≈ \$/i.test(K.kalshi||'') && K.line===null && K.how===null, K);
+      check('a Kalshi card keeps the Kalshi line (On Kalshi … Limit …¢) and gets no Polymarket strip', K && /^On Kalshi YES Shares [\d.]+ Limit \d+¢ Max cost \$/i.test(K.kalshi||'') /* v5.05: Max cost (was Cost ≈) */ && K.line===null && K.how===null, K);
       check('a Novig card has no what-to-type strip', N && N.line===null && N.how===null && N.kalshi===null, N);
       const X=await p.evaluate(()=>{ const r=Object.assign({}, lastRows.find(x=>x.apiKey==='aho'), {offeredProb:0.48, offeredRaw:'+108'}); return {line:scPolyLine(r), how:polyHowHtml(r)}; });
       check('a Polymarket price over La Contadora\'s most (48¢): no strip, nothing to type', X.line==='' && X.how==='', X);

@@ -12,7 +12,8 @@ Stake = `kellyFor(cfg, actNet, price)` = bankroll × Kelly × (actNet × haircut
 | EV floor (pass / Watch) | `actNet` (the model's `net` must clear it too) | `auditCore` |
 | OK up to, Kalshi limit price | `actProb` | `maxPriceFor` callers |
 | Stake | `actNet` | `auditCore`, the editor's `recStake`, `abStake` (+ Add a bet, and the size of a Make) |
-| After Kalshi's whole-contract fee rounding | `actNet` and `net` re-checked against the floor, also after a daily-max trim and in + Add a bet / the editor | `auditCore`, `applyDayLimits` `take()`, `abStake`, `recStake` |
+| Kalshi order size (v5.05) | the cash budget (Kelly / caps, rounded down to the cent) is the stake; shares = largest 0.01 with shares × limit + fee rounded up to the cent ≤ budget (a sizing safety buffer only); the limit is OK up to in whole cents, lowered 1¢ while `actNet` at the limit (smooth fee) is under the floor. EV and the floor use the smooth fee; the v2.50 recompute from the rounded fee and its floor drop are gone (superseded) | `kalshiFractionalFit`, `kalshiFitRow`, `kalshiHow`, `recStake`, `abStake`, `kalshiFeeSnap` |
+| (superseded by v5.05) After Kalshi's whole-contract fee rounding | `actNet` and `net` re-checked against the floor, also after a daily-max trim and in + Add a bet / the editor | `auditCore`, `applyDayLimits` `take()`, `abStake`, `recStake` |
 | Highest Make price | `actProb` with the maker fee (v4.54) | `abMakeLadder`, the Parole ladder |
 | Which book the Sentinels pick | `actNet` after each book's fee (v4.54) | `shopExchanges`, `swapHunt` |
 | Math order, daily-max fill | `actNet` | `mathKey`, `applyDayLimits` |
