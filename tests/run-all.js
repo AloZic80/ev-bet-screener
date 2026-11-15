@@ -130,6 +130,7 @@ const runs = [
   ['v5.07: Reports › So far (Sally agreed, owner BUILD): Market and Sport · type · market (market-alias-v1), ROI 95% range by whole games, Expected vs actual, CLV coverage, Read replaces Sample, the many-group check (BH 10%), the So far card; Scorecard and Said vs won unchanged', 'v507-test.js', []],
   ['v5.10: To win and Total payout side by side in the bet form (+ Add a bet, I bet this, Bet log › edit), linked both ways; a free bet\'s total = to win; "looks like the total payout" with Use $X; % boxes unchanged; Bet log row and Reports show "· total"', 'towin-total-test.js', []],
   ['v5.10: My plan (Settings: La Contadora’s chance at least 50% since 11/11, a reminder only): “Outside your plan” on cards, rows and the bet form under it, “· outside your plan” on 🍀 Suertudo and 🔮 Brujo; stakes and BET / SKIP unchanged; Performance › Your 1,000-bet blocks (each block judged by the Scorecard’s own functions, the head-start note); Reports › Band, 2.5% steps (exploratory); the Scorecard and Said vs won unchanged', 'v510-test.js', []],
+  ['v5.11 bug fixes: an "also at" price with no link no longer opens the card\'s own book slip and says so; the #1 math pick banner hides on its own tab', 'also-at-nolink-test.js', []],
 ];
 const run = (file, args) => spawnSync(process.execPath, [path.join(__dirname, file), ...args], { encoding: 'utf8', timeout: 300000 });
 const last = r => ((r.stdout || '') + (r.stderr || '')).trim().split('\n').pop();

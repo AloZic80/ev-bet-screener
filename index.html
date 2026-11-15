@@ -1786,6 +1786,10 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 @media (min-width:641px){ #modeBar .mode-plan{display:block} }
 @media (max-width:640px){ #modeBar .mode-plan{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap} #modeBar .mode-plan-line{display:block} }
 .top-hint .th-plan{color:var(--soft); font-weight:400}
+/* v5.11 (bug fixes; owner 11/15: "You found bugs but left alone ? Why not address them?"): the #1 math pick banner hides when the code says so (its
+   display:flex beat the hidden attribute, so it stayed on the tab it points to); an "also at" price with no link is plain text, not a slip opener. */
+.top-hint[hidden]{display:none}
+.sc-alt.nolink{cursor:default}
 </style>
 </head>
 <body>
@@ -4837,7 +4841,7 @@ function altBooksHtml(r){ if(!r || r.kind==='parlay' || !(r.offeredProb>0)) retu
     const body=logo+'<b>'+esc(String(a.odds||fmtOdds(Math.round(americanOf(a.p)))))+'</b><small>'+P(a.p)+' · '+word+(a.old&&a.at?' · ⏱ '+ag:a.old?' · ⏱ ?':'')+'</small>';
     if(a.x) return '<span class="'+cls+'" role="button" tabindex="0" data-alt-idx="'+a.x.idx+'" title="'+esc(tip)+'">'+body+'</span>';
     const src=LIVE_BOOK(a.book), u=(()=>{ try{ const v=bookUrl(src, a.q, 0); return v && /^(https:\/\/|novigapp:\/\/)/.test(v)?v:null; }catch(e){ return null; } })();
-    return u?'<a class="'+cls.replace(' book',' sc-link')+'" href="'+esc(u)+'"'+(/^https:/.test(u)?' target="_blank" rel="noopener"':'')+' title="'+esc(tip)+'">'+body+'</a>':'<span class="'+cls+'" title="'+esc(tip)+'">'+body+'</span>'; };
+    return u?'<a class="'+cls.replace(' book',' sc-link')+'" href="'+esc(u)+'"'+(/^https:/.test(u)?' target="_blank" rel="noopener"':'')+' title="'+esc(tip)+'">'+body+'</a>':'<span class="'+cls+' nolink" title="'+esc(tip.replace(/\. Tap to open it; I bet this sizes the stake at its price\.$/,'. No direct link here: open '+bookLabel(a.book)+' and search for this bet.'))+'">'+body+'</span>'; };   /* v5.11 (bug): no link, so the words no longer say Tap to open it */
   const show=A.slice(0,4), more=A.slice(4), top=A.find(a=>a.ok), cardNet=r.actNet!=null&&isFinite(r.actNet)?r.actNet:null;
   const notes=[];
   if(top && top.net!=null && (cardNet==null || top.net>cardNet+0.003)) notes.push('<span class="sc-alt-n good">Better confirmed price at '+esc(bookLabel(top.book))+' · Send the Sentinels to update the card</span>');
@@ -12149,6 +12153,7 @@ function rowAsBet(r){ return {id:'row'+r.idx, idx:r.idx, book:r.book, sport:r.sp
 document.addEventListener('click', async e=>{
   const img=e.target.closest('img.blogo, .book, .pp-open'); if(!img) return;
   { const lk=img.closest('a.sc-link[href]'); if(lk){ const h=lk.getAttribute('href'); if(/^novigapp:\/\//.test(h)) setTimeout(()=>{ try{ slipReady(h,'novig'); }catch(_){} },400); return; } }   // v4.42: a real slip link (phone): the tap opens it; for Novig the bar then offers the website too
+  { const sa=img.closest('.sc-alt'); if(sa && !sa.hasAttribute('data-alt-idx') && !sa.classList.contains('ref')) return; }   /* v5.11 (bug): a live "also at" price with no link is ANOTHER book: before, the tap fell through to this card and opened the card’s own book slip */
   const host=img.closest('tr, .pcard'); if(!host) return;
   let obj=null;
   const kb=host.querySelector('button.kill[data-i]'); if(kb) obj=logged[+kb.dataset.i];
