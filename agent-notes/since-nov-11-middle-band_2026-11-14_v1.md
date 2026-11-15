@@ -6,6 +6,7 @@ Ref: CC-2026-11-14-14 · from El Capataz (Claude Code) · times America/Chicago
 
 - **You did change what you bet.** Since 11/11 every bet with a saved chance is between 50% and 70%. Before, 39% were under 50%.
 - **Your middle-category bets (Volado: a 50% to 60% chance) are 9 won and 4 lost since 11/11: +$21.20 on $30.22.** That is only 13 bets, and two of them (Carolina and Buffalo) made $16.67 of it.
+  Two of the 13 (Buffalo and OKC) got their chance after the game had started, so they cannot test the forecast. The 11 with a chance saved before the start are 8 won, 3 lost, +$14.63 on $22.64 (section 4).
 - **The start day changes the story.** Counted from 11/10 instead, Volado is 9 won, 10 lost, +$8.90.
 - **Good luck so far, not proof.** If La Contadora's chances are right, these bets should make about 5 to 7 cents per dollar over many bets, not 70. Your prices so far are about even with the last price before each game.
 - **Your plan:** at today's pace the Scorecard reaches 1,000 settled bets about Jan 7, 2027, 2,000 about Mar 28 and 3,000 about Jun 16. For the 2nd and 3rd 1,000 to confirm, each must be scored on its own, which the Scorecard does not do yet.
@@ -39,7 +40,8 @@ This is a record check, not betting advice. For all 353 bets, see the full evalu
 - **You did change what you bet.** From 11/11 on you placed no single bet under 50% (by the day placed): no Unlikely, no Coin Flip. Before 11/11, 103 of
   the 263 bets with a forecast (39%) were under 50%. Since, all 40 bets with a forecast sit between 50% and 70%, and 24 of them are in Volado.
 - **Volado has gone well, but it is 13 bets.** Since 11/11 it is 9–4, +$21.20 on $30.22 staked (ROI +70.2%), in 12 games. The Scorecard calls anything
-  under 100 bets "stories". Two bets, Carolina −2.5 and Buffalo −2.5, are $16.67 of the $21.20.
+  under 100 bets "stories". Two bets, Carolina −2.5 and Buffalo −2.5, are $16.67 of the $21.20. Buffalo and OKC had their chance saved after
+  their games began (the app read the fills hours later), so only 11 can be judged: 8–3, +$14.63 on $22.64.
 - **The start day changes the picture.** The move to Volado began a day or two earlier. On 11/10, the first day every bet with a forecast carried La Contadora's
   chance, its 6 settled Volado bets all lost (−$12.30). Counted from 11/10, Volado is 9–10, +$8.90 (ROI +20.9%).
 - **Good luck so far, not proof yet.** Since 11/11 the bets won more than forecast, by an ordinary amount of luck (+1.3 SD). Your median CLV over all 168
