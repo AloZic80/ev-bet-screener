@@ -39,7 +39,7 @@ This build was made as "v5.09", but another session published a different v5.09 
   - −110 on $10: To win 19.09 raises the line ("To win would be $9.09"); 9.09 raises nothing.
   - A boost: To win typed as 9.50 at −110 stays 9.50 after the auto-filled Total payout is emptied.
   - A free bet with To win 1.52 gives Total 1.52.
-- **Tests:** tests/v509-test.js has 48 checks, including the board table on a phone at 360, 390 and 414 px. tests/pickem-books-test.js has 4.
+- **Tests:** tests/towin-total-test.js has 48 checks, including the board table on a phone at 360, 390 and 414 px. tests/pickem-books-test.js has 4.
   The full suite (`node tests/run-all.js`) passed on the build alone: 128 of 128 files, "All tests passed" (Sun 11/15, 4:53 to 5:18 AM). It runs again on v5.10 with main's v5.09 merged in before publishing.
 
 ## Questions to check
