@@ -26,10 +26,12 @@ const ROWS=[row('nv','Two Books','Novig',0.52), row('dk','Two Books','DraftKings
     check('a bet at only one book gets no “also at” row', await p.evaluate(()=>altBooksOf(lastRows.find(x=>x.apiKey==='solo')).length===0));
   }
   let C=null; for(const t of ['boring','safe','volado','lucky','hail']){ await p.evaluate(m=>{ try{ setMode(m); }catch(e){} }, t); await p.waitForTimeout(250);
-    C=await p.evaluate(()=>{ const c=[...document.querySelectorAll('.sc-card')].find(x=>x.textContent.includes('Two Books') && x.querySelector('.sc-alts')); if(!c) return null; const al=[...c.querySelectorAll('.sc-alt')], r=c.getBoundingClientRect();
+    C=await p.evaluate(()=>{ const c=[...document.querySelectorAll('.sc-card')].find(x=>x.textContent.includes('Two Books') && x.querySelector('.sc-alts')); if(!c) return null; const al=[...c.querySelectorAll('.sc-alts > .sc-alt')] /* v5.09: books you bet; the rest sit on the reference line */, r=c.getBoundingClientRect();
       return {txt:c.querySelector('.sc-alts').textContent, n:al.length, ok:al.map(x=>x.classList.contains('ok')), idx:al.map(x=>+x.dataset.altIdx), keys:al.map(x=>(lastRows.find(r=>r.idx===+x.dataset.altIdx)||{}).apiKey), fits:al.every(x=>{ const b=x.getBoundingClientRect(); return b.right<=r.right+1 && b.height>=32; })}; });
     if(C) break; }
   check(W+' px: the card shows "also at" with DraftKings 53.7% · OK ✓ first, then Polymarket greyed as over', C && C.n===2 && /also at/i.test(C.txt) && /53\.7%/.test(C.txt) && /OK ✓/.test(C.txt) && /over/.test(C.txt) && C.ok[0]===true && C.ok[1]===false, C);
+  const ref=await p.evaluate(()=>{ const c=[...document.querySelectorAll('.sc-card')].find(x=>x.textContent.includes('Two Books') && x.querySelector('.sc-alts')); const R=c&&c.querySelector('.sc-alts-ref'); return R?{txt:R.textContent, n:R.querySelectorAll('.sc-alt').length, ok:!!R.querySelector('.sc-alt.ok')}:null; });
+  check(W+' px: v5.09 (Sally c): FanDuel, not in your books, is on its own "reference only" line, never OK ✓', ref && ref.n===1 && /reference only/.test(ref.txt) && /50\.0%/.test(ref.txt) && !ref.ok, ref);
   check(W+' px: each box points to its own book’s row (a tap opens that book), fits inside the card and is big enough to tap', C && C.keys[0]==='dk' && C.keys[1]==='pm' && C.fits, C);
   const after=await p.evaluate(()=>{ const r=lastRows.find(x=>x.apiKey==='nv'); return {stake:r.stake, net:r.actNet}; });
   check(W+' px: display only: the card’s stake and EV did not move', after.stake===before.stake && after.net===before.net, {before, after});

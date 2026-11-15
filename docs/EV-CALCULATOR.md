@@ -76,6 +76,7 @@ A price of 53.5% passes the model's screen (+3.7% EV), but at the blend it is wo
 - the I bet this check;
 - + Add a bet;
 - **Kalshi's limit price**, in whole cents rounded down.
+- **"also at"** under the card's price (v4.95, v5.09): the same limit worked for each other book with that book's own fee (a book with a fee has a lower limit). OK ✓ only for a book you bet, read in the last 3 minutes (90 seconds near the start) and within 8 points of the market; older prices show as "last seen", books you don't bet on a "reference only" line. Display only.
 
 ## 4. How much to bet: quarter Kelly on half the edge
 
