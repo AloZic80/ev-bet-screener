@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.12</title>
+<title>0xBeta Screener v5.13</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1840,6 +1840,15 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 #parlayPanel .pl-note{margin:8px 0 0; font-size:13.5px; color:var(--soft); overflow-wrap:break-word}
 #parlayPanel .pl-note:empty{display:none}
 @media (max-width:640px){ #parlayPanel .pl-form .field{max-width:none; flex:1 1 140px} #parlayPanel .pl-form .field.pl-book, #parlayPanel .pl-form .field.pl-kind, #parlayPanel .pl-form .field.wide{flex:1 1 100%; max-width:none} #parlayPanel .pl-form .pl-free{min-height:44px} }
+/* v5.13 (first run and words; owner 11/15: "Yes", from the Karens review): the first-run note about the passphrase sits above the dock (its height is --dockH), calm (no red), one short line with a button; its x is 44 px wide;
+   the small-sample note under the Reports profit and ROI tiles. Display only: no number, stake or saved field changes. */
+.fill-warn{bottom:calc(var(--dockH,84px) + 6px + env(safe-area-inset-bottom,0px))}
+.fill-warn[hidden]{display:none!important}
+.fill-warn.calm:not([hidden]){display:flex; align-items:center; flex-wrap:wrap; gap:4px 10px; padding:6px 6px 6px 12px; border-color:var(--rule); box-shadow:0 2px 10px rgba(0,0,0,.12); font-size:13px}
+.fill-warn.calm .fw-note{flex:1 1 200px; color:var(--ink)} .fill-warn.calm .linkbtn{min-height:36px} .fill-warn.calm .fw-x{margin-left:auto; min-width:44px; min-height:44px}
+.rp-k .rp-tn{display:block; margin-top:2px; font-size:12px; font-weight:400; font-style:normal; color:var(--warn,var(--soft))}
+.sc-parlay-note{margin:6px 0}
+#boardMore[open]{z-index:61}   /* the open More ▾ list stays above the note, so it never hides a menu item */
 </style>
 </head>
 <body>
@@ -1848,7 +1857,7 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.12</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.13</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2014,7 +2023,7 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
     </tr></thead>
     <tbody id="tbody"></tbody>
   </table></div>
-  <div class="empty" id="emptyMsg">Nothing on the board yet. Pick a sport above and hit <b>Load</b>: the bets worth taking land here, the rest stay hidden unless you switch rejects on.</div>
+  <div class="empty" id="emptyMsg">Nothing on the board yet. Pick a sport above and hit <b>Load</b>: the bets worth taking land here, the rest stay hidden unless you switch rejects on. Or <button type="button" class="linkbtn" id="emptyPaste">paste a board</button> from the BettingPros site.</div>   <!-- v5.13: Paste is reachable on an empty board -->
 </div>
 
 <div class="panel" style="display:none">   <!-- v2.79: replaced by + Add a bet -->
@@ -2312,8 +2321,8 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
     <div class="grid" style="margin-top:12px">
       <div class="field"><label for="fKalshi">Kalshi % of price</label><input id="fKalshi" type="number" value="7" step="0.5"></div>
       <div class="field"><label for="fProphet">ProphetX % of stake</label><input id="fProphet" type="number" value="1" step="0.25"></div>
-      <div class="field"><label for="fPoly">Polymarket US % of price</label><input id="fPoly" type="number" value="6.95" step="0.05"></div>
-      <div class="field"><label for="fNovig" title="Novig charges nothing before the game. Once it's live, takers pay 6% × price × (1 − price) per contract — the screener adds that itself for live bets.">Novig % of stake (extra)</label><input id="fNovig" type="number" value="0" step="0.25"></div>
+      <div class="field"><label for="fPoly" title="Charged as 6.95% × (1 − price) of what you put up, the same way as Kalshi (not a flat 6.95% of the price).">Polymarket US % of price (× (1 − price))</label><input id="fPoly" type="number" value="6.95" step="0.05"></div>
+      <div class="field"><label for="fNovig" title="Novig charges nothing before the game. Once the game has started, takers pay 6% × price × (1 − price) per contract, which is 6% × (1 − price) of what you put up; the screener adds that itself to a bet on a game that has started (the board, + Add a bet and the bet editor). This box is only an extra on top.">Novig % of stake (extra)</label><input id="fNovig" type="number" value="0" step="0.25"></div>
       <div class="field"><label for="fFliff">Fliff % of stake</label><input id="fFliff" type="number" value="0" step="0.25"></div>
       <div class="field"><label for="fFdp" title="FanDuel Predicts charges a fee on the potential payout (shown on the slip before you confirm). 2 is the higher of what reviews report — change it to what your slips show.">FanDuel Predicts % of payout</label><input id="fFdp" type="number" value="2" step="0.25"></div>
       <div class="field"><label for="fBook">Licensed books % of stake</label><input id="fBook" type="number" value="0" step="0.25"></div>
@@ -2324,7 +2333,7 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 
 <details class="panel fold">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>Stake sizing <span class="sub">bankroll and Kelly</span></h2></summary>
-  <p class="hint">Kelly scales a bet to its edge. The haircut shrinks that edge first, because the fair values behind it move and the biggest ones move most. What survives gets clamped to the range you actually bet in.</p>
+  <p class="hint">Kelly scales a bet to its edge. The haircut shrinks that edge first, because the fair values behind it move and the biggest ones move most. The two multiply: Kelly 0.25 with a haircut of 0.5 stakes 0.125 of what full Kelly would. What survives gets clamped to the range you actually bet in.</p>
   <div class="grid">
     <div class="field"><label for="bank">Bankroll $</label><input id="bank" type="number" value="1000" step="25"></div>
     <div class="field"><label for="kelly">Kelly fraction</label><input id="kelly" type="number" value="0.25" step="0.05"></div>
@@ -2592,6 +2601,7 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 </div>
 <div class="panel sc-panel" id="scorePanel">
   <h2>📏 Scorecard <span class="sub">the 1,000-bet test · beat the close, then profit · research Makes and parlays kept out</span></h2>
+  <p class="meta sc-parlay-note" id="scParlayNote"></p>   <!-- v5.13 -->
   <div id="scoreBody"></div>
 </div>
 <div class="panel pb-panel" id="planBlocksPanel">   <!-- v5.10 (owner, 11/15: "id say 11/11 ... BUILD IT ALL"): Your 1,000-bet blocks, right under the Scorecard; worked out when Performance opens -->
@@ -2705,7 +2715,7 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 
 </div>
 <script>
-const SCREENER_VERSION='v5.12';
+const SCREENER_VERSION='v5.13';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -7864,7 +7874,7 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
   const z=x=>Math.abs(x)<0.005, up=x=>z(x)?'<span class="open">$0.00</span>':'<span class="tb-up d-up">+'+usd(x)+'</span>', dn=x=>z(x)?'<span class="open">$0.00</span>':'<span class="tb-down d-dn">−'+usd(x)+'</span>'; /* v5.04: ▲/▼ on Settled */
   const sgn=v=>v>=0?up(v):dn(-v);
   const counts=x=>'<div class="tb-l2 tb-cnt"><span title="has a result">✓ '+x.played+' played</span> <span class="live" title="game started, no result yet">▶ '+x.playing+' playing</span> <span title="game not started">⏳ '+x.toPlay+' to play</span></div>';
-  const wl=x=>'<div class="tb-l2"><span class="open">won</span> <span class="tb-up'+(z(x.won)?'':' d-up')+'" title="winnings (your stake not included)">'+usd(x.won)+'</span> <span class="open">vs lost</span> <span class="tb-down'+(z(x.lost)?'':' d-dn')+'" title="money lost">'+usd(x.lost)+'</span></div>'; /* v5.04: ▲/▼ on won and lost per book (none on $0.00) */
+  const wl=x=>'<div class="tb-l2"><span class="open">won</span> <span class="tb-up'+(z(x.won)?'':' d-up')+'" title="winnings (your stake not included)">'+(z(x.won)?'':'+')+usd(x.won)+'</span> <span class="open">profit vs lost</span> <span class="tb-down'+(z(x.lost)?'':' d-dn')+'" title="money lost">'+usd(x.lost)+'</span></div>'; /* v5.04: ▲/▼ on won and lost per book (none on $0.00) */
   const amts=x=>(x.playingAmt||x.toPlayAmt)?'<div class="tb-l2">'+(x.playingAmt?'<span class="tb-inplay" title="games playing: not won or lost yet">▶ '+usd(x.playingAmt)+' in play</span> ':'')+(x.toPlayAmt?'<span class="open" title="games not started: not counted as lost">⏳ '+usd(x.toPlayAmt)+' not started</span>':'')+'</div>':'';
   const pill=x=>'<div class="tb-l2">'+((x.played||x.cancel)?(z(x.net)?'<span class="open">even</span>':'<span class="tb-pill '+(x.net>0?'good':'bad')+dCls(x.net)+'" title="Won − lost, on bets already settled"><small>'+(x.net>0?'UP':'DOWN')+'</small> '+(x.net>0?'+':'−')+usd(x.net)+'</span>'):'')+(x.playingAmt?' <span class="tb-pill inplay" title="Games playing: not won or lost yet"><small>IN PLAY</small> '+usd(x.playingAmt)+'</span>':'')+'</div>'; /* v5.04: ▲/▼ on the per-book UP / DOWN pill */   // v4.07: UP/DOWN only for what is settled; in play in grey
   const order=RIBBON_BOOKS.concat(Object.keys(by).filter(k=>!RIBBON_BOOKS.includes(k)).sort());
@@ -7886,7 +7896,7 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
     const q=['No bets today. Your bankroll thanks you for the day off.','Nothing riding today. The sportsbooks will have to wait.','No action yet. Patience is a position too.','Zero bets, zero bad beats.'];
     el.innerHTML='<span class="tb-k"><span>'+lbl+' '+espnBtn+navBtns+'</span>'+lookChip()+'</span><span class="tb-empty">'+(isToday?esc(q[Math.floor(Date.parse(today)/864e5)%q.length]):'No bets on '+esc(dayLabel(today))+'.')+'</span>'; return; }   // v3.57: + bets to check
   const allCard='<div class="tb-t all"><div class="tb-l1"><b>All</b> <span class="open">'+tot.w+'–'+tot.l+(tot.p?'–'+tot.p:'')+'</span></div>'+
-    '<div class="tb-l2"><span class="open">✓ played</span> <b>'+usd(tot.playedAmt)+'</b> → <span class="open">won</span> <span class="tb-up'+(z(tot.won)?'':' d-up')+'">'+usd(tot.won)+'</span> <span class="open">vs lost</span> <span class="tb-down'+(z(tot.lost)?'':' d-dn')+'">'+usd(tot.lost)+'</span></div>'+ /* v5.04: ▲/▼ on All won and lost (none on $0.00) */
+    '<div class="tb-l2"><span class="open">✓ played</span> <b>'+usd(tot.playedAmt)+'</b> → <span class="open">won</span> <span class="tb-up'+(z(tot.won)?'':' d-up')+'" title="profit on the winning bets: your stake coming back is not in it">'+(z(tot.won)?'':'+')+usd(tot.won)+'</span> <span class="open">profit vs lost</span> <span class="tb-down'+(z(tot.lost)?'':' d-dn')+'">'+usd(tot.lost)+'</span></div>'+ /* v5.04: ▲/▼ on All won and lost (none on $0.00) */
     (tot.playing?'<div class="tb-l2"><span class="tb-inplay">▶ IN PLAY '+usd(tot.playingAmt)+'</span> <span class="open">not won or lost yet</span></div>':'')+   // v4.07
     (tot.toPlay?'<div class="tb-l2"><span class="open">⏳ to play '+usd(tot.toPlayAmt)+': not counted yet</span></div>':'')+
     (tot.open?'<div class="tb-l2 tb-scen" title="Settled = won − lost on bets with a result. Open upside = the profit if every open bet wins (to play and in play, at each ticket’s own payout; your stake back is not profit). In play = your own money on games started and not settled (free bets count $0).">Settled '+sgn(now)+' · Open upside <span class="tb-up'+(z(tot.toWin)?'':' d-up')+'">+'+usd(tot.toWin)+'</span> · In play <span class="tb-inplay">'+usd(tot.playingAmt)+'</span></div>':'')+ /* v5.04: ▲/▼ on Open upside */   // v4.07: worst is not a loss yet: grey   /* v5.01 (Sally, agreed): Settled · Open upside · In play (it was best · worst) */
@@ -8223,6 +8233,7 @@ function researchState(){
 function renderScorecard(){
   const el=document.getElementById('scoreBody'); if(!el) return;
   const {settled:S, withClose:C}=scoreSet(logged), n=S.length;
+  { const nt=document.getElementById('scParlayNote'); if(nt){ const P=logged.filter(b=>b && b.kind==='parlay').map(b=>betProfit(b)).filter(x=>x!=null), pp=P.reduce((t,x)=>t+x,0); nt.innerHTML='Parlays are left out of this Scorecard (it tests single bets), but <b>Results by day</b> and Reports count them'+(P.length?': your '+P.length+' settled parlay'+(P.length===1?'':'s')+' came to <b>'+money(pp,true)+'</b>, so the profit totals differ by that much (plus any Just missed, Hail Mary and research bets, also left out here).':'.'); } }   /* v5.13 (owner: Karens review): why this profit and the one in Results by day can differ; outside #scoreBody, so the Scorecard itself is byte for byte as before */
   const stage=n>=1000?'Evidence':n>=300?'Comparison':n>=100?'Directional':'Anecdotal';
   const staked=S.reduce((t,x)=>t+x._st,0), profit=S.reduce((t,x)=>t+x._pl,0), roi=staked>0?profit/staked:null;
   const ck=n+':'+C.length+':'+S.reduce((t,x)=>t+x._pl,0).toFixed(2)+':'+C.reduce((t,x)=>t+x._clv,0).toFixed(4);
@@ -9064,12 +9075,14 @@ function paintSportSelects(){
     if(def.innerHTML!==dh){ def.innerHTML=dh; def.value=dv; if(def.value!==dv){ const o=document.createElement('option'); o.value=dv; o.textContent=dv; def.appendChild(o); def.value=dv; } } }
 }
 let _sportPicked=false;
+function seasonSport(){ const m=+String(ctDay(Date.now())).slice(5,7); return (m>=9||m===1)?'NFL':m===2?'NBA':m===3?'NCAAB':'MLB'; }   // v5.13: the sport in season by the calendar (Sep to Jan NFL, Feb NBA, Mar NCAAB, Apr to Aug MLB), used only when no schedule is known
 function savedDefSport(){ try{ return (JSON.parse(localStorage.getItem('mbev.cfg')||'{}')||{}).defSport||''; }catch(e){ return ''; } }
 function pickStartSport(){
   if(_sportPicked) return; const sel=document.getElementById('apiSport'), def=document.getElementById('defSport'); if(!sel) return;
   const d=(def&&def.value)||savedDefSport();
   if(d){ if(![...sel.options].some(o=>o.value===d)) return; sel.value=d; _sportPicked=true; }
-  else { const known=allSports().filter(sp=>sportNext[sp]); if(!known.length) return; sel.value=known.sort((a,b)=>sportNext[a]-sportNext[b])[0]; _sportPicked=true; }
+  else { const known=allSports().filter(sp=>sportNext[sp]); if(!known.length){ if(!pickStartSport._fb){ pickStartSport._fb=1; const fb=seasonSport(); if([...sel.options].some(o=>o.value===fb)){ sel.value=fb; try{ toggleApiWeekFields(); }catch(e){} } } return; }   /* v5.13 (owner: Karens review): MLB was selected in November when no schedule was known (ESPN not answered yet or blocked); until a real schedule says otherwise, the sport in season by the calendar. Your Default sport in Settings still wins, and a schedule that is known still picks the soonest game. */
+    sel.value=known.sort((a,b)=>sportNext[a]-sportNext[b])[0]; _sportPicked=true; }
   try{ toggleApiWeekFields(); }catch(e){}
 }
 async function scanSportTimes(){
@@ -9588,11 +9601,11 @@ function lgLeagues(){ const m=new Map(), add=(code,name,group,key)=>{ if(code &&
   return [...m.values()]; }
 async function lgScan(){
   if(LG.busy) return; LG.busy=true; lgPaint();
-  const msg=document.getElementById('lgMsg'), now=Date.now(), rows={};
+  const msg=document.getElementById('lgMsg'), now=Date.now(), rows={}; LG.locked=false;   // v5.13
   try{
     try{ const {data}=await srcFetch('src=oddsapi_sports'); const A=Array.isArray(data)?data:((data&&data.data)||[]);   // free: every league The Odds API has in season
       LG.oa=A.filter(x=>x && x.key && x.active!==false && !/_winner$/.test(x.key)).map(x=>({key:x.key, title:x.title, group:x.group})); LG.oaNote=LG.oa.length+' leagues listed by The Odds API'; }
-    catch(e){ LG.oaNote=/have this yet/.test(e.message) ? 'league list: built in until the Worker passes The Odds API list through' : 'The Odds API list: '+e.message; }
+    catch(e){ if(/locked/.test(e.message)) LG.locked=true; LG.oaNote=/locked/.test(e.message) ? 'The Odds API: could not check: not connected' /* v5.13 */ : /have this yet/.test(e.message) ? 'league list: built in until the Worker passes The Odds API list through' : 'The Odds API list: '+e.message; }
     const L=lgLeagues(), today=ctDay(now), days=[0,1,2].map(n=>dayPlus(today,n));
     const E=L.filter(l=>ESPN_MAP[l.code]); let i=0;
     const espn=async()=>{ while(i<E.length){ const l=E[i++]; try{ const ev=[].concat(...await Promise.all(days.map(d=>fetchScoreboardDay(l.code,d))));
@@ -9604,7 +9617,7 @@ async function lgScan(){
     const oa=async()=>{ while(evOK && j<K.length){ const l=K[j++]; try{ const {data}=await srcFetch('src=oddsapi_events&sport='+encodeURIComponent(l.key)); const A=Array.isArray(data)?data:((data&&data.events)||[]);
         const T=A.map(x=>Date.parse(x.commence_time)).filter(t=>t>now-60e3 && t<now+3*864e5).sort((a,b)=>a-b), r=rows[l.code]=Object.assign(rows[l.code]||{}, {oa:T.length});
         if(T.length && !(r.next && r.next<=T[0])) r.next=T[0]; }
-      catch(e){ if(/have this yet|locked/.test(e.message)){ evOK=false; LG.evNote=/locked/.test(e.message)?'The Odds API: locked, check the passphrase':'The Odds API game list: after the Worker update'; } } } };
+      catch(e){ if(/have this yet|locked/.test(e.message)){ evOK=false; if(/locked/.test(e.message)) LG.locked=true; LG.evNote=/locked/.test(e.message)?'The Odds API: could not check: not connected (add your passphrase in Settings › Connect)' /* v5.13 */:'The Odds API game list: after the Worker update'; } } } };
     if(msg) msg.textContent='checking The Odds API…';
     await Promise.all([0,1,2,3].map(oa));
     LG.rows=rows; LG.at=Date.now(); try{ localStorage.setItem('mbev.lgScan',JSON.stringify({at:LG.at, rows, oa:LG.oa})); }catch(e){}
@@ -9627,9 +9640,9 @@ function lgPaint(){
       (l.bp?'<button type="button" class="log sm undo lg-bp" data-code="'+esc(l.code)+'" title="Uses your BettingPros calls (a load within 30 minutes is free)">BettingPros board</button>':'')+'</div></li>';
   const groups=list=>{ const G={}; list.forEach(l=>{ (G[l.group]=G[l.group]||[]).push(l); });
     return Object.keys(G).sort((a,b)=>(LG_ORDER.indexOf(a)+1||99)-(LG_ORDER.indexOf(b)+1||99)).map(g=>'<h3 class="lg-group">'+esc(g)+' <span class="meta">'+G[g].length+'</span></h3><ul class="lg-list">'+G[g].map(row).join('')+'</ul>').join(''); };
-  el.innerHTML = (!LG.at && !LG.busy ? '<div class="meta">Press Check again to ask your sources.</div>' : '')+
+  el.innerHTML = (!LG.at && !LG.busy ? '<div class="meta">Press Check again to ask your sources.</div>' : '')+(LG.locked&&LG.at?'<div class="meta lg-locked">Could not check The Odds API: not connected. Its leagues are not counted as having no games. Add your screener passphrase in Settings › Connect, then press Check again.</div>':'')+   /* v5.13 */
     (on.length ? groups(on) : (LG.at?(L.some(l=>checked(l) && ((l.x.espn||0)+(l.x.oa||0))>=0 && (l.x.espn!=null))?'<div class="meta">No league has games in the next 3 days, from what the sources said.</div>':'<div class="meta">⚠ Your sources did not answer, so this cannot tell which leagues have games. Press Check again.</div>' /* v5.00 (Karens: it said "no games" when nothing came back) */):''))+
-    (unk.length ? '<details class="lg-off"><summary>Not checked: no free schedule for these yet ('+unk.length+')</summary><ul class="lg-list">'+unk.map(row).join('')+'</ul></details>' : '')+
+    (unk.length ? '<details class="lg-off"><summary>'+(LG.locked?'Could not check: not connected (':'Not checked: no free schedule for these yet (')+unk.length+')</summary><ul class="lg-list">'+unk.map(row).join('')+'</ul></details>' : '')+
     (none.length ? '<details class="lg-off"><summary>No games in the next 3 days ('+none.length+')</summary><div class="lg-names">'+none.map(l=>esc(l.name)).join(' · ')+'</div></details>' : ''); }
 document.addEventListener('click',e=>{
   if(e.target.closest('#lgScan')){ lgScan(); return; }
@@ -9953,11 +9966,11 @@ function rgPaint(){ const el=document.getElementById('rgGrid'); if(!el) return; 
   const usd=x=>'$'+(+x).toFixed(2), od=x=>(x>0?'+':'')+x, F=c.fees||{};
   const T=(k,v,n)=>'<div class="rg-t"><span>'+esc(k)+'</span><b>'+esc(v)+'</b>'+(n?'<small>'+esc(n)+'</small>':'')+'</div>';
   el.innerHTML=
-    '<div class="rg-g"><h3>Screens</h3>'+T('Odds',od(c.oMin)+' to '+od(c.oMax))+T('Net EV floor',(c.eMin*100).toFixed(1)+'%','after fees')+T('Gross EV ceiling',(c.eMax*100).toFixed(0)+'%','higher is likely a wrong match')+T('Devig tolerance',(c.devig*100).toFixed(1)+'%')+
+    '<div class="rg-g"><h3>Screens</h3>'+T('Odds',od(c.oMin)+' to '+od(c.oMax))+T('Net EV floor',(c.eMin*100).toFixed(1)+'%','after fees')+T('Gross EV ceiling',(c.eMax*100).toFixed(0)+'%','higher is likely a wrong match')+T('Devig tolerance',(c.devig*100).toFixed(1)+'%')+T('Devig method','Multiplicative','each side’s price is divided by both sides added up ('+DEVIG_METHOD+')')+
       T('Books you bet',c.books.length?c.books.length+' books':'all books',c.books.slice(0,6).join(', ')+(c.books.length>6?'…':''))+'</div>'+
-    '<div class="rg-g"><h3>Stake sizing</h3>'+T('Bankroll',usd(c.bank))+T('Kelly',String(c.kelly),'× edge after a '+String(c.shrink)+' haircut')+T('Bets',usd(c.sMin)+' to '+usd(c.sMax))+T('Model weight',String(c.mWeight),'0 = market only, 1 = model only')+'</div>'+
+    '<div class="rg-g"><h3>Stake sizing</h3>'+T('Bankroll',usd(c.bank))+T('Kelly',String(c.kelly),'× edge after a '+String(c.shrink)+' haircut: together '+String(+((+c.kelly)*(+c.shrink)).toFixed(4))+' of full Kelly')+T('Bets',usd(c.sMin)+' to '+usd(c.sMax))+T('Model weight',String(c.mWeight),'0 = market only, 1 = model only')+'</div>'+
     '<div class="rg-g"><h3>Limits</h3>'+T('Per game',c.gameCapPct+'%',usd(c.gameCap))+T('Daily max',c.dayMaxPct+'%',c.dayMax>0?usd(c.dayMax)+' · the Hard stop asks past it':'off')+T('Daily bet goal',c.dayGoal?String(c.dayGoal):'off')+T('Mode',(MODES[c.mode]&&MODES[c.mode].label)||c.mode||'Safe')+'</div>'+
-    '<div class="rg-g"><h3>Fees</h3>'+T('Kalshi',F.kalshi+'% of price','× (1 − price)')+T('Polymarket US',F.poly+'% of price')+T('Novig',F.novig+'% extra','live: 6% × p × (1 − p)')+T('ProphetX',F.prophet+'% of stake')+T('Licensed books',F.book+'% of stake')+'</div>'; }
+    '<div class="rg-g"><h3>Fees</h3>'+T('Kalshi',F.kalshi+'% of price','× (1 − price)')+T('Polymarket US',F.poly+'% of price','× (1 − price), the same way as Kalshi')+T('Novig',F.novig+'% extra','only that extra before the game; once the game has started, 6% × (1 − price) more')+T('ProphetX',F.prophet+'% of stake')+T('Licensed books',F.book+'% of stake')+'</div>'; }
 try{ cnPaint(); crPaint(); rgPaint();
   document.getElementById('cnTest').addEventListener('click',cnTest);
   document.getElementById('crRefresh').addEventListener('click',crRefresh);
@@ -10355,6 +10368,7 @@ function rpSet(){ const R=rpRange(); let noDay=0, noDayRm=0;
   const L=logged.filter(b=>{ if(!rpPass(b)) return false; const d=rpDayOf(b); if(!d){ noDay++; return false; } return inR(d); });
   const Rm=removedBets.filter(b=>{ if(!(b.lost>0) || !rpPass(b)) return false; const d=rpDayOf(b); if(!d){ noDayRm++; return false; } return inR(d); });
   return {R, L, Rm, noDay, noDayRm}; }
+function rpTn(w){ return w?'<em class="rp-tn">'+esc(w)+': read with care</em>':''; }   /* v5.13 (owner: Karens review): the page's own small-sample word (rpSample, unchanged) next to the profit and ROI tiles */
 function rpSample(n){ return n<10?'too few to rank':n<30?'extremely preliminary':n<100?'early sample':''; }
 function rpPct(x){ return x==null?'—':(x>=0?'+':'−')+Math.abs(x*100).toFixed(1)+'%'; }
 function rpCls(v,step){ return (v>0.005?'pl-up':v<-0.005?'pl-down':'')+dClsR(v,step||0.01); } /* v5.04: ▲/▼ from the shown rounding: $ to the cent, ROI (step 0.001) to 0.1%; colour rule unchanged */
@@ -10397,11 +10411,11 @@ function rpRender(){ const box=document.getElementById('rpPanel'); if(!box) retu
   document.getElementById('rpFiltN').textContent=nf?'· '+nf+' on':'· none';
   document.getElementById('rpAsOf').textContent='As of '+new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:'America/Chicago'})+' · '+logged.length+' ticket'+(logged.length===1?'':'s')+' in the current log · counted by '+(RP.basis==='placed'?'date placed':'game day (as the Bet calendar)')+(nf?' · '+nf+' filter'+(nf===1?'':'s')+' on':'');
   const miss=S.noDay+S.noDayRm; document.getElementById('rpCover').textContent=miss?(miss+(miss===1?' bet has':' bets have')+(RP.basis==='placed'?' no saved placed time: not in this view (never guessed).':' no game day: not in this view.')):'';
-  const sett=g.n-g.pend, smp=rpSample(g.w+g.l+g.p), tile=(l,v,c,t)=>'<div class="rp-k"'+(t?' title="'+esc(t)+'"':'')+'><span>'+l+'</span><strong'+(c?' class="'+c+'"':'')+'>'+v+'</strong></div>';
+  const sett=g.n-g.pend, smp=rpSample(g.w+g.l+g.p), tile=(l,v,c,t,nt)=>'<div class="rp-k"'+(t?' title="'+esc(t)+'"':'')+'><span>'+l+'</span><strong'+(c?' class="'+c+'"':'')+'>'+v+'</strong>'+(nt||'')+'</div>';   /* v5.13: nt = the small-sample note under the tile */
   document.getElementById('rpHead').innerHTML=(g.n||g.cancelled)?
     '<div class="rp-line"><b>Settled:</b> $'+g.stSet.toFixed(2)+' risked, <b class="'+rpCls(g.profit)+'">'+lcUsd(g.profit)+'</b> · <b>To play:</b> $'+g.toPlay.toFixed(2)+' · <b>In play:</b> $'+g.inPlay.toFixed(2)+'</div>'+
     '<div class="rp-ks">'+tile('Tickets',g.n)+tile('W–L–P',g.w+'–'+g.l+'–'+g.p,'',g.hit==null?'':'won '+(g.hit*100).toFixed(1)+'% of the bets that won or lost')+tile('Hit rate',g.hit==null?'—':(g.hit*100).toFixed(1)+'%')+tile('Settled risked','$'+g.stSet.toFixed(2),'','your own money on settled bets (free bets are $0)')+
-      tile('Settled profit',lcUsd(g.profit),rpCls(g.profit))+tile('ROI',rpPct(g.roi),rpCls(g.roi||0,0.001),'settled profit ÷ settled risked: open bets are never in it')+tile('⏳ To play','$'+g.toPlay.toFixed(2),'rp-grey')+tile('▶ In play','$'+g.inPlay.toFixed(2),'rp-grey')+tile('Open total','$'+(g.toPlay+g.inPlay).toFixed(2)+' · '+g.pend+' open','rp-grey')+'</div>'+ /* v5.04: ▲/▼ ROI arrow from the shown 0.1% */
+      tile('Settled profit',lcUsd(g.profit),rpCls(g.profit),'',rpTn(smp))+tile('ROI',rpPct(g.roi),rpCls(g.roi||0,0.001),'settled profit ÷ settled risked: open bets are never in it',rpTn(smp))+tile('⏳ To play','$'+g.toPlay.toFixed(2),'rp-grey')+tile('▶ In play','$'+g.inPlay.toFixed(2),'rp-grey')+tile('Open total','$'+(g.toPlay+g.inPlay).toFixed(2)+' · '+g.pend+' open','rp-grey')+'</div>'+ /* v5.04: ▲/▼ ROI arrow from the shown 0.1% */
     '<div class="meta">'+[sett?sett+' settled ticket'+(sett===1?'':'s'):'nothing settled yet', g.cancelled?g.cancelled+' cancelled bet'+(g.cancelled===1?'':'s')+' that lost $'+g.cancelLost.toFixed(2)+' (counted, as on the calendar)':'', smp?'<b class="rp-smp">'+smp+'</b>: '+(g.w+g.l+g.p)+' won, lost or pushed':''].filter(Boolean).join(' · ')+'</div>'
     : '<p class="meta">No bets in this report. Change the period or the filters.</p>';
   const parts=[['Overall',S.L,S.Rm],['Singles',S.L.filter(b=>b.kind!=='parlay'),S.Rm.filter(b=>b.kind!=='parlay')],['Parlays',S.L.filter(b=>b.kind==='parlay'),S.Rm.filter(b=>b.kind==='parlay')]];
@@ -10843,104 +10857,47 @@ async function checkResultsRun(){
   document.getElementById('checkOddsApi').addEventListener('click', checkMarketOdds);
 })();
 
-const SAMPLE=`Connecticut Logo
-Washington Logo
-Over 157.5
-CON @ WAS
-WNBA
-157.5
-Total Points
--104
-Logo for Kalshi
--117	
+/* v5.13 (owner: Karens review): the built-in Sample read 0 props. It was a Market EV style paste of team bets with no "(price)" and no "Market Based EV" heading, so the Cheat Sheet reader skipped every row (and the Market EV reader skips team bets). It is now a few made-up Cheat Sheet rows in the format the reader takes, in NFL (in season in November), and it says it is a sample. */
+const SAMPLE=`Sample board (made-up players and prices, to show how Paste works)
+Sample Receiver
+WR
+KC @ BUF
+NFL
+68.5 Receiving Yards
+O 68.5
 +6%
-
-Connecticut Logo
-Washington Logo
-Under 157.5
-CON @ WAS
-WNBA
-157.5
-Total Points
-+111
-Logo for Novig
-+102	
-+4%
-
-Rice Logo
-Rice
-RICE @ FRE
-NCAAF
-+13.5
-Spread
-+111
-Logo for Polymarket US
-+104	
-+3%
-
-Fresno St. Logo
-Fresno St.
-RICE @ FRE
-NCAAF
--13.5
-Spread
--104
-Logo for Novig
--108	
-+2%
-
-UMass
-NCAAF
-27.5
-Total Points
--130
-Logo for Novig
--146	
-+5%
-
-U 27.5
--130
-Logo for Novig
-Napheesa CollierLogo for MIN
-Napheesa Collier
-F - MIN @ IND
-WNBA
-2.5
-Assists
--122
+(-110)
 Logo for DraftKings
--137	
-+5%
-
-O 2.5
--122
+Sample Receiver
+WR
+KC @ BUF
+NFL
+68.5 Receiving Yards
+U 68.5
+-2%
+(+120)
 Logo for DraftKings
-Pittsburgh Logo
-Pirates
-STL @ PIT
-MLB
--1.5
-Run Line
-+167
-Logo for Polymarket US
-+161	
-+2%
-
--1.5
-+167
-Logo for Polymarket US
-UTSA Logo
-UTSA
-CSU @ UTSA
-NCAAF
--3.5
-2Q Spread
-EVEN
-Logo for Hard Rock
--112	
-+6%`;
+Sample Runner
+RB
+DAL @ PHI
+NFL
+54.5 Rushing Yards
+O 54.5
++7%
+(-110)
+Logo for DraftKings
+Sample Runner
+RB
+DAL @ PHI
+NFL
+54.5 Rushing Yards
+U 54.5
+-2%
+(+125)
+Logo for DraftKings`;
 document.getElementById('demo').addEventListener('click',()=>{
   document.getElementById('input').value=SAMPLE; run();
+  { const d=document.getElementById('diag'); if(d) d.innerHTML='<b>This is a sample:</b> made-up players and prices, only to show how Paste works. Press <b>Clear</b> to remove it. '+d.innerHTML; }   /* v5.13: it says it is a sample */
 });
 
 const KEYS=NUMS.concat(['books','defSport','bpSportsList','planMin','planSince','planSetAt']);   /* v5.10: + My plan (planMin, planSince), saved and synced like the other settings */   /* v5.10 (fixer): + planSetAt, when the date was last changed */   // v3.12: default sport + the leagues BettingPros answered (synced with settings)
@@ -12803,8 +12760,8 @@ async function syncFills(force){
     try{ if(localStorage.getItem('mbev.fillV')!=='95'){ fillPending=[]; fillSeen={}; lsSafeSet('mbev.fillV','95'); } }catch(e){}   // v3.89: a failed write here wiped what you ignored on every read
     fillAt=Date.now();   // v4.24: a failed read waits its turn too (before, a failing Worker was asked again every 20 s)
     const res=await fetch(API_BASE+'/mine/fills?since='+(Date.now()-days*86400e3), {headers:apiHeaders()});
-    if(!res.ok){ let t=''; try{ t=String(await res.text()||'').replace(/\s+/g,' ').slice(0,120); }catch(_){} window._fillReadErr='the Worker answered HTTP '+res.status+(res.status===401?' (passphrase)':res.status===429?' (over its daily limit)':'')+(t?': '+t:''); return; }   // v4.46: said nowhere before
-    const j=await res.json(); fillAt=Date.now(); window._fillReadErr=''; window._fillOkAt=Date.now(); try{ if(wkPaused()){ const w=wkState(); w.pause=0; wkSave(); wkChipPaint(); } }catch(_){}   // v4.46: the Worker answered, so background checks go again
+    if(!res.ok){ window._fillReadCode=res.status; window._fillReadErr=res.status===401?'the Worker did not accept the screener passphrase':res.status===429?'the Worker is over its daily limit':res.status>=500?'the Worker had a problem (error '+res.status+')':'the Worker answered with error '+res.status; return; }   // v4.46: said now   // v5.13 (owner: Karens review): plain words, no raw HTTP text or JSON; the code is kept so a missing passphrase reads calmlyhere before
+    const j=await res.json(); fillAt=Date.now(); window._fillReadErr=''; window._fillReadCode=0; window._fillOkAt=Date.now(); try{ if(wkPaused()){ const w=wkState(); w.pause=0; wkSave(); wkChipPaint(); } }catch(_){}   // v4.46: the Worker answered, so background checks go again
     (j.fills||[]).forEach(normFillBet);   // v3.01
     let changed=false;
     window._fillErrors=j.errors||{};
@@ -12875,7 +12832,7 @@ async function syncFills(force){
     saveFills();
     if(changed){ saveLog(); renderLog(); renderPerf(); refresh(); }
     renderFromBooks(); syncOrders(); renderMyBooks();
-  }catch(e){ console.warn('syncFills', e); if(!window._fillOkAt || Date.now()-window._fillOkAt>5000) window._fillReadErr='could not reach the Worker ('+String(e&&e.message||e).slice(0,80)+')'; } finally{ fillBusy=false; try{ renderFillWarn(); }catch(_){} try{ renderFromBooks(); }catch(_){} }   // v4.46   // v4.49: From your books says it too
+  }catch(e){ console.warn('syncFills', e); if(!window._fillOkAt || Date.now()-window._fillOkAt>5000) window._fillReadErr='could not reach the Worker: check your internet connection'; /* v5.13: plain words */ } finally{ fillBusy=false; try{ renderFillWarn(); }catch(_){} try{ renderFromBooks(); }catch(_){} }   // v4.46   // v4.49: From your books says it too
 }
 /* v4.46 (owner, 11/10: "my bets are not getting picked up ... they still show at the board", "another one ... was NOT logged"): when the read of your
    books failed (Worker HTTP error or unreachable), nothing said so: no From your books, and Check my books now still said "all 3 books answered".
@@ -12890,6 +12847,10 @@ function fillWarnState(){ const tm=ms=>new Date(ms).toLocaleTimeString('en-US',{
   const e=window._fillReadErr||'', ok=window._fillOkAt||0, BE=Object.entries(window._fillErrors||{}).filter(([k])=>use(k)), be=BE.map(([k,v])=>(FILL_NAME[k]||k)+': '+cl(v)).join(' · ');
   let paused=false; try{ paused=wkPaused(); }catch(_){}
   const stale=!!(ok && Date.now()-ok>6*60e3 && document.visibilityState==='visible');
+  if(e && (window._fillReadCode|0)===401){   /* v5.13 (owner: Karens review): no passphrase yet, or one the Worker does not know: a calm note with a way to fix it, not a red warning; a passphrase that worked this session and stopped keeps the warning, in plain words */
+    let has=''; try{ has=localStorage.getItem('mbev.pass')||''; }catch(_){}
+    if(ok) return {msg:'Your books were not read since '+tm(ok)+': the Worker no longer accepts your screener passphrase (it worked before). Check it in Settings › Connect.', sig:'worker'};
+    return {calm:true, sig:'locked', msg:has?'Not connected yet: the Worker did not accept your screener passphrase. Check it in Settings › Connect':'Not connected yet: add your screener passphrase in Settings › Connect'}; }
   if(e) return {msg:'Your books were not read'+(ok?' since '+tm(ok):'')+': '+cl(e)+'.', sig:'worker'};
   if(be) return {msg:'Not read from '+be+'.', sig:'books:'+BE.map(x=>x[0]).sort().join(',')};
   if(paused) return {msg:'Background checks of your books are paused (the Worker is over its limit).', sig:'paused'};
@@ -12897,12 +12858,15 @@ function fillWarnState(){ const tm=ms=>new Date(ms).toLocaleTimeString('en-US',{
   return {msg:'', sig:''}; }
 function renderFillWarn(){ const el=document.getElementById('fillWarn'); if(!el) return; const S=fillWarnState(), tab=document.querySelector('.tab[data-view="v-log"]');
   let hid=''; try{ hid=localStorage.getItem('mbev.fillWarnHid')||''; }catch(_){}
-  if(tab){ tab.classList.toggle('tab-alert', !!S.msg); if(S.msg) tab.title='⚠ '+S.msg+' Open the Bet log to check.'; else tab.removeAttribute('title'); }
+  if(tab){ tab.classList.toggle('tab-alert', !!S.msg && !S.calm); if(S.msg && !S.calm) tab.title='⚠ '+S.msg+' Open the Bet log to check.'; else tab.removeAttribute('title'); }   // v5.13: no red ring for a missing passphrase
   if(!S.msg){ el.hidden=true; el.innerHTML=''; if(hid){ try{ localStorage.removeItem('mbev.fillWarnHid'); }catch(_){} } return; }
   if(hid===S.sig){ el.hidden=true; el.innerHTML=''; return; }   // hidden by you: the Bet log tab keeps its red ring until it is fixed
-  el.hidden=false;
+  el.hidden=false; el.classList.toggle('calm', !!S.calm); el.setAttribute('role', S.calm?'status':'alert');   // v5.13
+  if(S.calm){ el.innerHTML='<span class="fw-note">'+esc(S.msg)+'.</span> <button type="button" class="linkbtn" id="fillWarnSet">Open Settings › Connect</button>'+
+    '<button type="button" class="fw-x" id="fillWarnX" aria-label="Hide this message" title="Hide this note">×</button>'; return; }   /* v5.13 */
   el.innerHTML='<span class="ot-err">⚠ '+esc(S.msg)+'</span> A bet you just placed may still show as bettable: press <b>I bet this</b> on its card, or <b>+ Add a bet</b>. <button type="button" class="linkbtn" id="fillWarnGo">Check now</button>'+
     '<button type="button" class="fw-x" id="fillWarnX" aria-label="Hide this message" title="Hide it until something changes; the Bet log tab keeps a red ring until it is fixed">×</button>'; }
+document.addEventListener('click',e=>{ if(!e.target.closest('#fillWarnSet')) return; const t=document.querySelector('.tab[data-view="v-settings"]'); if(t) t.click(); const d=document.getElementById('srcSettings'); if(d){ d.open=true; try{ d.scrollIntoView({block:'start'}); }catch(_){} } const i=document.getElementById('screenerPass'); if(i) setTimeout(()=>{ try{ i.focus(); }catch(_){} },60); });   // v5.13: the note's button opens Settings › Connect
 document.addEventListener('click',e=>{ if(!e.target.closest('#fillWarnX')) return; const S=fillWarnState(); try{ localStorage.setItem('mbev.fillWarnHid', S.sig||''); }catch(_){} renderFillWarn(); });   // v4.49
 document.addEventListener('click',async e=>{ const b=e.target.closest('#fillWarnGo, .fw-go'); if(!b) return; b.disabled=true; b.textContent='checking…'; try{ await syncFills(true); }finally{ try{ renderFillWarn(); }catch(_){} } });
 setInterval(()=>{ try{ renderFillWarn(); }catch(_){} }, 30000);
@@ -12914,7 +12878,7 @@ function renderFromBooks(){
   let fw={msg:''}; try{ fw=fillWarnState(); }catch(_){}   // v4.49: the red bar's message, also here
   if(!fillPending.length && !errTxt && !fw.msg){ el.style.display='none'; el.innerHTML=''; return; }
   el.style.display='block';
-  el.innerHTML=(fw.msg?'<div class="fb-warn"><span class="ot-err">⚠ '+esc(fw.msg)+'</span> <button type="button" class="linkbtn fw-go">Check now</button></div>':'')+'<b>From your books</b> — '+(fillPending.length?fillPending.length+' bet'+(fillPending.length===1?'':'s')+' not matched to your log or board.':(fw.msg?'nothing new could be read.':'all matched.'))+
+  el.innerHTML=(fw.msg?'<div class="fb-warn">'+(fw.calm?'<span class="meta">'+esc(fw.msg)+'.</span>':'<span class="ot-err">⚠ '+esc(fw.msg)+'</span> <button type="button" class="linkbtn fw-go">Check now</button>')+'</div>':'')   /* v5.13: a missing passphrase is a calm note */+'<b>From your books</b> — '+(fillPending.length?fillPending.length+' bet'+(fillPending.length===1?'':'s')+' not matched to your log or board.':(fw.msg?'nothing new could be read.':'all matched.'))+
     (errTxt && !fw.msg?' <span class="meta">('+errTxt+')</span>':'')+   // v4.49: said once, above
     (fillPending.length?'<div class="copy-bar"><button type="button" class="copy-big" data-copy-fn="fromBooksText">📋 Copy this list</button></div><div class="fb-wrap"><table>'+fillPending.map((f,i)=>{ const L=fillLabel(f);
       return '<tr><td>'+(bookLogo(FILL_NAME[f.book])?logoTag(FILL_NAME[f.book],'sm'):esc(FILL_NAME[f.book]))+'</td>'+
@@ -13554,6 +13518,7 @@ setInterval(()=>{ if(document.visibilityState==='visible') syncFills(false); }, 
 setTimeout(()=>syncFills(true), 2500);
 setTimeout(()=>{ renderTodayBar(); autoGradeLog(); },50);
 // v2.71: Paste ▸ / Passphrase ▸ links on the load line
+document.addEventListener('click',e=>{ if(e.target.closest('#emptyPaste')){ const pl=document.getElementById('pasteLink'); if(pl) pl.click(); } });   // v5.13: "paste a board" in the empty-board text
 document.getElementById('pasteLink').addEventListener('click',()=>{ const t=document.querySelector('.tab[data-view="v-paste"]'); if(t) t.click(); const pp=document.getElementById('pastePanel'); if(pp){ pp.open=true; pp.scrollIntoView({behavior:'smooth', block:'start'}); } });
 document.getElementById('passLink').addEventListener('click',()=>{ const pb=document.getElementById('passBox'); pb.style.display=pb.style.display==='none'?'flex':'none'; });
 // v2.71: score strip — picks the sport you have the most open bets in (or your last pick), refreshes on the
