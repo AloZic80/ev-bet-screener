@@ -1790,6 +1790,35 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
    display:flex beat the hidden attribute, so it stayed on the tab it points to); an "also at" price with no link is plain text, not a slip opener. */
 .top-hint[hidden]{display:none}
 .sc-alt.nolink{cursor:default}
+/* v5.11 (owner 11/15: "Add a Bet needs to allow me to do Parlay. I did a PrizePick parlay and won, and i want to add it."): + Add a bet's Type Parlay / pick'em
+   shows the parlay fields (.ab-par) and hides the single-bet ones (.ab-par-hide, set by abParShow; what you typed in them stays); Flex shows its two payouts,
+   Won and Partial show Paid $. Display only. */
+#addBetPanel:not(.ab-par-on) .ab-par{display:none!important}
+#addBetPanel .ab-par-hide{display:none!important}
+#addBetPanel:not(.ab-par-flexon) .ab-par-flex, #addBetPanel:not(.ab-par-paidon) .ab-par-paid{display:none!important}
+#addBetPanel .ab-par-twchk{display:none!important}   /* ebTwWire's own line under the pair: the parlay note says it in the parlay's words */
+#addBetPanel .ab-par-legs{grid-column:span 2}
+#addBetPanel .ab-grid .ab-par-free{display:flex; align-items:center; gap:6px; margin:4px 0 0; font-size:13px; color:var(--ink); cursor:pointer}
+#addBetPanel .ab-grid .ab-par-free input{width:16px; height:16px; padding:0; margin:0; flex:none; accent-color:var(--accent)}
+#addBetPanel .ab-par-foot{margin-top:12px}
+#addBetPanel .ab-par-note{margin:0 0 8px; font-size:13.5px; color:var(--soft); overflow-wrap:break-word}
+#addBetPanel .ab-par-note:empty{display:none}
+#addBetPanel .ab-par-note.warn{color:var(--warn)}
+#addBetPanel .ab-par-foot .hint{margin:0 0 10px}
+#addBetPanel .ab-par-act{display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px}
+#addBetPanel .ab-par-msg{font-size:13px; color:var(--soft); overflow-wrap:break-word; max-width:100%}
+#addBetPanel .ab-par-msg:empty{display:none}
+#addBetPanel .ab-par-msg.warn{display:block; width:100%; box-sizing:border-box; padding:8px 12px; border-radius:8px; background:var(--warn-bg); color:var(--warn); font-weight:600; font-size:14px}   /* as the bet form's own warning */
+@media (max-width:900px){ #addBetPanel .ab-par-legs{grid-column:1/-1} }
+/* v5.11 (review): while the Type is a parlay the panel's subtitle is the parlay's own (the BET or SKIP line is for single bets); a Save warning stops above
+   the bottom bars (scrollIntoView counts the margin); on a phone the Type, App / book, Entry type and Result boxes take the whole row, so their words are
+   not cut ("Parlay / pick'e", "Power (all mus"), and Save parlay, Placed now and the Free entry tick are thumb-sized (44 px). Display only. */
+#addBetPanel.ab-par-on summary .sub:not(.ab-par-sub){display:none}
+#addBetPanel .ab-par-msg{scroll-margin-bottom:var(--dockH,110px)}
+@media (max-width:900px){
+  #addBetPanel.ab-par-on .ab-par-type, #addBetPanel .ab-par-wide{grid-column:1/-1}
+  #addBetPanel #abParSave, #addBetPanel #abParPlacedNow, #addBetPanel .ab-grid .ab-par-free{min-height:44px; box-sizing:border-box}
+}
 </style>
 </head>
 <body>
@@ -1988,10 +2017,10 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 <!-- v3.06: + Add a bet and Paste a board have their own tabs (moved off the Board, nothing removed) -->
 <div class="view" id="v-add">
 <details class="panel fold" id="addBetPanel">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
-  <summary><h2>+ Add a bet <span class="sub">take a price or post your own — it tells you BET or SKIP and how much, then ESPN grades it</span></h2></summary>
+  <summary><h2>+ Add a bet <span class="sub">take a price or post your own — it tells you BET or SKIP and how much, then ESPN grades it</span><span class="sub ab-par ab-par-sub">log a parlay or pick'em entry — no value check; you grade it (Result here, or “how many hit” in the Bet log)</span></h2></summary><!-- v5.11 (review): while the Type is a parlay, its own subtitle (the BET or SKIP one is for single bets) -->
   <div class="ab-grid">
     <div class="field"><label for="abSport">Sport</label><select id="abSport"><option>NFL</option><option>NCAAF</option><option>NBA</option><option>WNBA</option><option>NCAAB</option><option>MLB</option><option>NHL</option></select></div>
-    <div class="field"><label for="abType">Type</label><select id="abType"><option value="prop">Player prop</option><option value="spread">Spread</option><option value="total">Game total</option><option value="moneyline">Moneyline</option></select></div>
+    <div class="field"><label for="abType">Type</label><select id="abType"><option value="prop">Player prop</option><option value="spread">Spread</option><option value="total">Game total</option><option value="moneyline">Moneyline</option><option value="parlay">Parlay / pick'em (2+ picks)</option></select></div><!-- v5.11 (owner 11/15: "Add a Bet needs to allow me to do Parlay"): a parlay or pick'em entry, with its own fields (abPar*) -->
     <div class="field ab-wide"><label for="abGame">Game</label><select id="abGame"><option value="">loading…</option></select><input id="abGameFree" type="text" aria-label="Game, typed in" placeholder="Not listed? Type it: TOR @ UTA" style="margin-top:4px" autocomplete="off"></div>
     <div class="field"><label for="abDate">Game date</label><input id="abDate" type="date"></div>
     <div class="field ab-placed"><label for="abPlaced" title="When you placed the bet at the book (your time). Optional. Lets the 3-a-day long-shot moneyline check use the board as it was before you bet.">Placed at</label><input id="abPlaced" type="datetime-local"><button type="button" class="ghost sm" id="abPlacedNow" title="Saves this moment as the time you placed it">Placed now</button></div><!-- v4.73 -->
@@ -2001,6 +2030,26 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
     <div class="field ab-ou"><label for="abPick">Pick</label><select id="abPick"><option value="O">Over</option><option value="U">Under</option></select></div>
     <div class="field ab-line"><label for="abLine">Line</label><input id="abLine" type="number" step="0.5" placeholder="e.g. 249.5"></div>
     <div class="field"><label for="abResult" title="Logging a bet after the fact? Set how it went and it's saved as graded by you.">Result</label><select id="abResult"><option value="">Not played yet</option><option value="win">Won 🎉</option><option value="loss">Lost</option><option value="push">Push / void</option></select></div>
+    <!-- v5.11 (owner 11/15: "Add a Bet needs to allow me to do Parlay. I did a PrizePick parlay and won, and i want to add it."): the parlay fields, shown only while Type is Parlay / pick'em (abParShow); the apps in the scope's order, then Underdog Predict (also in the Bet log's parlay panel), then Other -->
+    <div class="field ab-par ab-par-wide"><label for="abParBook">App / book</label><select id="abParBook"><option>PrizePicks</option><option>Underdog</option><option>Sleeper</option><option>DraftKings Pick 6</option><option>Betr</option><option>ParlayPlay</option><option>Bovada</option><option>Novig</option><option>Kalshi</option><option>Polymarket</option><option>DraftKings Predictions</option><option>FanDuel Predicts</option><option>DraftKings</option><option>Underdog Predict</option><option>Other</option></select></div>
+    <div class="field ab-par ab-par-wide"><label for="abParKind">Entry type</label><select id="abParKind"><option value="power">Power (all must hit)</option><option value="flex">Flex (pays if 1 or 2 miss)</option></select></div>
+    <div class="field ab-par"><label for="abParPicks">Picks</label><input id="abParPicks" type="number" min="2" max="12" step="1" inputmode="numeric" placeholder="2 to 12"></div>
+    <div class="field ab-par"><label for="abParStake" title="What you paid for the entry">Entry $</label><input id="abParStake" class="eb-stake" type="number" step="0.01" min="0" placeholder="e.g. 5.00"><label class="bar-check ab-par-free" title="A free entry (a promo or bonus) is not your money: it costs you $0. If all hit you get the winnings, what it pays minus the entry, as the app counts free bets."><input type="checkbox" id="abParFree"> 🎁 Free entry</label></div>
+    <div class="field ab-par"><label for="abParWin" title="The profit only: what it pays if all hit, minus the entry">To win $</label><input id="abParWin" class="eb-win-o" type="number" step="0.01" min="0" placeholder="optional"></div><!-- v5.11 (review): To win first, as v5.09's To win | Total payout, so the Flex payouts come right after Pays if all hit (they read "Pays if all hit $ …if 1 misses $", not "To win $ …if 1 misses $") -->
+    <div class="field ab-par"><label for="abParAll" title="The total it pays if every pick hits, your entry included">Pays if all hit $</label><input id="abParAll" class="eb-tot-o" type="number" step="0.01" min="0" placeholder="e.g. 25.00"></div>
+    <div class="field ab-par ab-par-flex"><label for="abParM1" title="The total it pays if exactly 1 pick misses, your entry included (as Pays if all hit)">…if 1 misses $</label><input id="abParM1" type="number" step="0.01" min="0" placeholder="optional"></div><!-- v5.11 (review): the tips say it is the total, as Pays if all hit -->
+    <div class="field ab-par ab-par-flex"><label for="abParM2" title="The total it pays if exactly 2 picks miss, your entry included (as Pays if all hit)">…if 2 miss $</label><input id="abParM2" type="number" step="0.01" min="0" placeholder="optional"></div>
+    <div class="field ab-par"><label for="abParDay">Game day</label><input id="abParDay" type="date"></div>
+    <div class="field ab-par"><label for="abParPlaced" title="When you placed the entry at the app (your time). Optional.">Placed at</label><input id="abParPlaced" type="datetime-local"><button type="button" class="ghost sm" id="abParPlacedNow" title="Saves this moment as the time you placed it">Placed now</button></div>
+    <div class="field ab-par ab-par-wide"><label for="abParResult" title="Logging an entry that is already over? Set how it went and it saves graded.">Result</label><select id="abParResult"><option value="">Not played yet</option><option value="win">Won (all hit)</option><option value="loss">Lost</option><option value="partial">Partial payout (Flex)</option></select></div>
+    <div class="field ab-par ab-par-paid"><label for="abParPaid" title="Everything the app paid you back, your entry included">Paid $</label><input id="abParPaid" type="number" step="0.01" min="0" placeholder="it paid back"></div>
+    <div class="field ab-par ab-par-legs"><label for="abParLegs">Legs (optional note)</label><input id="abParLegs" type="text" placeholder="Mahomes O 1.5 TD, Bijan O 70.5 rush…" autocomplete="off"></div>
+    <div class="eb-tw-chk ab-par ab-par-twchk" id="abParChk"></div><!-- v5.11: the To win / Pays if all hit link is v5.09's ebTwWire; its own check line stays out of sight (the parlay note below says it in the parlay's words) -->
+  </div>
+  <div class="ab-par ab-par-foot"><!-- v5.11: the parlay note (a free entry, a pay under the entry), the hint and Save -->
+    <div class="ab-par-note" id="abParNote" role="status"></div>
+    <p class="hint">The screener only prices single bets, so a parlay gets no value check. It counts in that book's slot in the Today ribbon, but not against the screener's daily max or in the Scorecard.</p>
+    <div class="ab-par-act"><button type="button" class="act" id="abParSave">Save parlay</button><span class="ab-par-msg" id="abParMsg" role="status"></span></div>
   </div>
   <div id="abHost" class="ab-host"></div>
   <details class="ab-more" id="abMore"><summary>Model numbers <span class="meta">optional · projection, cover %, consensus</span></summary>
@@ -11477,6 +11526,7 @@ async function abLoadGames(){
 }
 function abFields(){
   const ty=$ab('abType').value, ev=abGameSel(), t=ev?abTeams(ev):null;
+  abParShow(ty==='parlay'); if(ty==='parlay') return;   // v5.11: a parlay shows its own fields; the single-bet ones keep what you typed, out of sight, and come back as they were
   if(ev && ev.date && !isNaN(Date.parse(ev.date)) && $ab('abDate')) $ab('abDate').value=ctDay(Date.parse(ev.date));   // v3.52: the picked game's day, editable
   document.querySelectorAll('#addBetPanel .ab-prop').forEach(e=>e.style.display=ty==='prop'?'':'none');
   document.querySelectorAll('#addBetPanel .ab-team').forEach(e=>e.style.display=(ty==='spread'||ty==='moneyline')?'':'none');
@@ -11562,7 +11612,7 @@ function fillManualFromRow(L, r){   // next Load: an unchecked manual bet picks 
   $ab('abGame').addEventListener('change',()=>{ if($ab('abGameFree')) $ab('abGameFree').value=''; abFields(); });   // v3.54: a game picked from the list replaces a typed one
   $ab('abGameFree').addEventListener('input',abFields);   // v3.54
   $ab('abPlacedNow').addEventListener('click',()=>{ const i=$ab('abPlaced'), now=Date.now(); i.dataset.at=new Date(now).toISOString(); i.value=placedLocalVal(i.dataset.at); i.dataset.v=i.value; });   /* v4.73: the moment you press it */
-  $ab('addBetPanel').addEventListener('input',e=>{ if(!e.target.closest('.editor')) { abUpdate(); const s=$ab('abHost').querySelector('.eb-stake'); if(s) s.dispatchEvent(new Event('change')); } else setTimeout(()=>{ abUpdate(); const s=$ab('abHost').querySelector('.eb-stake'); if(s && e.target!==s) s.dispatchEvent(new Event('change')); },0); });
+  $ab('addBetPanel').addEventListener('input',e=>{ if(e.target.closest('.ab-par')) return; if(!e.target.closest('.editor')) { abUpdate(); const s=$ab('abHost').querySelector('.eb-stake'); if(s) s.dispatchEvent(new Event('change')); } else setTimeout(()=>{ abUpdate(); const s=$ab('abHost').querySelector('.eb-stake'); if(s && e.target!==s) s.dispatchEvent(new Event('change')); },0); });   // v5.11: typing in the parlay fields leaves the single-bet form and its verdict alone
   $ab('addBetPanel').addEventListener('change',e=>{ if(e.target.closest('.editor')) setTimeout(abUpdate,0); });
   let loaded=false;
   $ab('addBetPanel').addEventListener('toggle',()=>{ if($ab('addBetPanel').open && !loaded){ loaded=true; abLoadGames().then(()=>{ if(!$ab('abHost').querySelector('.editor')) abOpenEditor(); }); } });
@@ -11580,6 +11630,93 @@ function fillManualFromRow(L, r){   // next Load: an unchecked manual bet picks 
     }
     abOpenEditor();
   }).observe($ab('abHost'),{childList:true});
+})();
+/* ============ v5.11: + Add a bet › Type "Parlay / pick'em (2+ picks)" ============
+   (owner 11/15: "remember, Add a Bet needs to allow me to do Parlay. I did a PrizePick parlay and won, and i want to add it."; agreed scope v5.11 Q1)
+   While the Type is a parlay, its own fields (App / book, Entry type, Picks, Entry $ with Free entry, Pays if all hit $ and To win $, the Flex payouts,
+   Game day, Placed at, Legs, Result and Paid $) replace the single-bet ones, which keep what you typed, out of sight. Pays if all hit and To win are
+   linked both ways by v5.09's ebTwWire (To win = Pays − Entry, as betProfit counts a parlay, a free one too). Save builds the record with parlayRecord,
+   exactly as the Bet log's "Add a parlay / Pick 6" panel does, then adds: free:true for a free entry (as the parlay editor), the placed time
+   (placedRead / placedSet, as the single form: user_entered when typed, placed_now from the button) and the result in the fields the Bet log's
+   "how many hit" list uses: Won → hits = picks, payout = Paid $ (or Pays if all hit); Lost → hits 0, payout 0; Partial (Flex) → result win (the scope),
+   payout = Paid $, hits = the Flex payout it equals; Not played yet → pending. Saved like the panel (pushed, then saveLog: not through addToLog).
+   No value check (the screener prices single bets only); not in the daily max or the Scorecard (poolOf, inScorecard). Hoisted: abFields, abUpdate94
+   and abAsk call these.
+   v5.11 (review, before release): a Paid $ typed on a Won entry is saved as its Pays if all hit too, with the odds from it (the Bet log row, its edit and
+   "how many hit" went back to Pays and dropped the money typed); for a free entry Paid $ is the winnings, as Got back $ in Bet log › edit, so the record
+   keeps Paid $ + Entry and the profit is what you typed ($20 typed was +$15.00); Won refuses a Paid $ at or under the entry, and says before Save when
+   Paid $ is not Pays if all hit; a Partial's Paid $ must be one of the Flex payouts typed, to the cent; Paid $ is emptied when the Result or the Free
+   entry tick changes (a $2 Partial left in it was saved as WON −$3.00); the Game day typed is kept (dateSet, as the single form), so an entry logged
+   the day after counts on its own day. */
+function abIsPar(){ const t=document.getElementById('abType'); return !!(t && t.value==='parlay'); }
+function abParSingles(){ const g=id=>document.getElementById(id), fld=id=>{ const e=g(id); return e?e.closest('.field'):null; }, mb=g('abMode');   // the single-bet parts of + Add a bet
+  return ['abSport','abGame','abDate','abPlaced','abPlayer','abTeam','abStat','abPick','abLine','abResult'].map(fld)
+    .concat([g('abHost'), g('abMore'), mb?mb.closest('.ab-modebar'):null, g('abVerdict'), document.querySelector('#addBetPanel [data-help="add-help"]')]).filter(Boolean); }
+function abParShow(on){ const P=document.getElementById('addBetPanel'); if(!P) return; on=!!on;
+  P.classList.toggle('ab-par-on', on); abParSingles().forEach(e=>e.classList.toggle('ab-par-hide', on));
+  { const t=document.getElementById('abType'), f=t?t.closest('.field'):null; if(f) f.classList.toggle('ab-par-type', on); }   // v5.11 (review): on a phone the Type box takes the whole row while it shows the parlay (CSS), so its words are not cut
+  if(on){ const d=document.getElementById('abParDay'); if(d && !d.value) d.value=ctDay(Date.now()); abParSync(); } }
+function abParSync(){ const g=id=>document.getElementById(id), P=g('addBetPanel'), note=g('abParNote'); if(!P || !note) return;   // Flex payouts, Paid $, and the note
+  const flex=g('abParKind').value==='flex', res=g('abParResult').value, st=parseFloat(g('abParStake').value), all=parseFloat(g('abParAll').value), free=g('abParFree').checked;
+  P.classList.toggle('ab-par-flexon', flex); P.classList.toggle('ab-par-paidon', res==='win' || res==='partial');
+  const pi=g('abParPaid'), pl=document.querySelector('#addBetPanel label[for="abParPaid"]'), paid=parseFloat(pi.value), exp=free ? (st>0 && all>st ? all-st : NaN) : all;   // v5.11 (review): a free entry's Paid $ is the winnings (the entry does not come back), as Got back $ in Bet log › edit
+  pi.placeholder = res==='win' && exp>0 ? exp.toFixed(2) : free ? 'the winnings' : 'it paid back';
+  if(pl) pl.title = free ? 'A free entry: the winnings the app paid you (the entry does not come back)' : 'Everything the app paid you back, your entry included';
+  let t='', warn=false;
+  if(st>0 && all>=0 && all<st-0.004){ t='Pays if all hit is less than the entry: it is everything you get back if every pick hits, your entry included.'; warn=true; }
+  else if(res==='win' && paid>0 && st>0 && exp>0 && Math.abs(paid-exp)>0.0050001){ warn=true;   // v5.11 (review): a Paid $ typed on a Won entry is what Save keeps, so it is said before Save (a slip: $250 for $25, or the entry typed in it)
+    t = !free && paid<=st+0.004 ? 'Won means every pick hit, so it paid back more than the $'+st.toFixed(2)+' entry: check Paid $.'
+      : 'Paid $'+paid.toFixed(2)+' is not the $'+exp.toFixed(2)+(free?' in winnings':'')+' it pays if all hit. Save keeps '+money(free?paid:paid-st,true)+': fix Paid $ if that is a typo.'; }
+  else if(free) t='🎁 Free entry: it costs you $0, and a miss costs $0. If all hit you get the winnings'+(st>0 && all>st ? ', $'+(all-st).toFixed(2)+' (the $'+st.toFixed(2)+' entry does not come back)' : ' (what it pays minus the entry)')+'.';
+  if(note.textContent!==t) note.textContent=t; note.classList.toggle('warn', warn); }
+function abParSave(){ const g=id=>document.getElementById(id), msg=g('abParMsg'), v=id=>parseFloat(g(id).value);
+  const say=t=>{ msg.textContent=t; msg.classList.add('warn'); try{ msg.scrollIntoView({block:'nearest'}); }catch(e){} };
+  msg.textContent=''; msg.classList.remove('warn');
+  const book=g('abParBook').value, picks=Math.round(v('abParPicks')), stake=v('abParStake'), all=v('abParAll'), flex=g('abParKind').value==='flex', free=g('abParFree').checked;
+  if(!(picks>=2 && picks<=12)){ say('Picks: 2 to 12.'); return; }
+  if(!(stake>0) || !(all>stake)){ say('Enter the entry and what it pays if all hit (more than the entry).'); return; }
+  const day=g('abParDay').value||ctDay(Date.now()), legs=g('abParLegs').value.trim(), m1=flex?v('abParM1'):NaN, m2=flex?v('abParM2'):NaN;   // Power: no partial payouts (as the panel with them left blank)
+  const res=g('abParResult').value, paidIn=g('abParPaid').value.trim()!=='', paid=v('abParPaid'), pr=placedRead(g('abParPlaced'));
+  const back=paid>0 ? +(free?paid+stake:paid).toFixed(2) : NaN;   // v5.11 (review): what came back, entry included, as the record keeps it (a free entry: Paid $ is the winnings, and betProfit takes the entry off again)
+  if(pr && pr.err){ say('The placed time is in the future: check Placed at.'); return; }
+  let G=null, allS=all;   // v5.11 (review): allS = the Pays if all hit that is saved
+  if(res==='win'){
+    if(paidIn){ if(!(back>stake+0.004)){ say(free ? 'Won means every pick hit, so the free entry paid you winnings. Leave Paid $ empty to use $'+(all-stake).toFixed(2)+' (what it pays if all hit, less the entry), or type the winnings the app paid you.' : 'Won means every pick hit, so it paid back more than the $'+stake.toFixed(2)+' entry. Leave Paid $ empty to use Pays if all hit ($'+all.toFixed(2)+'), or type everything the app paid back.'); return; }
+      allS=back; }   // v5.11 (review): a Paid $ typed on a Won entry is its Pays if all hit too (and the odds come from it), so the Bet log row, its edit and "how many hit" keep that money
+    G={hits:picks, payout:allS, result:'win'}; }
+  else if(res==='loss') G={hits:0, payout:0, result:'loss'};
+  else if(res==='partial'){
+    if(!flex){ say('A partial payout is for a Flex entry: choose Flex (pays if 1 or 2 miss) and type what it pays.'); return; }
+    if(!(paid>0)){ say('Type what it paid in Paid $. If it paid nothing, choose Lost.'); return; }
+    if(back>=all-0.004){ say(free ? 'Paid $ for a free entry is the winnings: what it paid, less the $'+stake.toFixed(2)+' entry. A partial payout is less than the $'+(all-stake).toFixed(2)+' it wins if all hit; if every pick hit, choose Won.' :'A partial payout is less than what it pays if all hit ($'+all.toFixed(2)+'). If every pick hit, choose Won.'); return; }
+    const T=[[picks-1,m1],[picks-2,m2]].filter(x=>x[1]>0 && x[0]>=1);   // the lines the Bet log's "how many hit" list offers
+    if(!T.length){ say('Type what it pays if 1 misses (or if 2 miss), so the Bet log can show how many hit.'); return; }
+    const L=T.find(x=>Math.abs(+(+x[1]).toFixed(2)-back)<0.005);   // v5.11 (review): Paid $ is one of the Flex payouts typed, to the cent, so the Bet log row ("2 of 3 — $6.25") and a later pick in its list give the same money
+    if(!L){ say('Paid $'+paid.toFixed(2)+' is not '+T.map(x=>'the '+(free?'winnings':'payout')+' if '+(picks-x[0]===1?'1 misses':'2 miss')+' ($'+(free?Math.max(0,x[1]-stake):+x[1]).toFixed(2)+')').join(' or ')+'. Check Paid $ and the Flex payouts, so the Bet log shows how many hit.'); return; }
+    G={hits:L[0], payout:back, result:'win'}; }
+  const rec=parlayRecord({book, picks, stake, all:allS, m1, m2, legs, day});   // the panel's own record
+  if(g('abParDay').value) rec.dateSet=true;   // v5.11 (review): the Game day you typed is the day it counts on (gameDayOf: the Bet log day, TODAY, the calendar, Reports), also when it is logged the day after; the single form sets it the same way
+  if(free) rec.free=true;
+  if(pr) placedSet(rec, pr.iso, pr.src, pr.tz);
+  if(G){ rec.parlay.hits=G.hits; rec.parlay.payout=+(+G.payout).toFixed(2); rec.result=G.result; }
+  logged.push(rec); abLogLen=logged.length;   // the + Add a bet watcher (above) only finishes bets its own editor saved
+  { const sb=g('abParSave'); sb.disabled=true; setTimeout(()=>{ sb.disabled=false; },700); }   // a double tap saves once (the second tap would find the boxes empty and warn)
+  saveLog(); renderLog(); renderPerf();
+  ['abParStake','abParAll','abParWin','abParM1','abParM2','abParLegs','abParPaid'].forEach(id=>{ g(id).value=''; });
+  g('abParFree').checked=false; g('abParResult').value='';
+  { const pi=g('abParPlaced'); pi.value=''; delete pi.dataset.at; delete pi.dataset.v; }
+  { const gr=g('abType').closest('.ab-grid'); if(gr && gr._own) gr._own.pay=''; }
+  abParSync();
+  const pf=betProfit(rec), base='<b>Saved:</b> '+esc(rec.name)+' · $'+stake.toFixed(2)+(rec.free?' free entry':'')+' at '+esc(bookLabel(book));
+  g('abMsg').innerHTML=base+(res==='win'?' · <b>WON</b> '+money(pf,true)+'. It is in your Bet log.' : res==='loss'?' · <b>LOST</b> '+money(pf,true)+'. It is in your Bet log.' : res==='partial'?' · <b>PARTIAL PAYOUT</b> '+(rec.free?money(pf,true):'$'+rec.parlay.payout.toFixed(2)+' ('+money(pf,true)+')')+'. It is in your Bet log.' /* v5.11 (review): a free entry shows its winnings only */ : ' · not played yet. It is in your Bet log: when it is over, set how many hit there.');
+  try{ savedToast('✓ Saved: '+rec.name+' · $'+stake.toFixed(2)+' at '+bookLabel(book)); }catch(e){} }
+(function(){ const g=id=>document.getElementById(id); if(!g('addBetPanel') || !g('abParSave')) return;
+  const grid=g('abType').closest('.ab-grid'); ebTwWire(grid);   // v5.09's link, as for single bets (no Odds box here, and Free entry is not its Free bet tick: To win = Pays − Entry either way)
+  { const d=g('abParDay'); if(d && !d.value) d.value=ctDay(Date.now()); }
+  g('abParPlacedNow').addEventListener('click',()=>{ const i=g('abParPlaced'), now=Date.now(); i.dataset.at=new Date(now).toISOString(); i.value=placedLocalVal(i.dataset.at); i.dataset.v=i.value; });   // as Placed now above (v4.73)
+  ['abParResult','abParFree'].forEach(id=>g(id).addEventListener('change',()=>{ g('abParPaid').value=''; }));   // v5.11 (review): a Paid $ typed for one result, or before the Free entry tick (it then means the winnings), is not carried over (a $2 Partial left in it was saved as WON −$3.00); runs before the grid's abParSync below
+  ['input','change'].forEach(k=>grid.addEventListener(k,e=>{ if(e.target.closest('.ab-par')) abParSync(); }));
+  g('abParSave').addEventListener('click',abParSave);
 })();
 
 /* ============ v2.88: results calendar (Performance tab) ============ */
@@ -12861,6 +12998,7 @@ function abFair(f){
   return {fair, mkt, src, ex, X, mktSrc};
 }
 async function abAsk(manual){
+  if(abIsPar()) return;   // v5.11: a parlay is not priced, so nothing is asked of the exchanges (the single-bet fields under it are out of sight)
   const f=abRowFields(), msg=$ab('abAskMsg');
   if(!f.game){ if(manual) msg.textContent='pick the game first'; return; }
   if(f.kind==='prop' && (!f.name||f._line==null||!String(f.market).replace(/^[+-]?[\d.]+\s*/,''))){ if(manual) msg.textContent='add the player, stat and line'; return; }
@@ -12894,7 +13032,7 @@ async function abAsk(manual){
 }
 function abScheduleAsk(){ clearTimeout(abAskTimer); abAskTimer=setTimeout(()=>abAsk(false), 1200); }
 function abUpdate94(){
-  if(!abR) return;
+  if(!abR || abIsPar()) return;   // v5.11: no BET / SKIP verdict for a parlay; switching back to a single-bet Type works it out again (abFields)
   const f=abRowFields(); Object.assign(abR, f);
   const cfg=cfgRead(), out=$ab('abVerdict'), L=[];
   const outCut=(parseFloat($ab('swOutlier').value)||15)/100, gapCut=(parseFloat($ab('swGap').value)||8)/100;
@@ -13343,7 +13481,7 @@ setTimeout(()=>{
 },0);
 document.querySelector('.tab[data-view="v-live"]').addEventListener('click',()=>renderLive(true));
 // v3.07: + Add a bet lives on its own tab — opening the tab loads the games and the editor (the panel's own "open" can fire before the page is listening)
-document.querySelector('.tab[data-view="v-add"]').addEventListener('click',()=>{ const p=document.getElementById('addBetPanel'); if(p){ p.open=true; p.dispatchEvent(new Event('toggle')); const toSport=()=>{ const sp=document.getElementById('abSport')||p; const r=sp.getBoundingClientRect(); if(r.top<0 || r.top>innerHeight*0.5) window.scrollTo(0, Math.max(0, r.top+scrollY-90)); }; setTimeout(toSport,150); setTimeout(toSport,450); } });   /* v5.00 (Karens: + Add a bet opened mid-form, Sport and Game out of sight) */
+document.querySelector('.tab[data-view="v-add"]').addEventListener('click',()=>{ const p=document.getElementById('addBetPanel'); if(p){ p.open=true; p.dispatchEvent(new Event('toggle')); const toSport=()=>{ const sp=document.getElementById(abIsPar()?'abType':'abSport')||p; /* v5.11: a parlay hides Sport, so its Type box (the same row) is the one brought into view */ const r=sp.getBoundingClientRect(); if(r.top<0 || r.top>innerHeight*0.5) window.scrollTo(0, Math.max(0, r.top+scrollY-90)); }; setTimeout(toSport,150); setTimeout(toSport,450); } });   /* v5.00 (Karens: + Add a bet opened mid-form, Sport and Game out of sight) */
 document.querySelectorAll('.tab[data-view="v-paste"]').forEach(t=>t.addEventListener('click',()=>{ const p=document.getElementById('pastePanel'); if(p) p.open=true; }));   /* v4.95: the Paste tab is that one panel, so tapping the tab opens it; everything else stays closed until tapped */
 document.addEventListener('click',e=>{ if(e.target.closest('#logFilterOff')){ logDayFilter=null; logBandFilter=null; renderLog(); } });
 document.addEventListener('click',e=>{ const t=e.target.closest && e.target.closest('button.lbf'); if(!t) return; e.preventDefault(); e.stopPropagation();   /* v4.66: a band: only its bets, in the Bet log */
