@@ -200,7 +200,7 @@ async function newPage(b, file, W, dev){
     await p.fill('#plM1', o.m1==null?'':String(o.m1)); await p.fill('#plM2', o.m2==null?'':String(o.m2)); await p.fill('#plDay', o.day); await p.fill('#plLegs', o.legs||'');
     const n0=await p.evaluate(()=>logged.length); await p.click('#plAdd'); await pause(300);
     return p.evaluate(n0=>logged.length>n0?{rec:JSON.parse(JSON.stringify(logged[logged.length-1])), i:logged.length-1}:null, n0); }
-  const IGN=['id','at'], IGD=IGN.concat(['dateSet']);   // v5.11 (review): the form also keeps the Game day typed (dateSet), which the panel leaves out (asked of the owner)
+  const IGN=['id','key','at'], IGD=IGN.concat(['dateSet']);   // v5.11 (review): the form also keeps the Game day typed (dateSet), which the panel leaves out (asked of the owner)   // v5.11 (bug fixes): a parlay's key is made from its own id (parlay|+id), so it differs as the id does
   const PP=await panel({book:'PrizePicks', picks:3, stake:5, all:25, day:'2026-11-15', legs:LEGS});
   await toAdd(); const AP=await par({picks:3, stake:5, all:25, day:'2026-11-15', legs:LEGS});
   check('Not played yet, nothing else set: the very record the panel saves (field by field, ignoring the id and the save time), plus dateSet: true (the Game day typed is its day)', PP && AP.rec && canon(AP.rec,IGD)===canon(PP.rec,IGD) && AP.rec.dateSet===true, {panel:PP&&PP.rec, form:AP.rec, diff:PP&&AP.rec?diffs(PP.rec,AP.rec,IGN):null});
