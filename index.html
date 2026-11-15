@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.08</title>
+<title>0xBeta Screener v5.09</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1618,6 +1618,13 @@ body[data-view]:not([data-view="v-board"]) #tbFoldBtn{display:none !important}
 .sc-alt img.blogo{height:16px; width:auto} .sc-alt b{font-size:14px} .sc-alt small{color:var(--soft); font-weight:600}
 .sc-alt.ok{border-color:var(--live)} .sc-alt.ok small{color:var(--live)}
 .sc-alt.over{opacity:.6} .sc-alt.old{border-style:dashed}
+/* v5.09: also at: last seen, reference only, the check button, notes */
+.sc-alt.seen{opacity:.6} .sc-alt.ref{opacity:.75; border-style:dotted} a.sc-alt{color:inherit; text-decoration:none}
+.sc-alt-chk{min-height:32px; padding:4px 10px; border:1px dashed var(--rule); border-radius:10px; background:transparent; color:var(--accent); font:inherit; font-size:12.5px; font-weight:600; cursor:pointer}
+.sc-alt-chk:disabled{opacity:.6; cursor:default}
+.sc-alts-ref,.sc-alts-notes{flex-basis:100%; display:flex; flex-wrap:wrap; align-items:center; gap:6px}
+.sc-alt-n{font-size:12px; color:var(--soft)} .sc-alt-n.good{color:var(--gain); font-weight:700}
+details.sc-alts-more{display:contents} details.sc-alts-more>summary{cursor:pointer; min-height:32px; display:inline-flex; align-items:center; padding:0 6px; font-size:12.5px; font-weight:600; color:var(--accent)}
 /* v4.97 (Las Karens): the Saved note above the bottom bar, a short tap guard, and thumb-sized buttons and 16px fields on a phone */
 #savedToast{position:fixed; left:50%; bottom:calc(var(--dockH,110px) + 14px); transform:translateX(-50%) translateY(20px); opacity:0; pointer-events:none; z-index:60; background:var(--live); color:#fff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:22px; box-shadow:0 6px 22px rgba(0,0,0,.25); transition:opacity .2s, transform .2s; max-width:calc(100vw - 32px); text-align:center}
 #savedToast.on{opacity:1; transform:translateX(-50%) translateY(0)}
@@ -1737,7 +1744,7 @@ small{font-size:max(12px, calc(1em / 1.2))}   /* v5.04: the browser’s own smal
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.08</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.09</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2563,7 +2570,7 @@ small{font-size:max(12px, calc(1em / 1.2))}   /* v5.04: the browser’s own smal
 
 </div>
 <script>
-const SCREENER_VERSION='v5.08';
+const SCREENER_VERSION='v5.09';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -4696,19 +4703,89 @@ function mathKey(r){ return (r&&r.outlier?-1:0)+(r&&(r.noMkt||(r.mktProb==null&&
    the other"): the same bet (same player or team, stat, line and side, same game day: pxKey) at your other books, cheapest first, under the card's price.
    Each is checked against La Contadora's "OK to" for that book (its own fee), from the card's chance. Display only: the card's stake, order and
    decision are unchanged; a tap opens that book's slip. Hoisted: the cards call it. */
-function altBooksOf(r){ if(!r || r.kind==='parlay' || !(r.offeredProb>0)) return []; const k=pxKey(r), cfg=cfgRead(), mine=String(cfg.books||'').split(',').map(x=>x.trim()).filter(Boolean);
-  const seen=new Set([bookLabel(r.book)]), out=[];
-  (lastRows||[]).forEach(x=>{ if(!x || x===r || !(x.offeredProb>0) || x.offeredProb>=1 || pxKey(x)!==k) return; const bl=bookLabel(x.book); if(!bl || seen.has(bl)) return;
-    if(mine.length && !mine.some(m=>bookIsMine(x.book,m))) return; if(x.removed || (x.gameInfo && (x.gameInfo.state==='in'||x.gameInfo.state==='post'))) return;
-    seen.add(bl); const mx=r.fairProb!=null?maxPriceFor(okProbR(r), x.book, cfg.eMin):null, old=(()=>{ try{ return rowOld(x); }catch(e){ return false; } })();
-    const gap=r.mktProb!=null&&isFinite(r.mktProb)?Math.abs(x.offeredProb-r.mktProb):null, far=gap!=null && gap>0.08+1e-9;   /* v5.01 (Sally, agreed): a backup alarm, after the exact identity checks: the raw shown price more than 8 points from the card's no-vig market; no market price = no flag */
-    if(far){ try{ x.verifyLine={gap:+gap.toFixed(4), price:+x.offeredProb.toFixed(4), market:+r.mktProb.toFixed(4), book:bl, quoteAt:rowSeenAt(x)||null, marketAt:rowSeenAt(r)||null, why:'price far from the market'}; }catch(e){} } else if(x.verifyLine) delete x.verifyLine;
-    out.push({x, book:bl, p:x.offeredProb, odds:x.offeredRaw, ok:mx!=null && x.offeredProb<=mx+1e-9 && !old && !far /* v5.01: a stale or far-off price is never OK ✓ */, mx, old, far, gap, mkt:r.mktProb}); });
-  return out.sort((a,b)=>((a.old||a.far)?1:0)-((b.old||b.far)?1:0) || a.p-b.p).slice(0,4); }   /* v5.01: never first when stale or far off */
-function altBooksHtml(r){ const A=altBooksOf(r); if(!A.length) return ''; const P=x=>(x*100).toFixed(1)+'%';
-  return '<div class="sc-alts"><span class="sc-alts-k">also at</span>'+A.map(a=>{ const logo=(()=>{ try{ const u=bookLogo(a.book); return u?'<img class="blogo" src="'+u+'" alt="">':''; }catch(e){ return ''; } })();
-    const tip=bookLabel(a.book)+' '+fmtOdds(Math.round(americanOf(a.p)))+': price '+P(a.p)+(a.mx!=null?(a.p<=a.mx+1e-9?' · under La Contadora\u2019s OK to '+P(a.mx)+' at this book (its fee included)':' · over La Contadora\u2019s OK to '+P(a.mx)+' at this book: look elsewhere'):'')+(a.old?' · this price is old: check it':'')+(a.far?' · ⚠ VERIFY LINE/MARKET · price '+P(a.p)+', market '+P(a.mkt)+' · gap '+(a.gap*100).toFixed(1)+' pts':'')+'. Tap to open it.';   /* v5.01 */
-    return '<span class="sc-alt book'+(a.ok?' ok':' over')+(a.old?' old':'')+'" role="button" tabindex="0" data-alt-idx="'+a.x.idx+'" title="'+esc(tip)+'">'+logo+'<b>'+esc(String(a.odds||fmtOdds(Math.round(americanOf(a.p)))))+'</b><small>'+P(a.p)+(a.far?' · ⚠ verify line':a.ok?' · OK ✓':a.old?'':' · over')+(a.old?' · ⏱':'')+'</small></span>';   /* v5.01 */ }).join('')+'</div>'; }
+/* v5.09 (Alonzo, 11/13: "novig is at 70%, so, you can do that also?"; "best bet on top, then the other under ... but only the part of same but 70%";
+   agreed with Sally, CC-2026-11-15-01/02 and her replies; owner "Build", "As you think is best"): "also at" also lists the prices the Sentinels read at
+   Novig, Kalshi and Polymarket US (r._shopQ, r._altQ) and a one-tap check of those three for this bet (↻ check exchanges: one Worker /live call, 0
+   BettingPros calls, kept in r._altChk in memory only). Each price is one of:
+   - confirmed: a book you bet, read within shopLim (3 min; 90 s within 5 min of the start), not far from the market, at or under her OK to there → OK ✓;
+   - over: confirmed but over her OK to at that book;
+   - verify: more than 8 pts from the card's no-vig market (v5.01): ⚠ verify line, never OK ✓, never first;
+   - last seen: older than shopLim, time unknown, or a later check could not read it (busy, error, "not found"): grey, no ✓, "was OK" when it passed;
+   - reference only: a book not in Books you bet (and the card's own book when you do not bet it), on its own line, never called best.
+   Only a definite "no offer" or "line moved" (qFailState) removes a book's older price. Order: confirmed by La Contadora's EV after that book's fee
+   (fresher first on a tie), then over, verify, last seen. A confirmed price 0.3 pts of her EV better than the card says "Better confirmed price at X ·
+   Send the Sentinels to update the card". Display only: nothing here moves the card or sizes a stake (I bet this does). */
+function altBooksAll(r){ if(!r || r.kind==='parlay' || !(r.offeredProb>0)) return {mine:[], ref:[], gone:[], miss:[]};
+  const k=pxKey(r), cfg=cfgRead(), now=Date.now(), lim=shopLim(r,now), mineL=String(cfg.books||'').split(',').map(x=>x.trim()).filter(Boolean);
+  const isMine=b=>!mineL.length || mineL.some(m=>bookIsMine(b,m)), act=r.fairProb!=null?okProbR(r):null, C=r._altChk||null, by={};
+  const own=LIVE_BOOK(r.book)||bookLabel(r.book);
+  const put=e=>{ const id=LIVE_BOOK(e.book)||e.book; if(id===own) return; const o=by[id]; if(!o || (e.at||0)>(o.at||0)) by[id]=e; };
+  (lastRows||[]).forEach(x=>{ if(!x || x===r || !(x.offeredProb>0) || x.offeredProb>=1 || pxKey(x)!==k) return; const bl=bookLabel(x.book); if(!bl) return;
+    if(x.removed || (x.gameInfo && (x.gameInfo.state==='in'||x.gameInfo.state==='post'))) return;
+    put({x, book:bl, p:x.offeredProb, odds:x.offeredRaw, at:rowSeenAt(x)||null, src:'board'}); });
+  [r._altQ, r._shopQ, C&&C.Q].forEach(M=>Object.keys(M||{}).forEach(n=>{ const q=M[n]; if(!q || q._unread || !(q.price>0 && q.price<1)) return;
+    const t0=+q._at||Date.parse(q.at)||null, at=t0?Math.min(t0,now):null; /* the Worker's clock can run ahead of this device */ put({x:null, q, book:n, p:q.price, odds:fmtOdds(Math.round(americanOf(q.price))), at, src:'live'}); }));
+  const gone=[], miss=[];
+  /* an older price = one that was already there when the check ran (stamped _altSeen by altCheck), or a board price read before it; timestamps from two clocks are not compared */
+  const before=e=>e.src==='live'?!!(e.q && C && e.q._altSeen===C.at):!!(C && e.at && e.at<=C.at);
+  if(C) Object.keys(C.miss||{}).forEach(n=>{ const m=C.miss[n], id=LIVE_BOOK(n)||n, e=by[id];
+    if(m.state==='no_offer' || m.state==='gone_line_moved'){ if(e && before(e)) delete by[id]; gone.push({book:n, m}); }
+    else if(e && before(e)) e.why=m.note||'could not refresh'; else if(!e) miss.push({book:n, m}); });
+  const mine=[], ref=[];
+  Object.values(by).forEach(e=>{ const mx=act!=null?maxPriceFor(act, e.book, cfg.eMin):null, f=feeRate(e.book,e.p,cfg.fees), net=r.fairProb!=null?actNetOf(r.fairProb, r.mktProb, e.p, f):null;
+    const gap=r.mktProb!=null&&isFinite(r.mktProb)?Math.abs(e.p-r.mktProb):null, far=gap!=null && gap>0.08+1e-9, passes=mx!=null && e.p<=mx+1e-9;
+    const fresh=!!e.at && !e.why && now-e.at<=lim, old=!fresh, state=far?'verify':!fresh?'seen':passes?'ok':'over';
+    if(far && e.x){ try{ e.x.verifyLine={gap:+gap.toFixed(4), price:+e.p.toFixed(4), market:+r.mktProb.toFixed(4), book:e.book, quoteAt:e.at, marketAt:rowSeenAt(r)||null, why:'price far from the market'}; }catch(_){} } else if(e.x && e.x.verifyLine) delete e.x.verifyLine;   /* v5.01 */
+    const a=Object.assign(e, {mx, net, gap, far, mkt:r.mktProb, passes, fresh, old, state, ok:state==='ok', age:e.at?now-e.at:null});
+    (isMine(e.book)?mine:ref).push(a); });
+  const rank={ok:0, over:1, verify:2, seen:3}, cmp=(a,b)=>rank[a.state]-rank[b.state] || ((b.net==null?-9:b.net)-(a.net==null?-9:a.net)) || ((b.at||0)-(a.at||0));
+  mine.sort(cmp); ref.sort(cmp);
+  if(!isMine(r.book)) ref.unshift({card:true, book:bookLabel(r.book), p:r.offeredProb, odds:r.offeredRaw, state:'card'});   /* the card's own book, when you do not bet it: reference only (Sally c) */
+  return {mine, ref, gone, miss}; }
+function altBooksOf(r){ return altBooksAll(r).mine; }
+function altBooksHtml(r){ if(!r || r.kind==='parlay' || !(r.offeredProb>0)) return '';
+  const W=altBooksAll(r), A=W.mine, C=r._altChk||null, P=x=>(x*100).toFixed(1)+'%', busy=!!(window._altBusy && window._altBusy[pxKey(r)]), can=r.fairProb!=null && ['Novig','Kalshi','Polymarket US'].some(n=>{ try{ return !!liveDesc(Object.assign(rowAsBet(r),{book:n, id:'t'})); }catch(e){ return false; } });
+  if(!A.length && !W.ref.length && !can && !C) return '';
+  const chip=a=>{ const logo=(()=>{ try{ const u=bookLogo(a.book); return u?'<img class="blogo" src="'+u+'" alt="">':''; }catch(e){ return ''; } })(), ag=a.age!=null?ageWords(a.age):'';
+    if(a.card) return '<span class="sc-alt book ref" title="'+esc(bookLabel(a.book)+' is where this card was found. It is not in Books you bet, so it is shown for reference only')+'">'+logo+'<b>'+esc(String(a.odds||''))+'</b><small>'+P(a.p)+' · this card · not in your books</small></span>';
+    const word=a.state==='ok'?'OK ✓':a.state==='over'?'over':a.state==='verify'?'⚠ verify line':(a.passes?'last seen · was OK':'last seen')+(a.why?' · could not refresh':'');
+    const tip=bookLabel(a.book)+' '+fmtOdds(Math.round(americanOf(a.p)))+': price '+P(a.p)+(a.mx!=null?(a.p<=a.mx+1e-9?' · under La Contadora’s OK to '+P(a.mx)+' at this book (its fee included)':' · over La Contadora’s OK to '+P(a.mx)+' at this book: look elsewhere'):'')+
+      (a.net!=null?' · her EV here '+(a.net>=0?'+':'')+P(a.net)+' after fees':'')+(a.at?' · read '+ag+' ago':' · price time unknown: check the book')+(a.why?' · could not refresh: '+a.why:'')+
+      (a.state==='seen'?' · not confirmed now'+(a.passes?' (the last-seen price was inside her limit)':''):'')+(a.far?' · ⚠ VERIFY LINE/MARKET · price '+P(a.p)+', market '+P(a.mkt)+' · gap '+(a.gap*100).toFixed(1)+' pts':'')+'. Tap to open it; I bet this sizes the stake at its price.';
+    const cls='sc-alt book'+(a.ok?' ok':' over')+(a.old?' old':'')+(a.state==='seen'?' seen':'')+(a.far?' far':'');
+    const body=logo+'<b>'+esc(String(a.odds||fmtOdds(Math.round(americanOf(a.p)))))+'</b><small>'+P(a.p)+' · '+word+(a.old&&a.at?' · ⏱ '+ag:a.old?' · ⏱ ?':'')+'</small>';
+    if(a.x) return '<span class="'+cls+'" role="button" tabindex="0" data-alt-idx="'+a.x.idx+'" title="'+esc(tip)+'">'+body+'</span>';
+    const src=LIVE_BOOK(a.book), u=(()=>{ try{ const v=bookUrl(src, a.q, 0); return v && /^(https:\/\/|novigapp:\/\/)/.test(v)?v:null; }catch(e){ return null; } })();
+    return u?'<a class="'+cls.replace(' book',' sc-link')+'" href="'+esc(u)+'"'+(/^https:/.test(u)?' target="_blank" rel="noopener"':'')+' title="'+esc(tip)+'">'+body+'</a>':'<span class="'+cls+'" title="'+esc(tip)+'">'+body+'</span>'; };
+  const show=A.slice(0,4), more=A.slice(4), top=A.find(a=>a.ok), cardNet=r.actNet!=null&&isFinite(r.actNet)?r.actNet:null;
+  const notes=[];
+  if(top && top.net!=null && (cardNet==null || top.net>cardNet+0.003)) notes.push('<span class="sc-alt-n good">Better confirmed price at '+esc(bookLabel(top.book))+' · Send the Sentinels to update the card</span>');
+  if(C && !busy && !top) notes.push('<span class="sc-alt-n">No enabled book currently inside La Contadora’s limit'+(r.stake>0 && !rowOld(r)?' besides this card':'')+'</span>');
+  W.gone.forEach(g=>notes.push('<span class="sc-alt-n">'+esc(bookLabel(g.book))+' · '+(g.m.state==='no_offer'?'no offer now':'your '+esc(g.m.line||'line')+' moved'+((g.m.listed||[]).length?' to '+esc(g.m.listed.join(', ')):''))+'</span>'));
+  W.miss.forEach(g=>notes.push('<span class="sc-alt-n">'+esc(bookLabel(g.book))+' · could not check: '+esc(g.m.note||'no answer')+'</span>'));
+  if(C && C.err && !busy) notes.push('<span class="sc-alt-n">⚠ '+esc(C.err)+'</span>');
+  const btn=can?'<button type="button" class="sc-alt-chk" data-pck="'+esc(pxKey(r))+'" data-idx="'+r.idx+'"'+(busy?' disabled':'')+' title="Read this bet now at Novig, Kalshi and Polymarket US (no BettingPros calls). It changes nothing on the card">'+(busy?'checking…':'↻ check exchanges')+'</button>':'';
+  return '<div class="sc-alts"><span class="sc-alts-k">also at</span>'+show.map(chip).join('')+
+    (more.length?'<details class="sc-alts-more"><summary>+'+more.length+' more</summary>'+more.map(chip).join('')+'</details>':'')+btn+
+    (W.ref.length?'<div class="sc-alts-ref"><span class="sc-alts-k">reference only · not in your books</span>'+W.ref.map(chip).join('')+'</div>':'')+
+    (notes.length?'<div class="sc-alts-notes">'+notes.join('')+'</div>':'')+'</div>'; }
+async function altCheck(r){ if(!r) return; const k=pxKey(r), B=(window._altBusy=window._altBusy||{}); if(B[k]) return; B[k]=1; try{ rerenderWithFilters(); }catch(_){}
+  const ownP=r.swap?r.swap.orig.offeredProb:r.offeredProb, Q={}, miss={}; let err='';
+  try{ const jobs=['Novig','Kalshi','Polymarket US'].map(n=>[n, liveDesc(Object.assign(rowAsBet(r),{book:n, id:'alt:'+r.idx+':'+LIVE_BOOK(n)}))]).filter(x=>x[1]);
+    if(!jobs.length) err='the exchanges cannot be asked about this bet (its teams are not known yet, or it is a Draw)';
+    else { const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(jobs.map(x=>x[1]))), {headers:apiHeaders()});
+      if(!res.ok) err='could not read the exchanges (the Worker answered '+res.status+'); the prices shown are the ones the app already had';
+      else { const R=((await res.json())||{}).results||{};
+        jobs.forEach(([n,d])=>{ const q=R[d.id];
+          if(q && q.ok && q.price>0 && q.price<1){ if(suspectQ(q, r.fairProb, ownP, r.mktProb)) miss[n]={state:'unreadable', note:'its price looks like a different market'}; else Q[n]=Object.assign({}, q, {_at:Date.now()}); }
+          else { const st=q?qFailState(q):{state:'unreadable'}; miss[n]={state:st.state, line:st.line, listed:st.listed, note:q?String(q.note||'no match').replace(/^(Kalshi|Polymarket|Novig): /,'').slice(0,90):'no answer'}; } }); } }
+  }catch(e){ err='could not read the exchanges (no answer from the Worker); the prices shown are the ones the app already had'; }
+  delete B[k]; const prev=r._altChk, t=Date.now();
+  if(!err) [r._shopQ, r._altQ, prev&&prev.Q].forEach(M=>Object.values(M||{}).forEach(q=>{ if(q) q._altSeen=t; }));   /* the prices that existed before this check */
+  r._altChk=err?Object.assign({}, prev||{Q:{}, miss:{}, at:0}, {err}):{at:t, Q, miss, err:''};   /* a failed check keeps what the last good one found */
+  try{ rerenderWithFilters(); }catch(_){} }
+document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return; const b=t.closest('.sc-alt-chk'); if(!b) return; e.preventDefault(); e.stopPropagation();
+  const r=lastRows.find(x=>x.idx===+b.dataset.idx && pxKey(x)===b.dataset.pck) || lastRows.find(x=>pxKey(x)===b.dataset.pck && !x.hiddenDup); if(r) altCheck(r); }, true);
 function scWord(t){ return t>=75?'STRONG':t>=50?'GOOD':'THIN'; }
 /* v4.93 (agreed with Sally 11/13, CC-2026-11-13-21/22, owner "BUILD, all"; Alonzo: "at 39.2, how do i have edge on a coin flip?"): how a card's EV
    and score are SHOWN. actNet, the stake, the order and the score itself never change; only the words and the colour.
