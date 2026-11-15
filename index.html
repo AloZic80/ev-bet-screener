@@ -1757,6 +1757,35 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 }
 @media (max-width:999px){ tr.editor .eb-tw-chk:empty{display:block; height:0} }   /* phone and tablet: with no line to show it still ends the row, so Game day starts at the left, on the screen (as before v5.10) */
 #tbody tr.editor .eb-tw-chk>span{max-width:calc(100vw - 93px)}   /* v5.10 (final check): the board shown as a table: its scrolling area is 42 px in on both sides and the line starts 9 px into the cell, so a long line stays on the screen (it lost 13 to 27 px on a phone) */
+/* v5.10 (owner, Sun 11/15: "id say 11/11. So, do your other recommendations to tell the other Brujo and such apart. BUILD IT ALL"): My plan in Settings, the calm
+   "Outside your plan" line (muted, never red) on cards, table rows and the bet form, "· outside your plan" on the tabs under it, Your 1,000-bet blocks in Performance and
+   the exploratory 2.5% band note in Reports. Display only: no stake, floor or BET / SKIP changes. Text 12 px or more. */
+.plan-row{display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; font-size:14px}
+.plan-row input{max-width:100%; box-sizing:border-box; font-family:inherit; font-size:14px; padding:8px 10px; border:1px solid var(--rule); border-radius:7px; background:var(--panel); color:var(--ink); font-variant-numeric:tabular-nums}   /* as the other Settings fields (16px on a phone, v5.00) */
+.plan-row input[type=number]{width:84px}
+.plan-g{display:inline-flex; align-items:center; gap:6px; white-space:nowrap; max-width:100%}   /* the number keeps its %, and "since" its date, when the row wraps on a phone */
+.plan-hint{margin:8px 0 0}
+.plan-out{display:block; flex-basis:100%; font-size:12px; font-weight:400; font-style:normal; letter-spacing:0; text-transform:none; color:var(--soft); line-height:1.35; white-space:normal; overflow-wrap:anywhere}
+.c-name .plan-out{margin-top:3px}
+.ab-verdict .plan-out{margin:2px 0 6px}
+.editor .eb-plan{flex-basis:100%} .editor .eb-plan:empty{display:none} .ab-host .eb-plan{display:none}   /* + Add a bet says it in its verdict */
+.mode-plan{font-weight:400}
+.pc-plan{font-weight:400}
+.pb-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)); gap:10px; margin:10px 0}
+.pb-card{border:1px solid var(--rule); border-radius:10px; padding:10px 12px; min-width:0}
+.pb-card h3{margin:0 0 4px; font-size:14px}
+.pb-card .sc-verdict{font-size:13px; margin:8px 0 0}
+.pb-l{font-size:13px; margin:4px 0 0; overflow-wrap:anywhere}
+.pb-l.meta{font-size:12px}
+.pb-note{font-size:13px; color:var(--soft); margin:8px 0 0; max-width:none}
+.pb-panel h2 .pb-from{font-weight:inherit}
+.rp-b25-note{font-size:12px}
+/* v5.10 (fixer): the tab words under the tab name on a computer (1,000 px keeps one row); on a phone one muted line under the tabs instead (3 rows, not 5),
+   the words kept in each button for screen readers; the #1 math pick banner’s plan words, muted */
+.mode-plan-line{display:none; flex-basis:100%; font-size:12px; font-weight:400; color:var(--soft); line-height:1.35}
+@media (min-width:641px){ #modeBar .mode-plan{display:block} }
+@media (max-width:640px){ #modeBar .mode-plan{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap} #modeBar .mode-plan-line{display:block} }
+.top-hint .th-plan{color:var(--soft); font-weight:400}
 </style>
 </head>
 <body>
@@ -2115,6 +2144,11 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
   <h2>Your rules at a glance <span class="cn-chip">saved in this browser · no secrets</span></h2>
   <div class="rg-grid" id="rgGrid"></div>
   <p class="hint" style="margin:6px 0 0">Change any of them in Screens and Stake sizing below; this updates as you type. A mode does not change any of them. Each tab lists only its own bets, by La Contadora’s chance: 😴 Boring = High Cover + Heavy Favorite (75%+), 💪 Machín = Strong + Solid + Lean (60–75%), 🪙 Volado = Slight Lean + On the Line (50–60%), 🍀 Suertudo = Coin Flip (45–50%) and the ones that just missed (the smallest bet, 5 a day), 🔮 Brujo = Unlikely (under 45%) and the Hail Marys ($1 each, 3 a day).</p>
+</div>
+<div class="panel plan-panel" id="planPanel">   <!-- v5.10 (owner, Sun 11/15: "id say 11/11 ... BUILD IT ALL"): My plan, a reminder only (saved and synced with the settings) -->
+  <h2>My plan <span class="sub">a reminder only</span></h2>
+  <div class="plan-row"><label for="planMin">La Contadora’s chance at least</label><span class="plan-g"><input id="planMin" type="number" value="50" step="1" min="0" max="99" title="0 turns the reminder off"><span>%</span></span><span class="plan-g"><span aria-hidden="true">·</span><label for="planSince">since</label><input id="planSince" type="date" value="2026-11-11"></span><input id="planSetAt" type="hidden" value=""><!-- v5.10 (fixer): when the date was last changed here (empty = never: 11/15 12:40 AM CT, PLAN_SET_AT), for the blocks’ head-start note --></div>
+  <p class="hint plan-hint">A reminder only: cards below it say ‘Outside your plan’. Stakes and BET / SKIP do not change.</p>
 </div>
 <details class="panel fold" id="layoutPanel">   <!-- v3.54 -->  <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>Layout <span class="sub">how the screener fits this device</span></h2></summary>
@@ -2483,6 +2517,9 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
   <h2>📏 Scorecard <span class="sub">the 1,000-bet test · beat the close, then profit · research Makes and parlays kept out</span></h2>
   <div id="scoreBody"></div>
 </div>
+<div class="panel pb-panel" id="planBlocksPanel">   <!-- v5.10 (owner, 11/15: "id say 11/11 ... BUILD IT ALL"): Your 1,000-bet blocks, right under the Scorecard; worked out when Performance opens -->
+  <div id="planBlocks"><h2>Your 1,000-bet blocks</h2></div>
+</div>
 <div class="stats" id="statCards"></div>
 <div class="panel">
   <h2>Is the model honest?</h2>
@@ -2571,7 +2608,7 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
   <div id="rpHead"></div>
   <div id="rpSplit"></div>
   <h3 class="rp-h">Breakdown</h3>   <!-- v4.90: Reports step 2 -->
-  <div class="rp-ctl"><label class="rp-lab">By <select id="rpBy"><option value="sport">Sport</option><option value="book">Book</option><option value="kind">Bet type</option><option value="price">Price paid</option><option value="tab">Tab (her chance when taken)</option><option value="band">Band</option><option value="market">Market</option><option value="stm">Sport · type · market</option></select></label>   <!-- v5.07: + Market, Sport · type · market -->
+  <div class="rp-ctl"><label class="rp-lab">By <select id="rpBy"><option value="sport">Sport</option><option value="book">Book</option><option value="kind">Bet type</option><option value="price">Price paid</option><option value="tab">Tab (her chance when taken)</option><option value="band">Band</option><option value="market">Market</option><option value="stm">Sport · type · market</option><option value="band25">Band, 2.5% steps (exploratory)</option></select></label>   <!-- v5.07: + Market, Sport · type · market -->   <!-- v5.10: + Band, 2.5% steps (exploratory) -->
     <label class="rp-lab" id="rpPxWrap">Show price as <select id="rpPx"><option value="chance">Break-even chance, all in</option><option value="american">American odds, all in</option></select></label></div>
   <div id="rpBreak"></div>
   <h3 class="rp-h">Profit over time</h3><div id="rpChart"></div><div id="rpMonths"></div>
@@ -2937,6 +2974,8 @@ const RING={pLo:0.50, pHi:0.75, evLo:0.04, evHi:0.12, room:0.025, freshMs:10*60e
 const MODEL_ONLY={day:5, game:1};
 const LSML={day:3, game:1, below:0.45, gap:0.08};   /* v4.68 (agreed with ChatGPT, owner "BUILD" 11/11): long-shot moneylines (La Contadora under 45%) across every mode; moneylines with the model 8+ points above the market are research only */   /* v4.55: bets with no market price, a game day and a game */
 const POLICY={math:'act-v2', sent:'v3-actNet-nomkt'};   /* v4.54: sent v3 = v2-actNet with the Edge halved when there is no market price. Never compare band records across policies. */
+const PLAN_SET_AT=Date.parse('2026-11-15T00:40:00-06:00');   /* v5.10 (owner, Sun 11/15 about 12:40 AM CT: "id say 11/11 ... BUILD IT ALL"): the moment My plan was set. The 1,000-bet blocks’ head-start note counts block 1’s bets already settled then (their games played before that day). */
+const PLAN_DEF={min:50, since:'2026-11-11'};   /* v5.10: My plan’s defaults (Settings): La Contadora’s chance at least 50%, since 11/11. A reminder only: no stake, floor, Kelly, cap or BET / SKIP reads it. */
 let betMode='safe';
 (function(){ try{ const m=JSON.parse(localStorage.getItem('mbev.mode')||'null');
   if(m && MODES[m.mode]){ const today=new Date().toLocaleDateString('en-CA',{timeZone:'America/Chicago'});
@@ -3584,6 +3623,27 @@ function lsEdge(r){ return !!(r && r.pass && r.actProb!=null && r.actProb<LSML.b
    whether the price was live. Old bets have none: their tab is never guessed into the record (the CSV can show a labelled "derived" one). */
 function tabOfChance(a){ return (a==null || !isFinite(a)) ? null : a<0.45-1e-9 ? 'brujo' : a<0.50-1e-9 ? 'suertudo' : a<0.60-1e-9 ? 'volado' : a<0.75-1e-9 ? 'machin' : 'boring'; }
 function tabWord(t){ return ({boring:'Boring', machin:'Machín', volado:'Volado', suertudo:'Suertudo', brujo:'Brujo'})[t]||''; }
+/* v5.10 (owner, Sun 11/15: since 11/11 he bets only La Contadora’s 50% and up; Brujo and Suertudo stay, "just in case I'm feeling like I came back from
+   the future"; "do your other recommendations to tell the other Brujo and such apart. BUILD IT ALL"; scope v5.10 P1/P2): My plan (Settings): La Contadora’s
+   chance at least planMin %, since planSince. Display only: a calm, muted line on board cards, table rows and the bet form whose La Contadora chance (actProb,
+   the chance the tabs use) is under it, and “· outside your plan” on each chance tab whose whole range is under it. It never hides a card and never changes a
+   stake, the floor or BET / SKIP. 0 turns it off; before its date it is off. Hoisted: a render reads it. */
+function planCfg(){ const mi=document.getElementById('planMin'), si=document.getElementById('planSince'), mv=mi?mi.value:'', d=String((si&&si.value)||''), key=mv+'|'+d+'|'+Math.floor(Date.now()/60e3);
+  if(planCfg._k===key) return planCfg._v;   /* worked out again when a field changes or the minute turns (a board paint asks on every card; ctDay is the slow part) */
+  const v=parseFloat(mv), pc=isNaN(v)?PLAN_DEF.min:Math.max(0,Math.min(99,v)), since=/^\d{4}-\d{2}-\d{2}$/.test(d)?d:PLAN_DEF.since, today=ctDay(Date.now());
+  planCfg._k=key; return (planCfg._v={min:pc/100, pc, since, today, on:pc>0 && today>=since}); }
+function planDayTxt(d){ const m=String(d||'').match(/^(\d{4})-(\d{2})-(\d{2})$/); if(!m) return ''; return (+m[2])+'/'+(+m[3])+(m[1]!==planCfg().today.slice(0,4)?'/'+m[1]:''); }   /* 2026-11-11 → 11/11 (the year only when it is not this year) */
+function planOutTxt(P){ P=P||planCfg(); return 'Outside your plan · you bet '+(+P.pc.toFixed(1))+'% and up since '+planDayTxt(P.since); }
+function planOut(a, P){ P=P||planCfg(); return !!(P.on && a!=null && isFinite(a) && a<P.min-1e-9); }   /* the edge tabOfChance uses: 50.0% is inside a 50% plan */
+function planOutHtml(a, P, short){ P=P||planCfg(); return planOut(a,P) ? '<span class="plan-out" title="'+(short?esc(planOutTxt(P))+'. ':'')+'A reminder from Settings › My plan. Stakes and BET / SKIP do not change.">'+esc(short?'Outside your plan':planOutTxt(P))+'</span>' : ''; }   /* v5.10 (fixer): short = a table row’s narrow name column: “Outside your plan”, the whole line on hover (5 lines there, now 2) */
+function planTabOut(m, P){ P=P||planCfg(); const top=({clair:0.45, lucky:0.50, volado:0.60, safe:0.75})[m]; return !!(P.on && top!=null && top<=P.min+1e-9); }   /* the top of each chance tab’s range (tabOfChance): 🔮 Brujo under 45%, 🍀 Suertudo 45–50%, 🪙 Volado 50–60%, 💪 Machín 60–75%; a whole tab is outside a plan whose minimum is at or above its top */
+function planTabsPaint(){ const P=planCfg(), out=[]; document.querySelectorAll('#modeBar button[data-mode]').forEach(b=>{ let el=b.querySelector('.mode-plan'); if(!planTabOut(b.dataset.mode,P)){ if(el) el.remove(); return; }
+    if(!el){ el=document.createElement('small'); el.className='mode-plan'; } el.textContent=' · outside your plan'; el.title=planOutTxt(P)+' (a reminder only: stakes and BET / SKIP do not change)'; b.appendChild(el); out.push((MODES[b.dataset.mode]||{}).label||''); });   /* last in the button, after its count */   /* v5.10 (fixer): out = the tabs it named */
+  const bar=document.getElementById('modeBar'); if(!bar) return; let ln=bar.querySelector('.mode-plan-line');   /* v5.10 (fixer): on a phone the words leave the buttons for one muted line under them (CSS); the buttons keep them for screen readers */
+  if(!out.length){ if(ln) ln.remove(); return; }
+  if(!ln){ ln=document.createElement('span'); ln.className='mode-plan-line'; ln.setAttribute('aria-hidden','true'); const c=document.getElementById('contadora'); if(c && c.parentNode===bar) bar.insertBefore(ln, c); else bar.appendChild(ln); }
+  ln.textContent=(out.length===1?out[0]+' is':out.slice(0,-1).join(', ')+' and '+out[out.length-1]+' are')+' outside your plan'; ln.title=planOutTxt(P)+' (a reminder only: stakes and BET / SKIP do not change)'; }
+function planActOfBet(b, P){ P=P||planCfg(); const s=b&&b.snap, a=s&&s.act!=null?+s.act:NaN; if(!(a>0 && a<1)) return null; const d=planPlacedDay(b); return d && d>=P.since ? a : null; }   /* a saved bet: La Contadora’s saved chance, when it was placed on or after the plan’s date */
 function listedOf(r){ const board=/^(api:|paste)/.test(String(r && r.src || '')) && !r._fill /* v4.86 review: a book fill is your own bet, like before */;
   if(!board) return {tab:null, status:'own', classification:null, availability:null, policy:'tabs-v476'};
   const a=r.noAct ? null : okProb(r.actFair!==undefined ? r.actFair : r.fairProb, r.actMkt!==undefined ? r.actMkt : r.mktProb) /* the chance saved with it (snap.act): a changed line has its own */,
@@ -3670,7 +3730,7 @@ function topJumpOnce(mathTopHere, gAll){ const box=document.getElementById('plac
   const g=gAll!==undefined?gAll:lastRows.filter(ok).reduce((a,r)=>!a||mathKey(r)>mathKey(a)?r:a, null); if(!g) return hide();
   let fam=modeFamOf(g); if(fam==='hail') fam='clair'; if(!MODES[fam] || fam===betMode) return hide();
   if(!el){ el=document.createElement('div'); el.id='topHint'; el.className='top-hint'; box.parentNode.insertBefore(el, box); }
-  el.innerHTML='⭐ <b>The #1 math pick is under '+esc(String(MODES[fam].label||fam).trim())+'</b>'+(String(g.name||'').trim()?' · '+esc(String(g.name).trim()):'')+' <button type="button" class="top-hint-go" data-mode-go="'+fam+'">Show it ›</button>'; el.hidden=false; }
+  el.innerHTML='⭐ <b>The #1 math pick is under '+esc(String(MODES[fam].label||fam).trim())+'</b>'+(String(g.name||'').trim()?' · '+esc(String(g.name).trim()):'')+(planOut(g.actProb)?' <span class="th-plan" title="'+esc(planOutTxt())+' (a reminder only: stakes and BET / SKIP do not change)">· outside your plan</span>':'') /* v5.10 (fixer): My plan’s words, muted; which bet is #1 does not change */+' <button type="button" class="top-hint-go" data-mode-go="'+fam+'">Show it ›</button>'; el.hidden=false; }
 document.addEventListener('click', e=>{ const b=e.target.closest && e.target.closest('.top-hint-go'); if(!b) return; setMode(b.dataset.modeGo); window.scrollTo(0, Math.max(0, (document.querySelector('.board-panel')||document.body).getBoundingClientRect().top+scrollY-8)); });
 function modeFamOf(r){ if(!r) return 'safe';
   if(r.prior){ const t=r.prior.tier; return (t==='lucky' || t==='hail') ? t : r.pass ? passFam(r) : 'safe'; }   /* v4.76 */
@@ -3957,7 +4017,7 @@ function renderCore(rows,cfg){
     if(g!==lastGroup && !(cardsOn && (g===0||g===6||g===7))){
       lastGroup=g;
       const gr=document.createElement('tr'); gr.className='group-row';
-      gr.innerHTML='<td colspan="'+BOARD_COLS.length+'"><span class="glabel"><b>'+GROUP_NAMES[g]+(g===0&&boardView==='perf'?' · ◎ from every tab':g===0&&famNow==='hail'?' · 🔮 edge · long shots':g===0&&famNow==='old'?' · ⏱ old prices':g===0&&famNow==='awol'?' · 👻 not found at the book':'')+'</b> · '+groupCount[g]+(g===0?(boardView==='perf'?' · ✅ La Contadora: YES' /* v4.81 */:famNow==='awol'?' · the book could not find these: look first' /* v4.81 */:famNow==='old'?' · La Contadora said YES at the old price: check it first':' · ✅ La Contadora: YES'):'')+'</span></td>';   // v4.76: Place these says YES
+      gr.innerHTML='<td colspan="'+BOARD_COLS.length+'"><span class="glabel"><b>'+GROUP_NAMES[g]+(g===0&&boardView==='perf'?' · ◎ from every tab':g===0&&famNow==='hail'?' · 🔮 edge · long shots':g===0&&famNow==='old'?' · ⏱ old prices':g===0&&famNow==='awol'?' · 👻 not found at the book':'')+'</b> · '+groupCount[g]+(g===0?(boardView==='perf'?' · ✅ La Contadora: YES' /* v4.81 */:famNow==='awol'?' · the book could not find these: look first' /* v4.81 */:famNow==='old'?' · La Contadora said YES at the old price: check it first':' · ✅ La Contadora: YES'):'')+(g===0 && boardView!=='perf' && planTabOut(cfg.mode)?' · outside your plan' /* v5.10 */:'')+'</span></td>';   // v4.76: Place these says YES
       tb.appendChild(gr);
     }
     if(g===0 && !cardsOn){ const k=rowBand(r); if(k!==lastBand){ lastBand=k; const br=document.createElement('tr'); br.className='group-row band-row'; br.innerHTML='<td colspan="'+BOARD_COLS.length+'">'+bandHead(k)+'</td>'; tb.appendChild(br); } }   /* v4.76 */
@@ -4006,7 +4066,7 @@ function renderCore(rows,cfg){
     cells.name=
       '<td class="c-name"><div class="c-who">'+avatarHtml(r,'r:'+r.idx)+'<div><div class="pick">'+esc(r.name)+injTagHtml(r)+wxTagHtml(r)+'</div>'+   // v3.57: a picture; v3.78: injury flag
         (lnGet(pxKey(r))?'<div class="ln-text">📝 '+esc(lnGet(pxKey(r)))+'</div>':'')+lnBtnHtml(r,true)+   // v4.34: your note
-        (r.matchup?'<div class="meta">'+esc(r.matchup)+'</div>':'')+kick+
+        (r.matchup?'<div class="meta">'+esc(r.matchup)+'</div>':'')+kick+((isSkip && !r.prior)?'':planOutHtml(r.actProb, null, true)) /* v5.10: My plan’s reminder (a greyed-out row is already not to place) */ /* v5.10 (fixer): the short form in the narrow column */+
         (isSweet(r,swc)?'<span class="sweet" title="Inside your sweet-spot settings">🎯 SWEET SPOT</span>':'')+
         (r.tier?'<span class="x-chip '+r.tier+'" title="'+esc(extraLine(r).t)+'">'+(r.tier==='lucky'?'🍀 JUST MISSED':'🔮 HAIL MARY')+'</span>':'')+ringChipHtml(r)+legTagHtml(r)+   // v4.50
         (nTags?'<div><button class="ntog" data-nkey="'+esc(nKey)+'" aria-expanded="'+nOpen+'" title="Show or hide the notes for this bet">'+
@@ -4051,7 +4111,7 @@ function renderCore(rows,cfg){
   const pcBox=document.getElementById('placeCards');
   if(pcBox){
     const xHtml=cardsOn?extrasCardsHtml(luckyHtml,hailRows,cfg,mN):'';   // v4.50: 🍀 Just missed and 🔮 Hail Marys   // v4.51: each only in its own mode, in place of Place these
-    if(cardsOn && (cardsHtml.length || xHtml)){ pcBox.classList.add('sc-grid'); pcBox.innerHTML=(!nCards?'':'<div class="pc-head"><b>🦑 The Sentinels</b> · Place these'+(boardView==='perf'?' · ◎ Perfectas from every tab':famNow==='hail'?' · 🔮 edge · long shots':famNow==='old'?' · ⏱ old prices':famNow==='awol'?' · 👻 not found at the book':'')+' · '+nCards+'<span class="sc-sub">'+(boardView==='perf'?'✅ La Contadora: YES. The math says bet every card here.' /* v4.81 (Los Chismosos): not the open tab’s words */:famNow==='awol'?'👻 AWOL: the book could not find these on its last check. Look at the book first: if the bet is there at your price or better, La Contadora’s YES stands. A 🦑 Sentinels press that finds one sends it back to its tab.' /* v4.81 */:famNow==='old'?'⏱ Read more than 12 hours ago: La Contadora said YES at these prices. Check each price at the book first, or press 🦑 Send the Sentinels, reload the board or paste it again; a fresh price sends the card back to its tab.':'✅ La Contadora: YES. The math says bet every card here.') /* v4.76 */ /* v4.77: old prices */ +' Best first on Sort › Math, band by band; bet down the list until your daily max. STRONG (green), GOOD (blue), THIN (yellow: still clears your estimated EV floor, with less edge, price confirmation or freshness; the smallest stakes).</span></div>'+cardsHtml.join(''))+xHtml; /* v4.51: best bets are listed in Safe only, so the v4.48 mode note is gone from here */ pcBox.style.display=''; pcFillShots(); }   // v3.57: ESPN photos   // v4.21: Sentinels cards in a grid
+    if(cardsOn && (cardsHtml.length || xHtml)){ pcBox.classList.add('sc-grid'); pcBox.innerHTML=(!nCards?'':'<div class="pc-head"><b>🦑 The Sentinels</b> · Place these'+(boardView==='perf'?' · ◎ Perfectas from every tab':famNow==='hail'?' · 🔮 edge · long shots':famNow==='old'?' · ⏱ old prices':famNow==='awol'?' · 👻 not found at the book':'')+' · '+nCards+(boardView!=='perf' && planTabOut(cfg.mode)?' <span class="pc-plan">· outside your plan</span>' /* v5.10 */:'')+'<span class="sc-sub">'+(boardView==='perf'?'✅ La Contadora: YES. The math says bet every card here.' /* v4.81 (Los Chismosos): not the open tab’s words */:famNow==='awol'?'👻 AWOL: the book could not find these on its last check. Look at the book first: if the bet is there at your price or better, La Contadora’s YES stands. A 🦑 Sentinels press that finds one sends it back to its tab.' /* v4.81 */:famNow==='old'?'⏱ Read more than 12 hours ago: La Contadora said YES at these prices. Check each price at the book first, or press 🦑 Send the Sentinels, reload the board or paste it again; a fresh price sends the card back to its tab.':'✅ La Contadora: YES. The math says bet every card here.') /* v4.76 */ /* v4.77: old prices */ +' Best first on Sort › Math, band by band; bet down the list until your daily max. STRONG (green), GOOD (blue), THIN (yellow: still clears your estimated EV floor, with less edge, price confirmation or freshness; the smallest stakes).</span></div>'+cardsHtml.join(''))+xHtml; /* v4.51: best bets are listed in Safe only, so the v4.48 mode note is gone from here */ pcBox.style.display=''; pcFillShots(); }   // v3.57: ESPN photos   // v4.21: Sentinels cards in a grid
     else { pcBox.innerHTML=''; pcBox.style.display='none'; }
     avFillSoon();   // v3.57: and on the board's rows
     injFillSoon();   // v3.78: injury flags
@@ -4969,7 +5029,7 @@ function placeCardHtml(r,cfg,o){
       '<div class="pc-nm" title="'+esc(r.name)+'">'+esc(r.name)+(code&&code!==String(r.name||'').toUpperCase()?' <span class="sc-tm">'+esc(code)+'</span>':'')+'</div>'+
       '<div class="sc-stat" title="'+esc(mname)+'">'+esc(statTxt)+'</div></div>'+
       '<div class="sc-game"><b>'+esc(giWhen(gi)||'game time not found')+'</b><span>'+esc(gameTxt)+'</span></div></div>'+
-    '<div class="sc-tags">'+cvChipActHtml(r)+tags+'</div>'+   // v4.31: Augi's cover band; v4.88: La Contadora's chance
+    '<div class="sc-tags">'+cvChipActHtml(r)+planOutHtml(r.actProb) /* v5.10: My plan’s reminder, under her chance */+tags+'</div>'+   // v4.31: Augi's cover band; v4.88: La Contadora's chance
     '<div class="sc-bet"><div class="sc-pick">'+esc(pickTxt)+(X?'':impTagHtml(r))+'</div>'+   // v4.10's line: the price as a %, OK to / look elsewhere, the math on hover
       '<div class="sc-money"><b>'+(st>0?'$'+st.toFixed(2):(r.hold&&!X)?'$0':'—')+'</b><span>'+((r.hold&&!X&&!(st>0))?(r.hold.why==='awol'?'if found':'if refreshed')+': up to $'+r.hold.stake.toFixed(2) /* v4.83 */:pay!=null?('wins $'+Math.max(0,pay-st).toFixed(2)+(isX?' · back $'+pay.toFixed(2):'')):'stake' /* v4.97: "wins" is always the profit, as at the book; an exchange also says what comes back */)+'</span>'+(lim?'<span class="sc-lim"'+(r.capBy&&!X?' title="'+esc(capDetail(r))+'"':'')+'>'+esc(lim)+'</span>':'')+'</div>'+   /* v5.01: the detail on hover */
       (()=>{ const hl=slip?slipLinkFor(r,st):null;   // v4.42: one tap on a phone: the chip is a real link when the book's slip is already known
@@ -5170,7 +5230,7 @@ function openBetEditor(tr, r, opt){
       '<label title="Only the winnings, your stake not included. Performance and ROI use this one.">Winnings $ <input class="eb-prof" type="number" step="0.01" min="0" style="width:90px"></label>'+
       '<label title="What you lost. Less than your stake if you cashed out part of it. A free bet loses $0.">Lost $ <input class="eb-lostamt" type="number" step="0.01" min="0" style="width:80px"></label>'+
       '<span class="meta eb-money-note"></span></span>':'')+
-    (opt.edit?ebResultHtml(opt.edit):'')+'<span class="eb-check"></span><span class="meta eb-rec"></span>'+
+    (opt.edit?ebResultHtml(opt.edit):'')+'<span class="eb-check"></span><span class="eb-plan"></span><span class="meta eb-rec"></span>' /* v5.10: eb-plan, My plan’s reminder */+
     '<button class="log sm eb-save">'+(opt.edit?'Save changes':'Save bet')+'</button> <button class="log sm undo eb-cancel">Cancel</button>'+
     '<span class="meta eb-msg" role="status"></span></div>'+(isCard?'':'</td>');
   if(isCard){ const at=tr.querySelector(':scope > .sc-act'); if(at) at.after(ed); else tr.appendChild(ed); } else tr.after(ed);   // v4.21: under the card's buttons
@@ -5353,6 +5413,7 @@ function openBetEditor(tr, r, opt){
       const tail=v&&v.level!=='ok'?(mx!=null&&pr&&pr.prob>mx?' · need ≤ '+P(mx):'')+' · look elsewhere':'';
       el.innerHTML = v ? '<span class="tag '+({bad:'t-out',warn:'t-warn',ok:'t-live'}[v.level])+'">'+esc((imp?imp+' · ':'')+v.msg+tail)+'</span>' : (imp?'<span class="tag" title="The chance this price charges for">'+esc(imp)+'</span>':''); }
     if(r.tier && !opt.edit){ const x=extraLine(r); el.innerHTML+=' <span class="tag t-warn">'+(r.tier==='lucky'?'🍀 Just missed: ':'🔮 Hail Mary: ')+esc(x.t)+'</span>'; }   // v4.50
+    { const pe=ed.querySelector('.eb-plan'); if(pe){ const P=planCfg(), a=opt.edit ? planActOfBet(opt.edit, P) : (v && v.fairAt!=null ? okProb(v.fairAt, v.mktAt) : r.actProb); pe.innerHTML=isHost ? '' : planOutHtml(a, P); } }   /* v5.10: My plan’s reminder under the chance and decision line: her chance at the line in the form (a saved bet: its saved chance, if placed since the plan’s date); no block, no extra click. + Add a bet says it in its verdict */
     const rs=recStake(), re=ed.querySelector('.eb-rec');
     if(re) re.textContent = rs==null ? '' : (r.tier && !opt.edit ? (r.tier==='lucky'?'just missed: the smallest bet, $':'a Hail Mary: $')+rs.toFixed(2) : 'recommended at this price: $'+rs.toFixed(2));
     if(re && rs>0 && /kalshi/i.test(bookSel.value||'')){ const k=kalFormFit(), pr=priceNow(); if(k && Math.abs(k.budget-rs)<0.005) re.textContent+=' · '+k.shares.toFixed(2)+' shares at a limit of '+k.limitCents+'¢ (most it can cost $'+(Math.ceil(k.maximumCost*100-1e-9)/100).toFixed(2)+(pr?', about $'+(Math.ceil(k.estimatedCurrentCost*100-1e-9)/100).toFixed(2)+' at '+Math.round(pr.prob*100)+'¢':'')+')'; }   /* v5.05: the same shares as the card, the strip and the Max payout box; "about" = the Cost box (Los Desconfiados) */
@@ -6341,6 +6402,7 @@ function modeCountsPaint(rows,mN){ mN=mN||{safe:0, lucky:0, hail:0, boring:0, vo
   set('clair', mN.hail, 'Unlikely (under 45%) and Hail Marys: long shots ('+mN.hail+' now). Back to Machín at midnight.');
   set('old', mN.old||0, 'Prices read more than 12 hours ago, from any tab ('+(mN.old||0)+' now). Check each price first: a Sentinels press, a reload or a new paste that reads it fresh sends it back to its tab.');   /* v4.77 */
   set('awol', mN.awol||0, 'Bets whose book could not find them on its last check ('+(mN.awol||0)+' now): no market at your line, not listed, game not found or nobody selling. A Sentinels press that finds one sends it back to its tab.');   /* v4.81 */
+  try{ planTabsPaint(); }catch(e){}   /* v5.10: “· outside your plan” on the tabs under My plan (after the counts) */
   const c=document.getElementById('contadora'); if(!c) return; if(betMode==='safe' || betMode==='boring' || betMode==='volado' || betMode==='old' || betMode==='awol' /* v4.81 */){ c.innerHTML=(CONTADORA[betMode]||'')+(betMode!=='safe'?' <span class="mode-info">· '+esc(modeElse(mN,betMode))+'</span>':''); return; }   /* v4.76 */
   const U=extrasUsed(), today=ctDay(Date.now()), uL=U.lucky[today]||0, uH=U.hail[today]||0, el=modeElse(mN,betMode);
   c.innerHTML=contadoraText(betMode) /* v4.80 */+' <span class="mode-info">· '+(betMode==='lucky'
@@ -8017,6 +8079,21 @@ function scoreSet(list){
   const S=list.filter(b=>b.kind!=='parlay' && !b.research && !b.tier && !b.gapRes).map(b=>({b, _pl:betProfit(b), _st:b.free?0:(+b.stake||0), _clv:clv(b), _day:gameDayOf(b)}));   // v3.98: ROI on your own money: profit without the stake, free bets stake $0
   return {settled:S.filter(x=>x._pl!=null && x._st>0), withClose:S.filter(x=>x._clv!=null)};
 }
+/* v5.10 (scope P3): the Scorecard’s ranges and verdict, moved as they were into functions of their own, so each 1,000-bet block is judged by the same code
+   (no copy: the same gates, 20 settled bets for the ROI range and 20 closes for the CLV ranges; the same thresholds and words). renderScorecard calls them. */
+function scBoots(S, C, noMean){ const n=S.length; return {roiB:n>=20?bootGames(S, roiOf):null, medB:C.length>=20?bootGames(C, medOf):null, meanB:(!noMean && C.length>=20)?bootGames(C, meanClvOf):null}; }   /* noMean: a block does not show the mean CLV, so its range is not drawn */
+function scVerdict(n, roiB, medB, S, C){ let vc='', vt='';   /* v5.10 (fixer): with S and C it adds the honest read of a bad stretch too (moved as it was), so a block shows the Scorecard’s whole verdict */
+  if(n>=PROOF_N){ const okR=roiB&&roiB.lo>0, okC=medB&&medB.lo25>0;
+    if(okR&&okC){ vc='good'; vt='✅ After 1,000+ bets, the profit range and the closing-line range are both above zero: good evidence of an edge (evidence, not proof).';   /* v4.41: statistical wording */ }
+    else { vc='bad'; vt='❌ '+n+' bets in, no clear evidence of an edge yet: '+(!okC?'median CLV range still touches zero':'')+(!okC&&!okR?' · ':'')+(!okR?'ROI range still includes losing':'')+'.'; } }
+  else vt='Not yet — '+(PROOF_N-n).toLocaleString()+' more settled bets before raising stakes or claiming anything.';
+  if(S && C && C.length>=30){ const sp=x=>(x>=0?'+':'−')+Math.abs(x*100).toFixed(1)+'%';   /* the Scorecard’s own % */
+    const rec=C.slice().sort((a,b)=>String(b._day).localeCompare(a._day)).slice(0,100), rMed=medOf(rec);
+    const since=ctDay(Date.now()-30*86400e3), last30=S.filter(x=>x._day>=since).reduce((t,x)=>t+x._pl,0);
+    if(rMed!=null && rMed<=0 && C.length>=100){ vc=vc||'bad'; vt+='<br>⚠ The last '+rec.length+' bets are <b>not beating the closing price</b> (median '+sp(rMed)+'). That isn\'t luck — check what changed.'; }
+    else if(last30<0 && rMed!=null && rMed>0) vt+='<br>📉 Down '+money(-last30)+' in the last 30 days, but still beating the close (median '+sp(rMed)+') — <b>normal bad luck</b>. Hope for the best, expect the worst.';
+  }
+  return {vc, vt}; }
 function segLabel(n){ return n>=1000?'<span class="sc-tag ev">evidence</span>':n>=300?'<span class="sc-tag cmp">comparison</span>':n>=100?'<span class="sc-tag">exploratory</span>':'<span class="sc-tag" style="opacity:.72">too few</span>'; }
 var _rsCache=null;
 function researchState(){
@@ -8035,7 +8112,7 @@ function renderScorecard(){
   const stage=n>=1000?'Evidence':n>=300?'Comparison':n>=100?'Directional':'Anecdotal';
   const staked=S.reduce((t,x)=>t+x._st,0), profit=S.reduce((t,x)=>t+x._pl,0), roi=staked>0?profit/staked:null;
   const ck=n+':'+C.length+':'+S.reduce((t,x)=>t+x._pl,0).toFixed(2)+':'+C.reduce((t,x)=>t+x._clv,0).toFixed(4);
-  if(!_scCache || _scCache.k!==ck) _scCache={k:ck, roiB:n>=20?bootGames(S, roiOf):null, medB:C.length>=20?bootGames(C, medOf):null, meanB:C.length>=20?bootGames(C, meanClvOf):null};
+  if(!_scCache || _scCache.k!==ck) _scCache=Object.assign({k:ck}, scBoots(S, C));   // v5.10: the same three ranges and gates, now in scBoots (each 1,000-bet block uses them too)
   const {roiB, medB, meanB}=_scCache, nGames=gameClusters(S).length;
   const med=medOf(C), mean=meanClvOf(C), beat=C.filter(x=>x._clv>0).length;
   // max drawdown over settled bets in game order
@@ -8053,17 +8130,7 @@ function renderScorecard(){
     '<div class="sc-box"><div class="k">Mean CLV</div><div class="v">'+(mean==null?'—':sp(mean))+'</div>'+rng(meanB,sp)+'</div>'+
     '<div class="sc-box"><div class="k">Worst drawdown</div><div class="v pl-down'+(dd<0?dClsR(dd,0.01):'')+'">'+(dd<0?money(dd,true):'$0.00')+'</div><div class="r">deepest drop from a high</div></div></div>'; /* v5.04: ▲/▼ on the worst drawdown */
   // the verdict — and the honest read of a bad stretch (luck vs broken)
-  let vc='', vt='';
-  if(n>=PROOF_N){ const okR=roiB&&roiB.lo>0, okC=medB&&medB.lo25>0;
-    if(okR&&okC){ vc='good'; vt='✅ After 1,000+ bets, the profit range and the closing-line range are both above zero: good evidence of an edge (evidence, not proof).';   /* v4.41: statistical wording */ }
-    else { vc='bad'; vt='❌ '+n+' bets in, no clear evidence of an edge yet: '+(!okC?'median CLV range still touches zero':'')+(!okC&&!okR?' · ':'')+(!okR?'ROI range still includes losing':'')+'.'; } }
-  else vt='Not yet — '+(PROOF_N-n).toLocaleString()+' more settled bets before raising stakes or claiming anything.';
-  if(C.length>=30){
-    const rec=C.slice().sort((a,b)=>String(b._day).localeCompare(a._day)).slice(0,100), rMed=medOf(rec);
-    const since=ctDay(Date.now()-30*86400e3), last30=S.filter(x=>x._day>=since).reduce((t,x)=>t+x._pl,0);
-    if(rMed!=null && rMed<=0 && C.length>=100){ vc=vc||'bad'; vt+='<br>⚠ The last '+rec.length+' bets are <b>not beating the closing price</b> (median '+sp(rMed)+'). That isn\'t luck — check what changed.'; }
-    else if(last30<0 && rMed!=null && rMed>0) vt+='<br>📉 Down '+money(-last30)+' in the last 30 days, but still beating the close (median '+sp(rMed)+') — <b>normal bad luck</b>. Hope for the best, expect the worst.';
-  }
+  const {vc, vt}=scVerdict(n, roiB, medB, S, C);   // v5.10: the same verdict (thresholds and words unchanged), now in scVerdict: each 1,000-bet block is judged by it too   /* v5.10 (fixer): and the read of a bad stretch, moved there as it was */
   h+='<div class="sc-verdict '+vc+'">'+vt+'</div>';
   // segments: sport × market
   const seg={}; S.forEach(x=>{ const k=(x.b.sport||'?')+' · '+(x.b.kind||'?'); (seg[k]=seg[k]||{s:[],c:[]}).s.push(x); });
@@ -8090,6 +8157,61 @@ function renderScorecard(){
   if(!n && !C.length) h+='<div class="empty" style="display:block">Nothing settled yet. Every bet that settles moves the bar.</div>';
   el.innerHTML=h; try{ helpApply(el); }catch(e){}   // v4.25: the stages drop-down stays as you left it
 }
+/* v5.10 (owner, Sat 11/14: "the first 1K is a starting point, and the next 1K Confirms it and the 3rd 1K Reconfirms it"; Sun 11/15: "id say 11/11 ... BUILD
+   IT ALL"; scope P3): Your 1,000-bet blocks, in Performance right under the Scorecard. The bets: the ones the Scorecard counts (scoreSet’s singles on your own
+   money: no parlays, research bets, 🍀 / 🔮 extras or free bets) placed on or after My plan’s date (the Chicago day of placedAt, else snap.at, else the bet’s
+   date), in the order placed (ties keep the log’s order): block 1 = the 1st–1,000th, block 2 = the 1,001st–2,000th, block 3 = the 2,001st–3,000th. Each block is
+   scored on its own by the Scorecard’s own scoreSet, scBoots and scVerdict on that block’s bets alone (in the log’s order, as the Scorecard reads them); it is
+   complete when all its bets are settled. Display only; worked out only when Performance is open (as the Watch study). */
+var _pbCache=new Map();
+function planPlacedMs(b){ let t=Date.parse(b&&b.placedAt); if(!isNaN(t)) return t; t=Date.parse(b&&b.snap&&b.snap.at); if(!isNaN(t)) return t; const d=String((b&&b.date)||''); return /^\d{4}-\d{2}-\d{2}$/.test(d)?Date.parse(d+'T00:00:00-06:00'):NaN; }
+function planPlacedDay(b){ let t=Date.parse(b&&b.placedAt); if(!isNaN(t)) return ctDay(t); t=Date.parse(b&&b.snap&&b.snap.at); if(!isNaN(t)) return ctDay(t); const d=String((b&&b.date)||''); return /^\d{4}-\d{2}-\d{2}$/.test(d)?d:''; }
+function planInBlocks(b){ return inScorecard(b) && !b.free && (+b.stake||0)>0; }   /* the bets the Scorecard counts once settled (scoreSet: your own money, so a free bet is CLV only there and takes no place in a block) */
+function planDayStartMs(d){ const a=Date.parse(d+'T00:00:00-05:00'); return ctDay(a)===d ? a : Date.parse(d+'T00:00:00-06:00'); }   /* midnight in Chicago that day (CDT or CST) */
+function planBlockSets(L, since){ const P=[], t0=planDayStartMs(since); let noDay=0; (L||[]).forEach((b,i)=>{ if(!planInBlocks(b)) return; const t=planPlacedMs(b); if(isNaN(t)){ noDay++; return; } if(t<t0) return; P.push({b, i, t}); });   /* placed on or after the plan’s day (Chicago) = at or after its midnight: no day string per bet (ctDay is the slow part) */
+  P.sort((x,y)=>(x.t-y.t)||(x.i-y.i)); const order=P.map(x=>x.b), blocks=[]; for(let k=0;k<order.length;k+=PROOF_N) blocks.push(order.slice(k,k+PROOF_N)); return {order, blocks, noDay}; }
+function planBlockScore(k, bets, L){ const inB=new Set(bets), list=(L||logged).filter(b=>inB.has(b)), sc=scoreSet(list), S=sc.settled, C=sc.withClose, n=S.length;   /* the block alone, in the log’s order */
+  const staked=S.reduce((t,x)=>t+x._st,0), profit=S.reduce((t,x)=>t+x._pl,0), ck=k+'|'+list.length+'|'+(list.length?list[0].id+'|'+list[list.length-1].id:'')+'|'+n+':'+C.length+':'+profit.toFixed(2)+':'+C.reduce((t,x)=>t+x._clv,0).toFixed(4);
+  let c=_pbCache.get(ck); if(!c){ c=scBoots(S, C, true); if(_pbCache.size>24) _pbCache.clear(); _pbCache.set(ck, c); }
+  const v=scVerdict(n, c.roiB, c.medB, S, C) /* v5.10 (fixer): the whole verdict, the read of a bad stretch included */; return {k, placed:bets.length, n, S, C, staked, profit, roi:staked>0?profit/staked:null, med:medOf(C), roiB:c.roiB, medB:c.medB, vc:v.vc, vt:v.vt}; }
+function planHeadStart(s1, at){ const pd=ctDay(at==null?PLAN_SET_AT:at), H=(s1?s1.S:[]).filter(x=>x._day && x._day<pd); return {n:H.length, profit:H.reduce((t,x)=>t+x._pl,0), day:pd}; }   /* block 1’s settled bets on games played before the day the plan was set: their results were known when its date was picked */   /* v5.10 (fixer): any block, at the moment the date was last set (at) */
+function planSetMs(){ const sa=document.getElementById('planSetAt'), t=Date.parse((sa&&sa.value)||''); return isNaN(t) ? {at:PLAN_SET_AT, saved:false} : {at:Math.min(t, Date.now()), saved:true}; }   /* v5.10 (fixer): when My plan’s date was last changed in Settings (saved and synced with it), else 11/15 12:40 AM CT (PLAN_SET_AT, when the owner chose 11/11); never in the future */
+function planBlocksModel(L){ L=L||logged; const P=planCfg(), now=Date.now(), B=planBlockSets(L, P.since), N=B.order.length, K=Math.max(3, Math.ceil(N/PROOF_N));
+  const days=Math.max(0, (now-planDayStartMs(P.since))/86400e3), pace=(days>=0.5 && N) ? N/days : null, blocks=[];   /* pace: bets placed a day since the plan’s date */
+  for(let k=0;k<K;k++){ const s=planBlockScore(k, B.blocks[k]||[], L), hi=(k+1)*PROOF_N; s.lo=k*PROOF_N+1; s.hi=hi; s.full=s.placed>=PROOF_N; s.complete=s.full && s.n>=PROOF_N;
+    s.fillAt=s.full ? planPlacedMs(B.order[hi-1]) : pace!=null ? now+(hi-N)/pace*86400e3 : null; blocks.push(s); }   /* the day its 1,000th bet was (or, at this pace, will be) placed */
+  const SA=planSetMs(), heads=blocks.map(s=>planHeadStart(s, SA.at));   /* v5.10 (fixer): the bets already settled when the date was last set, in every block (an early date can fill block 2 with known results) */
+  return {P, N, K, days, pace, rough:days<14, noDay:B.noDay, order:B.order, blocks, head:heads[0], heads, setAt:SA.at, setSaved:SA.saved, setDef:!SA.saved && P.since===PLAN_DEF.since}; }
+function planBlocksHtml(L){ const M=planBlocksModel(L), P=M.P, sd=planDayTxt(P.since), N=M.N, W=['starts the record','confirms','reconfirms'];
+  const fmtD=ms=>new Date(ms).toLocaleDateString('en-US',{timeZone:'America/Chicago', month:'short', day:'numeric', year:'numeric'}), sp=x=>(x>=0?'+':'−')+Math.abs(x*100).toFixed(1)+'%';   /* sp: the Scorecard’s own % */
+  let h='<h2>Your 1,000-bet blocks <span class="pb-from">(from '+esc(sd)+')</span> <span class="sub">the Scorecard’s bets from My plan’s date, in the order placed · each block judged on its own</span></h2>'+
+    '<p class="pb-l"><b>Block 1 starts the record · Block 2 confirms · Block 3 reconfirms.</b> Each block is judged on its own; the rules stay frozen inside a block.</p>'+
+    '<p class="pb-l meta pb-pace">'+(N ? N.toLocaleString()+' Scorecard bet'+(N===1?'':'s')+' placed since '+esc(sd)+(M.pace!=null?' · about '+M.pace.toFixed(1)+' a day':'')+' · '+M.days.toFixed(1)+' days of data'+(M.rough?' (rough: under 14 days)':'') : 'No Scorecard bet placed since '+esc(sd)+' yet.')+'</p><div class="pb-grid">';
+  M.blocks.forEach((s,k)=>{ const hiT=s.hi.toLocaleString()+'th';
+    const fill=s.complete ? 'Complete: all '+PROOF_N.toLocaleString()+' settled.' : s.full ? 'Full: its '+hiT+' bet was placed '+fmtD(s.fillAt)+'.' : s.fillAt!=null ? (s.placed?'':'Starts with bet '+s.lo.toLocaleString()+'. ')+'At your pace its '+hiT+' bet lands about '+fmtD(s.fillAt)+(M.rough?' (rough)':'')+'.' : 'No pace yet: it shows once bets are placed.';
+    h+='<div class="pb-card" data-block="'+(k+1)+'"><h3>Block '+(k+1)+(W[k]?' · '+W[k]:'')+' <span class="meta">bets '+s.lo.toLocaleString()+'–'+s.hi.toLocaleString()+'</span></h3>'+
+      '<div class="pb-l"><b class="pb-prog">'+s.n.toLocaleString()+' of '+PROOF_N.toLocaleString()+' settled</b> <span class="meta">· '+s.placed.toLocaleString()+' placed</span></div>'+
+      '<div class="sc-prog" role="img" aria-label="'+s.n+' of '+PROOF_N+' settled"><i style="width:'+Math.min(100,100*s.n/PROOF_N).toFixed(1)+'%"></i></div>'+
+      (s.n ? '<div class="pb-l pb-money">Profit <b class="'+(s.profit>=0?'pl-up':'pl-down')+dClsR(s.profit,0.01)+'">'+money(s.profit,true)+'</b> <span class="meta">on '+money(s.staked)+' staked</span> · ROI <b class="pb-roi'+dClsR(s.roi,0.001)+'">'+(s.roi==null?'—':sp(s.roi))+'</b> <span class="meta">'+(s.roiB?'range '+sp(s.roiB.lo)+' to '+sp(s.roiB.hi)+' (90%)':'range after 20 bets')+'</span></div>'+
+        '<div class="pb-l pb-clv">Median CLV <b>'+(s.med==null?'—':sp(s.med))+'</b> <span class="meta">'+(s.medB?'range '+sp(s.medB.lo25)+' to '+sp(s.medB.hi975)+' (95%)':'range after 20 closes')+' · '+s.C.length.toLocaleString()+' with a closing price</span></div>' : '')+
+      '<div class="pb-l meta pb-fill">'+fill+'</div>'+
+      '<div class="sc-verdict '+s.vc+'">'+s.vt+'</div></div>'; });
+  const H=M.head, setTxt=new Date(M.setAt).toLocaleString('en-US',{timeZone:'America/Chicago', month:'numeric', day:'numeric', hour:'numeric', minute:'2-digit'});   /* v5.10 (fixer): M.setAt, the moment the date was last set */
+  /* v5.10 (fixer): the words follow the numbers: “a good first week” only for the owner’s own 11/11 set on 11/15, “small” only under 5% of a block (50 bets);
+     another date gets plain words; blocks 2 and 3 are counted too and said to have no head start only when they have none */
+  const amt=x=>'<b class="'+(x.profit>=0?'pl-up':'pl-down')+dClsR(x.profit,0.01)+'">'+money(x.profit,true)+'</b>', nb=n=>n.toLocaleString()+' settled bet'+(n===1?'':'s'), small=H.n<PROOF_N*0.05;
+  const s1=!H.n ? 'Block 1 starts '+esc(sd)+': none of its bets had settled when the plan was set ('+esc(setTxt)+'), so it has no head start.'
+    : (M.setDef && H.profit>0 && small) ? 'Block 1 starts '+esc(sd)+', a date chosen after a good first week: its first '+nb(H.n)+' ('+amt(H)+') '+(H.n===1?'was':'were')+' already known, a small head start.'
+    : 'Block 1 starts '+esc(sd)+', a date chosen when '+H.n.toLocaleString()+' of its settled bets ('+amt(H)+') '+(H.n===1?'was':'were')+' already known'+(H.profit>0 ? (small?', a small head start':': a head start of '+H.n.toLocaleString()+' of its '+PROOF_N.toLocaleString()+' bets') : '')+'.';
+  const later=M.heads.slice(1).map((x,i)=>({x, k:i+2})), kn=later.filter(o=>o.x.n), nn=later.filter(o=>!o.x.n).map(o=>o.k), names=M.K===3?'Blocks 2 and 3':'Blocks 2 to '+M.K;
+  const s2=!kn.length ? names+(H.n?' have no such head start.':' have none either.')
+    : kn.map(o=>'Block '+o.k+' had '+nb(o.x.n)+' ('+amt(o.x)+') already known.').join(' ')+(nn.length?' '+(nn.length===1?'Block '+nn[0]+' has':'Blocks '+nn.join(', ')+' have')+' none.':'');
+  h+='</div><p class="pb-note" title="Counted from your log: the settled bets in each block on games played before '+esc(planDayTxt(H.day))+', the day '+(M.setSaved?'its date was last changed in Settings › My plan':'the plan was set')+' ('+esc(setTxt)+').">'+s1+' '+s2+'</p>'+
+    '<details class="help" data-help="pb-how"><summary>Which bets count</summary><div class="meta">The bets the Scorecard counts: singles on your own money (no parlays, research bets, 🍀 Just missed or 🔮 Hail Marys, and no free bets), placed on or after '+esc(sd)+' (the time the book says you placed it, else when the app saved it, else its date), in that order. Bet 1,000 closes block 1 and bet 1,001 opens block 2. A block is complete when all its bets are settled. Each block’s ranges re-draw whole games 10,000 times and its verdict uses the Scorecard’s own rules and words. The pace is the bets placed a day since '+esc(sd)+'. Change the date in Settings › My plan (the chance there does not change which bets count).' /* v5.10 (fixer): only the date changes the blocks */+(M.noDay?' '+M.noDay+' bet'+(M.noDay===1?' has':'s have')+' no date placed and '+(M.noDay===1?'is':'are')+' left out.':'')+'</div></details>';
+  return h; }
+function renderPlanBlocks(force){ const el=document.getElementById('planBlocks'); if(!el) return; const pv=document.getElementById('v-perf');
+  if(!force && !(pv && pv.classList.contains('on'))) return;   /* worked out only when Performance is open */
+  el.innerHTML=planBlocksHtml(logged); try{ helpApply(el); }catch(e){} }
 /* v4.44 (Alonzo, passing on ChatGPT: "record every Watch bet as a shadow observation, without counting it as a wager, stake, profit or loss";
    "compare probability accuracy on the identical Watch sample"): when a row first enters WATCH (v4.43: the model passes the floor, the market-adjusted
    chance does not), one frozen record is saved in mbev.watchObs: the bet (sport, kind, player or team, market, side, game, start), the shown price and fee,
@@ -8348,7 +8470,7 @@ function renderTiers(){ const el=document.getElementById('tierBody'); if(!el) re
     '</tbody></table></div>'+tierCmpHtml(S)+(none?'<p class="meta" style="margin-top:6px">'+none+' other single'+(none===1?'':'s')+' (from your books, typed in, or before v4.50) have no ring recorded.</p>':''); }
 function renderPerf(){ try{ renderWatchStudy(); }catch(e){ console.error(e); }   // v4.44
    try{ renderTiers(); }catch(e){ console.error(e); }   // v4.50
-   try{ renderCal(); }catch(e){} try{ renderScorecard(); }catch(e){ console.error(e); } try{ renderStudy(); }catch(e){ console.error(e); }   // v4.31
+   try{ renderCal(); }catch(e){} try{ renderScorecard(); }catch(e){ console.error(e); } try{ renderPlanBlocks(); }catch(e){ console.error(e); } /* v5.10: the 1,000-bet blocks, when Performance is open */ try{ renderStudy(); }catch(e){ console.error(e); }   // v4.31
   renderCalibration();
   const withClose=logged.filter(b=>clv(b)!==null);
   const cards=document.getElementById('statCards');
@@ -10199,8 +10321,10 @@ function rpGroupKey(b, by, sp){   /* v5.07 (fixer): sp = the sport a no-sport pr
   if(by==='price') return RP.px==='american' ? (rpOddsBucket(b) ? RP_ODDS[rpOddsBucket(b)] : RP_PX.u) : RP_PX[rpPxBand(b)];
   if(by==='market') return marketFamilyOf(b, sp).label;   // v5.07
   if(by==='stm') return rpStmOf(b, sp);   // v5.07
+  if(by==='band25'){ const k=rpBand25Of(b); return k==null?'No La Contadora chance':rpBand25Txt(k); }   // v5.10 (scope P4): exploratory 2.5-point steps of La Contadora’s chance saved before the game
   return ''; }
 function rpGroupOrder(by){ if(by==='price') return RP.px==='american' ? Object.keys(RP_ODDS).map(k=>RP_ODDS[k]).concat([RP_PX.u]) : Object.keys(RP_PX).map(k=>RP_PX[k]);
+  if(by==='band25'){ const o=[]; for(let k=39;k>=0;k--) o.push(rpBand25Txt(k)); return o.concat(['No La Contadora chance']); }   /* v5.10: highest first, as Band */
   if(by==='tab') return ['boring','machin','volado','suertudo','brujo'].map(tabWord).concat(['No tab']); if(by==='band') return [9,8,7,6,5,4,3,2,1].map(k=>cvNames()[k]+' · '+cvRanges()[k]).concat(['Unknown','No band (parlays)']); return null; }
 /* v5.07 (Sally agreed 11/14, owner BUILD; scope so-far-v1): Reports › So far. The Market grouping (market-alias-v1), ranges that re-draw whole games, the many-group check (Benjamini–Hochberg at 10%), the So far card. Display only: no stake, decision, floor, saved bet, Scorecard or Said vs won number changes; nothing new is saved. */
 var MARKET_ALIAS_SHOTS_CONFIRMED=true;   // v5.08: Alonzo confirmed 11/14 from his Novig slip ("Adam Fantilli 3+ Yes · Shots On Goal"); all 61 NHL "Shots" bets in his log were placed at Novig, so "Shots" merges into Shots on goal (evidence:'book-rule-confirmed'). v5.07 had it off until confirmed
@@ -10288,7 +10412,11 @@ function mfSportProof(list, pool){ const need=new Map();   /* v5.07 (fixer; scop
   (list||[]).forEach(b=>{ if(b && b.kind==='prop' && !String(b.sport||'').trim()){ const e=mfEvOf(b); if(e) need.set(b,e); } }); if(!need.size) return null;
   const want=new Set(need.values()), seen=new Map(); (pool||logged.concat(removedBets)).forEach(x=>{ if(!x || x.kind==='parlay') return; const s=String(x.sport||'').trim().toUpperCase(); if(!s || s==='PARLAY') return; const e=mfEvOf(x); if(!e || !want.has(e)) return; (seen.get(e)||seen.set(e,new Set()).get(e)).add(s); });
   const out=new Map(); need.forEach((e,b)=>{ const s=seen.get(e); if(s && s.size===1) out.set(b,[...s][0]); }); return out.size?out:null; }
-function rpByWord(by){ return ({sport:'Sport', book:'Book', kind:'Bet type', price:'Price paid', tab:'Tab (her chance when taken)', band:'Band', market:'Market', stm:'Sport · type · market'})[by]||'Sport'; }   /* v5.07: the grouping’s name for the So far card */
+function rpByWord(by){ return ({sport:'Sport', book:'Book', kind:'Bet type', price:'Price paid', tab:'Tab (her chance when taken)', band:'Band', market:'Market', stm:'Sport · type · market', band25:'Band, 2.5% steps (exploratory)' /* v5.10 */})[by]||'Sport'; }   /* v5.07: the grouping’s name for the So far card */
+/* v5.10 (scope P4): La Contadora’s saved chance (snap.act only) in 2.5-point steps from 0 to 100, for a single saved before its game, as Said vs won requires
+   (rpPregame); anything else (parlays, no chance saved, saved after the start) is “No La Contadora chance”. Exploratory: the official bands stay 5% wide. */
+function rpBand25Of(b){ if(!b || b.kind==='parlay') return null; const s=b.snap||{}, a=+s.act; if(s.act==null || !(a>0 && a<1) || !rpPregame(b)) return null; return Math.min(39, Math.floor(a*40+1e-9)); }
+function rpBand25Txt(k){ return (k*2.5).toFixed(1)+'–'+((k+1)*2.5).toFixed(1)+'%'; }   /* v5.10: 20 → “50.0–52.5%” */
 function sfHash(s){ let h=0x811c9dc5; s=String(s); for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193); } return h>>>0; }   /* v5.07: FNV-1a, the seed from a row’s own numbers */
 function sfQ(w, m, a, up){ const i=up?Math.ceil(a*(m-1)):Math.floor(a*(m-1)); return w[i]; }   /* v5.07: the same quantile rule as rpBootGames0 */
 /* v5.07 (S2/S4): the paired whole-game bootstrap. Per game g: P[g] settled profit, S[g] own-money stake. Each draw re-draws n games with replacement;
@@ -10351,7 +10479,8 @@ function rpSoFarHtml(M){ if(!M || !M.rows.length) return '';   /* v5.07 (S5): fo
   return '<div class="rp-box rp-sofar"><b>So far · by '+esc(rpByWord(M.by))+'</b> <span class="meta">same period, count and filters as this page · change the grouping under Breakdown › By</span>'+body+'<p class="meta">Many overlapping groups were checked. ‘Holding up’ and ‘Struggling’ need the 95% range to clear zero and a 10% false-discovery-rate screen. Leads are not proof; the 1,000-bet test is the Scorecard. ‘Leaning’ needs only the 90% range to clear zero.</p><p class="meta rp-sf-chk">'+chk+'</p></div>'; }   /* v5.07 (fixer): where the grouping is changed; what ‘Leaning’ needs; how many groups were checked */
 function rpBreakHtml(S, M){ const by=RP.by||'sport'; M=M||sfModel(S,by);   /* v5.07 (Sally agreed, owner BUILD): + Games, ROI 95% range, Expected vs actual, CLV and Read (Read replaces Sample); the rows come from sfModel, as the So far card */
   if(!M.rows.length) return '<p class="meta">No bets in this report.</p>';
-  const head=by==='price'?'<p class="meta rp-px-note"><b>Price paid · all-in break-even chance · not a forecast</b>'+(RP.px==='american'?' (shown as the all-in equivalent American price, fees included)':'')+'. It shows how hard each price was to beat, not whether the bet had an edge.</p>':'';
+  const head=by==='price'?'<p class="meta rp-px-note"><b>Price paid · all-in break-even chance · not a forecast</b>'+(RP.px==='american'?' (shown as the all-in equivalent American price, fees included)':'')+'. It shows how hard each price was to beat, not whether the bet had an edge.</p>'
+    :by==='band25'?'<p class="meta rp-b25-note"><b>Exploratory: leads, not proof.</b> The official bands stay 5% wide (calibration-v1). A cut you like here becomes a written guess, tested on the NEXT bets before anything changes (the band study plan). Rows: La Contadora’s chance saved before the game, in 2.5-point steps; a bet without one is under ‘No La Contadora chance’.</p>':'';   /* v5.10 (scope P4) */
   const fr=!!document.getElementById('rpFr');   /* v5.07 (fixer): recovered forecasts are “shown apart” only where their own section (v5.06, #rpFr) is on the page */
   const tr=r=>{ const x=r.x, c=r.c, bt=r.boot, ea=r.ea, cl=r.clv, lean=r.read==='Leaning up'||r.read==='Leaning down';   /* v5.07: no cell starts with a signed dollar amount; each one is its own <b> with rpCls (the v5.04 arrows) */
     return '<tr><td class="rp-bet"><b>'+esc(r.k)+'</b></td><td class="num" data-l="Tickets (incl. open)">'+x.n+'</td><td class="num" data-l="Settled outcomes">'+c.outcomes+'</td><td class="num" data-l="Settled games">'+c.games+'</td><td class="num" data-l="W–L–P">'+x.w+'–'+x.l+'–'+x.p+'</td><td class="num" data-l="Settled risked">$'+x.stSet.toFixed(2)+'</td><td class="num '+rpCls(x.profit)+'" data-l="Profit">'+lcUsd(x.profit)+'</td>'+   /* v5.07 (fixer): “Settled games”, as “Settled outcomes” (open bets are in neither) */
@@ -10700,8 +10829,12 @@ document.getElementById('demo').addEventListener('click',()=>{
   document.getElementById('input').value=SAMPLE; run();
 });
 
-const KEYS=NUMS.concat(['books','defSport','bpSportsList']);   // v3.12: default sport + the leagues BettingPros answered (synced with settings)
+const KEYS=NUMS.concat(['books','defSport','bpSportsList','planMin','planSince','planSetAt']);   /* v5.10: + My plan (planMin, planSince), saved and synced like the other settings */   /* v5.10 (fixer): + planSetAt, when the date was last changed */   // v3.12: default sport + the leagues BettingPros answered (synced with settings)
 const CHECKS=['cDeriv','cProp','cDfs','cShow','cHideStarted'];
+['planMin','planSince'].forEach(id=>{ const el=document.getElementById(id); if(el) ['input','change'].forEach(ev=>el.addEventListener(ev,()=>{ if(id==='planSince') planSinceSet(); save(); refresh(); try{ planTabsPaint(); renderPlanBlocks(); }catch(e){} })); });   /* v5.10: My plan, saved like the other settings; the board, the tabs and the blocks follow it */   /* v5.10 (fixer): planSinceSet first */
+function planSinceSet(){ const si=document.getElementById('planSince'), sa=document.getElementById('planSetAt'); if(!si || !sa) return; let was=PLAN_DEF.since;   /* v5.10 (fixer): a new date is a new choice: the moment is saved with it, so the head-start note counts what was known then */
+  try{ const o=JSON.parse(localStorage.getItem('mbev.cfg')||'{}')||{}; if(o.planSince) was=String(o.planSince); }catch(e){}
+  if(si.value!==was) sa.value=new Date().toISOString(); }
 function save(){
   try{
     const o={};
@@ -11525,6 +11658,7 @@ var logDayFilter=null, logBandFilter=null;   // v4.66: a cover band (0 = no cove
     const c=e.target.closest('.cal-c.has'); if(c){ logDayFilter=c.dataset.day; renderLog(); const t=document.querySelector('.tab[data-view="v-log"]'); if(t) t.click(); }
   });
   const pt=document.querySelector('.tab[data-view="v-perf"]'); if(pt){ pt.addEventListener('click',renderCal); pt.addEventListener('click',()=>{ try{ renderWatchStudy(true); }catch(e){ console.error(e); } }); }   // v4.45: Watch stats are computed when Performance opens
+  if(pt) pt.addEventListener('click',()=>{ try{ renderPlanBlocks(true); }catch(e){ console.error(e); } });   /* v5.10: the 1,000-bet blocks are worked out when Performance opens */
   setTimeout(renderCal,60);
 })();
 
@@ -12771,6 +12905,7 @@ function abUpdate94(){
   const bookSel=$ab('abHost').querySelector('.eb-book'), book=bookSel?bookSel.value:'';
   let level='none', head='', top=[];
   let kalH=null;   // v5.05 (K6): the Kalshi order of the typed price's verdict (Take a price only), handed to the form below
+  let planA=fair!=null?okProb(fair, mkt):null;   /* v5.10 (fixer): La Contadora’s chance of the side the verdict is about (My plan’s line): the side you typed, or the other side when the verdict picks it */
   // ---- modes
   document.querySelectorAll('#abMode button').forEach(b=>b.classList.toggle('on', b.dataset.m===abModeV));
   if(fair==null){
@@ -12806,6 +12941,7 @@ function abUpdate94(){
       if(best) top.push('<div class="ab-alt">✅ Instead: BET $'+best.st.s.toFixed(2)+' — '+lbl(best)+' → '+SG94(best.her)+' net</div>');
       else if(hasOpp){ const omx=maxPriceFor(okProb(1-fair, mkt==null?null:1-mkt), typed.book, cfg.eMin); if(omx!=null && omx>0.02) top.push('The <b>'+esc(opTxt)+'</b> would be a bet at '+esc(bookLabel(typed.book))+' at '+P94(omx)+' or better'); }
     } else if(best){
+      if(best.side==='op') planA=okProb(1-fair, mkt==null?null:1-mkt);   /* v5.10 (fixer): the verdict bets the other side */
       level='ok'; head='🟢 BET $'+best.st.s.toFixed(2)+' — '+SG94(best.her)+' net';
       top.push('<b>'+lbl(best)+'</b>'+(best.st.n?' · '+(best.st.kal?best.st.n.toFixed(2)+' shares at a limit of '+best.st.kal.limitCents+'¢':best.st.n+' contracts') /* v5.05 */:'')+(best.st.pctBank!=null?' · '+(best.st.pctBank*100).toFixed(1)+'% of your bankroll':''));
       top.push('<span class="meta">Pick '+esc(bookLabel(best.book))+' below and the price fills in.</span>');
@@ -12838,7 +12974,7 @@ function abUpdate94(){
   if(f._missing) L.push('<b>Add the '+esc(f._missing)+' to save</b> — ESPN needs it to grade the bet');
   abR.flags = abR.outlier && usedOut>=outN ? [['warn','outlier limit reached ('+outN+' a day)']] : [];
   out.className='ab-verdict '+level;
-  out.innerHTML='<div class="ab-h">'+head+'</div>'+top.map(x=>/^<(div|table)/.test(x)?x:'<div>'+x+'</div>').join('')+'<div class="meta" style="margin-top:6px">'+L.join('<br>')+'</div>';
+  out.innerHTML='<div class="ab-h">'+head+'</div>'+(fair!=null?planOutHtml(planA):'') /* v5.10: My plan’s reminder, under the verdict */ /* v5.10 (fixer): planA, the side the verdict is about */+top.map(x=>/^<(div|table)/.test(x)?x:'<div>'+x+'</div>').join('')+'<div class="meta" style="margin-top:6px">'+L.join('<br>')+'</div>';
 }
 // ---- 📌 Make my own: a ladder of posted prices, best edge first
 function abMakeLadder(f, fair, mkt, book, X, isOut, outLimit){

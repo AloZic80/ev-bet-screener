@@ -36,7 +36,7 @@ const ROWS=[row('lek','Jonathan Lekkerimaki','Novig',0.519,0.5546,0.526),
   // + Add a bet's verdict also uses the blend
   const ab=await p.evaluate(()=>maxPriceFor(okProb(0.5546,0.526),'Novig',cfgRead().eMin));
   check('+ Add a bet: the same blend limit (52.8%) for the same chances', Math.abs(ab*100-52.81)<0.02, ab);
-  const wd=await p.evaluate(()=>({head:(document.querySelector('#placeCards .sc-sub')||{}).textContent||'', src:String(renderScorecard)}));
+  const wd=await p.evaluate(()=>({head:(document.querySelector('#placeCards .sc-sub')||{}).textContent||'', src:String(renderScorecard)+String(scVerdict)}));   // v5.10: the Scorecard’s verdict words live in scVerdict (renderScorecard calls it; each 1,000-bet block too)
   check('wording: Place these says THIN "still clears your estimated EV floor" (not "still +EV"); the Scorecard says evidence, not proof', /THIN \(yellow: still clears your estimated EV floor/.test(wd.head) && !/still \+EV/.test(wd.head) && /good evidence of an edge \(evidence, not proof\)/.test(wd.src) && !/Passed the 1,000-bet test/.test(wd.src), wd.head);
   check('no page errors', !errs.length, errs);
   console.log(`\n${pass} passed, ${fail} failed`); await b.close(); process.exit(fail?1:0);

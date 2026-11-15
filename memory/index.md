@@ -15,6 +15,7 @@ Status words: **active** (the rule now), **unverified** (believed, not confirmed
 | `decisions/exposure.md` | One bet per player, same game, daily max, Hard stop |
 | `decisions/watch-study.md` | Watch bets as shadow records; how the record is read |
 | `decisions/so-far-v1.md` | Reports › So far: Market and Sport · type · market groupings, ROI ranges, the Read words, the many-group check (v5.07) |
+| `decisions/plan-and-blocks-v1.md` | My plan (a reminder only), the 1,000-bet blocks from 11/11, the band study rules (v5.10) |
 | `decisions/publishing.md` | Branch, tests, publish, notes |
 
 ## Incidents (bugs that came back; the test that now stops each)
