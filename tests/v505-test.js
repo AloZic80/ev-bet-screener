@@ -41,6 +41,7 @@ const mostAt=(q,eMin)=>{ let lo=0.01, hi=0.99; for(let i=0;i<60;i++){ const m=(l
       if(/\/live\?/.test(u)) return r.fulfill({contentType:'application/json',body:'{"results":{}}'});
       if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
     await p.goto('http://app.test/'); await p.waitForTimeout(1300);
+    await p.evaluate(()=>{ EXTRAS.hailBets=true; refresh(); }); await p.waitForTimeout(250);   /* v5.13 (owner: no daily Suertudo/Brujo bets): Hail Mary offers are off by default (EXTRAS.hailBets false); on here, so this test's Hail Mary checks stay covered */
     const C=await p.evaluate(()=>{ const c=cfgRead(); return {bank:c.bank, kelly:c.kelly, shrink:c.shrink, eMin:c.eMin, sMin:c.sMin, sMax:c.sMax, w:c.mWeight, kal:c.fees.kalshi}; });
     if(W===1280){
       // ================= K1–K3, K6: the helper, the scope's own examples =================
