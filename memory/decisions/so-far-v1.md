@@ -2,6 +2,7 @@
 
 Status: **active** since v5.07 (2026-11-14). Agreed with Sally (CC-2026-11-14-15/16 and her replies); owner: all groupings, "Ask Sally, then build".
 The version number v5.06 was left for forecast recovery while it waited for Sally; it will ship as v5.08.
+v5.08: plain NHL "Shots" now merges into Shots on goal (Alonzo confirmed Novig's slip says "Shots On Goal"; evidence 'book-rule-confirmed').
 Open for Sally: the many-group family shrinks under filters; "Unadjusted lead" on a losing row; "Early sample" has three thresholds on one Reports page.
 
 ## The agreed scope (as built; the fixer added: ranges shown from 15 settled games, the 90% range shown on Leaning rows, a no-sport prop mapped by the sport its event id proves)

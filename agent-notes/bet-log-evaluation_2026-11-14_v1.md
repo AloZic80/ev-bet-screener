@@ -2,13 +2,17 @@
 
 Ref: CC-2026-11-14-13 · from El Capataz (Claude Code) · times America/Chicago
 
+> **Update, Sun 11/15 12:30 AM (from your Bovada ticket PROPS-400252286):** Trent Walker's "Winnings +$3.04" is Bovada's **total return** (stake $1.52 × odds 2.00);
+> the real profit is **$1.52**. Once you set its To win to 1.52 in the Bet log, the totals here read: all settled **+$41.55**, the Scorecard **+$20.43**, Bovada
+> **+$62.34**. It was the only Bovada bet with a typed To win; the other 26 are worked out from the odds, so no other Bovada bet is affected.
+
 ## At a glance
 
 - **You are up $43.07 on 333 settled bets** ($693.59 staked: about 6 cents per dollar). With this many bets, luck alone could still hide a losing record.
 - **Bovada made +$63.86 on 26 bets you typed in,** which no book feed checks. All the other books together: −$20.79.
 - **The app's Scorecard (322 bets) is +$21.95, 678 settled bets short of its 1,000-bet test.** Nothing is decided before then.
 - **La Contadora's chances look honest so far** (18 won where she expected 17.81), and your prices are about even with the last price before each game.
-- **Records:** 4 show a small fix (−$0.90 in all) and 23 need a look (section 6).
+- **Records:** 4 show a small fix (−$0.90 in all) and 22 need a look (section 6).
 - **Your middle-category question** is answered in the middle-category report, CC-2026-11-14-14: since 11/11 Volado is 9 won, 4 lost, +$21.20, too
   few bets to tell skill from luck.
 
@@ -59,8 +63,9 @@ compare. Wins and losses use settled tickets only; open tickets are kept apart. 
 - **Your prices are about equal to the close.** 168 of the 323 settled bets in the closing-price checks have a closing price, all from Novig, Polymarket US
   and Kalshi. Mean CLV +0.27% (95% range −0.65% to +1.22%), and most of that is one bet; the median is 0.00%. You beat the close on 72 of 168; leaving
   out the 25 exact ties, on 72 of 143 (50.3%).
-- **Some records need your eye (section 6).** Four show a small fix (−$0.90 in all; profit +$42.17), and 23 more the data check could not settle. The
-  biggest open questions are a second Tuli Tuipulotu ticket ($4.27) and Trent Walker's $3.04 to-win ($1.52). None of them changes the answers above.
+- **Some records need your eye (section 6).** Four show a small fix (−$0.90 in all; profit +$42.17), and 22 more the data check could not settle. The
+  biggest open question is Trent Walker's $3.04 to-win ($1.52). None of them changes the answers above. (The two Tuli Tuipulotu tickets are confirmed:
+  you placed two bets on the same play, as you had said before.)
 
 ## 2. Money
 
@@ -236,10 +241,10 @@ profit would move if the record is wrong in the way it looks.
 - **00bcd9f1** Jared McCain Over 1.5 threes, Polymarket US −161. The same. Change −$0.19.
 
 **B. Needs your ticket or your memory**
-- **7ab6402c** Trent Walker Over 3.5 receptions, Bovada +100, $1.52, 11/13. The typed to-win, $3.04, looks like stake plus winnings: at +100 the winnings
-  are $1.52. A guess from the numbers: check the Bovada ticket; a boosted price would make it right. Change if so: −$1.52 if $3.04 was the payout.
-- **b1793588** Tuli Tuipulotu Over 0.5 sacks, Bovada +135, $3.16, 11/1, "ticket 2". Made with the "+ ticket" button at 8:59 PM, about 6 hours after
-  kickoff and 24 seconds after Arik Armstead was voided. Both copies won. Did you place two tickets? Change if so: −$4.27 if only one.
+- **7ab6402c** Trent Walker Over 3.5 receptions, Bovada +100, $1.52, 11/13. **Confirmed from your Bovada ticket (PROPS-400252286): Stake $1.52, Odds 2.00,
+  "Winnings +$3.04" is the total return.** The real profit is $1.52: set To win to 1.52 in the Bet log. Change: −$1.52.
+- **b1793588** Tuli Tuipulotu Over 0.5 sacks, Bovada +135, $3.16, 11/1, "ticket 2". **Confirmed by you: two bets on the same play** (you had said so
+  before; this report should not have asked). Both count for money (+$4.27 each); as an outcome it counts once. No change.
 - **a48fbcc7** Bovada 3-pick parlay, 11/4. The odds changed from +1112 to +1266 on 11/5 at 5:57 PM, after its legs had started; graded by hand.
   Change if so: −$1.54 if it paid +1112.
 - **538aa2d9** Trae Young Over 3.5 rebounds, FanDuel Predicts +179, $1.25, 11/2. Marked free on 11/6, four days after the game. Change if so: −$1.25 if
@@ -373,7 +378,7 @@ before 11/11 (63) is 64 here with the free bet. Its win rate, 46.3%, counts the 
 - Removed: 20 tickets, none marked placed, $0 lost. 13 were pending duplicate parlays: 12 Bovada combos removed in bursts on 11/4 and 11/5, and 1
   Polymarket US combo. So removals hide no settled loss.
 - Extras ("lucky"): Jaylen Brown +$0.90 and Damian Lillard −$1.00. In the total, out of the Scorecard.
-- Second ticket: Tuli Tuipulotu "ticket 2", +$4.27, counted as the app counts it (section 6).
+- Second ticket: Tuli Tuipulotu "ticket 2", +$4.27, counted as the app counts it: confirmed by Alonzo as a second bet on the same play.
 
 **Largest results**
 - Wins: Bovada 3-pick parlay at +1266, $1, +$12.66 (11/4). Bovada 3-pick parlay at +915, $1, +$9.15 (11/5). Carolina Hurricanes (SEA @ CAR)
