@@ -5,7 +5,7 @@ Ref: CC-2026-11-14-14 · from El Capataz (Claude Code) · times America/Chicago
 ## At a glance
 
 - **You did change what you bet.** Since 11/11 every bet with a saved chance is between 50% and 70%. Before, 39% were under 50%.
-- **The middle tab, Volado (50% to 60%), is 9 won and 4 lost since 11/11: +$21.20 on $30.22.** That is only 13 bets, and two of them (Carolina and Buffalo) made $16.67 of it.
+- **Your middle-category bets (Volado: a 50% to 60% chance) are 9 won and 4 lost since 11/11: +$21.20 on $30.22.** That is only 13 bets, and two of them (Carolina and Buffalo) made $16.67 of it.
 - **The start day changes the story.** Counted from 11/10 instead, Volado is 9 won, 10 lost, +$8.90.
 - **Good luck so far, not proof.** If La Contadora's chances are right, these bets should make about 5 to 7 cents per dollar over many bets, not 70. Your prices so far are about even with the last price before each game.
 - **Your plan:** at today's pace the Scorecard reaches 1,000 settled bets about Jan 7, 2027, 2,000 about Mar 28 and 3,000 about Jun 16. For the 2nd and 3rd 1,000 to confirm, each must be scored on its own, which the Scorecard does not do yet.
@@ -18,7 +18,8 @@ This is a record check, not betting advice. For all 353 bets, see the full evalu
 
 **Words used**
 - **Forecast:** the chance of winning saved with a bet. From 11/10 on it is La Contadora's; before, mostly the model's.
-- **La Contadora:** the app's careful chance. It starts at the market's price and moves 35% of the way toward the model, never past it.
+- **La Contadora:** the app's careful chance, min(model, market + 0.35 × (model − market)). When the model likes a bet more than the market does, she
+  moves only 35% of the way from the market's price toward the model's; she is never above the model.
 - **Band and tab:** the app sorts a chance into bands (Unlikely under 45%, Coin Flip 45–50%, On the Line 50–55%, Slight Lean 55–60%, then Lean, Solid,
   Strong, Heavy Favorite, High Cover) and the board into five tabs. Volado is the middle tab: 50% to under 60%.
 - **ROI:** profit ÷ money staked. +70.2% means 70.2 cents of profit per dollar bet.
@@ -41,20 +42,22 @@ This is a record check, not betting advice. For all 353 bets, see the full evalu
   under 100 bets "stories". Two bets, Carolina −2.5 and Buffalo −2.5, are $16.67 of the $21.20.
 - **The start day changes the picture.** The move to Volado began a day or two earlier. On 11/10, the first day every bet with a forecast carried La Contadora's
   chance, its 6 settled Volado bets all lost (−$12.30). Counted from 11/10, Volado is 9–10, +$8.90 (ROI +20.9%).
-- **Good luck so far, not proof yet.** Since 11/11 the bets won more than forecast, by an ordinary amount of luck (+1.3 SD). Your prices were, in the middle,
-  exactly even with the last price before each game (0.00% over 168 closes). Your 1K / 2K / 3K plan matches the app's own rule (nothing is decided before
-  1,000 settled bets), as long as each 1,000 is scored on its own. The Scorecard does not do that yet.
+- **Good luck so far, not proof yet.** Since 11/11 the bets won more than forecast, by an ordinary amount of luck (+1.3 SD). Your median CLV over all 168
+  closes is exactly 0.00%: even with the last price before each game. Your 1K / 2K / 3K plan matches the app's own rule (nothing is decided before 1,000
+  settled bets), as long as each 1,000 is scored on its own. The Scorecard does not do that yet.
 
 ## 2. What the middle category is in your bets
 
-Here "Volado" means a bet whose band chance (`bandCover`) is 50% to under 60%: the app's On the Line and Slight Lean bands. Reports › Breakdown by band
-(date placed) shows these same numbers as On the Line plus Slight Lean. "Machín" is 60% to under 75%, and so on. The band chance is La Contadora's chance
-saved with the bet (`snap.act`), else a cover you typed, else the model's fair price (the app's fallback).
+Here "Volado" means a bet whose band chance (`bandCover`) is 50% to under 60%: the app's On the Line and Slight Lean bands. "Machín" is 60% to under
+75%, and so on. The band chance is La Contadora's chance saved with the bet (`snap.act`), else a cover you typed, else the model's fair price (the app's
+fallback). Reports › Breakdown by band gives the same groups, but its "date placed" is the day a bet was saved, and it also counts extras. From 11/11 to
+11/14 that adds only Paul George (placed 11/10, saved 11/11): On the Line plus Slight Lean there shows 14 settled, 9–5, +$20.20.
 
 The app's own tab record (`rpTabOf`, Reports › Breakdown by tab) is narrower: the tab saved with a board bet, or else La Contadora's chance. Since v4.86
-(11/13) a book fill is saved as "own", with no tab, and older bets have none. That view shows Volado since 11/11 as 10 settled, 7–3, +$10.72 on $20.43:
-Carolina −2.5 (+$9.10), Portland −10.5 and Shea Theodore are book fills saved as "own", and 13 of the 24 Volado bets placed since 11/11 have no tab there.
-All time it holds 16 settled Volado bets (−$1.58), and 286 of the 295 singles placed before 11/11 have no tab.
+(11/13) a book fill is saved as "own", with no tab, and older bets have none. By the day placed it shows Volado since 11/11 as 10 settled, 7–3, +$10.72 on
+$20.43 (in Reports, by the day saved: 11 settled, 7–4, +$9.72). Carolina −2.5 (+$9.10), Portland −10.5 and Shea Theodore are book fills saved as "own",
+and 13 of the 24 Volado bets placed since 11/11 have no tab there. All time that view holds only 18 settled Volado bets (−$1.68, the 2 extras included),
+and 286 of the 295 singles placed before 11/11 have no tab.
 
 Singles placed, by the tab their band chance belongs to:
 
@@ -188,8 +191,8 @@ Walker ($3.04) and Portland ($1.68).
 - All time, the bets judged here made +$7.39 against +$44.01 expected (−0.9 SD): ordinary bad luck, or a forecast that runs high. 267 bets cannot tell which yet.
 - **What the bets should earn if La Contadora is right: about +5% to +7% of the money staked.** Since 11/11, +7.0% (+$2.93 on the $42.10 judged above).
   On her chances the app's Reports judge, from 11/10 on, +5.6% (+$3.17 on $56.12, from the EV saved with each bet). Her rule over the wider set, with
-  the older bets rebuilt: +5.1% (both in the full evaluation, section 3). The last row's +8.2% is mostly the model's own chance, which the app keeps only as a check. Over many
-  bets, results drift toward what the bets are really worth: single digits, not +70%.
+  the older bets rebuilt: +5.08% (+$27.35 on $538.66; both in the full evaluation, section 3). The last row's +8.2% is mostly the model's own chance, which the app keeps only
+  as a check. Over many bets, results drift toward what the bets are really worth: single digits, not +70%.
 
 The ranges:
 - Volado since 11/11: ROI range +3.8% to +112.5% (90%: +14.3% to +107.7%). The low end is just above zero, but it rests on 12 games. Without the two biggest
@@ -212,6 +215,7 @@ still starts at 0. The math policy (`docs/EV-CALCULATOR.md`): "Beating the closi
 **Where you are.** The Scorecard counts 322 settled bets. Its stage is "comparison" (300 to 999 bets). Its verdict box reads today:
 
 > Not yet — 678 more settled bets before raising stakes or claiming anything.
+>
 > ⚠ The last 100 bets are not beating the closing price (median +0.0%). That isn't luck — check what changed.
 
 The warning shows when the median of the last 100 closes is zero or below. Here it is exactly 0.00%, with 16 of those 100 at the same price: even with
@@ -304,7 +308,8 @@ Which reading counts (each block alone, or the three together) is best set befor
 
 Your bet log backup (saved Sat 11/14 3:54 PM, app v5.04), read on this computer only. Los Chambeadores ran the numbers and Los Desconfiados re-ran every
 one. Los Chismosos (reviewers) then checked this note against the app's code and the full evaluation, and El Capataz re-ran each of their corrections with
-the app's own functions (`bandCover`, `betProfit`, `bootGames`, `rpPregame`, `rpTabOf`, `saidOf`, `renderScorecard`). Results use settled bets only. A
-bet's day is the day it was placed, in Chicago time. Scripts and outputs: `eval-work-1111/` (first run and re-check) and `eval-review/` (review and
-corrections: `review.js`, `review2.js`, `extra.js`, `tabcheck.js`, `modes.py` and the editor's `ed_*.js` / `ed_power.py`), both in
+the app's own functions (`bandCover`, `cvBand`, `tabOfChance`, `inScorecard`, `betProfit`, `bootGames`, `rpPregame`, `rpTabOf`, `rpPlacedDay`,
+`saidOf`, `renderScorecard`). Results use settled bets only. A bet's day is the day it was placed (`placedAt`), in Chicago time. Scripts and outputs:
+`eval-work-1111/` (first run and re-check) and `eval-review/` (review and corrections: `review.js`, `review2.js`, `extra.js`, `tabcheck.js`, `modes.py`
+and the editor's `ed_*.js` / `ed_power.py`), both in
 `/tmp/claude-0/-home-user/c5370435-0dbc-56b4-aaf1-597d242c119b/scratchpad/` (a scratch folder; a restart can clear it).
