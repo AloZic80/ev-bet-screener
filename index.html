@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.05</title>
+<title>0xBeta Screener v5.07</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1711,6 +1711,24 @@ small{font-size:max(12px, calc(1em / 1.2))}   /* v5.04: the browser’s own smal
 .sc-pill.age.unk{color:var(--warn); border-color:var(--warn); white-space:normal; max-width:100%; box-sizing:border-box; height:auto; min-height:26px; padding-top:3px; padding-bottom:3px; line-height:1.25}   /* the longer words wrap inside the narrow score column on a computer */
 .sc-pill.age.old{white-space:normal; max-width:100%; box-sizing:border-box; height:auto; min-height:26px; padding-top:3px; padding-bottom:3px; line-height:1.25}   /* v5.05 (Los Desconfiados): "Price stale · re-check" wraps too (it ran into the next column at 850 to 920 px) */
 .sc-pill.age .nw{white-space:nowrap}   /* v5.05: it wraps before "re-check", not at its hyphen */
+/* v5.07 (Sally agreed, owner BUILD): Reports › the So far card and the By table’s new columns (Games, ROI 95% range, Expected vs actual, CLV, Read). Display only. */
+.rp-sofar .rp-sf-h{margin:8px 0 2px; font-weight:700; font-size:13px}
+.rp-sf-l{margin:2px 0 4px; padding-left:18px}
+.rp-sf-l li{margin:3px 0; font-size:13px; overflow-wrap:anywhere}
+.rp-sf-none{margin:6px 0 2px}
+@media (min-width:641px){ .rp-br th, .rp-br td{padding:5px 4px} .rp-br th.num{white-space:normal} .rp-br .rp-read{min-width:7.5em} }   /* the 12 columns fit from 1000 px up with no scroll inside the table; the numbers stay on one line */
+@media (max-width:640px){ .rp-br td.rp-ea, .rp-br td.rp-read{grid-column:1 / -1} }   /* on a phone the two long cells take the whole card width */
+.rp-nw{white-space:nowrap}   /* v5.07 (fixer, Los Chismosos): a + or − stays with its dollar amount (a browser may break between "−" and "$", so "−$22.35" read as "$22.35" on the next line) */
+.rp-br td.rp-ea b{white-space:nowrap}   /* v5.07 (fixer): the same for Expected and actual with their ▲/▼ */
+@media (min-width:641px) and (max-width:999px){   /* v5.07 (fixer): from 641 to 999 px the 12 columns do not fit (the table scrolled inside its box and Read was out of view), so the By table is cards there too, three to a line, as on a phone */
+  .rp-br thead{display:none}
+  .rp-br, .rp-br tbody{display:block}
+  .rp-br tr{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); grid-auto-flow:row dense; gap:2px 12px; padding:8px 0; border-bottom:1px solid var(--rule)}   /* dense: CLV fills the slot next to ROI 95% range */
+  .rp-br td{border:0; padding:1px 0; text-align:left!important; white-space:normal}
+  .rp-br td.rp-bet, .rp-br td.rp-ea, .rp-br td.rp-read{grid-column:1 / -1}
+  .rp-br td[data-l]::before{content:attr(data-l)': '; color:var(--soft); font-size:12px}
+  .rp-br td[data-l].d-up::before{content:attr(data-l) ": ▲\00a0"} .rp-br td[data-l].d-dn::before{content:attr(data-l) ": ▼\00a0"}
+}
 </style>
 </head>
 <body>
@@ -1719,7 +1737,7 @@ small{font-size:max(12px, calc(1em / 1.2))}   /* v5.04: the browser’s own smal
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.05</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.07</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2521,10 +2539,11 @@ small{font-size:max(12px, calc(1em / 1.2))}   /* v5.04: the browser’s own smal
   </details>
   <div class="meta" id="rpAsOf"></div>
   <div class="meta rp-cover" id="rpCover"></div>
+  <div id="rpSoFar"></div>   <!-- v5.07 (Sally agreed, owner BUILD): So far · follows the By grouping, period, count and filters -->
   <div id="rpHead"></div>
   <div id="rpSplit"></div>
   <h3 class="rp-h">Breakdown</h3>   <!-- v4.90: Reports step 2 -->
-  <div class="rp-ctl"><label class="rp-lab">By <select id="rpBy"><option value="sport">Sport</option><option value="book">Book</option><option value="kind">Bet type</option><option value="price">Price paid</option><option value="tab">Tab (her chance when taken)</option><option value="band">Band</option></select></label>
+  <div class="rp-ctl"><label class="rp-lab">By <select id="rpBy"><option value="sport">Sport</option><option value="book">Book</option><option value="kind">Bet type</option><option value="price">Price paid</option><option value="tab">Tab (her chance when taken)</option><option value="band">Band</option><option value="market">Market</option><option value="stm">Sport · type · market</option></select></label>   <!-- v5.07: + Market, Sport · type · market -->
     <label class="rp-lab" id="rpPxWrap">Show price as <select id="rpPx"><option value="chance">Break-even chance, all in</option><option value="american">American odds, all in</option></select></label></div>
   <div id="rpBreak"></div>
   <h3 class="rp-h">Profit over time</h3><div id="rpChart"></div><div id="rpMonths"></div>
@@ -2544,7 +2563,7 @@ small{font-size:max(12px, calc(1em / 1.2))}   /* v5.04: the browser’s own smal
 
 </div>
 <script>
-const SCREENER_VERSION='v5.05';
+const SCREENER_VERSION='v5.07';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -9923,7 +9942,7 @@ setTimeout(csvDays,0);
    never guessed). Money comes from lcStats + betProfit and the cancelled-bet losses, exactly as the calendar's totals, so the two cannot drift.
    ROI is settled profit over settled own-money stake; open money is shown apart (to play, in play) and never in W–L–P, profit or ROI. */
 var RP={basis:'game', per:'month', anchor:null, from:'', to:'', f:{}, all:{open:false, set:false}};
-try{ const s=JSON.parse(localStorage.getItem('mbev.reportsUi')||'null'); if(s && typeof s==='object'){ if(s.basis==='placed') RP.basis='placed'; if(['day','month','year','all','custom'].includes(s.per)) RP.per=s.per; if(s.f && typeof s.f==='object') RP.f=s.f; if(typeof s.from==='string') RP.from=s.from; if(typeof s.to==='string') RP.to=s.to; if(['sport','book','kind','price','tab','band'].includes(s.by)) RP.by=s.by; if(s.px==='american') RP.px='american'; if(s.bwWho==='players') RP.bwWho='players'; if(s.bwDir==='worst') RP.bwDir='worst'; RP.small=!!s.small; } }catch(e){}   /* v4.90: the step-2 choices too */
+try{ const s=JSON.parse(localStorage.getItem('mbev.reportsUi')||'null'); if(s && typeof s==='object'){ if(s.basis==='placed') RP.basis='placed'; if(['day','month','year','all','custom'].includes(s.per)) RP.per=s.per; if(s.f && typeof s.f==='object') RP.f=s.f; if(typeof s.from==='string') RP.from=s.from; if(typeof s.to==='string') RP.to=s.to; if(['sport','book','kind','price','tab','band','market','stm'].includes(s.by)) RP.by=s.by; if(s.px==='american') RP.px='american'; if(s.bwWho==='players') RP.bwWho='players'; if(s.bwDir==='worst') RP.bwDir='worst'; RP.small=!!s.small; } }catch(e){}   /* v4.90: the step-2 choices too */   /* v5.07: + market, stm */
 function rpSaveUi(){ try{ localStorage.setItem('mbev.reportsUi',JSON.stringify({basis:RP.basis, per:RP.per, f:RP.f, from:RP.from, to:RP.to, by:RP.by, px:RP.px, bwWho:RP.bwWho, bwDir:RP.bwDir, small:!!RP.small})); }catch(e){} }
 function rpPlacedDay(b){ const t=Date.parse(b && b.snap && b.snap.at); return isNaN(t)?null:ctDay(t); }   // the saved time only: never the id, the game day or an edit time
 function rpDayOf(b){ return RP.basis==='placed' ? rpPlacedDay(b) : (gameDayOf(b)||null); }
@@ -10029,30 +10048,185 @@ function rpRender(){ const box=document.getElementById('rpPanel'); if(!box) retu
    Price = what was paid, all in (entryPInfo: a fill's cost ÷ shares, the fee already in the cost; else stake ÷ (stake + to win); else the
    paid odds with the saved fee): never a forecast, never in Brier, calibration, expected wins or the Scorecard. Parlays: Unknown price. */
 function rpNorm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9.+-]+/g,' ').trim(); }
-function rpGameKey(b){ const ev=(b.gameInfo&&b.gameInfo.eventId)||b.eventId||b.nvEvent||''; if(ev) return 'e'+ev; const d=gameDayOf(b)||'';   /* review: a doubleheader stays two games by its start hour; a bet with no game is its day and team, never its own id */
+function rpGameKey(b){ const ev=(b.gameInfo&&b.gameInfo.eventId)||b.eventId||b.nvEvent||''; if(ev) return 'e'+ev; const d=gameDayOf(b)||'';   /* review: a doubleheader stays two games by its start hour; a bet with no game is its day and team, never its own id */   /* v5.07: sfKeySig lists every field this reads (with gameDayOf, loggedAtOf, rpOutKey); add a new one there too */
   return b.game ? 'g'+d+'|'+gameKey(b.game)+'|'+String(b.start||'').slice(0,13) : 'x'+d+'|'+rpNorm(b.team||b.name); }
-function rpOutKey(b){ return rpGameKey(b)+'|'+(b.kind||'')+'|'+rpNorm(b.name)+'|'+rpNorm(b.market)+'|'+(b.side||''); }   /* the same outcome: game, who, market and line, side; never book, odds or stake */
+function rpOutKey(b, gk){ return (gk||rpGameKey(b))+'|'+(b.kind||'')+'|'+rpNorm(b.name)+'|'+rpNorm(b.market)+'|'+(b.side||''); }   /* the same outcome: game, who, market and line, side; never book, odds or stake */   /* v5.07: gk = the game key when it is already worked out (same result) */
 function rpPxBand(b){ const p=b.kind==='parlay'?null:entryP(b); if(p==null) return 'u'; return p<0.40?'p1':p<0.50?'p2':p<0.60?'p3':p<0.70?'p4':'p5'; }   /* half-open: 40.0% is in 40–<50 */
 var RP_PX={p1:'under 40%', p2:'40–<50%', p3:'50–<60%', p4:'60–<70%', p5:'70% or more', u:'Unknown price (parlays, no price)'};
 function rpCounts(L){ const o=new Set(), g=new Set(); L.forEach(b=>{ if(heldValue(b).open) return; o.add(rpOutKey(b)); g.add(rpGameKey(b)); }); return {outcomes:o.size, games:g.size}; }
-function rpGroupKey(b, by){
+function rpGroupKey(b, by, sp){   /* v5.07 (fixer): sp = the sport a no-sport prop’s event proves (mfSportProof), read by market and stm only */
   if(by==='sport') return String(b.sport||'')||'(no sport)';
   if(by==='book') return bookLabel(b.book||'')||'(no book)';
   if(by==='kind') return rpKindWord(b.kind);
   if(by==='tab'){ const t=rpTabOf(b); return t?tabWord(t):'No tab'; }
   if(by==='band'){ if(b.kind==='parlay') return 'No band (parlays)'; const k=rpBandOf(b); return k===''||k==='0'?'Unknown':cvNames()[+k]+' · '+cvRanges()[+k]; }
   if(by==='price') return RP.px==='american' ? (rpOddsBucket(b) ? RP_ODDS[rpOddsBucket(b)] : RP_PX.u) : RP_PX[rpPxBand(b)];
+  if(by==='market') return marketFamilyOf(b, sp).label;   // v5.07
+  if(by==='stm') return rpStmOf(b, sp);   // v5.07
   return ''; }
 function rpGroupOrder(by){ if(by==='price') return RP.px==='american' ? Object.keys(RP_ODDS).map(k=>RP_ODDS[k]).concat([RP_PX.u]) : Object.keys(RP_PX).map(k=>RP_PX[k]);
   if(by==='tab') return ['boring','machin','volado','suertudo','brujo'].map(tabWord).concat(['No tab']); if(by==='band') return [9,8,7,6,5,4,3,2,1].map(k=>cvNames()[k]+' · '+cvRanges()[k]).concat(['Unknown','No band (parlays)']); return null; }
-function rpBreakHtml(S){ const by=RP.by||'sport', G=new Map(), R=new Map(); S.L.forEach(b=>{ const k=rpGroupKey(b,by); (G.get(k)||G.set(k,[]).get(k)).push(b); }); S.Rm.forEach(b=>{ const k=rpGroupKey(b,by); (R.get(k)||R.set(k,[]).get(k)).push(b); });
-  const keys=[...new Set([...G.keys(),...R.keys()])], ord=rpGroupOrder(by);
-  if(ord){ const ix=k=>{ const i=ord.indexOf(k); return i<0?999:i; }; keys.sort((a,b)=>ix(a)-ix(b)); } else keys.sort((a,b)=>rpAgg(G.get(b)||[],R.get(b)||[]).profit-rpAgg(G.get(a)||[],R.get(a)||[]).profit);
-  if(!keys.length) return '<p class="meta">No bets in this report.</p>';
+/* v5.07 (Sally agreed 11/14, owner BUILD; scope so-far-v1): Reports › So far. The Market grouping (market-alias-v1), ranges that re-draw whole games, the many-group check (Benjamini–Hochberg at 10%), the So far card. Display only: no stake, decision, floor, saved bet, Scorecard or Said vs won number changes; nothing new is saved. */
+var MARKET_ALIAS_SHOTS_CONFIRMED=false;   // v5.07: NHL "Shots" stays its own family until Alonzo confirms his books settle it as shots on goal; true merges it into Shots on goal (evidence:'book-rule-confirmed')
+var sfMemo=new Map();   // v5.07: So far row results, keyed by grouping, basis, range, filters, row and its per-game numbers (no ranking or total is ever saved)
+function mfNorm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim(); }   /* v5.07: case, accents, spacing and punctuation ("Points+Rebounds" = "points rebounds", "3-Pointers Made" = "3 pointers made") */
+function mfGroup(sport){ const s=String(sport||'').toUpperCase(); return (s==='NBA'||s==='NCAAB')?'bb':s==='NHL'?'hk':(s==='NFL'||s==='NCAAF')?'fb':s==='MLB'?'mlb':isSoccer(s)?'soc':''; }   /* v5.07: the alias table is per sport group; any other sport (or none): unmapped */
+function marketAliasV1(){ if(marketAliasV1.T) return marketAliasV1.T;   /* v5.07: market-alias-v1 as data (same contract only), built once on first use */
+  const F=[   /* [id, label (Market), short label (Sport · type · market), group, aliases exactly as mfNorm writes them, merged into this id when MARKET_ALIAS_SHOTS_CONFIRMED] */
+    ['hk.sog','Shots on goal','Shots on goal','hk',['shots ongoal','shots on goal','sog']],
+    ['hk.shots','Shots','Shots','hk',['shots'],'hk.sog'],
+    ['hk.saves','Goalie saves','Goalie saves','hk',['saves','goalie saves']],
+    ['hk.goals','Player goals (hockey)','Player goals','hk',['player goals','goals']],
+    ['hk.pts','Points (hockey)','Points','hk',['points']],
+    ['hk.ast','Assists (hockey)','Assists','hk',['assists']],
+    ['bb.pra','Points + rebounds + assists','Points + rebounds + assists','bb',['points assists rebounds','points rebounds assists','pra','pts reb ast']],
+    ['bb.pr','Points + rebounds','Points + rebounds','bb',['points rebounds']],
+    ['bb.pa','Points + assists','Points + assists','bb',['points assists']],
+    ['bb.ra','Rebounds + assists','Rebounds + assists','bb',['rebounds assists']],
+    ['bb.3pm','Three-pointers made','Three-pointers made','bb',['threes','threepointersmade','3 point field goals','3 pointers made','three pointers made']],
+    ['bb.pts','Points (basketball)','Points','bb',['points']],
+    ['bb.reb','Rebounds','Rebounds','bb',['rebounds']],
+    ['bb.ast','Assists (basketball)','Assists','bb',['assists']],
+    ['bb.stl','Steals','Steals','bb',['steals']],
+    ['bb.blk','Blocks','Blocks','bb',['blocks']],
+    ['bb.tov','Turnovers','Turnovers','bb',['turnovers']],
+    ['bb.fgm','Field goals made','Field goals made','bb',['field goals made']],
+    ['bb.ftm','Free throws made','Free throws made','bb',['free throws made']],
+    ['bb.dd','Double double','Double double','bb',['double double']],
+    ['bb.td','Triple double','Triple double','bb',['triple double']],
+    ['fb.rec','Receptions','Receptions','fb',['receiving receptions','receptions']],
+    ['fb.passint','Passing interceptions','Passing interceptions','fb',['passing interceptions']],   /* plain "Interceptions" only when the player is the passer: marketFamilyOf */
+    ['fb.recyds','Receiving yards','Receiving yards','fb',['receiving yards']],
+    ['fb.rushyds','Rushing yards','Rushing yards','fb',['rushing yards']],
+    ['fb.rushatt','Rushing attempts','Rushing attempts','fb',['rushing attempts']],
+    ['fb.passatt','Passing attempts','Passing attempts','fb',['passing attempts']],
+    ['fb.passtd','Passing TDs','Passing TDs','fb',['passing tds']],
+    ['fb.rushrec','Rushing + receiving yards','Rushing + receiving yards','fb',['rushing receiving yards']],
+    ['fb.sacks','Sacks','Sacks','fb',['defense sacks','sacks']],
+    ['fb.passyds','Passing yards','Passing yards','fb',['passing yards']],
+    ['fb.passcmp','Passing completions','Passing completions','fb',['passing completions']],
+    ['fb.passtd2','Passing touchdowns','Passing touchdowns','fb',['passing touchdowns']],
+    ['fb.anytd','Anytime touchdown','Anytime touchdown','fb',['anytime touchdown']],
+    ['fb.longrec','Longest reception','Longest reception','fb',['longest reception']],
+    ['fb.longrush','Longest rush','Longest rush','fb',['longest rush']],
+    ['fb.defsacks','Defensive sacks','Defensive sacks','fb',['defensive sacks']],
+    ['mlb.hits','Hits','Hits','mlb',['hits']],
+    ['mlb.bbal','Walks allowed','Walks allowed','mlb',['walks allowed']],
+    ['mlb.k','Strikeouts','Strikeouts','mlb',['strikeouts']],
+    ['mlb.runs','Runs','Runs','mlb',['runs']],
+    ['mlb.rbi','RBIs','RBIs','mlb',['rbis']],
+    ['mlb.hrr','Hits + runs + RBIs','Hits + runs + RBIs','mlb',['h r rbi']],
+    ['mlb.er','Earned runs','Earned runs','mlb',['earned runs']],
+    ['mlb.outs','Pitching outs','Pitching outs','mlb',['pitching outs']],
+    ['soc.goals','Player goals (soccer)','Player goals','soc',['player goals','goals']]];
+  const Q=[   /* [code, label, pattern on mfNorm text]: checked in this order, each found once and taken out before the stat is looked up */
+    ['p1','1st period','\\b(1st|first) period\\b|\\bp1\\b|\\b1p\\b'], ['p2','2nd period','\\b(2nd|second) period\\b|\\bp2\\b|\\b2p\\b'], ['p3','3rd period','\\b(3rd|third) period\\b|\\bp3\\b|\\b3p\\b'],
+    ['q1','1st quarter','\\b(1st|first) quarter\\b|\\bq1\\b|\\b1q\\b'], ['q2','2nd quarter','\\b(2nd|second) quarter\\b|\\bq2\\b|\\b2q\\b'], ['q3','3rd quarter','\\b(3rd|third) quarter\\b|\\bq3\\b|\\b3q\\b'], ['q4','4th quarter','\\b(4th|fourth) quarter\\b|\\bq4\\b|\\b4q\\b'],
+    ['h1','1st half','\\b(1st|first) half\\b|\\bh1\\b|\\b1h\\b'], ['h2','2nd half','\\b(2nd|second) half\\b|\\bh2\\b|\\b2h\\b'],
+    ['f5','first 5 innings','\\b(1st|first) (5|five) innings?\\b|\\bf5\\b'], ['i1','1st inning','\\b(1st|first) inning\\b'],
+    ['part','part of the game','\\b(periods?|quarters?|half|halves|innings?)\\b'],
+    ['reg','regulation','\\bregulation( time)?\\b|\\breg\\b'], ['ot','incl. overtime','\\b(incl|including|inc) (ot|overtime)\\b|\\bovertime\\b|\\bot\\b'],
+    ['pp','power play','\\bpower ?play\\b|\\bpp\\b'], ['sh','shorthanded','\\bshort ?handed\\b|\\bsh\\b'], ['alt','alternate','\\balt\\b|\\balternate\\b'],
+    ['first','first','\\b(1st|first)\\b'], ['last','last','\\blast\\b'], ['anytime','anytime','\\banytime\\b']];
+  const fam=new Map(), idx=new Map(), QL={}; F.forEach(([id,label,short,g,al,confirm])=>{ fam.set(id,{id,label,short,g,confirm}); al.forEach(a=>idx.set(g+'|'+a,id)); });
+  Q.forEach(q=>{ QL[q[0]]=q[1]; q.push(new RegExp(q[2])); q.push(new RegExp(q[2],'g')); });
+  return (marketAliasV1.T={policy:'market-alias-v1', fam, idx, Q, QL}); }
+function mfQual(t){ const T=marketAliasV1(); let s=' '+t+' '; const q=[]; T.Q.forEach(x=>{ if(x[3].test(s)){ q.push(x[0]); s=s.replace(x[4],' '); } }); return {rest:s.replace(/\s+/g,' ').trim(), q}; }   /* v5.07: qualifiers stay part of the identity, never merged */
+function marketFamilyOf(b, sp){ const P='market-alias-v1', k=String((b&&b.kind)||''), T=marketAliasV1();   /* v5.07 (Sally, agreed): the Market grouping; it never changes a bet */   /* v5.07 (fixer): sp = the sport its event proves when none is saved (mfSportProof); anything but a string (a .map index) is ignored */
+  if(k==='parlay') return {key:'parlay', label:'Parlay', short:'', mapped:true, aliasPolicy:P, qualifiers:[]};
+  const raw=statOfMarket((b&&b.market)||'').replace(/\s+/g,' ').trim(), t=mfNorm(raw);
+  if(k==='spread'||k==='total'||k==='moneyline'){ const x=mfQual(t), ql=x.q.map(c=>T.QL[c]); return {key:'gl.'+k+(x.q.length?'|'+x.q.join('+'):''), label:[k==='spread'?'Spread':k==='total'?'Total (Over/Under)':'Moneyline'].concat(ql).join(' · '), short:ql.join(' · '), mapped:true, aliasPolicy:P, qualifiers:x.q}; }   /* game lines by kind, any sport (also none): a Draw is a moneyline */
+  const un={key:'u|'+t, label:'Unmapped · '+(raw||'(no stat)'), short:'Unmapped · '+(raw||'(no stat)'), mapped:false, aliasPolicy:P, qualifiers:[]};
+  const g=mfGroup(String((b&&b.sport)||'').trim()||(typeof sp==='string'?sp:'')); if(k!=='prop' || !g || !t) return un;   /* an unknown kind, no sport (saved, or proved by its event) or no stat: shown as unmapped, never dropped */   /* v5.07 (fixer): the scope’s “No sport saved: unmapped unless identity proves the sport” */
+  const hit=(id,q)=>{ let f=T.fam.get(id), ev; if(f.confirm && MARKET_ALIAS_SHOTS_CONFIRMED){ f=T.fam.get(f.confirm); ev='book-rule-confirmed'; } const ql=q.map(c=>T.QL[c]);
+    const o={key:f.id+(q.length?'|'+q.join('+'):''), label:[f.label].concat(ql).join(' · '), short:[f.short].concat(ql).join(' · '), mapped:true, aliasPolicy:P, qualifiers:q}; if(ev) o.evidence=ev; return o; };
+  const id=T.idx.get(g+'|'+t); if(id) return hit(id,[]);   /* the whole text first (a family whose own name has a qualifier word, like "Anytime touchdown") */
+  const x=mfQual(t);
+  if(x.q.some(c=>c==='first'||c==='last'||c==='anytime')) return un;   /* v5.07 (Los Desconfiados C1): a first, last or anytime scorer prop is not a count prop: never mapped */
+  if(g==='fb' && x.rest==='interceptions') return String((b&&(b.pos||b.position))||'').toUpperCase()==='QB' ? hit('fb.passint',x.q) : un;   /* only the passer’s interceptions are passing interceptions; role unknown: unmapped */
+  const id2=x.q.length ? T.idx.get(g+'|'+x.rest) : null; return id2 ? hit(id2,x.q) : un; }
+function rpStmOf(b, sp){ sp=typeof sp==='string'?sp:''; const f=marketFamilyOf(b, sp), k=String((b&&b.kind)||''), s=String((b&&b.sport)||'').trim(); if(k==='parlay' && (!s || s.toUpperCase()==='PARLAY')) return 'Parlay';   /* v5.07 (fixer, Los Chismosos): a parlay saved with the sport PARLAY reads “Parlay”, not “PARLAY · parlay” */
+  return [s||'(no sport)', k||'other', f.short].filter(Boolean).join(' · '); }   /* v5.07: "NHL · prop · Shots on goal", "NFL · spread"; the sport part is the saved one, as the Sport grouping (a prop whose event proves its sport: "(no sport) · prop · Blocks") */
+function mfEvOf(b){ const ev=(b&&((b.gameInfo&&b.gameInfo.eventId)||b.eventId||b.nvEvent))||''; return ev?'e'+ev:''; }   /* v5.07 (fixer): a ticket’s event id, read as rpGameKey reads it */
+function mfSportProof(list, pool){ const need=new Map();   /* v5.07 (fixer; scope S1 “No sport saved: unmapped unless identity proves the sport”): a prop saved with no sport takes the sport of the other tickets on the same event id (the whole log and the cancelled bets, never a parlay), only when they all name one sport; no event id, or two sports: none. Returns Map(bet → sport) or null */
+  (list||[]).forEach(b=>{ if(b && b.kind==='prop' && !String(b.sport||'').trim()){ const e=mfEvOf(b); if(e) need.set(b,e); } }); if(!need.size) return null;
+  const want=new Set(need.values()), seen=new Map(); (pool||logged.concat(removedBets)).forEach(x=>{ if(!x || x.kind==='parlay') return; const s=String(x.sport||'').trim().toUpperCase(); if(!s || s==='PARLAY') return; const e=mfEvOf(x); if(!e || !want.has(e)) return; (seen.get(e)||seen.set(e,new Set()).get(e)).add(s); });
+  const out=new Map(); need.forEach((e,b)=>{ const s=seen.get(e); if(s && s.size===1) out.set(b,[...s][0]); }); return out.size?out:null; }
+function rpByWord(by){ return ({sport:'Sport', book:'Book', kind:'Bet type', price:'Price paid', tab:'Tab (her chance when taken)', band:'Band', market:'Market', stm:'Sport · type · market'})[by]||'Sport'; }   /* v5.07: the grouping’s name for the So far card */
+function sfHash(s){ let h=0x811c9dc5; s=String(s); for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193); } return h>>>0; }   /* v5.07: FNV-1a, the seed from a row’s own numbers */
+function sfQ(w, m, a, up){ const i=up?Math.ceil(a*(m-1)):Math.floor(a*(m-1)); return w[i]; }   /* v5.07: the same quantile rule as rpBootGames0 */
+/* v5.07 (S2/S4): the paired whole-game bootstrap. Per game g: P[g] settled profit, S[g] own-money stake. Each draw re-draws n games with replacement;
+   ROI* = ΣP* ÷ ΣS* (a draw is skipped only when ΣS* = 0). In the same draws, the null-centered statistic T* = ΣR* ÷ ΣS* with R[g] = P[g] − r·S[g],
+   r = ΣP ÷ ΣS; p = min(1, (1 + #{|T*| ≥ |r|}) ÷ (B + 1)) with B = the draws kept (a skipped draw is not a draw). Seeded rng32: same numbers, same range. */
+function sfBootRatio(P, S, B, seed){ const n=P.length; if(n<2) return null; let sp=0, ss=0; for(let i=0;i<n;i++){ sp+=P[i]; ss+=S[i]; } if(!(ss>0)) return null;
+  const r=sp/ss, ar=Math.abs(r), R=new Float64Array(n); for(let i=0;i<n;i++) R[i]=P[i]-r*S[i];
+  const rnd=rng32(seed), v=new Float64Array(B); let m=0, k=0;
+  for(let b=0;b<B;b++){ let p=0, s=0, q=0; for(let i=0;i<n;i++){ const j=(rnd()*n)|0; p+=P[j]; s+=S[j]; q+=R[j]; } if(!(s>0)) continue; v[m++]=p/s; if(Math.abs(q/s)>=ar) k++; }
+  if(m<2) return null; const w=v.subarray(0,m).sort();
+  return {r, lo95:sfQ(w,m,0.025), hi95:sfQ(w,m,0.975,1), lo90:sfQ(w,m,0.05), hi90:sfQ(w,m,0.95,1), p:Math.min(1,(1+k)/(m+1)), B, kept:m, games:n}; }
+function sfBootSum(D, B, seed){ const n=D.length; if(n<2) return null; const rnd=rng32(seed), v=new Float64Array(B);   /* v5.07: actual − expected in dollars, whole games re-drawn */
+  for(let b=0;b<B;b++){ let t=0; for(let i=0;i<n;i++) t+=D[(rnd()*n)|0]; v[b]=t; } v.sort(); return {lo95:sfQ(v,B,0.025), hi95:sfQ(v,B,0.975,1), B, games:n}; }
+function sfKey(sig){ return sfHash(sig)+'.'+sfHash('#'+sig)+'.'+sig.length; }   /* v5.07: the row’s numbers in short: two hashes and the length */
+function sfMemoGet(key, fn){ if(sfMemo.has(key)) return sfMemo.get(key); if(sfMemo.size>400) sfMemo.clear(); const v=fn(); sfMemo.set(key,v); return v; }
+function sfTuples(items){ const G=new Map(); items.forEach(([g,a,b])=>{ (G.get(g)||G.set(g,[]).get(g)).push([a,b]); }); const keys=[...G.keys()].sort(), X=new Float64Array(keys.length), Y=new Float64Array(keys.length);   /* v5.07: sorted by game key, and each game’s items added in a fixed order (Los Desconfiados C9): the log order never changes a sum */
+  keys.forEach((g,i)=>{ const t=G.get(g); if(t.length>2) t.sort((u,w)=>(u[0]-w[0])||(u[1]-w[1])); let x=0, y=0; t.forEach(([a,b])=>{ x+=a; y+=b; }); X[i]=x; Y[i]=y; }); return {keys, X, Y, sig:keys.map((g,i)=>g+'='+X[i].toFixed(6)+'/'+Y[i].toFixed(6)).join(';')}; }
+var sfKeyMemo=new WeakMap();   // v5.07: each bet’s game and outcome keys, kept while the fields they are made from stay the same
+function sfKeySig(b){ const s=b.snap||{}, gi=b.gameInfo||{}; return [gi.eventId, b.eventId, b.nvEvent, b.dateSet?1:0, b.date, b.start, b.manual?1:0, s.at, b.id, b.game, b.team, b.name, b.kind, b.market, b.side].join('\u0001'); }   /* v5.07: every field rpGameKey, gameDayOf, loggedAtOf and rpOutKey read: a new one there must be added here */
+function sfKeys(list, K){ K=K||new Map(); list.forEach(b=>{ if(K.has(b)) return; const sig=sfKeySig(b); let m=sfKeyMemo.get(b); if(!m || m.sig!==sig){ const g=rpGameKey(b); m={sig, g, o:rpOutKey(b,g)}; sfKeyMemo.set(b,m); } const pr=betProfit(b); K.set(b,{g:m.g, o:m.o, pr, open:pr==null}); }); return K; }   /* v5.07: game, outcome and profit once per paint (gameDayOf is the slow part); open = heldValue(b).open */
+function sfFlat1(L, K){ K=sfKeys(L,K); let n=0, t=0; L.forEach(b=>{ if(b.kind==='parlay' || b.sold || b.free) return; const st=+b.stake||0, pr=K.get(b).pr; if(pr==null || !(st>0)) return; n++; t+=pr/st; }); return n?{roi:t/n, n}:null; }   /* v5.07: each ordinary settled ticket at $1 at the price it got */
+function sfClv(L, K){ K=sfKeys(L,K); const M=L.filter(b=>b.kind!=='parlay' && !K.get(b).open), v=M.map(clv).filter(x=>x!=null); return {med:rpMed(v), n:v.length, of:M.length, par:L.filter(b=>b.kind==='parlay' && !K.get(b).open).length}; }   /* v5.07: the app’s clv(), as Closing line counts it (settled singles) */   /* v5.07 (fixer): par = settled parlays, so a parlay-only row says why it has no close */
+function sfEA(L, B, ctx, K){ K=sfKeys(L,K); let set=0, rec=0, fb=0; const E=[];   /* v5.07: La Contadora’s own frozen pregame forecast only */
+  L.forEach(b=>{ if(K.get(b).open) return; set++; if(b.kind==='parlay' || b.sold || b.free) return; if(b.forecastRecovery){ rec++; return; }
+    const s=b.snap||{}, a=+s.act, ok=s.act!=null && a>0 && a<1 && s.actNet!=null && isFinite(+s.actNet);
+    if(s.modelOnly || !ok){ const f=toProb(b.fair), unpriced=s.model!=null && s.act===null, typed=!!(b.cover && +b.cover.p>0 && +b.cover.p<1); if(s.modelOnly || (!unpriced && !typed && ((s.model!=null && +s.model>0 && +s.model<1) || (f>0 && f<1)))) fb++; return; }   /* v5.07 (Los Desconfiados C4): a line nobody priced and a typed cover are not model fallbacks (as bandCover) */
+    if(!rpPregame(b)) return; E.push(b); });
+  const e=E.reduce((t,b)=>t+(+b.stake||0)*(+b.snap.actNet),0), a=E.reduce((t,b)=>t+K.get(b).pr,0), T=sfTuples(E.map(b=>[K.get(b).g, K.get(b).pr-(+b.stake||0)*(+b.snap.actNet), 0]));
+  const boot=T.keys.length>=2 ? sfMemoGet(ctx+'|ea|'+B+'|'+sfKey(T.sig), ()=>sfBootSum(T.X, B, sfHash('ea|'+B+'|'+T.sig))) : null;
+  return {n:E.length, set, rec, fb, E:e, A:a, boot}; }
+var SF_UNADJ='Unadjusted lead · did not survive the many-group check';   // v5.07: one spelling for the table, the card and the tests
+function sfRead(o, g, bt, bh){   /* v5.07 (S3): gates first, then the ranges; "holding up" and "struggling" also need the many-group check (BH) */
+  if(o<30 || g<15) return 'Too few to read';
+  if(o<50 || g<25) return 'Early sample';
+  if(bt && o>=100 && g>=50){ if(bt.lo95>0 && bh) return 'Holding up so far'; if(bt.hi95<0 && bh) return 'Struggling so far'; if(bt.lo95>0 || bt.hi95<0) return SF_UNADJ; }
+  if(bt && bt.lo90>0) return 'Leaning up'; if(bt && bt.hi90<0) return 'Leaning down';
+  return 'No clear lean'; }
+function sfBH(ps, q){ const m=ps.length, ix=ps.map((p,i)=>i).sort((a,b)=>(ps[a]-ps[b])||(a-b)); let kmax=0; ix.forEach((i,r)=>{ if(ps[i]<=(r+1)/m*q) kmax=r+1; }); const ok=ps.map(()=>false); for(let r=0;r<kmax;r++) ok[ix[r]]=true; return ok; }   /* v5.07 (S4): Benjamini–Hochberg step-up */
+function sfCounts(L, K){ const o=new Set(), g=new Set(); L.forEach(b=>{ const x=K.get(b); if(x.open) return; o.add(x.o); g.add(x.g); }); return {outcomes:o.size, games:g.size}; }   /* v5.07: rpCounts from the keys already worked out */
+function sfRow(k, L, Rm, ctx, K){ K=sfKeys(Rm||[], sfKeys(L,K)); const x=rpAgg(L,Rm), c=sfCounts(L,K), B=(c.outcomes>=50 && c.games>=25)?5000:2000;   /* v5.07: rows that can read Leaning or more get 5,000 draws */
+  const T=sfTuples(L.filter(b=>!K.get(b).open).map(b=>[K.get(b).g, K.get(b).pr, b.free?0:(+b.stake||0)]).concat((Rm||[]).map(b=>[K.get(b).g, -(+b.lost||0), 0])));   /* the money as rpAgg counts it: r = the ROI shown */
+  const rk=ctx+'|'+k, boot=T.keys.length>=2 ? sfMemoGet(rk+'|roi|'+B+'|'+sfKey(T.sig), ()=>sfBootRatio(T.X, T.Y, B, sfHash('roi|'+B+'|'+T.sig))) : null;
+  return {k, x, c, B, boot, tg:T.keys.length, flat:sfFlat1(L,K), clv:sfClv(L,K), ea:sfEA(L, B, rk, K), bh:false, read:''}; }
+function sfModel(S, by){ const G=new Map(), R=new Map(), SP=(by==='market'||by==='stm')?mfSportProof(S.L.concat(S.Rm)):null, sp=b=>SP?SP.get(b):undefined; S.L.forEach(b=>{ const k=rpGroupKey(b,by,sp(b)); (G.get(k)||G.set(k,[]).get(k)).push(b); }); S.Rm.forEach(b=>{ const k=rpGroupKey(b,by,sp(b)); (R.get(k)||R.set(k,[]).get(k)).push(b); });   /* v5.07: one model for the By table and the So far card */   /* v5.07 (fixer): SP = the sports events prove (mfSportProof), Market and Sport · type · market only */
+  const ctx=[by, by==='price'?(RP.px||'chance'):'', RP.basis, S.R.lo, S.R.hi, JSON.stringify(RP.f||{})].join('|'), keys=[...new Set([...G.keys(),...R.keys()])], ord=rpGroupOrder(by);
+  const K=sfKeys(S.Rm, sfKeys(S.L)), rows=keys.map(k=>sfRow(k, G.get(k)||[], R.get(k)||[], ctx, K));
+  if(ord){ const ix=k=>{ const i=ord.indexOf(k); return i<0?999:i; }; rows.sort((a,b)=>ix(a.k)-ix(b.k)); } else rows.sort((a,b)=>b.x.profit-a.x.profit);   /* the order rpBreakHtml had */
+  const E=rows.filter(r=>r.c.outcomes>=100 && r.c.games>=50 && r.boot); sfBH(E.map(r=>r.boot.p), 0.10).forEach((ok,i)=>{ E[i].bh=ok; });   /* S4: BH at q = 0.10 across this grouping’s 100/50 rows, regardless of sign */
+  rows.forEach(r=>{ r.read=sfRead(r.c.outcomes, r.c.games, r.boot, r.bh); });
+  let mapped=0, un=0, viaEv=0; if(by==='market' || by==='stm') S.L.forEach(b=>{ if(marketFamilyOf(b, sp(b)).mapped){ mapped++; if(sp(b)) viaEv++; } else un++; });   /* v5.07 (fixer): viaEv = mapped with the sport their event proves */
+  return {policy:'so-far-v1', by, rows, bhN:E.length, mapped, un, viaEv, filt:Object.keys(RP.f||{}).filter(k=>(RP.f||{})[k]).length, rec:rows.reduce((t,r)=>t+r.ea.rec,0), fb:rows.reduce((t,r)=>t+r.ea.fb,0)}; }   /* v5.07 (fixer): filt = the filters on (the card and the note say the many-group check counted only this filtered view) */
+function sfUp(r){ return !!r.boot && (r.read==='Holding up so far' || r.read==='Leaning up' || (r.read===SF_UNADJ && r.boot.lo95>0)); }   /* v5.07: the card’s two lists */
+function sfDown(r){ return !!r.boot && (r.read==='Struggling so far' || r.read==='Leaning down' || (r.read===SF_UNADJ && r.boot.hi95<0)); }
+function rpSoFarHtml(M){ if(!M || !M.rows.length) return '';   /* v5.07 (S5): follows the selected grouping, the period, basis and filters */
+  const cmp=(a,b)=>a.k<b.k?-1:a.k>b.k?1:0, up=M.rows.filter(sfUp).sort((a,b)=>(b.boot.lo95-a.boot.lo95)||cmp(a,b)).slice(0,3), dn=M.rows.filter(sfDown).sort((a,b)=>(a.boot.hi95-b.boot.hi95)||cmp(a,b)).slice(0,3);
+  const li=r=>{ const lean=r.read==='Leaning up'||r.read==='Leaning down'; return '<li><b>'+esc(r.k)+'</b> <span class="meta">'+r.x.n+' ticket'+(r.x.n===1?'':'s')+' (incl. open) · '+r.c.outcomes+' settled outcome'+(r.c.outcomes===1?'':'s')+' · '+r.c.games+' settled game'+(r.c.games===1?'':'s')+'</span><br>ROI <b class="'+rpCls(r.x.roi||0,0.001)+'">'+rpPct(r.x.roi)+'</b> <span class="meta">95% range '+rpPct(r.boot.lo95)+' to '+rpPct(r.boot.hi95)+(lean?' · 90% range '+rpPct(r.boot.lo90)+' to '+rpPct(r.boot.hi90):'')+'</span> · <span class="rp-sf-read">'+esc(r.read)+'</span></li>'; };   /* v5.07 (fixer): the counts say what they count, as the table does; a Leaning line shows the 90% range that decided it */
+  const body=(up.length||dn.length) ? (up.length?'<div class="rp-sf-h">Up so far</div><ul class="rp-sf-l">'+up.map(li).join('')+'</ul>':'')+(dn.length?'<div class="rp-sf-h">Down so far</div><ul class="rp-sf-l">'+dn.map(li).join('')+'</ul>':'')
+    : '<p class="rp-sf-none">Nothing reads clearly yet: '+M.rows.length+' group'+(M.rows.length===1?'':'s')+', all too few or no clear lean.</p>';
+  const chk=M.bhN===0 ? 'In this view no group has 100 outcomes on 50 games yet.' : (M.bhN===1 ? 'In this view only 1 group has 100 outcomes on 50 games, so the screen checked it alone.' : 'In this view the screen checked the '+M.bhN+' groups with 100 outcomes on 50 games.')+(M.filt?' Filters are on, so only the groups in this filtered view were checked.':'');   /* v5.07 (fixer, Los Chismosos): how many groups the many-group check covered here, on the card as under the table */
+  return '<div class="rp-box rp-sofar"><b>So far · by '+esc(rpByWord(M.by))+'</b> <span class="meta">same period, count and filters as this page · change the grouping under Breakdown › By</span>'+body+'<p class="meta">Many overlapping groups were checked. ‘Holding up’ and ‘Struggling’ need the 95% range to clear zero and a 10% false-discovery-rate screen. Leads are not proof; the 1,000-bet test is the Scorecard. ‘Leaning’ needs only the 90% range to clear zero.</p><p class="meta rp-sf-chk">'+chk+'</p></div>'; }   /* v5.07 (fixer): where the grouping is changed; what ‘Leaning’ needs; how many groups were checked */
+function rpBreakHtml(S, M){ const by=RP.by||'sport'; M=M||sfModel(S,by);   /* v5.07 (Sally agreed, owner BUILD): + Games, ROI 95% range, Expected vs actual, CLV and Read (Read replaces Sample); the rows come from sfModel, as the So far card */
+  if(!M.rows.length) return '<p class="meta">No bets in this report.</p>';
   const head=by==='price'?'<p class="meta rp-px-note"><b>Price paid · all-in break-even chance · not a forecast</b>'+(RP.px==='american'?' (shown as the all-in equivalent American price, fees included)':'')+'. It shows how hard each price was to beat, not whether the bet had an edge.</p>':'';
-  return head+'<div class="rp-tw"><table class="rp-t rp-br"><thead><tr><th></th><th class="num">Tickets (incl. open)</th><th class="num">Settled outcomes</th><th class="num">W–L–P</th><th class="num">Settled risked</th><th class="num">Profit</th><th class="num">ROI</th><th>Sample</th></tr></thead><tbody>'+
-    keys.map(k=>{ const L=G.get(k)||[], x=rpAgg(L,R.get(k)||[]), c=rpCounts(L), smp=rpSample(c.outcomes);
-      return '<tr><td class="rp-bet"><b>'+esc(k)+'</b></td><td class="num" data-l="Tickets (incl. open)">'+x.n+'</td><td class="num" data-l="Settled outcomes">'+c.outcomes+'</td><td class="num" data-l="W–L–P">'+x.w+'–'+x.l+'–'+x.p+'</td><td class="num" data-l="Settled risked">$'+x.stSet.toFixed(2)+'</td><td class="num '+rpCls(x.profit)+'" data-l="Profit">'+lcUsd(x.profit)+'</td><td class="num'+dClsR(x.roi,0.001)+'" data-l="ROI">'+rpPct(x.roi)+'</td><td class="meta" data-l="Sample">'+(smp||'—')+'</td></tr>'; }).join('')+'</tbody></table></div>'; } /* v5.04: ▲/▼ on the ROI cell, from the shown 0.1% (no colour, as before) */
+  const fr=!!document.getElementById('rpFr');   /* v5.07 (fixer): recovered forecasts are “shown apart” only where their own section (v5.06, #rpFr) is on the page */
+  const tr=r=>{ const x=r.x, c=r.c, bt=r.boot, ea=r.ea, cl=r.clv, lean=r.read==='Leaning up'||r.read==='Leaning down';   /* v5.07: no cell starts with a signed dollar amount; each one is its own <b> with rpCls (the v5.04 arrows) */
+    return '<tr><td class="rp-bet"><b>'+esc(r.k)+'</b></td><td class="num" data-l="Tickets (incl. open)">'+x.n+'</td><td class="num" data-l="Settled outcomes">'+c.outcomes+'</td><td class="num" data-l="Settled games">'+c.games+'</td><td class="num" data-l="W–L–P">'+x.w+'–'+x.l+'–'+x.p+'</td><td class="num" data-l="Settled risked">$'+x.stSet.toFixed(2)+'</td><td class="num '+rpCls(x.profit)+'" data-l="Profit">'+lcUsd(x.profit)+'</td>'+   /* v5.07 (fixer): “Settled games”, as “Settled outcomes” (open bets are in neither) */
+      '<td class="num'+dClsR(x.roi,0.001)+'" data-l="ROI"'+(r.flat?' title="Flat $1 ROI: '+rpPct(r.flat.roi)+' ('+(r.flat.n===1?'1 ordinary settled ticket':'each of '+r.flat.n+' ordinary settled tickets')+' at $1; free, sold and parlays left out)"':'')+'>'+rpPct(x.roi)+'</td>'+   /* v5.04: ▲/▼ on the ROI cell, from the shown 0.1% (no colour, as before) */
+      '<td class="rp-rng" data-l="ROI 95% range">'+(bt&&c.games>=15?rpPct(bt.lo95)+' to '+rpPct(bt.hi95):'—')+'<div class="meta">'+(c.games<15?'needs 15 settled games for a range':!bt?'no own money at stake':(lean?'90% range '+rpPct(bt.lo90)+' to '+rpPct(bt.hi90)+' · ':'')+bt.games+' games re-drawn'+(bt.games>c.games?' (incl. '+(bt.games-c.games)+' cancelled)':''))+(r.flat?' · flat $1: '+rpPct(r.flat.roi):'')+'</div></td>'+   /* Los Desconfiados C8: a game with only a cancelled loss is re-drawn too */   /* v5.07 (fixer): no range under 15 settled games (2 to 4 games gave exact-looking ranges such as −100.0% to −100.0%); a Leaning row shows the 90% range that decided it */
+      '<td class="rp-ea" data-l="Expected vs actual">'+(ea.n?'Expected <b class="'+rpCls(ea.E)+'">'+lcUsd(ea.E)+'</b> vs actual <b class="'+rpCls(ea.A)+'">'+lcUsd(ea.A)+'</b>':'—')+'<div class="meta">'+ea.n+' of '+ea.set+' settled ticket'+(ea.set===1?'':'s')+' eligible'+(ea.boot&&ea.boot.games>=15?' · actual − expected, 95% range by game: <span class="rp-nw">from '+lcUsd(ea.boot.lo95)+'</span> <span class="rp-nw">to '+lcUsd(ea.boot.hi95)+'</span>':'')+'</div></td>'+   /* v5.07 (fixer): the dollar range from 15 games, each sign kept with its amount; the recovered and model fallback counts are given once, under the table */
+      '<td class="rp-clvc" data-l="CLV">'+(cl.n?'Median <b class="'+rpClvCls(cl.med)+'">'+rpPctP(cl.med)+'</b>':'—')+'<div class="meta">'+(cl.of?cl.n+' of '+cl.of+(cl.of===1?' settled single has':' settled singles have')+' a same-line close':cl.par?'parlays have no closing line':'no settled singles yet')+'</div></td>'+   /* Los Desconfiados C6: the CLV section’s own words */   /* v5.07 (fixer): a parlay-only row says why it has no close */
+      '<td class="rp-read" data-l="Read">'+esc(r.read)+'</td></tr>'; };
+  return head+'<div class="rp-tw"><table class="rp-t rp-br"><thead><tr><th></th><th class="num">Tickets (incl. open)</th><th class="num">Settled outcomes</th><th class="num">Settled games</th><th class="num">W–L–P</th><th class="num">Settled risked</th><th class="num">Profit</th><th class="num">ROI</th><th>ROI 95% range</th><th>Expected vs actual</th><th>CLV</th><th>Read</th></tr></thead><tbody>'+M.rows.map(tr).join('')+'</tbody></table></div>'+   /* v5.07 (fixer): the header “Settled games” */
+    ((by==='market'||by==='stm')?'<p class="meta rp-map">'+M.mapped+' ticket'+(M.mapped===1?'':'s')+' mapped · '+M.un+' unmapped (market-alias-v1)'+(M.viaEv?' · '+M.viaEv+' with no sport saved were mapped by the sport of other tickets on the same event':'')+'</p>':'')+   /* v5.07 (fixer): how many took their sport from their event */
+    '<p class="meta rp-sf-note">Ranges re-draw whole games (bets on one game move together) and are shown from 15 games. Expected vs actual counts only La Contadora’s own forecast saved before the game (settled, your own money, not sold, no parlays)'+((fr||M.rec)?' · Recovered from history: '+M.rec+(fr?' (shown apart)':' (not counted here)'):'')+' · Model fallback: '+M.fb+' (not included) · the Edge check below counts model-only bets; this table does not. Read: under 30 outcomes or 15 games, too few to read; under 50 outcomes or 25 games, early sample; ‘Holding up’ and ‘Struggling’ need 100 outcomes on 50 games, the 95% range clear of zero and the many-group check ('+(M.bhN?'10% false-discovery rate across the '+M.bhN+' row'+(M.bhN===1?'':'s')+' of this grouping with 100 outcomes on 50 games'+(M.filt?', only those in this filtered view':''):'no row of this grouping has 100 outcomes on 50 games yet')+'); ‘Leaning’ needs 50 outcomes on 25 games and the 90% range clear of zero (shown on those rows); ‘Unadjusted lead’ means the 95% range is clear of zero but the many-group check did not pass; otherwise no clear lean. Rules: so-far-v1.</p>'; }   /* Los Desconfiados C2 (the Edge check counts model-only bets) and C7 (every Read word explained) */   /* v5.07 (fixer): ranges from 15 games; “Recovered from history” only with a count or its own section; the filtered-view words */
 /* settled profit, added up day by day in the order of the chosen basis; open bets do not move it */
 function rpChartHtml(S){ const M=new Map(); S.L.forEach(b=>{ const pr=betProfit(b); if(pr==null) return; const d=rpDayOf(b); M.set(d,(M.get(d)||0)+pr); }); S.Rm.forEach(b=>{ const d=rpDayOf(b); M.set(d,(M.get(d)||0)-b.lost); });
   const days=[...M.keys()].filter(Boolean).sort(); if(days.length<2) return '<p class="meta">The line needs settled bets on at least two days in this period.</p>';
@@ -10078,7 +10252,8 @@ function rpStep2(S){ const set=(id,h)=>{ const el=document.getElementById(id); i
   const by=document.getElementById('rpBy'); if(by) by.value=RP.by||'sport'; const px=document.getElementById('rpPx'); if(px) px.value=RP.px||'chance'; const pw=document.getElementById('rpPxWrap'); if(pw) pw.hidden=(RP.by||'sport')!=='price';
   const bw=document.getElementById('rpBwWho'); if(bw) bw.value=RP.bwWho||'teams'; const sm=document.getElementById('rpSmall'); if(sm) sm.checked=!!RP.small;
   document.querySelectorAll('#rpBwDir button').forEach(x=>{ const on=x.dataset.d===(RP.bwDir||'best'); x.classList.toggle('on',on); x.setAttribute('aria-pressed',String(on)); });
-  set('rpBreak', rpBreakHtml(S)); set('rpChart', rpChartHtml(S)); set('rpMonths', rpMonthsHtml(S)); set('rpBw', rpBwHtml(S)); }
+  const M=sfModel(S, RP.by||'sport');   /* v5.07: one model, so the table and the So far card never disagree */
+  set('rpBreak', rpBreakHtml(S, M)); set('rpSoFar', rpSoFarHtml(M)); set('rpChart', rpChartHtml(S)); set('rpMonths', rpMonthsHtml(S)); set('rpBw', rpBwHtml(S)); }   /* v5.07: the By table and the So far card from the same M */
 /* v4.91 (agreed with Sally 11/13 (CC-2026-11-13-12 … -17), owner "BUILD"): Reports step 3, the edge checks. Numbers only, never a verdict.
    Closing line: settled singles with a closing price, CLV = closing chance ÷ your price's chance − 1 (clv); "even" is within 0.1 point.
    CLV value proxy = Σ own stake × CLV, "if the closing price were fair": a proxy, not expected earnings.

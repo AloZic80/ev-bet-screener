@@ -14,6 +14,7 @@ Status words: **active** (the rule now), **unverified** (believed, not confirmed
 | `decisions/signal.md` | The ⚡ market signal on the Sentinels |
 | `decisions/exposure.md` | One bet per player, same game, daily max, Hard stop |
 | `decisions/watch-study.md` | Watch bets as shadow records; how the record is read |
+| `decisions/so-far-v1.md` | Reports › So far: Market and Sport · type · market groupings, ROI ranges, the Read words, the many-group check (v5.07) |
 | `decisions/publishing.md` | Branch, tests, publish, notes |
 
 ## Incidents (bugs that came back; the test that now stops each)
