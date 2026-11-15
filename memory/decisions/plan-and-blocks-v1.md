@@ -2,8 +2,8 @@
 
 Owner, Sun 11/15: "id say 11/11. So, do your other recomendations to tell the other Brujo and such apart. BUILD IT ALL". Earlier: "i'll still want
 them there, just in case im feeling like i just came back from the future. But, i already like that the app tells me already that I SHOULD NOT bet
-them, nor the Coin Flips either". The study rules are in `agent-notes/band-study-plan_2026-11-15_v1.md` (CC-2026-11-15-01). Sally agreed with
-safeguards in her reply to CC-2026-11-15-06 (part C).
+them, nor the Coin Flips either". The study rules are in `agent-notes/band-study-plan_2026-11-15_v1.md` (CC-2026-11-15-01). Sally answered with
+safeguards in her reply to CC-2026-11-15-06 (part C); they are proposals under review (CC-2026-11-15-08), not agreed yet.
 
 ## My plan (a reminder only)
 - Settings › My plan: La Contadora's chance at least `planMin` (default 50%) since `planSince` (default 2026-11-11). 0 turns it off; a future date
@@ -23,10 +23,11 @@ safeguards in her reply to CC-2026-11-15-06 (part C).
 
 ## The band study
 - The official 5-point bands never change. Reports › By › "Band, 2.5% steps (exploratory)" reads `snap.act` saved before the game only; leads, not
-  answers. At 500 settled study bets: one written guess with exact edges, metric, direction, minimum future sample (Sally: at least 100 new unique
-  outcomes and 50 games in the compared region, or a written power target), statistical rule and treatment of pushes / repeated tickets; tested only
-  on bets after it is written. bands-v2 only if it passes there; v1 is kept. The 11/11 start is owner-chosen after a good week: the head start is
-  shown and is not evidence.
+  answers. At 500 settled study bets: one written guess with exact edges; tested only on bets after it is written. bands-v2 only if it passes there;
+  v1 is kept. Proposed by Sally, under review (CC-2026-11-15-08): the guess also names its metric, direction, minimum future sample (at least 100 new
+  outcomes and 50 games, per side or together to be settled), statistical rule and treatment of pushes / repeated tickets; the 11/11 start is labelled
+  as chosen after seeing its first days, and the head start is not evidence. Known gap: the 2.5% view shows what the Reports page holds (its period
+  and filters, all bet kinds), not only the study's Scorecard bets since 11/11.
 
 ## Tests
 `tests/v510-test.js` (54): the settings, the reminder at 4 widths, the tabs, the blocks against the Scorecard run on each block alone, the head-start
