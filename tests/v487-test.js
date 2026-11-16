@@ -27,7 +27,7 @@ const LOG=[bet('d1',{name:'Rasmus Dahlin', odds:'-113', autoFrom:'novig', fillCo
         fair:['Rasmus Dahlin','Moussa Diabate','Dylan Holloway'].map(n=>[by(n).fair||null, by(n).cover||null, (by(n).snap||{}).market??null]),
         cal:calibrationPoints?calibrationPoints(logged).length:null}; });
     if(W===1280){
-      check('Dahlin (8 shares for $4.52): "ENTRY PRICE · 56.5% · Slight Lean · no forecast"', v.d1==='ENTRY PRICE · 56.5% · Slight Lean · no forecast', v.d1);
+      check('Dahlin (8 shares for $4.52): "ENTRY PRICE · 56.5% · Faint Lean · no forecast"', v.d1==='ENTRY PRICE · 56.5% · Faint Lean · no forecast', v.d1);
       check('Diabate (−147, no fill numbers): the price itself, 59.5%', v.d2==='ENTRY PRICE · 59.5% · Slight Lean · no forecast', v.d2);
       check('Seguin matched a card (fair −120): his forecast band "On the Line", not an entry price', v.s1==='On the Line', v.s1);
       check('a bet you typed (not a fill) with no cover keeps "no band"', v.h1==='no band', v.h1);

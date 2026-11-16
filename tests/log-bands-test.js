@@ -22,8 +22,8 @@ const rowsShown=p=>p.evaluate(()=>[...document.querySelectorAll('#logBody tr:not
 (async()=>{ const b=await chromium.launch();
   for(const W of [1280,390]){ let {ctx,p,errs}=await open(b,W);
     let R=await rowsShown(p); const by=Object.fromEntries(R.map(r=>[r.name,r.band]));
-    check(W+' px: every single in the Bet log shows its band, worked by hand from its fair odds (+150 = 40% Unlikely, +120 = 45.5% Coin Flip, −138 = 58% Slight Lean, −150 = 60% Lean; none saved = "no band"); the parlay has none', by['Player u1']==='Unlikely' && by['Player c1']==='Coin Flip' && by['Player s1']==='Slight Lean' && by['Player l1']==='Lean' && by['Player nf']==='no band' && by['Parlay · 2 picks']===null && R.filter(r=>r.band).every(r=>r.vis), by);
-    await p.click('#logBody button.lbf[data-band="1"]'); await p.waitForTimeout(250);
+    check(W+' px: every single in the Bet log shows its band, worked by hand from its fair odds (+150 = 40% Unlikely, +120 = 45.5% Coin Flip, −138 = 58% Slight Lean, −150 = 60% Lean; none saved = "no band"); the parlay has none', by['Player u1']==='Unlikely' && by['Player c1']==='Near Even' /* v5.17 (owner: Karens row names) */ && by['Player s1']==='Slight Lean' && by['Player l1']==='Almost Lean' && by['Player nf']==='no band' && by['Parlay · 2 picks']===null && R.filter(r=>r.band).every(r=>r.vis), by);
+    await p.click('#logBody button.lbf[data-band="101"]') /* v5.17 (owner: Karens row names) */; await p.waitForTimeout(250);
     R=await rowsShown(p); const f=await p.evaluate(()=>document.getElementById('logFilter').textContent.replace(/\s+/g,' ').trim());
     // by hand: Unlikely = 3 bets, 1–2; expected 40% each; won 1 of 2 decided? no: 1 win, 2 losses → 33% vs 40%. Profit: +$4.00 (2 at +200) − $2 − $2 = $0.00
     check(W+' px: a tap on "Unlikely" shows only the three Unlikely bets, with "3 bets · 1–2–0 · won 33% vs 40% expected · +$0.00"', R.length===3 && R.every(r=>r.band==='Unlikely') && /Unlikely/.test(f) && /3 bets · 1–2–0 · won 33% vs 40% expected · \+\$0\.00/.test(f), {R, f});
@@ -37,7 +37,7 @@ const rowsShown=p=>p.evaluate(()=>[...document.querySelectorAll('#logBody tr:not
     await p.evaluate(()=>{ const s=document.querySelector('#studyRows button.lbf[data-band="107"]'); s.scrollIntoView(); }); await p.click('#studyRows button.lbf[data-band="107"]') /* v5.16: the 57.5–<60% row (Slight Lean) */; await p.waitForTimeout(400);
     R=await rowsShown(p); const f2=await p.evaluate(()=>({f:document.getElementById('logFilter').textContent.replace(/\s+/g,' ').trim(), view:document.body.dataset.view}));
     check(W+' px: in Performance › Bet result study, a tap on "Slight Lean" opens the Bet log with only that band: "1 bet · 1–0–0 · won 100% vs 58% expected · +$1.85"', f2.view==='v-log' && R.length===1 && R[0].band==='Slight Lean' && /1 bet · 1–0–0 · won 100% vs 58% expected · \+\$1\.85/.test(f2.f), {R, f2});
-    await p.click('#logBody button.lbf[data-band="4"]'); await p.waitForTimeout(200);
+    await p.click('#logBody button.lbf[data-band="107"]' /* v5.17 (owner: Karens row names) */); await p.waitForTimeout(200);
     check(W+' px: tapping the same band again in the log shows everything again', (await rowsShown(p)).length===8, null);
     const over=await p.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
     if(W===390) check('phone: no sideways scroll', over<=0, over);

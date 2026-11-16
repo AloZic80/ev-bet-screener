@@ -22,18 +22,18 @@ const ROW={name:'Board Guy',team:'PHX',game:'CHA @ PHX',matchup:'CHA @ PHX',side
   await p.goto('http://app.test/'); await p.waitForTimeout(1300);
   const v=await p.evaluate(()=>{ const by=n=>logged.find(x=>x.name===n), chip=n=>{ const t=document.createElement('div'); t.innerHTML=logBandChip(by(n)); const e=t.firstElementChild; return {t:t.textContent, title:e?e.title:''}; };
     return {lil:chip('Damian Lillard'), typ:chip('Typed One'), mod:chip('Model Only'), cal:calibrationPoints().map(x=>Math.round(x.cover*1000)/1000).sort()}; });
-  check('Lillard: "Lean" by La Contadora’s 64.4% (it was Heavy Favorite by the model); the tooltip says the model said 75.8%', v.lil.t==='Lean' && /^La Contadora 64\.4%/.test(v.lil.title) && /the model said 75\.8% \(Heavy Favorite\)/.test(v.lil.title), v.lil);
-  check('no La Contadora chance saved: a typed cover is used (52%: On the Line) and says it was typed', v.typ.t==='On the Line' && /^Cover you typed 52\.0%/.test(v.typ.title), v.typ);
-  check('an older bet with only the model: "Lean" by the model, and the tooltip says so', v.mod.t==='Lean' && /^Model \(no La Contadora chance saved\) 60\.0%/.test(v.mod.title), v.mod);
+  check('Lillard: "Lean" by La Contadora’s 64.4% (it was Heavy Favorite by the model); the tooltip says the model said 75.8%', v.lil.t==='Lean' && /^La Contadora 64\.4%/.test(v.lil.title) && /the model said 75.8% \(Very Strong\)/.test(v.lil.title), v.lil);
+  check('no La Contadora chance saved: a typed cover is used (52%: On the Line) and says it was typed', v.typ.t==='Just Above' /* v5.17 (owner: Karens row names) */ && /^Cover you typed 52\.0%/.test(v.typ.title), v.typ);
+  check('an older bet with only the model: "Lean" by the model, and the tooltip says so', v.mod.t==='Almost Lean' /* v5.17 (owner: Karens row names) */ && /^Model \(no La Contadora chance saved\) 60\.0%/.test(v.mod.title), v.mod);
   check('calibration panels are untouched: they read the grade history (model and market), never the new band', Array.isArray(v.cal) && !v.cal.includes(0.644), v.cal);
   // Bet result study: La Contadora by default, Model on the switch
   await p.evaluate(()=>{ document.querySelector('.tab[data-view="v-perf"]').click(); }); await p.waitForTimeout(400);
   const st=async()=>p.evaluate(()=>({sum:document.getElementById('studySum').textContent, rows:[...document.querySelectorAll('#studyRows tr')].map(r=>r.children[0].textContent.replace(/\s+/g,' ').trim()+' | '+r.children[1].textContent)}));
   const s1=await st();
-  check('study (La Contadora): "Band source: La Contadora · 1 La Contadora · 1 typed · 2 model"; Lean holds Lillard and the model-only bet', /^Band source: La Contadora · 1 La Contadora · 1 typed · 2 model/.test(s1.sum) && s1.rows.some(r=>/^60–<62\.5% Lean \| 1$/.test(r)) && s1.rows.some(r=>/^62\.5–<65% Lean \| 1$/.test(r)) && !s1.rows.some(r=>/Heavy Favorite/.test(r)) /* v5.16 (owner: 2.5-point cover rows): the model-only 60% and Lillard’s 64.4% are the two Lean rows */, s1);
+  check('study (La Contadora): "Band source: La Contadora · 1 La Contadora · 1 typed · 2 model"; Lean holds Lillard and the model-only bet', /^Band source: La Contadora · 1 La Contadora · 1 typed · 2 model/.test(s1.sum) && s1.rows.some(r=>/^60–<62\.5% Almost Lean \| 1$/.test(r)) && s1.rows.some(r=>/^62\.5–<65% Lean \| 1$/.test(r)) && !s1.rows.some(r=>/Heavy Favorite/.test(r)) /* v5.16 (owner: 2.5-point cover rows): the model-only 60% and Lillard’s 64.4% are the two Lean rows */, s1);
   await p.evaluate(()=>{ const s=document.getElementById('studyBand'); s.value='model'; s.dispatchEvent(new Event('change')); }); await p.waitForTimeout(300);
   const s2=await st();
-  check('study (Model): Lillard is back in Heavy Favorite; nothing saved changes', /^Band source: Model/.test(s2.sum) && s2.rows.some(r=>/^75–<77\.5% Heavy Favorite \| 1$/.test(r)) /* v5.16: 75.8% */, s2);
+  check('study (Model): Lillard is back in Heavy Favorite; nothing saved changes', /^Band source: Model/.test(s2.sum) && s2.rows.some(r=>/^75–<77\.5% Very Strong \| 1$/.test(r)) /* v5.16: 75.8% */, s2);
   const hitRange=await p.evaluate(()=>[...document.querySelectorAll('#studyRows .meta')].map(x=>x.textContent).find(t=>/^\d+–\d+%$/.test(t))||null);
   check('each graded band shows a 95% range under its hit rate', !!hitRange, hitRange);
   // CSV: band by La Contadora, with its source
@@ -43,7 +43,7 @@ const ROW={name:'Board Guy',team:'PHX',game:'CHA @ PHX',matchup:'CHA @ PHX',side
   // board chip and a new bet's frozen band
   await p.evaluate(()=>{ document.querySelector('.tab[data-view="v-board"]').click(); }); await p.waitForTimeout(400);
   const bc=await p.evaluate(()=>{ setMode('parejo') /* v5.16 (owner: more tabs): 60.3% is ⚖️ Parejo */; const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>/Board Guy/.test(x.textContent)); const ch=c&&c.querySelector('.sc-tags .cv-chip'); addToLog(lastRows.find(r=>r.apiKey==='bg')); const s=logged[logged.length-1].snap.bandSnapshot; return {chip:ch?ch.textContent:null, title:ch?ch.title:'', snap:s}; });
-  check('board card: "Lean" by La Contadora’s 60.3% (the model’s 70% would say Strong)', bc.chip==='Lean' && /^La Contadora 60\.3%/.test(bc.title) && /the model says 70\.0% \(Strong\)/.test(bc.title), bc);
+  check('board card: "Lean" by La Contadora’s 60.3% (the model’s 70% would say Strong)', bc.chip==='Almost Lean' /* v5.17 (owner: Karens row names) */ && /^La Contadora 60\.3%/.test(bc.title) && /the model says 70\.0% \(Very Solid\)/.test(bc.title), bc);
   check('a new bet freezes its band: p 0.6025, source act, pregame, cover-bands-v1, act-v2, bands-act-v1, v4.88', bc.snap && bc.snap.p===0.6025 && bc.snap.source==='act' && bc.snap.pregame===true && bc.snap.thresholdsPolicy==='cover-bands-v1' && bc.snap.selectionPolicy==='act-v2' && bc.snap.displayPolicy==='bands-act-v1' && /^v\d+\.\d+$/.test(bc.snap.appVersion) /* the version that saved it */, bc.snap);
   // calendar totals
   await p.evaluate(()=>{ document.querySelector('.tab[data-view="v-log"]').click(); }); await p.waitForTimeout(400);
