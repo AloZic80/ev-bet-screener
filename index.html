@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.17</title>
+<title>0xBeta Screener v5.18</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1917,6 +1917,22 @@ tr.ai-prop-tr td{padding-top:0}
 .tab-rows .tr-btn{font-size:12.5px; font-variant-numeric:tabular-nums; min-height:32px}
 .tr-chip{font-size:12px; font-variant-numeric:tabular-nums}
 @media (max-width:640px){ .tab-rows .tr-btn{min-height:40px; padding:0 12px} }
+/* v5.18 (scout, schedule, alerts): the 🔭 Scout button stays next to Send the Sentinels at every width; the result is one calm line; the ⏰ Schedule rows and editor; the ✅ alert banner sits above the bottom dock */
+.board-panel .board-bar>#scoutBtn, .board-panel .board-bar>#scoutSet, .board-panel .board-bar>#scoutMsg{order:-1}
+.board-panel .board-bar>#scoutMsg{flex-basis:100%; font-size:12.5px} #scoutMsg:empty{display:none}
+.sc-set{font-size:12px}
+.sc-cap-row{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:6px 0}
+.sc-scout{margin:8px 0; padding:8px 10px; border:1px solid var(--rule); border-radius:10px; font-size:13.5px; line-height:1.45}
+.sc-rows{list-style:none; margin:4px 0; padding:0}
+.sc-row{display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--rule); font-size:13.5px}
+.sc-row-t{min-width:0; overflow-wrap:anywhere} .sc-row-b{display:inline-flex; flex-wrap:wrap; gap:4px}
+.sc-ed{margin:8px 0; padding:10px; border:1px solid var(--rule); border-radius:10px; background:var(--panel)}
+.sc-ed-g{display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; margin-top:6px; min-width:0} .sc-ed-g>label{display:inline-flex; flex-wrap:wrap; gap:4px 6px; align-items:center; max-width:100%; min-width:0} .sc-ed-g select{max-width:100%; min-width:0; flex:1 1 auto} .sc-ed-line{margin-top:6px}
+.sc-dd{display:inline-flex; flex-wrap:wrap; gap:4px 8px}
+.sc-warn{flex-basis:100%; color:var(--warn); font-size:13px; font-weight:600}
+.sc-alert-g{display:flex; flex-direction:column; gap:4px}
+#scAlert{display:none; position:fixed; left:50%; transform:translateX(-50%); bottom:calc(var(--dockH, 0px) + 10px); z-index:9998; width:min(720px, calc(100vw - 32px)); box-sizing:border-box; padding:10px 12px; border:1px solid var(--rule); border-radius:12px; background:var(--panel); color:var(--ink); box-shadow:0 6px 24px rgba(0,0,0,.18); font-size:14px}
+#scAlert.on{display:flex; flex-direction:column; gap:3px} #scAlert .sa-i{overflow-wrap:anywhere} #scAlert .sa-n{color:var(--soft)} #scAlert .sa-b{display:flex; gap:8px; justify-content:flex-end; margin-top:4px}
 </style>
 </head>
 <body>
@@ -1925,7 +1941,7 @@ tr.ai-prop-tr td{padding-top:0}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.17</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.18</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2074,7 +2090,7 @@ tr.ai-prop-tr td{padding-top:0}
     <label class="bar-check"><input type="checkbox" id="showRejects"> Show rejected</label>
     <label class="bar-check"><input type="checkbox" id="onlyMyGames"> Only games I already bet</label>
     </span>
-    <button type="button" class="ghost sm" id="shopBtn" title="La Contadora re-checks every bet on this board — passing and skipped — at live Kalshi, Polymarket US and Novig prices (no BettingPros calls). Fair value stays from your last Pull.">🦑 Send the Sentinels</button><span class="meta" id="shopMsg"></span>
+    <button type="button" class="ghost sm" id="shopBtn" title="La Contadora re-checks every bet on this board — passing and skipped — at live Kalshi, Polymarket US and Novig prices (no BettingPros calls). Fair value stays from your last Pull.">🦑 Send the Sentinels</button><span class="meta" id="shopMsg"></span><button type="button" class="ghost sm" id="scoutBtn" title="Loads every sport with a game in the next 12 hours (BettingPros props, soonest first, within your daily scout cap), then sends the Sentinels once. Settings › ⏰ Schedule.">🔭 Scout now</button><button type="button" class="linkbtn sc-set" id="scoutSet" title="Scout settings: source, how many props, max calls (Settings › ⏰ Schedule)">⚙ settings</button><span class="meta" id="scoutMsg" role="status"></span><!-- v5.18 -->
     <span class="bar-more" id="barMore2"><label class="bar-check"><input type="checkbox" id="notesAll"> Show all notes</label></span><!-- v4.25 -->
     <label class="bar-check" title="Bets to place show as cards above the table (uncheck for table rows)"><input type="checkbox" id="cardsOn" checked> Cards</label>
   </div>
@@ -2311,6 +2327,29 @@ tr.ai-prop-tr td{padding-top:0}
   <div class="plan-row"><label for="planMin">La Contadora’s chance at least</label><span class="plan-g"><input id="planMin" type="number" value="50" step="1" min="0" max="99" title="0 turns the reminder off"><span>%</span></span><span class="plan-g"><span aria-hidden="true">·</span><label for="planSince">since</label><input id="planSince" type="date" value="2026-11-11"></span><input id="planSetAt" type="hidden" value=""><!-- v5.10 (fixer): when the date was last changed here (empty = never: 11/15 12:40 AM CT, PLAN_SET_AT), for the blocks’ head-start note --></div>
   <p class="hint plan-hint">A reminder only: cards below it say ‘Outside your plan’. Stakes and BET / SKIP do not change.</p>
 </div>
+<details class="panel fold" id="schedPanel">   <!-- v5.18 (owner 11/16: "have a button just for that ... Or perhaps by time ... So, i can program it"; "i have to tell it 'program' it what API and what settings for search"): closed until tapped -->
+  <summary><h2>⏰ Schedule <span class="sub">Scout, set times, auto Sentinels and alerts · while this page is open</span></h2></summary>
+  <div class="sc-cap-row"><label for="schedCap">Scout cap: up to</label> <input id="schedCap" type="number" min="0" max="50" step="1" value="10" style="width:64px"> <span>BettingPros calls a day (of your 50)</span> <span class="meta" id="schedCapNote"></span></div>
+  <div class="sc-scout" id="schedScout"></div>
+  <h3 class="set-h">Scout at set times</h3>
+  <ul class="sc-rows" id="schedRows"></ul>
+  <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:6px"><button type="button" class="ghost sm" data-sc="add">+ Add a row</button><button type="button" class="ghost sm" data-sc="ex">+ Example: NHL 11:00 AM</button></div>
+  <div class="sc-ed" id="schedEd" hidden></div>
+  <div class="meta" id="schedNext"></div>
+  <div class="meta" id="schedMsg" role="status"></div>
+  <h3 class="set-h">🛰️ Auto Sentinels</h3>
+  <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center"><label class="bar-check"><input type="checkbox" id="schedAutoOn"> Send the Sentinels every</label> <select id="schedAutoMin" aria-label="Minutes between Sentinels"><option value="15">15</option><option value="30" selected>30</option><option value="45">45</option><option value="60">60</option></select> <span>minutes</span></div>
+  <div class="meta" id="schedAutoNote"></div>
+  <h3 class="set-h">🔔 Alert me</h3>
+  <div class="sc-alert-g">
+    <label class="bar-check"><input type="checkbox" id="schedAlertOn"> Alert me when La Contadora approves a new bet</label>
+    <label class="bar-check"><input type="checkbox" id="schedAlertPlan" checked> Only inside My plan</label>
+    <label class="bar-check ai-only"><input type="checkbox" id="schedAlertNews"> Add a news check (AI helper, about 4¢ each)</label>
+  </div>
+  <div class="meta" id="schedAlertNote"></div>
+  <p class="hint" style="margin:8px 0 0">Runs while this page is open. On iPhone, keep the app on screen; Safari pauses pages in the background.</p>
+  <p class="hint" style="margin:4px 0 0">The Scout, the set times and the alerts only load prices and tell you. They never change La Contadora’s decision, a stake or the order. Turning alerts on takes the board as it is; only bets approved after that alert, once a day each.</p>
+</details>
 <details class="panel fold" id="layoutPanel">   <!-- v3.54 -->  <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>Layout <span class="sub">how the screener fits this device</span></h2></summary>
   <div class="ab-seg" id="layoutSeg" role="radiogroup" aria-label="Layout"><button type="button" role="radio" data-l="auto">Auto</button><button type="button" role="radio" data-l="phone">Phone</button><button type="button" role="radio" data-l="desktop">Desktop</button></div>
@@ -2815,7 +2854,7 @@ tr.ai-prop-tr td{padding-top:0}
 
 </div>
 <script>
-const SCREENER_VERSION='v5.17';
+const SCREENER_VERSION='v5.18';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -9970,6 +10009,7 @@ async function loadApi(fresh, spOver){   // v4.11: spOver = one of the sports ti
     mergeRows('api:'+sport+':'+type, rows, (meta.from_cache||meta.stale)?(Date.parse(meta.fetched_at)?new Date(Date.parse(meta.fetched_at)).toISOString():'unknown'):undefined); if(boardSrc!=='api') showBoardSrc('api');   // v4.61: a cached answer keeps the time BettingPros was read
     document.getElementById('savedNote').textContent='';
     const c=cfgRead(); render(audit(lastRows,c),c); save(); autoSaveBoard();
+    try{ scAlertCheck(); }catch(e){}   // v5.18: 🔔 a new approved bet (a label only; not while a Scout is running: it checks once at its end)
     if(lastRows.length){
       attachGameInfo(lastRows).then(async ()=>{
         await attachAutoGrades(lastRows);
@@ -12323,6 +12363,250 @@ document.addEventListener('touchend', perfAudioWake, {passive:true}); document.a
 document.addEventListener('click', e=>{ const b=e.target.closest && e.target.closest('#perfAlert button'); if(!b) return; const el=document.getElementById('perfAlert'); if(el) el.classList.remove('on');
   if(b.classList.contains('pa-show')){ try{ const tab=document.querySelector('.tab[data-view="v-board"][data-src="'+((el&&el.dataset.src)||'api')+'"]') /* v4.81: the board it came from */; if(tab && tab.getAttribute('aria-selected')!=='true') tab.click(); const s=document.getElementById('boardView'); if(s && s.value!=='perf'){ s.value='perf'; s.dispatchEvent(new Event('change')); } const pc=document.getElementById('placeCards'); if(pc) pc.scrollIntoView({block:'start'}); }catch(err){} } });
 try{ const c=document.getElementById('cPerfNotify'); if(c) c.checked=perfNotifyOn(); perfNotifyNote(); }catch(e){}
+/* v5.18 (owner, 11/16: "have a button just for that, which will make it quicker for me. Or perhaps by time ... NHL props come out at 11Am ... So, i can program it.
+   And send the sentinels Every 30 minutes or so, and have the AI alert me if theres any picks that passes Sally's screening?"; then: "i have to tell it 'program' it what API
+   and what settings for search though"): 🔭 Scout now (the board), and in Settings › ⏰ Schedule: rows that each hold a sport, a source, that source’s own search settings, a time,
+   days and a max; 🛰️ Auto Sentinels; 🔔 Alert me. Every load goes through a loader the app already has (loadApi, loadOddsSrc, loadOddsPapi, loadSbapi, then shopExchanges),
+   with the settings that loader already takes. Caps: a daily scout cap of BettingPros calls (default 10 of the 50), never over what is left today, and a max per row in that
+   source’s unit. An alert is a label only: it never changes a decision, a stake or the order. All of it runs only while the page is open.
+   mbev.sched (synced): {cap, scout, rows, auto:{on,min}, alert:{on,plan,news}}. This device only: mbev.schedRun (what ran today), mbev.alertSeen (cards alerted today). Hoisted. */
+function scSrcs(){ return {
+  bp_props:{name:'BettingPros props', unit:'call', cost:'1 call per 20 props (50 a day)', bp:true, type:'props'},
+  bp_ml:{name:'BettingPros moneylines', unit:'call', cost:'1 call (50 a day)', bp:true, type:'moneyline'},
+  bp_spread:{name:'BettingPros spreads', unit:'call', cost:'1 call (50 a day)', bp:true, type:'spread'},
+  bp_total:{name:'BettingPros game totals', unit:'call', cost:'1 call (50 a day)', bp:true, type:'total'},
+  sgo:{name:'SportsGameOdds', unit:'request', cost:'1 request per 10 games (2,500 games a month)'},
+  oddsapi:{name:'The Odds API game lines', unit:'credit', cost:'credits: bet types × regions', warn:true},
+  oddspapi:{name:'OddsPapi NFL totals', unit:'call', cost:'1 call per game (monthly allowance)'},
+  sbapi:{name:'Sportsbook API +EV picks', unit:'call', cost:'1 call per load'},
+  sent:{name:'Sentinels only', unit:'call', cost:'no BettingPros calls (re-checks the cards loaded)'} }; }
+function scPl(n, w){ return n+' '+w+(n===1?'':'s'); }
+function scCost(row){ switch(row.src){ case 'bp_props': return row.pages; case 'bp_ml': case 'bp_spread': case 'bp_total': return 1; case 'sgo': return Math.ceil(row.n/10);
+  case 'oddsapi': return row.mk.length*(row.rx?2:1); case 'oddspapi': return row.opn; case 'sbapi': return 1; default: return 0; } }
+function scRowNorm(o){ o=o||{}; const S=scSrcs(), src=S[o.src]?o.src:'bp_props', pg=Math.max(2,Math.min(5,Math.round(+o.pages)||2)), n=+o.n===20?20:10;
+  const mk=(Array.isArray(o.mk)?o.mk:['h2h']).filter(m=>m==='h2h'||m==='spreads'||m==='totals'), opn=[4,8,16].indexOf(+o.opn)>=0?+o.opn:4;
+  const days=Array.isArray(o.days)?o.days.map(Number).filter(d=>d>=0&&d<=6):(o.days==='wk'||o.days==='we')?o.days:'all';
+  const r={id:String(o.id||('r'+Date.now().toString(36)+Math.random().toString(36).slice(2,6))), sp:String(o.sp||'NHL').toUpperCase().replace(/[^A-Z0-9_]/g,'').slice(0,16)||'NHL', src, pages:pg, n, props:o.props!==false, gl:o.gl!==false, mk:mk.length?mk:['h2h'], rx:!!o.rx, opn,
+    t:/^\d\d:\d\d$/.test(String(o.t||''))?o.t:'11:00', days};
+  r.cap=(o.cap!=null && o.cap!=='' && isFinite(+o.cap))?Math.max(0,Math.min(500,Math.round(+o.cap))):scCost(r); return r; }
+function scGet(){ let o=null; try{ o=JSON.parse(localStorage.getItem('mbev.sched')||'null'); }catch(e){} if(!o || typeof o!=='object') o={};
+  const A=o.auto||{}, L=o.alert||{};
+  return {cap:(o.cap!=null && o.cap!=='' && isFinite(+o.cap))?Math.max(0,Math.min(50,Math.round(+o.cap))):10, scout:scRowNorm(Object.assign({id:'scout', src:'bp_props', pages:2, cap:10}, o.scout||{})),
+    rows:(Array.isArray(o.rows)?o.rows:[]).map(scRowNorm), auto:{on:!!A.on, min:[15,30,45,60].indexOf(+A.min)>=0?+A.min:30}, alert:{on:!!L.on, plan:L.plan!==false, news:!!L.news}}; }
+function scSet(G){ lsSafeSet('mbev.sched', JSON.stringify(G)); try{ syncTouched(); }catch(e){} scPaint(); }
+function scRunGet(){ let o=null; try{ o=JSON.parse(localStorage.getItem('mbev.schedRun')||'null'); }catch(e){} o=o&&typeof o==='object'?o:{}; const d=ctDay(Date.now());
+  if(o.day!==d){ o.day=d; o.used=0; } o.used=+o.used||0; o.fired=o.fired||{}; return o; }
+function scRunSet(R){ lsSafeSet('mbev.schedRun', JSON.stringify(R)); }
+function scNowCT(t){ const P={}; new Intl.DateTimeFormat('en-US',{timeZone:'America/Chicago', hourCycle:'h23', hour:'2-digit', minute:'2-digit', weekday:'short'}).formatToParts(new Date(t||Date.now())).forEach(x=>{ P[x.type]=x.value; });
+  return {min:((+P.hour)%24)*60+(+P.minute), wd:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].indexOf(P.weekday), day:ctDay(t||Date.now())}; }
+function scMin(t){ const m=String(t||'').match(/^(\d\d):(\d\d)$/); return m?(+m[1])*60+(+m[2]):0; }
+function scTimeTxt(t){ const m=scMin(t), h=Math.floor(m/60), mm=m%60; return ((h%12)||12)+':'+String(mm).padStart(2,'0')+' '+(h<12?'AM':'PM'); }
+function scClock(t){ return new Date(t||Date.now()).toLocaleTimeString('en-US',{timeZone:'America/Chicago', hour:'numeric', minute:'2-digit'}); }
+function scDayOk(days, wd){ return days==='all' ? true : days==='wk' ? (wd>=1 && wd<=5) : days==='we' ? (wd===0 || wd===6) : Array.isArray(days) && days.indexOf(wd)>=0; }
+function scDaysTxt(days){ const N=['Sun','Mon','Tue','Wed','Thu','Fri','Sat']; return days==='all'?'every day':days==='wk'?'weekdays':days==='we'?'weekends':(Array.isArray(days)&&days.length?days.slice().sort().map(d=>N[d]).join(', '):'no days picked'); }
+function scSrcTxt(row){ const S=scSrcs(), s=S[row.src], c=scCost(row);
+  if(row.src==='bp_props') return 'BettingPros props · '+(row.pages*20)+' props ('+scPl(row.pages,'call')+')';
+  if(s.bp) return s.name+' · 1 call';
+  if(row.src==='sgo') return 'SportsGameOdds '+(row.props&&row.gl?'props and game lines':row.props?'props':'game lines')+' · '+row.n+' games ('+scPl(c,'request')+')';
+  if(row.src==='oddsapi') return 'The Odds API game lines · '+row.mk.map(m=>({h2h:'moneyline', spreads:'spreads', totals:'totals'})[m]).join(', ')+(row.rx?' + exchanges':'')+' (about '+scPl(c,'credit')+') · ⚠ uses credits';
+  if(row.src==='oddspapi') return 'OddsPapi NFL totals · next '+row.opn+' games ('+scPl(c,'call')+')';
+  if(row.src==='sbapi') return 'Sportsbook API +EV picks · 1 call';
+  return 'Sentinels only · no BettingPros calls'; }
+function scDesc(row, scout){ const u=scSrcs()[row.src].unit, mx='max '+scPl(row.cap,u);
+  if(scout) return 'Every sport with a game in the next 12 hours, soonest first · '+scSrcTxt(row)+' · '+mx+' · then the Sentinels';
+  return [row.src==='sbapi'?'All sports':row.src==='oddspapi'?'NFL':row.sp, scSrcTxt(row), scTimeTxt(row.t), scDaysTxt(row.days), mx].join(' · '); }
+function scSoon(sp, h){ const t=sportNext[sp]; return !!t && t-Date.now()<=h*3600e3; }
+function scSrcSports(src){ return /^bp_/.test(src)?allSports():src==='sgo'?Object.keys(SGO_LEAGUES):src==='oddsapi'?Object.keys(OA_SPORTS):src==='oddspapi'?['NFL']:null; }
+function scAhead(r){ if(!r) return false; const g=r.gameInfo; if(g && (g.state==='in' || g.state==='post')) return false; const s=g && Date.parse(g.startISO); return !(s && !isNaN(s) && s<=Date.now()); }
+/* the same card La Contadora shows as a best bet (mathTopAll’s test): a stake, not already bet, not 👻 AWOL or ⏱ Old, price trusted (not an outlier or stale), game ahead */
+function scApproved(r){ return !!(r && r.pass && r.stake>0 && !r.prior && !r.waitOrder && !r.removed && !r.moved && !r.glConflict && !r.hiddenDup && !rowAwol(r) && !rowOld(r) && evDisplayState(r)==='actionable' && scAhead(r)); }
+function scMsg(t){ ['scoutMsg','schedMsg'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=t; }); }
+/* one load through the loader the app already has, with this row’s settings; the screen’s own choices are put back after */
+async function scLoad(row, sp){ const S=scSrcs(), s=S[row.src], per=scCost(row), g=id=>document.getElementById(id);
+  if(s.bp){ const ty=g('apiType'), pg=g('apiPages'), oT=ty?ty.value:'', oP=pg?pg.value:'', before=window._bpLeft; let txt='';
+    try{ if(ty) ty.value=s.type; if(pg && row.src==='bp_props') pg.value=String(row.pages); txt=String(await loadApi(false, sp)||''); }
+    finally{ if(ty) ty.value=oT; if(pg) pg.value=oP; }
+    try{ await refreshBudget(); }catch(e){} const after=window._bpLeft;
+    const used=(before!=null && after!=null)?Math.max(0,before-after):/from cache|skipped|^Load failed/.test(txt)?0:per;
+    return {ok:!/^Load failed|skipped/.test(txt), used, txt, name:sp}; }
+  if(row.src==='sgo' || row.src==='oddsapi'){ const oa=row.src==='oddsapi', pn=g('srcPanel'), mine=!(pn && pn.style.display==='block' && pn.dataset.src===row.src && g(oa?'oaSport':'sgoSport'));
+    let host=null, keep=[]; if(mine){ host=document.createElement('div'); host.hidden=true; host.className='sc-host'; host.innerHTML=srcLoadForm(row.src); document.body.appendChild(host); }
+    const setV=(id,prop,v)=>{ const el=g(id); if(!el) return; keep.push([el,prop,el[prop]]); el[prop]=v; };
+    try{ const sel=g(oa?'oaSport':'sgoSport'); if(!sel || ![...sel.options].some(o=>o.value===sp)) return {ok:false, used:0, txt:sp+': not offered by '+s.name, name:sp};
+      setV(oa?'oaSport':'sgoSport','value',sp);
+      if(oa){ setV('oaKey','value',''); setV('oaMkH','checked',row.mk.indexOf('h2h')>=0); setV('oaMkS','checked',row.mk.indexOf('spreads')>=0); setV('oaMkT','checked',row.mk.indexOf('totals')>=0); setV('oaRgX','checked',row.rx); }
+      else { setV('sgoN','value',String(row.n)); setV('sgoProps','checked',row.props); setV('sgoGl','checked',row.gl); }
+      await loadOddsSrc(row.src); const txt=((g('srcMsg')||{}).textContent)||'', ok=/^✓/.test(txt), saved=/saved answer/.test(txt), cr=txt.match(/(\d+) credits/);
+      return {ok, used:!ok||saved?0:oa&&cr?+cr[1]:per, txt, name:sp}; }
+    finally{ if(host) host.remove(); else keep.reverse().forEach(([el,p,v])=>{ el[p]=v; }); } }
+  if(row.src==='oddspapi'){ const pn=g('srcPanel'), mine=!(pn && pn.style.display==='block' && pn.dataset.src==='oddspapi' && g('opSport')); let host=null;
+    if(mine){ host=document.createElement('div'); host.hidden=true; host.className='sc-host'; host.innerHTML='<select id="opSport"></select><select id="opLeague"></select><select id="opN"><option value="4">4</option><option value="8">8</option><option value="16">16</option></select><span id="opMsg"></span><div id="opUse"></div><div id="opLog"></div><div id="opOut"></div>'; document.body.appendChild(host); }
+    try{ await opLoadSports(); const ss=g('opSport'), so=ss?[...ss.options].find(o=>/american football/i.test(o.textContent))||[...ss.options].find(o=>o.value && /football/i.test(o.textContent) && !/soccer/i.test(o.textContent)):null;
+      if(!so) return {ok:false, used:0, txt:'OddsPapi: American football not in its list', name:'NFL'};
+      ss.value=so.value; await opSportChanged(); const ls=g('opLeague'), lo=ls?[...ls.options].find(o=>o.value && /\bNFL\b|National Football League/i.test(o.textContent)):null;
+      if(!lo) return {ok:false, used:0, txt:'OddsPapi: the NFL league not in its list', name:'NFL'};
+      ls.value=lo.value; g('opN').value=String(row.opn); await loadOddsPapi(); const txt=((g('opMsg')||{}).textContent)||'', ok=/^✓/.test(txt);
+      return {ok, used:ok?row.opn:0, txt, name:'NFL'}; }
+    finally{ if(host) host.remove(); } }
+  if(row.src==='sbapi'){ const n0=lastRows.filter(r=>r.src==='api:sbapi:ev').length; await loadSbapi(false); const txt=((g('srcMsg')||{}).textContent)||'';
+    return {ok:!/^✗/.test(txt) && (/^✓/.test(txt) || lastRows.filter(r=>r.src==='api:sbapi:ev').length>=n0), used:/no call/.test(txt)?0:1, txt, name:'Sportsbook API'}; }
+  return {ok:true, used:0, txt:'', name:''}; }
+/* how: 'scout' (🔭 Scout now: every sport with a game in 12 h), 'sched' (a row at its time), 'now' (a row’s Run now: no 12-hour check) */
+async function scRunRow(row, how){ if(window._scBusy) return 'busy';
+  window._scBusy=true; let out='';
+  try{
+    if(!Object.keys(sportNext).length || Date.now()-(window._scScanAt||0)>10*60e3){ scMsg('🔭 Checking the schedule (ESPN, free)…'); try{ await scanSportTimes(); }catch(e){} window._scScanAt=Date.now(); }
+    const S=scSrcs(), s=S[row.src], G=scGet(), per=scCost(row), head=(how==='sched'?'⏰ ':'')+'Scouted '+scClock()+': ';
+    let list;
+    if(how==='scout'){ const ok=scSrcSports(row.src); list=(ok||allSports()).filter(sp=>scSoon(sp,12)).sort((a,b)=>sportNext[a]-sportNext[b]); if(!ok && list.length) list=['*']; }
+    else { const sp=row.src==='oddspapi'?'NFL':row.sp; list=(how==='now' || row.src==='sbapi' || sportNext[sp]===undefined || scSoon(sp,12))?[row.src==='sbapi'?'*':sp]:[]; }
+    if(!list.length){ out=head+(how==='scout'?'no game starts in the next 12 hours':'no '+(row.src==='oddspapi'?'NFL':row.sp)+' game starts in the next 12 hours')+', nothing loaded (no calls)'; return out; }
+    const loaded=[], notL=[], failed=[]; let used=0;
+    if(row.src!=='sent'){
+      if(s.bp){ try{ await refreshBudget(); }catch(e){} }
+      for(const sp of list){
+        if(used+per>row.cap){ notL.push((sp==='*'?s.name:sp)+' (max '+scPl(row.cap,s.unit)+' for this '+(how==='scout'?'scout':'row')+')'); continue; }
+        if(s.bp){ const R=scRunGet(), capLeft=G.cap-R.used, left=window._bpLeft;
+          if(per>capLeft){ notL.push(sp+' (scout cap reached)'); continue; }
+          if(left!=null && left<per){ notL.push(sp+' ('+scPl(left,'BettingPros call')+' left today)'); continue; } }
+        scMsg('🔭 Loading '+(sp==='*'?s.name:sp)+' ('+(list.indexOf(sp)+1)+' of '+list.length+')…');
+        let r; try{ r=await scLoad(row, sp); }catch(e){ r={ok:false, used:0, txt:String(e&&e.message||e), name:sp}; }
+        used+=r.used; if(s.bp){ const R=scRunGet(); R.used+=r.used; scRunSet(R); }
+        (r.ok?loaded:failed).push(r.name||sp);
+      } }
+    let sent='Sentinels: no cards with games ahead';
+    const sb=document.getElementById('shopBtn');
+    if(sb && !sb.disabled && (lastRows||[]).some(r=>r && r.fairProb!=null && !r.prior && scAhead(r))){ scMsg('🦑 Sending the Sentinels…'); try{ await shopExchanges(); sent='Sentinels sent'; }catch(e){ sent='Sentinels could not finish'; } }
+    const nOk=(lastRows||[]).filter(scApproved).length, capTxt=s.bp?', '+Math.max(0,G.cap-scRunGet().used)+' left of your scout cap':'';
+    out=head+(row.src==='sent'?'':(loaded.length?'loaded '+loaded.join(', '):'nothing loaded')+' ('+scPl(used,s.unit)+capTxt+')'+(failed.length?' · did not load: '+failed.join(', '):'')+(notL.length?' · not loaded: '+notL.join(', '):'')+' · ')+sent+' · '+nOk+' approved';
+    return out;
+  } finally { window._scBusy=false; if(out) scMsg(out); try{ scAlertCheck(); }catch(e){} try{ scPaint(); }catch(e){} } }
+async function scoutNow(){ const b=document.getElementById('scoutBtn'); if(b) b.disabled=true; try{ await scRunRow(scGet().scout, 'scout'); } finally { if(b) b.disabled=false; } }
+/* ⏰ at each row’s time (checked every minute, inside the 10 minutes after it, once per row a day); 🛰️ every N minutes */
+function scTick(){ try{ scSchedTick(); }catch(e){} try{ scAutoTick(); }catch(e){} try{ scPaintTimes(); }catch(e){} }
+function scSchedTick(){ const G=scGet(); if(!G.rows.length || window._scBusy) return; const c=scNowCT(), R=scRunGet();
+  for(const row of G.rows){ const m=scMin(row.t); if(!scDayOk(row.days, c.wd) || c.min<m || c.min>=m+10 || R.fired[row.id]===c.day) continue;
+    R.fired[row.id]=c.day; scRunSet(R); scRunRow(row, 'sched'); return; } }
+function scAutoTick(){ const A=scGet().auto; if(!A.on) return; const R=scRunGet(), now=Date.now();
+  if(!R.autoLast){ R.autoLast=now; scRunSet(R); return; }
+  if(now-R.autoLast < A.min*60e3-5e3 || window._scBusy) return;
+  const sb=document.getElementById('shopBtn'); if(!sb || sb.disabled) return;
+  R.autoLast=now;
+  if(!(lastRows||[]).some(r=>r && r.fairProb!=null && !r.prior && scAhead(r))){ R.autoNote='skipped at '+scClock(now)+': no cards with games ahead'; scRunSet(R); return; }
+  R.autoRan=now; R.autoNote=''; scRunSet(R); window._scBusy=true;
+  shopExchanges().catch(()=>{}).then(()=>{ window._scBusy=false; try{ scAlertCheck(); }catch(e){} try{ scPaintTimes(); }catch(e){} }); }
+/* 🔔 a NEW approved card, once a day per card (its key); a label only */
+function scSeenGet(){ let o=null; try{ o=JSON.parse(localStorage.getItem('mbev.alertSeen')||'null'); }catch(e){} const d=ctDay(Date.now()); if(!o || o.day!==d) o={day:d, k:{}}; o.k=o.k||{}; return o; }
+function scSeenSet(o){ lsSafeSet('mbev.alertSeen', JSON.stringify(o)); }
+function scAlertKey(r){ return pxKey(r); }
+function scAlertText(r){ const sd=r.side==='O'?'Over':r.side==='U'?'Under':'', gl=GL_KINDS.test(r.kind||'');
+  const pick=gl ? (r.kind==='total'?sd+' '+String(r.market||'')+(r.game?' · '+r.game:''):isDrawRow(r)?'Draw (tie)':(r.team||r.name)+(r.kind==='spread'?' '+String(r.market||'').replace(/\s*Spread$/i,''):' to win')) : String(r.name||'')+' '+sd+' '+String(r.market||'');
+  const odds=r.offeredRaw||fmtOdds(Math.round(americanOf(r.offeredProb))), tab=tabWord(tabOfChance(r.actProb));
+  return '✅ New: '+pick.replace(/\s+/g,' ').trim()+', '+(bookLabel(r.book)||String(r.book||''))+' '+odds+', $'+(+r.stake).toFixed(2)+(tab?' · '+tab:''); }
+function scAlertCheck(baseline){ if(window._scBusy || window._perfHold) return; const A=scGet().alert; if(!A.on && !baseline) return;
+  const P=planCfg(), S=scSeenGet(), fresh=[];
+  (lastRows||[]).forEach(r=>{ if(!scApproved(r)) return; if(A.plan && planOut(r.actProb, P)) return; const k=scAlertKey(r); if(S.k[k]) return; S.k[k]=Date.now(); if(!baseline) fresh.push(r); });
+  scSeenSet(S); if(fresh.length) scAlert(fresh, A); }
+function scAlert(fresh, A){ const T=fresh.map(scAlertText); let shown=false;
+  try{ if('Notification' in window && Notification.permission==='granted'){ fresh.forEach((r,i)=>{ const n=new Notification('✅ New approved bet', {body:T[i].replace(/^✅ New: /,''), tag:'sc|'+scAlertKey(r)}); n.onclick=()=>{ try{ window.focus(); n.close(); }catch(e){} }; }); shown=true; } }
+  catch(e){ window._scNoCtor=true; shown=false; }
+  try{ perfBeep(); }catch(e){}
+  const items=fresh.map((r,i)=>({k:scAlertKey(r), t:T[i]}));
+  if(!shown || (A.news && aiOn())) scBanner(items);
+  if(A.news && aiOn()) scNewsAll(fresh, items);
+  try{ scPaint(); }catch(e){} }
+function scBanner(I){ let el=document.getElementById('scAlert'); if(!el){ el=document.createElement('div'); el.id='scAlert'; el.setAttribute('role','status'); document.body.appendChild(el); }
+  if(el.classList.contains('on') && el._scI) I=el._scI.concat(I.filter(x=>!el._scI.some(y=>y.k===x.k)));
+  el._scI=I; scBannerPaint(el); }
+function scBannerPaint(el){ const I=el._scI||[]; if(!I.length){ el.classList.remove('on'); el.innerHTML=''; return; }
+  el.innerHTML='<b class="sa-h">✅ New approved bet'+(I.length>1?'s ('+I.length+')':'')+'</b>'+I.slice(0,6).map(x=>'<span class="sa-i">'+esc(x.t.replace(/^✅ New: /,''))+(x.news?' <span class="sa-n">· 📰 '+esc(x.news)+'</span>':'')+'</span>').join('')+(I.length>6?'<span class="sa-i">and '+(I.length-6)+' more</span>':'')+
+    '<span class="sa-b"><button type="button" class="sa-show">Show the board</button><button type="button" class="sa-x" aria-label="Close">×</button></span>'; el.classList.add('on'); }
+async function scNewsAll(fresh, items){ for(let i=0;i<fresh.length && i<5;i++){ const r=fresh[i]; if(!(r.kind==='prop' || GL_KINDS.test(r.kind||''))) continue;
+  const gl=r.kind!=='prop', gi=r.gameInfo||{}, inp={game:String(r.game||r.matchup||'').slice(0,80), sport:r.sport||'', market:gl?r.kind:statOfMarket(r.market), startISO:gi.startISO||null};
+  if(gl) inp.team=r.team||r.name; else { inp.player=r.name; if(r.team) inp.team=r.team; }
+  let res=null; try{ res=await aiCall('news', inp); }catch(e){ res=null; }
+  let word='news check failed';
+  if(res && res.ok){ const o=res.out, N=aiGet('news',{}), k=aiNewsKey(r);
+    N[k]={status:String(o.status||'unknown'), summary:String(o.summary||'').slice(0,400), sources:(o.sources||[]).slice(0,5).map(s=>({title:String(s.title||'').slice(0,120), url:String(s.url||'').slice(0,300), seen:s.seen})), checkedAt:o.checkedAt||new Date().toISOString(), day:k.split('|')[2]};
+    aiPut('news', N); word=aiNewsWord(N[k].status)+' (a label only)'; }
+  const el=document.getElementById('scAlert'), it=el&&(el._scI||[]).find(x=>x.k===items[i].k); if(it){ it.news=word; scBannerPaint(el); } } }
+function scAudioWake(){ try{ if(!scGet().alert.on) return; const AC=window.AudioContext||window.webkitAudioContext; if(AC && !window._perfAC) window._perfAC=new AC(); if(window._perfAC && window._perfAC.state==='suspended') window._perfAC.resume(); }catch(e){} }
+/* Settings › ⏰ Schedule */
+function scPaintTimes(){ const g=id=>document.getElementById(id); const G=scGet(), R=scRunGet(), c=scNowCT();
+  const nx=g('schedNext'); if(nx){ let best=null;
+    for(let d=0; d<8 && !best; d++){ const wd=(c.wd+d)%7; G.rows.slice().sort((a,b)=>scMin(a.t)-scMin(b.t)).forEach(row=>{ if(best) return; const m=scMin(row.t); if(!scDayOk(row.days, wd)) return;
+      if(d===0 && (c.min>=m+10 || R.fired[row.id]===c.day)) return; best={row, d, now:d===0 && c.min>=m}; }); }
+    nx.textContent=!G.rows.length?'No set times yet.':best?'next: '+(best.row.src==='sbapi'?'Sportsbook API':best.row.src==='oddspapi'?'NFL':best.row.sp)+' at '+scTimeTxt(best.row.t)+(best.now?' (now)':best.d===0?'':best.d===1?' tomorrow':' on '+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][(c.wd+best.d)%7]):'next: none (no days picked)'; }
+  const an=g('schedAutoNote'); if(an){ const A=G.auto; an.textContent=!A.on?'Off.':'On: every '+A.min+' minutes while this page is open, only when there are cards with games not yet started.'+(R.autoRan?' Last: '+scClock(R.autoRan)+'.':' Last: not yet.')+(R.autoLast?' Next: '+scClock(R.autoLast+A.min*60e3)+'.':'')+(R.autoNote?' ('+R.autoNote+')':''); }
+  const cn=g('schedCapNote'); if(cn) cn.textContent=R.used+' of '+G.cap+' used today'+(window._bpLeft!=null?' · '+window._bpLeft+' BettingPros calls left today':''); }
+function scPaint(){ const g=id=>document.getElementById(id); if(!g('schedPanel')) return; const G=scGet();
+  const cap=g('schedCap'); if(cap && document.activeElement!==cap) cap.value=G.cap;
+  const sc=g('schedScout'); if(sc) sc.innerHTML='<b>🔭 Scout now</b> <span class="sc-row-t">'+esc(scDesc(G.scout, true))+'</span> <button type="button" class="linkbtn" data-sc="scoutEd">⚙ settings</button>';
+  const rl=g('schedRows'); if(rl) rl.innerHTML=G.rows.map(row=>'<li class="sc-row" data-id="'+esc(row.id)+'"><span class="sc-row-t">'+esc(scDesc(row))+'</span><span class="sc-row-b"><button type="button" class="ghost sm" data-sc="run">▶ Run now</button><button type="button" class="ghost sm" data-sc="edit">Edit</button><button type="button" class="ghost sm" data-sc="dup">Duplicate</button><button type="button" class="ghost sm" data-sc="del">Remove</button></span></li>').join('');
+  const set=(id,p,v)=>{ const el=g(id); if(el) el[p]=v; };
+  set('schedAutoOn','checked',G.auto.on); set('schedAutoMin','value',String(G.auto.min)); set('schedAlertOn','checked',G.alert.on); set('schedAlertPlan','checked',G.alert.plan); set('schedAlertNews','checked',G.alert.news);
+  const al=g('schedAlertNote'); if(al){ const P=('Notification' in window)?Notification.permission:'none';
+    al.textContent=!G.alert.on?'Off.':window._scNoCtor?'On: a banner and a sound. This browser does not show notifications from a page.':P==='granted'?'On: a notification and a sound for each new approved bet.':P==='denied'?'On: a banner and a sound. This browser blocks notifications for this site.':P==='none'?'On: a banner and a sound. No notifications in this browser (on an iPhone they need the app added to the Home Screen).':'On: a banner and a sound. For notifications too, untick and tick this box again and allow them.'; }
+  scPaintTimes(); scEdPaint(); }
+/* the row editor: a row, a new row, or the Scout’s own settings */
+function scEdOpen(mode, id){ const G=scGet(); let row;
+  if(mode==='scout') row=Object.assign({}, G.scout);
+  else if(id){ row=Object.assign({}, G.rows.find(x=>x.id===id)||{}); }
+  else { const sel=document.getElementById('apiSport'); row=scRowNorm({sp:(sel&&sel.value)||'NHL', src:'bp_props', pages:2, t:'11:00', days:'all'}); }
+  window._scEd={mode:mode==='scout'?'scout':'row', id:id||null, row:scRowNorm(row)}; scEdPaint(true); }
+function scEdPaint(focus){ const box=document.getElementById('schedEd'); if(!box) return; const E=window._scEd; if(!E){ box.hidden=true; box.innerHTML=''; return; }
+  const r=E.row, S=scSrcs(), sco=E.mode==='scout', u=S[r.src].unit, opt=(v,t,on)=>'<option value="'+esc(v)+'"'+(on?' selected':'')+'>'+esc(t)+'</option>', ck=(f,v,on,t)=>'<label class="bar-check"><input type="checkbox" data-f="'+f+'" value="'+esc(v)+'"'+(on?' checked':'')+'> '+esc(t)+'</label>';
+  const sports=[...new Set(allSports().concat(Object.keys(SGO_LEAGUES), Object.keys(OA_SPORTS), [r.sp]))];
+  let h='<div class="sc-ed-h"><b>'+(sco?'🔭 Scout now settings':E.id?'Edit this row':'New row')+'</b></div><div class="sc-ed-g">';
+  h+=sco?'<span class="meta">Sports: every sport with a game in the next 12 hours, soonest first.</span>':'<label>Sport <select data-f="sp">'+sports.map(sp=>opt(sp,sp,sp===r.sp)).join('')+'</select></label>';
+  h+='<label>Source <select data-f="src">'+Object.keys(S).map(k=>opt(k, S[k].name+' · '+S[k].cost, k===r.src)).join('')+'</select></label>';
+  if(r.src==='bp_props') h+='<label>Props <select data-f="pages">'+[2,3,4,5].map(n=>opt(n, (n*20)+' props · '+n+' calls', n===r.pages)).join('')+'</select></label>';
+  if(r.src==='sgo') h+='<label>Games <select data-f="n">'+opt(10,'10 games · 1 request',r.n===10)+opt(20,'20 games · 2 requests',r.n===20)+'</select></label>'+ck('props','1',r.props,'Player props')+ck('gl','1',r.gl,'Game lines');
+  if(r.src==='oddsapi') h+=ck('mk','h2h',r.mk.indexOf('h2h')>=0,'Moneyline')+ck('mk','spreads',r.mk.indexOf('spreads')>=0,'Spreads')+ck('mk','totals',r.mk.indexOf('totals')>=0,'Totals')+ck('rx','1',r.rx,'+ exchanges (doubles the cost)')+'<div class="sc-warn">⚠ Uses The Odds API credits: about '+scPl(scCost(r),'credit')+' each run (bet types × regions). A reload within 10 minutes is free.</div>';
+  if(r.src==='oddspapi') h+='<label>Games <select data-f="opn">'+[4,8,16].map(n=>opt(n,'next '+n+' games · '+n+' calls',n===r.opn)).join('')+'</select></label><span class="meta">NFL totals only. Listing its leagues costs one call a day.</span>';
+  if(r.src==='sent') h+='<span class="meta">Re-checks the cards already loaded at live Kalshi, Polymarket US and Novig prices.</span>';
+  if(!sco){ h+='<label>Time (CT) <input type="time" data-f="t" value="'+esc(r.t)+'"></label><label>Days <select data-f="days">'+opt('all','Every day',r.days==='all')+opt('wk','Weekdays',r.days==='wk')+opt('we','Weekends',r.days==='we')+opt('pick','Pick days',Array.isArray(r.days))+'</select></label>';
+    if(Array.isArray(r.days)) h+='<span class="sc-dd">'+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d,i)=>ck('dd',i,r.days.indexOf(i)>=0,d)).join('')+'</span>'; }
+  if(r.src!=='sent') h+='<label>Max for this '+(sco?'scout':'row')+' <input type="number" data-f="cap" min="0" max="500" step="1" value="'+r.cap+'" style="width:64px"> '+esc(u)+'s</label>';
+  h+='</div><div class="meta sc-ed-line">'+esc(scDesc(r, sco))+'</div><div class="row" style="gap:8px;margin-top:6px"><button type="button" class="act sm" data-sc="edSave">Save</button><button type="button" class="ghost sm" data-sc="edCancel">Cancel</button></div>';
+  box.innerHTML=h; box.hidden=false; if(focus){ try{ box.scrollIntoView({block:'nearest'}); }catch(e){} } }
+function scEdRead(){ const box=document.getElementById('schedEd'), E=window._scEd; if(!box || !E) return; const r=Object.assign({}, E.row), q=f=>box.querySelector('[data-f="'+f+'"]'), oldCost=scCost(E.row), oldSrc=r.src;
+  if(q('sp')) r.sp=q('sp').value; if(q('src')) r.src=q('src').value; if(q('pages')) r.pages=+q('pages').value; if(q('n')) r.n=+q('n').value; if(q('opn')) r.opn=+q('opn').value;
+  if(q('props')) r.props=q('props').checked; if(q('gl')) r.gl=q('gl').checked; if(q('rx')) r.rx=q('rx').checked;
+  if(box.querySelector('[data-f="mk"]')){ const mk=[...box.querySelectorAll('[data-f="mk"]')].filter(x=>x.checked).map(x=>x.value); r.mk=mk.length?mk:['h2h']; }
+  if(q('t') && /^\d\d:\d\d$/.test(q('t').value)) r.t=q('t').value;
+  if(q('days')){ const v=q('days').value; r.days=v==='pick'?(Array.isArray(E.row.days)?[...box.querySelectorAll('[data-f="dd"]')].filter(x=>x.checked).map(x=>+x.value):[]):v; }
+  if(q('cap')) r.cap=q('cap').value;
+  const n=scRowNorm(r); if(r.src!==oldSrc || (+r.cap===oldCost && scCost(n)!==oldCost)) n.cap=scCost(n);   /* a max that followed the cost keeps following it */
+  E.row=n; }
+document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return;
+  if(t.closest('#scoutBtn')){ scoutNow(); return; }
+  if(t.closest('#scoutSet')){ const st=document.querySelector('.tab[data-view="v-settings"]'); if(st) st.click(); const p=document.getElementById('schedPanel'); if(p) p.open=true; scEdOpen('scout'); return; }
+  const a=t.closest('#scAlert button'); if(a){ const el=document.getElementById('scAlert'); if(el){ el.classList.remove('on'); el._scI=[]; } if(a.classList.contains('sa-show')){ const bt=document.querySelector('.tab[data-view="v-board"]'); if(bt) bt.click(); } return; }
+  const b=t.closest('#schedPanel [data-sc]'); if(!b) return; const k=b.dataset.sc, li=b.closest('.sc-row'), id=li?li.dataset.id:null, G=scGet();
+  if(k==='add') return scEdOpen('row');
+  if(k==='scoutEd') return scEdOpen('scout');
+  if(k==='ex'){ G.rows.push(scRowNorm({sp:'NHL', src:'bp_props', pages:2, t:'11:00', days:'all'})); scSet(G); return; }
+  if(k==='edit') return scEdOpen('row', id);
+  if(k==='dup'){ const i=G.rows.findIndex(x=>x.id===id); if(i>=0){ const c=scRowNorm(Object.assign({}, G.rows[i], {id:null})); G.rows.splice(i+1, 0, c); scSet(G); } return; }
+  if(k==='del'){ G.rows=G.rows.filter(x=>x.id!==id); scSet(G); return; }
+  if(k==='run'){ const row=G.rows.find(x=>x.id===id); if(row) scRunRow(row, 'now'); return; }
+  if(k==='edCancel'){ window._scEd=null; scEdPaint(); return; }
+  if(k==='edSave'){ scEdRead(); const E=window._scEd; if(!E) return; if(E.mode==='scout') G.scout=Object.assign(E.row, {id:'scout'}); else { const i=G.rows.findIndex(x=>x.id===E.id); if(i>=0) G.rows[i]=E.row; else G.rows.push(E.row); } window._scEd=null; scSet(G); return; } });
+document.addEventListener('change', e=>{ const t=e.target; if(!t) return;
+  if(t.closest && t.closest('#schedEd')){ scEdRead(); scEdPaint(); return; }
+  const G=scGet();
+  if(t.id==='schedCap'){ G.cap=Math.max(0,Math.min(50,Math.round(+t.value)||0)); scSet(G); return; }
+  if(t.id==='schedAutoOn' || t.id==='schedAutoMin'){ G.auto={on:(document.getElementById('schedAutoOn')||{}).checked===true, min:+((document.getElementById('schedAutoMin')||{}).value)||30};
+    const R=scRunGet(); R.autoLast=Date.now(); R.autoNote=''; scRunSet(R); scSet(G); return; }
+  if(t.id==='schedAlertOn' || t.id==='schedAlertPlan' || t.id==='schedAlertNews'){ const was=G.alert.on; G.alert={on:!!(document.getElementById('schedAlertOn')||{}).checked, plan:!!(document.getElementById('schedAlertPlan')||{}).checked, news:!!(document.getElementById('schedAlertNews')||{}).checked}; scSet(G);
+    if(G.alert.on && !was){ scAudioWake(); try{ localStorage.removeItem('mbev.alertSeen'); }catch(err){} scAlertCheck(true); /* on: the board as it is now is the starting point (no burst) */
+      try{ if('Notification' in window && Notification.permission==='default') Notification.requestPermission().then(scPaint, scPaint); }catch(err){} }
+    return; } });
+document.addEventListener('pointerdown', scAudioWake, {passive:true}); document.addEventListener('touchend', scAudioWake, {passive:true}); document.addEventListener('click', scAudioWake, {passive:true});
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) scTick(); });
+setInterval(scTick, 60e3);
+try{ scPaint(); }catch(e){}
 // v3.07: your open Make orders (read-only, from the books) on the row they belong to — WAITING FOR TAKER
 function makesFor(r){
   const O=(myOrders&&myOrders.orders)||[]; if(!O.length || !r) return [];
@@ -12619,6 +12903,7 @@ async function shopExchanges(){
       if(!was && now){ r.freed=true; freed++; } else if(was && !now){ r.jailed=true; jailed++; } });
     delete window._perfHold; refresh();   /* v4.83: the 🔔 check sees this press's final state (👻 AWOL written) */
     msg.innerHTML=(failMsg?'🦑 '+esc(failMsg)+' · <b>'+unasked.size+'</b> '+(unasked.size===1?'bet':'bets')+' not checked, left as '+(unasked.size===1?'it was':'they were')+' · ':'🦑 Sentinels are back: ')+'<b>'+matched+'</b> live prices · <b>'+repriced+'</b> repriced'+(freed?' · <b style="color:var(--live)">🔓 '+freed+' out of Skipping Jail</b>':'')+(jailed?' · <b style="color:var(--out)">🔒 '+jailed+' sent to Skipping Jail</b>':'')+' · '+new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    try{ scAlertCheck(); }catch(e){}   // v5.18: 🔔 after the Sentinels (a label only)
     pkSentNote(msg,!failMsg);   // v3.57: what is better in a parlay goes to the Parlays tab; v4.61: "checked at live prices" only when the whole scan ran
   }catch(e){ msg.textContent='🦑 the Sentinels got lost (exchange check failed)'; }
   finally{ btn.disabled=false; delete window._perfHold; rows.forEach(r=>{ delete r._qFail; delete r._qMiss; /* v4.81 */ const w=r._was; if(!w) return; delete r._was; if(w.q) r._shopQ=w.q; if(w.freed) r.freed=w.freed; if(w.jailed) r.jailed=w.jailed; if(w.qg) r.qGone=w.qg; }); }   /* v4.61: a scan that broke before deciding gives the earlier prices and tags back */
@@ -13794,7 +14079,7 @@ function syncBaseColl(pairs, st){
    The Worker never reads the data: it stores what the page sends and refuses a save made from an older copy (409) — the
    page then merges the newer copy and saves again. The board is separate: rows by source, the newer load wins. */
 var SY=null;
-const SYNC_SETS={cfg:'mbev.cfg', sweet:'mbev.sweet2', maker:'mbev.makerFees', grades:'mbev.grades', ignored:'mbev.fillIgnored', ai_slips:'mbev.ai.slips', ai_names:'mbev.ai.names', ai_sources:'mbev.ai.sources', ai_markets:'mbev.ai.markets', ai_news:'mbev.ai.news', ai_log:'mbev.ai.log'};   // v5.15: the AI helper's data points   // v3.94: Ignore on every device   // v3.93: your results, on every device
+const SYNC_SETS={cfg:'mbev.cfg', sweet:'mbev.sweet2', maker:'mbev.makerFees', grades:'mbev.grades', ignored:'mbev.fillIgnored', ai_slips:'mbev.ai.slips', ai_names:'mbev.ai.names', ai_sources:'mbev.ai.sources', ai_markets:'mbev.ai.markets', ai_news:'mbev.ai.news', ai_log:'mbev.ai.log', sched:'mbev.sched'};   // v5.18: ⏰ Schedule rows and choices   // v5.15: the AI helper's data points   // v3.94: Ignore on every device   // v3.93: your results, on every device
 function syncLS(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v); return true; }catch(e){ return v===undefined?null:false; } }
 function syncDev(){ const u=navigator.userAgent||''; return /iPhone/.test(u)?'iPhone':/iPad/.test(u)?'iPad':/Android/.test(u)?'Android':/Macintosh/.test(u)?'Mac':/Windows/.test(u)?'Windows PC':/CrOS/.test(u)?'Chromebook':/Linux/.test(u)?'Linux PC':'browser'; }
 function syncNewMeta(){ return {v:1, rev:0, brev:0, c:{}, s:{}, bsig:'', at:0, dirty:false, joined:false}; }
