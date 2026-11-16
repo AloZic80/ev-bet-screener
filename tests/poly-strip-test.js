@@ -18,11 +18,11 @@ const ROWS=[row('aho','Sebastian Aho','CAR','SEA','Polymarket US',0.44,0.56,0.47
   row('jar','Seth Jarvis','BOS','NYR','Polymarket US',0.45,0.60,0.50,{side:'U'}),                  // an Under: NO on "1+"
   row('kx','Quinn Hughes','VAN','PHI','Kalshi',0.53,0.60,0.57,{market:'1.5 Shots'}),               // Kalshi keeps its own line
   row('nv','Jonathan Lekkerimaki','DAL','MIN','Novig',0.519,0.5546,0.526,{market:'1.5 Shots'})];   // Novig: no what-to-type strip
-const strip=(p,name)=>p.evaluate(n=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>x.textContent.includes(n)); if(!c) return null;
+const strip=async(p,name)=>{ await p.evaluate(N=>{ const r=lastRows.find(x=>x.pass && String(x.name||'').includes(N)); if(r){ const f=passFam(r), m=f==='hail'?'clair':f; if(m!==betMode) setMode(m); } /* v5.16 (owner: more tabs): open the chance tab that lists this card */ }, name); return p.evaluate(n=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>x.textContent.includes(n)); if(!c) return null;
   const s=c.querySelector('.sc-px'), k=c.querySelector('.sc-kx:not(.sc-px):not(.sc-xline)'), d=c.querySelector('details.sc-why'); if(d) d.open=true;
   const h=c.querySelector('.px-how'), cr=c.getBoundingClientRect(), box=e=>{ if(!e) return null; const r=e.getBoundingClientRect(); return {in:r.left>=cr.left-1 && r.right<=cr.right+1, w:Math.round(r.width), h:Math.round(r.height)}; };
   const t=e=>e?e.innerText.replace(/\s+/g,' ').trim():null;
-  const out={line:t(s), kalshi:t(k), how:t(h), lineBox:box(s), howBox:box(h), boxes:h?[...h.querySelectorAll('.kx-b')].map(t):[]}; if(d) d.open=false; return out; }, name);
+  const out={line:t(s), kalshi:t(k), how:t(h), lineBox:box(s), howBox:box(h), boxes:h?[...h.querySelectorAll('.kx-b')].map(t):[]}; if(d) d.open=false; return out; }, name); };
 (async()=>{ const b=await chromium.launch();
   for(const W of [1280,390,1000,1960]){
     const ctx=await b.newContext({timezoneId:'America/Chicago',viewport:{width:W,height:1000}}); await ctx.clock.install({time:new Date(NOW)});

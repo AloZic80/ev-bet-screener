@@ -1,14 +1,17 @@
-# Modes: five tabs (Boring, Machín, Volado, Suertudo, Brujo), ⏱ Old and 👻 AWOL
+# Modes: eight chance tabs (Boring, Tranqui, Machín, Parejo, Volado, Dado, Suertudo, Brujo), ⏱ Old and 👻 AWOL
 
-Status: active · Introduced: v4.50, made exclusive in v4.51, five tabs by La Contadora's chance in v4.76, ⏱ Old in v4.77 · Approved by: Alonzo · Last verified: 2026-11-12 (v4.80)
+Status: active · Introduced: v4.50, made exclusive in v4.51, five tabs by La Contadora's chance in v4.76, ⏱ Old in v4.77, eight tabs in v5.16 (owner 11/16: "add more tabs ... add in between"; names by Las Karens) · Approved by: Alonzo · Last verified: 2026-11-12 (v4.80)
 
 ## Rule
 - A mode never changes the math (stakes, daily max, what passes). It only changes the list.
-- Five tabs, highest chance first (owner, 11/12: "only 5 tabs. start with boring and end with Brujo"). An approved bet goes by La Contadora's
-  chance (`actProb`, `passFam`), each cover band in one tab:
+- Eight tabs since v5.16 (were five, owner 11/12), highest chance first, edges half-open (70.0% is Tranqui). An approved bet goes by La Contadora's
+  chance (`actProb`, `passFam`; `tabOfChance` for the saved record, policy `tabs-v516`), each cover band in one tab:
   - 😴 Boring (`boring`): 75% or more: High Cover, Heavy Favorite;
-  - 💪 Machín (`safe`, the app opens here; was 🛡️ Safe): 60 to 75%: Strong, Solid, Lean;
-  - 🪙 Volado (`volado`): 50 to 60%: Slight Lean, On the Line;
+  - 🛋️ Tranqui (`tranqui`, v5.16): 70 to 75%: Strong;
+  - 💪 Machín (`safe`, the app opens here; was 🛡️ Safe): 65 to 70%: Solid (60 to 75% before v5.16);
+  - ⚖️ Parejo (`parejo`, v5.16): 60 to 65%: Lean;
+  - 🪙 Volado (`volado`): 55 to 60%: Slight Lean (50 to 60% before v5.16);
+  - 🎲 Dado (`dado`, v5.16): 50 to 55%: On the Line;
   - 🍀 Suertudo (`lucky`; was Feeling Lucky): 45 to 50%: Coin Flip, plus the Just missed offers;
   - 🔮 Brujo (`clair`, family `hail`; was Clairvoyant): under 45%: Unlikely, plus the Hail Marys.
 - ⏱ Old (`old`, v4.77; Alonzo: "lets not mix them with our regular tabs"): any card whose price was read more than 12 hours ago (`rowOld`, `OLD_PRICE`),

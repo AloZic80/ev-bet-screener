@@ -25,7 +25,7 @@ const row=(extra)=>Object.assign({name:'Shane Wright',team:'NSH',game:'NSH @ VGK
       return r.fulfill({contentType:'application/json',body:JSON.stringify({at:new Date(Date.now()).toISOString(),results:R})}); }
     if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1300);
-  for(const t of ['safe','boring','volado','lucky','hail']){ const has=await p.evaluate(()=>!!document.querySelector('#placeCards .sc-card .sc-alts')); if(has) break; await p.evaluate(m=>{ try{ setMode(m); }catch(e){} }, t); await p.waitForTimeout(250); }
+  for(const t of ['safe','boring','tranqui','parejo','volado','dado','lucky','hail'] /* v5.16 (owner: more tabs) */){ const has=await p.evaluate(()=>!!document.querySelector('#placeCards .sc-card .sc-alts')); if(has) break; await p.evaluate(m=>{ try{ setMode(m); }catch(e){} }, t); await p.waitForTimeout(250); }
   // no address for Kalshi: its live price is shown without a link (as for any book the app has no address for)
   await p.evaluate(()=>{ try{ delete BOOK_HOME.kalshi; }catch(e){} window._opens=[]; window._slipReadyCalls=0; const wo=window.open; window.open=function(){ window._opens.push(String(arguments[0]||'')); return {closed:false, close(){}, location:{href:''}, document:{write(){}, close(){}}}; };
     if(typeof slipReady==='function'){ const sr=slipReady; window.slipReady=function(){ window._slipReadyCalls++; return sr.apply(this, arguments); }; } });

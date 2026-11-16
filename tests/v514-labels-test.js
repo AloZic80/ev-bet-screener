@@ -24,10 +24,10 @@ const T=s=>String(s||'').replace(/\s+/g,' ').trim();
   const browser=await chromium.launch();
   const { page:p, errors } = await openPractice(browser,{html, width:1280, height:900, rows, settleMs:2500});
   await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(500);
-  const card=name=>p.evaluate(name=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>x.textContent.includes(name)); if(!c) return null;
+  const card=async name=>{ await p.evaluate(N=>{ const r=lastRows.find(x=>x.pass && String(x.name||'').includes(N)); if(r){ const f=passFam(r), m=f==='hail'?'clair':f; if(m!==betMode) setMode(m); } /* v5.16 (owner: more tabs): open the chance tab that lists this card */ }, name); await p.waitForTimeout(200); return p.evaluate(name=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>x.textContent.includes(name)); if(!c) return null;
     const d=c.querySelector('details.sc-why'); if(d && !d.open){ d.open=true; }
     return {text:c.textContent.replace(/\s+/g,' '), kx:(c.querySelector('.sc-kx')||{}).textContent||'', how:((c.querySelector('.kx-how')||{}).textContent||'').replace(/\s+/g,' '),
-      alts:[...c.querySelectorAll('.sc-alt')].map(a=>a.textContent.replace(/\s+/g,' ').trim()), tiles:[...c.querySelectorAll('.sc-grid2 .sc-t')].map(t=>({k:(t.querySelector('.sc-tk')||{}).textContent, v:(t.querySelector('b')||{}).textContent, s:(t.querySelector('.sc-ts')||{}).textContent||''}))}; }, name);
+      alts:[...c.querySelectorAll('.sc-alt')].map(a=>a.textContent.replace(/\s+/g,' ').trim()), tiles:[...c.querySelectorAll('.sc-grid2 .sc-t')].map(t=>({k:(t.querySelector('.sc-tk')||{}).textContent, v:(t.querySelector('b')||{}).textContent, s:(t.querySelector('.sc-ts')||{}).textContent||''}))}; }, name); };
 
   // ---- L2: the card tiles ----
   const K=await card('Travis Kelce');

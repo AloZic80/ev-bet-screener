@@ -32,7 +32,7 @@ const LOG=[{id:'b1',name:'Bowling Green Falcons',kind:'moneyline',market:'BGSU t
   /* v4.76: approved bets are split into tabs by La Contadora's chance. AKR, BGSU and BALL (model = market = 55%) are 🪙 Volado bets (50 to 60%), and an
      order waiting at a book stays in the opening tab, 💪 Machín (modeFamOf). So each look reads every tab and puts them together: "out of Place these"
      means in no tab, "in Already bet" means in some tab (before, all of them were in the one default tab). Ends back on the opening tab. */
-  const seeTabs=async()=>{ const V={cards:[],already:[],tabs:{}}; for(const m of ['boring','safe','volado','lucky','clair']){ await p.evaluate(m=>setMode(m),m); await p.waitForTimeout(300); const v=await see(); V.cards.push(...v.cards); V.already.push(...v.already); V.tabs[m]={cards:v.cards, already:v.already.length}; }
+  const seeTabs=async()=>{ const V={cards:[],already:[],tabs:{}}; for(const m of ['boring','tranqui','safe','parejo','volado','dado','lucky','clair'] /* v5.16 (owner: more tabs) */){ await p.evaluate(m=>setMode(m),m); await p.waitForTimeout(300); const v=await see(); V.cards.push(...v.cards); V.already.push(...v.already); V.tabs[m]={cards:v.cards, already:v.already.length}; }
     await p.evaluate(()=>setMode('safe')); await p.waitForTimeout(300); return V; };
   const A=await seeTabs();
   check('a bet logged from the Kalshi fill (worded "Bowling Green Falcons") matches the BGSU row by Kalshi\'s market code → Already bet', !A.cards.includes('BGSU') && A.already.some(t=>/BGSU/.test(t) && /ALREADY BET/.test(t)), A);

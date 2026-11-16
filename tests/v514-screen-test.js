@@ -52,7 +52,7 @@ const paroleFx=()=>{ const rungs=[0.58,0.57,0.56].map((p,i)=>({p,sweet:i===1,net
   S=await open(b,{w:390,h:844,rows:VOLADO,cfg:{books:'Novig',cfgVer:3.03}});
   let m=await S.p.evaluate(()=>({mode:betMode, banner:!!document.querySelector('#topHint:not([hidden]), .top-hint-go'), txt:document.body.innerText.includes('#1 math pick')}));
   check('B1. Machín (nothing here, the bets are under Volado) shows no "#1 math pick is under ... Show it ›" banner', m.mode==='safe' && !m.banner && !m.txt, m);
-  await S.p.evaluate(()=>setMode('volado')); await S.p.waitForTimeout(400);
+  await S.p.evaluate(()=>setMode('dado')); await S.p.waitForTimeout(400);   /* v5.16 (owner: more tabs): the three 53% bets are 🎲 Dado (50–55%) now */
   m=await S.p.evaluate(()=>({cards:[...document.querySelectorAll('#placeCards .sc-card')].map(c=>(c.querySelector('.sc-who')||c).innerText.split('\n').find(t=>/Star/.test(t))||''), top:document.querySelectorAll('.sc-mathtop').length, txt:/MATH PICK/i.test(document.body.innerText), order:lastRows.map(r=>({n:r.name,k:mathKey(r)})).sort((x,y)=>y.k-x.k).map(x=>x.n)}));
   check('B2. Volado lists its three cards in the same order as before (best edge first), with no "#1 MATH PICK" label anywhere', m.cards.length===3 && m.cards.map(c=>c.replace(/ [A-Z]{2,3}$/,'')).join()===m.order.join() && m.top===0 && !m.txt, m);
   await S.ctx.close();
@@ -120,6 +120,7 @@ const paroleFx=()=>{ const rungs=[0.58,0.57,0.56].map((p,i)=>({p,sweet:i===1,net
   check('E7. a free entry says it is typed at its face value (not $0), in both parlay forms (the Bet log panel and + Add a bet), note and tooltip', /face value/.test(fe.note) && /face value/.test(fa) && /face value/.test(fe.tipP) && /face value/.test(fe.tipA), {pl:fe.note, ab:fa});
   await S.ctx.close();
   S=await open(b,{w:1280,h:900,rows:FAV,cfg:{books:'DraftKings',bank:'1000',cfgVer:3.03}});
+  await S.p.evaluate(()=>setMode('tranqui')); await S.p.waitForTimeout(300);   /* v5.16 (owner: more tabs): her 73.1% is 🛋️ Tranqui (70–75%) now, not Machín */
   const wn=await S.p.evaluate(()=>{ const r=lastRows[0], t=[...document.querySelectorAll('.sc-money')].map(e=>e.innerText.replace(/\s+/g,' ')).join(' | '); const m=t.match(/wins \$([\d.]+)/); return {stake:r&&r.stake, txt:t, wins:m&&m[1], exact:r?(r.stake*100/230).toFixed(2):null}; });
   check('E8. a $10 bet at -230 says "wins $4.35" (10 × 100 / 230 = 4.3478, to the cent), not $4.34', wn.stake===10 && wn.wins==='4.35' && wn.wins===wn.exact, wn);
   await S.ctx.close();

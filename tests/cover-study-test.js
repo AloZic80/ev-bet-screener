@@ -19,6 +19,7 @@ const ROWS=[{name:'Naz Reid',team:'MIN',game:'LAC @ MIN',matchup:'LAC @ MIN',sid
   const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
   await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/api\.0xbeta\.dev/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1200);
+  await p.evaluate(()=>setMode('parejo')); await p.waitForTimeout(300);   /* v5.16 (owner: more tabs): a 62% pick is in ⚖️ Parejo (60–65%) */
   const card=await p.evaluate(()=>[...document.querySelectorAll('#placeCards .sc-card .cv-chip')].map(c=>c.textContent));
   await p.evaluate(()=>{ if(!window._barOpen){ window._barOpen=true; barMoreApply(); } }) /* v4.94: the board controls are behind Filters; tap it first */; await p.uncheck('#cardsOn'); await p.waitForTimeout(400);   // Cards off: the same bet is a table row
   const chips={card, cell:await p.evaluate(()=>[...document.querySelectorAll('#tbody td .cv-chip')].map(c=>c.textContent))};
@@ -26,7 +27,7 @@ const ROWS=[{name:'Naz Reid',team:'MIN',game:'LAC @ MIN',matchup:'LAC @ MIN',sid
   check('a 62% pick says "Lean" (60–<65%) on its Sentinels card and in the board\'s Cover cell', chips.card.includes('Lean') && chips.cell.includes('Lean'), chips);
   await p.evaluate(()=>document.querySelector('.tab[data-view="v-perf"]').click()); await p.waitForTimeout(500);
   const rows=await p.evaluate(()=>[...document.querySelectorAll('#studyRows tr')].map(tr=>[...tr.children].map(td=>td.innerText.replace(/\s+/g,' ').trim())));
-  const row=n=>rows.find(r=>r[0].startsWith(n))||null;
+  const row=n=>rows.find(r=>new RegExp('^\\S+ '+n+'$').test(r[0]))||null;   /* v5.16 (owner: 2.5-point cover rows): “60–<62.5% Lean”: the range, then the band name */
   const lean=row('Lean'), ls=row('Unlikely'), hc=row('High Cover');
   check('Lean: 3 logged, 1 pending, 1–1–0, predicted 60.0%, hit 50.0%, −10.0 pts, profit −$0.91 (+9.09 − 10)', lean && lean.slice(1).map((x,i)=>i===4?x.split(' ')[0]:x /* v4.88: the hit rate, then its range */).join('|')==='3|1|1–1–0|60.0%|50.0%|−10.0 pts|−$0.91', lean);
   check('Unlikely (v4.51: the band that was "Long Shot"): 1–0–0, predicted 40.0%, hit 100.0%, +60.0 pts, +$10.00', ls && ls.slice(1).map((x,i)=>i===4?x.split(' ')[0]:x /* v4.88: the hit rate, then its range */).join('|')==='1|0|1–0–0|40.0%|100.0%|+60.0 pts|+$10.00', ls);

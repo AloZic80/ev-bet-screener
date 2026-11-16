@@ -25,7 +25,7 @@ const ROWS=[row('nv','Two Books','Novig',0.52), row('dk','Two Books','DraftKings
     check('each is checked against La Contadora’s OK to at that book: 53.7% OK, 66% over', A[0] && A[0].ok===true && A[1] && A[1].ok===false && A[0].mx>0.537, A);
     check('a bet at only one book gets no “also at” row', await p.evaluate(()=>altBooksOf(lastRows.find(x=>x.apiKey==='solo')).length===0));
   }
-  let C=null; for(const t of ['boring','safe','volado','lucky','hail']){ await p.evaluate(m=>{ try{ setMode(m); }catch(e){} }, t); await p.waitForTimeout(250);
+  let C=null; for(const t of ['boring','tranqui','safe','parejo','volado','dado','lucky','hail'] /* v5.16 (owner: more tabs) */){ await p.evaluate(m=>{ try{ setMode(m); }catch(e){} }, t); await p.waitForTimeout(250);
     C=await p.evaluate(()=>{ const c=[...document.querySelectorAll('.sc-card')].find(x=>x.textContent.includes('Two Books') && x.querySelector('.sc-alts')); if(!c) return null; const al=[...c.querySelectorAll('.sc-alts > .sc-alt')] /* v5.09: books you bet; the rest sit on the reference line */, r=c.getBoundingClientRect();
       return {txt:c.querySelector('.sc-alts').textContent, n:al.length, ok:al.map(x=>x.classList.contains('ok')), idx:al.map(x=>+x.dataset.altIdx), keys:al.map(x=>(lastRows.find(r=>r.idx===+x.dataset.altIdx)||{}).apiKey), fits:al.every(x=>{ const b=x.getBoundingClientRect(); return b.right<=r.right+1 && b.height>=32; })}; });
     if(C) break; }
