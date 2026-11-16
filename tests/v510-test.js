@@ -85,8 +85,7 @@ const NEWLAYOUT=sel=>{ const out={side:document.documentElement.scrollWidth-inne
     // v5.10 (fixer): the #1 math pick banner (v4.97) on 💪 Machín names the 40% 🔮 Brujo card: My plan’s words, muted; the same #1 with the plan off
     const HINT=async()=>{ await p.evaluate(()=>setMode('safe')); await p.waitForTimeout(300); return p.evaluate(()=>{ const h=document.getElementById('topHint'), w=h&&h.querySelector('.th-plan'); return h?{t:h.textContent.replace(/\s+/g,' ').trim(), w:w?getComputedStyle(w).fontWeight+'|'+(getComputedStyle(w).color===getComputedStyle(document.querySelector('#planPanel .hint')).color):null}:null; }); };
     const HB50=await HINT(); await setPlan(p, 0); const HB0=await HINT(); await setPlan(p, 50);
-    check('P2 · the #1 math pick banner on 💪 Machín: "⭐ The #1 math pick is under 🔮 Brujo · Hotel Unlikely · outside your plan" (the words muted: weight 400, the hint grey); with the plan off the same banner and the same #1, without the words',
-      HB50 && HB50.t==='⭐ The #1 math pick is under 🔮 Brujo · Hotel Unlikely · outside your plan Show it ›' && HB50.w==='400|true' && HB0 && HB0.t==='⭐ The #1 math pick is under 🔮 Brujo · Hotel Unlikely Show it ›' && HB0.w===null, {HB50, HB0});
+    check('P2 · v5.14 (owner 11/15: "REmove math pick"): the #1 math pick banner is gone on 💪 Machín, with the plan at 50 and off (the plan words are not shown anywhere on the board)', HB50===null && HB0===null, {HB50, HB0});
     const look=async()=>p.evaluate(([d])=>({dec:(eval(d))(), n:document.querySelectorAll('.plan-out').length, tabs:[...document.querySelectorAll('#modeBar .mode-plan')].map(x=>x.parentNode.dataset.mode)}), ['('+DEC.toString()+')']);
     await p.evaluate(()=>setMode('clair')); await p.waitForTimeout(300);
     const D50=await look(); await setPlan(p, 0); const D0=await look(); await setPlan(p, 99); const D99=await look(); const L99=await p.evaluate(()=>(document.querySelector('#placeCards .plan-out')||{}).textContent);

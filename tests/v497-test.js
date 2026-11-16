@@ -19,10 +19,11 @@ const ROWS=[row('vol','Clean Pick','Novig',0.54,0.585,0.575), row('out','Way Off
   await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1500);
   const st=await p.evaluate(()=>{ const h=document.getElementById('topHint'); return {mode:betMode, hint:h&&!h.hidden?h.textContent:''}; });
-  check(W+' px: Machín (no #1 math pick here) shows a banner: "⭐ The #1 math pick is under 🪙 Volado", and stays on Machín by itself', st.mode==='safe' && /#1 math pick is under 🪙 Volado/.test(st.hint) && /Clean Pick/.test(st.hint), st);
-  await p.click('#topHint .top-hint-go'); await p.waitForTimeout(300);
-  const st2=await p.evaluate(()=>{ const h=document.getElementById('topHint'); return {mode:betMode, top:!!document.querySelector('.sc-mathtop'), hint:!!(h&&!h.hidden), onScreen:!!(h && getComputedStyle(h).display!=='none' && h.getClientRects().length)}; });   // v5.11 (bug): also on screen? (.top-hint{display:flex} beat the hidden attribute)
-  check(W+' px: one tap on "Show it" opens 🪙 Volado with the #1 math pick, and the banner goes away there (hidden and not on screen)', st2.mode==='volado' && st2.top && !st2.hint && !st2.onScreen, st2);
+  check(W+' px: v5.14 (owner 11/15: "REmove math pick"): Machín shows no "#1 math pick is under" banner (it was a v4.97 tip), and stays on Machín', st.mode==='safe' && st.hint==='', st);
+  /* v5.14 (owner): the banner and its Show it button are removed; no #1 math pick label on Volado either */
+  await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(300);
+  const st2=await p.evaluate(()=>({mode:betMode, top:!!document.querySelector('.sc-mathtop'), banner:!!document.querySelector('#topHint:not([hidden]), .top-hint-go')}));
+  check(W+' px: v5.14: Volado lists its bets with no #1 math pick label and no banner', st2.mode==='volado' && !st2.top && !st2.banner, st2);
   await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(250);
   const money=await p.evaluate(()=>{ const c=[...document.querySelectorAll('.sc-card')].find(x=>x.textContent.includes('Clean Pick')); return c?c.querySelector('.sc-money').textContent:''; });
   check(W+' px: the card says "wins $" = the profit, and an exchange also says what comes back', /wins \$[\d.]+ · back \$[\d.]+/.test(money), money);

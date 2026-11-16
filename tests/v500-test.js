@@ -26,7 +26,7 @@ const LOG=[bet('w',{stake:3,odds:'-150',result:'win',gradedBy:'manual',start:iso
   const sum=(cw.where.match(/\d+/g)||[]).reduce((a,x)=>a+(+x),0);
   check(W+' px: v5.00 (Alonzo: "it says 24 bets to bet now...i dont see that amount"): under the number, where they are by tab, and they add up to it', cw.now>0 && /^in /.test(cw.where) && sum===cw.now, cw);
   const tops=await p.evaluate(async()=>{ const n=[]; for(const m of Object.keys(MODES)){ setMode(m); await new Promise(r=>setTimeout(r,120)); n.push(...[...document.querySelectorAll('.sc-mathtop')].map(()=>m)); } setMode('safe'); return n; });
-  check(W+' px: one ✅ #1 MATH PICK across every tab (not one per tab)', tops.length===1, tops);
+  check(W+' px: v5.14 (owner 11/15: "REmove math pick"): no ✅ #1 MATH PICK label on any tab', tops.length===0, tops);
   await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(250);
   const chips=await p.evaluate(()=>{ const all=document.querySelector('#bookChips .bchip[data-book=""] small'); const cards=[...document.querySelectorAll('#placeCards .sc-card')].filter(c=>c.querySelector('.bet-btn')).length; return {all:all?+all.textContent:null, cards}; });
   check(W+' px: the "All" book chip counts the bets to place on this tab, the same as the cards', chips.all===chips.cards && chips.cards>=1, chips);

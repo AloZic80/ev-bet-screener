@@ -27,15 +27,15 @@ const ROWS=[prop('Five Star','MIN','16.5 Points',5,0.52,0.54,0.535,'k1'), prop('
       check('Sort opens on ✅ Math: best edge first (Top bets by stars is still in the menu)', st.sort==='math' && st.opts[0]==='math' && st.opts.includes('top'), {sort:st.sort, opts:st.opts});
       const nm=st.cards.map(c=>c.name.replace(/ [A-Z]{2,3}$/,''));
       check('the cards are in math order (edge after blending, outliers last), not the stars order (5, 4, 3)', st.cards.length===3 && nm.join()===st.edge.join() && nm.join()!=='Five Star,Four Star,Three Star', {cards:nm, math:st.edge});
-      check('exactly one card says ✅ #1 MATH PICK, the first', st.cards.filter(c=>c.top).length===1 && st.cards[0].top, st.cards.map(c=>c.top));
+      check('v5.14 (owner 11/15: "REmove math pick"): no card says ✅ #1 MATH PICK; the order is unchanged', st.cards.filter(c=>c.top).length===0, st.cards.map(c=>c.top));
       check('every score says what its colour means: STRONG / GOOD / THIN (v4.93: OUTLIER or STALE in grey when the card is not trusted as shown)', st.cards.every(c=>/^(STRONG|GOOD|THIN|OUTLIER|STALE|OUTLIER · STALE)$/.test(c.word)) && st.cards.some(c=>/^(STRONG|GOOD|THIN)$/.test(c.word)), st.cards.map(c=>c.word));
       check('the header says the math says bet every card, best first, down to the daily max, and what the colours mean', /math says bet every card/i.test(st.head) && /daily max/.test(st.head) && /STRONG/.test(st.head) && /THIN/.test(st.head), st.head.slice(0,200));
       await p.evaluate(()=>{ if(!window._barOpen){ window._barOpen=true; barMoreApply(); } }) /* v4.94: the board controls are behind Filters; tap it first */; await p.selectOption('#sortBy','top'); await p.waitForTimeout(400);
       const t2=await p.evaluate(()=>[...document.querySelectorAll('#placeCards .sc-card')].map(c=>({top:!!c.querySelector('.sc-mathtop'), five:/Five Star/.test(c.innerText)})));
-      check('sorted by stars, 5 stars comes first, and the #1 MATH PICK badge stays on the math pick (not the first card)', t2[0].five && !t2[0].top && t2.filter(c=>c.top).length===1, t2);
+      check('sorted by stars, 5 stars comes first, and no card has a #1 MATH PICK badge (v5.14)', t2[0].five && t2.filter(c=>c.top).length===0, t2);
     } else {
       const fit=await p.evaluate(()=>{ const c=document.querySelector('#placeCards .sc-card'), b=c&&c.querySelector('.sc-mathtop'); return b?{r:Math.round(b.getBoundingClientRect().right), cr:Math.round(c.getBoundingClientRect().right)}:null; });
-      check('on a phone the #1 MATH PICK badge fits inside its card', fit && fit.r<=fit.cr, fit);
+      check('v5.14: on a phone there is no #1 MATH PICK badge on the card', fit===null, fit);
     }
     check(W+' px: no page errors', !errs.length, errs);
     await ctx.close();

@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.13</title>
+<title>0xBeta Screener v5.14</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1849,6 +1849,29 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 .rp-k .rp-tn{display:block; margin-top:2px; font-size:12px; font-weight:400; font-style:normal; color:var(--warn,var(--soft))}
 .sc-parlay-note{margin:6px 0}
 #boardMore[open]{z-index:61}   /* the open More ▾ list stays above the note, so it never hides a menu item */
+/* v5.14 (money and price labels): the small notes in the card's exchange strip (the price with the fee, 0.01 or whole shares, of your bet) */
+.sc-kx-s{font-size:11.5px; font-weight:600; color:var(--soft)}
+/* v5.14 (screen, words and removals; owner 11/15, from the Las Karens review): phones only (no change at 1000 px and wider): Parole's table scrolls inside its own box, so the page no
+   longer scrolls sideways; the bottom bar wraps (the Load and Refresh buttons get their own line next to a sources strip that scrolls inside its own box, with an edge fade) so
+   nothing is clipped; More ▾ has a visible close; "Placed at" has the full row; the smallest tap targets are 40 px tall; the Parlay headline is calm, not a big green number. */
+.par-scroll{max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch}
+.bm-x{display:none; font-size:13px; font-weight:700; color:var(--soft); padding:8px 10px; min-height:40px; box-sizing:border-box; cursor:pointer; border-bottom:1px solid var(--rule); align-items:center; justify-content:flex-end}
+.pk-calm{font-size:14px; font-weight:600; color:var(--ink); margin:6px 0}
+.pk-calm .meta{font-weight:400}
+.pk-ev, .pk-ev.up, .pk-ev.down{font-size:13px; font-weight:500; letter-spacing:0; color:var(--soft); line-height:1.3}   /* the expected return is a quiet line under the calm headline */
+.pk-ev small{font-size:13px; font-weight:500; margin-left:4px}
+@media (max-width:760px){ .board-more[open] .bm-x{display:flex} }
+@media (max-width:640px){
+  .par-scroll .par-tbl{min-width:520px}
+  #apiRow{scrollbar-width:thin; scrollbar-color:var(--soft) transparent}   /* the bottom bar stays one line, but Load and Refresh come first and always fit, "(API)" is shortened away, and a thin scrollbar plus the edge fade show that the BettingPros chip and the sources strip continue to the right */
+  #apiRow::-webkit-scrollbar{display:block; height:3px} #apiRow::-webkit-scrollbar-thumb{background:var(--soft); border-radius:3px}
+  .api-bpbtns{order:-1; margin-right:2px}
+  #refreshApi .rf-api{display:none}
+  .ab-grid .ab-placed, .ab-grid .ab-par{grid-column:1/-1}
+  .bchip, .cal-seg button, .cal-chips button, .cal-nav button, .sc-alt-chk, #subTabs .tab, .lc-d, .cal-c.has, button.cv-chip.lbf, .api-row .src-chip{min-height:40px}
+  .view .panel>details>summary, details.help>summary, #addBetPanel>summary{min-height:40px; box-sizing:border-box; display:flex; align-items:center}
+  .ab-grid .ghost.sm, #addBetPanel .act, #addBetPanel .ghost{min-height:40px}
+}
 </style>
 </head>
 <body>
@@ -1857,7 +1880,7 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.13</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.14</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1898,7 +1921,7 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
     </span>
     <div id="bpMulti" class="bp-multi" hidden></div><!-- v4.11: tick the sports you want, see the calls, load them in one press -->
     <button class="act" id="loadApi" title="Reuses the last pull for 30 minutes, so repeat loads cost no API calls">Load</button>
-    <button class="ghost" id="refreshApi" disabled title="Skips the 30-minute cache and spends API calls">⟳ Refresh (API)</button>
+    <button class="ghost" id="refreshApi" disabled title="Skips the 30-minute cache and spends API calls">⟳ Refresh<span class="rf-api"> (API)</span></button>   <!-- v5.14: "(API)" is hidden on a phone so the button fits -->
     <span class="budget" id="apiBudget" title="BettingPros requests used through the Worker">API today: —</span>
     <span class="ll-links">
       <button class="linkbtn" id="saveBoard" title="Download the current board as a file">Save</button>
@@ -2064,7 +2087,7 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
     <div class="field ab-par ab-par-wide"><label for="abParBook">App / book</label><select id="abParBook"><option>PrizePicks</option><option>Underdog</option><option>Sleeper</option><option>DraftKings Pick 6</option><option>Betr</option><option>ParlayPlay</option><option>Bovada</option><option>Novig</option><option>Kalshi</option><option>Polymarket</option><option>DraftKings Predictions</option><option>FanDuel Predicts</option><option>DraftKings</option><option>Underdog Predict</option><option>Other</option></select></div>
     <div class="field ab-par ab-par-wide"><label for="abParKind">Entry type</label><select id="abParKind"><option value="power">Power (all must hit)</option><option value="flex">Flex (pays if 1 or 2 miss)</option></select></div>
     <div class="field ab-par"><label for="abParPicks">Picks</label><input id="abParPicks" type="number" min="2" max="12" step="1" inputmode="numeric" placeholder="2 to 12"></div>
-    <div class="field ab-par"><label for="abParStake" title="What you paid for the entry">Entry $</label><input id="abParStake" class="eb-stake" type="number" step="0.01" min="0" placeholder="e.g. 5.00"><label class="bar-check ab-par-free" title="A free entry (a promo or bonus) is not your money: it costs you $0. If all hit you get the winnings, what it pays minus the entry, as the app counts free bets."><input type="checkbox" id="abParFree"> 🎁 Free entry</label></div>
+    <div class="field ab-par"><label for="abParStake" title="What you paid for the entry">Entry $</label><input id="abParStake" class="eb-stake" type="number" step="0.01" min="0" placeholder="e.g. 5.00"><label class="bar-check ab-par-free" title="A free entry (a promo or bonus) is not your money: it costs you $0. Type the entry at its face value (not $0). If all hit you get the winnings, what it pays minus the entry, as the app counts free bets."><input type="checkbox" id="abParFree"> 🎁 Free entry</label></div>
     <div class="field ab-par"><label for="abParWin" title="The profit only: what it pays if all hit, minus the entry">To win $</label><input id="abParWin" class="eb-win-o" type="number" step="0.01" min="0" placeholder="optional"></div><!-- v5.11 (review): To win first, as v5.09's To win | Total payout, so the Flex payouts come right after Pays if all hit (they read "Pays if all hit $ …if 1 misses $", not "To win $ …if 1 misses $") -->
     <div class="field ab-par"><label for="abParAll" title="The total it pays if every pick hits, your entry included">Pays if all hit $</label><input id="abParAll" class="eb-tot-o" type="number" step="0.01" min="0" placeholder="e.g. 25.00"></div>
     <div class="field ab-par ab-par-flex"><label for="abParM1" title="The total it pays if exactly 1 pick misses, your entry included (as Pays if all hit)">…if 1 misses $</label><input id="abParM1" type="number" step="0.01" min="0" placeholder="optional"></div><!-- v5.11 (review): the tips say it is the total, as Pays if all hit -->
@@ -2342,7 +2365,6 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
     <div class="field"><label for="sMax">Largest bet $</label><input id="sMax" type="number" value="10.00" step="0.5"></div>
     <div class="field"><label for="mWeight" title="How far to trust BettingPros' model over the market price when sizing. 0 = market only, 1 = model only.">Model weight (0–1)</label><input id="mWeight" type="number" value="0.35" step="0.05" min="0" max="1"></div>
     <div class="field"><label for="gameCapPct" title="Most you'll have riding on one game, as a % of your bankroll (2% of $1000 = $20). The same in every mode.">Max per game % of bankroll</label><input id="gameCapPct" type="number" value="2" step="0.5" min="0"></div>
-    <div class="field"><label for="dayGoal" title="How many bets you aim for per game day. Shown on the Board and in Bets by game day. 0 turns it off.">Daily bet goal</label><input id="dayGoal" type="number" value="20" step="1" min="0"></div>
     <div class="field"><label for="dayMaxPct" title="Most you'll stake on one day's games — everything together: the API board, the pasted Market EV page and your exchange fills — as a % of bankroll. The same in every mode. 0 turns it off.">Daily max % (everything)</label><input id="dayMaxPct" type="number" value="10" step="1" min="0"></div>
     <div class="field" style="display:none"><label for="dayMaxMevPct">(v3.10 paste max — no longer used)</label><input id="dayMaxMevPct" type="number" value="50" step="5" min="0"></div>
   </div>
@@ -2550,7 +2572,7 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
     <div class="field pl-kind"><label for="plKind">Entry type</label><select id="plKind"><option value="power">Power (all must hit)</option><option value="flex">Flex (pays if 1 or 2 miss)</option></select></div><!-- v5.13 (Las Karens 11/15): Power or Flex, as + Add a bet’s Entry type -->
     <div class="field" style="max-width:90px"><label for="plPicks">Picks</label><input id="plPicks" type="number" min="2" max="12" value="4"></div>
     <div class="field" style="max-width:110px"><label for="plStake">Stake $</label><input id="plStake" type="number" step="0.01" min="0" placeholder="5.00"></div>
-    <div class="pl-freef"><label class="pl-free" title="A free entry (a promo or bonus) is not your money: it costs you $0. If all hit you get the winnings, what it pays minus the entry, as the app counts free bets."><input type="checkbox" id="plFree"> 🎁 Free entry</label></div><!-- v5.13 (Las Karens 11/15): the Free entry tick, as + Add a bet -->
+    <div class="pl-freef"><label class="pl-free" title="A free entry (a promo or bonus) is not your money: it costs you $0. Type the entry at its face value (not $0). If all hit you get the winnings, what it pays minus the entry, as the app counts free bets."><input type="checkbox" id="plFree"> 🎁 Free entry</label></div><!-- v5.13 (Las Karens 11/15): the Free entry tick, as + Add a bet -->
     <div class="field"><label for="plAll">Pays if all hit $</label><input id="plAll" type="number" step="0.01" min="0" placeholder="50.00"></div>
     <div class="field pl-flex"><label for="plM1">…if 1 misses $</label><input id="plM1" type="number" step="0.01" min="0" placeholder="optional"></div><!-- v5.13: Flex only -->
     <div class="field pl-flex"><label for="plM2">…if 2 miss $</label><input id="plM2" type="number" step="0.01" min="0" placeholder="optional"></div><!-- v5.13: Flex only -->
@@ -2569,7 +2591,7 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
   <div class="log-filter" id="logFilter" style="display:none"></div>
   <div class="scroll"><table>
     <thead><tr>
-      <th>Date</th><th>Bet</th><th>Sport</th><th class="num">Your price</th><th class="num">Fair then</th>
+      <th>Date</th><th>Bet</th><th>Sport</th><th class="num">Your price</th><th class="num" title="The model’s chance when the bet was saved (for a bet typed in + Add a bet: your cover % or the exchanges’ middle price)">Model then</th><!-- v5.14 (Las Karens review 2, item 2): was Fair then; it is the model’s number -->
       <th class="num">Net EV</th><th class="num">Stake</th><th class="num">Result</th><th class="num">Close (same line)</th><th class="num">CLV</th><th></th>
     </tr></thead>
     <tbody id="logBody"></tbody>
@@ -2715,7 +2737,7 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 
 </div>
 <script>
-const SCREENER_VERSION='v5.13';
+const SCREENER_VERSION='v5.14';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -3101,7 +3123,7 @@ function cfgReadBase(){
     gameCapPct:(x=>isNaN(x)?2:Math.max(0,x))(parseFloat(document.getElementById('gameCapPct').value)),
     dayMaxPct:(x=>isNaN(x)?10:Math.max(0,x))(parseFloat(document.getElementById('dayMaxPct').value)),
     dayMaxMevPct:(x=>isNaN(x)?50:Math.max(0,x))(parseFloat(document.getElementById('dayMaxMevPct').value)),
-    dayGoal:(x=>isNaN(x)?20:Math.max(0,Math.round(x)))(parseFloat(document.getElementById('dayGoal').value)),
+    /* v5.14 (owner 11/15): the Daily bet goal is removed; an old saved dayGoal is ignored */
 
     deriv:document.getElementById('cDeriv').checked,
     prop:document.getElementById('cProp').checked,
@@ -3818,15 +3840,7 @@ function awolPill(r){ return rowAwol(r) ? '<span class="sc-pill awol" title="'+e
 /* v4.97 (Las Karens: "the app opens on a $1 untrusted card; the #1 math pick is hidden in another tab"): when the tab on screen has no #1 math pick
    and another tab has one, a banner at the top says where it is, with one tap to go there. Nothing switches by itself (orders and bets you
    already placed stay in view). Hoisted. */
-function topJumpOnce(mathTopHere, gAll){ const box=document.getElementById('placeCards'); if(!box || !box.parentNode) return;
-  let el=document.getElementById('topHint'); const hide=()=>{ if(el) el.hidden=true; };
-  if(mathTopHere || !(lastRows||[]).length) return hide();
-  const ok=r=>r.pass && r.stake>0 && !r.prior && !r.waitOrder && !r.removed && !r.moved && !r.glConflict && !rowAwol(r) && !rowOld(r) && evDisplayState(r)==='actionable';
-  const g=gAll!==undefined?gAll:lastRows.filter(ok).reduce((a,r)=>!a||mathKey(r)>mathKey(a)?r:a, null); if(!g) return hide();
-  let fam=modeFamOf(g); if(fam==='hail') fam='clair'; if(!MODES[fam] || fam===betMode) return hide();
-  if(!el){ el=document.createElement('div'); el.id='topHint'; el.className='top-hint'; box.parentNode.insertBefore(el, box); }
-  el.innerHTML='⭐ <b>The #1 math pick is under '+esc(String(MODES[fam].label||fam).trim())+'</b>'+(String(g.name||'').trim()?' · '+esc(String(g.name).trim()):'')+(planOut(g.actProb)?' <span class="th-plan" title="'+esc(planOutTxt())+' (a reminder only: stakes and BET / SKIP do not change)">· outside your plan</span>':'') /* v5.10 (fixer): My plan’s words, muted; which bet is #1 does not change */+' <button type="button" class="top-hint-go" data-mode-go="'+fam+'">Show it ›</button>'; el.hidden=false; }
-document.addEventListener('click', e=>{ const b=e.target.closest && e.target.closest('.top-hint-go'); if(!b) return; setMode(b.dataset.modeGo); window.scrollTo(0, Math.max(0, (document.querySelector('.board-panel')||document.body).getBoundingClientRect().top+scrollY-8)); });
+function topJumpOnce(mathTopHere, gAll){ const el=document.getElementById('topHint'); if(el && el.parentNode) el.parentNode.removeChild(el); }   // v5.14 (owner 11/15: "REmove math pick"): the "#1 math pick is under ... Show it" banner is gone; this only clears an old one. Orders do not change.
 function modeFamOf(r){ if(!r) return 'safe';
   if(r.prior){ const t=r.prior.tier; return (t==='lucky' || t==='hail') ? t : r.pass ? passFam(r) : 'safe'; }   /* v4.76 */
   if(r.waitOrder || r.moved) return 'safe';   /* an order waiting at a book, or the same bet at another line: with the best bets, so the "do not bet it twice" mark is in the default mode */
@@ -3870,7 +3884,7 @@ function ringDirt(r){
 function ringOf(r,cfg){ const P=x=>(x*100).toFixed(1)+'%', sg=x=>(x>=0?'+':'−')+Math.abs(x*100).toFixed(1)+'%', C=[], add=(k,ok,t)=>C.push({k, ok:!!ok, t});
   const p=r.actProb!=null?r.actProb:r.fairProb, ev=r.actNet!=null?r.actNet:r.net, be=r.offeredProb*(1+(+r.fee||0)), room=p!=null?p-be:null, e=1e-9;
   const z=p!=null && p>=RING.pLo-e && p<RING.pHi;
-  add('zone', z, p==null?'no chance to judge':z?'in the zone: La Contadora gives '+P(p)+' (50 to 75%)':'outside the zone: La Contadora gives '+P(p)+', not 50 to 75%');
+  add('zone', z, p==null?'no chance to judge':z?'in the zone: La Contadora gives '+P(p)+' (50 to 75%)':'outside the zone: La Contadora gives '+P(p)+(p>=RING.pHi-e?', which is Boring (75% or better, as in Settings); the ◎ zone is 50 to 75%':', below the ◎ zone of 50 to 75%'));   /* v5.14: Boring says 75%+ like Settings */
   const eo=ev!=null && ev>=RING.evLo-e && ev<=RING.evHi+e;
   add('edge', eo, ev==null?'no EV to judge':ev<RING.evLo-e?'edge '+sg(ev)+' with the market: under +4%':ev>RING.evHi+e?'edge '+sg(ev)+': over +12%, check the match':'edge '+sg(ev)+' with the market (+4% to +12%)');
   const ro=room!=null && room>=RING.room-e;
@@ -3977,7 +3991,7 @@ function renderCore(rows,cfg){
   const pv=boardSrc==='paste';
   const famNow=cfg.mode==='awol'?'awol':cfg.mode==='old'?'old':cfg.mode==='lucky'?'lucky':cfg.mode==='clair'?'hail':cfg.mode==='boring'?'boring':cfg.mode==='volado'?'volado':'safe',   /* v4.76 */ famIs=x=>modeFamOf(x)===famNow;   // v4.51: the mode's own rows
   shown=shown.filter(r=>pv?isPasteRow(r):!isPasteRow(r));
-  { const n=passing.filter(isPasteRow).length, el=document.getElementById('pasteTabN'); if(el) el.textContent=n?n:'';
+  { const n=passing.filter(r=>isPasteRow(r) && r.stake>0).length /* v5.14 (Las Karens 11/15): count what the list shows: a pass with no stake (no market price to size it) is not listed as a bet */, el=document.getElementById('pasteTabN'); if(el) el.textContent=n?n:'';
     const t=document.getElementById('boardTitle'); if(t) t.textContent=pv?'Pasted board':'The board';
     const pn=document.getElementById('pasteNote');
     if(pn){ pn.style.display=pv?'block':'none';
@@ -4517,7 +4531,10 @@ function apiDockPaint(){ const chip=document.getElementById('bpChip'); if(!chip)
    its views open from a More menu in the board panel (the Board tab in the bar brings the board back). Hoisted. */
 function boardMorePaint(){ const list=document.getElementById('boardMoreList'), box=document.getElementById('boardMore'); if(!list || !box) return;
   const items=[...document.querySelectorAll('#subTabs .tab[data-group="board"]')].filter(t=>!t.hidden);
-  list.innerHTML='<button type="button" data-f="1">🔎 Filters &amp; sort'+(window._barOpen?' (open)':'')+'</button>'+items.map((t,i)=>'<button type="button" data-i="'+i+'">'+t.innerHTML+'</button>').join(''); box.hidden=false; }   /* v4.96 (Alonzo: "only Send the Sentinels button" ... "put it on More"): Filters lives in More; the bar shows Filters only while it is open, to close it */
+  list.innerHTML='<div class="bm-x" role="button" tabindex="0" aria-label="Close this menu">✕ Close</div>'+   /* v5.14: a visible close, a div so the list of buttons is unchanged */
+    '<button type="button" data-f="1">🔎 Filters &amp; sort'+(window._barOpen?' (open)':'')+'</button>'+items.map((t,i)=>'<button type="button" data-i="'+i+'">'+t.innerHTML+'</button>').join(''); box.hidden=false; }   /* v4.96 (Alonzo: "only Send the Sentinels button" ... "put it on More"): Filters lives in More; the bar shows Filters only while it is open, to close it */
+document.addEventListener('click', e=>{ const x=e.target.closest && e.target.closest('#boardMoreList .bm-x'); if(x){ const bx=document.getElementById('boardMore'); if(bx) bx.open=false; } });   // v5.14: the × closes More
+document.addEventListener('keydown', e=>{ if((e.key==='Enter'||e.key===' ') && e.target.classList && e.target.classList.contains('bm-x')){ e.preventDefault(); e.target.click(); } });   // v5.14
 document.addEventListener('click', e=>{ const b=e.target.closest && e.target.closest('#boardMoreList button'); if(!b) return;
   if(b.dataset.f){ const box=document.getElementById('boardMore'); if(box) box.open=false; window._barOpen=!window._barOpen; barMoreApply(); boardMorePaint(); const bar=document.querySelector('.board-panel .board-bar'); if(bar && window._barOpen) bar.scrollIntoView({block:'nearest'}); return; }
   const items=[...document.querySelectorAll('#subTabs .tab[data-group="board"]')].filter(t=>!t.hidden), t=items[+b.dataset.i]; const box=document.getElementById('boardMore'); if(box) box.open=false; if(t) t.click(); window.scrollTo(0,0); });
@@ -4929,7 +4946,7 @@ function altBooksHtml(r){ if(!r || r.kind==='parlay' || !(r.offeredProb>0)) retu
       (a.net!=null?' · her EV here '+(a.net>=0?'+':'')+P(a.net)+' after fees':'')+(a.at?' · read '+ag+' ago':' · price time unknown: check the book')+(a.why?' · could not refresh: '+a.why:'')+
       (a.state==='seen'?' · not confirmed now'+(a.passes?' (the last-seen price was inside her limit)':''):'')+(a.far?' · ⚠ VERIFY LINE/MARKET · price '+P(a.p)+', market '+P(a.mkt)+' · gap '+(a.gap*100).toFixed(1)+' pts':'')+'. Tap to open it; I bet this sizes the stake at its price.';
     const cls='sc-alt book'+(a.ok?' ok':' over')+(a.old?' old':'')+(a.state==='seen'?' seen':'')+(a.far?' far':'');
-    const body=logo+'<b>'+esc(String(a.odds||fmtOdds(Math.round(americanOf(a.p)))))+'</b><small>'+P(a.p)+' · '+word+(a.old&&a.at?' · ⏱ '+ag:a.old?' · ⏱ ?':'')+'</small>';
+    const fp=feePaidOf(a.book, a.p), body=logo+'<b>'+esc(String(a.odds||fmtOdds(Math.round(americanOf(a.p)))))+'</b><small>'+P(a.p)+(fp?' → '+P(fp.q)+' with fee':'')+' · '+word+(a.old&&a.at?' · ⏱ '+ag:a.old?' · ⏱ ?':'')+'</small>';   /* v5.14 (Las Karens review 2, item 3): the price paid with the fee next to the listed one (OK up to already counts the fee) */
     if(a.x) return '<span class="'+cls+'" role="button" tabindex="0" data-alt-idx="'+a.x.idx+'" title="'+esc(tip)+'">'+body+'</span>';
     const src=LIVE_BOOK(a.book), u=(()=>{ try{ const v=bookUrl(src, a.q, 0); return v && /^(https:\/\/|novigapp:\/\/)/.test(v)?v:null; }catch(e){ return null; } })();
     return u?'<a class="'+cls.replace(' book',' sc-link')+'" href="'+esc(u)+'"'+(/^https:/.test(u)?' target="_blank" rel="noopener"':'')+' title="'+esc(tip)+'">'+body+'</a>':'<span class="'+cls+' nolink" title="'+esc(tip.replace(/\. Tap to open it; I bet this sizes the stake at its price\.$/,'. No direct link here: open '+bookLabel(a.book)+' and search for this bet.'))+'">'+body+'</span>'; };   /* v5.11 (bug): no link, so the words no longer say Tap to open it */
@@ -5034,14 +5051,15 @@ function pxChartSvg(r,mx,bookName,fmt){ const A=pxSeries(r); if(A.length<2) retu
     '<text x="'+pl+'" y="'+(H-5)+'">'+esc(pxTime(t0))+'</text><text x="'+(W-pr)+'" y="'+(H-5)+'" text-anchor="end">now</text></svg>'+
     '<div class="sc-leg"><span><i class="k-p"></i>'+esc(bookName)+' price</span>'+(fl?'<span><i class="k-f"></i>fair (La Contadora)</span>':'')+(mx>0?'<span><i class="k-mx"></i>OK to '+esc(fmt?fmt(mx):P(mx))+'</span>':'')+'</div>'; }
 /* what to type on Kalshi, in one line on the card (the four steps, explained, are in Why this play?) */
+function scFeePaidTxt(book, cents){ const fp=feePaidOf(book, cents/100); return fp ? ' <small class="sc-kx-s">→ '+(fp.q*100).toFixed(1)+'¢ with fee</small>' : ''; }   /* v5.14 (Las Karens review 2, item 3): the limit price once the fee is added; hoisted */
 function scKalshiLine(r){ if(LIVE_BOOK(r.book)!=='kalshi' || r.fairProb==null || !(r.offeredProb>0 && r.offeredProb<1)) return '';
   const st=+r.stake||0, mx=maxPriceFor(okProbR(r), r.book, cfgRead().eMin); if(!(st>0) || mx==null || r.offeredProb>mx+1e-9) return '';
   const k=kalshiHow(r,st,r.offeredProb,mx); if(!k) return '';
-  return '<div class="sc-kx" title="What to type on Kalshi. The steps are explained in Why this play?"><span class="sc-kx-h">On Kalshi</span><span class="sc-kx-i"><b>'+k.btn+'</b>'+(k.on?' on '+esc(k.on) /* v4.80: a spread says which market */:'')+'</span><span class="sc-kx-i">Shares <b>'+k.shares.toFixed(2)+'</b></span><span class="sc-kx-i">Limit <b>'+k.lim+'¢</b></span><span class="sc-kx-i">Max cost <b>$'+k.cost.toFixed(2)+'</b></span></div>'; }   /* v5.05: the most the order can cost (was Cost ≈) */
+  return '<div class="sc-kx" title="What to type on Kalshi. The steps are explained in Why this play?"><span class="sc-kx-h">On Kalshi</span><span class="sc-kx-i"><b>'+k.btn+'</b>'+(k.on?' on '+esc(k.on) /* v4.80: a spread says which market */:'')+'</span><span class="sc-kx-i">Shares <b>'+k.shares.toFixed(2)+'</b> <small class="sc-kx-s">(Kalshi takes 0.01 shares)</small></span><span class="sc-kx-i">Limit <b>'+k.lim+'¢</b>'+scFeePaidTxt(r.book, k.lim)+'</span><span class="sc-kx-i">Max cost <b>$'+k.cost.toFixed(2)+'</b></span></div>'; }   /* v5.05: the most the order can cost (was Cost ≈) · v5.14 (Las Karens review 2, item 3): the 0.01-share note and the price with the fee */
 function scPolyLine(r){ if(LIVE_BOOK(r.book)!=='poly' || r.fairProb==null || !(r.offeredProb>0 && r.offeredProb<1)) return '';   /* v4.79: what to type on Polymarket US, on the card (like the Kalshi line) */
   const st=+r.stake||0, mx=maxPriceFor(okProbR(r), r.book, cfgRead().eMin); if(!(st>0) || mx==null || r.offeredProb>mx+1e-9) return '';
   const k=polyHow(r,st,mx); if(!k) return '';
-  return '<div class="sc-kx sc-px" title="What to type on Polymarket US. A Market order on a thin book (High slippage) pays more than the price shown; a Limit order never pays more than its price. The steps are explained in Why this play?"><span class="sc-kx-h">On Polymarket</span><span class="sc-kx-i"><b>Limit</b>, not Market</span><span class="sc-kx-i"><b>'+esc(k.btn)+'</b>'+(k.plus?' on '+k.plus:'')+'</span><span class="sc-kx-i">Limit <b>'+k.lim+'¢</b></span><span class="sc-kx-i">Shares <b>'+k.shares+'</b></span><span class="sc-kx-i">Cost ≤ <b>$'+k.cost.toFixed(2)+'</b></span></div>'; }
+  return '<div class="sc-kx sc-px" title="What to type on Polymarket US. A Market order on a thin book (High slippage) pays more than the price shown; a Limit order never pays more than its price. The steps are explained in Why this play?"><span class="sc-kx-h">On Polymarket</span><span class="sc-kx-i"><b>Limit</b>, not Market</span><span class="sc-kx-i"><b>'+esc(k.btn)+'</b>'+(k.plus?' on '+k.plus:'')+'</span><span class="sc-kx-i">Limit <b>'+k.lim+'¢</b>'+scFeePaidTxt(r.book, k.lim)+'</span><span class="sc-kx-i">Shares <b>'+k.shares+'</b> <small class="sc-kx-s">(whole shares)</small></span><span class="sc-kx-i">Cost ≤ <b>$'+k.cost.toFixed(2)+'</b>'+(k.cost<st-0.004?' <small class="sc-kx-s">of your $'+st.toFixed(2)+'</small>':'')+'</span></div>'; }   /* v5.14 (Las Karens review 2, item 3): the price with the fee; whole shares, so the most it costs can be under the bet (BET $6.34, Cost ≤ $6.21) */
 function placeCardHtml(r,cfg,o){
   const gi=r.gameInfo||{}, T=gi.teams||[], away=T.find(t=>t.ha==='away'), home=T.find(t=>t.ha==='home');
   const gl=GL_KINDS.test(r.kind||''), drawR=gl && isDrawRow(r) /* v4.80: a Draw names the home team: no home logo or code */, myAb=drawR?null:(r.team?normAbbr(r.team):(gl?glTeam(r):null));
@@ -5063,7 +5081,7 @@ function placeCardHtml(r,cfg,o){
   const sc=sentScore(r), scCls=sc.total>=75?'hi':sc.total>=50?'mid':'lo', evSt=evDisplayState(r);   /* v4.93 */
   const X=o.tier||null, XL=X?extraLine(r):null, R=!X&&r.ring&&r.ring.n>=5?r.ring:null;   // v4.50: a 🍀 / 🔮 extra card, or a best bet with a ◎ ring (5 or 6 of 6)
   const p=r.offeredProb, okP=p>0&&p<1, isX=!!LIVE_BOOK(r.book), mx=r.fairProb!=null?maxPriceFor(okProbR(r), r.book, cfg.eMin):null, over=!X && okP && (mx==null || p>mx+1e-9);
-  const st=+(X?r.xStake:r.stake)||0, fee=okP?feeRate(r.book,p,cfg.fees):0, kSh=LIVE_BOOK(r.book)==='kalshi'?+(X?r.xContracts:r.contracts)||0:0, pay=st>0&&okP?(kSh>0?kSh /* v5.05: Kalshi pays $1 a share: the same shares as the strip */:Math.floor(st/(p*(1+fee))*100+1e-6)/100):null;
+  const st=+(X?r.xStake:r.stake)||0, fee=okP?feeRate(r.book,p,cfg.fees):0, kSh=LIVE_BOOK(r.book)==='kalshi'?+(X?r.xContracts:r.contracts)||0:0, pay=st>0&&okP?(kSh>0?kSh /* v5.05: Kalshi pays $1 a share: the same shares as the strip */:(/kalshi|polymarket|novig|prophet|predict|sporttrade|fliff/i.test(r.book||'')?Math.floor(st/(p*(1+fee))*100+1e-6):Math.round(st/(p*(1+fee))*100-1e-6))/100):null;   /* v5.14 (Las Karens 11/15): a sportsbook payout is rounded to the nearest cent (a $10 bet at -230 wins $4.35, not $4.34); an exchange still rounds its shares down */
   const isC=/kalshi|polymarket/i.test(r.book||''), isPB=isX || /predict|prophet|sporttrade/i.test(r.book||'');
   const pp=x=>isC?Math.round(x*100)+'¢':(x*100).toFixed(1)+'%', okTo=x=>isPB?(isC?Math.floor(x*100+1e-9)+'¢' /* v4.79 (Los Chismosos): her most in whole cents rounds down, like the strip */:pp(x)):fmtOdds(Math.round(americanOf(x))), odds=okP?fmtOdds(Math.round(americanOf(p))):fmtOdds(r.offeredRaw);
   const bk=bookLabel(r.book)||'book?', logo=bookLogo(r.book)?logoTag(r.book):'<i>'+esc(bk)+'</i>';
@@ -5086,11 +5104,12 @@ function placeCardHtml(r,cfg,o){
   const chart=pxChartSvg(r,mx,bk,okTo);
   const why='<details class="sc-why" data-pck="'+esc(pxKey(r))+'"'+(open?' open':'')+'><summary>Why this play?</summary><div class="sc-why-b">'+
       '<div class="sc-grid2">'+
+        tile('Market', r.mktProb!=null?pct(r.mktProb):'—', r.mktProb!=null?(r.mktSharp?'sharp no-vig':'consensus no-vig'):'no market price')+   /* v5.14 (Las Karens review 2, item 2): the three chances in order, Market (no-vig) · Model · La Contadora, before the EVs */
+        tile('Model', r.fairProb!=null?pct(r.fairProb):'—', r.fairProb!=null?esc(fmtOdds(Math.round(americanOf(r.fairProb))))+' · the model’s chance':'')+   /* v5.14: was “Fair”, but it is the model’s number (r.fairProb), not a no-vig price */
+        tile('La Contadora', r.fairProb!=null&&okProbR(r)!=null?pct(okProbR(r)):'—', r.fairProb!=null?'the chance the bet uses':'')+   /* v5.14: min(model, market + 0.35 × gap), what the stake and OK up to use */
         tile('La Contadora EV', evA==null?'—':(evA>0?'+':'')+pct(evA), r.mktProb!=null?'after fees, with the market':'after fees, the model alone', (evA>0?'up':'down')+(evSt==='actionable'?dCls(evA):''))+ /* v5.04: ▲/▼ on the La Contadora EV tile (actionable only) */
         tile('Model EV', r.net==null?'—':(r.net>0?'+':'')+pct(r.net), (r.evModel?(r.evModel==='market'?'market model':'projection model'):'the model alone')+(r.mktProb!=null && r.net!=null && Math.abs(r.net-evA)>=0.0005?' · not used for the stake':''), '')+
-        tile('Fair', r.fairProb!=null?esc(fmtOdds(Math.round(americanOf(r.fairProb)))):'—', r.fairProb!=null?pct(r.fairProb)+' to hit':'')+
         tile('OK up to', mx!=null?esc(okTo(mx)):'—', mx!=null?'La Contadora’s most at '+esc(bk):'nothing passes here')+
-        tile('Market', r.mktProb!=null?pct(r.mktProb):'—', r.mktProb!=null?(r.mktSharp?'sharp no-vig':'consensus no-vig'):'no market price')+
         tile('Consensus', esc(line||'—'), esc(cons||''))+
         tile('Projection', r.projValue!=null?String(Math.round(r.projValue*10)/10):'—', esc(shortStat(mname)))+
         tile('Rating', nS==null?'—':'<span class="pc-stars">'+'★'.repeat(nS)+'<span>'+'★'.repeat(5-nS)+'</span></span>', nS==null?'no rating':nS+'-star')+
@@ -5113,7 +5132,7 @@ function placeCardHtml(r,cfg,o){
     (X?'<div class="sc-xtop '+X+'" title="'+esc(XL.t)+'">'+(X==='lucky'?'🍀 ':'🔮 HAIL MARY · ')+esc(XL.short)+'</div>' /* v4.76: 🍀 La Contadora: NO · … */
       :R?(R.n===R.of?'<div class="sc-ringb gold" title="All six checks pass: zone, edge, room for error, lined up with the market, a fresh price, nothing flagged. The list is in Why this play?">'+(rowAwol(r)?'◎ PERFECTA · 👻 AWOL · look at the book first' /* v4.82: never BET NOW when the book could not find it */:evDisplayState(r)!=='actionable'?'⏱ CHECK THE PRICE FIRST' /* v5.01 (Sally, agreed: no PERFECTA headline when the price is not fresh) */:'◎ PERFECTA · 6/6 · price freshly checked' /* v5.01 (Sally, agreed; buyer’s tool: no BET NOW) */)+' <small>'+(!rowAwol(r)&&evDisplayState(r)!=='actionable'?'Previously 6 of 6; freshness currently fails · ':'')+esc(String((R.checks.find(c=>c.k==='fresh')||{}).t||'').replace(/^fresh: /,''))+'</small></div>'
                      :'<div class="sc-ringb" title="Five of the six Perfecta checks pass. The list is in Why this play?">◎ 5 of 6 · <b>'+esc(R.miss[0]||'')+'</b></div>'):'')+   // v4.50
-    (o.top?'<div class="sc-mathtop" title="The best edge in this tab right now (edge after blending the market with the model, what the stake is sized on). Bet the cards top to bottom on Sort › Math until your daily max.">✅ #1 MATH PICK</div>':'')+   // v4.28
+       // v4.28
     '<div class="sc-top">'+(X?'<span class="sc-score x" title="'+(X==='lucky'?'Just missed: La Contadora says NO · optional, smallest bet' /* v4.76 */:'A Hail Mary: your call, not the math’s')+'">'+(X==='lucky'?'🍀':'🔮')+'<small class="sc-word">'+(X==='lucky'?'JUST MISSED':'HAIL MARY')+'</small></span>'
       :(evSt==='actionable'?'<span class="sc-score '+scCls+'" title="Sentinel score: edge '+sc.e+'/50, market '+sc.m+'/30, fresh '+sc.f+'/20'+(sc.s?', signal +'+sc.s:'')+'. Open Why this play? for the parts.">'+sc.total+'<small class="sc-word">'+scWord(sc.total)+'</small></span>'
         :'<span class="sc-score muted" title="Underlying Sentinel score kept for audit (edge '+sc.e+'/50, market '+sc.m+'/30, fresh '+sc.f+'/20). Its strength word is replaced because this card is not trusted or not actionable as shown.">'+sc.total+'<small class="sc-word">'+({outlier_untrusted:'OUTLIER', stale_last_seen:'STALE', outlier_and_stale:'OUTLIER · STALE', unavailable:'—'})[evSt]+'</small></span>'))+   /* v4.93 */
@@ -6477,6 +6496,8 @@ function modeEmptyText(mode,mN){ const el=modeElse(mN,mode), bv=(typeof boardVie
   if(mode==='clair' && !EXTRAS.hailBets) return '🔮 Brujo lists the long shots under 45% that La Contadora approves, and none is on the board right now. Hail Marys are not offered as bets (👀 Watch only). '+el;   /* v5.13 (owner: no daily Suertudo/Brujo bets) */
   if(mode==='clair') return '🔮 Brujo lists the long shots under 45% and the Hail Marys, and '+(mN&&mN.fullH?'you have used today’s '+EXTRAS.hailDay:mN&&mN.lsmlH?'the long-shot moneyline limit is used ('+LSML.day+' a game day, one a game)' /* v4.80 */:'none is on the board right now')+'. '+el;
   if(mode==='safe' && mN && (mN.boring||mN.volado||mN.lucky||mN.hail||mN.old||mN.awol /* v4.81 */)) return '💪 Machín lists the bets La Contadora approves at 60 to 75%, and none is on the board right now. '+el;   /* v4.77: the other tabs have bets */
+  const ns=(lastRows||[]).filter(r=>(boardSrc==='paste')===isPasteRow(r) && r.pass && !(r.stake>0) && !r.prior && (r.flags||[]).some(f=>/no market check/.test(f[1]))).length;   /* v5.14: bets that pass but have no stake are not "failed" */
+  if(ns) return 'No bet here has a stake: '+ns+' pass every screen but have no market price to size a stake on. Switch on the rejects to see the rest.'+(el?' '+el:'');
   return 'Every bet failed a screen. Switch on the rejects to see why each one died.'+(el?' '+el:''); }
 /* v4.50: the two extra card groups, under Place these. Hail Marys are grouped by game, each a drop-down (so a Sunday with 60 TD scorers stays short);
    only the open games get their cards built, and opening one redraws. A search opens them all. */
@@ -6828,6 +6849,9 @@ function paidOddsOf(b){ if(!b || b.kind==='parlay') return null; const fee=betFe
   const st=+b.stake||0, q=(b.towin>0 && st>0) ? st/(st+(+b.towin)) : p*(1+fee); if(!(q>0 && q<1)) return null;
   const am=fmtOdds(Math.round(americanOf(q))), listed=(()=>{ try{ return PM_BOOK.test(String(b.book||'')); }catch(e){ return false; } })() ? String(+(p*100).toFixed(1))+'¢' : fmtOdds(b.odds);
   return {odds:am, listed, fee, q, txt:listed+' + fee = '+am}; }
+/* v5.14 (Las Karens review 2, item 3): the price paid once the fee is added (price × (1 + fee), as paidOddsOf counts it), for a price on the board, not a saved bet.
+   null when the book takes no fee at this price. Display only: OK up to, the EV and the stake already include the fee. Hoisted: the Also at chips and the card strips call it. */
+function feePaidOf(book, p, cfg){ if(!(p>0 && p<1)) return null; const c=cfg||cfgRead(), f=feeRate(book, p, c.fees); if(!(f>1e-9)) return null; const q=p*(1+f); return q>0 && q<1 ? {q, fee:f} : null; }
 function oddsShownTxt(b){ const x=paidOddsOf(b); return x ? x.odds : fmtOdds(b && b.odds); }   /* the price shown for a bet: the one paid */
 function oddsShownHtml(b){ const x=paidOddsOf(b); if(!x) return esc(fmtOdds(b && b.odds));
   return '<span title="The price you paid, fee included: '+esc(x.txt)+'. A win pays at this price.">'+esc(x.odds)+'</span><div class="meta odds-paid">'+esc(x.listed)+' + fee</div>'; }
@@ -6888,10 +6912,9 @@ function dayLabel(day){
   const d=new Date(day+'T12:00:00');
   return isNaN(d)?esc(day):d.toLocaleDateString('en-US',{weekday:'short',month:'numeric',day:'numeric'});
 }
-function dayCells(d,goal,bank){
-  const pct=goal>0?Math.min(100,Math.round(100*d.bets/goal)):0;
+function dayCells(d,goal,bank){   // v5.14 (owner 11/15): no daily bet goal, so no "/ 20" and no bar (the goal argument is ignored)
   const wlp=(d.w+d.l+d.p)? d.w+'–'+d.l+'–'+d.p : '—';
-  return '<td class="num"><b>'+d.bets+'</b>'+(goal>0?' <span class="meta">/ '+goal+'</span><div class="goalbar"><i style="width:'+pct+'%"'+(d.bets>=goal?' class="hit"':'')+'></i></div>':'')+'</td>'+
+  return '<td class="num"><b>'+d.bets+'</b></td>'+
     '<td class="num">'+(d.staked?money(d.staked):'—')+(d.staked&&bank?'<div class="meta">'+(100*d.staked/bank).toFixed(1)+'% of bankroll</div>':'')+'</td>'+
     '<td class="num">'+(d.locked?'<b>'+money(d.locked)+'</b>':'—')+(d.notStarted?'<div class="meta" title="Games not started yet: you can still get out, usually for a small loss">'+money(d.notStarted)+' not started</div>':'')+'</td>'+   // v3.67: spent, locked in
     '<td class="num">'+wlp+(d.sold?'<div class="meta">'+d.sold+' sold</div>':'')+(d.cancelled?'<div class="meta">'+d.cancelled+' cancelled</div>':'')+'</td>'+
@@ -6903,7 +6926,7 @@ function dayCells(d,goal,bank){
 }
 function renderDays(){
   const tb=document.getElementById('daysBody'), tf=document.getElementById('daysFoot'); if(!tb) return;
-  const cfg=cfgRead(), goal=cfg.dayGoal, bank=cfg.bank||0;
+  const cfg=cfgRead(), goal=0, bank=cfg.bank||0;   // v5.14: no goal
   const stats=dayStats(), today=ctDay(Date.now());
   const shift=n=>ctDay(Date.parse(today+'T12:00:00Z')+n*86400e3);
   const list=[]; for(let i=0;i<7;i++) list.push(shift(-i));                          // today and the 6 days before
@@ -6915,15 +6938,15 @@ function renderDays(){
   list.filter(day=>day<=today).forEach(day=>{ const d=stats[day]; if(!d) return; if(d.bets) active++;
     Object.keys(wk).forEach(k=>{ if(typeof wk[k]==='number') wk[k]+=d[k]; }); });
   tf.innerHTML='<tr class="total"><td><b>Last 7 days</b>'+(wk.bets?'<div class="meta">'+(wk.bets/7).toFixed(1)+' a day on average</div>':'')+'</td>'+
-    dayCells(wk,goal>0?goal*7:0,bank)+'</tr>';
+    dayCells(wk,0,bank)+'</tr>';
 }
 /* v2.63: one line on the Board — today's games */
 function renderTodayLine(){
   const el=document.getElementById('todayLine'); if(!el) return;
-  const cfg=cfgRead(), goal=cfg.dayGoal, today=ctDay(Date.now());
+  const cfg=cfgRead(), today=ctDay(Date.now());   // v5.14: no daily bet goal
   const d=dayStats()[today];
-  if(!d || !d.bets){ el.innerHTML="Today's games: <b>0"+(goal>0?' / '+goal:'')+'</b> bets'; return; }
-  const parts=["Today's games: <b>"+d.bets+(goal>0?' / '+goal:'')+'</b> bets', money(d.staked)+(cfg.dayMax>0?' of '+money(cfg.dayMax)+' max':' staked')+(cfg.bank?' ('+(100*d.staked/cfg.bank).toFixed(1)+'% of bankroll)':'')];
+  if(!d || !d.bets){ el.innerHTML="Today's games: <b>0</b> bets"; return; }
+  const parts=["Today's games: <b>"+d.bets+'</b> bets', money(d.staked)+(cfg.dayMax>0?' of '+money(cfg.dayMax)+' max':' staked')+(cfg.bank?' ('+(100*d.staked/cfg.bank).toFixed(1)+'% of bankroll)':'')];
   if(d.w+d.l+d.p) parts.push(d.w+'–'+d.l+'–'+d.p);
   if(d.pend) parts.push(d.pend+' pending');
   if(d.settled||d.risk) parts.push('<b class="'+(d.profit>=0?'pl-up':'pl-down')+dClsR(d.profit,0.01)+'">'+money(d.profit,true)+'</b>'+(d.risk?' <span class="meta">(on the line counted as gone)</span>':'')); /* v5.04: ▲/▼ on the day net */
@@ -8146,6 +8169,9 @@ function renderCalibration(){
     [['under 55%',0,.55],['55–60%',.55,.60],['60–65%',.60,.65],['65–70%',.65,.70],['70–80%',.70,.80],['80%+',.80,1.01]], x=>x.cover);
   document.getElementById('calEvBody').innerHTML = calRows(pts,
     [['under 2%',-9,.02],['2–5%',.02,.05],['5–10%',.05,.10],['10–15%',.10,.15],['15%+ (outliers)',.15,9]], x=>x.net);
+  /* v5.14 (Las Karens 11/15): "Nothing graded yet" was said next to a study that counts 12 graded bets. This table only judges a bet that has the model's own cover % saved, so say that, with the graded count */
+  const gN=logged.filter(b=>b.kind!=='parlay' && !b.sold && (b.result==='win' || b.result==='loss')).length, ce=document.getElementById('calEmpty');
+  if(ce) ce.textContent = gN ? 'Nothing to compare yet: '+gN+' of your bets '+(gN===1?'is':'are')+' graded, but none has the model\u2019s cover % saved (a bet you typed in, or saved after kickoff, has none). The Bet result study below counts all '+gN+'. Picks on your board are graded automatically once their games go final.' : 'Nothing graded yet. Picks on your board get graded automatically once their games go final; your own bets get graded with Check results in the Bet log.';
   document.getElementById('calEmpty').style.display = pts.length?'none':'block';
   // Brier (lower is better; always guessing 50% scores 0.250) and log loss, model vs market
   const brier=(xs,f)=>xs.reduce((s,x)=>s+Math.pow(f(x)-(x.won?1:0),2),0)/xs.length;
@@ -8706,12 +8732,12 @@ async function run(){
   render(audit(lastRows,c),c); save(); autoSaveBoard();
   if(pasted.length) showBoardSrc('paste');
   const d=document.getElementById('diag'), L=parse.lastLines||[];
-  const passed=pasted.filter(r=>r.pass).length;
+  const passed=pasted.filter(r=>r.pass && r.stake>0).length, passNoStake=pasted.filter(r=>r.pass && !(r.stake>0) && (r.flags||[]).some(f=>/no market check/.test(f[1]))).length;   // v5.14 (Las Karens 11/15): the Sample said "2 pass every screen" while the list said every bet failed: those 2 pass but have no market price, so no stake
   if(!L.length){ d.innerHTML=''; return; }
   if(pasted.length){
-    d.innerHTML='Read <b>'+pasted.length+'</b> '+(isMev?'bets from the <b>Market EV</b> page':'props from '+L.length+' lines')+' · <b>'+passed+'</b> pass every screen'+
+    d.innerHTML='Read <b>'+pasted.length+'</b> '+(isMev?'bets from the <b>Market EV</b> page':'props from '+L.length+' lines')+' · <b>'+passed+'</b> pass every screen'+(passNoStake?' · '+passNoStake+' more pass but have no market price to size a stake on, so none is listed as a bet':'')+
       (isMev&&parseMarketEV.skippedTeam?' · '+parseMarketEV.skippedTeam+' team bet'+(parseMarketEV.skippedTeam===1?'':'s')+' skipped (the page doesn\'t say which team)':'')+
-      (passed<pasted.length?' · tick <b>Show the rejects</b> to see why the rest died':'');
+      (passed+passNoStake<pasted.length?' · tick <b>Show the rejects</b> to see why the rest died':'');
   } else {
     const odd=L.slice(0,400).filter(l=>/[()@%]/.test(l)).slice(0,25);
     d.innerHTML='<b style="color:var(--out)">Read 0 props from '+L.length+' lines.</b> Screenshot this box and send it:'+
@@ -9969,8 +9995,8 @@ function rgPaint(){ const el=document.getElementById('rgGrid'); if(!el) return; 
     '<div class="rg-g"><h3>Screens</h3>'+T('Odds',od(c.oMin)+' to '+od(c.oMax))+T('Net EV floor',(c.eMin*100).toFixed(1)+'%','after fees')+T('Gross EV ceiling',(c.eMax*100).toFixed(0)+'%','higher is likely a wrong match')+T('Devig tolerance',(c.devig*100).toFixed(1)+'%')+T('Devig method','Multiplicative','each side’s price is divided by both sides added up ('+DEVIG_METHOD+')')+
       T('Books you bet',c.books.length?c.books.length+' books':'all books',c.books.slice(0,6).join(', ')+(c.books.length>6?'…':''))+'</div>'+
     '<div class="rg-g"><h3>Stake sizing</h3>'+T('Bankroll',usd(c.bank))+T('Kelly',String(c.kelly),'× edge after a '+String(c.shrink)+' haircut: together '+String(+((+c.kelly)*(+c.shrink)).toFixed(4))+' of full Kelly')+T('Bets',usd(c.sMin)+' to '+usd(c.sMax))+T('Model weight',String(c.mWeight),'0 = market only, 1 = model only')+'</div>'+
-    '<div class="rg-g"><h3>Limits</h3>'+T('Per game',c.gameCapPct+'%',usd(c.gameCap))+T('Daily max',c.dayMaxPct+'%',c.dayMax>0?usd(c.dayMax)+' · the Hard stop asks past it':'off')+T('Daily bet goal',c.dayGoal?String(c.dayGoal):'off')+T('Mode',(MODES[c.mode]&&MODES[c.mode].label)||c.mode||'Safe')+'</div>'+
-    '<div class="rg-g"><h3>Fees</h3>'+T('Kalshi',F.kalshi+'% of price','× (1 − price)')+T('Polymarket US',F.poly+'% of price','× (1 − price), the same way as Kalshi')+T('Novig',F.novig+'% extra','only that extra before the game; once the game has started, 6% × (1 − price) more')+T('ProphetX',F.prophet+'% of stake')+T('Licensed books',F.book+'% of stake')+'</div>'; }
+    '<div class="rg-g"><h3>Limits</h3>'+T('Per game',c.gameCapPct+'%',usd(c.gameCap))+T('Daily max',c.dayMaxPct+'%',c.dayMax>0?usd(c.dayMax)+' · the Hard stop asks past it':'off')+T('Mode',(MODES[c.mode]&&MODES[c.mode].label)||c.mode||'Safe')+'</div>'+
+    '<div class="rg-g"><h3>Fees</h3>'+T('Kalshi',F.kalshi+'% of price','× (1 − price)')+T('Polymarket US',F.poly+'% of price','× (1 − price), the same way as Kalshi')+T('Novig',(F.novig>0?F.novig+'% of stake':'No fee')+' before the game','once the game has started: 6% × (1 − price) of what you put up'+(F.novig>0?', plus your '+F.novig+'%':''))+T('ProphetX',F.prophet+'% of stake')+T('Licensed books',F.book+'% of stake')+'</div>'; }
 try{ cnPaint(); crPaint(); rgPaint();
   document.getElementById('cnTest').addEventListener('click',cnTest);
   document.getElementById('crRefresh').addEventListener('click',crRefresh);
@@ -10214,8 +10240,8 @@ try{ document.getElementById('paletteSeg').addEventListener('click',e=>{ const b
    compositing layer (translateZ), the usual cure. Same buttons, same handlers. */
 try{ const tb=document.querySelector('.tabs'), dk=document.getElementById('apiDock'); if(dk){ if(dk.parentNode!==document.body) document.body.insertBefore(dk, document.body.firstChild); if(tb && tb.parentNode!==dk) dk.insertBefore(tb, document.getElementById('apiSheet').nextSibling); } else if(tb && tb.parentNode!==document.body) document.body.insertBefore(tb, document.body.firstChild); }catch(e){}   /* v4.92: the dock (tabs inside) is the direct child of <body> now */   // first in the page, so the tab order (Board before the hidden Pasted) stays
 function showBoardSrc(src){ const t=document.querySelector('.tab[data-src="'+src+'"]'); if(t) t.click(); }
-const NUMS=['oMin','oMax','eMin','eMax','devig','bank','kelly','shrink','sMin','sMax','mWeight','gameCapPct','dayGoal','dayMaxPct','dayMaxMevPct',
-            'fKalshi','fProphet','fPoly','fNovig','fFliff','fBook','fFdp'];
+const NUMS=['oMin','oMax','eMin','eMax','devig','bank','kelly','shrink','sMin','sMax','mWeight','gameCapPct','dayMaxPct','dayMaxMevPct',
+            'fKalshi','fProphet','fPoly','fNovig','fFliff','fBook','fFdp'];   // v5.14: dayGoal is no longer a setting (an old saved one is ignored)
 NUMS.forEach(id=>document.getElementById(id).addEventListener('input',()=>{ refresh(); manual(); save(); renderDays(); }));
 ['fKalshi','fProphet','fPoly','fNovig','fFliff','fBook'].forEach(id=>document.getElementById(id).addEventListener('input',renderMoneylines));
 document.getElementById('books').addEventListener('input',()=>{ refresh(); save(); paintBookChecks(); });
@@ -11073,7 +11099,7 @@ function plSync(){ const g=id=>document.getElementById(id), P=g('parlayPanel'), 
     const a=put('plAll', arr[0]); if(flex){ put('plM1', arr[1]); put('plM2', arr[2]); }
     if(a) filled='Pays if all hit is filled in from the Parlays tab’s '+pkAppLabel(book)+' '+(flex?'Flex':'Power')+' payouts ('+picks+' picks: '+arr.map(x=>String(+(+x).toFixed(2))+'x').join(' / ')+'). Type over it if your entry pays something else.'; }
   const all=parseFloat(g('plAll').value);
-  const freeTxt=free ? '🎁 Free entry: it costs you $0, and a miss costs $0. If all hit you get the winnings'+(st>0 && all>st ? ', $'+(all-st).toFixed(2)+' (the $'+st.toFixed(2)+' entry does not come back)' : ' (what it pays minus the entry)')+'.' : '';   /* the words of + Add a bet’s note (abParSync) */
+  const freeTxt=free ? '🎁 Free entry: it costs you $0, and a miss costs $0. If all hit you get the winnings'+(st>0 && all>st ? ', $'+(all-st).toFixed(2)+' (the $'+st.toFixed(2)+' entry does not come back)' : ' (what it pays minus the entry)')+'. Type the entry at its face value, not $0.' : '';   /* the words of + Add a bet’s note (abParSync) */   /* v5.14 (Las Karens 11/15): the hint says a free entry is typed at its face value */
   const t=[freeTxt, filled].filter(Boolean).join(' ');
   if(note.textContent!==t) note.textContent=t; }
 (function(){ const g=id=>document.getElementById(id), P=g('parlayPanel'); if(!P || !g('plKind')) return; P._own={};
@@ -11339,7 +11365,14 @@ function pkSegHit(r,t){ const n=' '+nrmT(t)+' ', raw=' '+String(t)+' ';
 /* v5.00 (Karens: "✓ you bet this" for settled bets from other nights): only bets still open, on the same game day as the pick. Hoisted. */
 function pkSameDay(r,b){ const rd=r&&r.gameInfo&&r.gameInfo.startISO?ctDay(Date.parse(r.gameInfo.startISO)):''; const bd=(typeof gameDayOf==='function'&&gameDayOf(b))||b.date||''; return !rd || !bd || rd===bd; }
 /* v5.00 (Karens: "no stake left today (caps)" with $2,400 left, on a 20-hour-old price): the real reason a passing pick has no stake. Hoisted. */
-function pkNoStakeWhy(r){ try{ if(rowOld(r)) return 'old price: refresh it first'; if(rowAwol(r)) return 'the book cannot find it now'; }catch(e){} if(r.hold && r.hold.why) return r.hold.why==='awol'?'the book cannot find it now':'old price: refresh it first'; if(r.prior) return 'you already bet it'; return 'no stake: one of your caps (per game, per player or daily) is reached'; }
+function pkNoStakeWhy(r){ try{ if(rowOld(r)) return 'old price: refresh it first'; if(rowAwol(r)) return 'the book cannot find it now'; }catch(e){} if(r.hold && r.hold.why) return r.hold.why==='awol'?'the book cannot find it now':'old price: refresh it first'; if(r.prior) return 'you already bet it';
+  /* v5.14 (Las Karens 11/15): say WHICH cap left it no stake, from the flag the screener wrote when it sized the bet */
+  const fl=(r.flags||[]).map(f=>String(f&&f[1]||'')); const has=re=>fl.some(t=>re.test(t));
+  if(has(/^daily max reached/)) return 'no stake: your daily max is reached';
+  if(has(/^game cap reached/)) return 'no stake: your per-game cap is reached on this game';
+  if(has(/PLAYER EXPOSURE|one per player/)) return 'no stake: you already have a bet on this player (one per player)';
+  if(has(/under the \$.*minimum/)) return 'no stake: it sizes under your minimum stake';
+  return 'no stake: a cap or limit left it $0 (per game, per player or daily max)'; }
 function pkParlaysWith(r){ const from=ctDay(Date.now()-2*86400e3);
   return logged.filter(b=>b.kind==='parlay' && b.parlay && (!b.result || b.result==='pending') && !b.sold && (b.date||'')>=from && pkSameDay(r,b) && pkSegs(b).some(t=>pkSegHit(r,t))); }   // v5.12 (bug): an open parlay is result pending (parlayRecord saves every new one so: + Add a bet, the Bet log panel, this tab), not only none; before, no parlay you saved ever marked a pick
 function pkBetTag(l){ const r=l&&l.r; if(!r) return ''; const out=[];
@@ -11406,6 +11439,7 @@ function pkCard(title,legs,e,id,best){
     '<div class="pk-h"><b>'+esc(title)+'</b><span class="meta">'+esc(pkPaysTxt(e.arr))+'</span></div>'+
     (best?(prov?'<div class="pk-best prov" title="The best of these entries only if the app has every line shown: check the lines marked check line">PROVISIONAL BEST · check that the app has this exact line</div>':'<div class="pk-best" title="Of these entries, this one grows your bankroll most at its suggested stake: the return weighed against how often it loses">Best for your bankroll</div>'):'')+
     (moL.length?'<div class="pk-mo-warn" role="note">⚠ '+moL.map(l=>esc(l.name)).join(', ')+': model only, no market check. Not a recommended entry.</div>':'')+
+    '<div class="pk-calm">'+(e.be!=null?'Needs '+pct(e.be)+' a pick to break even · these average '+pct(e.avg)+' (model)':'These average '+pct(e.avg)+' (model)')+'</div>'+   /* v5.14 (Las Karens 11/15, owner): the calm headline; the expected return stays below it, small, not in big green */
     '<div class="pk-ev '+(up?'up':'down')+dCls(e.ev)+'">'+(up?'+':'−')+(Math.abs(e.ev)*100).toFixed(1)+'%<small> expected return'+ifm+'</small></div>'+ /* v5.04: ▲/▼ on the parlay expected return */
     '<div class="pk-meter" role="img" aria-label="Picks average '+pct(e.avg)+', break-even '+(e.be!=null?pct(e.be):'n/a')+'"><i style="width:'+pos(e.avg)+'"></i>'+(e.be!=null?'<b style="left:'+pos(e.be)+'"></b>':'')+'</div>'+
     '<div class="meta">Picks average <b>'+pct(e.avg)+'</b>, break-even '+(e.be!=null?pct(e.be):'n/a')+'. All '+e.n+' hit '+pct(e.pAll)+' of the time'+(e.pAll>0?' (about 1 in '+Math.max(1,Math.round(1/e.pAll))+')':'')+'.</div>'+   // v3.64
@@ -11712,7 +11746,7 @@ function abParSync(){ const g=id=>document.getElementById(id), P=g('addBetPanel'
   else if(res==='win' && paid>0 && st>0 && exp>0 && Math.abs(paid-exp)>0.0050001){ warn=true;   // v5.11 (review): a Paid $ typed on a Won entry is what Save keeps, so it is said before Save (a slip: $250 for $25, or the entry typed in it)
     t = !free && paid<=st+0.004 ? 'Won means every pick hit, so it paid back more than the $'+st.toFixed(2)+' entry: check Paid $.'
       : 'Paid $'+paid.toFixed(2)+' is not the $'+exp.toFixed(2)+(free?' in winnings':'')+' it pays if all hit. Save keeps '+money(free?paid:paid-st,true)+': fix Paid $ if that is a typo.'; }
-  else if(free) t='🎁 Free entry: it costs you $0, and a miss costs $0. If all hit you get the winnings'+(st>0 && all>st ? ', $'+(all-st).toFixed(2)+' (the $'+st.toFixed(2)+' entry does not come back)' : ' (what it pays minus the entry)')+'.';
+  else if(free) t='🎁 Free entry: it costs you $0, and a miss costs $0. If all hit you get the winnings'+(st>0 && all>st ? ', $'+(all-st).toFixed(2)+' (the $'+st.toFixed(2)+' entry does not come back)' : ' (what it pays minus the entry)')+'. Type the entry at its face value, not $0.';   // v5.14 (Las Karens 11/15): face value, in both parlay forms
   if(note.textContent!==t) note.textContent=t; note.classList.toggle('warn', warn); }
 function abParSave(){ const g=id=>document.getElementById(id), msg=g('abParMsg'), v=id=>parseFloat(g(id).value);
   const say=t=>{ msg.textContent=t; msg.classList.add('warn'); try{ msg.scrollIntoView({block:'nearest'}); }catch(e){} };
@@ -12028,7 +12062,7 @@ function maxTagHtml(r){
 function pickPayHtml(r){
   if(r.fairProb==null || !(r.offeredProb>0 && r.offeredProb<1)) return maxTagHtml(r);
   const cfg=cfgRead(), p=r.offeredProb, mx=maxPriceFor(okProbR(r), r.book, cfg.eMin), pctBook=PM_BOOK.test(r.book||'');
-  const f=feeRate(r.book,p,cfg.fees), st=+r.stake||0, pay=st>0?Math.floor(st/(p*(1+f))*100+1e-6)/100:null;
+  const f=feeRate(r.book,p,cfg.fees), st=+r.stake||0, pay=st>0?(/kalshi|polymarket|novig|prophet|predict|sporttrade|fliff/i.test(r.book||'')?Math.floor(st/(p*(1+f))*100+1e-6):Math.round(st/(p*(1+f))*100-1e-6))/100:null;   /* v5.14: a sportsbook payout rounds to the nearest cent */
   const show=x=>pctBook?(x*100).toFixed(1)+'%':fmtOdds(Math.round(americanOf(x)));
   const net=r.net, evTxt=net!=null?'<b class="'+(net>=cfg.eMin?'up':net<0?'down':'')+'"'+(isFdp(r.book)?' title="FanDuel Predicts\' fee is a guess — approximate"':'')+'>'+(isFdp(r.book)?'~':'')+(net>=0?'+':'')+(net*100).toFixed(1)+'% EV</b>':'';
   const src=LIVE_BOOK(r.book) || (/draftkings/i.test(r.book||'')?'dk':null);
@@ -12067,7 +12101,7 @@ function kalshiHowHtml(r){   // a full-width strip on the card: one box per thin
   return '<div class="kx-how" title="What to type on Kalshi for La Contadora\'s bet"><div class="kx-h">On Kalshi, enter</div><div class="kx-row">'+
     box('1 · Press', k.btn, esc(k.what)+(k.underNote?' (NO on the Over = the Under)':'')+'<br>in '+esc(gameHintOf(r)))+   // v4.15: which game
     box('2 · Shares', k.shares.toFixed(2), 'not '+st.toFixed(2)+': that is dollars, the most it can cost')+   // v5.05 (Los Desconfiados): the bet is now the budget, not the cost (was "that is the cost")
-    box('3 · Limit price', k.lim+'¢', 'the maximum: La Contadora\'s most, never higher')+   // v5.05
+    box('3 · Limit price', k.lim+'¢', 'the maximum: La Contadora\'s most, never higher'+(feePaidOf(r.book, k.lim/100)?' · '+(feePaidOf(r.book, k.lim/100).q*100).toFixed(1)+'¢ with the fee':''))+   // v5.05 · v5.14 (Las Karens review 2, item 3): the price with the fee
     box('Then check', 'Maximum cost $'+k.cost.toFixed(2), 'At the current '+k.ask+'¢ ask about $'+k.est.toFixed(2)+' · Max payout $'+k.payout.toFixed(2))+'</div>'+   /* v5.05: the most it can cost (<= the bet) and about what it costs now */
     '<div class="kx-buf">Order-cost safety buffer: fee rounded up to the next cent for sizing only (Kalshi’s own rounding unverified; one taker order showed no round-up)</div>'+   // v5.05 (K3)
     kalshiFeeLineHtml()+   // v5.05 (K7): the Why this play? fee line, under the buffer note
@@ -12101,9 +12135,9 @@ function polyHowHtml(r){   // v4.79: the full strip in Why this play?, one box p
   return '<div class="kx-how px-how" title="What to type on Polymarket US for La Contadora’s bet"><div class="kx-h">On Polymarket US, enter</div><div class="kx-row">'+
     box('1 · Order type', 'Limit', 'tap Market ⌄ and pick Limit. Never Market')+
     box('2 · Press', esc(k.btn), esc(k.what)+(k.underNote?' (NO on the Over = the Under)':'')+'<br>in '+esc(gameHintOf(r)))+   /* v4.79: a team bet names its side (esc: it is a team name) */
-    box('3 · Limit price', k.lim+'¢', 'La Contadora’s most, never higher')+
-    box('4 · Shares', String(k.shares), 'if it asks for dollars: $'+k.amt.toFixed(2))+
-    box('Then check', 'Cost ≤ $'+k.cost.toFixed(2), 'Pays $'+k.payout.toFixed(2)+' if it wins')+'</div>'+
+    box('3 · Limit price', k.lim+'¢', 'La Contadora’s most, never higher'+(feePaidOf(r.book, k.lim/100)?' · '+(feePaidOf(r.book, k.lim/100).q*100).toFixed(1)+'¢ with the fee':''))+   /* v5.14 (Las Karens review 2, item 3): the price with the fee */
+    box('4 · Shares', String(k.shares), 'whole shares · if it asks for dollars: $'+k.amt.toFixed(2))+   /* v5.14 (Las Karens review 2, item 3) */
+    box('Then check', 'Cost ≤ $'+k.cost.toFixed(2), (k.cost<st-0.004?'of your $'+st.toFixed(2)+' bet: whole shares at '+k.lim+'¢ + fee · ':'')+'Pays $'+k.payout.toFixed(2)+' if it wins')+'</div>'+   /* v5.14: why the cost is under the bet */
     '<div class="px-slip">⚠ “High slippage” means a Market order would pay more than the price shown: the book is thin, so it keeps buying higher. A Limit order buys what is offered up to '+k.lim+'¢ and waits for the rest. Not filled by the start? Cancel it.</div></div>'; }
 /* v4.80 (owner, 11/11: "or better, NOTIFICATION?", then "Yes all across"): level 1, while the app is open. When a NEW ◎ Perfecta (6 of 6) is in
    Place these after a draw (a Load, a Sentinels press, a refresh), a banner at the top (fixed: it never moves the board), a short sound and a browser
@@ -13135,7 +13169,7 @@ function abUpdate94(){
       if(best && best!==typed && best.her>typed.her+0.01) top.push('<div class="ab-alt">🦑 Better: BET $'+best.st.s.toFixed(2)+' — '+lbl(best)+' → '+SG94(best.her)+' net</div>');
     } else if(typed){
       level='bad'; head='🔴 SKIP — '+esc(typed.st.why||'no edge');
-      top.push(lbl(typed)+' vs fair '+P94(typed.side==='me'?fair:1-fair)+' → '+SG94(typed.net)+' net after fee on the model alone'+(Math.abs(typed.her-typed.net)>=0.0005?', '+SG94(typed.her)+' with the market':''));
+      top.push(lbl(typed)+' vs '+(FA.ex?'fair ':'the model ')+P94(typed.side==='me'?fair:1-fair)+' → '+SG94(typed.net)+' net after fee on the model alone'+(Math.abs(typed.her-typed.net)>=0.0005?', '+SG94(typed.her)+' with the market':''));   // v5.14: the model, not fair (Las Karens review 2)
       if(mx!=null) top.push('It becomes a bet at <b>'+P94(mx)+' or better</b>'+(LIVE_BOOK(typed.book)?' — or post it there yourself: switch to <b>📌 Make my own</b>':''));
       if(best) top.push('<div class="ab-alt">✅ Instead: BET $'+best.st.s.toFixed(2)+' — '+lbl(best)+' → '+SG94(best.her)+' net</div>');
       else if(hasOpp){ const omx=maxPriceFor(okProb(1-fair, mkt==null?null:1-mkt), typed.book, cfg.eMin); if(omx!=null && omx>0.02) top.push('The <b>'+esc(opTxt)+'</b> would be a bet at '+esc(bookLabel(typed.book))+' at '+P94(omx)+' or better'); }
@@ -13164,10 +13198,10 @@ function abUpdate94(){
   }
   { const hEd=$ab('abHost')&&$ab('abHost').querySelector('.editor'); if(hEd){ const was=hEd._kalHost; hEd._kalHost=kalH; if(hEd._kalSync && (kalH||was)) hEd._kalSync(); } }   // v5.05 (K6): the form shows this verdict's shares (none in Make my own or with no verdict); other books: nothing runs
   // ---- the working, same lines as before
-  if(fair!=null) L.push('Fair '+P94(fair)+' from '+FA.src);
+  if(fair!=null){ const caP=okProb(fair, mkt); L.push((mkt!=null?'Market '+P94(mkt)+' no-vig ('+esc(FA.mktSrc||'market')+') · ':'')+(FA.ex?'Fair ':'Model ')+P94(fair)+' from '+FA.src+(caP!=null&&!FA.ex?' · La Contadora '+P94(caP)+(mkt!=null?' (what the bet uses)':' (no market: the model alone)'):'')); }   /* v5.14 (Las Karens review 2, item 2): in order Market (no-vig) · Model · La Contadora; it said Fair for the model’s number (Fair stays only when it is the exchanges’ middle price) */
   if(f.projValue!=null && f._line!=null && f.kind==='prop'){ const d=f.projValue-f._line; L.push('Projection '+f.projValue+' vs line '+f._line+' ('+(d>=0?'+':'')+(Math.round(d*10)/10)+')'); }
-  if(gap!=null) L.push('Market check ('+esc(FA.mktSrc||'market')+'): '+pct(mkt)+', fair is '+(gap>=0?'+':'−')+Math.abs(gap*100).toFixed(1)+' pts '+(gap>=0?'above':'below')+' it'+(gap>gapCut?' — <b>too far: outlier</b>, stake held to the minimum':''));
-  const today=ctDay(Date.now()), usedDay=logged.filter(b=>!b.sold && gameDayOf(b)===today && poolOf(b)==='proj').reduce((t,b)=>t+(+b.stake||0),0);
+  if(gap!=null) L.push('Market check ('+esc(FA.mktSrc||'market')+'): '+pct(mkt)+', '+(FA.ex?'fair':'the model')+' is '+(gap>=0?'+':'−')+Math.abs(gap*100).toFixed(1)+' pts '+(gap>=0?'above':'below')+' it'+(gap>gapCut?' — <b>too far: outlier</b>, stake held to the minimum':''));   // v5.14: the model, not fair
+  const today=ctDay(Date.now()), usedDay=+((dayStats()[today]||{}).staked)||0;   /* v5.14 (Las Karens review 2, item 1): the same number as the Bet log strip and the Hard stop (dayStats().staked of today: parlay and pick’em entries and sold bets included, a free bet at $0); the stake sizing above (abStake) is unchanged */
   L.push('Today $'+usedDay.toFixed(2)+' of $'+cfg.dayMax.toFixed(2)+' daily max'+(usedDay>=cfg.dayMax-1e-9?' — <b>reached</b>':'')+' · outliers '+usedOut+' of '+outN);
   if(f.gameInfo && f.gameInfo.state==='in') L.push('<b>Game already started</b> — live price, live risk');
   if(f._missing) L.push('<b>Add the '+esc(f._missing)+' to save</b> — ESPN needs it to grade the bet');
@@ -13471,7 +13505,7 @@ function renderParole(){
       '<td>$'+g.stake.toFixed(2)+'</td><td>$'+g.payout.toFixed(2)+'</td><td class="meta">'+esc(g.chance)+'</td>'+
       '<td><button type="button" class="ghost sm par-copy" data-copy="'+(g.p*100).toFixed(1)+'">📋 '+(g.p*100).toFixed(1)+'</button></td></tr>').join('');
     return '<div class="par-card">'+head+
-      '<table class="par-tbl"><thead><tr><th>Bait (Make price)</th><th>Odds</th><th>Proj. EV</th><th>vs market</th><th>$</th><th>Payout</th><th>Chance of a bite</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>'+
+      '<div class="par-scroll"><table class="par-tbl"><thead><tr><th>Bait (Make price)</th><th>Odds</th><th>Proj. EV</th><th>vs market</th><th>$</th><th>Payout</th><th>Chance of a bite</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'+   /* v5.14: the table scrolls inside its own box on a phone */
       '<div class="par-steps" style="margin-top:6px"><span>① <b>Open slip</b> (side + $ filled)</span><span class="par-make">② tap <b>MAKE</b> (not Take)</span><span>③ paste the bait %</span><span>④ check the $</span><span>⑤ check the payout → you press the button</span></div>'+
       '<div class="par-btns">'+(url?'<a class="log sm par-btn" href="'+esc(url)+'" target="_blank" rel="noopener">Open slip ($'+first.stake.toFixed(2)+' filled)</a>':'')+
       '<button type="button" class="ghost sm par-save" data-i="'+r.idx+'">📌 Save bait (tracks the catch)</button></div>'+

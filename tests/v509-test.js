@@ -49,7 +49,7 @@ const books=v=>v.main.map(c=>c.txt.replace(' · ','|'));
   check('before any read: the card has an "also at" strip with ↻ check exchanges and no prices yet', v.has && v.btn==='↻ check exchanges' && v.main.length===0 && chkCalls(S).length===0, v);
   await S.p.evaluate(async()=>{ await shopExchanges(); }); await S.p.waitForTimeout(400); v=await look(S);
   check('Send the Sentinels: Novig 70.0% stays off the card (Hard Rock is fresh and better) but now shows under it: "-233 · 70.0% · OK ✓"; Kalshi 70.0% is over her OK to there (fee) and comes second',
-    v.card.book==='Hard Rock' && JSON.stringify(books(v))===JSON.stringify(['-233|70.0% · OK ✓','-233|70.0% · over']) && v.main[0].ok && v.main[1].ok===false && /novig\.com/.test(v.main[0].href||''), {main:v.main, card:v.card});
+    v.card.book==='Hard Rock' && JSON.stringify(books(v))===JSON.stringify(['-233|70.0% · OK ✓','-233|70.0% → 71.5% with fee · over']) /* v5.14 (owner: Karens review 2): Kalshi with its fee, 70 × (1 + 0.07 × 0.30) = 71.47% */ && v.main[0].ok && v.main[1].ok===false && /novig\.com/.test(v.main[0].href||''), {main:v.main, card:v.card});
   check('Novig’s chip opens its slip (no stake filled); Kalshi’s opens its market', v.main[0].href==='https://novig.com/events/out-1/novig' && v.main[1].href==='https://kalshi.com/m/x', v.main.map(x=>x.href));
   check('no "better" line: Novig’s EV '+(ev(0.70)*100).toFixed(2)+'% is under the card’s '+(ev(P0)*100).toFixed(2)+'%', !v.notes.some(n=>/Better confirmed/.test(n)), v.notes);
   // ===== 2. the one-tap check =====
@@ -57,7 +57,7 @@ const books=v=>v.main.map(c=>c.txt.replace(' · ','|'));
   await press(S); v=await look(S);
   check('one tap = ONE Worker call for this bet at the three exchanges', chkCalls(S).length===1 && chkCalls(S)[0].length===3, chkCalls(S));
   check('Polymarket US at 66.0% (EV '+(ev(0.66,pf(0.66))*100).toFixed(2)+'% after its fee) goes FIRST, OK ✓; the card’s EV is lower by more than 0.3 pts, so "Better confirmed price at Polymarket US · Send the Sentinels to update the card"',
-    v.main[0] && /^-194 · 66\.0% · OK ✓/.test(v.main[0].txt) && v.main[0].ok && v.notes.includes('Better confirmed price at Polymarket US · Send the Sentinels to update the card') && ev(0.66,pf(0.66))>ev(P0)+0.003, {main:v.main, notes:v.notes});
+    v.main[0] && /^-194 · 66\.0% → 67\.6% with fee · OK ✓/.test(v.main[0].txt) /* v5.14 (owner: Karens review 2): 66 × (1 + 0.0695 × 0.34) = 67.56% */ && v.main[0].ok && v.notes.includes('Better confirmed price at Polymarket US · Send the Sentinels to update the card') && ev(0.66,pf(0.66))>ev(P0)+0.003, {main:v.main, notes:v.notes});
   check('Kalshi said "no offer": its older 70.0% is removed and it says "Kalshi · no offer now"', !v.main.some(c=>/over/.test(c.txt) && /-233/.test(c.txt) && !c.seen) && v.notes.includes('Kalshi · no offer now') && v.main.length===2, {main:v.main, notes:v.notes});
   check('Novig was busy: its older 70.0% stays, grey, no ✓: "last seen · was OK · could not refresh"', v.main[1] && v.main[1].seen && !v.main[1].ok && /70\.0% · last seen · was OK · could not refresh/.test(v.main[1].txt), v.main[1]);
   check('display only: the card did not move (book, price, stake, EV, no best-book claim)', JSON.stringify(v.card)===before, v.card);
@@ -72,7 +72,7 @@ const books=v=>v.main.map(c=>c.txt.replace(' · ','|'));
   check('a board price read 11 min ago (over the 3-min window) is "last seen · was OK · ⏱ 11 min", grey, no ✓', v.main.length===1 && v.main[0].seen && !v.main[0].ok && /70\.0% · last seen · was OK · ⏱ 11 min/.test(v.main[0].txt), v.main);
   check('DraftKings (not in your books) is on the "reference only" line, never OK ✓ (and 8.5 pts from the market: verify)', v.ref.length===1 && /reference only/.test(await S.p.evaluate(()=>document.querySelector('.sc-alts-ref').textContent)) && !v.ref[0].ok && /62\.0% · ⚠ verify line/.test(v.ref[0].txt), v.ref);
   await press(S); v=await look(S);
-  check('Kalshi at 60.0% read now is 10.5 pts from the market (70.5%): "⚠ verify line", never OK ✓, never first, and on the reference line (not in your books)', v.ref.some(c=>/60\.0% · ⚠ verify line/.test(c.txt) && !c.ok) && !v.main.some(c=>/60\.0%/.test(c.txt)), {main:v.main, ref:v.ref});
+  check('Kalshi at 60.0% read now is 10.5 pts from the market (70.5%): "⚠ verify line", never OK ✓, never first, and on the reference line (not in your books)', v.ref.some(c=>/60\.0% → 61\.7% with fee · ⚠ verify line/.test(c.txt) /* v5.14 (owner: Karens review 2): 60 × (1 + 0.07 × 0.40) = 61.68% */ && !c.ok) && !v.main.some(c=>/60\.0%/.test(c.txt)), {main:v.main, ref:v.ref});
   check('no enabled book confirmed: "No enabled book currently inside La Contadora’s limit besides this card"', v.notes.includes('No enabled book currently inside La Contadora’s limit besides this card'), v.notes);
   await S.ctx.close();
   S=await open(b, {books:'Novig, Kalshi'});   /* a card at a book you do not bet never reaches Place these (it moves to your book or stays off), so the strip is read directly */
