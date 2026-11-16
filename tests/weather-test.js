@@ -33,7 +33,7 @@ let OM_OK=true; const asked={geo:0, om:0};
       const at=t=>Date.parse(t+':00Z')===kick; return J(r,{hourly:{time:T, temperature_2m:T.map(t=>at(t)?x.t:70), precipitation_probability:T.map(t=>at(t)?x.p:0), precipitation:T.map(()=>0), snowfall:T.map(t=>at(t)?x.s:0), wind_speed_10m:T.map(t=>at(t)?x.w:2), wind_gusts_10m:T.map(t=>at(t)?x.g:4)}}); }
     if(/football\/nfl\/scoreboard/.test(u)) return J(r,SB);
     if(/espn\.com/.test(u)) return J(r,{events:[]}); return r.abort(); });
-  await p.goto('http://app.test/'); await p.waitForTimeout(2500);
+  await p.goto('http://app.test/'); await p.waitForTimeout(2500); await p.evaluate(()=>{ try{ setMode('parejo'); }catch(e){} }); await p.waitForTimeout(2200);   // v5.16 (owner: more tabs): the 60% fixtures are in ⚖️ Parejo (60–65%), no longer Machín
   const read=()=>p.evaluate(()=>{ const o={}; document.querySelectorAll('span.wx').forEach(e=>{ const card=e.closest('.pcard,tr'); const n=(card.querySelector('.pc-nm')||card.querySelector('.pick')).firstChild.textContent.trim(); if(e.textContent) o[n]={t:e.textContent, c:e.className, title:e.title}; }); return o; });
   let W=await read();
   check('wind at kickoff (21 mph, gusts 33) in Baltimore', W['Windy QB'] && W['Windy QB'].t==='🌬️ 21 mph · gusts 33' && /in Baltimore \(Open-Meteo\): wind 21 mph, gusts 33/.test(W['Windy QB'].title), W['Windy QB']);
@@ -41,9 +41,9 @@ let OM_OK=true; const asked={geo:0, om:0};
   check('v3.81: a dome says 🏟️ dome, calm weather a quiet chip (temperature and wind), neither in colour', W['Dome QB'] && W['Dome QB'].t==='🏟️ dome' && /calm/.test(W['Dome QB'].c) && W['Calm QB'] && W['Calm QB'].t==='☀️ 61°F · 6 mph' && /calm/.test(W['Calm QB'].c), [W['Dome QB'], W['Calm QB']]);
   check('v3.80: a game written in full names is found too (by ESPN id, or by the teams\' full names)', W['Full Total'] && /21 mph/.test(W['Full Total'].t) && W['Full Names'] && /snow/.test(W['Full Names'].t), [W['Full Total'], W['Full Names']]);
   check('the right city: the US state from ESPN picks among same-name places', asked.geo===3, asked);
-  const g0=asked.geo; await p.reload(); await p.waitForTimeout(2200);
+  const g0=asked.geo; await p.reload(); await p.waitForTimeout(2200); await p.evaluate(()=>{ try{ setMode('parejo'); }catch(e){} }); await p.waitForTimeout(800);   /* v5.16 (owner: more tabs) */
   check('cities and forecasts are kept: a reload asks again for neither', asked.geo===g0 && asked.om===3 && Object.keys(await read()).length===6, asked);
-  OM_OK=false; await p.evaluate(()=>{ localStorage.removeItem('mbev.wx'); }); await p.reload(); await p.waitForTimeout(2200);
+  OM_OK=false; await p.evaluate(()=>{ localStorage.removeItem('mbev.wx'); }); await p.reload(); await p.waitForTimeout(2200); await p.evaluate(()=>{ try{ setMode('parejo'); }catch(e){} }); await p.waitForTimeout(800);   /* v5.16 (owner: more tabs) */
   W=await read();
   check('if Open-Meteo does not answer, ESPN\'s own forecast still flags snow and cold', W['Snow QB'] && /❄️ snow/.test(W['Snow QB'].t) && /🥶 27°F/.test(W['Snow QB'].t) && /calm/.test((W['Windy QB']||{}).c||'calm'), W);
   check('no page errors', errs.length===0, errs);
