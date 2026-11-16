@@ -100,7 +100,7 @@ async function newPage(b, file, W, dev){
   await p.fill('#abParAll','50'); await pause(100); await p.fill('#abParStake','5'); await pause(100); t=await tw();
   check('Pays $50 typed, then Entry $5: Pays stays $50, To win $45.00', t.all==='50' && t.win==='45.00', t);
   await p.setChecked('#abParFree',true); await pause(100); t=await tw();
-  check('Free entry ticked: To win stays Pays − Entry ($45.00, the app\'s free-parlay rule) and the note says what it means', t.win==='45.00' && t.note==='🎁 Free entry: it costs you $0, and a miss costs $0. If all hit you get the winnings, $45.00 (the $5.00 entry does not come back).' && !t.warn, t);
+  check('Free entry ticked: To win stays Pays − Entry ($45.00, the app\'s free-parlay rule) and the note says what it means', t.win==='45.00' && t.note==='🎁 Free entry: it costs you $0, and a miss costs $0. If all hit you get the winnings, $45.00 (the $5.00 entry does not come back). Type the entry at its face value, not $0.' /* v5.14 (owner 11/15): the face-value hint */ && !t.warn, t);
   await p.setChecked('#abParFree',false); await p.fill('#abParAll','4'); await pause(100); t=await tw();
   check('Pays $4 under the $5 entry: To win $0.00 (never below 0) and a calm warning in the parlay\'s words', t.win==='0.00' && t.warn && t.note==='Pays if all hit is less than the entry: it is everything you get back if every pick hits, your entry included.', t);
   const noAsk=live.length;
