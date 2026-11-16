@@ -24,11 +24,11 @@ const ROWS=[{name:'Naz Reid',team:'MIN',game:'LAC @ MIN',matchup:'LAC @ MIN',sid
   await p.evaluate(()=>{ if(!window._barOpen){ window._barOpen=true; barMoreApply(); } }) /* v4.94: the board controls are behind Filters; tap it first */; await p.uncheck('#cardsOn'); await p.waitForTimeout(400);   // Cards off: the same bet is a table row
   const chips={card, cell:await p.evaluate(()=>[...document.querySelectorAll('#tbody td .cv-chip')].map(c=>c.textContent))};
   await p.evaluate(()=>{ if(!window._barOpen){ window._barOpen=true; barMoreApply(); } }) /* v4.94: the board controls are behind Filters; tap it first */; await p.check('#cardsOn'); await p.waitForTimeout(200);
-  check('a 62% pick says "Lean" (60–<65%) on its Sentinels card and in the board\'s Cover cell', chips.card.includes('Lean') && chips.cell.includes('Lean'), chips);
+  check('a 62% pick says "Lean" (60–<65%) on its Sentinels card and in the board\'s Cover cell', chips.card.includes('Almost Lean') && chips.cell.includes('Almost Lean') /* v5.17 (owner: Karens row names) */, chips);
   await p.evaluate(()=>document.querySelector('.tab[data-view="v-perf"]').click()); await p.waitForTimeout(500);
   const rows=await p.evaluate(()=>[...document.querySelectorAll('#studyRows tr')].map(tr=>[...tr.children].map(td=>td.innerText.replace(/\s+/g,' ').trim())));
   const row=n=>rows.find(r=>new RegExp('^\\S+ '+n+'$').test(r[0]))||null;   /* v5.16 (owner: 2.5-point cover rows): “60–<62.5% Lean”: the range, then the band name */
-  const lean=row('Lean'), ls=row('Unlikely'), hc=row('High Cover');
+  const lean=row('Almost Lean'), ls=row('Unlikely'), hc=row('High Cover');
   check('Lean: 3 logged, 1 pending, 1–1–0, predicted 60.0%, hit 50.0%, −10.0 pts, profit −$0.91 (+9.09 − 10)', lean && lean.slice(1).map((x,i)=>i===4?x.split(' ')[0]:x /* v4.88: the hit rate, then its range */).join('|')==='3|1|1–1–0|60.0%|50.0%|−10.0 pts|−$0.91', lean);
   check('Unlikely (v4.51: the band that was "Long Shot"): 1–0–0, predicted 40.0%, hit 100.0%, +60.0 pts, +$10.00', ls && ls.slice(1).map((x,i)=>i===4?x.split(' ')[0]:x /* v4.88: the hit rate, then its range */).join('|')==='1|0|1–0–0|40.0%|100.0%|+60.0 pts|+$10.00', ls);
   check('High Cover: a push is logged but not in the hit rate (—), profit $0', hc && hc.slice(1).join('|')==='1|0|0–0–1|—|—|—|+$0.00', hc);

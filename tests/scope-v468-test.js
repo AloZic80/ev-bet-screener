@@ -112,7 +112,7 @@ async function open(b, o){ const ctx=await b.newContext({timezoneId:'America/Chi
     const st=await p.evaluate(()=>({sum:document.getElementById('studySum').textContent, rows:[...document.querySelectorAll('#studyRows tr')].map(t=>[...t.querySelectorAll('td')].map(d=>d.textContent.replace(/\s+/g,' ').trim()).slice(0,7))}));
     // settled: d1, d2, m2 = 3 tickets; outcomes: Tuipulotu, Other = 2; games: NYJ @ MIA, BUF @ NEP = 2
     check('Performance: "3 settled tickets · 2 unique outcomes · 2 unique games"', /3 settled tickets · 2 unique outcomes · 2 unique games/.test(st.sum), st.sum);
-    const lean=st.rows.find(r=>/^\S+ Lean$/.test(r[0])), sl=st.rows.find(r=>/^\S+ Slight Lean$/.test(r[0]));   /* v5.16 (owner: 2.5-point cover rows): “60–<62.5% Lean” */
+    const lean=st.rows.find(r=>/^\S+ Almost Lean$/.test(r[0])), sl=st.rows.find(r=>/^\S+ Slight Lean$/.test(r[0]));   /* v5.16 (owner: 2.5-point cover rows): “60–<62.5% Lean” */
     check('Bet result study, Lean: 3 bets (d1, d2, m1), 2–0–0, expected 60.0% and won 100% on one outcome (profit counts both tickets)', lean && lean[1]==='3' && lean[3]==='2–0–0' && lean[4]==='60.0%' && lean[5].startsWith('100.0%') /* v4.88: then its 95% range */, lean);
     check('Bet result study, Slight Lean (m2, typed after the start): 1–0–0, no expected % and no hit rate (not judged)', sl && sl[3]==='1–0–0' && sl[4]==='—' && sl[5]==='—', sl);
     // CSV
