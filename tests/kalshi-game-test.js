@@ -33,7 +33,7 @@ const ORD_SAME={id:'o3',book:'kalshi',ref:'KXNCAAFGAME-26NOV14TTUOKST-OKST',side
     const D=await p.evaluate(()=>liveDesc(rowAsBet(lastRows.find(r=>/Oklahoma/.test(r.name)))));
     if(W===1280) check('Kalshi is asked for the exact game: TTU @ OKST, team OKST, the 11/14 start (it was not asked at all: full names had no codes)', D && D.away==='TTU' && D.home==='OKST' && D.team==='OKST' && D.start==='2026-11-14T17:00:00.000Z', D);
     const card=()=>p.evaluate(()=>{ const c=[...document.querySelectorAll('#placeCards .pcard')].find(x=>/Oklahoma State/.test(x.textContent)); return c?c.textContent.replace(/\s+/g,' '):null; });
-    await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(400);   /* v4.76: approved bets are split into tabs by La Contadora's chance: both games here (52%) are Place these cards under 🪙 Volado (50 to 60%), not the 💪 Machín tab the page opens in, so the cards are read there */
+    await p.evaluate(()=>setMode('dado') /* v5.16 (owner: more tabs): 50–55% is 🎲 Dado now */); await p.waitForTimeout(400);   /* v4.76: approved bets are split into tabs by La Contadora's chance: both games here (52%) are Place these cards under 🪙 Volado (50 to 60%), not the 💪 Machín tab the page opens in, so the cards are read there */
     const c0=await card();
     check(W+' px: the Kalshi strip names the game: "in Texas Tech at Oklahoma State, Sat, 11/14, 11:00 AM CT"', c0 && /in Texas Tech at Oklahoma State, Sat, 11\/14, 11:00 AM CT/.test(c0), c0&&c0.slice(0,600));
     // his orders: Oklahoma St. vs Kansas St., North Carolina vs UConn (other games, today)
@@ -48,7 +48,7 @@ const ORD_SAME={id:'o3',book:'kalshi',ref:'KXNCAAFGAME-26NOV14TTUOKST-OKST',side
     const dupes=()=>p.evaluate(()=>[...document.querySelectorAll('#tbody tr.dupe')].map(t=>t.textContent.replace(/\s+/g,' ')));
     let c2=await card(); const al=await dupes();   // Volado, as it stands
     for(const m of ['boring','safe','lucky','clair']){ await p.evaluate(m=>setMode(m),m); await p.waitForTimeout(400); c2=c2||await card(); al.push(...await dupes()); }
-    await p.evaluate(()=>setMode('volado')); await p.waitForTimeout(400);
+    await p.evaluate(()=>setMode('dado') /* v5.16 (owner: more tabs): 50–55% is 🎲 Dado now */); await p.waitForTimeout(400);
     check(W+' px: an order on THIS game (Texas Tech at Oklahoma St., 11/14) moves it to Already bet: ORDER WAITING 2 shares at 49¢', !c2 && al.some(t=>/Oklahoma State/.test(t) && /ORDER WAITING/.test(t) && /2 shares at 49¢/.test(t)), {c2:!!c2, al});
     if(W===1280){
       // open slip on North Carolina: Kalshi cannot find it → the card says which game to pick

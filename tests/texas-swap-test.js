@@ -28,6 +28,7 @@ const NOVIG={'Jaylen Brown':0.55,'Jayson Tatum':0.60};
     if(/\/props\?/.test(u)){ bp=u; return r.fulfill({contentType:'application/json',headers:H,body:JSON.stringify({props:[]})}); }
     if(/espn/.test(u)) return r.fulfill({contentType:'application/json',headers:H,body:'{"events":[]}'}); return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1200);
+  await p.evaluate(()=>setMode('parejo')); await p.waitForTimeout(300);   /* v5.16 (owner: more tabs): these 60–65% cards are listed under ⚖️ Parejo, not the opening 💪 Machín (65–70%) */
   await p.evaluate(()=>{ const i=document.getElementById('books'); i.value='Bovada, Novig, DraftKings Predictions, Kalshi, Polymarket'; i.dispatchEvent(new Event('input',{bubbles:true})); }); await p.waitForTimeout(1500);
   const R=await p.evaluate(()=>Object.fromEntries(lastRows.map(r=>[r.name+'|'+(r.swap?r.swap.orig.book:r.book), {book:r.book, odds:r.offeredRaw, hidden:!!r.hiddenDup, pass:!!r.pass, out:(r.flags||[]).filter(f=>f[0]==='out').map(f=>f[1])}])));
   check('Reaves: DraftKings row hidden, the same bet at Bovada (on the board) is the one shown', R['Austin Reaves|DraftKings'].hidden && !R['Austin Reaves|Bovada'].hidden, [R['Austin Reaves|DraftKings'], R['Austin Reaves|Bovada']]);

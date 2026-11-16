@@ -71,7 +71,7 @@ const ROWS=[row('g','Collin Gillespie','PHX','1.5 Threes','Novig',0.58,0.64), ro
       check('5. Bridges in 👻 AWOL says "$0 if found: up to $X"', /^\$0 ?if found: up to \$\d+\.\d\d/.test(c2||''), c2);
       const dec=await p.evaluate(()=>{ localStorage.setItem('mbev.cards','0'); refresh(); return [...document.querySelectorAll('.dec')].map(x=>x.textContent.trim()); });
       check('5. table view: his row says "👻 AWOL $0" (not BET $X)', dec.includes('👻 AWOL $0') && !dec.some(t=>/^BET \$/.test(t)), dec);
-      await ev(()=>{ localStorage.setItem('mbev.cards','1'); setMode('safe'); });
+      await ev(()=>{ localStorage.setItem('mbev.cards','1'); setMode('parejo'); /* v5.16 (owner: more tabs): 64% is ⚖️ Parejo now */ });
       // 6. a tap on the price: Kalshi says there is no offer to buy → $0 at once, out of Place these
       ANS['Kel Oubre']={ok:false, note:'Kalshi: no offer to buy right now'};
       const k0=await look();

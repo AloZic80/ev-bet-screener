@@ -23,6 +23,7 @@ const INJ={injuries:[{displayName:'Atlanta Hawks', injuries:[inj('Asa Newell','D
     if(/basketball\/nba\/injuries/.test(u)){ asked++; return r.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(INJ)}); }
     if(/espn\.com/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(2000);
+  await p.evaluate(()=>setMode('parejo')); await p.waitForTimeout(2000);   /* v5.16 (owner: more tabs): these 60–65% cards are listed under ⚖️ Parejo, not the opening 💪 Machín (65–70%) */
   const tags=await p.evaluate(()=>{ const o={}; document.querySelectorAll('#tbody span.inj, #placeCards span.inj').forEach(e=>{ const tr=e.closest('tr,.pcard'); const n=(tr.querySelector('.pick')||tr.querySelector('.pc-nm')).firstChild.textContent.trim(); (o[n]=o[n]||[]).push({t:e.textContent, c:e.className, title:e.title}); }); return o; });
   const T=n=>((tags[n]||[]).find(x=>x.t)||{});
   check('OUT is red, with ESPN\'s note on hover', T('Jalen Johnson').t==='🚑 OUT' && /out/.test(T('Jalen Johnson').c) && /ESPN injury report: Out · ATL .*Johnson \(ankle\) is out\./.test(T('Jalen Johnson').title), T('Jalen Johnson'));

@@ -28,6 +28,7 @@ const ROWS=[row('o',{offeredProb:0.55, fairProb:0.64, mktProb:0.64}), row('u',{s
         return r.fulfill({contentType:'application/json',body:JSON.stringify({results:R})}); }
       if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
     await p.goto('http://app.test/'); await p.waitForTimeout(1300);
+    await p.evaluate(()=>setMode('parejo')); await p.waitForTimeout(300);   /* v5.16 (owner: more tabs): these 60–65% cards are listed under ⚖️ Parejo, not the opening 💪 Machín (65–70%) */
     const look=()=>p.evaluate(()=>{ const g=k=>lastRows.find(r=>r.apiKey===k)||{}; return {o:g('o').sh||null, oTxt:shText(g('o')), oStake:+(+g('o').stake||0).toFixed(2), mp:shText(g('mp')), sx:g('sx').sh||null, tq:g('tq').sh||null}; });
     const ev=(f)=>p.evaluate(f).then(()=>p.waitForTimeout(300));
     const boxCheck=async()=>{ /* v4.85 (Alonzo: the tag ran over the game time): it stays inside its own column at every width */

@@ -7,14 +7,14 @@ const { chromium } = require('playwright'); const fs=require('fs');
 const html=fs.readFileSync(process.argv[2]||INDEX,'utf8');
 let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?'PASS ':'FAIL ')+n+'  → '+JSON.stringify(got===undefined?null:got).slice(0,700)); };
 const NOW=Date.parse('2026-11-13T19:00:00Z'), iso=ms=>new Date(ms).toISOString(), H=3600e3;
-const bet=(id,o)=>Object.assign({id,key:id,sport:'NBA',kind:'prop',book:'Novig',stake:2,date:'2026-11-12',dateSet:true,game:'SAC @ POR',team:'POR',name:'P '+id,side:'O',market:'1.5 Threes',odds:'-110',start:'2026-11-13T02:00:00Z',snap:{at:'2026-11-12T18:00:00Z', act:0.62}},o);
+const bet=(id,o)=>Object.assign({id,key:id,sport:'NBA',kind:'prop',book:'Novig',stake:2,date:'2026-11-12',dateSet:true,game:'SAC @ POR',team:'POR',name:'P '+id,side:'O',market:'1.5 Threes',odds:'-110',start:'2026-11-13T02:00:00Z',snap:{at:'2026-11-12T18:00:00Z', act:0.67 /* v5.16 (owner: more tabs): was 0.62; Machín is 65–70% now */}},o);
 const LOG=[bet('a',{name:'Won Guy', result:'win', gradedBy:'espn'}),
   bet('b',{name:'Lost Guy', sport:'NHL', book:'DraftKings', team:'DAL', stake:3, result:'loss', gradedBy:'espn', snap:{at:'2026-11-11T20:00:00Z', act:0.55}}),   // placed on 11/11, game day 11/12
   bet('c',{name:'Tonight Guy', date:'2026-11-13', start:iso(NOW+7*H), stake:4, snap:{at:iso(NOW-H), act:0.66}}),   // to play
   bet('d',{name:'Dallas Cowboys', kind:'moneyline', sport:'NFL', book:'Kalshi', team:'DAL', date:'2026-11-13', start:iso(NOW-H), stake:5, odds:'+120', snap:{at:iso(NOW-3*H), act:0.48}}),   // in play
   bet('e',{name:'Parlay', kind:'parlay', stake:1, result:'loss', gradedBy:'manual', parlay:{legs:3}, snap:undefined}),   // no saved placed time
   bet('f',{name:'Free Guy', free:true, odds:'+100', result:'win', gradedBy:'espn'}),
-  bet('oct',{name:'October Guy', date:'2026-10-30', start:'2026-10-31T00:00:00Z', stake:2, result:'loss', gradedBy:'espn', snap:{at:'2026-10-30T18:00:00Z', act:0.6}})];
+  bet('oct',{name:'October Guy', date:'2026-10-30', start:'2026-10-31T00:00:00Z', stake:2, result:'loss', gradedBy:'espn', snap:{at:'2026-10-30T18:00:00Z', act:0.65 /* v5.16: was 0.6 */}})];
 const REM=[{id:'rm1', lost:1.5, date:'2026-11-12', dateSet:true, start:'2026-11-12T23:00:00Z', name:'Cancelled', kind:'prop', sport:'NBA', book:'Novig', snap:{at:'2026-11-12T17:00:00Z'}}];
 (async()=>{ const b=await chromium.launch();
   const ctx=await b.newContext({timezoneId:'America/Chicago',viewport:{width:1280,height:1000}}); await ctx.clock.install({time:new Date(NOW)});
@@ -55,7 +55,7 @@ const REM=[{id:'rm1', lost:1.5, date:'2026-11-12', dateSet:true, start:'2026-11-
   await p.evaluate(()=>{ const s=document.getElementById('rpTab'); s.value='volado'; s.dispatchEvent(new Event('change',{bubbles:true})); }); const fV=await rd();
   check('tab filter by La Contadora’s chance when taken: Volado (50–60%) holds no NBA Novig bet here (they are 60–66%)', fV.ks['Tickets']===undefined && /No bets in this report/.test(await p.evaluate(()=>document.getElementById('rpHead').textContent)), fV.ks);
   await p.evaluate(()=>{ const s=document.getElementById('rpTab'); s.value='machin'; s.dispatchEvent(new Event('change',{bubbles:true})); }); const fM=await rd();
-  check('tab Machín (60–75%): Won Guy, Tonight Guy, Free Guy, October Guy', fM.ks['Tickets']==='4', fM);
+  check('tab Machín (65–70% since v5.16): Won Guy, Tonight Guy, Free Guy, October Guy', fM.ks['Tickets']==='4', fM);
   // CSV of exactly these bets
   const csv=await p.evaluate(()=>{ const S=rpSet(); return logCsv('', new Set(S.L), {basis:'game day', range:'r', filters:'f', at:'t'}); });
   const parse=line=>{ const out=[]; let cur='', q=false; for(let i=0;i<line.length;i++){ const ch=line[i]; if(q){ if(ch==='"'){ if(line[i+1]==='"'){ cur+='"'; i++; } else q=false; } else cur+=ch; } else if(ch==='"') q=true; else if(ch===','){ out.push(cur); cur=''; } else cur+=ch; } out.push(cur); return out; };
@@ -63,7 +63,7 @@ const REM=[{id:'rm1', lost:1.5, date:'2026-11-12', dateSet:true, start:'2026-11-
   check('CSV: exactly the 4 filtered bets, each with ticket id, report basis, range, filters and time; the plain CSV is unchanged', rows.length===4 && head.slice(-5).join('|')==='ticket id|report basis|report range|report filters|report generated' && rows.every(r=>r.length===head.length) && rows.map(r=>r[head.indexOf('ticket id')]).sort().join(',')==='a,c,f,oct' && await p.evaluate(()=>{ const h=logCsv('').split('\r\n')[0]; return /band source$/.test(h); }), {head:head.slice(-5), n:rows.length});
   // saved: only the choices; the log untouched
   const ui=await p.evaluate(()=>JSON.parse(localStorage.getItem('mbev.reportsUi')||'null')), logAfter=await p.evaluate(()=>localStorage.getItem('mbev.log'));
-  check('only the choices are saved (basis, period, filters); no totals; the bet log is byte-for-byte the same', ui && ui.basis==='game' && ui.per==='all' && ui.f.sport==='NBA' && Object.keys(ui).every(k=>['basis','per','f','from','to','by','px','bwWho','bwDir','small'].includes(k)) /* v4.90: the step-2 choices; never a total */ && logAfter===logBefore, {ui});
+  check('only the choices are saved (basis, period, filters); no totals; the bet log is byte-for-byte the same', ui && ui.basis==='game' && ui.per==='all' && ui.f.sport==='NBA' && Object.keys(ui).every(k=>['basis','per','f','from','to','by','px','bwWho','bwDir','small','bandRows' /* v5.16: marks a Band filter saved with the 2.5-point rows */].includes(k)) /* v4.90: the step-2 choices; never a total */ && logAfter===logBefore, {ui});
   // live: settle a bet and the open report follows
   await p.evaluate(()=>{ document.getElementById('rpReset').click(); }); const pre=await rd();
   await p.evaluate(()=>{ const t=logged.find(x=>x.id==='d'); t.result='win'; t.gradedBy='manual'; saveLog(); }); await p.waitForTimeout(200); const post=await rd();

@@ -32,9 +32,9 @@ const rowsShown=p=>p.evaluate(()=>[...document.querySelectorAll('#logBody tr:not
     check(W+' px: "show all" brings every bet back', R.length===8, R.length);
     await p.evaluate(()=>{ document.querySelector('.tab[data-view="v-perf"]').click(); }); await p.waitForTimeout(400);
     const st=await p.evaluate(()=>[...document.querySelectorAll('#studyRows tr')].map(t=>[...t.querySelectorAll('td')].map(d=>d.textContent.replace(/\s+/g,' ').trim()).slice(0,6)));
-    const un=st.find(r=>/^Unlikely/.test(r[0])), ns=st.find(r=>/no cover saved/.test(r[0]));
+    const un=st.find(r=>/^<45% Unlikely/.test(r[0]) /* v5.16 (owner: 2.5-point cover rows) */), ns=st.find(r=>/no cover saved/.test(r[0]));
     check(W+' px: the Bet result study counts 3 Unlikely bets at a 40.0% average and the bet with no fair odds under "no cover saved" (it was counted as Unlikely at 0%)', un && un[1]==='3' && un[4]==='40.0%' && ns && ns[1]==='1', {un, ns});
-    await p.evaluate(()=>{ const s=document.querySelector('#studyRows button.lbf[data-band="4"]'); s.scrollIntoView(); }); await p.click('#studyRows button.lbf[data-band="4"]'); await p.waitForTimeout(400);
+    await p.evaluate(()=>{ const s=document.querySelector('#studyRows button.lbf[data-band="107"]'); s.scrollIntoView(); }); await p.click('#studyRows button.lbf[data-band="107"]') /* v5.16: the 57.5–<60% row (Slight Lean) */; await p.waitForTimeout(400);
     R=await rowsShown(p); const f2=await p.evaluate(()=>({f:document.getElementById('logFilter').textContent.replace(/\s+/g,' ').trim(), view:document.body.dataset.view}));
     check(W+' px: in Performance › Bet result study, a tap on "Slight Lean" opens the Bet log with only that band: "1 bet · 1–0–0 · won 100% vs 58% expected · +$1.85"', f2.view==='v-log' && R.length===1 && R[0].band==='Slight Lean' && /1 bet · 1–0–0 · won 100% vs 58% expected · \+\$1\.85/.test(f2.f), {R, f2});
     await p.click('#logBody button.lbf[data-band="4"]'); await p.waitForTimeout(200);

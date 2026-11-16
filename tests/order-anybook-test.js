@@ -38,9 +38,9 @@ const ORD={orders:[
        these card under 🪙 Volado; Bowling Green and Singletary (an order waiting) stay in the default tab, 💪 Machín, under Already bet. So each tag is
        read in its tab, and "out of Place these" and "nothing runs off the screen" are checked in every tab (before, all of them were in the default tab). */
     const V={safe:await look()};   // the default tab, read as before
-    for(const m of ['boring','volado','lucky','clair']){ await p.evaluate(m=>setMode(m),m); await p.waitForTimeout(400); V[m]=await look(); }
+    for(const m of ['boring','tranqui','parejo','volado','dado','lucky','clair'] /* v5.16 (owner: more tabs) */){ await p.evaluate(m=>setMode(m),m); await p.waitForTimeout(400); V[m]=await look(); }
     await p.evaluate(()=>setMode('safe')); await p.waitForTimeout(400);
-    const all=Object.values(V), R={bg:V.safe.bg, bgCard:all.some(v=>v.bgCard), ok:V.volado.ok, sing:V.safe.sing, singCard:all.some(v=>v.singCard), sw:Math.max(...all.map(v=>v.sw)), vw:V.safe.vw};
+    const all=Object.values(V), R={bg:V.safe.bg, bgCard:all.some(v=>v.bgCard), ok:(all.find(v=>v.ok)||{}).ok /* v5.16: in whichever chance tab lists it (Dado or Volado) */, sing:V.safe.sing, singCard:all.some(v=>v.singCard), sw:Math.max(...all.map(v=>v.sw)), vw:V.safe.vw};
     check(W+' px: Bowling Green at Novig, Kalshi order on this game: "ORDER WAITING on Kalshi: 3 at 37¢", out of Place these', /ORDER WAITING on Kalshi: 3 at 37¢, not filled/.test(R.bg||'') && !R.bgCard, {tag:R.bg, card:R.bgCard});
     check(W+' px: Oklahoma State at Bovada with no ESPN team codes: "You have a Kalshi order on this team … another game"', /You have a Kalshi order on this team: “Oklahoma St\. vs Kansas St\.”.*another game/.test(R.ok||''), R.ok);
     check(W+' px: Singletary Under 15.5 at Bovada, Kalshi order NO on 16+: ORDER WAITING on Kalshi, out of Place these', /ORDER WAITING on Kalshi: 2 at 50¢/.test(R.sing||'') && !R.singCard, {tag:R.sing, card:R.singCard});

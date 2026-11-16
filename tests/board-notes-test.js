@@ -25,7 +25,7 @@ const LOG=[{id:'p1',key:'p1',name:'Anthony Edwards',sport:'NBA',kind:'prop',mark
     /* v4.76: the sample is split over two tabs now: Naz Reid, Gobert and Edwards (already bet) are approved at La Contadora 54.2%, 53.2% and 54.2%
        (min(model, market + 0.35 × (model − market)), e.g. min(.545, .54 + .35 × .005)), so they are under 🪙 Volado (50–60%); Kris Dunn has no edge
        (not approved), so he stays under 💪 Machín, the opening tab. Each Show check reads both tabs and adds them up, so it still sees the whole sample. */
-    const both=async()=>{ await tab('volado'); const v=await seen(); await tab('safe'); const m=await seen(); return {cards:v.cards.concat(m.cards), rows:v.rows.concat(m.rows)}; };
+    const both=async()=>{ await tab('dado') /* v5.16 (owner: more tabs): 53–54% is 🎲 Dado now */; const v=await seen(); await tab('safe'); const m=await seen(); return {cards:v.cards.concat(m.cards), rows:v.rows.concat(m.rows)}; };
     const view=async v=>{ await p.evaluate(()=>{ if(!window._barOpen){ window._barOpen=true; barMoreApply(); } }) /* v4.94: the board controls are behind Filters; tap it first */; await p.selectOption('#boardView',v); await p.waitForTimeout(300); return both(); };   /* v4.76: both tabs */
     if(W===1280){
       let s=await both();   /* v4.76: Volado + Machín */
@@ -40,7 +40,7 @@ const LOG=[{id:'p1',key:'p1',name:'Anthony Edwards',sport:'NBA',kind:'prop',mark
       check('the cover legend has Augi\'s nine bands, Unlikely to High Cover (v4.51: "Long Shot" and "Feeling Lucky" are Unlikely and Coin Flip, so they do not share names with the modes)', leg.length===9 && /^Unlikely/.test(leg[0]) && /^Coin Flip/.test(leg[1]) && /^High Cover/.test(leg[8]), leg);
     }
     // a note on a card
-    await tab('volado');   /* v4.76: Naz Reid's card (La Contadora 54.2%) is under 🪙 Volado, not the opening tab */
+    await tab('dado') /* v5.16 (owner: more tabs): 53–54% is 🎲 Dado now */;   /* v4.76: Naz Reid's card (La Contadora 54.2%) is under 🪙 Volado, not the opening tab */
     await p.evaluate(()=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>/Naz Reid/.test(x.textContent)); c.querySelector('.ln-btn').click(); }); await p.waitForTimeout(200);
     await p.fill('.ln-ed .ln-txt','Check his minutes; lineup news at 6 PM');
     await p.evaluate(()=>{ const r=lastRows.find(x=>/Naz/.test(x.name)); r.name='Naz Reid'; const c=cfgRead(); render(audit(lastRows,c),c); }); await p.waitForTimeout(300);
@@ -49,7 +49,7 @@ const LOG=[{id:'p1',key:'p1',name:'Anthony Edwards',sport:'NBA',kind:'prop',mark
     const card=()=>p.evaluate(()=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>/Naz Reid/.test(x.textContent)); return c?{note:(c.querySelector('.ln-text')||{}).textContent||'', btn:c.querySelector('.ln-btn').textContent}:null; });
     let c=await card();
     check(W+' px: Save note: the note shows on the card and the button says Note', c && /lineup news at 6 PM/.test(c.note) && /Note$/.test(c.btn.trim()), c);
-    await p.reload(); await p.waitForTimeout(1200); await tab('volado'); c=await card();   /* v4.76: read the card in its own tab (Volado) after the reload */
+    await p.reload(); await p.waitForTimeout(1200); await tab('dado') /* v5.16 (owner: more tabs): 53–54% is 🎲 Dado now */; c=await card();   /* v4.76: read the card in its own tab (Volado) after the reload */
     check(W+' px: the note is still there after a reload (this device)', c && /lineup news/.test(c.note), c);
     if(W===1280){
       await p.evaluate(()=>{ if(!window._barOpen){ window._barOpen=true; barMoreApply(); } }) /* v4.94: the board controls are behind Filters; tap it first */; await p.uncheck('#cardsOn'); await p.waitForTimeout(400);

@@ -29,7 +29,7 @@ async function open(b, o){ o=o||{}; const ctx=await b.newContext({timezoneId:'Am
       return r.fulfill({contentType:'application/json',body:JSON.stringify({at:new Date(Date.now()).toISOString(),results:R})}); }
     if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1300);
-  for(const t of ['safe','boring','volado','lucky','hail']){ const has=await p.evaluate(()=>!!document.querySelector('#placeCards .sc-card .sc-alts')); if(has) break; await p.evaluate(m=>{ try{ setMode(m); }catch(e){} }, t); await p.waitForTimeout(250); }
+  for(const t of ['safe','boring','tranqui','parejo','volado','dado','lucky','hail'] /* v5.16 (owner: more tabs) */){ const has=await p.evaluate(()=>!!document.querySelector('#placeCards .sc-card .sc-alts')); if(has) break; await p.evaluate(m=>{ try{ setMode(m); }catch(e){} }, t); await p.waitForTimeout(250); }
   return S; }
 const chkCalls=S=>S.calls.filter(ids=>ids.some(id=>/^alt:/.test(id)));
 const look=S=>S.p.evaluate(()=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>x.textContent.includes('Shane Wright')), tx=x=>x?x.textContent.replace(/\s+/g,' ').trim():null, r=lastRows.find(x=>x.apiKey==='hr');

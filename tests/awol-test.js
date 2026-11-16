@@ -28,14 +28,14 @@ const ROWS=[row('g','Collin Gillespie','PHX','1.5 Threes','Novig',0.58,0.64), ro
     const tabs=()=>p.evaluate(()=>[...document.querySelectorAll('#modeBar button')].map(x=>x.textContent.replace(/\s+/g,' ').trim()));
     const press=async()=>{ await p.evaluate(async()=>{ await shopExchanges(); }); await p.waitForTimeout(400); };
     const t0=await tabs();
-    if(W===1280) check('seven tabs: 👻 AWOL after ⏱ Old, 0 at first; the three bets under 💪 Machín', t0.length===7 && /^👻 AWOL 0$/.test(t0[6]) && /^💪 Machín 3$/.test(t0[1]), t0);
+    if(W===1280) check('seven tabs: 👻 AWOL after ⏱ Old, 0 at first; the three bets under 💪 Machín', t0.length===10 /* v5.16 (owner: more tabs): eight chance tabs, then Old and AWOL; the 64% bets are ⚖️ Parejo */ && /^👻 AWOL 0$/.test(t0[9]) && /^⚖️ Parejo 3$/.test(t0[3]), t0);
     // a 🦑 press: Novig cannot find Gillespie's market; Booker is busy (our side); Bridges is found
     ANS['Collin Gillespie']={ok:false, note:'Novig: no market at your line'}; ANS['Devin Booker']={ok:false, busy:true, note:'Novig: busy — too many markets to read in one go, try again in a minute'};
     await press();
     const t1=await tabs();
     const s1=await p.evaluate(()=>({g:modeFamOf(lastRows.find(r=>r.apiKey==='g')), b:modeFamOf(lastRows.find(r=>r.apiKey==='b')), stake:+lastRows.find(r=>r.apiKey==='g').stake, hold:lastRows.find(r=>r.apiKey==='g').hold||null, count:(document.getElementById('count')||{}).textContent||''}));
     if(W===1280){
-      check('Novig says "no market at your line" for Gillespie: he moves to 👻 AWOL (1), 💪 Machín 2; "busy" is our side: Booker stays', /^👻 AWOL 1$/.test(t1[6]) && /^💪 Machín 2$/.test(t1[1]) && s1.g==='awol' && s1.b==='safe', {t1, s1});
+      check('Novig says "no market at your line" for Gillespie: he moves to 👻 AWOL (1), 💪 Machín 2; "busy" is our side: Booker stays', /^👻 AWOL 1$/.test(t1[9]) && /^⚖️ Parejo 2$/.test(t1[3]) && s1.g==='awol' && s1.b==='parejo', {t1, s1});
       check('v4.83 (agreed with Sally): Gillespie is $0 and holds none of the daily max, with what he would get kept ("if found: up to $X"); the big number counts only what you can bet now (2)', s1.stake===0 && s1.hold && s1.hold.why==='awol' && s1.hold.stake>0 && /^2$/.test(s1.count.trim()), s1);
       const pw=await p.evaluate(()=>[...document.querySelectorAll('#cuts .pass-where .cut-list > div')].map(x=>x.textContent.trim()));
       check('"N elsewhere ▸" says where he is: "1 in 👻 AWOL: the book could not find them on its last check, $0 until found (look at the book first)"', pw.includes('1 in 👻 AWOL: the book could not find them on its last check, $0 until found (look at the book first)'), pw);
@@ -47,21 +47,21 @@ const ROWS=[row('g','Collin Gillespie','PHX','1.5 Threes','Novig',0.58,0.64), ro
       check('v4.82: his card never says BET NOW or #1 MATH PICK while the book cannot find it (the ring itself stays: the six checks are frozen)', !lab.betNow && !lab.top && (!lab.ring || /👻 AWOL · look at the book first/.test(lab.ring)), lab);
       check('its Place these and La Contadora say: look at the book first; a Sentinels press that finds it sends it back', /👻 not found at the book/.test(v.head||'') && /the book could not find these on its last check\. Look at the book first/.test(v.head||'') && /The book could not find these on its last check/.test(v.lc||''), v);
       // Novig finds it again: back to 💪 Machín
-      ANS['Collin Gillespie']='found'; ANS['Devin Booker']='found'; await press(); await p.evaluate(()=>setMode('safe')); await p.waitForTimeout(300);
+      ANS['Collin Gillespie']='found'; ANS['Devin Booker']='found'; await press(); await p.evaluate(()=>setMode('parejo') /* v5.16 */); await p.waitForTimeout(300);
       const t2=await tabs();
-      check('a press that finds him sends him back: 💪 Machín 3, 👻 AWOL 0', /^💪 Machín 3$/.test(t2[1]) && /^👻 AWOL 0$/.test(t2[6]), t2);
+      check('a press that finds him sends him back: 💪 Machín 3, 👻 AWOL 0', /^⚖️ Parejo 3$/.test(t2[3]) && /^👻 AWOL 0$/.test(t2[9]), t2);
       // the open check after a load ("no market at your line" there sets exClosed): it was the Started group; now 👻 AWOL
       await p.evaluate(()=>{ const r=lastRows.find(x=>x.apiKey==='m'); r.exClosed='Novig: no market at your line'; refresh(); }); await p.waitForTimeout(300);
       const t3=await tabs(), m3=await p.evaluate(()=>modeFamOf(lastRows.find(r=>r.apiKey==='m')));
-      const b3=await p.evaluate(()=>{ setMode('awol'); const r=lastRows.find(x=>x.apiKey==='m'); return {stake:+r.stake, hidden:document.getElementById('cHideStarted').checked}; }); await p.evaluate(()=>setMode('safe'));
-      check('the open check that finds his market closed (v2.97: no money for a market with no seller, unchanged) lists Bridges under 👻 AWOL, not 💪 Machín; with no stake he is not a card, so the AWOL number stays 0', m3==='awol' && /^👻 AWOL 0$/.test(t3[6]) && /^💪 Machín 2$/.test(t3[1]) && b3.stake===0, {t3, m3, b3});
+      const b3=await p.evaluate(()=>{ setMode('awol'); const r=lastRows.find(x=>x.apiKey==='m'); return {stake:+r.stake, hidden:document.getElementById('cHideStarted').checked}; }); await p.evaluate(()=>setMode('parejo') /* v5.16 */);
+      check('the open check that finds his market closed (v2.97: no money for a market with no seller, unchanged) lists Bridges under 👻 AWOL, not 💪 Machín; with no stake he is not a card, so the AWOL number stays 0', m3==='awol' && /^👻 AWOL 0$/.test(t3[9]) && /^⚖️ Parejo 2$/.test(t3[3]) && b3.stake===0, {t3, m3, b3});
       await p.evaluate(()=>{ delete lastRows.find(x=>x.apiKey==='m').exClosed; refresh(); }); await p.waitForTimeout(300);
       // a tap on the price: Novig does not find it → 👻 AWOL; "not mapped" (our side) does not
       ANS['Collin Gillespie']={ok:false, note:'Novig: no market at your line'};
       await p.evaluate(()=>{ window.open=()=>({location:{href:''}, close(){}}); });   // the slip window (not needed here)
       await p.evaluate(()=>{ const c=[...document.querySelectorAll('#placeCards .sc-card')].find(x=>/Collin Gillespie/.test(x.textContent)); c.querySelector('.sc-price').click(); }); await p.waitForTimeout(1500);
       const t4=await tabs(), g4=await p.evaluate(()=>modeFamOf(lastRows.find(r=>r.apiKey==='g')));
-      check('your tap on the price: Novig "did not find this exact game" → the card moves to 👻 AWOL (Alonzo’s case)', g4==='awol' && /^👻 AWOL 1$/.test(t4[6]), {t4, g4});
+      check('your tap on the price: Novig "did not find this exact game" → the card moves to 👻 AWOL (Alonzo’s case)', g4==='awol' && /^👻 AWOL 1$/.test(t4[9]), {t4, g4});
       const nm=await p.evaluate(()=>({mapped:awolNote('Novig: league not mapped'), busy:awolNote('Novig: busy — too many markets'), draw:awolNote('Draw: not read (only the two teams are matched)'), tell:awolNote('Novig: couldn\'t tell which outcome is yours'), gone:awolNote('Kalshi lists X at 2.5+ — not your 1.5'), listed:awolNote('Polymarket: Collin Gillespie not listed'), game:awolNote('Kalshi: game not found (KXNBAGAME)')}));
       check('what counts: not mapped, busy, a Draw, "could not tell" and (v4.81, Los Chismosos) "game not found" are our side, not AWOL; not listed and the line moved are AWOL', !nm.mapped && !nm.busy && !nm.draw && !nm.tell && !nm.game && nm.gone && nm.listed, nm);
       const held=await p.evaluate(()=>{ const r=lastRows.find(x=>x.apiKey==='g'); return rowAwol(Object.assign({}, r, {prior:{tier:''}})); });
