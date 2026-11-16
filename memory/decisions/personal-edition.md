@@ -11,3 +11,11 @@ separate build that leaves them out (and gets its own legal review, CLAUDE.md "T
 | Exchange integrations (Kalshi, Polymarket US, Novig fills and settlements) | v4.x | his own accounts, read-only |
 | Scout now, Schedule, Auto Sentinels, Alerts | v5.18 | his feeds' quotas and his routine |
 | AI companion (planned) | — | talks with him about his own board, log and plan |
+
+## The paid version (owner, 2026-11-16)
+"THe one we will charge, will be lighter. by then we will use/pay for 1 API only. Unless they get there own. But, we can figure that out later."
+Lighter build, one paid data API (or users bring their own key). Decide later; nothing built for it yet.
+
+## Free sources to add (owner, 2026-11-16)
+"i do have some other API's i want to add. Free ones, but it will alleviate some of the ones we have since they can easily dwindle down."
+Plan: free sources go behind the Worker (keys as Worker secrets), cached, and are used first so BettingPros / SGO / Odds API quota lasts longer.
