@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.18</title>
+<title>0xBeta Screener v5.19</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1933,6 +1933,26 @@ tr.ai-prop-tr td{padding-top:0}
 .sc-alert-g{display:flex; flex-direction:column; gap:4px}
 #scAlert{display:none; position:fixed; left:50%; transform:translateX(-50%); bottom:calc(var(--dockH, 0px) + 10px); z-index:9998; width:min(720px, calc(100vw - 32px)); box-sizing:border-box; padding:10px 12px; border:1px solid var(--rule); border-radius:12px; background:var(--panel); color:var(--ink); box-shadow:0 6px 24px rgba(0,0,0,.18); font-size:14px}
 #scAlert.on{display:flex; flex-direction:column; gap:3px} #scAlert .sa-i{overflow-wrap:anywhere} #scAlert .sa-n{color:var(--soft)} #scAlert .sa-b{display:flex; gap:8px; justify-content:flex-end; margin-top:4px}
+/* v5.19 (El Compa): the 🤝 button floats above the bottom dock on every page (hidden with the AI helper off: .ai-only); the chat is a side panel on a computer and a full-screen sheet on a phone; the input is 16 px (no zoom on an iPhone); the confirm card before any action */
+#compaBtn{position:fixed; right:14px; bottom:calc(var(--dockH, 0px) + 14px); z-index:9990; display:inline-flex; align-items:center; gap:6px; min-height:44px; padding:0 14px; border-radius:22px; border:1px solid var(--rule); background:var(--panel); color:var(--ink); font:inherit; font-size:14px; font-weight:700; box-shadow:0 4px 16px rgba(0,0,0,.18); cursor:pointer}
+html.cp-open #compaBtn{display:none}
+#compaPanel{position:fixed; right:12px; top:12px; bottom:calc(var(--dockH, 0px) + 12px); width:min(400px, calc(100vw - 24px)); z-index:9996; display:flex; flex-direction:column; box-sizing:border-box; background:var(--panel); color:var(--ink); border:1px solid var(--rule); border-radius:14px; box-shadow:0 10px 36px rgba(0,0,0,.25); overflow:hidden}
+#compaPanel[hidden]{display:none}
+.cp-h{display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; padding:10px 12px; border-bottom:1px solid var(--rule)} .cp-h .meta{font-size:12px; flex:1 1 140px; min-width:0} .cp-hb{display:inline-flex; gap:6px; margin-left:auto}
+.cp-hb button{min-height:36px; min-width:36px}
+.cp-list{flex:1 1 auto; min-height:0; overflow-y:auto; padding:10px 12px; display:flex; flex-direction:column; gap:8px}
+.cp-m{max-width:88%; padding:8px 11px; border-radius:12px; font-size:14.5px; line-height:1.45; overflow-wrap:anywhere}
+.cp-me{align-self:flex-end; background:var(--accent-bg); color:var(--ink)}
+.cp-him{align-self:flex-start; background:var(--panel-2); border:1px solid var(--rule)}
+.cp-note{align-self:center; max-width:100%; font-size:12.5px; color:var(--soft); padding:2px 6px; text-align:center}
+.cp-empty{font-size:13.5px; line-height:1.45; margin:0}
+.cp-ask{border:1px solid var(--accent); border-radius:12px; padding:10px; font-size:14px; line-height:1.45; background:var(--panel-2); overflow-wrap:anywhere}
+.cp-ask-b{display:flex; gap:8px; margin-top:8px} .cp-ask-b button{min-height:40px; min-width:84px} .cp-cost{font-weight:700}
+.cp-foot{padding:4px 12px; font-size:12px}
+.cp-form{display:flex; gap:8px; align-items:flex-end; padding:8px 12px 12px; border-top:1px solid var(--rule)}
+#compaIn{flex:1 1 auto; min-width:0; font-size:16px; line-height:1.35; resize:none; padding:8px 10px; border:1px solid var(--rule); border-radius:10px; background:var(--page); color:var(--ink); font-family:inherit; box-sizing:border-box}
+#compaSend{min-height:44px}
+@media (max-width:640px){ #compaPanel{inset:0; width:auto; border:0; border-radius:0; padding-bottom:env(safe-area-inset-bottom,0px)} #compaBtn{right:10px} }
 </style>
 </head>
 <body>
@@ -1941,7 +1961,7 @@ tr.ai-prop-tr td{padding-top:0}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.18</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.19</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2854,7 +2874,7 @@ tr.ai-prop-tr td{padding-top:0}
 
 </div>
 <script>
-const SCREENER_VERSION='v5.18';
+const SCREENER_VERSION='v5.19';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -14449,7 +14469,7 @@ function aiDomain(u){ try{ return new URL(u).hostname.replace(/^www\./,''); }cat
 function aiLink(s){ const u=String(s&&s.url||''), t=String(s&&s.title||'')||aiDomain(u)||'source'; if(!/^https?:\/\//i.test(u)) return esc(t);
   if(s.seen===false) return esc(t)+' <span class="meta">'+esc(aiDomain(u))+' (not from its search)</span>'; /* v5.15 (La Guardia): a page the search never returned is text, not a link */
   return '<a href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">'+esc(t)+'</a> <span class="meta">'+esc(aiDomain(u))+'</span>'; }
-function aiJobWord(j){ return ({slip:'Read slip', prices:'Prices from a screenshot', news:'Check news', match:'Suggest the match', grade:'Find the result', settle:'Check the book’s grade', market:'Market names', ask:'Ask my log', weekly:'This week in plain words', bug:'Bug note'})[j]||String(j||''); }
+function aiJobWord(j){ return ({slip:'Read slip', prices:'Prices from a screenshot', news:'Check news', match:'Suggest the match', grade:'Find the result', settle:'Check the book’s grade', market:'Market names', ask:'Ask my log', weekly:'This week in plain words', bug:'Bug note', compa:'El Compa' /* v5.19 */})[j]||String(j||''); }
 /* Plain words for every answer that is not a result (the Worker's error codes, ai.js): never raw JSON. */
 function aiErrText(code, j){ j=j||{};
   if(code==='cap'){ const day=j.which!=='month', sp=day?j.spentToday:j.spentMonth, cp=day?j.capDay:j.capMonth; /* v5.15 (La Guardia): new wording; the Worker keeps a little in reserve for the largest job */
@@ -14867,6 +14887,154 @@ window.addEventListener('unhandledrejection', e=>{ const r=e&&e.reason; aiErrCau
   aiPaint();
   try{ if(localStorage.getItem('mbev.ai.on')==='1') setTimeout(()=>{ aiStatusCheck(); }, 1500); }catch(e){}
   setTimeout(()=>{ try{ aiMarketsMaybe(); }catch(e){} }, 30000); setInterval(()=>{ try{ aiMarketsMaybe(); }catch(e){} }, 10*60e3);
+})();
+/* ============ v5.19: 🤝 El Compa, the owner’s companion (owner, 11/16: "i want the AI as my companion … this is mine personally") ============
+   A chat one tap away on every page (the 🤝 button; hidden while the AI helper is off). It sends job "compa" through aiCall (Worker v3.47, prop-bet-api src/ai.js) with the chat so
+   far (text only, the last 40), a compact context the app builds here (counts per tab, La Contadora’s approved cards in her own order, the plan, today’s log totals, the Schedule,
+   quotas and a cost table; never notes, ids, keys or passwords) and, for the tool rounds of one message, the turns exactly as the Worker returned them. Read tools run here at once;
+   an action tool (Scout, run or add a Schedule row, the Sentinels, a news check, the last slip) is shown first as "El Compa wants to: … · cost [Do it] [No]" and runs only on Do it.
+   At most 20 tool rounds for one message. It never decides, ranks or sizes a bet: La Contadora decides, and nothing here changes a decision, a stake or the order.
+   History: mbev.compa (this device only), one day, the last 100 messages; Clear empties it. Personal edition only (memory/decisions/personal-edition.md). Hoisted function declarations only. */
+function compaDay(){ return ctDay(Date.now()); }
+function compaGet(){ let o=null; try{ o=JSON.parse(localStorage.getItem('mbev.compa')||'null'); }catch(e){} if(!o || typeof o!=='object' || o.day!==compaDay() || !Array.isArray(o.msgs)) o={day:compaDay(), msgs:[]}; return o; }
+function compaSet(o){ while(o.msgs.length>100) o.msgs.shift(); return lsSafeSet('mbev.compa', JSON.stringify(o)); }
+function compaPush(role, content){ const o=compaGet(); o.msgs.push({role, content:String(content||'').slice(0,8000), at:new Date().toISOString()}); compaSet(o); compaPaint(); }
+function compaPct(p){ return (p==null || !isFinite(p)) ? null : (+(p*100).toFixed(1))+'%'; }
+function compaWhen(iso){ const t=Date.parse(iso||''); return isNaN(t)?null:new Date(t).toLocaleString('en-US',{timeZone:'America/Chicago', weekday:'short', hour:'numeric', minute:'2-digit'})+' CT'; }
+function compaSide(r){ return r.side==='O'?'Over':r.side==='U'?'Under':(r.side||null); }
+/* one card, short (the context and the board summary) and full (get_card); only what the card already shows */
+function compaCard(r){ return {key:pxKey(r), player:r.name||null, team:r.team||null, sport:r.sport||null, market:r.market||null, side:compaSide(r), book:bookLabel(r.book)||String(r.book||''), price:r.offeredRaw||null,
+  stake:r.stake>0?+(+r.stake).toFixed(2):0, chance:compaPct(r.actProb), tab:tabWord(tabOfChance(r.actProb))||null, game:r.game||r.matchup||null, start:compaWhen(startOf(r))}; }
+function compaCardFull(r){ const c=compaCard(r), n=(()=>{ try{ return aiNewsOf(r); }catch(e){ return null; } })();
+  return Object.assign(c, {approved:scApproved(r), passes:!!r.pass, fairPrice:r.fairRaw||null, marketChance:compaPct(r.mktProb), modelChance:compaPct(r.fairProb), evLaContadora:r.actNet!=null?compaPct(r.actNet):null,
+    alreadyBet:!!r.prior, awol:rowAwol(r), oldPrice:rowOld(r), priceState:evDisplayState(r), outsidePlan:planOut(r.actProb), stars:r.stars!=null?r.stars:null, kind:r.kind||null,
+    news:n?{status:aiNewsWord(n.status), summary:String(n.summary||'').slice(0,300), checked:compaWhen(n.checkedAt)}:null, loaded:compaWhen(r.loadedAt)}); }
+function compaRows(){ return (lastRows||[]).filter(r=>r && !r.removed && !r.hiddenDup); }
+function compaApproved(){ return compaRows().filter(scApproved).sort((a,b)=>mathKey(b)-mathKey(a)); }   /* La Contadora’s own order (mathKey), never a new one */
+function compaBoard(n){ const R=compaRows(), A=compaApproved(), tabs={};
+  A.forEach(r=>{ const t=tabWord(tabOfChance(r.actProb))||'No chance'; tabs[t]=(tabs[t]||0)+1; });
+  const at=R.map(r=>Date.parse(r.loadedAt)).filter(x=>!isNaN(x)).sort((a,b)=>b-a)[0];
+  return {cards:R.length, approved:A.length, approvedPerTab:tabs, alreadyBet:R.filter(r=>r.prior).length, loaded:at?compaWhen(new Date(at).toISOString()):null, approvedCards:A.slice(0,n).map(compaCard)}; }
+function compaRange(range){ const now=Date.now(), d=compaDay(); return range==='today'?[d,d]:range==='yesterday'?[ctDay(now-864e5),ctDay(now-864e5)]:range==='7d'?[ctDay(now-6*864e5),d]:range==='30d'?[ctDay(now-29*864e5),d]:range==='month'?[d.slice(0,7)+'-01',d]:['0000-00-00','9999-99-99']; }
+function compaResOf(b){ return /^(win|loss|push)$/.test(String(b.result||''))?b.result:'open'; }
+function compaLog(range, f){ f=f||{}; const [a,z]=compaRange(range||'today'), sp=String(f.sport||'').toUpperCase(), bk=nrm(f.book||'');
+  const L=(logged||[]).filter(b=>{ if(!b) return false; const d=gameDayOf(b)||''; if(d<a || d>z) return false; if(sp && String(b.sport||'').toUpperCase()!==sp) return false; if(bk && nrm(bookLabel(b.book)||b.book||'').indexOf(bk)<0) return false; return !f.result || compaResOf(b)===f.result; });
+  const n={bets:L.length, wins:0, losses:0, pushes:0, open:0, staked:0, profitSettled:0};
+  L.forEach(b=>{ const r=compaResOf(b); if(r==='win') n.wins++; else if(r==='loss') n.losses++; else if(r==='push') n.pushes++; else n.open++; n.staked+=b.free?0:(+b.stake||0); if(r!=='open'){ const p=betProfit(b); if(p!=null) n.profitSettled+=p; } });
+  n.staked=+n.staked.toFixed(2); n.profitSettled=+n.profitSettled.toFixed(2);
+  return {range:range||'today', from:a.indexOf('0000')===0?null:a, to:z.indexOf('9999')===0?null:z, totals:n, note:'Only settled bets (win, loss, push) win or lose; open bets are neither.',
+    bets:L.slice(-25).map(b=>{ const r=compaResOf(b), p=r==='open'?null:betProfit(b); let lab=''; try{ lab=b.kind==='parlay'?'Parlay':String(b.name||'')+' · '+betLabel(b); }catch(e){ lab=String(b.name||'')+' '+String(b.market||''); }
+      return {date:gameDayOf(b)||null, sport:b.sport||null, bet:lab, book:bookLabel(b.book)||String(b.book||''), odds:b.odds||null, stake:+(+b.stake||0).toFixed(2), free:!!b.free, result:r, profit:p}; })}; }
+function compaPlan(){ const P=planCfg(); return {on:!!P.on, lowestChance:P.on?(+P.pc.toFixed(1))+'%':null, since:P.since, note:'A reminder only: it never changes a stake, the floor or BET / SKIP.'}; }
+function compaFeed(row, n){ const s=row.src, o={bettingpros:0, sgo:0, oddsapi:0, oddspapi:0};
+  if(/^bp_/.test(s)) o.bettingpros=n; else if(s==='sgo') o.sgo=n; else if(s==='oddsapi') o.oddsapi=n; else if(s==='oddspapi') o.oddspapi=n;
+  o.text=s==='sent'?'no feed calls':s==='sbapi'?'1 Sportsbook API call':scPl(n, /^bp_/.test(s)?'BettingPros call':s==='sgo'?'SportsGameOdds request':s==='oddsapi'?'The Odds API credit':'OddsPapi call'); return o; }
+function compaSoon(){ try{ return allSports().filter(sp=>scSoon(sp,12)).sort((a,b)=>sportNext[a]-sportNext[b]); }catch(e){ return []; } }
+function compaSched(){ const G=scGet(), R=scRunGet();
+  return {scout:{what:scDesc(G.scout, true), costPerSport:compaFeed(G.scout, scCost(G.scout)), sportsWithGameIn12h:compaSoon()}, scoutCap:G.cap, scoutCapUsedToday:R.used,
+    rows:G.rows.map(r=>({id:r.id, what:scDesc(r), costPerRun:compaFeed(r, scCost(r))})), autoSentinels:G.auto.on?'every '+G.auto.min+' minutes':'off', alerts:G.alert.on?'on':'off'}; }
+function compaAlerts(){ const A=scGet().alert, el=document.getElementById('scAlert'), I=(el&&el.classList.contains('on')&&el._scI)||[], S=scSeenGet();
+  return {on:!!A.on, onlyInsidePlan:!!A.plan, newsCheck:!!A.news, showingNow:I.map(x=>String(x.t||'').replace(/^✅ New: /,'')+(x.news?' · news: '+x.news:'')), alertedToday:Object.keys(S.k||{}).length}; }
+function compaQuotas(){ const G=scGet(), R=scRunGet(), ou=window._opUsage;
+  return {bettingprosLeftToday:window._bpLeft!=null?window._bpLeft:null, scoutCapLeft:Math.max(0,G.cap-R.used), oddsApi:(()=>{ try{ return oaLeft()||null; }catch(e){ return null; } })(), oddspapiLeftThisMonth:ou&&ou.left!=null?ou.left:null}; }
+/* the context sent with each message: compact, numbers as the app shows them, no notes, ids, keys or passwords */
+function compaCtx(){ const L=compaLog('today'), S=compaSched();
+  return {now:new Date().toLocaleString('en-US',{timeZone:'America/Chicago', weekday:'short', month:'numeric', day:'numeric', hour:'numeric', minute:'2-digit'})+' CT', app:SCREENER_VERSION,
+    page:((document.querySelector('.tab.on')||{}).textContent||'').trim().slice(0,30)||null, board:compaBoard(15), plan:compaPlan(),
+    logToday:L.totals, schedule:{rows:S.rows.map(r=>({id:r.id, what:r.what})), autoSentinels:S.autoSentinels, alerts:S.alerts}, quotas:compaQuotas(),
+    costs:{scout_now:{perSport:S.scout.costPerSport, sportsNow:S.scout.sportsWithGameIn12h, note:'each sport with a game in 12 hours costs perSport, within the scout cap left'},
+      run_schedule_row:S.rows.map(r=>({id:r.id, cost:r.costPerRun})), add_schedule_row:'nothing now; its cost each time it runs', send_sentinels:{text:'no feed calls', bettingpros:0, sgo:0, oddsapi:0, oddspapi:0},
+      check_news:{text:'no feed calls (one AI news check, a few cents)', bettingpros:0, sgo:0, oddsapi:0, oddspapi:0}, read_last_slip:'nothing'}}; }
+function compaRead(name, a){ a=a||{};
+  if(name==='get_board_summary') return compaBoard(40);
+  if(name==='get_card'){ const r=compaRows().find(x=>pxKey(x)===String(a.key||'')); return r?compaCardFull(r):{error:'No card with that key on the board now.'}; }
+  if(name==='get_log_summary') return compaLog(a.range, {sport:a.sport, book:a.book, result:a.result});
+  if(name==='get_plan') return compaPlan();
+  if(name==='get_schedule') return compaSched();
+  if(name==='get_alerts') return compaAlerts();
+  return {error:'unknown read tool'}; }
+/* an action, in plain words for the confirm card, with the cost the app itself counts when it can (else what El Compa wrote) */
+function compaPlanOf(c){ const a=c.input||{}, G=scGet(), mc=a.cost&&typeof a.cost==='object'&&a.cost.text?String(a.cost.text).slice(0,80):'cost unknown';
+  if(c.name==='scout_now'){ const sp=a.sport?String(a.sport).toUpperCase().replace(/[^A-Z0-9_]/g,'').slice(0,16):''; const per=scCost(G.scout), n=sp?1:compaSoon().length, own=n?compaFeed(G.scout, Math.min(per*n, Math.max(0,G.cap-scRunGet().used))).text:null;
+    return {what:'Scout '+(sp||'every sport with a game in the next 12 hours')+' now', cost:own?'up to '+own:mc}; }
+  if(c.name==='run_schedule_row'){ const row=G.rows.find(x=>x.id===String(a.id||'')); return row?{what:'Run this Schedule row now: '+scDesc(row), cost:compaFeed(row, scCost(row)).text}:{what:'Run a Schedule row that is not there ('+String(a.id||'').slice(0,30)+')', cost:mc, bad:'There is no Schedule row with that id.'}; }
+  if(c.name==='add_schedule_row'){ const row=scRowNorm(Object.assign({}, a.row||{}, {id:null})); return {what:'Add a Schedule row: '+scDesc(row), cost:'nothing now; '+compaFeed(row, scCost(row)).text+' each time it runs', row}; }
+  if(c.name==='send_sentinels') return {what:'Send the Sentinels (re-check the cards at live Kalshi, Polymarket US and Novig prices)', cost:'no feed calls'};
+  if(c.name==='check_news'){ const r=compaRows().find(x=>pxKey(x)===String(a.cardKey||'')); return r?{what:'Check the news for '+(r.kind==='prop'?r.name:(r.team||r.name)), cost:'no feed calls, one AI news check (a few cents)'}:{what:'Check the news for a card that is not on the board', cost:mc, bad:'No card with that key on the board now.'}; }
+  if(c.name==='read_last_slip') return {what:'Read back the last bet slip the app read', cost:'nothing'};
+  return {what:'Run an action the app does not know ('+String(c.name||'').slice(0,30)+')', cost:mc, bad:'Unknown action.'}; }
+async function compaAct(c, P){ const a=c.input||{}, G=scGet();
+  if(P.bad) return {done:false, error:P.bad};
+  if(c.name==='scout_now'){ const sp=a.sport?String(a.sport).toUpperCase().replace(/[^A-Z0-9_]/g,'').slice(0,16):''; const out=sp?await scRunRow(scRowNorm(Object.assign({}, G.scout, {sp, id:'compa'})), 'now'):await scRunRow(G.scout, 'scout');
+    return out==='busy'?{done:false, error:'Another scout or schedule run is going on; nothing was started.'}:{done:true, result:String(out||'')}; }
+  if(c.name==='run_schedule_row'){ const row=G.rows.find(x=>x.id===String(a.id||'')); const out=await scRunRow(row, 'now'); return out==='busy'?{done:false, error:'Another run is going on; nothing was started.'}:{done:true, result:String(out||'')}; }
+  if(c.name==='add_schedule_row'){ G.rows.push(P.row); scSet(G); return {done:true, result:'Added: '+scDesc(P.row), id:P.row.id}; }
+  if(c.name==='send_sentinels'){ const sb=document.getElementById('shopBtn'); if(!sb || sb.disabled) return {done:false, error:'The Sentinels are busy or not available now.'}; await shopExchanges(); try{ scAlertCheck(); }catch(e){} return {done:true, result:'Sentinels sent · '+compaApproved().length+' approved now'}; }
+  if(c.name==='check_news'){ const r=compaRows().find(x=>pxKey(x)===String(a.cardKey||'')); const gl=r.kind!=='prop', gi=r.gameInfo||{}, inp={game:String(r.game||r.matchup||'').slice(0,80), sport:r.sport||'', market:gl?r.kind:statOfMarket(r.market), startISO:gi.startISO||null};
+    if(gl) inp.team=r.team||r.name; else { inp.player=r.name; if(r.team) inp.team=r.team; }
+    const res=await aiCall('news', inp); if(!res.ok) return {done:false, error:res.err};
+    const o=res.out, N=aiGet('news',{}), k=aiNewsKey(r); N[k]={status:String(o.status||'unknown'), summary:String(o.summary||'').slice(0,400), sources:(o.sources||[]).slice(0,5).map(s=>({title:String(s.title||'').slice(0,120), url:String(s.url||'').slice(0,300), seen:s.seen})), checkedAt:o.checkedAt||new Date().toISOString(), day:k.split('|')[2]};
+    aiPut('news', N); setTimeout(()=>{ try{ refresh(); }catch(e){} }, 0);
+    return {done:true, status:aiNewsWord(N[k].status), summary:N[k].summary, sources:N[k].sources.map(s=>({title:s.title, url:s.url, fromItsSearch:s.seen!==false})), note:'A label only: news never changes La Contadora’s decision or the stake.'}; }
+  if(c.name==='read_last_slip'){ const P2=window._aiSlipProp, S=aiGet('slips',[]), s=P2?Object.assign({}, P2):S.length?Object.assign({}, S[S.length-1].fields||{}, {book:S[S.length-1].book}):null; if(!s) return {done:true, result:'No slip has been read yet.'};
+    delete s.ticketId; return {done:true, slip:s}; }
+  return {done:false, error:'Unknown action.'}; }
+/* the confirm card: resolves true on Do it, false on No (or when the chat is closed or cleared) */
+function compaConfirm(c){ const P=compaPlanOf(c); return new Promise(res=>{ window._cpAsk={c, P, res}; compaPaint(); compaOpen(); }).then(ok=>({ok, P})); }
+function compaAnswer(ok){ const A=window._cpAsk; if(!A) return; window._cpAsk=null; compaPaint(); A.res(!!ok); }
+/* plain text in, safe HTML out: everything escaped; http and https links only; line breaks kept */
+function compaRich(t){ return esc(String(t||'')).replace(/\bhttps?:\/\/[^\s<>"']+/g, u=>{ const m=u.match(/^(.*?)([.,;:!?)]*)$/), href=m[1], tail=m[2]; return '<a href="'+href+'" target="_blank" rel="noopener noreferrer">'+href+'</a>'+tail; }).replace(/\n/g,'<br>'); }
+function compaPaint(){ const list=document.getElementById('compaList'); if(!list) return; const o=compaGet(), A=window._cpAsk;
+  let h=o.msgs.length?'':'<p class="cp-empty meta">Hola, Jefe. Ask me about the board, a card, your plan, your bet log or your schedule. I can also scout, run a Schedule row or send the Sentinels for you, and I ask before anything that spends calls. La Contadora decides the bets; I explain them.</p>';
+  h+=o.msgs.map(m=>'<div class="cp-m cp-'+(m.role==='user'?'me':m.role==='assistant'?'him':'note')+'">'+compaRich(m.content)+'</div>').join('');
+  if(window._cpBusy && !A) h+='<div class="cp-m cp-note cp-busy">El Compa is thinking…</div>';
+  if(A) h+='<div class="cp-ask" role="group" aria-label="El Compa asks before acting"><div><b>El Compa wants to:</b> '+esc(A.P.what)+' · <span class="cp-cost">'+esc(A.P.cost)+'</span></div><div class="cp-ask-b"><button type="button" class="act sm" data-cp="yes">Do it</button><button type="button" class="ghost sm" data-cp="no">No</button></div></div>';
+  list.innerHTML=h; list.scrollTop=list.scrollHeight;
+  const sb=document.getElementById('compaSend'); if(sb) sb.disabled=!!window._cpBusy; }
+function compaOpen(){ const p=document.getElementById('compaPanel'); if(!p || !aiOn()) return; p.hidden=false; document.documentElement.classList.add('cp-open'); compaPaint(); const i=document.getElementById('compaIn'); if(i && !window._cpAsk) try{ i.focus({preventScroll:true}); }catch(e){} }
+function compaClose(){ const p=document.getElementById('compaPanel'); if(p) p.hidden=true; document.documentElement.classList.remove('cp-open'); if(window._cpAsk) compaAnswer(false); }
+function compaClear(){ if(window._cpAsk) compaAnswer(false); window._cpStop=true; try{ localStorage.removeItem('mbev.compa'); }catch(e){} compaPaint(); }
+/* the chat sent to the Worker: user and assistant text only, the last 40, starting and ending with the owner */
+function compaChat(){ let M=compaGet().msgs.filter(m=>m.role==='user'||m.role==='assistant').map(m=>({role:m.role, content:String(m.content||'')})).slice(-40); while(M.length && M[0].role!=='user') M.shift(); return M; }
+async function compaSend(text){ text=String(text||'').trim(); if(!text || window._cpBusy) return; if(!aiOn()){ compaPush('note', aiErrText('off')); return; }
+  window._cpBusy=true; window._cpStop=false; compaPush('user', text);
+  const messages=compaChat(), context=compaCtx(), rounds=[], said=[];   /* frozen for every tool round of this message */
+  try{
+    for(let k=0; k<=20; k++){
+      if(k===20){ compaPush('note', 'Stopped after 20 tool steps for one message. Ask again if you need more.'); break; }
+      const res=await aiCall('compa', {messages, context, toolResults:rounds});
+      if(window._cpStop) return;
+      if(!res.ok){ compaPush('note', res.err); break; }
+      const o=res.out||{}, calls=Array.isArray(o.toolCalls)?o.toolCalls:[];
+      if(o.reply) said.push(String(o.reply));
+      if(!calls.length){ if(!said.length) compaPush('note', 'El Compa had nothing to say. Try again.'); break; }
+      if(said.length){ compaPush('assistant', said.join('\n\n')); said.length=0; }
+      const results=[];
+      for(const c of calls){ let out;
+        if(!c.action){ try{ out=compaRead(c.name, c.input); }catch(e){ out={error:'The app could not read that: '+String(e&&e.message||e).slice(0,120)}; } results.push({id:c.id, content:JSON.stringify(out).slice(0,8000)}); continue; }
+        const {ok, P}=await compaConfirm(c); if(window._cpStop) return;
+        if(!ok){ compaPush('note', 'You said No: '+P.what+'. Nothing was run.'); results.push({id:c.id, content:JSON.stringify({done:false, ownerSaid:'No', note:'Nothing was run.'})}); continue; }
+        compaPush('note', 'Running: '+P.what+'…');
+        try{ out=await compaAct(c, P); }catch(e){ out={done:false, error:String(e&&e.message||e).slice(0,200)}; }
+        compaPush('note', (out.done?'Done: ':'Not done: ')+(out.result||out.error||P.what));
+        results.push({id:c.id, content:JSON.stringify(out).slice(0,8000), isError:!out.done}); }
+      rounds.push({turn:o.turn||[], results}); }
+    if(said.length) compaPush('assistant', said.join('\n\n'));
+  } finally { window._cpBusy=false; compaPaint(); } }
+(function(){ const b=document.createElement('button'); b.type='button'; b.id='compaBtn'; b.className='ai-only'; b.setAttribute('aria-label','Open El Compa, your companion chat'); b.innerHTML='🤝 <span>El Compa</span>'; document.body.appendChild(b);
+  const p=document.createElement('section'); p.id='compaPanel'; p.className='ai-only'; p.hidden=true; p.setAttribute('role','dialog'); p.setAttribute('aria-label','El Compa, your companion chat');
+  p.innerHTML='<div class="cp-h"><b>🤝 El Compa</b><span class="meta">La Contadora decides the bets; I explain and help.</span><span class="cp-hb"><button type="button" class="ghost sm" id="compaClear">Clear</button><button type="button" class="ghost sm" id="compaX" aria-label="Close El Compa">×</button></span></div>'+
+    '<div id="compaList" class="cp-list" role="log" aria-live="polite"></div><div class="cp-foot meta">This costs about 1–3¢ a message (your Worker’s AI limits apply). Today’s chat is kept on this device.</div>'+
+    '<form id="compaForm" class="cp-form"><textarea id="compaIn" rows="2" maxlength="2000" placeholder="Ask El Compa…" aria-label="Message to El Compa"></textarea><button type="submit" class="act" id="compaSend">Send</button></form>';
+  document.body.appendChild(p);
+  const go=()=>{ const i=document.getElementById('compaIn'); if(!i) return; const t=i.value; if(!t.trim() || window._cpBusy) return; i.value=''; compaSend(t); };
+  b.addEventListener('click',()=>{ if(p.hidden) compaOpen(); else compaClose(); });
+  p.addEventListener('click',e=>{ const t=e.target; if(!t || !t.closest) return; if(t.closest('#compaX')) return compaClose(); if(t.closest('#compaClear')) return compaClear();
+    const y=t.closest('[data-cp]'); if(y) compaAnswer(y.dataset.cp==='yes'); });
+  document.getElementById('compaForm').addEventListener('submit',e=>{ e.preventDefault(); go(); });
+  document.getElementById('compaIn').addEventListener('keydown',e=>{ if(e.key==='Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); go(); } });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !p.hidden) compaClose(); });
+  compaPaint();
 })();
 </script>
 </body>
