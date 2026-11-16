@@ -5280,6 +5280,7 @@ function isSweet(r,c){
   c=c||swCfg();
   if(!r.pass || r.tier || r.outlier || !(r.stake>0) || r.stars==null || r.net==null) return false;   // v4.50: only ever a best bet (owner: "sweet spots will always be on the Safe bets")
   if(c.mkt && r.mktNet!=null && r.mktNet<=0) return false;   // price doesn't beat the market
+  if(planOut(r.actProb) || evDisplayState(r)!=='actionable') return false;   // v5.16 (owner 11/16: "sweet spot is confusing then. it makes me think that it fits what im going for"): never on a card outside My plan, or with a stale, unconfirmed or untrusted price; a label only (the stake, BET / SKIP and order do not change)
   const odds=parseFloat(r.offeredRaw), e=(r.actNet!=null?r.actNet:r.net)*100;   // v4.50: La Contadora's EV (with the market), not the model's own: Eklund's "+6.3%" sweet spot was +3.1% for her
   return r.stars>=c.stars && e>=c.netMin && e<=c.netMax &&
          !isNaN(odds) && odds>=c.oMin && odds<=c.oMax;
