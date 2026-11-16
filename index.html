@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.14</title>
+<title>0xBeta Screener v5.15</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1872,6 +1872,42 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
   .view .panel>details>summary, details.help>summary, #addBetPanel>summary{min-height:40px; box-sizing:border-box; display:flex; align-items:center}
   .ab-grid .ghost.sm, #addBetPanel .act, #addBetPanel .ghost{min-height:40px}
 }
+/* v5.15 (AI helper): every AI button and box is hidden until the helper is set up on the Worker and switched on (html.ai-on); proposals in one calm box style; unclear boxes
+   from a slip outlined in amber; the bug-note bar above the dock. Display only: no number, stake or saved field changes. */
+html:not(.ai-on) .ai-only, html:not(.ai-on) .ai-news-btn, html:not(.ai-on) .ai-match, html:not(.ai-on) .ai-grade, html:not(.ai-on) .ai-settle{display:none!important}
+.ai-slip{margin:8px 0 10px}
+.ai-drop{display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; padding:10px 12px; border:1.5px dashed var(--rule); border-radius:10px; background:var(--panel)}
+.ai-drop.ai-over{border-color:var(--accent); background:var(--accent-bg)}
+.ai-drop .meta{flex:1 1 220px; min-width:0; overflow-wrap:anywhere}
+.ai-drop button{min-height:44px}
+.ai-prop{margin:8px 0; padding:10px 12px; border:1px solid var(--rule); border-radius:10px; background:var(--panel); color:var(--ink); font-size:14px; overflow-wrap:anywhere; max-width:100%; box-sizing:border-box}
+.ai-prop ul{margin:6px 0; padding-left:18px} .ai-prop p{margin:6px 0}
+.ai-prop .ai-h{font-weight:600; margin-bottom:4px}
+.ai-prop li.ai-unc{color:var(--warn)}
+.ai-acts{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px} .ai-acts button{min-height:44px; min-width:88px}
+#addBetPanel .ai-acts button, #addBetPanel .ai-drop button{min-height:44px}   /* v5.15 (merge): above v5.14 phone rule #addBetPanel .act (40px) */
+.ai-warn{color:var(--warn); margin:6px 0} .ai-err{color:var(--out)} .ai-ok{color:var(--live); font-weight:600; margin:6px 0}
+.ai-src{margin:4px 0; padding-left:18px} .ai-src a{color:var(--accent); overflow-wrap:anywhere}
+#addBetPanel .ai-unclear input, #addBetPanel .ai-unclear select, #addBetPanel label.ai-unclear input, #addBetPanel label.ai-unclear select{outline:2px solid var(--warn); outline-offset:1px}
+#addBetPanel .ai-unclear > label::after{content:" ⚠"; color:var(--warn)}
+.ai-scroll{overflow-x:auto; max-width:100%}
+.ai-tbl{border-collapse:collapse; width:100%; font-size:13.5px} .ai-tbl th, .ai-tbl td{padding:6px; border-bottom:1px solid var(--rule); text-align:left; vertical-align:top}
+.ai-tbl tr.ai-no td{color:var(--soft)} .ai-tbl input[type=text]{width:80px; font-size:16px; padding:4px 6px} .ai-tbl input[type=checkbox]{width:22px; height:22px}
+.ai-lab{display:inline-flex; align-items:center; gap:6px; margin:4px 0} .ai-lab select{font-size:16px; max-width:220px}
+.ai-box{margin:8px 0} .ai-shot-row{margin:4px 0} .ai-shot-row .linkbtn{min-height:44px}
+.ai-tag{background:var(--accent-bg); color:var(--ink); border:1px solid var(--rule)}
+.sc-more .ai-news-out{flex-basis:100%; width:100%}
+.sc-more .ai-news-out:empty{display:none}
+.ai-lo{flex-basis:100%; width:100%}
+tr.ai-prop-tr td{padding-top:0}
+.ai-log{border-collapse:collapse; font-size:13.5px; margin:6px 0} .ai-log td, .ai-log th{padding:4px 10px 4px 0; text-align:left} .ai-log .num{text-align:right}
+.ai-st{margin:8px 0; font-size:14px; color:var(--ink)}
+.ai-ask{display:flex; flex-wrap:wrap; gap:8px; margin:8px 0} .ai-ask input{flex:1 1 240px; min-width:0; font-size:16px; padding:8px 10px} .ai-ask button{min-height:44px}
+.ai-ans{white-space:pre-wrap}
+.ai-bugbar{position:fixed; left:8px; right:8px; bottom:calc(var(--dockH,84px) + 8px + env(safe-area-inset-bottom,0px)); z-index:70; display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; padding:8px 10px;
+  background:var(--panel); color:var(--ink); border:1px solid var(--rule); border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,.18); font-size:14px; max-width:720px; margin:0 auto}
+.ai-bugbar[hidden]{display:none!important} .ai-bugbar .ai-bug-t{flex:1 1 220px; overflow-wrap:anywhere} .ai-bugbar button{min-height:44px; min-width:44px} .ai-bugbar #aiBugMsg{flex-basis:100%}
+@media (max-width:640px){ .ai-tbl{font-size:13px} .ai-prop{padding:8px 10px} }
 </style>
 </head>
 <body>
@@ -1880,7 +1916,7 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.14</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.15</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -1984,6 +2020,11 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 <div class="panel board-panel">
   <h2 id="boardTitle">The board</h2>
   <details class="board-more" id="boardMore"><summary title="Filters &amp; sort, Leagues, Parole, Moneylines">More ▾</summary><div class="board-more-list" id="boardMoreList"></div></details><!-- v4.92 (Alonzo: "leagues, Parole, moneylines, can be removed or moved elsewhere. i have board on the bottom already") -->
+  <div class="ai-only ai-shot-row"><button type="button" class="linkbtn" id="aiShotBtn" title="Read the prices on a sportsbook screenshot and add them to the board (AI helper)">📷 Add prices from a screenshot</button></div>   <!-- v5.15 (AI helper): next to More ▾ (Paste and the load line sit in the dock) -->
+  <div class="ai-box ai-only" id="aiShotBox" hidden><!-- v5.15 (AI helper): rows read from a screenshot are shown first; nothing goes on the board until Add -->
+    <div class="ai-drop" id="aiShotDrop" tabindex="0" aria-label="Drop or paste a sportsbook screenshot here"><button type="button" class="act sm" id="aiShotPick">📷 Pick a screenshot</button><button type="button" class="ghost sm" id="aiShotClip">📋 Paste</button><input type="file" id="aiShotFile" accept="image/*" hidden><span class="meta">Pick, paste (Ctrl+V) or drop a screenshot of a book’s prices. The rows show here first; nothing goes on the board until you press Add.</span><button type="button" class="ghost sm" id="aiShotClose">Close</button></div>
+    <div id="aiShotOut" role="status" aria-live="polite"></div>
+  </div>
   <div class="psrc-note" id="pasteNote" style="display:none"></div>
   <div class="modes" id="modeBar" role="group" aria-label="Betting mode">
     <button type="button" data-mode="boring">😴 Boring</button><button type="button" data-mode="safe">💪 Machín</button><button type="button" data-mode="volado">🪙 Volado</button><button type="button" data-mode="lucky">🍀 Suertudo</button><button type="button" data-mode="clair">🔮 Brujo</button><button type="button" data-mode="old">⏱ Old</button><button type="button" data-mode="awol">👻 AWOL</button><!-- v4.76 --><!-- v4.77: ⏱ Old (prices read over 12 hours ago) --><!-- v4.81: 👻 AWOL (the book could not find it) -->
@@ -2071,6 +2112,10 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
 <div class="view" id="v-add">
 <details class="panel fold" id="addBetPanel">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>+ Add a bet <span class="sub">take a price or post your own — it tells you BET or SKIP and how much, then ESPN grades it</span><span class="sub ab-par ab-par-sub">log a parlay or pick'em entry — no value check; you grade it (Result here, or “how many hit” in the Bet log)</span></h2></summary><!-- v5.11 (review): while the Type is a parlay, its own subtitle (the BET or SKIP one is for single bets) -->
+  <div class="ai-slip ai-only" id="aiSlip"><!-- v5.15 (AI helper): Read slip; Use fills the form below, you check it and press Save -->
+    <div class="ai-drop" id="aiSlipDrop" tabindex="0" aria-label="Drop or paste a bet slip screenshot here"><button type="button" class="act sm" id="aiSlipPick">📷 Read slip</button><button type="button" class="ghost sm" id="aiSlipClip">📋 Paste</button><input type="file" id="aiSlipFile" accept="image/*" hidden><span class="meta">Pick, paste (Ctrl+V) or drop a screenshot of your bet slip. The AI reads it, you check the form and press Save.</span></div>
+    <div id="aiSlipOut" role="status" aria-live="polite"></div>
+  </div>
   <div class="ab-grid">
     <div class="field"><label for="abSport">Sport</label><select id="abSport"><option>NFL</option><option>NCAAF</option><option>NBA</option><option>WNBA</option><option>NCAAB</option><option>MLB</option><option>NHL</option></select></div>
     <div class="field"><label for="abType">Type</label><select id="abType"><option value="prop">Player prop</option><option value="spread">Spread</option><option value="total">Game total</option><option value="moneyline">Moneyline</option><option value="parlay">Parlay / pick'em (2+ picks)</option></select></div><!-- v5.11 (owner 11/15: "Add a Bet needs to allow me to do Parlay"): a parlay or pick'em entry, with its own fields (abPar*) -->
@@ -2280,6 +2325,20 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
   <div class="sync-status" id="syncStatus">Off on this device.</div>
   <details class="help" data-help="sync"><summary>How sync works</summary><p class="hint">One copy of your bet log lives in your Cloudflare store. Any device with the screener passphrase <b>and</b> this password sees the same bets, baits and settings. Changes upload a few seconds after you make them; other devices pick them up when they open or come back to the page, and once a minute while it's open — Wi-Fi or cellular.</p><p class="hint" style="margin-top:8px"><b>Synced:</b> bet log, removed bets, parlay marks, Parole baits, which book fills are matched, your settings (bankroll, La Contadora's rules, fees) and the last board you loaded with its grading history. <b>Stays on each device:</b> the screener passphrase, this password, theme, team logos.</p><p class="hint" style="margin-top:4px"><b>First time:</b> on the Mac run <code>cd ~/prop-bet-api</code>, then <code>npx wrangler secret put SYNC_KEY</code> (type the password you picked — it never goes in chat or code), then <code>npx wrangler deploy</code>. Turn it on here on the PC first (its log becomes the cloud copy), then on the phone. Lost a device? Run the secret command again with a new password.</p></details>   <!-- v4.25: a drop-down (the three notes were always open) -->
   <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px"><button class="ghost sm" id="syncBak">Cloud backups…</button><span class="meta" id="syncBakList"></span></div>
+</details>
+<details class="panel fold" id="aiPanel">   <!-- v5.15 (AI helper; owner 11/15: "its only for me now." · "LETS CHOOSE SONNET"): off until the Worker says it is set up; closed until tapped -->
+  <summary><h2>✨ AI helper <span class="sub">reads slips, screenshots, news and results for you to check · it never decides a bet or a stake</span></h2></summary>
+  <div class="row" style="gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px">
+    <label class="bar-check"><input type="checkbox" id="aiOnBox" disabled> Use the AI helper</label>
+    <button type="button" class="ghost sm" id="aiCheck">Check the Worker</button>
+  </div>
+  <div class="ai-st" id="aiStatus" role="status" aria-live="polite">Not checked yet. Press Check the Worker.</div>
+  <div id="aiMkBox"></div>
+  <div class="row ai-only" style="gap:8px;align-items:center;flex-wrap:wrap"><button type="button" class="ghost sm" id="aiMkNow">Check new market names</button><span class="meta" id="aiMkMsg" role="status"></span></div>
+  <h3 style="margin:12px 0 4px;font-size:15px">Recent AI jobs and their cost</h3>
+  <div id="aiLogList"></div>
+  <p class="hint" style="margin:8px 0">Kept on this device, with no pictures: what each slip read and what you changed (slips), the fill and card names you confirmed (names), which sites gave results (sources), the market names you confirmed (markets), news checks (news) and the jobs list. They go to your other devices with sync when sync is on. Names and markets work with the AI off.</p>
+  <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><button type="button" class="ghost sm" id="aiClear">Clear AI data</button><span class="meta" id="aiClearMsg" role="status"></span></div>
 </details>
 <details class="panel fold" id="myBooksPanel">
   <summary><h2>Your exchange bets <span class="sub">Kalshi · Polymarket US · Novig — read-only</span></h2></summary>
@@ -2733,11 +2792,20 @@ tr.editor .eb-tw-chk>span{max-width:calc(100vw - 67px)}   /* the visible part of
   <h3 class="rp-h">Settled bets <span class="meta" id="rpSetN"></span></h3><div id="rpSettled"></div>
   <p><button type="button" class="btn-sm" id="rpCsv">⬇ CSV of exactly these bets</button></p>
 </div>
+<div class="panel ai-only" id="aiRpPanel">   <!-- v5.15 (AI helper): Ask my log and This week in plain words -->
+  <h2>✨ Ask my log <span class="sub">your question and only the columns it needs (never notes, ids or keys) go to the AI; the answer comes from your own bets</span></h2>
+  <div class="ai-ask"><input type="text" id="aiAskQ" maxlength="300" placeholder="e.g. How did my NBA unders do this month?" aria-label="Your question about your bet log" autocomplete="off"><button type="button" class="act" id="aiAskGo">Ask</button></div>
+  <div class="meta" id="aiAskSend"></div>
+  <div id="aiAskOut" role="status" aria-live="polite"></div>
+  <h3 class="rp-h">This week in plain words</h3>
+  <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><button type="button" class="btn-sm" id="aiWeekGo">This week in plain words</button><span class="meta">The app adds up your last 7 game days (the Bet log’s Last 7 days line) and sends only those totals.</span></div>
+  <div id="aiWeekOut" role="status" aria-live="polite"></div>
+</div>
 </div>
 
 </div>
 <script>
-const SCREENER_VERSION='v5.14';
+const SCREENER_VERSION='v5.15';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -5093,7 +5161,7 @@ function placeCardHtml(r,cfg,o){
   const sgm=X?null:sc.sig, sgWho=sgm&&sgm.sharp?'sharp market':'market', sgTxt=!sgm?'':'<span class="sc-pill sig'+(sgm.behind?' good':'')+'" title="The '+sgWho+' moved this way: its chance for this side went from '+(sgm.from*100).toFixed(1)+'% to '+(sgm.to*100).toFixed(1)+'%, seen '+ageTxt(sgm.mins*60e3)+' ago. '+(sgm.retr?'It has come back from its high since, so this is not counted.':sgm.behind?esc(bk)+' has not followed yet.':esc(bk)+' has already moved with it.')+(sgm.sampled?' Sampled: your loads around the move were '+ageTxt(sgm.gap*60e3)+' apart, so when it moved is not known.':'')+' Seen between your loads, not live.">⚡ '+sgWho+' +'+(sgm.rise*100).toFixed(1)+' pts · '+ageTxt(sgm.mins*60e3)+(sgm.sampled?' · sampled':'')+'</span>';
   const warns=(r.flags||[]).filter(f=>f[0]==='warn' && !/ order (“|in this game)/.test(f[1]) && !/^×\d+$/.test(f[1])).map(f=>'<span class="tag t-warn">'+esc(f[1])+'</span>').join('')
     +(r.flags||[]).filter(f=>f[0]==='corr').map(f=>'<span class="tag t-corr" title="You already have money on this game; bets in one game move together">🔗 '+esc(f[1])+'</span>').join('');   // v4.47: the same-game note was in the table only
-  const tags=orderTagHtml(r)+injTagHtml(r)+wxTagHtml(r)+(o.sweet?'<span class="sweet">🎯 SWEET SPOT</span>':'')+legTagHtml(r)+shopTagHtml(r)+warns+'<span class="mk-slot" data-idx="'+r.idx+'">'+makeTagHtml(r)+'</span>';
+  const tags=orderTagHtml(r)+injTagHtml(r)+wxTagHtml(r)+(o.sweet?'<span class="sweet">🎯 SWEET SPOT</span>':'')+legTagHtml(r)+shopTagHtml(r)+warns+'<span class="mk-slot" data-idx="'+r.idx+'">'+makeTagHtml(r)+'</span>'+aiCardTagsHtml(r);   // v5.15: "read from a screenshot" and the news label (labels only)
   const open=notesAll || scOpenSet().has(pxKey(r));
   const nS=r.stars==null?null:Math.max(0,Math.min(5,Math.round(r.stars)));
   let cons=''; const ou=r.side==='O'||r.side==='U';
@@ -5126,7 +5194,7 @@ function placeCardHtml(r,cfg,o){
         :r.ring?'<div class="sc-ringl"><div class="sc-h">◎ Perfecta checks: '+r.ring.n+' of '+r.ring.of+'</div><ul>'+r.ring.checks.map(c=>'<li class="'+(c.ok?'ok':'no')+'">'+(c.ok?'✓ ':'✗ ')+esc(c.t)+'</li>').join('')+'</ul></div>':'')+   // v4.50
       shHow(r) /* v4.84 */+(kalshiHowHtml(r)||(LIVE_BOOK(r.book)==='kalshi'?kalshiFeeLineHtml():'')) /* v5.05 (K7; Los Desconfiados): the fee line sits in the strip when there is one (on its own it took the strip's place in the two columns on a computer) */+polyHowHtml(r)+   // v4.79: Polymarket US, what to type
       (o.nTags?'<div class="sc-notes"><div class="sc-h">Notes</div><div class="tags">'+o.tags+'</div></div>':'')+
-      '<div class="sc-more"><button class="log sm share-btn" data-idx="'+r.idx+'" title="Send this bet to someone, with the same link the logo opens: the slip with the side, line and the screener stake filled in (they can change it). Your bankroll, EV and log do not go with it.">📤 Share</button></div>'+
+      '<div class="sc-more"><button class="log sm share-btn" data-idx="'+r.idx+'" title="Send this bet to someone, with the same link the logo opens: the slip with the side, line and the screener stake filled in (they can change it). Your bankroll, EV and log do not go with it.">📤 Share</button>'+aiNewsBtnHtml(r) /* v5.15: Check news (AI helper) */+'</div>'+
     '</div></details>';
   return '<div class="pcard sc-card'+(X?' sc-x '+X:R?(R.n===R.of?' sc-perf':' sc-perf5'):'')+'" data-idx="'+r.idx+'" data-pck="'+esc(pxKey(r))+'">'+
     (X?'<div class="sc-xtop '+X+'" title="'+esc(XL.t)+'">'+(X==='lucky'?'🍀 ':'🔮 HAIL MARY · ')+esc(XL.short)+'</div>' /* v4.76: 🍀 La Contadora: NO · … */
@@ -6635,7 +6703,7 @@ function clv(b){
   if(mine===null||close===null) return null;
   return close/mine - 1;   /* your price better than the close when positive */
 }
-function resultSrcHtml(b){ return b.resultSrc ? '<div class="meta">by '+esc(b.resultSrc)+'</div>' : ''; }
+function resultSrcHtml(b){ return (b.resultSrc ? '<div class="meta">by '+esc(b.resultSrc)+'</div>' : '')+aiGradeNoteHtml(b); }   // v5.15 (La Guardia): the AI helper note
 function resultBadge(b){
   if(b.sold){ const pl=b.sold.price-(b.stake||0);
     return '<span class="tag t-sold">SOLD $'+Number(b.sold.price).toFixed(2)+'</span><div class="meta">'+(pl>=0?'+':'−')+'$'+Math.abs(pl).toFixed(2)+' · excluded from calibration</div>'; }
@@ -6812,7 +6880,7 @@ function renderLookOut(){
       const head=what && what.toLowerCase().startsWith(nm.toLowerCase()) ? '<b>'+esc(what)+'</b>' : '<b>'+esc(nm)+'</b>'+(what?' '+esc(what):'');   // "NY Moneyline", not "NY NY Moneyline"
       return '<div class="lo-row"><div class="lo-what">'+head+' <span class="meta">'+esc(bookLabel(b.book))+' · $'+(+b.stake||0).toFixed(2)+' · '+(x.day?dayLabel(x.day):'no date')+'</span><div class="meta lo-why">'+esc(x.why)+'</div></div>'+
         '<div class="lo-btns">'+(b.kind==='parlay' ? '' : ['win','loss','push'].map(r=>'<button type="button" class="log sm lo-res" data-i="'+x.i+'" data-res="'+r+'">'+({win:'Won',loss:'Lost',push:'Push'}[r])+'</button>').join(''))+
-        '<button type="button" class="log sm undo lo-find" data-i="'+x.i+'">Find it</button></div></div>'; }).join('')+
+        '<button type="button" class="log sm undo lo-find" data-i="'+x.i+'">Find it</button>'+aiGradeBtnHtml(b,x.i) /* v5.15: Find the result (AI helper) */+'</div></div>'+aiGradeRowHtml(b,x.i); }).join('')+
     '<div class="row lo-foot"><button type="button" class="ghost sm" id="lookCheck">Check results again</button><span class="meta">Grading runs when the page opens and on the refresh buttons. A bet that still does not grade needs your result.</span></div>';
 }
 document.addEventListener('click',e=>{
@@ -8967,7 +9035,8 @@ setInterval(()=>{ try{ wkChipPaint(); }catch(e){} }, 60000);
     let res=await F(u, I);
     if(cookie && res.status===401){ wkCookieSet(false); wkNote(path); res=await F(u, init); }   // the Worker no longer takes the cookie: back to the header
     else if(!cookie && res.headers && res.headers.get('x-auth-cookie')==='1' && wkCookieHostOk()) wkCookieSet(true);
-    if(res.status===429) wkPause(10*60e3, 'the Worker answered 429 (too many requests)');
+    if(res.status===429 && path==='/ai'){ /* v5.15 (La Guardia): the AI budget answer is not the Worker's rate limit; only /ai is skipped */ }
+    else if(res.status===429) wkPause(10*60e3, 'the Worker answered 429 (too many requests)');
     else if(res.status>=500){ let t=''; try{ t=await res.clone().text(); }catch(e){} if(/1027|exceeded|daily request|limit/i.test(t)) wkPause(10*60e3, 'the Worker said its daily limit is reached ('+res.status+')'); }
     return res; };
   window.fetch=async function(u, init){
@@ -11704,6 +11773,7 @@ function fillManualFromRow(L, r){   // next Load: an unchecked manual bet picks 
       { const pr=placedRead($ab('abPlaced')); if(pr && !pr.err) placedSet(L, pr.iso, pr.src, pr.tz); const pi=$ab('abPlaced'); pi.value=''; delete pi.dataset.at; delete pi.dataset.v; }   /* v4.73 */
       if(abR && abR._result){ L.result=abR._result; L.gradedBy='manual'; L.resultSrc='you'; delete L.why; gradeRemember(L); $ab('abResult').value=''; }   // v3.54: a bet that's already over saves graded
       saveLog(); renderLog(); renderPerf(); renderTodayBar();
+      try{ aiSlipSaved(L); }catch(e){ console.warn('ai slip note', e); }   // v5.15: the slip data point (what was read, what you changed); the bet is already saved
       $ab('abMsg').innerHTML='<b>Saved:</b> '+esc(L.name)+' — '+esc(betLabel(L))+' · $'+(+L.stake||0).toFixed(2)+' on '+esc(bookLabel(L.book))+(L.result?' · <b>'+({win:'WON',loss:'LOST',push:'PUSH'}[L.result]||'')+'</b>'+(L.result==='win'&&betProfit(L)!=null?' +$'+betProfit(L).toFixed(2):''):'')+(L.net==null?' · <span class="meta">unchecked until the next Load</span>':'');
       ['abPlayer','abLine','abProj','abCover','abCons'].forEach(id=>$ab(id).value='');
     }
@@ -11781,6 +11851,7 @@ function abParSave(){ const g=id=>document.getElementById(id), msg=g('abParMsg')
   logged.push(rec); abLogLen=logged.length;   // the + Add a bet watcher (above) only finishes bets its own editor saved
   { const sb=g('abParSave'); sb.disabled=true; setTimeout(()=>{ sb.disabled=false; },700); }   // a double tap saves once (the second tap would find the boxes empty and warn)
   saveLog(); renderLog(); renderPerf();
+  try{ aiSlipSaved(rec); }catch(e){ console.warn('ai slip note', e); }   // v5.15: the slip data point for a parlay read from a slip
   ['abParStake','abParAll','abParWin','abParM1','abParM2','abParLegs','abParPaid'].forEach(id=>{ g(id).value=''; });
   g('abParFree').checked=false; g('abParResult').value='';
   { const pi=g('abParPlaced'); pi.value=''; delete pi.dataset.at; delete pi.dataset.v; }
@@ -12656,7 +12727,7 @@ function normFillBet(f){   // Novig: "<Player> <line> <STAT_TYPE>" → player + 
 }
 function comboFam(s){ const P=/\bpoints?\b|\bpts\b/i.test(s), R=/\brebounds?\b|\breb\b/i.test(s), A=/\bassists?\b|\bast\b/i.test(s);   // v3.02: any word order
   return P&&R&&A?'pra':P&&R?'pr':P&&A?'pa':R&&A?'ra':null; }
-function statFam(t){ const s=us_(t); const c0=comboFam(s); if(c0) return c0; const r=STAT_FAM.find(x=>x[0].test(s)); return r?r[1]:s.toLowerCase().replace(/[^a-z]/g,''); }
+function statFam(t){ const s=us_(t); const am=aiMarketKey(s); if(am) return am; /* v5.15: a market name you confirmed (mbev.ai.markets), with no AI */ const c0=comboFam(s); if(c0) return c0; const r=STAT_FAM.find(x=>x[0].test(s)); return r?r[1]:s.toLowerCase().replace(/[^a-z]/g,''); }
 const nrm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]/g,' ').replace(/\b(jr|sr|ii|iii|iv)\b/g,'').replace(/\s+/g,' ').trim();
 function sameName(a,b){ const x=nrm(a), y=nrm(b); if(!x||!y) return false; if(x===y) return true;
   const xs=x.split(' '), ys=y.split(' '); return xs[xs.length-1]===ys[ys.length-1] && xs[0][0]===ys[0][0]; }
@@ -12711,11 +12782,13 @@ function linkedTo(f){ const ids=[f.id].concat(f.ids||[]); return logged.find(b=>
 function betForFill(f){
   const L=linkedTo(f); if(L) return L;
   const old=betForFillRef(f); if(old) return old;
+  { const nb=aiNamesBet(f); if(nb) return nb; }   // v5.15: a fill name ↔ bet you confirmed (AI helper, mbev.ai.names), with no AI
   const mine=logged.filter(b=>!b.sold && LIVE_BOOK(b.book)===f.book && betMatches(f.bet,b));
   return mine.find(b=>!(b.fills&&b.fills.length)) || mine[0] || null;
 }
 function rowForFill(f){
   const old=rowForFillRef(f); if(old) return old;
+  { const nr=aiNamesRow(f); if(nr) return nr; }   // v5.15: a fill name ↔ board row you confirmed (mbev.ai.names), with no AI
   if(!f.bet) return null;
   const rows=(lastRows||[]).filter(r=>!r.prior && r.fairProb!=null && rowOkForFill(r,f) && betMatches(f.bet,r));
   return rows.find(r=>LIVE_BOOK(r.book)===f.book) || rows[0] || null;
@@ -12920,7 +12993,7 @@ function renderFromBooks(){
       '<td class="num">'+(f.price!=null?(f.price*100).toFixed(1)+'%<div class="meta">'+esc(fmtOdds(Math.round(americanOf(f.price))))+'</div>':'—')+'</td>'+
       '<td class="num">$'+(+(f.cost||0)+(+f.fee||0)).toFixed(2)+(f.qty!=null?'<div class="meta">'+f.qty+' ct</div>':'')+'</td>'+
       '<td class="meta fb-ts">bet '+(f.ts?new Date(f.ts).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}):'')+'</td>'+
-      '<td class="fb-act" style="white-space:nowrap">'+(f.action==='sell'?'':'<button class="log sm fb-add" data-i="'+i+'">Add</button> ')+'<button class="ghost sm fb-ign" data-i="'+i+'">Ignore</button></td></tr>'; }).join('')+'</table></div>'+(fillPending.length>=6?'<div class="copy-bar"><button type="button" class="copy-big" data-copy-fn="fromBooksText">📋 Copy this list</button></div>':''):'');
+      '<td class="fb-act" style="white-space:nowrap">'+(f.action==='sell'?'':'<button class="log sm fb-add" data-i="'+i+'">Add</button> ')+'<button class="ghost sm fb-ign" data-i="'+i+'">Ignore</button>'+aiMatchBtnHtml(f) /* v5.15: Suggest the match (AI helper) */+'</td></tr>'+aiMatchRowHtml(f); }).join('')+'</table></div>'+(fillPending.length>=6?'<div class="copy-bar"><button type="button" class="copy-big" data-copy-fn="fromBooksText">📋 Copy this list</button></div>':''):'');
 }
 function fromBooksText(){ return 'From your books — '+fillPending.length+' not matched\n'+fillPending.map(f=>{ const L=fillLabel(f); return [FILL_NAME[f.book], L.bet, L.game, L.when, f.price!=null?(f.price*100).toFixed(1)+'%':'', '$'+(+(f.cost||0)+(+f.fee||0)).toFixed(2), f.ts?new Date(f.ts).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}):'', f.book+':'+f.id].filter(Boolean).join(' · '); }).join('\n'); }
 // v3.03: the big highlighted Copy — top and bottom of long outputs (data-copy-from = an element id, data-copy-fn = a text builder)
@@ -13402,9 +13475,9 @@ function renderMyBooks(){
       '<td class="meta">'+(f.ts?new Date(f.ts).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}):'')+'</td>'+
       '<td class="num">'+(f.price!=null?esc(fmtOdds(Math.round(americanOf(f.price))))+'<div class="meta">'+(f.price*100).toFixed(1)+'%</div>':'—')+'</td>'+
       '<td class="num">$'+cost.toFixed(2)+'</td>'+
-      '<td class="num '+cls+'"><b>'+esc(st==='open'?(b&&b.result==='?'?'final · ?':'open'):st)+'</b></td>'+
+      '<td class="num '+cls+'"><b>'+esc(st==='open'?(b&&b.result==='?'?'final · ?':'open'):st)+'</b>'+(S?aiSettleBtnHtml(f):'') /* v5.15: Check the book’s grade (AI helper) */+'</td>'+
       '<td class="num">'+(paid!=null?'$'+paid.toFixed(2):'—')+'</td>'+
-      '<td>'+(b?'<span class="ok-t">✓ in log</span>'+(b.fingerprint?' <span class="meta">(fingerprint)</span>':''):'<span class="tb-down">✗ not logged</span> <button type="button" class="log sm mb-add" data-k="'+esc(f.book+':'+f.id)+'">+ Add</button><div class="meta mb-why">'+esc(fillWhyNot(f))+'</div>')+'</td></tr>';   // v3.90: add it from here, and why it was not logged
+      '<td>'+(b?'<span class="ok-t">✓ in log</span>'+(b.fingerprint?' <span class="meta">(fingerprint)</span>':''):'<span class="tb-down">✗ not logged</span> <button type="button" class="log sm mb-add" data-k="'+esc(f.book+':'+f.id)+'">+ Add</button><div class="meta mb-why">'+esc(fillWhyNot(f))+'</div>')+'</td></tr>'+aiSettleRowHtml(f) /* v5.15 */;   // v3.90: add it from here, and why it was not logged
   }).join('');
   const sum=Object.entries(tot).map(([k,t])=>{ const pl=t.back-t.settled;
     const logPl=logged.filter(b=>b.fillBook===k).reduce((s,b)=>{ const v=heldValue(b); return s+(v&&!v.open?v.v:0); },0);
@@ -13667,7 +13740,7 @@ function syncBaseColl(pairs, st){
    The Worker never reads the data: it stores what the page sends and refuses a save made from an older copy (409) — the
    page then merges the newer copy and saves again. The board is separate: rows by source, the newer load wins. */
 var SY=null;
-const SYNC_SETS={cfg:'mbev.cfg', sweet:'mbev.sweet2', maker:'mbev.makerFees', grades:'mbev.grades', ignored:'mbev.fillIgnored'};   // v3.94: Ignore on every device   // v3.93: your results, on every device
+const SYNC_SETS={cfg:'mbev.cfg', sweet:'mbev.sweet2', maker:'mbev.makerFees', grades:'mbev.grades', ignored:'mbev.fillIgnored', ai_slips:'mbev.ai.slips', ai_names:'mbev.ai.names', ai_sources:'mbev.ai.sources', ai_markets:'mbev.ai.markets', ai_news:'mbev.ai.news', ai_log:'mbev.ai.log'};   // v5.15: the AI helper's data points   // v3.94: Ignore on every device   // v3.93: your results, on every device
 function syncLS(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v); return true; }catch(e){ return v===undefined?null:false; } }
 function syncDev(){ const u=navigator.userAgent||''; return /iPhone/.test(u)?'iPhone':/iPad/.test(u)?'iPad':/Android/.test(u)?'Android':/Macintosh/.test(u)?'Mac':/Windows/.test(u)?'Windows PC':/CrOS/.test(u)?'Chromebook':/Linux/.test(u)?'Linux PC':'browser'; }
 function syncNewMeta(){ return {v:1, rev:0, brev:0, c:{}, s:{}, bsig:'', at:0, dirty:false, joined:false}; }
@@ -14017,6 +14090,445 @@ document.addEventListener('click', async e=>{
     opUsageChip();
   }catch(err){ box.textContent='OddsPapi request failed: '+err.message; }
 });
+/* ============ v5.15: the AI helper, app side (owner 11/15-16: "its only for me now." · "Lets use it to its full potential. All that we can." · "LETS CHOOSE SONNET") ============
+   Contract: agent-notes/ai-helper-contract_2026-11-15_v1.md. The Worker (prop-bet-api, POST /ai and GET /ai/status, behind the screener passphrase like every data route) owns
+   every prompt, the model (Sonnet), the effort, the tools and the day and month caps; the app sends only { job, input } through aiCall and shows the answer in plain words.
+   It reads, checks, explains and records; it never decides. Whatever would write a bet, a grade, a match or a price is shown first as a proposal with Use / Ignore (Edit: change the
+   form, the book or the odds before Use or Save). No AI answer changes a decision, a stake, a floor, a cap, Kelly, the order, the six checks or the Scorecard; "⚠ check news" is a label.
+   Off until GET /ai/status says the Worker is set up and you tick "Use the AI helper" (Settings › AI helper); every button is hidden while it is off (html.ai-on).
+   Data points kept on this device (and in sync when sync is on, through SYNC_SETS): mbev.ai.slips, .names, .sources, .markets, .news, .log. No picture is kept.
+   Hoisted function declarations only (renders reach aiCardTagsHtml, aiNewsBtnHtml, aiMatchBtnHtml, aiGradeBtnHtml, aiSettleBtnHtml, aiMarketKey and aiNamesBet before this block runs). */
+function aiGet(k, d){ try{ const v=JSON.parse(localStorage.getItem('mbev.ai.'+k)||'null'); return v==null?d:v; }catch(e){ return d; } }
+function aiPut(k, v){ const ok=lsSafeSet('mbev.ai.'+k, JSON.stringify(v)); window._aiMkC=null; if(ok){ try{ syncTouched(); }catch(e){} } return ok; }   // a data point: synced when sync is on
+function aiPutLocal(k, v){ return lsSafeSet('mbev.ai.'+k, typeof v==='string'?v:JSON.stringify(v)); }   // this device only (status, the on switch, the market day)
+function aiSt(){ return aiGet('status', null)||{}; }
+function aiOn(){ try{ return localStorage.getItem('mbev.ai.on')==='1' && aiSt().setUp===true; }catch(e){ return false; } }
+function aiUsd(x){ x=+x||0; return '$'+(x>0 && x<0.1 ? x.toFixed(3) : x.toFixed(2)); }
+function aiWhen(iso){ const t=Date.parse(iso); if(isNaN(t)) return 'soon'; return new Date(t).toLocaleString('en-US',{timeZone:'America/Chicago', weekday:'short', month:'numeric', day:'numeric', hour:'numeric', minute:'2-digit'})+' CT'; }
+function aiVisible(el){ return !!(el && el.getClientRects().length); }
+function aiDomain(u){ try{ return new URL(u).hostname.replace(/^www\./,''); }catch(e){ return ''; } }
+function aiLink(s){ const u=String(s&&s.url||''), t=String(s&&s.title||'')||aiDomain(u)||'source'; if(!/^https?:\/\//i.test(u)) return esc(t);
+  if(s.seen===false) return esc(t)+' <span class="meta">'+esc(aiDomain(u))+' (not from its search)</span>'; /* v5.15 (La Guardia): a page the search never returned is text, not a link */
+  return '<a href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">'+esc(t)+'</a> <span class="meta">'+esc(aiDomain(u))+'</span>'; }
+function aiJobWord(j){ return ({slip:'Read slip', prices:'Prices from a screenshot', news:'Check news', match:'Suggest the match', grade:'Find the result', settle:'Check the book’s grade', market:'Market names', ask:'Ask my log', weekly:'This week in plain words', bug:'Bug note'})[j]||String(j||''); }
+/* Plain words for every answer that is not a result (the Worker's error codes, ai.js): never raw JSON. */
+function aiErrText(code, j){ j=j||{};
+  if(code==='cap'){ const day=j.which!=='month', sp=day?j.spentToday:j.spentMonth, cp=day?j.capDay:j.capMonth; /* v5.15 (La Guardia): new wording; the Worker keeps a little in reserve for the largest job */
+    return (day?'Today’s':'This month’s')+' AI budget is used up (it keeps a little in reserve for the largest job)'+(sp!=null&&cp!=null?': '+aiUsd(sp)+' of '+aiUsd(cp)+' spent':'')+'. Nothing was sent. It starts again '+aiWhen(j.resets)+'.'; }
+  return ({not_set_up:'The AI helper is not set up on your Worker yet (it has no Anthropic key). Nothing was sent.',
+    origin:'Your Worker did not accept requests from this web address. Nothing was sent.', content_type:'The Worker refused the request format. Reload the page and try again. Nothing was sent.',
+    not_locked:'Your Worker has no screener passphrase set, so it will not run the AI helper. Set one on the Worker first. Nothing was sent.',
+    locked:'Your Worker did not accept the screener passphrase. Check it in Settings › Connect. Nothing was sent.',
+    bad_input:'The Worker could not take this request'+(j.why?': '+String(j.why).slice(0,120):'')+'.',
+    too_large:'That is too large to send. Try a smaller screenshot or less text. Nothing was sent.', bad_json:'The Worker could not read the request. Reload the page and try again.',
+    unknown_job:'Your Worker does not know this job yet. It needs the newer Worker.', refusal:'The AI declined to answer this one. Nothing was changed.',
+    max_tokens:'The answer was too long and was cut off. Nothing was changed. Try again with less.', bad_output:'The answer could not be read. Nothing was changed. Try again.',
+    unfinished:'The search did not finish. Nothing was changed. Try again in a minute.', busy:'Anthropic is busy right now. Try again in a minute.',
+    bad_key:'The Anthropic key on your Worker was not accepted. Check the key on the Worker.', rejected:'Anthropic did not accept this request. Try a different picture or question.',
+    network:'Could not reach your Worker. Check your connection and try again.', off:'The AI helper is off. Turn it on in Settings › AI helper.'})[code]
+    || 'The AI helper could not answer'+(j.status?' (error '+(+j.status||'')+')':'')+'. Nothing was changed.'; }
+function aiLogAdd(job, usd, err){ const L=aiGet('log',[]); const o={at:new Date().toISOString(), job, usd:+(+usd||0).toFixed(5)}; if(err) o.err=String(err).slice(0,20); L.push(o); while(L.length>200) L.shift(); aiPut('log', L); }
+/* The one way the app talks to the AI helper: POST API_BASE/ai with the passphrase header like the other Worker calls (apiHeaders; the fetch wrapper turns it into the cookie when that mode is on). */
+async function aiCall(job, input){
+  if(!aiOn()) return {ok:false, code:'off', err:aiErrText('off')};
+  let res, j=null;
+  try{ res=await fetch(API_BASE+'/ai', {method:'POST', headers:Object.assign({'Content-Type':'application/json'}, apiHeaders()), body:JSON.stringify({job, input}), cache:'no-store'}); }
+  catch(e){ return {ok:false, code:'network', err:aiErrText('network')}; }
+  try{ j=await res.json(); }catch(e){ j=null; }
+  if(j && (j.spentToday!=null || j.spentMonth!=null)){ const s=aiSt(); if(j.spentToday!=null) s.spentToday=+j.spentToday||0; if(j.spentMonth!=null) s.spentMonth=+j.spentMonth||0; if(j.capDay!=null) s.capDay=+j.capDay; if(j.capMonth!=null) s.capMonth=+j.capMonth; aiPutLocal('status', s); }
+  if(j && j.usd!=null) aiLogAdd(job, j.usd, j.ok?'':j.error);
+  if(res.status===401) return {ok:false, code:'locked', err:aiErrText('locked')};
+  if(!j || typeof j!=='object') return {ok:false, code:'http', err:aiErrText('http', {status:res.status})};
+  if(!j.ok){ if(j.error==='not_set_up'){ const s=aiSt(); s.setUp=false; aiPutLocal('status', s); } try{ aiPanelPaint(); }catch(e){} return {ok:false, code:j.error||'api', err:aiErrText(j.error||'api', Object.assign({status:res.status}, j))}; }
+  try{ aiPanelPaint(); }catch(e){}
+  return {ok:true, out:(j.out&&typeof j.out==='object')?j.out:{}, usd:+j.usd||0}; }
+async function aiStatusCheck(){
+  let res, j=null;
+  try{ res=await fetch(API_BASE+'/ai/status', {headers:apiHeaders(), cache:'no-store'}); try{ j=await res.json(); }catch(e){} }
+  catch(e){ window._aiStMsg=aiErrText('network'); aiPaint(); return null; }
+  if(res.status===401){ window._aiStMsg=aiErrText('locked'); aiPaint(); return null; }
+  if(!res.ok || !j || typeof j.setUp!=='boolean'){ window._aiStMsg='Your Worker does not have the AI helper yet, so it stays off. Nothing is sent.'; aiPutLocal('status', {setUp:false, at:Date.now()}); aiPaint(); return null; }
+  window._aiStMsg=''; const s={setUp:j.setUp, spentToday:+j.spentToday||0, spentMonth:+j.spentMonth||0, capDay:+j.capDay||0, capMonth:+j.capMonth||0, at:Date.now()};
+  aiPutLocal('status', s); aiPaint(); return s; }
+/* Settings › AI helper: the switch, what was spent, the caps (set on the Worker, read here), recent jobs with their cost, the market names to confirm, Clear AI data. */
+function aiPanelPaint(){ const g=id=>document.getElementById(id), box=g('aiPanel'); if(!box) return;
+  const s=aiSt(), on=aiOn(), sw=g('aiOnBox');
+  if(sw){ sw.disabled=s.setUp!==true; sw.checked=on; }
+  const st=g('aiStatus');
+  if(st) st.textContent = window._aiStMsg ? window._aiStMsg
+    : s.setUp===true ? (on?'On.':'Set up on your Worker, and off here.')+' Spent today '+aiUsd(s.spentToday)+' of '+aiUsd(s.capDay)+' · this month '+aiUsd(s.spentMonth)+' of '+aiUsd(s.capMonth)+'. The limits are set on the Worker; over a limit nothing is sent.'
+    : s.setUp===false ? 'Not set up on your Worker yet (it has no Anthropic key), so the helper stays off. Nothing is sent.'
+    : 'Not checked yet. Press Check the Worker.';
+  const L=aiGet('log',[]).slice(-12).reverse(), ll=g('aiLogList');
+  if(ll) ll.innerHTML = L.length ? '<table class="ai-log"><thead><tr><th>When</th><th>Job</th><th class="num">Cost</th></tr></thead><tbody>'+L.map(x=>'<tr><td>'+esc(new Date(x.at).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}))+'</td><td>'+esc(aiJobWord(x.job))+(x.err?' <span class="meta">(no answer)</span>':'')+'</td><td class="num">'+aiUsd(x.usd)+'</td></tr>').join('')+'</tbody></table>' : '<p class="meta">No AI jobs yet.</p>';
+  const mk=g('aiMkBox'); if(mk) mk.innerHTML=aiMkPropHtml(); }
+function aiPaint(){ try{ document.documentElement.classList.toggle('ai-on', aiOn()); }catch(e){} try{ aiPanelPaint(); }catch(e){} }
+function aiRedraw(){ [renderFromBooks, renderLookOut, renderMyBooks, refresh].forEach(f=>{ try{ f(); }catch(e){} }); }
+function aiClearData(){ ['slips','names','sources','markets','news','log','mkProp','mkDay'].forEach(k=>{ try{ localStorage.removeItem('mbev.ai.'+k); }catch(e){} }); window._aiMkC=null; try{ syncTouched(); }catch(e){} aiPaint(); aiRedraw(); }
+
+/* ---- 1. Pictures: a screenshot is drawn on a canvas at most 1,600 px on its longest side and sent as a JPEG; nothing of it is kept. ---- */
+function aiImageFrom(file){ return new Promise((res, rej)=>{ const u=URL.createObjectURL(file), im=new Image();
+  im.onload=()=>{ try{ const W=im.naturalWidth||1, H=im.naturalHeight||1, k=Math.min(1, 1600/Math.max(W,H)), w=Math.max(1,Math.round(W*k)), h=Math.max(1,Math.round(H*k)), c=document.createElement('canvas'); c.width=w; c.height=h;
+    const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,w,h); x.drawImage(im,0,0,w,h); const d=c.toDataURL('image/jpeg',0.85); URL.revokeObjectURL(u); res({image:d.slice(d.indexOf(',')+1), mediaType:'image/jpeg', w, h}); }catch(e){ rej(e); } };
+  im.onerror=()=>{ URL.revokeObjectURL(u); rej(new Error('not a picture')); }; im.src=u; }); }
+function aiImgOf(dt){ if(!dt) return null; let f=[...(dt.files||[])].find(x=>/^image\//.test(x.type||'')); if(!f && dt.items) for(const it of dt.items){ if(it.kind==='file' && /^image\//.test(it.type||'')){ f=it.getAsFile(); break; } } return f||null; }
+async function aiClipImage(){ try{ if(!navigator.clipboard || !navigator.clipboard.read) return null; const items=await navigator.clipboard.read(); for(const it of items){ const t=(it.types||[]).find(x=>/^image\//.test(x)); if(t){ const b=await it.getType(t); return new File([b], 'clip', {type:t}); } } }catch(e){} return null; }
+function aiDropWire(pre, onFile){ const g=id=>document.getElementById(id), pick=g(pre+'Pick'), file=g(pre+'File'), drop=g(pre+'Drop'), clip=g(pre+'Clip'); if(!pick || !file || !drop) return;
+  pick.addEventListener('click',()=>file.click());
+  file.addEventListener('change',()=>{ const f=file.files&&file.files[0]; if(f) onFile(f); file.value=''; });
+  if(clip) clip.addEventListener('click', async ()=>{ const f=await aiClipImage(); if(f) onFile(f); else { const o=g(pre+'Out'); if(o) o.innerHTML='<span class="meta">No picture found on the clipboard. Copy a screenshot, then press Ctrl+V here (on a phone: long-press here, then Paste), or pick the file.</span>'; } });
+  ['dragenter','dragover'].forEach(k=>drop.addEventListener(k,e=>{ e.preventDefault(); drop.classList.add('ai-over'); }));
+  drop.addEventListener('dragleave',()=>drop.classList.remove('ai-over'));
+  drop.addEventListener('drop',e=>{ e.preventDefault(); drop.classList.remove('ai-over'); const f=aiImgOf(e.dataTransfer); if(f) onFile(f); }); }
+function aiNum(v){ const n=typeof v==='number'?v:parseFloat(String(v==null?'':v).replace(/[^0-9.+-]/g,'')); return isFinite(n)?n:null; }
+function aiOddsTxt(v){ const n=aiNum(v); return n==null?String(v||''):(n>0?'+'+n:String(n)); }
+function aiOU(s){ const t=String(s||'').trim(); return /^o(ver)?\b/i.test(t)?'O':/^u(nder)?\b/i.test(t)?'U':''; }
+function aiPickOpt(sel, name){ if(!sel || !name) return ''; const n=nrm(name); if(!n) return ''; const O=[...sel.options];
+  const o=O.find(x=>nrm(x.value)===n||nrm(x.text)===n) || O.find(x=>{ const v=nrm(x.text); return v && (v.indexOf(n)===0 || n.indexOf(v)===0); }); return o?o.value:''; }
+
+/* ---- 2. slip: "📷 Read slip" in + Add a bet. Use fills the single-bet form or the Parlay / pick'em one; you check it and press Save. On Save, the data point (what was read, what you changed). ---- */
+async function aiSlipRead(file){ const out=document.getElementById('aiSlipOut'); if(!out || !aiOn()) return;
+  out.innerHTML='<span class="meta">Reading the slip…</span>';
+  let img; try{ img=await aiImageFrom(file); }catch(e){ out.innerHTML='<span class="ai-err">That file could not be read as a picture. Try a PNG or JPG screenshot.</span>'; return; }
+  window._aiLastImg={w:img.w, h:img.h, type:img.mediaType};
+  const r=await aiCall('slip', {image:img.image, mediaType:img.mediaType});
+  if(!r.ok){ out.innerHTML='<span class="ai-err">'+esc(r.err)+'</span>'; return; }
+  window._aiSlipProp=r.out; out.innerHTML=aiSlipPropHtml(r.out); }
+function aiUnclearHas(U, keys){ return [].concat(keys).some(k=>U.some(u=>u===k || u.indexOf(k)>=0)); }
+function aiSlipPropHtml(o){ const U=(o.unclear||[]).map(x=>String(x).toLowerCase()), legs=Array.isArray(o.legs)?o.legs:[], par=o.kind==='parlay';
+  const li=(k,lab,v)=>v==null||v===''?'':'<li'+(aiUnclearHas(U,k)?' class="ai-unc"':'')+'>'+lab+' <b>'+esc(v)+'</b>'+(aiUnclearHas(U,k)?' ⚠':'')+'</li>';
+  const legTxt=l=>[l.player||l.team, l.side, l.line, l.market, l.odds!=null?'('+aiOddsTxt(l.odds)+')':''].filter(x=>x!=null&&x!=='').join(' ');
+  return '<div class="ai-prop"><div class="ai-h">Read from the slip <span class="meta">'+esc(o.confidence?'· how clearly it read: '+o.confidence:'')+'</span></div><ul>'+
+    li('book','Book',o.book)+li('kind','Type',par?'Parlay or pick’em, '+legs.length+' picks':'Single bet')+li('stake','Stake $',o.stake!=null?(+o.stake).toFixed(2):null)+li('odds','Odds',o.odds!=null?aiOddsTxt(o.odds):null)+
+    li('towin','To win $',o.toWin!=null?(+o.toWin).toFixed(2):null)+li('totalpayout','Total payout $',o.totalPayout!=null?(+o.totalPayout).toFixed(2):null)+li('free','Free',o.free?'yes':null)+li('placedat','Placed',o.placedAt)+
+    li('entrytype','Entry',o.entryType)+li('paysall','Pays if all hit',o.paysAll!=null?String(o.paysAll):null)+li('flexpays','Flex pays',Array.isArray(o.flexPays)&&o.flexPays.length?o.flexPays.join(' · '):null)+
+    legs.map((l,i)=>li('legs['+i+']',(legs.length>1?'Pick '+(i+1):'Pick'),legTxt(l))).join('')+'</ul>'+
+    (U.length?'<div class="ai-warn">⚠ Not clear on the slip: '+esc(U.join(', '))+'. Those boxes are marked: check them.</div>':'')+
+    '<div class="ai-acts"><button type="button" class="act sm" id="aiSlipUse">Use</button> <button type="button" class="ghost sm" id="aiSlipIgnore">Ignore</button></div>'+
+    '<p class="meta">Use fills the form below. Nothing is saved until you check it and press '+(par?'Save parlay':'Save bet')+'.</p></div>'; }
+function aiSlipFill(o){ const g=id=>document.getElementById(id), U=(o.unclear||[]).map(x=>String(x).toLowerCase()), legs=Array.isArray(o.legs)?o.legs:[], par=o.kind==='parlay'||legs.length>1, L0=legs[0]||{};
+  document.querySelectorAll('#addBetPanel .ai-unclear').forEach(e=>e.classList.remove('ai-unclear'));
+  const mark=(el,keys,force)=>{ if(!el) return; if(force || aiUnclearHas(U,keys)){ const f=el.closest('.field')||el.closest('label')||el; f.classList.add('ai-unclear'); } };
+  const fire=el=>{ if(el){ el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true})); } };
+  const read={book:o.book||null, stake:o.stake!=null?+o.stake:null};
+  const placed=(id)=>{ if(!o.placedAt) return; const t=Date.parse(o.placedAt), pi=g(id); if(!pi) return; if(!isNaN(t) && t<=Date.now()+5*60e3){ pi.value=placedLocalVal(new Date(t).toISOString()); delete pi.dataset.at; delete pi.dataset.v; mark(pi,'placedat'); } else mark(pi,'placedat',true); };
+  if(par){
+    g('abType').value='parlay'; try{ abFields(); }catch(e){}
+    const pb=aiPickOpt(g('abParBook'), o.book); if(pb) g('abParBook').value=pb; mark(g('abParBook'),'book',!pb);
+    if(o.entryType){ g('abParKind').value=o.entryType==='flex'?'flex':'power'; read.entryType=o.entryType; } mark(g('abParKind'),'entrytype',!o.entryType);
+    g('abParPicks').value=legs.length||''; read.picks=legs.length||null; mark(g('abParPicks'),'legs',!legs.length);
+    g('abParFree').checked=!!o.free; read.free=!!o.free;
+    if(o.stake!=null) g('abParStake').value=(+o.stake).toFixed(2); mark(g('abParStake'),'stake',o.stake==null);
+    const st=+o.stake||0, all=o.totalPayout>0?+o.totalPayout:(o.paysAll>0&&st>0?st*o.paysAll:(o.toWin>0&&st>0?st+(+o.toWin):null));
+    if(all!=null){ g('abParAll').value=all.toFixed(2); read.all=+all.toFixed(2); } mark(g('abParAll'),['paysall','totalpayout','towin'],all==null);
+    const fp=(Array.isArray(o.flexPays)?o.flexPays:[]).map(x=>{ const s=String(x); const n=aiNum(s); return n==null?null:(/x/i.test(s)&&st>0?st*n:n); });
+    if(fp[0]!=null){ g('abParM1').value=fp[0].toFixed(2); } if(fp[1]!=null){ g('abParM2').value=fp[1].toFixed(2); }
+    g('abParLegs').value=legs.map(l=>[l.player||l.team, aiOU(l.side)?(aiOU(l.side)==='O'?'O':'U'):l.side, l.line, l.market].filter(x=>x!=null&&x!=='').join(' ')).join(', ');
+    placed('abParPlaced');
+    fire(g('abParAll')); fire(g('abParStake'));
+  } else {
+    const m=String(L0.market||''), ty=L0.player?'prop':/money\s*line|\bml\b|to win/i.test(m)?'moneyline':/spread|handicap|run line|puck line/i.test(m)?'spread':/total/i.test(m)?'total':'prop';
+    g('abType').value=ty; try{ abFields(); }catch(e){}
+    read.market=L0.market||null; read.line=L0.line!=null?+L0.line:null; read.side=L0.side||null;
+    if(ty==='prop'){ g('abPlayer').value=L0.player||''; g('abStat').value=L0.market||''; read.player=L0.player||null; mark(g('abPlayer'),'player',!L0.player); mark(g('abStat'),'market',!L0.market); }
+    const sd=aiOU(L0.side); if(sd) g('abPick').value=sd; if(ty==='prop'||ty==='total') mark(g('abPick'),'side',!sd);
+    if(L0.line!=null && ty!=='moneyline') g('abLine').value=L0.line; if(ty!=='moneyline') mark(g('abLine'),'line',L0.line==null);
+    if(ty==='spread'||ty==='moneyline'){ const tm=L0.team||L0.side||'', tv=aiPickOpt(g('abTeam'), tm); if(tv) g('abTeam').value=tv; else if(g('abTeamFree')) g('abTeamFree').value=String(tm).slice(0,30); read.team=tm||null; mark(g('abTeam'),'team',!tv); }
+    if(!g('abGame').value && !(g('abGameFree')&&g('abGameFree').value)) mark(g('abGame'),'game',true);   // the slip does not say which game: pick it
+    placed('abPlaced');
+    const h=g('abHost'); if(h && !h.querySelector('.editor')){ try{ abOpenEditor(); }catch(e){} }
+    const ed=h&&h.querySelector('.editor');
+    if(ed){ const bs=ed.querySelector('.eb-book'), bk=aiPickOpt(bs, o.book); if(bk){ bs.value=bk; bs.dispatchEvent(new Event('change',{bubbles:true})); } mark(bs,'book',!bk);
+      const md=ed.querySelector('.eb-mode'); if(md && md.value!=='odds'){ md.value='odds'; md.dispatchEvent(new Event('change',{bubbles:true})); }
+      abCostTyped=true;   // the stake read from the slip stays (+ Add a bet does not put its own stake over it, as when a book fill fills the form)
+      const od=ed.querySelector('.eb-odds'), sk=ed.querySelector('.eb-stake');
+      if(od && o.odds!=null){ od.value=aiOddsTxt(o.odds); read.odds=aiOddsTxt(o.odds); } mark(od,'odds',o.odds==null);
+      if(sk && o.stake!=null) sk.value=(+o.stake).toFixed(2); mark(sk,'stake',o.stake==null);
+      [od,sk].forEach(x=>x&&x.dispatchEvent(new Event('input',{bubbles:true}))); }
+  }
+  window._aiSlip={at:new Date().toISOString(), kind:par?'parlay':'single', read};
+  const out=g('aiSlipOut'); if(out) out.innerHTML='<div class="ai-ok">Filled in from the slip. Check every box (the ones marked ⚠ most)'+(par?'':', pick the game')+', then press '+(par?'Save parlay':'Save bet')+'.</div>'; }
+/* Called once the bet is saved (+ Add a bet's own Save bet or Save parlay): what was read, and every box you changed from it. */
+function aiSlipSaved(L){ const P=window._aiSlip; if(!P || !L) return; window._aiSlip=null;
+  const near=(a,b)=>{ if(a==null||b==null) return a==b; const x=aiNum(a), y=aiNum(b); if(x!=null&&y!=null) return Math.abs(x-y)<0.005; return nrm(a)===nrm(b); };
+  const bookSame=(a,b)=>{ const x=nrm(a), y=nrm(bookLabel(b)||b); return !!x && !!y && (x===y || x.indexOf(y)>=0 || y.indexOf(x)>=0); };
+  const mine = P.kind==='parlay' ? {book:L.book, stake:+L.stake||0, picks:+(L.parlay&&L.parlay.picks)||null, all:+(L.parlay&&L.parlay.pays&&L.parlay.pays.all)||null, free:!!L.free, entryType:((document.getElementById('abParKind')||{}).value)||null}
+    : {book:L.book, stake:+L.stake||0, odds:L.odds||null, player:L.kind==='prop'?L.name:null, market:L.kind==='prop'?statOfMarket(L.market):(L.kind||null), line:lineOfMarket(L.market), side:sideOf(L)||null, team:L.team||null};
+  const C={}; Object.keys(P.read).forEach(k=>{ const a=P.read[k], b=mine[k]; if(a==null || !(k in mine)) return;
+    if(k==='book' ? !bookSame(a,b) : k==='side' ? (aiOU(a)||nrm(a))!==(aiOU(b)||nrm(b)) : k==='market' && L.kind!=='prop' ? false : !near(a,b)) C[k]=[a,b]; });
+  const S=aiGet('slips',[]); S.push({at:P.at, book:L.book||P.read.book||'', kind:P.kind, fields:P.read, corrections:C}); while(S.length>300) S.shift();
+  if(!aiPut('slips', S)){ const m=document.getElementById('aiSlipOut'); if(m) m.innerHTML='<span class="ai-err">The bet is saved. The slip note could not be kept on this device (storage full).</span>'; return; }
+  const m=document.getElementById('aiSlipOut'); if(m) m.innerHTML='<span class="meta">Saved. '+(Object.keys(C).length?'Noted what you changed from the slip ('+esc(Object.keys(C).join(', '))+'), so the reading can get better.':'The slip was read right.')+'</span>'; }
+
+/* ---- 3. prices: "📷 Add prices from a screenshot" on the Board. Each row read is matched to the same prop or line already on the board (its fair price); it becomes a board row on
+   the book in the screenshot with src 'ai-shot', priced by La Contadora like any row, its price time = when it was read. A row with no fair price on the board cannot be priced: not added. ---- */
+function aiShotOpen(on){ const b=document.getElementById('aiShotBox'); if(b){ b.hidden=!on; if(on) try{ b.scrollIntoView({block:'nearest'}); }catch(e){} } }
+async function aiShotRead(file){ const out=document.getElementById('aiShotOut'); if(!out || !aiOn()) return;
+  out.innerHTML='<span class="meta">Reading the screenshot…</span>';
+  let img; try{ img=await aiImageFrom(file); }catch(e){ out.innerHTML='<span class="ai-err">That file could not be read as a picture. Try a PNG or JPG screenshot.</span>'; return; }
+  window._aiLastImg={w:img.w, h:img.h, type:img.mediaType};
+  const sp=(document.getElementById('apiSport')||{}).value||'';
+  const r=await aiCall('prices', {image:img.image, mediaType:img.mediaType, sport:sp});
+  if(!r.ok){ out.innerHTML='<span class="ai-err">'+esc(r.err)+'</span>'; return; }
+  const at=new Date().toISOString(), rows=(Array.isArray(r.out.rows)?r.out.rows:[]).map(x=>({x, base:aiShotBase(x)}));
+  window._aiShot={at, book:r.out.book||'', rows, unclear:r.out.unclear||[]}; out.innerHTML=aiShotPropHtml(); }
+function aiShotBase(x){ try{
+  const cand=(lastRows||[]).filter(r=>r && r.fairProb!=null && r.src!=='ai-shot');   /* a row already bet keeps its fair price; the new row is marked already bet by audit like any */
+  const sd=aiOU(x.side), ln=x.line!=null?+x.line:null;
+  if(x.player){ return cand.find(r=>r.kind==='prop' && sameName(x.player, r.name) && statFam(x.market||'')===statFam(statOfMarket(r.market)) && (ln==null || Math.abs((lineOfMarket(r.market)||0)-ln)<0.01) && (!sd || r.side===sd))||null; }
+  const m=String(x.market||''), kind=/money\s*line|\bml\b|to win|winner/i.test(m)?'moneyline':/spread|handicap|run line|puck line/i.test(m)?'spread':/total|over|under/i.test(m)||sd?'total':'';
+  const tm=nrm(x.team||(sd?'':x.side)||'');
+  return cand.find(r=>{ if(!kind || r.kind!==kind) return false;
+    if(kind==='total') return sd && r.side===sd && ln!=null && Math.abs((lineOfMarket(r.market)||0)-ln)<0.01 && (!x.game || !r.game || nrm(r.game).split(' ').some(w=>w.length>1 && nrm(x.game).indexOf(w)>=0));
+    const nm=nrm(r.team||r.name), ab=nrm(normAbbr(r.team||r.name)); if(!tm || !(nm===tm || ab===tm || (nm && (nm.indexOf(tm)>=0 || tm.indexOf(nm)>=0)))) return false;
+    return kind==='moneyline' || ln==null || Math.abs((lineOfMarket(r.market)||0)-ln)<0.01; })||null; }catch(e){ return null; } }
+function aiShotPropHtml(){ const S=window._aiShot; if(!S) return ''; const bkSel=aiPickOpt({options:BET_BOOKS.map(b=>({value:b, text:bookLabel(b)}))}, S.book);
+  const n=S.rows.filter(y=>y.base).length;
+  return '<div class="ai-prop"><div class="ai-h">Read from the screenshot · '+S.rows.length+' price'+(S.rows.length===1?'':'s')+', '+n+' can be priced</div>'+
+    '<label class="ai-lab">Book <select id="aiShotBook">'+(bkSel?'':'<option value="">choose the book</option>')+BET_BOOKS.map(b=>'<option value="'+esc(b)+'"'+(b===bkSel?' selected':'')+'>'+esc(bookLabel(b))+'</option>').join('')+'</select></label>'+(S.book&&!bkSel?' <span class="ai-warn">⚠ read as “'+esc(S.book)+'”: choose the book</span>':'')+
+    '<div class="ai-scroll"><table class="ai-tbl"><thead><tr><th></th><th>Player or team</th><th>Bet</th><th>Odds</th><th>On the board</th></tr></thead><tbody>'+
+    S.rows.map((y,i)=>{ const x=y.x, b=y.base; return '<tr'+(b?'':' class="ai-no"')+'><td><input type="checkbox" class="ai-shot-chk" data-i="'+i+'" aria-label="Add this row"'+(b?' checked':' disabled')+'></td><td>'+esc(x.player||x.team||'?')+(x.game?'<div class="meta">'+esc(x.game)+'</div>':'')+'</td><td>'+esc([x.side, x.line, x.market].filter(v=>v!=null&&v!=='').join(' '))+'</td>'+
+      '<td><input type="text" class="ai-shot-odds" data-i="'+i+'" value="'+esc(aiOddsTxt(x.odds))+'" aria-label="Odds" inputmode="text"></td><td>'+(b?'fair '+esc(fmtOdds(Math.round(americanOf(b.fairProb))))+'<div class="meta">'+esc(b.name)+' · '+esc(b.market||'')+'</div>':'<span class="meta">no fair price on the board for this one: it cannot be priced, so it is not added</span>')+'</td></tr>'; }).join('')+'</tbody></table></div>'+
+    ((S.unclear||[]).length?'<div class="ai-warn">⚠ Not clear in the picture: '+esc(S.unclear.join(', '))+'</div>':'')+
+    '<div class="ai-acts"><button type="button" class="act sm" id="aiShotAdd">Add to the board</button> <button type="button" class="ghost sm" id="aiShotIgnore">Ignore</button></div>'+
+    '<p class="meta">Check the odds against the picture first. Added rows say “read from a screenshot”; La Contadora prices them like any row, and their price ages from now.</p></div>'; }
+function aiShotAdd(){ const S=window._aiShot, out=document.getElementById('aiShotOut'); if(!S || !out) return;
+  const book=(document.getElementById('aiShotBook')||{}).value||''; if(!book){ out.querySelector('.ai-acts').insertAdjacentHTML('afterend','<div class="ai-err">Choose the book first.</div>'); return; }
+  const rows=[];
+  out.querySelectorAll('.ai-shot-chk').forEach(c=>{ if(!c.checked) return; const y=S.rows[+c.dataset.i]; if(!y || !y.base) return;
+    const oi=out.querySelector('.ai-shot-odds[data-i="'+c.dataset.i+'"]'), raw=aiOddsTxt(oi?oi.value:y.x.odds), p=toProb(raw); if(p==null || !(p>0 && p<1)) return;
+    rows.push(Object.assign(slimRow(y.base), {book, offeredRaw:raw, offeredProb:p, src:'ai-shot', loadedAt:S.at, priceAt:S.at, apiKey:null, screenerEV:null, consensusEdge:null})); });
+  if(!rows.length){ out.innerHTML='<span class="meta">Nothing was added.</span>'; window._aiShot=null; return; }
+  const idOf=r=>[r.sport,r.name,r.market,r.side||'',r.book||'',r.offeredRaw].join('|').toLowerCase(), inc=new Set(rows.map(idOf));
+  lastRows=lastRows.filter(r=>!inc.has(idOf(r))).concat(rows);
+  window._aiShot=null; refresh(); try{ autoSaveBoard(); }catch(e){}
+  out.innerHTML='<div class="ai-ok">Added '+rows.length+' row'+(rows.length===1?'':'s')+' at '+esc(bookLabel(book))+' to the board, marked “read from a screenshot”. La Contadora priced them like any row.</div>'; }
+function aiCardTagsHtml(r){ let h=''; try{
+  if(r && r.src==='ai-shot') h+='<span class="tag ai-tag" title="These odds were read by the AI helper from a screenshot you added'+(r.priceAt?' ('+esc(new Date(r.priceAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}))+')':'')+'. Check them at the book before you bet.">📷 read from a screenshot</span>';
+  const n=r?aiNewsOf(r):null; if(aiNewsFlag(n)) h+='<span class="tag t-warn ai-newsflag" title="'+esc('News check: '+aiNewsWord(n.status)+'. '+(n.summary||''))+' A label only: it changes no decision and no stake.">⚠ check news</span>';
+  }catch(e){} return h; }
+
+/* ---- 4. news: Why this play? › "Check news". Status, a short summary and the pages it used; out, questionable or limited puts "⚠ check news" on the card for that game day (a label only). ---- */
+function aiNewsKey(r){ const s=r&&r.gameInfo&&Date.parse(r.gameInfo.startISO), d=s&&!isNaN(s)?ctDay(s):ctDay(Date.now()); return [String(r.sport||'').toUpperCase(), nrm(r.kind==='prop'?r.name:(r.team||r.name)), d].join('|'); }
+function aiNewsOf(r){ const N=aiGet('news',null); return N?N[aiNewsKey(r)]||null:null; }
+function aiNewsFlag(n){ return !!n && /^(out|questionable|limited)$/.test(String(n.status||'')); }
+function aiNewsWord(s){ return ({ok:'Available', questionable:'Questionable', out:'Out', limited:'Limited', unknown:'Nothing recent found'})[s]||'Not clear'; }
+function aiNewsHtml(n){ return '<div class="ai-prop ai-news"><div class="ai-h">'+(aiNewsFlag(n)?'⚠ ':'')+esc(aiNewsWord(n.status))+' <span class="meta">checked '+esc(new Date(n.checkedAt||Date.now()).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}))+'</span></div>'+
+  (n.summary?'<p>'+esc(n.summary)+'</p>':'')+((n.sources||[]).length?'<ul class="ai-src">'+n.sources.map(s=>'<li>'+aiLink(s)+'</li>').join('')+'</ul>':'<p class="meta">No pages were cited.</p>')+
+  '<p class="meta">A label only: news never changes La Contadora’s decision or the stake.</p></div>'; }
+function aiNewsBtnHtml(r){ try{ if(!aiOn() || !r || !(r.kind==='prop' || GL_KINDS.test(r.kind||''))) return ''; const n=aiNewsOf(r);
+  return '<button type="button" class="ghost sm ai-news-btn" data-idx="'+r.idx+'">📰 '+(n?'Check news again':'Check news')+'</button><div class="ai-news-out" data-k="'+esc(aiNewsKey(r))+'">'+(n?aiNewsHtml(n):'')+'</div>'; }catch(e){ return ''; } }
+async function aiNewsCheck(btn){ const r=lastRows.find(x=>x.idx===+btn.dataset.idx); if(!r) return; const box=btn.nextElementSibling;
+  btn.disabled=true; if(box) box.innerHTML='<span class="meta">Checking the news…</span>';
+  const gl=r.kind!=='prop', gi=r.gameInfo||{}, inp={game:String(r.game||r.matchup||'').slice(0,80), sport:r.sport||'', market:gl?r.kind:statOfMarket(r.market), startISO:gi.startISO||null};
+  if(gl) inp.team=r.team||r.name; else { inp.player=r.name; if(r.team) inp.team=r.team; }
+  const res=await aiCall('news', inp); btn.disabled=false;
+  if(!res.ok){ if(box) box.innerHTML='<span class="ai-err">'+esc(res.err)+'</span>'; return; }
+  const o=res.out, N=aiGet('news',{}), k=aiNewsKey(r), cut=ctDay(Date.now()-3*86400e3);
+  Object.keys(N).forEach(x=>{ if((x.split('|')[2]||'')<cut) delete N[x]; });
+  N[k]={status:String(o.status||'unknown'), summary:String(o.summary||'').slice(0,400), sources:(o.sources||[]).slice(0,5).map(s=>({title:String(s.title||'').slice(0,120), url:String(s.url||'').slice(0,300), seen:s.seen})), checkedAt:o.checkedAt||new Date().toISOString(), day:k.split('|')[2]};
+  aiPut('news', N); if(box) box.innerHTML=aiNewsHtml(N[k]);
+  setTimeout(()=>{ try{ refresh(); }catch(e){} }, 0); }
+
+/* ---- 5. match: From your books › a fill not matched › "Suggest the match". The proposed bet or board row with why; Use links it the same way as Add (linkFill, or autoAddFromRow
+   for a board row) and keeps the pair in mbev.ai.names; next time betForFill / rowForFill check that table first, with no AI. ---- */
+function aiFillKey(f){ return f.book+'|'+nrm(fillLabel(f).bet); }
+function aiCardKey(x){ return nrm([x.name, x.kind==='prop'||!x.kind?statOfMarket(x.market):x.kind, lineOfMarket(x.market), x.side||sideOf(x)||''].join(' ')); }
+function aiFillTs(f){ const s=f&&f.bet&&Date.parse(f.bet.start); if(s && !isNaN(s)) return s; return typeof (f&&f.ts)==='number'?f.ts:Date.parse(f&&f.ts); }
+function aiNear(x, ts){ if(isNaN(ts)) return true; const s=Date.parse(startOf(x)); if(!isNaN(s)) return Math.abs(s-ts)<48*3600e3; const d=gameDayOf(x)||x.date; return !d || Math.abs(Date.parse(d+'T12:00:00Z')-ts)<3*86400e3; }
+function aiNamesBet(f){ try{ const N=aiGet('names',null); if(!N || !N.length || !f) return null; const k=aiFillKey(f), ts=aiFillTs(f);
+  for(const e of N){ if(e.kind!=='fill' || e.fill!==k || e.to!=='bet') continue; const b=logged.find(b=>b && !b.sold && !(b.fills&&b.fills.length) && LIVE_BOOK(b.book)===f.book && aiCardKey(b)===e.card && aiNear(b, ts)); if(b) return b; } }catch(e){} return null; }
+function aiNamesRow(f){ try{ const N=aiGet('names',null); if(!N || !N.length || !f) return null; const k=aiFillKey(f), ts=aiFillTs(f);
+  for(const e of N){ if(e.kind!=='fill' || e.fill!==k || e.to!=='row') continue; const r=(lastRows||[]).find(r=>r && !r.prior && r.fairProb!=null && aiCardKey(r)===e.card && aiNear(r, ts)); if(r) return r; } }catch(e){} return null; }
+function aiMatchBtnHtml(f){ try{ return aiOn() && f && f.action!=='sell' ? ' <button type="button" class="ghost sm ai-match" data-k="'+esc(f.book+':'+f.id)+'">✨ Suggest the match</button>' : ''; }catch(e){ return ''; } }
+function aiMatchRowHtml(f){ try{ const k=f.book+':'+f.id, P=(window._aiMatch||{})[k]; if(!P || !aiOn()) return ''; return '<tr class="ai-prop-tr"><td colspan="6">'+P.html+'</td></tr>'; }catch(e){ return ''; } }
+function aiMatchCands(f){ const ts=aiFillTs(f), L=fillLabel(f), words=nrm(L.bet+' '+L.game).split(' ').filter(w=>w.length>=3 && !/^(over|under|the|and)$/.test(w)), C=[];
+  logged.forEach(b=>{ if(b && !b.sold && b.kind!=='parlay' && !(b.fills&&b.fills.length) && LIVE_BOOK(b.book)===f.book && aiNear(b, ts)) C.push({type:'bet', ref:b}); });
+  (lastRows||[]).forEach(r=>{ if(!r || r.prior || r.fairProb==null || !aiNear(r, ts)) return; const t=nrm(r.name+' '+(r.game||r.matchup||'')); if(words.some(w=>t.indexOf(w)>=0)) C.push({type:'row', ref:r}); });
+  return C.slice(0,40).map((c,i)=>Object.assign(c, {i:i+1, label:(c.type==='bet'?'Your logged bet: ':'Board row: ')+c.ref.name+' — '+betLabel(c.ref)+' · '+bookLabel(c.ref.book), game:String(c.ref.game||c.ref.matchup||''), start:startOf(c.ref)||gameDayOf(c.ref)||''})); }
+async function aiMatchAsk(k){ const f=fillPending.find(x=>x.book+':'+x.id===k); if(!f) return; window._aiMatch=window._aiMatch||{};
+  const C=aiMatchCands(f); if(!C.length){ window._aiMatch[k]={html:'<div class="ai-prop"><span class="meta">Nothing in your log or on the board to compare it with (same book, within two days). Use Add instead.</span> <button type="button" class="ghost sm ai-match-ign" data-k="'+esc(k)+'">Close</button></div>'}; renderFromBooks(); return; }
+  window._aiMatch[k]={html:'<span class="meta">Looking for the match…</span>'}; renderFromBooks();
+  const L=fillLabel(f), b=f.bet||{}, fill={book:FILL_NAME[f.book], what:L.bet, title:String(f.title||'').slice(0,160), game:L.game, start:b.start||null, placed:f.ts?new Date(f.ts).toISOString():null, price:f.price!=null?+f.price:null, kind:b.kind||null, player:b.player||null, stat:b.statText||null, line:b.line!=null?b.line:null, side:b.side||null, team:b.team||b.teamName||null};
+  const r=await aiCall('match', {fill, candidates:C.map(c=>({i:c.i, label:c.label, game:c.game, start:c.start}))});
+  if(!r.ok){ window._aiMatch[k]={html:'<div class="ai-prop"><span class="ai-err">'+esc(r.err)+'</span> <button type="button" class="ghost sm ai-match-ign" data-k="'+esc(k)+'">Close</button></div>'}; renderFromBooks(); return; }
+  const o=r.out, c=C.find(x=>x.i===o.i)||null;
+  window._aiMatch[k]={cand:c, html:'<div class="ai-prop"><div class="ai-h">'+(c?'Suggested match: <b>'+esc(c.label)+'</b> <span class="meta">('+esc(o.confidence||'?')+' confidence)</span>':'No match suggested')+'</div><p>'+esc(o.why||'')+'</p>'+
+    '<div class="ai-acts">'+(c?'<button type="button" class="act sm ai-match-use" data-k="'+esc(k)+'">Use</button> ':'')+'<button type="button" class="ghost sm ai-match-ign" data-k="'+esc(k)+'">Ignore</button></div>'+(c?'<p class="meta">Use links this fill to it, the same way as Add. The pair is remembered, so next time it matches with no AI.</p>':'')+'</div>'};
+  renderFromBooks(); }
+function aiMatchUse(k){ const P=(window._aiMatch||{})[k], f=fillPending.find(x=>x.book+':'+x.id===k); if(!P || !P.cand || !f) return; const c=P.cand, x=c.ref;
+  if(c.type==='bet'){ if(!logged.includes(x)) return; linkFill(x,f); fillSeen[k]={s:'linked',q:+f.qty||0}; }
+  else { if(!(f.price>0)) return; autoAddFromRow(x,f); fillSeen[k]={s:'added',q:+f.qty||0}; }
+  fillPending=fillPending.filter(y=>!(y.book===f.book && y.id===f.id)); saveFills(); saveLog();
+  const N=aiGet('names',[]), e={kind:'fill', book:f.book, fill:aiFillKey(f), to:c.type, card:aiCardKey(x), fillText:fillLabel(f).bet, cardText:x.name+' — '+betLabel(x), at:new Date().toISOString()};
+  const N2=N.filter(y=>!(y.kind==='fill' && y.fill===e.fill && y.card===e.card)).concat([e]); while(N2.length>500) N2.shift(); aiPut('names', N2);
+  delete window._aiMatch[k];
+  try{ renderLog(); renderPerf(); refresh(); }catch(e){} renderFromBooks(); try{ renderMyBooks(); }catch(e){} }
+
+/* ---- 6. grade + settle: Look out › "Find the result" proposes a result with the stat, the page and why; Use goes through the Look out list's own Won / Lost / Push buttons
+   (the manual grade: gradedBy manual, gradeRemember). The page's domain is kept per sport and market (mbev.ai.sources). My books › a settled fill › "Check the book's grade" only shows. ---- */
+function aiBetInput(b){ const gl=b.kind!=='prop', sd=sideOf(b)||'', o={market:gl?b.kind:statOfMarket(b.market), side:sd==='O'?'Over':sd==='U'?'Under':(b.team||b.name||sd), game:String(b.game||b.matchup||''), sport:b.sport||'', date:gameDayOf(b)||b.date||''};
+  const ln=lineOfMarket(b.market); if(ln!=null) o.line=ln; else if(b.line!=null && !isNaN(+b.line)) o.line=+b.line;
+  if(gl) o.team=b.team||b.name; else o.player=b.name; return o; }
+function aiGradeKey(b,i){ return String(b&&b.id||'i'+i); }
+function aiGradeBtnHtml(b,i){ try{ return aiOn() && b && b.kind!=='parlay' ? '<button type="button" class="ghost sm ai-grade" data-i="'+i+'">✨ Find the result</button>' : ''; }catch(e){ return ''; } }
+function aiGradeRowHtml(b,i){ try{ const P=(window._aiGrade||{})[aiGradeKey(b,i)]; return P && aiOn() ? '<div class="ai-lo">'+P.html+'</div>' : ''; }catch(e){ return ''; } }
+function aiResWord(r){ return ({win:'Won', loss:'Lost', push:'Push', void:'Void (counts as a push)', unknown:'Not found'})[r]||'Not found'; }
+async function aiGradeAsk(i){ const b=logged[i]; if(!b) return; const k=aiGradeKey(b,i); window._aiGrade=window._aiGrade||{};
+  window._aiGrade[k]={html:'<span class="meta">Looking for the result…</span>'}; renderLookOut();
+  const r=await aiCall('grade', {bet:aiBetInput(b)});
+  if(!r.ok){ window._aiGrade[k]={html:'<div class="ai-prop"><span class="ai-err">'+esc(r.err)+'</span> <button type="button" class="ghost sm ai-grade-ign" data-i="'+i+'">Close</button></div>'}; renderLookOut(); return; }
+  const o=r.out, ok=/^(win|loss|push|void)$/.test(o.result||'');
+  window._aiGrade[k]={out:o, html:'<div class="ai-prop"><div class="ai-h">Result found: <b>'+esc(aiResWord(o.result))+'</b>'+(o.stat?' · stat '+esc(o.stat):'')+'</div><p>'+esc(o.why||'')+'</p>'+(o.source&&o.source.url?'<div class="ai-src">Source: '+aiLink(o.source)+'</div>':'<div class="meta">No source page.</div>')+
+    '<div class="ai-acts">'+(ok?'<button type="button" class="act sm ai-grade-use" data-i="'+i+'">Use: mark '+esc(o.result==='void'?'Push':aiResWord(o.result))+'</button> ':'')+'<button type="button" class="ghost sm ai-grade-ign" data-i="'+i+'">Ignore</button></div>'+(ok?'<p class="meta">Use marks it the same way as the Won / Lost / Push buttons: graded by you.</p>':'')+'</div>'};
+  renderLookOut(); }
+function aiSourceNote(b, src){ const d=aiDomain(src&&src.url); if(!d || !b) return; const S=aiGet('sources',{}), key=String(b.sport||'?').toUpperCase()+'|'+(b.kind==='prop'?statFam(statOfMarket(b.market)):(b.kind||'?'));
+  const e=S[key]||(S[key]={domains:{}, n:0}); e.domains[d]=(e.domains[d]||0)+1; e.n++; e.last=d; e.at=new Date().toISOString(); aiPut('sources', S); }
+function aiGradeUse(i){ const b=logged[i]; if(!b) return; const k=aiGradeKey(b,i), P=(window._aiGrade||{})[k]; if(!P || !P.out) return;
+  const res=P.out.result==='void'?'push':P.out.result; if(!/^(win|loss|push)$/.test(res)) return;
+  const btn=document.querySelector('#lookOut .lo-res[data-i="'+i+'"][data-res="'+res+'"]'); if(!btn) return;
+  aiSourceNote(b, P.out.source); delete window._aiGrade[k]; btn.click();
+  if(b.result===res){ const src=P.out.source||{}; b.aiGrade={domain:aiDomain(src.url)||'', at:new Date().toISOString(), result:res}; saveLog(); try{ renderLog(); }catch(e){} } } /* v5.15 (La Guardia): a top-level field on the row, never in snap; shown on the bet in the Bet log */
+function aiGradeNoteHtml(b){ try{ const g=b&&b.aiGrade; if(!g || g.result!==b.result) return ''; return '<div class="meta ai-gnote">result found by the AI helper'+(g.domain?' · '+esc(g.domain):'')+'</div>'; }catch(e){ return ''; } }
+function aiSettleKey(f){ return f.book+':'+f.id; }
+function aiSettleBtnHtml(f){ try{ return aiOn() ? '<div><button type="button" class="ghost sm ai-settle" data-k="'+esc(aiSettleKey(f))+'">✨ Check the book’s grade</button></div>' : ''; }catch(e){ return ''; } }
+function aiSettleRowHtml(f){ try{ const P=(window._aiSettle||{})[aiSettleKey(f)]; return P && aiOn() ? '<tr class="ai-prop-tr"><td colspan="8">'+P.html+'</td></tr>' : ''; }catch(e){ return ''; } }
+async function aiSettleAsk(k){ const f=(window._fills||[]).find(x=>aiSettleKey(x)===k); if(!f) return; window._aiSettle=window._aiSettle||{};
+  const S=(window._settlements||[]).find(s=>s.book===f.book && s.ref===f.ref && s.outcome && (!s.side || !f.side || s.side===f.side)); if(!S) return;
+  const b=linkedTo(f), fb=f.bet||{}, bet=b?aiBetInput(b):{player:fb.player||null, team:fb.team||fb.teamName||null, market:fb.statText||fb.kind||fillLabel(f).bet, line:fb.line!=null?fb.line:null, side:fb.side==='O'?'Over':fb.side==='U'?'Under':(fb.side||''), game:fillLabel(f).game, sport:fb.sport||'', date:fb.start?ctDay(Date.parse(fb.start)):''};
+  window._aiSettle[k]={html:'<span class="meta">Checking the official result…</span>'}; renderMyBooks();
+  const r=await aiCall('settle', {bet, bookResult:String(S.outcome)});
+  if(!r.ok){ window._aiSettle[k]={html:'<div class="ai-prop"><span class="ai-err">'+esc(r.err)+'</span> <button type="button" class="ghost sm ai-settle-x" data-k="'+esc(k)+'">Close</button></div>'}; renderMyBooks(); return; }
+  const o=r.out, ag=o.agrees===true?'Agrees with '+FILL_NAME[f.book]:o.agrees===false?'Does not agree with '+FILL_NAME[f.book]:'Could not check';
+  if(b && o.source && o.agrees!=='unknown') aiSourceNote(b, o.source);
+  window._aiSettle[k]={html:'<div class="ai-prop"><div class="ai-h">'+(o.agrees===false?'⚠ ':'')+esc(ag)+' <span class="meta">(the book says '+esc(String(S.outcome))+'; the official result says '+esc(aiResWord(o.ourResult))+(o.stat?', stat '+esc(o.stat):'')+')</span></div><p>'+esc(o.why||'')+'</p>'+(o.source&&o.source.url?'<div class="ai-src">Source: '+aiLink(o.source)+'</div>':'')+
+    '<div class="ai-acts"><button type="button" class="ghost sm ai-settle-x" data-k="'+esc(k)+'">Close</button></div><p class="meta">A check only: nothing in your log changes.</p></div>'};
+  renderMyBooks(); }
+
+/* ---- 7. market: BettingPros market names the fill matcher does not know (statFam finds no family) go at most once a day in one call; the proposed map waits in Settings › AI helper
+   for Use / Ignore. Confirmed names (mbev.ai.markets) are read by statFam first, with no AI. ---- */
+function aiMarketKey(s){ try{ let C=window._aiMkC; if(!C || Date.now()-C.t>3000) C=window._aiMkC={t:Date.now(), m:aiGet('markets',{})||{}};
+  const e=C.m[String(s||'').toLowerCase().replace(/[_\s]+/g,' ').trim()]; return e && e.key ? e.key : null; }catch(e){ return null; } }
+function aiMkKnown(){ const W={long:'Longest reception or rush', rushrec:'Rushing + receiving yards', passrush:'Passing + rushing yards', passyds:'Passing yards', passatt:'Pass attempts', passcmp:'Pass completions', passtd:'Passing touchdowns', int:'Interceptions thrown',
+  rushyds:'Rushing yards', rushatt:'Rushing attempts', recyds:'Receiving yards', rec:'Receptions', td:'Anytime touchdown', sacks:'Sacks', tackles:'Tackles', fg:'Field goals made', kickpts:'Kicking points', pra:'Points + rebounds + assists',
+  pr:'Points + rebounds', pa:'Points + assists', ra:'Rebounds + assists', threes:'Three-pointers made', reb:'Rebounds', stl:'Steals', blkshots:'Blocked shots (hockey)', blk:'Blocks', tov:'Turnovers', hrr:'Hits + runs + RBIs',
+  hitsallowed:'Hits allowed', er:'Earned runs allowed', tb:'Total bases', hr:'Home runs', k:'Strikeouts', rbi:'RBIs', sb:'Stolen bases', bb:'Walks', outs:'Pitching outs', ppp:'Power play points', sog:'Shots on goal', saves:'Saves',
+  hits:'Hits', runs:'Runs', goals:'Goals', ast:'Assists', pts:'Points'};
+  let keys=[]; try{ keys=STAT_FAM.map(x=>x[1]); }catch(e){ keys=Object.keys(W); } ['pra','pr','pa','ra'].forEach(k=>{ if(!keys.includes(k)) keys.push(k); });
+  return [...new Set(keys)].map(k=>({key:k, label:W[k]||k})); }
+function aiMkUnknown(){ const M=aiGet('markets',{})||{}, seen=new Set(), out=[];
+  (lastRows||[]).forEach(r=>{ if(!r || r.kind!=='prop' || !/^api:[A-Z0-9]+:/.test(String(r.src||''))) return; const s=statOfMarket(r.market).trim(), k=s.toLowerCase().replace(/[_\s]+/g,' ').trim(); if(!k || seen.has(k) || M[k]) return; seen.add(k);
+    let known=false; try{ const u=us_(s); known=!!comboFam(u) || STAT_FAM.some(x=>x[0].test(u)); }catch(e){ known=true; } if(!known) out.push(s); });
+  return out.slice(0,100); }
+async function aiMarketsMaybe(byHand){ if(!aiOn()) return 'off'; const today=ctDay(Date.now()); let day=''; try{ day=localStorage.getItem('mbev.ai.mkDay')||''; }catch(e){}
+  const msg=t=>{ const m=document.getElementById('aiMkMsg'); if(m && byHand) m.textContent=t; return t; };
+  if(day===today) return msg('Market names were already checked today (once a day).');
+  const names=aiMkUnknown(); if(!names.length) return msg('Every market name on the board is known. Nothing was sent.');
+  aiPutLocal('mkDay', today);
+  const r=await aiCall('market', {names, known:aiMkKnown()});
+  if(!r.ok) return msg(r.err);
+  const P=(Array.isArray(r.out.map)?r.out.map:[]).filter(x=>x && x.name).map(x=>({name:String(x.name).slice(0,80), key:x.key||null, why:String(x.why||'').slice(0,160)}));
+  aiPutLocal('mkProp', P); aiPanelPaint(); return msg(P.length+' market name'+(P.length===1?'':'s')+' to confirm below.'); }
+function aiMkPropHtml(){ const P=aiGet('mkProp',[])||[]; if(!P.length || !aiOn()) return ''; const K={}; aiMkKnown().forEach(x=>{ K[x.key]=x.label; });
+  return '<div class="ai-prop"><div class="ai-h">Market names to confirm</div><table class="ai-tbl"><tbody>'+P.map((x,i)=>'<tr><td><b>'+esc(x.name)+'</b></td><td>'+(x.key?'= '+esc(K[x.key]||x.key):'<span class="meta">no known market</span>')+'<div class="meta">'+esc(x.why)+'</div></td><td style="white-space:nowrap">'+
+    (x.key?'<button type="button" class="act sm ai-mk-use" data-i="'+i+'">Use</button> ':'')+'<button type="button" class="ghost sm ai-mk-ign" data-i="'+i+'">Ignore</button></td></tr>').join('')+'</tbody></table><p class="meta">Use teaches the app this name for matching your book fills; it then works with the AI off.</p></div>'; }
+function aiMkDecide(i, use){ const P=aiGet('mkProp',[])||[], x=P[i]; if(!x) return; const M=aiGet('markets',{})||{}, k=x.name.toLowerCase().replace(/[_\s]+/g,' ').trim();
+  M[k]={key:use?x.key:null, name:x.name, at:new Date().toISOString()}; aiPut('markets', M); P.splice(i,1); aiPutLocal('mkProp', P); aiPanelPaint(); }
+
+/* ---- 8, 9. Reports › "Ask my log" (only the columns the question needs: never notes, ids or keys) and "This week in plain words" (only the Bet log's Last 7 days totals). ---- */
+function aiAskFields(q){ const s=' '+String(q||'').toLowerCase()+' ', F=['date','result','profit','stake'];
+  if(/sport|nfl|nba|wnba|mlb|nhl|ncaa|college|football|basketball|baseball|hockey|soccer|mls/.test(s)) F.push('sport');
+  if(/market|prop|point|rebound|assist|yard|touchdown|\btds?\b|strikeout|hits|shots|goal|three|moneyline|spread|total|type|kind|parlay/.test(s)) F.push('market');
+  if(/over|under|side|favou?rite|underdog|\bdogs?\b/.test(s)) F.push('side');
+  if(/book|kalshi|novig|polymarket|fanduel|draftkings|prizepicks|underdog|bovada|betmgm|caesars|fanatics|bet365|exchange|\bapp/.test(s)) F.push('book');
+  if(/odds|price|favou?rite|underdog|long ?shot|plus money|minus|[+-]\d/.test(s)) F.push('odds');
+  if(/fee/.test(s)) F.push('fee');
+  return [...new Set(F)]; }
+function aiAskVal(b, f){ const sd=sideOf(b);
+  return f==='date'?(gameDayOf(b)||b.date||''):f==='sport'?String(b.sport||''):f==='market'?(b.kind==='prop'?statOfMarket(b.market):String(b.kind||'')):f==='side'?(sd==='O'?'Over':sd==='U'?'Under':b.kind==='parlay'?'':String(b.team||b.name||'')):
+    f==='book'?bookLabel(b.book):f==='odds'?String(b.odds||''):f==='stake'?(b.free?0:+(+b.stake||0).toFixed(2)):f==='result'?(b.sold?'sold':b.result==='win'||b.result==='loss'||b.result==='push'?b.result:'open'):
+    f==='profit'?(()=>{ const p=betProfit(b); return p==null?'':+p.toFixed(2); })():f==='fee'?(b.fee!=null?+(+b.fee).toFixed(4):''):''; }
+async function aiAsk(){ const g=id=>document.getElementById(id), q=(g('aiAskQ').value||'').trim(), out=g('aiAskOut'); if(!q){ out.innerHTML='<span class="meta">Type a question first.</span>'; return; }
+  const F=aiAskFields(q), L=logged.filter(b=>b).slice().sort((a,b)=>String(gameDayOf(b)||b.date||'').localeCompare(String(gameDayOf(a)||a.date||''))).slice(0,500), rows=L.map(b=>F.map(f=>aiAskVal(b,f)));
+  g('aiAskSend').textContent='Sends your question and '+rows.length+' bet'+(rows.length===1?'':'s')+' with only: '+F.join(', ')+'.';
+  out.innerHTML='<span class="meta">Asking…</span>'; g('aiAskGo').disabled=true;
+  const r=await aiCall('ask', {question:q.slice(0,300), fields:F, rows}); g('aiAskGo').disabled=false;
+  if(!r.ok){ out.innerHTML='<span class="ai-err">'+esc(r.err)+'</span>'; return; }
+  const o=r.out, T=Array.isArray(o.table)&&o.table.length?o.table:null;
+  out.innerHTML='<div class="ai-prop"><p class="ai-ans">'+esc(o.answer||'')+'</p>'+(T?'<div class="ai-scroll"><table class="ai-tbl"><thead><tr>'+T[0].map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr></thead><tbody>'+T.slice(1,60).map(rw=>'<tr>'+(rw||[]).map(c=>'<td>'+esc(c)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>':'')+
+    '<p class="meta">Based on '+(+o.usedRows||0)+' of the '+rows.length+' bets sent. Worked out by the AI from your rows: check a number in Reports before you rely on it.</p></div>'; }
+function aiWeekSummary(){ const today=ctDay(Date.now()), shift=n=>ctDay(Date.parse(today+'T12:00:00Z')+n*86400e3), days=[]; for(let i=6;i>=0;i--) days.push(shift(-i));
+  const st=dayStats(), wk=blankDay('week'); days.forEach(d=>{ const x=st[d]; if(!x) return; Object.keys(wk).forEach(k=>{ if(typeof wk[k]==='number' && typeof x[k]==='number') wk[k]+=x[k]; }); });   // the Bet log's Last 7 days line, added the same way
+  const L=logged.filter(b=>b && days.includes(gameDayOf(b)||'')), g=rpAgg(L, []), r2_=x=>+(+x||0).toFixed(2);
+  return {period:'last 7 game days', from:days[0], to:days[6], bets:wk.bets, staked:r2_(wk.staked), won:wk.w, lost:wk.l, pushed:wk.p, sold:wk.sold, open:wk.pend, settled:wk.settled, profit:r2_(wk.profit),
+    roiOnSettled:g.roi==null?null:+(g.roi*100).toFixed(1), hitRate:g.hit==null?null:+(g.hit*100).toFixed(1), stakedOnSettled:r2_(g.stSet), note:'roiOnSettled and hitRate are percent; profit and staked in dollars'}; }
+async function aiWeekly(){ const out=document.getElementById('aiWeekOut'), b=document.getElementById('aiWeekGo'); const S=aiWeekSummary();
+  out.innerHTML='<span class="meta">Writing it…</span>'; b.disabled=true; const r=await aiCall('weekly', {summary:S}); b.disabled=false;
+  if(!r.ok){ out.innerHTML='<span class="ai-err">'+esc(r.err)+'</span>'; return; }
+  out.innerHTML='<div class="ai-prop"><p class="ai-ans">'+esc(r.out.text||'')+'</p><p class="meta">From the numbers the app added up for '+esc(S.from)+' to '+esc(S.to)+': '+S.bets+' bets, '+(S.won+S.lost+S.pushed)+' settled, '+money(S.profit,true)+'.</p></div>'; }
+
+/* ---- 10. bug: a page error caught here offers "Send a bug note": version, the error and stack (each cut to 1,000 characters, amounts and emails blanked), the screen name, and the last 20 taps as element ids and data-attribute names only (v5.15 La Guardia: no visible text, no bets, no keys, no typing). ---- */
+function aiScrub(x,n){ return String(x==null?'':x).replace(/\$\s?\d[\d.,]*/g,'$…').replace(/[\w.+-]+@[\w-]+\.[\w.]+/g,'…').slice(0,n||1000); }
+function aiActNote(e){ try{ const el=e.target&&e.target.closest&&e.target.closest('button,a,summary,select,[role=tab]'); if(!el || el.closest('#aiBugBar')) return;
+  const v=(document.querySelector('.view.on')||{}).id||'', A=window._aiActs||(window._aiActs=[]);
+  const dn=Array.from(el.attributes||[]).map(a=>a.name).filter(n=>/^data-/.test(n)).join(','); /* v5.15 (La Guardia): attribute NAMES only, never their values */
+  A.push(new Date().toISOString().slice(11,19)+' '+(v?v+' ':'')+el.tagName.toLowerCase()+(el.id?'#'+aiScrub(el.id,40):'')+(dn?' ['+dn.slice(0,80)+']':'')); while(A.length>20) A.shift(); }catch(_){} }
+function aiErrCaught(msg, stack, where){ try{ const m=String(msg||''); if(!m || /ResizeObserver loop/.test(m)) return;
+  window._aiErr={msg:aiScrub(m,1000), stack:aiScrub(stack,1000), where:aiScrub(where,160)}; /* v5.15 (La Guardia): each cut to 1,000 characters, amounts and emails blanked */ if(aiOn()) aiBugBarShow(); }catch(_){} }
+function aiBugBarShow(){ let el=document.getElementById('aiBugBar'); if(!el){ el=document.createElement('div'); el.id='aiBugBar'; el.className='ai-bugbar'; el.setAttribute('role','status'); document.body.appendChild(el); }
+  const E=window._aiErr||{}; el.innerHTML='<span class="ai-bug-t">Something on this page went wrong'+(E.msg?': '+esc(E.msg.slice(0,100)):'')+'.</span> <button type="button" class="act sm" id="aiBugSend">Send a bug note</button><div class="meta">It sends: the app version, this error and its stack (each cut to 1,000 characters, dollar amounts and emails blanked), the screen name, and your last 20 taps as element ids and data names only. No button words, bets, keys or typing.</div> <button type="button" class="ghost sm" id="aiBugX" aria-label="Close">×</button><div class="meta" id="aiBugMsg"></div>'; el.hidden=false; }
+async function aiBugSend(){ const E=window._aiErr, m=document.getElementById('aiBugMsg'), b=document.getElementById('aiBugSend'); if(!E || !m) return; b.disabled=true; m.textContent='Sending…';
+  const v=(document.querySelector('.view.on')||{}).id||'';
+  const r=await aiCall('bug', {version:SCREENER_VERSION, error:aiScrub(E.msg,1000), stack:aiScrub(E.stack,1000) /* v5.15 (La Guardia): scrubbed again at send */, where:aiScrub((E.where||'')+(v?' · view '+v:''),200), recent:(window._aiActs||[]).slice(-20).map(x=>aiScrub(x,160))});
+  if(!r.ok){ m.textContent=r.err; b.disabled=false; return; }
+  m.textContent='Sent: '+(r.out.title||'bug note')+'. '+(r.out.likelyCause?'Likely cause: '+r.out.likelyCause+' ':'')+'It is kept on your Worker for 60 days.'; }
+
+/* ---- wiring ---- */
+document.addEventListener('click', e=>{ aiActNote(e);
+  const t=e.target, c=s=>t.closest&&t.closest(s);
+  let x;
+  if((x=c('#aiSlipUse'))){ if(window._aiSlipProp) aiSlipFill(window._aiSlipProp); window._aiSlipProp=null; return; }
+  if((x=c('#aiSlipIgnore'))){ window._aiSlipProp=null; window._aiSlip=null; const o=document.getElementById('aiSlipOut'); if(o) o.innerHTML=''; return; }
+  if((x=c('#aiShotBtn'))){ const b=document.getElementById('aiShotBox'); aiShotOpen(!!(b && b.hidden)); return; }
+  if((x=c('#aiShotClose'))){ aiShotOpen(false); return; }
+  if((x=c('#aiShotAdd'))){ aiShotAdd(); return; }
+  if((x=c('#aiShotIgnore'))){ window._aiShot=null; const o=document.getElementById('aiShotOut'); if(o) o.innerHTML='<span class="meta">Ignored. Nothing was added.</span>'; return; }
+  if((x=c('.ai-news-btn'))){ aiNewsCheck(x); return; }
+  if((x=c('.ai-match-use'))){ aiMatchUse(x.dataset.k); return; }
+  if((x=c('.ai-match-ign'))){ if(window._aiMatch) delete window._aiMatch[x.dataset.k]; renderFromBooks(); return; }
+  if((x=c('.ai-match'))){ aiMatchAsk(x.dataset.k); return; }
+  if((x=c('.ai-grade-use'))){ aiGradeUse(+x.dataset.i); return; }
+  if((x=c('.ai-grade-ign'))){ const b=logged[+x.dataset.i]; if(b && window._aiGrade) delete window._aiGrade[aiGradeKey(b,+x.dataset.i)]; renderLookOut(); return; }
+  if((x=c('.ai-grade'))){ aiGradeAsk(+x.dataset.i); return; }
+  if((x=c('.ai-settle-x'))){ if(window._aiSettle) delete window._aiSettle[x.dataset.k]; renderMyBooks(); return; }
+  if((x=c('.ai-settle'))){ aiSettleAsk(x.dataset.k); return; }
+  if((x=c('.ai-mk-use'))){ aiMkDecide(+x.dataset.i, true); return; }
+  if((x=c('.ai-mk-ign'))){ aiMkDecide(+x.dataset.i, false); return; }
+  if((x=c('#aiMkNow'))){ aiMarketsMaybe(true); return; }
+  if((x=c('#aiCheck'))){ x.disabled=true; aiStatusCheck().finally(()=>{ x.disabled=false; }); return; }
+  if((x=c('#aiClear'))){ if(x.dataset.sure!=='1'){ x.dataset.sure='1'; x.textContent='Tap again to clear'; setTimeout(()=>{ x.dataset.sure=''; x.textContent='Clear AI data'; }, 4000); return; }
+    x.dataset.sure=''; x.textContent='Clear AI data'; aiClearData(); const m=document.getElementById('aiClearMsg'); if(m) m.textContent='Cleared: slips, names, sources, markets, news and the jobs list on this device.'; return; }
+  if((x=c('#aiAskGo'))){ aiAsk(); return; }
+  if((x=c('#aiWeekGo'))){ aiWeekly(); return; }
+  if((x=c('#aiBugSend'))){ aiBugSend(); return; }
+  if((x=c('#aiBugX'))){ const el=document.getElementById('aiBugBar'); if(el) el.hidden=true; return; }
+}, true);
+document.addEventListener('paste', e=>{ if(!aiOn()) return; const f=aiImgOf(e.clipboardData); if(!f) return;
+  const P=document.getElementById('addBetPanel'), sb=document.getElementById('aiShotBox');
+  if(P && P.open && aiVisible(document.getElementById('aiSlipDrop'))){ e.preventDefault(); aiSlipRead(f); return; }
+  if(sb && !sb.hidden && aiVisible(sb)){ e.preventDefault(); aiShotRead(f); } });
+window.addEventListener('error', e=>{ if(e && e.message) aiErrCaught(e.message, e.error&&e.error.stack, String(e.filename||'').split('/').pop()+':'+(e.lineno||0)); });
+window.addEventListener('unhandledrejection', e=>{ const r=e&&e.reason; aiErrCaught((r&&r.message)||String(r||''), r&&r.stack, 'a promise'); });
+(function(){ const g=id=>document.getElementById(id);
+  aiDropWire('aiSlip', aiSlipRead); aiDropWire('aiShot', aiShotRead);
+  const sw=g('aiOnBox'); if(sw) sw.addEventListener('change',()=>{ aiPutLocal('on', sw.checked?'1':'0'); aiPaint(); aiRedraw(); });
+  const q=g('aiAskQ'); if(q) q.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); aiAsk(); } });
+  const pn=g('aiPanel'); if(pn) pn.addEventListener('toggle',()=>{ if(pn.open) aiStatusCheck(); });
+  document.addEventListener('input',e=>{ const f=e.target&&e.target.closest&&e.target.closest('#addBetPanel .ai-unclear'); if(f && e.isTrusted) f.classList.remove('ai-unclear'); });
+  aiPaint();
+  try{ if(localStorage.getItem('mbev.ai.on')==='1') setTimeout(()=>{ aiStatusCheck(); }, 1500); }catch(e){}
+  setTimeout(()=>{ try{ aiMarketsMaybe(); }catch(e){} }, 30000); setInterval(()=>{ try{ aiMarketsMaybe(); }catch(e){} }, 10*60e3);
+})();
 </script>
 </body>
 </html>
