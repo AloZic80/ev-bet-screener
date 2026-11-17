@@ -19,3 +19,7 @@ Lighter build, one paid data API (or users bring their own key). Decide later; n
 ## Free sources to add (owner, 2026-11-16)
 "i do have some other API's i want to add. Free ones, but it will alleviate some of the ones we have since they can easily dwindle down."
 Plan: free sources go behind the Worker (keys as Worker secrets), cached, and are used first so BettingPros / SGO / Odds API quota lasts longer.
+
+## API-Sports (checked 2026-11-17)
+Free plan = seasons 2022–2024 only, 100 requests a day per sport: no current games, odds or scores. Owner: "why would i want old seasons and have a limit on requests?" · "ok, we remove on next build".
+To do on the next Worker change: remove src/apisports.js, its two routes and its test (v3.46). Owner removes the secrets APISPORTS_KEY and the misnamed one, and resets the key on api-sports.io.
