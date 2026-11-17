@@ -10,7 +10,7 @@ separate build that leaves them out (and gets its own legal review, CLAUDE.md "T
 | AI helper (slip reader, screenshot prices, news, match, results, ask my log, weekly words, bug notes) | v5.15 | his Anthropic key and credit; his data |
 | Exchange integrations (Kalshi, Polymarket US, Novig fills and settlements) | v4.x | his own accounts, read-only |
 | Scout now, Schedule, Auto Sentinels, Alerts | v5.18 | his feeds' quotas and his routine |
-| AI companion (planned) | — | talks with him about his own board, log and plan |
+| 🤝 El Compa, the AI companion chat (job compa; asks before any action that spends feed calls) | v5.19 (Worker v3.47) | talks with him about his own board, log, plan and schedule; runs his own scouts; his Anthropic key and credit |
 
 ## The paid version (owner, 2026-11-16)
 "THe one we will charge, will be lighter. by then we will use/pay for 1 API only. Unless they get there own. But, we can figure that out later."
@@ -19,3 +19,7 @@ Lighter build, one paid data API (or users bring their own key). Decide later; n
 ## Free sources to add (owner, 2026-11-16)
 "i do have some other API's i want to add. Free ones, but it will alleviate some of the ones we have since they can easily dwindle down."
 Plan: free sources go behind the Worker (keys as Worker secrets), cached, and are used first so BettingPros / SGO / Odds API quota lasts longer.
+
+## API-Sports (checked 2026-11-17)
+Free plan = seasons 2022–2024 only, 100 requests a day per sport: no current games, odds or scores. Owner: "why would i want old seasons and have a limit on requests?" · "ok, we remove on next build".
+To do on the next Worker change: remove src/apisports.js, its two routes and its test (v3.46). Owner removes the secrets APISPORTS_KEY and the misnamed one, and resets the key on api-sports.io.
