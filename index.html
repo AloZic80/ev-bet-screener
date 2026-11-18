@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.21</title>
+<title>0xBeta Screener v5.22</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1958,6 +1958,9 @@ html.cp-open #compaBtn{display:none}
 .kal-toast[hidden]{display:none}
 /* v5.21 (thin exchange book) */
 .eb-thin{color:var(--warn); font-weight:600}
+/* v5.22 (Send my log to El Capataz) */
+#shareStatus .share-code{word-break:break-all; user-select:all; font-size:12px}
+#shareCopy{min-height:44px}
 /* v5.21 (tab edge so far, dev mode) */
 #modeBar button.edge-up{box-shadow:0 0 0 2px var(--live) inset}
 #modeBar .mode-edge{font-weight:600; opacity:.9}
@@ -1971,7 +1974,7 @@ html.cp-open #compaBtn{display:none}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.21</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.22</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2696,6 +2699,8 @@ html.cp-open #compaBtn{display:none}
     <button class="ghost" id="restoreLog" title="Loads a backup file and adds what's missing — nothing is replaced or duplicated">Restore bet log</button>
     <input type="file" id="restoreFile" accept=".json,application/json" style="display:none">
     <span id="backupStatus" style="font-size:13px;color:var(--soft)"></span>
+    <button class="ghost" id="shareLog" title="Saves a copy of your bet log on your Worker for 24 hours (no keys, no passwords, no notes) and gives you a code to paste to El Capataz (Claude Code), so he can read your bets">📤 Send my log to El Capataz</button><!-- v5.22 -->
+    <span id="shareStatus" style="font-size:13px;color:var(--soft)"></span>
     <button class="ghost" id="wipe">Delete every logged bet</button>
   </div>
   </details>
@@ -2884,7 +2889,7 @@ html.cp-open #compaBtn{display:none}
 
 </div>
 <script>
-const SCREENER_VERSION='v5.21';
+const SCREENER_VERSION='v5.22';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -10487,6 +10492,23 @@ setTimeout(paintBookChecks, 0);
 
 /* v2.56: bet log backup / restore — the log lives only in this browser */
 function betIdentity(b){ return b.id || [b.date,b.name,b.market,sideOf(b),b.book,b.odds,b.stake].join('|').toLowerCase(); }
+/* v5.22 (owner 11/18: "you should be able to look at the bets as well ... Build what you need to get it done"): Send my log to El Capataz. A copy of the
+   bet log (and parlays) goes to his own Worker (POST /share, behind the passphrase) for 24 hours; he gets a code to paste to Claude Code, who reads it once
+   with GET /share/<code>. Free-text notes are left out; no key, passphrase or email is ever in the log. Nothing on the board or in the log changes. */
+function shareLogRows(){ return (logged||[]).map(b=>{ const c=Object.assign({}, b); delete c.notes; delete c.note; return c; }); }
+document.getElementById('shareLog').addEventListener('click',async()=>{
+  const st=document.getElementById('shareStatus'), btn=document.getElementById('shareLog'); btn.disabled=true; st.textContent='Sending…';
+  try{
+    const res=await fetch(API_BASE+'/share',{method:'POST', headers:Object.assign({'Content-Type':'application/json'}, apiHeaders()), body:JSON.stringify({app:SCREENER_VERSION, rows:shareLogRows(), parlays:(typeof parlays!=='undefined'?parlays:[])}), cache:'no-store'});
+    const j=await res.json().catch(()=>({}));
+    if(!res.ok || !j.ok){ st.textContent=res.status===401?'Not sent: the Worker did not accept the passphrase (Settings › Connect).':res.status===404||res.status===405?'Not sent: your Worker does not have this yet (it needs the v3.48 update).':'Not sent ('+(j.error||('error '+res.status))+'). Nothing was changed.'; return; }
+    const msg='El Capataz, read my log: '+j.code;
+    st.innerHTML='✓ Sent '+j.count+' bets. Paste this to El Capataz (works for 24 hours): <code class="share-code">'+esc(msg)+'</code> <button type="button" class="ghost sm" id="shareCopy">Copy</button>';
+    const cp=document.getElementById('shareCopy'); if(cp) cp.addEventListener('click',()=>{ try{ navigator.clipboard.writeText(msg); cp.textContent='Copied'; }catch(e){} });
+    try{ navigator.clipboard.writeText(msg); }catch(e){}
+  }catch(e){ st.textContent='Not sent: the Worker did not answer. Nothing was changed.'; }
+  finally{ btn.disabled=false; }
+});
 document.getElementById('backupLog').addEventListener('click',()=>{
   const payload={kind:'mbev-betlog', v:1, savedAt:new Date().toISOString(), screener:SCREENER_VERSION,
     log:logged, parlays, gradeHistory, removed:removedBets, teamLogos};
