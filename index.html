@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.19</title>
+<title>0xBeta Screener v5.20</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1953,6 +1953,9 @@ html.cp-open #compaBtn{display:none}
 #compaIn{flex:1 1 auto; min-width:0; font-size:16px; line-height:1.35; resize:none; padding:8px 10px; border:1px solid var(--rule); border-radius:10px; background:var(--page); color:var(--ink); font-family:inherit; box-sizing:border-box}
 #compaSend{min-height:44px}
 @media (max-width:640px){ #compaPanel{inset:0; width:auto; border:0; border-radius:0; padding-bottom:env(safe-area-inset-bottom,0px)} #compaBtn{right:10px} }
+/* v5.20 (Kalshi link) */
+.kal-toast{position:fixed; left:50%; bottom:76px; transform:translateX(-50%); z-index:9999; max-width:min(92vw,520px); background:var(--card,#1d2530); color:var(--ink,#e8eef6); border:1px solid var(--accent,#5aa2ff); border-radius:10px; padding:10px 14px; font-size:13.5px; line-height:1.4; box-shadow:0 6px 24px rgba(0,0,0,.35)}
+.kal-toast[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -1961,7 +1964,7 @@ html.cp-open #compaBtn{display:none}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.19</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.20</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2874,7 +2877,7 @@ html.cp-open #compaBtn{display:none}
 
 </div>
 <script>
-const SCREENER_VERSION='v5.19';
+const SCREENER_VERSION='v5.20';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -5121,8 +5124,8 @@ function altBooksHtml(r){ if(!r || r.kind==='parlay' || !(r.offeredProb>0)) retu
     const cls='sc-alt book'+(a.ok?' ok':' over')+(a.old?' old':'')+(a.state==='seen'?' seen':'')+(a.far?' far':'');
     const fp=feePaidOf(a.book, a.p), body=logo+'<b>'+esc(String(a.odds||fmtOdds(Math.round(americanOf(a.p)))))+'</b><small>'+P(a.p)+(fp?' → '+P(fp.q)+' with fee':'')+' · '+word+(a.old&&a.at?' · ⏱ '+ag:a.old?' · ⏱ ?':'')+'</small>';   /* v5.14 (Las Karens review 2, item 3): the price paid with the fee next to the listed one (OK up to already counts the fee) */
     if(a.x) return '<span class="'+cls+'" role="button" tabindex="0" data-alt-idx="'+a.x.idx+'" title="'+esc(tip)+'">'+body+'</span>';
-    const src=LIVE_BOOK(a.book), u=(()=>{ try{ const v=bookUrl(src, a.q, 0); return v && /^(https:\/\/|novigapp:\/\/)/.test(v)?v:null; }catch(e){ return null; } })();
-    return u?'<a class="'+cls.replace(' book',' sc-link')+'" href="'+esc(u)+'"'+(/^https:/.test(u)?' target="_blank" rel="noopener"':'')+' title="'+esc(tip)+'">'+body+'</a>':'<span class="'+cls+' nolink" title="'+esc(tip.replace(/\. Tap to open it; I bet this sizes the stake at its price\.$/,'. No direct link here: open '+bookLabel(a.book)+' and search for this bet.'))+'">'+body+'</span>'; };   /* v5.11 (bug): no link, so the words no longer say Tap to open it */
+    const src=LIVE_BOOK(a.book), kc=src==='kalshi'?kalshiCopyInfo(r, a.q, a.p, a.mx, r):null /* v5.20 */, u=(()=>{ try{ const v=bookUrl(src, a.q, 0); return v && /^(https:\/\/|novigapp:\/\/)/.test(v)?v:null; }catch(e){ return null; } })();
+    return u?'<a class="'+cls.replace(' book',' sc-link')+'" href="'+esc(u)+'"'+(kc?kalshiAnchorAttrs(kc):'')+(/^https:/.test(u)?' target="_blank" rel="noopener"':'')+' title="'+esc(kc&&kc.name?tip.replace(/Tap to open it; I bet this sizes the stake at its price\.$/,'Kalshi game page · copies the market (“'+kc.name+'”, '+kc.side+(kc.lim?', limit '+kc.lim+'¢':'')+'). I bet this sizes the stake at its price.'):tip)+'">'+body+'</a>':'<span class="'+cls+' nolink" title="'+esc(tip.replace(/\. Tap to open it; I bet this sizes the stake at its price\.$/,'. No direct link here: open '+bookLabel(a.book)+' and search for this bet.'))+'">'+body+'</span>'; };   /* v5.11 (bug): no link, so the words no longer say Tap to open it */
   const show=A.slice(0,4), more=A.slice(4), top=A.find(a=>a.ok), cardNet=r.actNet!=null&&isFinite(r.actNet)?r.actNet:null;
   const notes=[];
   if(top && top.net!=null && (cardNet==null || top.net>cardNet+0.003)) notes.push('<span class="sc-alt-n good">Better confirmed price at '+esc(bookLabel(top.book))+' · Send the Sentinels to update the card</span>');
@@ -5320,13 +5323,14 @@ function placeCardHtml(r,cfg,o){
     '<div class="sc-bet"><div class="sc-pick">'+esc(pickTxt)+(X?'':impTagHtml(r,true))+'</div>'+   /* v5.11 (bug L4): true = on the card (a Kalshi card names the limit) */   // v4.10's line: the price as a %, OK to / look elsewhere, the math on hover
       '<div class="sc-money"><b>'+(st>0?'$'+st.toFixed(2):(r.hold&&!X)?'$0':'—')+'</b><span>'+((r.hold&&!X&&!(st>0))?(r.hold.why==='awol'?'if found':'if refreshed')+': up to $'+r.hold.stake.toFixed(2) /* v4.83 */:pay!=null?('wins $'+Math.max(0,pay-st).toFixed(2)+(isX?' · back $'+pay.toFixed(2):'')):'stake' /* v4.97: "wins" is always the profit, as at the book; an exchange also says what comes back */)+'</span>'+(lim?'<span class="sc-lim"'+(r.capBy&&!X?' title="'+esc(capDetail(r))+'"':'')+'>'+esc(lim)+'</span>':'')+'</div>'+   /* v5.01: the detail on hover */
       (()=>{ const hl=slip?slipLinkFor(r,st):null;   // v4.42: one tap on a phone: the chip is a real link when the book's slip is already known
-        return (hl?'<a class="sc-price book go sc-link'+(over?' over':'')+'" href="'+esc(hl)+'"'+(/^https:/.test(hl)?' target="_blank" rel="noopener"':''):'<span class="sc-price book'+(over?' over':'')+(slip?' go':'')+'" role="button" tabindex="0"')+' title="'+(slip?'Open this bet on '+esc(bk)+(st>0?' with $'+st.toFixed(2)+' filled':''):esc(bk))+(over?'. The price is over La Contadora’s most now: skip it or look elsewhere':'')+'">'+
+        return (hl?'<a class="sc-price book go sc-link'+(over?' over':'')+'" href="'+esc(hl)+'"'+(LIVE_BOOK(r.book)==='kalshi'?kalshiAnchorAttrs(kalshiCopyInfo(r, kalshiQOf(r), r.offeredProb, null, r)):'')+(/^https:/.test(hl)?' target="_blank" rel="noopener"':''):'<span class="sc-price book'+(over?' over':'')+(slip?' go':'')+'" role="button" tabindex="0"')+' title="'+(slip?(kalshiOpenTitle(r)?esc(kalshiOpenTitle(r)):'Open this bet on '+esc(bk)+(st>0?' with $'+st.toFixed(2)+' filled':'')):esc(bk))+(over?'. The price is over La Contadora’s most now: skip it or look elsewhere':'')+'">'+
         '<span class="scp-o">'+logo+'<b>'+esc(odds)+'</b></span><span class="scp-p">'+(okP?pp(p):'')+(over?' · over':'')+'</span>'+(hl?'</a>':'</span>'); })()+(X?'':altBooksHtml(r))+'</div>'+   /* v4.95 (Alonzo: "IMAGINE ANOTHER book under that saying, 53.7 etc. so, i can choose one or the other"): inside the price box, right under the price */
     (X?'<div class="sc-kx sc-xline'+(XL.agree?' ok':'')+'" title="'+esc(XL.short)+'">'+esc(XL.t)+'</div>':scKalshiLine(r)||scPolyLine(r) /* v4.79: or Polymarket US */)+   // v4.50: what the math thinks, in the Kalshi line's place (an extra never has one)
     (lnGet(pxKey(r))?'<div class="ln-text" title="Your note on this line">📝 '+esc(lnGet(pxKey(r)))+'</div>':'')+   // v4.34: your note
     '<div class="sc-act"><button class="log sm bet-btn" data-idx="'+r.idx+'">'+(r.moved?'Add this line too':'I bet this')+'</button>'+lnBtnHtml(r)+
       '<button class="log sm parlay'+(inParlay(r)?' on':'')+' parlay-btn" data-idx="'+r.idx+'" title="Mark as used in a parlay">'+(inParlay(r)?'In parlay ✓':'Parlay')+'</button>'+
-      (slip?'<span class="pp-open" title="Open this bet on '+esc(bk)+(st>0?' with $'+st.toFixed(2)+' filled':'')+'">open slip ↗</span>':'')+'</div>'+
+      (slip?'<span class="pp-open" title="'+(kalshiOpenTitle(r)?esc(kalshiOpenTitle(r)):'Open this bet on '+esc(bk)+(st>0?' with $'+st.toFixed(2)+' filled':''))+'">'+(kalshiOpenTitle(r)?'open Kalshi game ↗':'open slip ↗')+'</span>':'')+'</div>'+   // v5.20: says what it does
+      
     why+
   '</div>';
 }
@@ -12192,6 +12196,26 @@ async function quoteFor(obj, bookName){
    https://novig.com/events/<outcome>/novig/<stake>; Kalshi / Polymarket US: the market's own url; DraftKings / PrizePicks: their home (no prefilled slip).
    Only when the price the app read at that book is within 8 points of the card's price (else it may be another market: the tap then checks first).
    Owner: "APP link first and then https last": Novig's chip is novigapp://; the tap also shows the bar with the website (https) in case the app did not open. */
+/* v5.20 (owner 11/18: "Kalshi links, to open prefilled, are wrong. its never the same play."; "Oh, nice. yes. great idea."): Kalshi has no prefilled link; its url is the whole GAME page
+   (dozens of markets). So every path that opens a Kalshi page first copies the exact market name (Kalshi's own title, without the "NO · " prefix; built from the card when no title is known)
+   and says in a calm toast what to paste and pick (the side and limit are the Kalshi strip's own numbers). The page that opens is unchanged. Novig, Polymarket and the others are untouched. Hoisted. */
+function kalshiQOf(r){ try{ if(!r) return null; return [r._openQ, r._shopQ&&r._shopQ['Kalshi'], r._altQ&&r._altQ['Kalshi']].find(x=>x && x.ok && x.src==='kalshi' && x.title)||null; }catch(e){ return null; } }
+function kalshiMarketName(q, r){ try{ const t=q&&q.title?String(q.title).replace(/^\s*NO\s*·\s*/i,'').trim():''; if(t) return t;
+  if(!r) return ''; const mk=String(r.market||'').replace(/^([+-]?[\d.]+)\s*/,'$1 ').trim(), nm=String(r.kind==='prop'?r.name:(r.team||r.name)||'').trim(); return nm?nm+(r.kind==='prop'?': ':' ')+mk:mk; }catch(e){ return ''; } }
+function kalshiCopyInfo(r, q, p, mx, nrow){ try{ let k=null; if(r){ const st=+r.stake||0, m=mx!=null?mx:maxPriceFor(okProbR(r), r.book, cfgRead().eMin), pp=p>0?p:r.offeredProb; k=(st>0 && m!=null && pp>0)?kalshiHow(r, st, pp, m):null; }
+    const t=q&&q.title?String(q.title):'', no=/^\s*NO\s*·/i.test(t);
+    return {name:kalshiMarketName(q, nrow||r), side:k?k.btn:(t?(no?'NO':'YES'):'YES (or NO)'), lim:k?k.lim:null}; }catch(e){ return {name:'', side:'YES (or NO)', lim:null}; } }
+function kalshiOpenTitle(r){ try{ if(!r || LIVE_BOOK(r.book)!=='kalshi') return ''; const q=kalshiQOf(r), i=kalshiCopyInfo(r, q, r.offeredProb, null, r);
+    return 'Opens the game on Kalshi · pick '+(q&&i.name?i.name:'the market it copies')+' · '+i.side+(i.lim?' · limit '+i.lim+'¢':''); }catch(e){ return ''; } }
+function kalshiAnchorAttrs(i){ return (i && i.name)?' data-kmk="'+esc(i.name)+'" data-kside="'+esc(i.side||'')+'"'+(i.lim?' data-klim="'+esc(String(i.lim))+'"':''):''; }
+function kalshiCopyOld(t){ try{ const ta=document.createElement('textarea'); ta.value=t; ta.setAttribute('readonly',''); ta.style.cssText='position:fixed;left:-9999px;top:0;opacity:0'; document.body.appendChild(ta); ta.select(); const ok=document.execCommand('copy'); ta.remove(); return !!ok; }catch(e){ return false; } }
+function kalshiToast(msg){ try{ let el=document.getElementById('kalToast'); if(!el){ el=document.createElement('div'); el.id='kalToast'; el.className='kal-toast'; el.setAttribute('role','status'); document.body.appendChild(el); }
+    el.textContent=msg; el.hidden=false; clearTimeout(kalshiToast._t); kalshiToast._t=setTimeout(()=>{ el.hidden=true; }, 9000); }catch(e){} }
+function kalshiCopyMarket(i){ if(!i || !i.name) return; const name=String(i.name), tail='On Kalshi, paste it in Search, pick '+(i.side||'YES (or NO)')+(i.lim?', limit '+i.lim+'¢':'')+'.';
+  const done=ok=>kalshiToast(ok?'Copied “'+name+'”. '+tail:'Could not copy. On Kalshi, search for “'+name+'”, pick '+(i.side||'YES (or NO)')+(i.lim?', limit '+i.lim+'¢':'')+'.');
+  let started=false; try{ if(navigator.clipboard && navigator.clipboard.writeText){ started=true; navigator.clipboard.writeText(name).then(()=>done(true), ()=>done(kalshiCopyOld(name))); } }catch(e){ started=false; }
+  if(!started) done(kalshiCopyOld(name)); }
+document.addEventListener('click', e=>{ const a=e.target.closest&&e.target.closest('a[data-kmk]'); if(a) kalshiCopyMarket({name:a.getAttribute('data-kmk'), side:a.getAttribute('data-kside')||'', lim:a.getAttribute('data-klim')||null}); }, true);   // v5.20: a Kalshi link (chip, card price, Parole, phone bar): copy first, then the link opens as before
 function slipLinkFor(r, st){ try{
   if(!/iPhone|iPad|iPod|Android/i.test(navigator.userAgent||'') || !r) return null;
   const b=String(r.book||'').toLowerCase(), src=/kalshi/.test(b)?'kalshi':/polymarket/.test(b)?'poly':/novig/.test(b)?'novig':null;
@@ -12251,7 +12275,7 @@ function pickPayHtml(r){
   const show=x=>pctBook?(x*100).toFixed(1)+'%':fmtOdds(Math.round(americanOf(x)));
   const net=r.net, evTxt=net!=null?'<b class="'+(net>=cfg.eMin?'up':net<0?'down':'')+'"'+(isFdp(r.book)?' title="FanDuel Predicts\' fee is a guess — approximate"':'')+'>'+(isFdp(r.book)?'~':'')+(net>=0?'+':'')+(net*100).toFixed(1)+'% EV</b>':'';
   const src=LIVE_BOOK(r.book) || (/draftkings/i.test(r.book||'')?'dk':null);
-  const open=src?'<span class="pp-open" title="Open this bet on '+esc(bookLabel(r.book))+(st>0?' with $'+st.toFixed(2)+' filled':'')+'">open slip ↗</span>':'';
+  const kt=kalshiOpenTitle(r), open=src?'<span class="pp-open" title="'+(kt?esc(kt):'Open this bet on '+esc(bookLabel(r.book))+(st>0?' with $'+st.toFixed(2)+' filled':''))+'">'+(kt?'open Kalshi game ↗':'open slip ↗')+'</span>':'';   // v5.20
   if(mx==null) return '<span class="pp no" title="No price at this book clears your EV floor">✗ no price passes</span>'+open;
   if(p>mx+1e-9) return '<span class="pp no" title="The price is above the most you can pay — skip it">✗ '+show(p)+' — over '+show(mx)+', skip</span><span class="pp-sub">'+evTxt+'</span>'+open;
   const prof=pay!=null?Math.max(0,pay-st):null;
@@ -12283,7 +12307,7 @@ function kalshiHowHtml(r){   // a full-width strip on the card: one box per thin
   const st=+r.stake||0, mx=maxPriceFor(okProbR(r), r.book, cfgRead().eMin); if(!(st>0) || mx==null || r.offeredProb>mx+1e-9) return '';
   const k=kalshiHow(r,st,r.offeredProb,mx); if(!k) return '';
   const box=(lbl,val,note)=>'<div class="kx-b"><span class="kx-l">'+lbl+'</span><b class="kx-v">'+val+'</b>'+(note?'<span class="kx-n">'+note+'</span>':'')+'</div>';
-  return '<div class="kx-how" title="What to type on Kalshi for La Contadora\'s bet"><div class="kx-h">On Kalshi, enter</div><div class="kx-row">'+
+  return '<div class="kx-how" title="What to type on Kalshi for La Contadora\'s bet. The Kalshi link opens the game page, not this market: it copies the market name for you to paste in Search."><div class="kx-h">On Kalshi, enter</div><div class="kx-row">'+
     box('1 · Press', k.btn, esc(k.what)+(k.underNote?' (NO on the Over = the Under)':'')+'<br>in '+esc(gameHintOf(r)))+   // v4.15: which game
     box('2 · Shares', k.shares.toFixed(2), 'not '+st.toFixed(2)+': that is dollars, the most it can cost')+   // v5.05 (Los Desconfiados): the bet is now the budget, not the cost (was "that is the cost")
     box('3 · Limit price', k.lim+'¢', 'the maximum: La Contadora\'s most, never higher'+(feePaidOf(r.book, k.lim/100)?' · '+(feePaidOf(r.book, k.lim/100).q*100).toFixed(1)+'¢ with the fee':''))+   // v5.05 · v5.14 (Las Karens review 2, item 3): the price with the fee
@@ -12809,8 +12833,8 @@ document.addEventListener('click', async e=>{
   const src=LIVE_BOOK(obj.book) || (/draftkings/i.test(obj.book||'')?'dk':/prizepicks/i.test(obj.book||'')?'pp':null); if(!src) return;   // v4.04: PrizePicks opens too (its app or site; it has no prefilled slip)
   e.preventDefault(); e.stopPropagation();
   const w=isPhone()?null:slipWindow();   // open now (pop-up blockers), point it once we know where   // v4.04: not on a phone (see slipReady)
-  let url=BOOK_HOME[src], miss=null;
-  try{ if(src!=='dk' && src!=='pp'){ const q=await quoteFor(obj, obj.book);
+  let url=BOOK_HOME[src], miss=null, kq=null;   // v5.20: kq = the Kalshi quote, for the market name
+  try{ if(src!=='dk' && src!=='pp'){ const q=await quoteFor(obj, obj.book); kq=q;
     // v3.05: a book price far from the card's price means the book matched a different bet (a half, the other side of
     // the spread) — open the book's home page instead of a prefilled slip, and say why on the card
     const p0=obj.odds!=null?toProb(String(obj.odds).trim().replace(/^(\d)/,'+$1')):null;
@@ -12826,20 +12850,22 @@ document.addEventListener('click', async e=>{
         miss=qGoneText(slipRow.qGone); if(note) note.textContent='⚠ '+miss; setTimeout(()=>{ try{ refresh(); }catch(_e){} }, 800); }
       else if(slipRow && q && awolNote(q.note) && LIVE_BOOK(slipRow.book)===src){ slipRow.awol={book:slipRow.book, note:String(q.note), hint:miss, at:Date.parse(q.at)||Date.now()}; setTimeout(()=>{ try{ refresh(); }catch(_e){} }, 800); } }   /* v4.81: the book could not find it: the card goes to 👻 AWOL */
     else if(slipRow && (slipRow.awol || slipRow.exClosed || (slipRow.qGone && slipRow.qGone.tap) /* v4.83 */) && LIVE_BOOK(slipRow.book)===src && !(p0!=null && Math.abs(q.price-p0)>SLIP_GUARD) /* v4.81: a price far from the card may be another market: not a find */){ delete slipRow.awol; delete slipRow.exClosed; if(slipRow.qGone && slipRow.qGone.tap) delete slipRow.qGone; /* v4.81: found */ setTimeout(()=>{ try{ refresh(); }catch(_e){} }, 800); } } }catch(_){}
-  if(isPhone()){ slipReady(url, src, miss); return; }   // v4.04
+  const kinfo=src==='kalshi'?kalshiCopyInfo(slipRow, kq&&kq.ok?kq:null, slipRow?slipRow.offeredProb:0, null, slipRow||obj):null;   // v5.20: the market name, side and limit (the strip's own)
+  if(isPhone()){ slipReady(url, src, miss, kinfo); return; }   // v4.04 · v5.20: the bar link copies on its tap (a fresh tap, so the phone allows it)
+  if(kinfo) kalshiCopyMarket(kinfo);   // v5.20
   if(w) w.location.href=url; else location.href=url;
 }, true);
 /* v4.04 (Alonzo: "when I press to prefill, open the app instead of the website"): an iPhone hands a link to an app (Novig, Kalshi,
    Polymarket, DraftKings) only when you tap the link itself. A tab the page opened and pointed at the slip after the price check
    always stayed in Safari. On a phone the slip now waits in a bar at the bottom as a real link: one tap opens the app. */
-function slipReady(url, src, msg){ if(!url) return; let el=document.getElementById('slipGo');
+function slipReady(url, src, msg, kinfo){ if(!url) return; /* v5.20: + kinfo (Kalshi: the market to copy) */ let el=document.getElementById('slipGo');
   if(!el){ el=document.createElement('div'); el.id='slipGo'; el.className='slip-go'; el.setAttribute('role','status'); document.body.appendChild(el);
     el.addEventListener('click',e=>{ if(e.target.closest('.slip-go-x')){ el.hidden=true; return; } if(e.target.closest('a')) setTimeout(()=>{ el.hidden=true; },800); }); }
   const nm=BOOK_NAME[src]||(src==='dk'?'DraftKings':src==='pp'?'PrizePicks':'the book'), web=/^novigapp:\/\//.test(url)?url.replace(/^novigapp:\/\//,'https://novig.com/'):'';
-  el.innerHTML='<span class="slip-go-t">'+(msg?'⚠ '+esc(msg):src==='dk'||src==='pp'?esc(nm)+': no prefilled slip, find the bet in the app':esc(nm)+' slip is ready')+'</span><a class="slip-go-a" href="'+esc(url)+'">Open in '+esc(nm)+' ›</a>'+(web?'<a class="slip-go-w" href="'+esc(web)+'" target="_blank" rel="noopener">website (if the app did not open)</a>':'')+'<button type="button" class="slip-go-x" aria-label="Close">×</button>';
+  el.innerHTML='<span class="slip-go-t">'+(msg?'⚠ '+esc(msg):src==='dk'||src==='pp'?esc(nm)+': no prefilled slip, find the bet in the app':esc(nm)+' slip is ready')+'</span><a class="slip-go-a" href="'+esc(url)+'"'+(src==='kalshi'?kalshiAnchorAttrs(kinfo):'')+(src==='kalshi'&&kinfo&&kinfo.name?' title="Opens the game on Kalshi and copies the market name"':'')+'>Open in '+esc(nm)+' ›</a>'+(web?'<a class="slip-go-w" href="'+esc(web)+'" target="_blank" rel="noopener">website (if the app did not open)</a>':'')+'<button type="button" class="slip-go-x" aria-label="Close">×</button>';
   el.hidden=false; }
 // mark clickable logos
-const _markGo=()=>document.querySelectorAll('#logBody img.blogo, #tbody img.blogo, #placeCards img.blogo, #liveBody img.blogo').forEach(i=>{ if(/kalshi|polymarket|novig|draftkings|prizepicks/i.test(i.alt||'')){ i.classList.add('go'); i.title=(i.alt||'')+' — open this bet'; } });
+const _markGo=()=>document.querySelectorAll('#logBody img.blogo, #tbody img.blogo, #placeCards img.blogo, #liveBody img.blogo').forEach(i=>{ if(/kalshi|polymarket|novig|draftkings|prizepicks/i.test(i.alt||'')){ i.classList.add('go'); i.title=/kalshi/i.test(i.alt||'')?'Kalshi — opens the game page and copies the market name (v5.20)':(i.alt||'')+' — open this bet'; } });
 new MutationObserver(()=>_markGo()).observe(document.body,{childList:true,subtree:true});
 
 /* v2.91: La Contadora's live check — every not-started row with a fair value (passing OR skipped) gets live
@@ -13686,7 +13712,7 @@ function abMakeLadder(f, fair, mkt, book, X, isOut, outLimit){
   (st.notes||[]).filter(n=>!/contracts/.test(n)).forEach(n=>lines.push('<span class="meta">'+esc(n)+'</span>'));
   lines.push('<span class="meta">The whole ladder counts as one bet toward your daily max. Nothing is placed by the screener — post the rungs yourself.</span>');
   const url=bookUrl(src, now?now.q:null, 0);
-  lines.push('<div class="ab-btns"><button type="button" class="log sm" id="abSavePost">📌 Save ladder</button>'+(url?'<a class="ghost sm" style="text-decoration:none;padding:5px 10px;border:1px solid var(--rule);border-radius:8px" href="'+esc(url)+'" target="_blank" rel="noopener">Open '+esc(bookLabel(book))+'</a>':'')+'</div>');
+  lines.push('<div class="ab-btns"><button type="button" class="log sm" id="abSavePost">📌 Save ladder</button>'+(url?'<a class="ghost sm" style="text-decoration:none;padding:5px 10px;border:1px solid var(--rule);border-radius:8px" href="'+esc(url)+'"'+(src==='kalshi'?kalshiAnchorAttrs(kalshiCopyInfo(null, now?now.q:null, 0, null, null)):'')+' target="_blank" rel="noopener">Open '+esc(bookLabel(book))+'</a>':'')+'</div>');
   return {level:'ok', head:'📌 POST '+esc(abSideTxt(f,false))+' — $'+st.s.toFixed(2)+' across '+R.length+' rung'+(R.length===1?'':'s'), lines};
 }
 function abSavePost(){
@@ -13939,7 +13965,7 @@ function renderParole(){
     return '<div class="par-card">'+head+
       '<div class="par-scroll"><table class="par-tbl"><thead><tr><th>Bait (Make price)</th><th>Odds</th><th>Proj. EV</th><th>vs market</th><th>$</th><th>Payout</th><th>Chance of a bite</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'+   /* v5.14: the table scrolls inside its own box on a phone */
       '<div class="par-steps" style="margin-top:6px"><span>① <b>Open slip</b> (side + $ filled)</span><span class="par-make">② tap <b>MAKE</b> (not Take)</span><span>③ paste the bait %</span><span>④ check the $</span><span>⑤ check the payout → you press the button</span></div>'+
-      '<div class="par-btns">'+(url?'<a class="log sm par-btn" href="'+esc(url)+'" target="_blank" rel="noopener">Open slip ($'+first.stake.toFixed(2)+' filled)</a>':'')+
+      '<div class="par-btns">'+(url?'<a class="log sm par-btn" href="'+esc(url)+'"'+(P.src==='kalshi'?kalshiAnchorAttrs(kalshiCopyInfo(null, P.q, 0, null, r)):'')+' target="_blank" rel="noopener"'+(P.src==='kalshi'?' title="Opens the game on Kalshi and copies the market name"':'')+'>Open slip ($'+first.stake.toFixed(2)+' filled)</a>':'')+
       '<button type="button" class="ghost sm par-save" data-i="'+r.idx+'">📌 Save bait (tracks the catch)</button></div>'+
       '<div class="meta">'+(P.ask!=null?'If the slip shows '+(P.ask*100).toFixed(1)+'%, you\'re still on Take.':'Your price would be the first offer on that side.')+'</div></div>';
   }).join('') + (takeNow.length?'<div class="par-takenow">🟢 '+takeNow.length+' Jail bet'+(takeNow.length===1?' is':'s are')+' already cheap enough to take now ('+takeNow.map(([r])=>esc(r.name)).join(', ')+') — no fishing needed: <b>🦑 Send the Sentinels</b> on the Board.</div>':'') + (stay.length?'<details class="par-stay"><summary>'+stay.length+' stay in Jail</summary>'+stay.map(([r,w])=>'<div class="meta">'+esc(r.name)+' · '+esc(r.market||'')+' — '+esc(w)+'</div>').join('')+'</details>':'')
