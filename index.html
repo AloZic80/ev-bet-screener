@@ -1958,6 +1958,11 @@ html.cp-open #compaBtn{display:none}
 .kal-toast[hidden]{display:none}
 /* v5.21 (thin exchange book) */
 .eb-thin{color:var(--warn); font-weight:600}
+/* v5.21 (tab edge so far, dev mode) */
+#modeBar button.edge-up{box-shadow:0 0 0 2px var(--live) inset}
+#modeBar .mode-edge{font-weight:600; opacity:.9}
+#modeBar button.edge-up .mode-edge{color:var(--live)}
+#modeBar button.edge-down .mode-edge{color:var(--dim)}
 </style>
 </head>
 <body>
@@ -3897,6 +3902,28 @@ function planOutTxt(P){ P=P||planCfg(); return 'Outside your plan · you bet '+(
 function planOut(a, P){ P=P||planCfg(); return !!(P.on && a!=null && isFinite(a) && a<P.min-1e-9); }   /* the edge tabOfChance uses: 50.0% is inside a 50% plan */
 function planOutHtml(a, P, short){ P=P||planCfg(); return planOut(a,P) ? '<span class="plan-out" title="'+(short?esc(planOutTxt(P))+'. ':'')+'A reminder from Settings › My plan. Stakes and BET / SKIP do not change.">'+esc(short?'Outside your plan':planOutTxt(P))+'</span>' : ''; }   /* v5.10 (fixer): short = a table row’s narrow name column: “Outside your plan”, the whole line on hover (5 lines there, now 2) */
 function planTabOut(m, P){ P=P||planCfg(); const top=({clair:0.45, lucky:0.50, dado:0.55, volado:0.60, parejo:0.65, safe:0.70, tranqui:0.75})[m]; /* v5.16 (owner: more tabs): 🎲 Dado 50–55%, 🪙 Volado 55–60%, ⚖️ Parejo 60–65%, 💪 Machín 65–70%, 🛋️ Tranqui 70–75% */ return !!(P.on && top!=null && top<=P.min+1e-9); }   /* the top of each chance tab’s range (tabOfChance): 🔮 Brujo under 45%, 🍀 Suertudo 45–50%, 🪙 Volado 50–60%, 💪 Machín 60–75%; a whole tab is outside a plan whose minimum is at or above its top */
+/* v5.21 (owner 11/17: "If you see that im on an Edge from all bets on lets say, Machin, Parejo, VOlado ... highlight"; "this is an ONGOING survey and go with the
+   stats we go now ... See this as a Dev app"; "from now on, we are making my dev app. when we are ready after 1k or more, we change go reg mode"): each chance
+   tab shows how HIS settled single bets whose La Contadora chance (snap.act, frozen when taken) falls in its range are doing so far: count, profit, ROI, wins vs
+   the wins the saved chances expected, CLV where a closing price exists. Ahead (profit > 0 and wins at least expected) = a calm green ring, with NO minimum
+   sample (dev mode), always with "so far · N bets". Behind = a muted note. A label only: no decision, stake, order or tab content changes; Reports keeps its
+   own careful wording. Hoisted: a render reads it. */
+function tabEdgeStats(log){ const T={}, K={boring:'boring', tranqui:'tranqui', machin:'safe', parejo:'parejo', volado:'volado', dado:'dado', suertudo:'lucky', brujo:'clair'};
+  (log||[]).forEach(b=>{ if(!b || b.kind==='parlay' || !(b.result==='win' || b.result==='loss' || b.result==='push')) return; const c=bandCover(b,'act'); if(!c || c.source!=='act') return;
+    const t=tabOfChance(c.p), m=t&&K[t]; if(!m) return; const pr=betProfit(b); if(pr==null) return;
+    const g=T[m]||(T[m]={n:0, w:0, l:0, p:0, exp:0, profit:0, staked:0, clvN:0, clvSum:0});
+    g.n++; g.profit+=+pr; g.staked+=b.free?0:(+b.stake||0); if(b.result==='push') g.p++; else { if(b.result==='win') g.w++; else g.l++; g.exp+=c.p; }
+    let v=null; try{ v=clv(b); }catch(e){} if(v!=null && isFinite(+v)){ g.clvN++; g.clvSum+=+v; } });
+  Object.values(T).forEach(g=>{ g.profit=+g.profit.toFixed(2); g.roi=g.staked>0?g.profit/g.staked:null; g.ahead=g.profit>0 && g.w>=g.exp-1e-9; });
+  return T; }
+function tabEdgeTxt(g){ const $=v=>(v<0?'−':'+')+'$'+Math.abs(v).toFixed(2);
+  return 'So far · '+g.n+' settled bet'+(g.n===1?'':'s')+': '+$(g.profit)+(g.roi!=null?' (ROI '+(g.roi>=0?'+':'−')+Math.abs(g.roi*100).toFixed(1)+'%)':'')+' · won '+g.w+(g.p?', '+g.p+' push'+(g.p===1?'':'es'):'')+', the math expected '+g.exp.toFixed(1)+
+    (g.clvN?' · CLV '+(g.clvSum/g.clvN>=0?'+':'−')+Math.abs(g.clvSum/g.clvN*100).toFixed(1)+'% on '+g.clvN:'')+' · a running survey, not proof (dev mode). Reports has the careful numbers. Nothing here changes a bet.'; }
+function tabEdgePaint(){ const T=tabEdgeStats(typeof logged!=='undefined'?logged:[]);
+  document.querySelectorAll('#modeBar button[data-mode]').forEach(b=>{ const g=T[b.dataset.mode]; let el=b.querySelector('.mode-edge');
+    if(!g){ if(el) el.remove(); b.classList.remove('edge-up','edge-down'); return; }
+    if(!el){ el=document.createElement('small'); el.className='mode-edge'; } el.textContent=' '+(g.ahead?'▲':'▼')+' '+(g.profit<0?'−':'+')+'$'+Math.abs(g.profit).toFixed(0)+' · '+g.n;
+    el.title=tabEdgeTxt(g); el.setAttribute('aria-label', tabEdgeTxt(g)); b.appendChild(el); b.classList.toggle('edge-up', g.ahead); b.classList.toggle('edge-down', !g.ahead); }); }
 function planTabsPaint(){ const P=planCfg(), out=[]; document.querySelectorAll('#modeBar button[data-mode]').forEach(b=>{ let el=b.querySelector('.mode-plan'); if(!planTabOut(b.dataset.mode,P)){ if(el) el.remove(); return; }
     if(!el){ el=document.createElement('small'); el.className='mode-plan'; } el.textContent=' · outside your plan'; el.title=planOutTxt(P)+' (a reminder only: stakes and BET / SKIP do not change)'; b.appendChild(el); out.push((MODES[b.dataset.mode]||{}).label||''); });   /* last in the button, after its count */   /* v5.10 (fixer): out = the tabs it named */
   const bar=document.getElementById('modeBar'); if(!bar) return; let ln=bar.querySelector('.mode-plan-line');   /* v5.10 (fixer): on a phone the words leave the buttons for one muted line under them (CSS); the buttons keep them for screen readers */
@@ -6720,6 +6747,7 @@ function modeCountsPaint(rows,mN){ mN=mN||{safe:0, lucky:0, hail:0, boring:0, vo
   set('old', mN.old||0, 'Prices read more than 12 hours ago, from any tab ('+(mN.old||0)+' now). Check each price first: a Sentinels press, a reload or a new paste that reads it fresh sends it back to its tab.');   /* v4.77 */
   set('awol', mN.awol||0, 'Bets whose book could not find them on its last check ('+(mN.awol||0)+' now): no market at your line, not listed, game not found or nobody selling. A Sentinels press that finds one sends it back to its tab.');   /* v4.81 */
   try{ planTabsPaint(); }catch(e){}   /* v5.10: “· outside your plan” on the tabs under My plan (after the counts) */
+  try{ tabEdgePaint(); }catch(e){}   /* v5.21: how his own settled bets in each tab’s range are doing so far (dev mode, a label) */
   const c=document.getElementById('contadora'); if(!c) return; if(betMode==='safe' || betMode==='boring' || betMode==='volado' || betMode==='tranqui' || betMode==='parejo' || betMode==='dado' /* v5.16 */ || betMode==='old' || betMode==='awol' /* v4.81 */){ c.innerHTML=(CONTADORA[betMode]||'')+(betMode!=='safe'?' <span class="mode-info">· '+esc(modeElse(mN,betMode))+'</span>':''); return; }   /* v4.76 */
   const U=extrasUsed(), today=ctDay(Date.now()), uL=U.lucky[today]||0, uH=U.hail[today]||0, el=modeElse(mN,betMode);
   c.innerHTML=contadoraText(betMode) /* v4.80 */+' <span class="mode-info">· '+(betMode==='lucky'
