@@ -54,6 +54,9 @@
   (price checker and receipt book), not a seller: no pressure, urgency or hype; calm verbs ("Compare", "Place at …", "Log my bet"); the fair price, the best book,
   what to type and how fresh the price is come first; "skip / not worth it" is shown as plainly as a good price.
 - Legal advice will be asked for before it is offered to anyone else.
+- Dev mode (owner, 2026-11-17: "from now on, we are making my dev app. when we are ready after 1k or more, we change go reg mode"): labels and
+  studies run live with no minimum sample, always showing the count; a label still never changes a decision or stake; Reports keeps its careful wording.
+  After 1,000+ settled bets the owner decides when to switch to Regular mode (sample gates, as a paid version would have). No mode switch is built yet.
 - Owner, 2026-11-16: "i want the AI as my companion. lots of the features we have will not go out as the app that we will charge FYI. this is mine personally."
   This app is his personal edition: the AI helper, scout, schedule and alerts are for him. A paid public version, if any, is a separate build
   that leaves personal features out; mark new personal-only features in `memory/decisions/personal-edition.md`.
