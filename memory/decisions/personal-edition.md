@@ -23,3 +23,10 @@ Plan: free sources go behind the Worker (keys as Worker secrets), cached, and ar
 ## API-Sports (checked 2026-11-17)
 Free plan = seasons 2022–2024 only, 100 requests a day per sport: no current games, odds or scores. Owner: "why would i want old seasons and have a limit on requests?" · "ok, we remove on next build".
 To do on the next Worker change: remove src/apisports.js, its two routes and its test (v3.46). Owner removes the secrets APISPORTS_KEY and the misnamed one, and resets the key on api-sports.io.
+
+## Dev mode now, Regular mode after 1,000+ bets (owner, 2026-11-17)
+"yes, i understand the TOO few, but thats for final REPORTS. this is an ONGOING survey and go with the stats we go now. When we sell the app, then it would be different. See this as a Dev app. since we also have an AI now" (about the per-tab edge highlights), then at 8:27 PM:
+"from now on, we are making my dev app. when we are ready after 1k or more, we change go reg mode".
+- Dev mode (now): running-survey labels (tab edge highlights, "so far" badges) show live with no minimum sample, always with the count ("so far · N bets"). A label never changes a decision, stake, order or tab content.
+- Reports, the Scorecard and the 1,000-bet test keep their careful small-sample wording in both modes.
+- Regular mode: after 1,000+ settled bets, on the owner's word. Highlights get sample gates, as a paid version would have. Nothing is built for the switch yet.

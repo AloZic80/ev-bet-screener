@@ -13,6 +13,8 @@
   (branch, tests, publish on the owner's go). The claude.ai Project's agent keeps the history, researches and writes specs;
   ChatGPT gives second opinions; the owner decides, deploys the Worker and carries notes. Code drafted elsewhere comes in
   as a note to merge and test, never as an upload over `main`.
+  Handoff SOP (owner, 11/17: "make this a standard. SOP"): handoffs from Chat arrive in the private repo `AloZic80/claude-handoffs` (`inbox/`, once he creates it);
+  a handoff is a proposal, not a go; Code replies in `done/`. Details: `agent-notes/sop-chat-to-code-handoff_2026-11-18_v1.md`.
 - Crew names (owner, 2026-11-11: "Love it!"), used in agent labels and reports: El Jefe (Alonzo), El Juez (the test suite), El Capataz (Claude Code),
   El Consultor (ChatGPT), El Historiador (the Project's agent), Los Desconfiados (skeptic agents), Los Chismosos (reviewer agents), Los Chambeadores (worker agents),
   Las Karens (owner, 2026-11-13: "assign workers to just play the part of a customer ... Beta testers. Almost like Karens"; "so we add to the crew"): customer agents who use the live app
@@ -54,6 +56,9 @@
   (price checker and receipt book), not a seller: no pressure, urgency or hype; calm verbs ("Compare", "Place at …", "Log my bet"); the fair price, the best book,
   what to type and how fresh the price is come first; "skip / not worth it" is shown as plainly as a good price.
 - Legal advice will be asked for before it is offered to anyone else.
+- Dev mode (owner, 2026-11-17: "from now on, we are making my dev app. when we are ready after 1k or more, we change go reg mode"): labels and
+  studies run live with no minimum sample, always showing the count; a label still never changes a decision or stake; Reports keeps its careful wording.
+  After 1,000+ settled bets the owner decides when to switch to Regular mode (sample gates, as a paid version would have). No mode switch is built yet.
 - Owner, 2026-11-16: "i want the AI as my companion. lots of the features we have will not go out as the app that we will charge FYI. this is mine personally."
   This app is his personal edition: the AI helper, scout, schedule and alerts are for him. A paid public version, if any, is a separate build
   that leaves personal features out; mark new personal-only features in `memory/decisions/personal-edition.md`.
