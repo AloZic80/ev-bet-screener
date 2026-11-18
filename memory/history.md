@@ -906,3 +906,4 @@ New builds add their line at the top of the right section.
   4 stats each. A board row at the app's own line is `own`; a different line (`diff`) or a pick the app doesn't offer (`none`) is
   kept out of entries; games not looked up stay `unknown` ("check line").
 
+- v5.20 / v5.21 (2026-11-18, PR #161): `kalshiCopyMarket` / `kalshiMarketName`: a Kalshi link opens the game page (no prefill), so every tap copies the exact market name. `thinQ`: a live exchange price more than 10 points over your own side's bid (Novig Mamukelashvili 65.0% vs 43.5%) never fills I bet this, is not "Novig now", and is left out of best odds and `r.sh` (the hold). `tabEdgeStats` / `tabEdgePaint`: each chance tab shows his settled singles in its range so far (snap.act), green ring when ahead with no minimum sample (dev mode, owner 11/17), label only.
