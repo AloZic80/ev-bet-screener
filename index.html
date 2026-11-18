@@ -1956,6 +1956,8 @@ html.cp-open #compaBtn{display:none}
 /* v5.20 (Kalshi link) */
 .kal-toast{position:fixed; left:50%; bottom:76px; transform:translateX(-50%); z-index:9999; max-width:min(92vw,520px); background:var(--card,#1d2530); color:var(--ink,#e8eef6); border:1px solid var(--accent,#5aa2ff); border-radius:10px; padding:10px 14px; font-size:13.5px; line-height:1.4; box-shadow:0 6px 24px rgba(0,0,0,.35)}
 .kal-toast[hidden]{display:none}
+/* v5.21 (thin exchange book) */
+.eb-thin{color:var(--warn); font-weight:600}
 </style>
 </head>
 <body>
@@ -3958,7 +3960,7 @@ function shAssign(rows,cfg){ const C=shCfg(), now=Date.now(), mine=b=>!cfg.books
     const ids=list.map(x=>x._shId), oppOf=id=>{ if(!id.team) return id.side==='O'?'U':'O'; const o=ids.find(x=>x.team!==id.team && (id.n==null || Math.abs(x.n+id.n)<1e-9)); return o?o.side:null; };
     list.forEach(r=>{ const id=r._shId, op=oppOf(id), said=[r.exClosed?(r.exClosedBook||r.book):null, r.awol&&r.awol.book, r.qGone&&r.qGone.book].filter(Boolean).map(b=>LIVE_BOOK(b)||b);
       if(!(r.prior || rowAwol(r) || rowOld(r) || r.qGone || r.exClosed || String(r.src||'').startsWith('paste'))) add(id.side, r.book, r.offeredProb, rowSeenAt(r));
-      [r._openQ].concat(Object.values(r._shopQ||{}), Object.values(r._altQ||{})).forEach(q=>{ if(!q || !q.ok || !BOOK_NAME[q.src] || said.includes(q.src)) return; const at=Date.parse(q.at)||0, bk=BOOK_NAME[q.src];
+      [r._openQ].concat(Object.values(r._shopQ||{}), Object.values(r._altQ||{})).forEach(q=>{ if(!q || !q.ok || thinQ(q) /* v5.21: a thin book is not a price */ || !BOOK_NAME[q.src] || said.includes(q.src)) return; const at=Date.parse(q.at)||0, bk=BOOK_NAME[q.src];
         add(id.side, bk, q.price, at); if(op && id.oneMinus && q.bid>0 && q.bid<1) add(op, bk, 1-q.bid, at); }); });
     list.forEach(r=>{ const id=r._shId, op=oppOf(id), two=id.team ? new Set(ids.map(x=>x.team)).size===2 : true;
       if(!op || !two){ r.sh={ok:false, why:'the other side is not on the board'}; return; }
@@ -5729,9 +5731,11 @@ function openBetEditor(tr, r, opt){
       if(!lastQ) return;
       const {book,q,others}=lastQ, cfg=cfgRead(), fair=r.fairProb;
       const mx=fair!=null?maxPriceFor(okProb(fair, r.mktProb), book, cfg.eMin):null;   // v4.41: the blend
-      const typed=parseFloat(pctIn.value), cur=pmMode()&&typed>0&&typed<100?typed/100:(q&&q.ok?q.price:null);
+      const thin=thinQ(q), cardP=toProb(r.offeredRaw);   // v5.21: a thin book is no price
+      const typed=parseFloat(pctIn.value), cur=pmMode()&&typed>0&&typed<100?typed/100:(q&&q.ok&&!thin?q.price:null);
       let h='';
-      if(q && q.ok){ const f=feeRate(book,q.price,cfg.fees), net=fair!=null?actNetOf(fair, r.mktProb, q.price, f):null;   /* v4.53: her EV at the live price (it printed the model's next to "pay up to") */
+      if(thin) h+='<span class="eb-thin">⚠ '+esc(bookLabel(book))+'’s live book read '+(q.price*100).toFixed(1)+'% here'+(cardP!=null?', far from the card’s '+(cardP*100).toFixed(1)+'%':'')+' — its book is thin, check your slip</span>';   /* v5.21 */
+      else if(q && q.ok){ const f=feeRate(book,q.price,cfg.fees), net=fair!=null?actNetOf(fair, r.mktProb, q.price, f):null;   /* v4.53: her EV at the live price (it printed the model's next to "pay up to") */
         h+='<b>'+esc(bookLabel(book))+' now '+(q.price*100).toFixed(1)+'%</b> ('+esc(fmtOdds(Math.round(americanOf(q.price))))+')'+
           (net!=null?' · EV <b class="'+(net>=cfg.eMin?'tb-up':net>0?'':'tb-down')+'">'+(net>=0?'+':'')+(net*100).toFixed(1)+'%</b>':''); }
       else if(q) h+='live: '+esc(String(q.note||'no match').replace(/^(Kalshi|Polymarket|Novig): /,''));
@@ -5752,10 +5756,10 @@ function openBetEditor(tr, r, opt){
         const res=await fetch(API_BASE+'/live?bets='+encodeURIComponent(JSON.stringify(descs)), {headers:apiHeaders()});
         const j=await res.json(), R=(j&&j.results)||{}; if(myTok!==tok) return;
         let own=src?R['ed'+myTok+':'+src]:null; if(own&&own.ok&&suspectQ(own,r.fairProb,toProb(r.offeredRaw),r.mktProb)) own={ok:false,note:'price looks like a different market — ignored'};
-        const others=descs.map(d=>({d,q:R[d.id]})).filter(x=>x.q&&x.q.ok&&!suspectQ(x.q,r.fairProb,toProb(r.offeredRaw),r.mktProb)).map(x=>({book:BOOK_NAME[x.d.book], p:x.q.price})).sort((a,b)=>a.p-b.p);
+        const others=descs.map(d=>({d,q:R[d.id]})).filter(x=>x.q&&x.q.ok&&!thinQ(x.q) /* v5.21 */&&!suspectQ(x.q,r.fairProb,toProb(r.offeredRaw),r.mktProb)).map(x=>({book:BOOK_NAME[x.d.book], p:x.q.price})).sort((a,b)=>a.p-b.p);
         lastQ={book, q:own||null, others: r.fairProb==null||!src ? others : others.filter(o=>LIVE_BOOK(o.book)!==src)};
-        if(own && own.ok){ liveQuotes['ed:'+src]=own;
-          if(pmMode() && !pctTyped && ed.dataset.pmsrc!=='win'){ pctIn.value=(own.price*100).toFixed(1); pctIn.dispatchEvent(new Event('input')); } }
+        if(own && own.ok){ if(!thinQ(own)) liveQuotes['ed:'+src]=own;   // v5.21: a thin reading is not kept as the live price
+          if(!thinQ(own) && pmMode() && !pctTyped && ed.dataset.pmsrc!=='win'){ pctIn.value=(own.price*100).toFixed(1); pctIn.dispatchEvent(new Event('input')); } }
         paint();
       }catch(e){ liveEl.textContent='live price unavailable'; }
     };
@@ -12074,6 +12078,10 @@ var logDayFilter=null, logBandFilter=null;   // v4.66: a cover band (0 = no cove
 /* ============ v2.88: live exchange prices (Kalshi · Polymarket US · Novig) via the Worker ============ */
 /* v3.00: an exchange price that implies a huge edge, or sits far from the bet's own price, is almost always a DIFFERENT market
    (e.g. Necas "1+ Powerplay Points" 34.5% matched to "Over 0.5 Points" 65.7%). Never use it to take, post, close or shop. */
+/* v5.21 (owner, 11/17: "please fix"; Mamukelashvili O1.5 threes): a thin exchange book. Your price is 1 − the best bid on the other side, and on a
+   thin prop the two sides are far apart (Novig: ask 65.0%, your own bid 43.5%, a 21.5-point gap) while the app filled him at 55%. A gap over 10
+   points between your price and your own side's bid is a thin reading: it never fills I bet this and is not used as a price or a hold. A label only. */
+function thinQ(q){ if(!q || !q.ok || !(q.price>0)) return false; if(q.thin) return true; return q.bid!=null && +q.bid>0 && q.price - +q.bid > 0.10 + 1e-9; }
 function suspectQ(q, fair, own, mkt){   // v3.02: judged against the MARKET (a real outlier like Flagg 71% model vs 53% price is not "wrong market")
   if(!q || !(q.price>0)) return false;
   if(mkt!=null) return Math.abs(q.price-mkt)>0.15;          // the market is the best yardstick for "same bet?"
