@@ -13,6 +13,8 @@
   (branch, tests, publish on the owner's go). The claude.ai Project's agent keeps the history, researches and writes specs;
   ChatGPT gives second opinions; the owner decides, deploys the Worker and carries notes. Code drafted elsewhere comes in
   as a note to merge and test, never as an upload over `main`.
+  Handoff SOP (owner, 11/17: "make this a standard. SOP"): handoffs from Chat arrive in the private repo `AloZic80/claude-handoffs` (`inbox/`, once he creates it);
+  a handoff is a proposal, not a go; Code replies in `done/`. Details: `agent-notes/sop-chat-to-code-handoff_2026-11-18_v1.md`.
 - Crew names (owner, 2026-11-11: "Love it!"), used in agent labels and reports: El Jefe (Alonzo), El Juez (the test suite), El Capataz (Claude Code),
   El Consultor (ChatGPT), El Historiador (the Project's agent), Los Desconfiados (skeptic agents), Los Chismosos (reviewer agents), Los Chambeadores (worker agents),
   Las Karens (owner, 2026-11-13: "assign workers to just play the part of a customer ... Beta testers. Almost like Karens"; "so we add to the crew"): customer agents who use the live app
