@@ -34,7 +34,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.22</title>
+<title>0xBeta Screener v5.23</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1958,6 +1958,16 @@ html.cp-open #compaBtn{display:none}
 .kal-toast[hidden]{display:none}
 /* v5.21 (thin exchange book) */
 .eb-thin{color:var(--warn); font-weight:600}
+/* v5.23 ("Type this" ticket on exchange cards: one field a row, in the book's order) */
+.sc-tkt{margin:8px 14px 0; padding:8px 12px 6px; border:1.5px solid var(--accent); border-radius:12px; background:var(--panel); max-width:420px}
+.sc-tkt-h{font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--accent)}
+.sc-tkt>.sc-kx{display:flex; flex-direction:column; align-items:stretch; gap:0; padding:2px 0 0}
+.sc-tkt>.sc-kx>.sc-kx-h{font-size:13px; letter-spacing:.02em; text-transform:none; color:var(--ink); padding:2px 0 4px}
+.sc-tkt>.sc-kx>.sc-kx-i{border:0; border-top:1px dashed var(--rule); border-radius:0; background:none; padding:7px 2px; font-size:14px; color:var(--soft)}
+.sc-tkt>.sc-kx>.sc-kx-i b{font-size:16px; color:var(--ink)}
+.sc-tkt-exp{display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 8px; border-top:1px dashed var(--rule); padding:7px 2px 2px; font-size:14px; color:var(--soft)}
+.sc-tkt-exp b{color:var(--ink)} .sc-tkt-exp small{flex:1 1 100%}
+@container sclist (min-width:760px){ .sc-card>.sc-tkt{grid-area:kx; justify-self:end; margin:0 16px 10px 6px; width:min(420px,100%)} }
 /* v5.22 (Send my log to El Capataz) */
 #shareStatus .share-code{word-break:break-all; user-select:all; font-size:12px}
 #shareCopy{min-height:44px}
@@ -1974,7 +1984,7 @@ html.cp-open #compaBtn{display:none}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.22</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.23</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2889,7 +2899,7 @@ html.cp-open #compaBtn{display:none}
 
 </div>
 <script>
-const SCREENER_VERSION='v5.22';
+const SCREENER_VERSION='v5.23';
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -5266,6 +5276,14 @@ function scKalshiLine(r){ if(LIVE_BOOK(r.book)!=='kalshi' || r.fairProb==null ||
   const st=+r.stake||0, mx=maxPriceFor(okProbR(r), r.book, cfgRead().eMin); if(!(st>0) || mx==null || r.offeredProb>mx+1e-9) return '';
   const k=kalshiHow(r,st,r.offeredProb,mx); if(!k) return '';
   return '<div class="sc-kx" title="What to type on Kalshi. The steps are explained in Why this play?"><span class="sc-kx-h">On Kalshi</span><span class="sc-kx-i"><b>'+k.btn+'</b>'+(k.on?' on '+esc(k.on) /* v4.80: a spread says which market */:'')+'</span><span class="sc-kx-i">Shares <b>'+k.shares.toFixed(2)+'</b> <small class="sc-kx-s">(Kalshi takes 0.01 shares)</small></span><span class="sc-kx-i">Limit <b>'+k.lim+'¢</b>'+scFeePaidTxt(r.book, k.lim)+'</span><span class="sc-kx-i">Max cost <b>$'+k.cost.toFixed(2)+'</b></span></div>'; }   /* v5.05: the most the order can cost (was Cost ≈) · v5.14 (Las Karens review 2, item 3): the 0.01-share note and the price with the fee */
+/* v5.23 (owner 11/18, the Draymond Green slip: "what shares or how many? you see, that is what you need to also show on the app to bet"; "build"): the
+   exchange line becomes a "Type this" ticket in the book’s own order (the side, Limit price, Shares, then the cost), one field a row, plus an Expires row:
+   end the order before the start, so an unfilled Limit does not fill after tip-off. Same numbers and words as the line (La Contadora’s most as the
+   limit: a Limit at it fills at the lower ask when there is one). Display only. Hoisted: a render reads it. */
+function scExpiresHtml(r){ const s=Date.parse((r.gameInfo&&r.gameInfo.startISO)||r.start||''); if(isNaN(s) || s<Date.now()) return '';
+  const t=new Date(s).toLocaleTimeString('en-US',{hour:'numeric', minute:'2-digit', timeZone:'America/Chicago'});
+  return '<div class="sc-tkt-exp"><span>Expires</span><b>before '+esc(t)+' CT</b><small class="sc-kx-s">the start · if it only offers Good ’til canceled, cancel what has not filled by then</small></div>'; }
+function scTicket(r){ const s=scKalshiLine(r)||scPolyLine(r); if(!s) return ''; return '<div class="sc-tkt"><div class="sc-tkt-h">Type this</div>'+s+scExpiresHtml(r)+'</div>'; }
 function scPolyLine(r){ if(LIVE_BOOK(r.book)!=='poly' || r.fairProb==null || !(r.offeredProb>0 && r.offeredProb<1)) return '';   /* v4.79: what to type on Polymarket US, on the card (like the Kalshi line) */
   const st=+r.stake||0, mx=maxPriceFor(okProbR(r), r.book, cfgRead().eMin); if(!(st>0) || mx==null || r.offeredProb>mx+1e-9) return '';
   const k=polyHow(r,st,mx); if(!k) return '';
@@ -5359,7 +5377,7 @@ function placeCardHtml(r,cfg,o){
       (()=>{ const hl=slip?slipLinkFor(r,st):null;   // v4.42: one tap on a phone: the chip is a real link when the book's slip is already known
         return (hl?'<a class="sc-price book go sc-link'+(over?' over':'')+'" href="'+esc(hl)+'"'+(LIVE_BOOK(r.book)==='kalshi'?kalshiAnchorAttrs(kalshiCopyInfo(r, kalshiQOf(r), r.offeredProb, null, r)):'')+(/^https:/.test(hl)?' target="_blank" rel="noopener"':''):'<span class="sc-price book'+(over?' over':'')+(slip?' go':'')+'" role="button" tabindex="0"')+' title="'+(slip?(kalshiOpenTitle(r)?esc(kalshiOpenTitle(r)):'Open this bet on '+esc(bk)+(st>0?' with $'+st.toFixed(2)+' filled':'')):esc(bk))+(over?'. The price is over La Contadora’s most now: skip it or look elsewhere':'')+'">'+
         '<span class="scp-o">'+logo+'<b>'+esc(odds)+'</b></span><span class="scp-p">'+(okP?pp(p):'')+(over?' · over':'')+'</span>'+(hl?'</a>':'</span>'); })()+(X?'':altBooksHtml(r))+'</div>'+   /* v4.95 (Alonzo: "IMAGINE ANOTHER book under that saying, 53.7 etc. so, i can choose one or the other"): inside the price box, right under the price */
-    (X?'<div class="sc-kx sc-xline'+(XL.agree?' ok':'')+'" title="'+esc(XL.short)+'">'+esc(XL.t)+'</div>':scKalshiLine(r)||scPolyLine(r) /* v4.79: or Polymarket US */)+   // v4.50: what the math thinks, in the Kalshi line's place (an extra never has one)
+    (X?'<div class="sc-kx sc-xline'+(XL.agree?' ok':'')+'" title="'+esc(XL.short)+'">'+esc(XL.t)+'</div>':scTicket(r) /* v4.79: or Polymarket US · v5.23: as a "Type this" ticket with Expires */)+   // v4.50: what the math thinks, in the Kalshi line's place (an extra never has one)
     (lnGet(pxKey(r))?'<div class="ln-text" title="Your note on this line">📝 '+esc(lnGet(pxKey(r)))+'</div>':'')+   // v4.34: your note
     '<div class="sc-act"><button class="log sm bet-btn" data-idx="'+r.idx+'">'+(r.moved?'Add this line too':'I bet this')+'</button>'+lnBtnHtml(r)+
       '<button class="log sm parlay'+(inParlay(r)?' on':'')+' parlay-btn" data-idx="'+r.idx+'" title="Mark as used in a parlay">'+(inParlay(r)?'In parlay ✓':'Parlay')+'</button>'+
