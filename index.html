@@ -8,6 +8,8 @@
   var embed=/[?&]embed=phone(&|$)/.test(location.search), narrow=screen.width<700, de=document.documentElement;
   de.setAttribute('data-layout', embed?'embed':m);
   try{ de.setAttribute('data-palette', localStorage.getItem('mbev.palette')||'green'); }catch(e){ de.setAttribute('data-palette','green'); }   // v4.33: colour scheme, before the first paint
+  try{ de.setAttribute('data-viewas', localStorage.getItem('mbev.viewAs')==='easy'?'easy':'god'); }catch(e){ de.setAttribute('data-viewas','god'); }   // v5.24: View as (God is the default; this device only), before the first paint
+  try{ if(localStorage.getItem('mbev.viewLabels')==='1') de.setAttribute('data-labels','1'); }catch(e){}   // v5.24: Show who sees what (this device only)
   /* v4.37 (Alonzo: "can I choose from a grid, not just those colours, like a colour wheel"): Custom builds a whole light and dark scheme from one
      colour (the hue, toned until every pair passes 4.5:1), as a <style id="palCustomCss">, before the first paint. */
   window.palCss=function(hex){ function rgb(h){ h=String(h||'').replace('#',''); if(h.length===3) h=h.replace(/./g,'$&$&'); return [0,2,4].map(function(i){ return parseInt(h.substr(i,2),16)||0; }); }
@@ -1976,6 +1978,66 @@ html.cp-open #compaBtn{display:none}
 #modeBar .mode-edge{font-weight:600; opacity:.9}
 #modeBar button.edge-up .mode-edge{color:var(--live)}
 #modeBar button.edge-down .mode-edge{color:var(--dim)}
+/* v5.24 (owner 11/20: "we need to differentiate already"; step 1, the shell): View as (html[data-viewas] god | easy), the four Easy tabs and views, the level labels
+   (html[data-labels="1"]) and the Who sees what panel. God is the default and looks exactly as before: every rule below that changes something is scoped to Easy
+   or to the labels switch. */
+:root{--lv-god:#5B21B6; --lv-god-bg:#F1EBFE; --lv-god-edge:#7C3AED; --lv-plus:#7A4B00; --lv-plus-bg:#FFF0C7; --lv-plus-edge:#B7791F; --lv-easy:#0B6B34; --lv-easy-bg:#E4F7EC; --lv-easy-edge:#12A150}
+:root[data-theme="dark"]{--lv-god:#CDBBFF; --lv-god-bg:#2A1F55; --lv-god-edge:#A78BFA; --lv-plus:#F2B44C; --lv-plus-bg:#3A2A08; --lv-plus-edge:#F2B44C; --lv-easy:#3ED98A; --lv-easy-bg:#12301F; --lv-easy-edge:#3ED98A}
+html:not([data-viewas="easy"]) .tabs .tab.etab, html:not([data-viewas="easy"]) .view.eview, html:not([data-viewas="easy"]) .easy-only{display:none !important}
+html[data-viewas="easy"] .tabs .tab:not(.etab), html[data-viewas="easy"] .view:not(.eview), html[data-viewas="easy"] #subTabs, html[data-viewas="easy"] .god-only{display:none !important}
+html[data-viewas="easy"] .wrap:not(:has(.eview.on)) #v-etoday{display:block}
+html[data-viewas="easy"] .statbox, html[data-viewas="easy"] #tbFoldBtn, html[data-viewas="easy"] #todayBar, html[data-viewas="easy"] #ordersTop, html[data-viewas="easy"] #fillWarn, html[data-viewas="easy"] #pullBar,
+html[data-viewas="easy"] #ssFoldBtn, html[data-viewas="easy"] #scoreStrip, html[data-viewas="easy"] #syncChip, html[data-viewas="easy"] #verTag, html[data-viewas="easy"] #layoutBtn, html[data-viewas="easy"] .head .date,
+html[data-viewas="easy"] #apiDock #apiRow, html[data-viewas="easy"] #apiDock #apiSheet, html[data-viewas="easy"] #compaBtn, html[data-viewas="easy"] #compaPanel, html[data-viewas="easy"] .ai-only,
+html[data-viewas="easy"] #perfAlert, html[data-viewas="easy"] #scAlert, html[data-viewas="easy"] #kalToast, html[data-viewas="easy"] #slipGo, html[data-viewas="easy"] #aiBugBar{display:none !important}
+.eview{padding:14px 0 18px}
+.tabs .tab.etab{min-height:44px}
+.eview .ev-h{font-size:24px; margin:6px 0 8px}
+.eview .ev-p{font-size:16px; color:var(--soft); margin:0}
+.easy-banner{display:flex; align-items:center; justify-content:center; gap:4px; height:36px; padding:0 8px; background:var(--accent-bg); border-bottom:1px solid var(--rule); font-size:13px; color:var(--ink); white-space:nowrap}
+.easy-banner[hidden]{display:none}
+.easy-banner .eb-short{display:none}
+.easy-banner button{font:inherit; font-size:13px; font-weight:700; color:var(--accent); background:none; border:0; text-decoration:underline; cursor:pointer; height:44px; margin:-4px 0; padding:0 8px}
+@media (max-width:640px){ .easy-banner .eb-long{display:none} .easy-banner .eb-short{display:inline} }
+#easySwitchBox h2{margin:0 0 4px}
+#easySwitchBox .es-line{font-size:14px; color:var(--soft); margin:0 0 10px}
+.es-seg{display:flex; gap:6px; margin:0 0 6px}
+.es-seg button{flex:1 1 0; min-width:0; min-height:48px; padding:6px 8px; font:inherit; font-size:15px; font-weight:700; line-height:1.2; color:var(--ink); background:var(--panel-2); border:1px solid var(--rule); border-radius:10px; cursor:pointer}
+.es-seg button[aria-checked="true"]{background:var(--lv-god-bg); color:var(--lv-god); box-shadow:inset 0 0 0 1.5px var(--lv-god-edge)}
+.es-seg button.e[aria-checked="true"]{background:var(--lv-easy-bg); color:var(--lv-easy); box-shadow:inset 0 0 0 1.5px var(--lv-easy-edge)}
+.es-seg button[disabled]{border-style:dashed; color:var(--soft); cursor:not-allowed; background:transparent}
+.es-row{display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:52px; padding:6px 0; border-top:1px solid var(--rule); margin-top:8px}
+.es-tx{display:flex; flex-direction:column; min-width:0; font-size:15px}
+.es-tx small{font-size:13px; color:var(--soft)}
+.es-sw{position:relative; flex:none; width:56px; min-height:44px; padding:0; border:0; background:transparent; cursor:pointer}
+.es-sw::before{content:""; position:absolute; left:2px; right:2px; top:8px; bottom:8px; border-radius:999px; border:2px solid var(--soft); background:var(--panel-2)}
+.es-sw .es-knob{position:absolute; top:12px; left:8px; width:20px; height:20px; border-radius:50%; background:var(--soft); transition:left .15s}
+.es-sw[aria-checked="true"]::before{background:var(--lv-god-bg); border-color:var(--lv-god-edge)}
+.es-sw[aria-checked="true"] .es-knob{left:28px; background:var(--lv-god-edge)}
+.es-legend{font-size:13px; line-height:1.5; margin:4px 0 8px; color:var(--ink)}
+details.easy-who{border-top:1px solid var(--rule); padding-top:2px}
+#easySwitchBox details.easy-who>summary{display:flex; align-items:center; min-height:44px; font-size:15px; font-weight:700; cursor:pointer}   /* the id lifts it over .view .panel>details>summary (40 px) */
+.ew-counts{display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 8px}
+.ew-cnt{min-height:44px; padding:0 12px; font:inherit; font-size:14px; font-weight:600; color:var(--ink); background:var(--panel-2); border:1px solid var(--rule); border-radius:999px; cursor:pointer}
+.ew-cnt[aria-pressed="true"]{box-shadow:inset 0 0 0 1.5px var(--ink)}
+.ew-cnt[data-ewlv="god"]{background:var(--lv-god-bg); color:var(--lv-god)} .ew-cnt[data-ewlv="plus"]{background:var(--lv-plus-bg); color:var(--lv-plus)} .ew-cnt[data-ewlv="easy"]{background:var(--lv-easy-bg); color:var(--lv-easy)}
+.ew-note{font-size:13px; color:var(--soft); margin:0 0 8px}
+.ew-grp{display:flex; align-items:center; gap:8px; margin:12px 0 4px; font-size:15px}
+.ew-pill{display:inline-flex; align-items:center; padding:2px 10px; border-radius:999px; font-size:13px; font-weight:700; border:1px solid currentColor}
+.ew-pill[data-ewlv="god"]{background:var(--lv-god-bg); color:var(--lv-god)} .ew-pill[data-ewlv="plus"]{background:var(--lv-plus-bg); color:var(--lv-plus)} .ew-pill[data-ewlv="easy"]{background:var(--lv-easy-bg); color:var(--lv-easy)}
+.ew-empty{font-size:14px; color:var(--soft); margin:4px 0}
+.ew-list{list-style:none; margin:0; padding:0}
+.ew-row{display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,2fr); gap:2px 12px; padding:8px 0 8px 10px; border-top:1px solid var(--rule-2); border-left:3px solid var(--lv-god-edge); font-size:14px}
+.ew-row[data-ewlv="plus"]{border-left-color:var(--lv-plus-edge)} .ew-row[data-ewlv="easy"]{border-left-color:var(--lv-easy-edge)}
+.ew-f{font-weight:700; color:var(--ink)} .ew-w,.ew-y{color:var(--soft)}
+@media (max-width:640px){ .ew-row{grid-template-columns:minmax(0,1fr)} }
+/* the level labels: a small pill in the corner of each tab, More item and Settings section. Never in the flow (absolute), never tappable, never part of the text. */
+html[data-labels="1"] [data-lv]{position:relative}
+html[data-labels="1"] [data-lv]::after{position:absolute; z-index:5; pointer-events:none; display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px; padding:0 4px; border-radius:11px; font-size:12px; line-height:1; font-weight:700; border:1px solid var(--lv-god-edge); background:var(--lv-god-bg); color:var(--lv-god); top:-11px; right:8px}
+html[data-labels="1"] [data-lv="god"]::after{content:"⚡"}
+html[data-labels="1"] [data-lv="plus"]::after{content:"⭐"; border-color:var(--lv-plus-edge); background:var(--lv-plus-bg); color:var(--lv-plus)}
+html[data-labels="1"] [data-lv="easy"]::after{content:"🟢"; border-color:var(--lv-easy-edge); background:var(--lv-easy-bg); color:var(--lv-easy)}
+html[data-labels="1"] .tabs .tab[data-lv]::after, html[data-labels="1"] #subTabs .tab[data-lv]::after, html[data-labels="1"] .board-more-list button[data-lv]::after{top:1px; right:1px; height:18px; min-width:18px; font-size:12px}
 </style>
 </head>
 <body>
@@ -2046,23 +2108,28 @@ html.cp-open #compaBtn{display:none}
 </div>
 
 <div class="tabs" role="tablist" aria-label="Sections">   <!-- v4.29 (Alonzo: "his 5 tabs"): Augi's five; the rest sit in the row under their tab -->
-  <button class="tab on" role="tab" aria-selected="true" data-view="v-board" data-src="api" data-group="board">Board</button>
-  <button class="tab" role="tab" aria-selected="false" data-view="v-live" data-group="live">Live Games <span class="tab-n" id="leTabN"></span></button>
-  <button class="tab" role="tab" aria-selected="false" data-view="v-parlay" data-group="parlay" title="PrizePicks and DraftKings Pick6 entries built from the board">Parlay <span class="tab-n" id="pkTabN"></span></button>
-  <button class="tab" role="tab" aria-selected="false" data-view="v-log" data-group="log">Bet log <span class="tab-n look-n" id="logTabN"></span></button>
-  <button class="tab" role="tab" aria-selected="false" data-view="v-settings" data-group="settings">Settings</button>
+  <button class="tab on" role="tab" aria-selected="true" data-view="v-board" data-src="api" data-group="board" data-lv="god">Board</button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-live" data-group="live" data-lv="god">Live Games <span class="tab-n" id="leTabN"></span></button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-parlay" data-group="parlay" data-lv="god" title="PrizePicks and DraftKings Pick6 entries built from the board">Parlay <span class="tab-n" id="pkTabN"></span></button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-log" data-group="log" data-lv="god">Bet log <span class="tab-n look-n" id="logTabN"></span></button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-settings" data-group="settings" data-lv="god">Settings</button>
+  <!-- v5.24 (owner 11/20: "make tabs for just them"): the four Easy tabs. Hidden in God view (CSS); in Easy view the five God tabs are hidden and these show. New view ids, so no test or code that clicks a God tab finds them. -->
+  <button class="tab etab" role="tab" aria-selected="false" data-view="v-etoday" data-group="etoday" data-lv="easy">Today</button>
+  <button class="tab etab" role="tab" aria-selected="false" data-view="v-ebets" data-group="ebets" data-lv="easy">My bets</button>
+  <button class="tab etab" role="tab" aria-selected="false" data-view="v-elearn" data-group="elearn" data-lv="easy">Learn</button>
+  <button class="tab etab" role="tab" aria-selected="false" data-view="v-esettings" data-group="esettings" data-lv="easy">Settings</button>
 </div>
 <div class="subtabs" id="subTabs" role="tablist" aria-label="More in this tab">
   <button type="button" class="subhome" data-group="board" data-home="v-board">Board</button>
   <button class="tab" role="tab" aria-selected="false" data-view="v-board" data-src="paste" data-group="board" hidden>Pasted <span class="tab-n" id="pasteTabN"></span></button>
-  <button class="tab" role="tab" aria-selected="false" data-view="v-leagues" data-group="board" title="Every league your sources have games for in the next 3 days">🌍 Leagues <span class="tab-n" id="lgTabN"></span></button>
-  <button class="tab" role="tab" aria-selected="false" data-view="v-parole" data-group="board" title="Jail bets your own posted price would fix — Make orders on Novig">🔓 Parole <span class="tab-n" id="paroleTabN"></span></button>
-  <button class="tab" role="tab" aria-selected="false" data-view="v-money" data-group="board">Moneylines</button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-leagues" data-group="board" data-lv="god" title="Every league your sources have games for in the next 3 days">🌍 Leagues <span class="tab-n" id="lgTabN"></span></button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-parole" data-group="board" data-lv="god" title="Jail bets your own posted price would fix — Make orders on Novig">🔓 Parole <span class="tab-n" id="paroleTabN"></span></button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-money" data-group="board" data-lv="god">Moneylines</button>
   <button class="tab" role="tab" aria-selected="false" data-view="v-paste" data-group="board" hidden title="Paste a board from the BettingPros site — doesn't use the API">Paste a board</button>
   <button type="button" class="subhome" data-group="log" data-home="v-log">Bet log</button>
-  <button class="tab" role="tab" aria-selected="false" data-view="v-add" data-group="log" title="Take a price or post your own — BET or SKIP and how much">+ Add a bet</button>
-  <button class="tab" role="tab" aria-selected="false" data-view="v-perf" data-group="log">Performance</button>
-  <button class="tab" role="tab" aria-selected="false" data-view="v-reports" data-group="log" title="Your results for a day, a month, a year or all time, worked out live from your bet log">📊 Reports</button>   <!-- v4.89 -->
+  <button class="tab" role="tab" aria-selected="false" data-view="v-add" data-group="log" data-lv="god" title="Take a price or post your own — BET or SKIP and how much">+ Add a bet</button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-perf" data-group="log" data-lv="god">Performance</button>
+  <button class="tab" role="tab" aria-selected="false" data-view="v-reports" data-group="log" data-lv="god" title="Your results for a day, a month, a year or all time, worked out live from your bet log">📊 Reports</button>   <!-- v4.89 -->
 </div>
 <!-- v4.92 (Alonzo: "the API's, bring them to the bottom. under BOARD, Live GAMES, Parlay, Bet LOG, etc....across"; "that includes BettingPros API, since, its AN API"):
      the API dock. At startup apiDockBuild() moves the five tabs, the BettingPros panel, the status line and the source chips in here, so every id and
@@ -2340,7 +2407,7 @@ html.cp-open #compaBtn{display:none}
 </div>
 
 <div class="view" id="v-settings">
-<details class="panel fold" id="srcSettings">   <!-- v3.54: moved here from the header; v3.57: the sources went back to the main page, the passphrase stays -->  <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
+<details class="panel fold" id="srcSettings" data-lv="god">   <!-- v3.54: moved here from the header; v3.57: the sources went back to the main page, the passphrase stays -->  <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>Connect <span class="sub">your Worker and passphrase · test it for free</span></h2></summary>   <!-- v4.38: Augi's Connect screen -->
   <div class="row" id="passBox" style="display:flex;margin-top:4px">
     <input type="password" id="screenerPass" aria-label="Screener passphrase" placeholder="passphrase" style="max-width:220px" autocomplete="new-password">
@@ -2355,22 +2422,22 @@ html.cp-open #compaBtn{display:none}
     <p class="hint" style="margin:6px 0 0">No API keys are typed here: every key stays a secret on the Worker in Cloudflare. The passphrase only unlocks your Worker.</p>
   </div>
 </details>
-<details class="panel fold" id="credPanel">   <!-- v4.38: Augi's API credits page -->  <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
+<details class="panel fold" id="credPanel" data-lv="god">   <!-- v4.38: Augi's API credits page -->  <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>API credits &amp; usage <span class="sub">last reported, not a live poll · refresh is free</span></h2></summary>
   <div class="cr-grid" id="crGrid"></div>
   <div class="row" style="margin-top:10px"><button type="button" class="ghost sm" id="crRefresh">⟳ Refresh (free)</button> <span class="meta" id="crMsg" role="status"></span></div>
 </details>
-<div class="panel rg-panel" id="rulesGlance">   <!-- v4.38: Augi's rules layout: everything La Contadora uses, in one place -->
+<div class="panel rg-panel" id="rulesGlance" data-lv="god">   <!-- v4.38: Augi's rules layout: everything La Contadora uses, in one place -->
   <h2>Your rules at a glance <span class="cn-chip">saved in this browser · no secrets</span></h2>
   <div class="rg-grid" id="rgGrid"></div>
   <p class="hint" style="margin:6px 0 0">Change any of them in Screens and Stake sizing below; this updates as you type. A mode does not change any of them. Each tab lists only its own bets, by La Contadora’s chance: 😴 Boring = High Cover + Heavy Favorite (75%+), 🛋️ Tranqui = Strong (70–75%), 💪 Machín = Solid (65–70%), ⚖️ Parejo = Lean (60–65%), 🪙 Volado = Slight Lean (55–60%), 🎲 Dado = On the Line (50–55%)<!-- v5.16 (owner: more tabs) -->, 🍀 Suertudo = Coin Flip (45–50%), 🔮 Brujo = Unlikely (under 45%). The ones that just missed and the Hail Marys are not offered as bets: they stay in 👀 Watch, and you can log one yourself with + Add a bet.<!-- v5.13 (owner: no daily Suertudo/Brujo bets) --></p>
 </div>
-<div class="panel plan-panel" id="planPanel">   <!-- v5.10 (owner, Sun 11/15: "id say 11/11 ... BUILD IT ALL"): My plan, a reminder only (saved and synced with the settings) -->
+<div class="panel plan-panel" id="planPanel" data-lv="god">   <!-- v5.10 (owner, Sun 11/15: "id say 11/11 ... BUILD IT ALL"): My plan, a reminder only (saved and synced with the settings) -->
   <h2>My plan <span class="sub">a reminder only</span></h2>
   <div class="plan-row"><label for="planMin">La Contadora’s chance at least</label><span class="plan-g"><input id="planMin" type="number" value="50" step="1" min="0" max="99" title="0 turns the reminder off"><span>%</span></span><span class="plan-g"><span aria-hidden="true">·</span><label for="planSince">since</label><input id="planSince" type="date" value="2026-11-11"></span><input id="planSetAt" type="hidden" value=""><!-- v5.10 (fixer): when the date was last changed here (empty = never: 11/15 12:40 AM CT, PLAN_SET_AT), for the blocks’ head-start note --></div>
   <p class="hint plan-hint">A reminder only: cards below it say ‘Outside your plan’. Stakes and BET / SKIP do not change.</p>
 </div>
-<details class="panel fold" id="schedPanel">   <!-- v5.18 (owner 11/16: "have a button just for that ... Or perhaps by time ... So, i can program it"; "i have to tell it 'program' it what API and what settings for search"): closed until tapped -->
+<details class="panel fold" id="schedPanel" data-lv="god">   <!-- v5.18 (owner 11/16: "have a button just for that ... Or perhaps by time ... So, i can program it"; "i have to tell it 'program' it what API and what settings for search"): closed until tapped -->
   <summary><h2>⏰ Schedule <span class="sub">Scout, set times, auto Sentinels and alerts · while this page is open</span></h2></summary>
   <div class="sc-cap-row"><label for="schedCap">Scout cap: up to</label> <input id="schedCap" type="number" min="0" max="50" step="1" value="10" style="width:64px"> <span>BettingPros calls a day (of your 50)</span> <span class="meta" id="schedCapNote"></span></div>
   <div class="sc-scout" id="schedScout"></div>
@@ -2393,7 +2460,7 @@ html.cp-open #compaBtn{display:none}
   <p class="hint" style="margin:8px 0 0">Runs while this page is open. On iPhone, keep the app on screen; Safari pauses pages in the background.</p>
   <p class="hint" style="margin:4px 0 0">The Scout, the set times and the alerts only load prices and tell you. They never change La Contadora’s decision, a stake or the order. Turning alerts on takes the board as it is; only bets approved after that alert, once a day each.</p>
 </details>
-<details class="panel fold" id="layoutPanel">   <!-- v3.54 -->  <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
+<details class="panel fold" id="layoutPanel" data-lv="god">   <!-- v3.54 -->  <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>Layout <span class="sub">how the screener fits this device</span></h2></summary>
   <div class="ab-seg" id="layoutSeg" role="radiogroup" aria-label="Layout"><button type="button" role="radio" data-l="auto">Auto</button><button type="button" role="radio" data-l="phone">Phone</button><button type="button" role="radio" data-l="desktop">Desktop</button></div>
   <p class="hint" style="margin:10px 0 0">Auto picks the layout from your screen size. Phone shows the phone layout, even on a computer. Desktop shows the full layout, even on a phone. Saved on this device only.</p>
@@ -2406,7 +2473,7 @@ html.cp-open #compaBtn{display:none}
   </div>
   <p class="hint" style="margin:10px 0 0">A whole scheme for light and dark: page, panels, tabs and buttons. Green is Augi's. Wins stay green and losses red in every scheme. Saved on this device only.</p>
 </details>
-<details class="panel fold" id="syncPanel">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
+<details class="panel fold" id="syncPanel" data-lv="god">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>☁ Your bets on every device <span class="sub">phone, other PCs — locked with your own sync password</span></h2></summary>
   <div class="row" style="gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px">
     <input type="password" id="syncPw" aria-label="Sync password" placeholder="sync password" autocomplete="new-password" style="max-width:220px;padding:8px 10px;font-size:14px">
@@ -2418,7 +2485,7 @@ html.cp-open #compaBtn{display:none}
   <details class="help" data-help="sync"><summary>How sync works</summary><p class="hint">One copy of your bet log lives in your Cloudflare store. Any device with the screener passphrase <b>and</b> this password sees the same bets, baits and settings. Changes upload a few seconds after you make them; other devices pick them up when they open or come back to the page, and once a minute while it's open — Wi-Fi or cellular.</p><p class="hint" style="margin-top:8px"><b>Synced:</b> bet log, removed bets, parlay marks, Parole baits, which book fills are matched, your settings (bankroll, La Contadora's rules, fees) and the last board you loaded with its grading history. <b>Stays on each device:</b> the screener passphrase, this password, theme, team logos.</p><p class="hint" style="margin-top:4px"><b>First time:</b> on the Mac run <code>cd ~/prop-bet-api</code>, then <code>npx wrangler secret put SYNC_KEY</code> (type the password you picked — it never goes in chat or code), then <code>npx wrangler deploy</code>. Turn it on here on the PC first (its log becomes the cloud copy), then on the phone. Lost a device? Run the secret command again with a new password.</p></details>   <!-- v4.25: a drop-down (the three notes were always open) -->
   <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px"><button class="ghost sm" id="syncBak">Cloud backups…</button><span class="meta" id="syncBakList"></span></div>
 </details>
-<details class="panel fold" id="aiPanel">   <!-- v5.15 (AI helper; owner 11/15: "its only for me now." · "LETS CHOOSE SONNET"): off until the Worker says it is set up; closed until tapped -->
+<details class="panel fold" id="aiPanel" data-lv="god">   <!-- v5.15 (AI helper; owner 11/15: "its only for me now." · "LETS CHOOSE SONNET"): off until the Worker says it is set up; closed until tapped -->
   <summary><h2>✨ AI helper <span class="sub">reads slips, screenshots, news and results for you to check · it never decides a bet or a stake</span></h2></summary>
   <div class="row" style="gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px">
     <label class="bar-check"><input type="checkbox" id="aiOnBox" disabled> Use the AI helper</label>
@@ -2432,7 +2499,7 @@ html.cp-open #compaBtn{display:none}
   <p class="hint" style="margin:8px 0">Kept on this device, with no pictures: what each slip read and what you changed (slips), the fill and card names you confirmed (names), which sites gave results (sources), the market names you confirmed (markets), news checks (news) and the jobs list. They go to your other devices with sync when sync is on. Names and markets work with the AI off.</p>
   <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><button type="button" class="ghost sm" id="aiClear">Clear AI data</button><span class="meta" id="aiClearMsg" role="status"></span></div>
 </details>
-<details class="panel fold" id="myBooksPanel">
+<details class="panel fold" id="myBooksPanel" data-lv="god">
   <summary><h2>Your exchange bets <span class="sub">Kalshi · Polymarket US · Novig — read-only</span></h2></summary>
   <p class="hint">Every minute the page reads your fills (never places, changes or cancels anything). A fill that matches a bet you saved is linked (✓, or ⚠ with Fix if the price or cost differs). A fill that matches a row on the board is saved for you (tag <b>auto</b>). Anything else waits in <b>From your books</b> above the Log.</p>
   <div class="row" style="margin-top:0;gap:10px;flex-wrap:wrap;align-items:center">
@@ -2452,10 +2519,10 @@ html.cp-open #compaBtn{display:none}
   </div>
   <p class="hint" style="margin-top:4px">Defaults: Novig 0 (makers pay nothing before the game) and Polymarket US 0 (it actually pays makers a small rebate, 1.25% × p × (1 − p) — left out to stay on the safe side); Kalshi 1.75 = 25% of its 7 taker coefficient, which some Kalshi series charge makers (most charge 0 — set 0 if yours do).</p>
 </details>
-<div class="panel" style="padding-top:12px;padding-bottom:12px">
+<div class="panel" style="padding-top:12px;padding-bottom:12px" data-lv="god">
   <label class="bar-check"><input type="checkbox" id="dkGroup" checked> Today ribbon: count DK Predictions and DraftKings Pick 6 under DraftKings</label>
 </div>
-<details class="panel fold" id="teamLogoPanel">
+<details class="panel fold" id="teamLogoPanel" data-lv="god">
   <summary><h2>Team logos <span class="sub">your own logo for any team — cards, Live tab, the field pin</span></h2></summary>
   <p class="hint">Pick the sport, type the team, then choose an image (PNG, JPG, WEBP or SVG — square with a transparent background looks best). It's shrunk to 128 px and saved in this browser; <b>Back up bet log</b> carries it to your other devices. Send the ones you keep to Claude to build them into the file.</p>
   <div class="row" style="margin-top:0;gap:12px;flex-wrap:wrap;align-items:flex-end">
@@ -2466,7 +2533,7 @@ html.cp-open #compaBtn{display:none}
   </div>
   <div id="tlList" class="tl-list"></div>
 </details>
-<details class="panel fold">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
+<details class="panel fold" data-lv="god">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>Screens <span class="sub">odds range, EV floor, books, fees</span></h2></summary>
   <p class="hint">A bet has to clear all of these. Widening them until something appears is how you end up on the rows that only look good.</p>
   <div class="grid">
@@ -2505,7 +2572,7 @@ html.cp-open #compaBtn{display:none}
   </details>
 </details>
 
-<details class="panel fold">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
+<details class="panel fold" data-lv="god">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>Stake sizing <span class="sub">bankroll and Kelly</span></h2></summary>
   <p class="hint">Kelly scales a bet to its edge. The haircut shrinks that edge first, because the fair values behind it move and the biggest ones move most. The two multiply: Kelly 0.25 with a haircut of 0.5 stakes 0.125 of what full Kelly would. What survives gets clamped to the range you actually bet in.</p>
   <div class="grid">
@@ -2522,7 +2589,7 @@ html.cp-open #compaBtn{display:none}
   <details class="help" data-help="stake-how"><summary>How stakes are sized</summary><p class="hint" style="margin:12px 0 0"><b>One daily max for everything</b> (v3.11): the API board, the pasted Market EV page and exchange fills all count against the same %, so a big paste can't stack on top of the board. Stakes size off a blend: the market's no-vig price pulled toward BettingPros' number by the model weight (0.35 = mostly market). If there's no market price for a bet, the model number is used with the haircut. Bets on a game you already have money on are trimmed so the game stays under the per-game max.</p></details>   <!-- v4.25: a drop-down -->
 </details>
 
-<details class="panel fold" id="sportsPanel">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
+<details class="panel fold" id="sportsPanel" data-lv="god">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>🌎 Sports <span class="sub">your default sport · every league BettingPros has · year-round</span></h2></summary>
   <div class="pl-form" style="align-items:flex-end">
     <div class="field"><label for="defSport" title="The sport the BettingPros bar starts on when you open the screener. Auto = the sport whose next game starts soonest.">Default sport</label><select id="defSport"><option value="">Auto — soonest games</option><option value="MLB">MLB</option><option value="NFL">NFL</option><option value="NCAAF">NCAAF</option><option value="NBA">NBA</option><option value="NHL">NHL</option><option value="NCAAB">NCAAB</option><option value="WNBA">WNBA</option><option value="MLS">MLS</option><option value="EPL">EPL</option><option value="LALIGA">LALIGA</option><option value="SERIEA">SERIEA</option><option value="BUNDESLIGA">BUNDESLIGA</option><option value="LIGUE1">LIGUE1</option><option value="UCL">UCL</option><option value="UEL">UEL</option><option value="LIGAMX">LIGAMX</option></select></div>
@@ -2534,7 +2601,7 @@ html.cp-open #compaBtn{display:none}
   <details class="help" data-help="sports-how"><summary>How the list is sorted, and soccer grading</summary><p class="hint">The sport list is sorted by the next game (ESPN, free): sports playing soonest on top, off-season ones at the bottom marked <i>no games</i>. A load for a sport with no game in the next 24 hours is skipped so it doesn't spend calls (you can still load it anyway). Soccer is graded on regular time (90' + stoppage): extra time and penalties don't count, a draw loses a team's moneyline, and quarter-goal handicaps (±0.25 / ±0.75) are left for you to grade.</p></details>   <!-- v4.25: a drop-down -->
 </details>
 
-<details class="panel fold">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
+<details class="panel fold" data-lv="god">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>Sweet spot &amp; outliers <span class="sub">what gets the 🎯 badge, what counts as an outlier, risk bets</span></h2></summary>
   <details class="help" data-help="sweet-how"><summary>What these change</summary><p class="hint">The sweet spot only marks rows. The outlier and risk-bet settings change stakes: an outlier is capped at the minimum, and one that is also below the market is skipped unless it fits the risk-bet allowance.</p></details>   <!-- v4.25: a drop-down -->
   <div class="sweetbar">
@@ -2548,7 +2615,7 @@ html.cp-open #compaBtn{display:none}
   </div>
 </details>
 
-<details class="panel fold">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
+<details class="panel fold" data-lv="god">   <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
   <summary><h2>Board filters <span class="sub">hide rows on the board · reset when the page reloads</span></h2></summary>
   <p class="hint">These only hide rows; they never change a decision or a stake. When one is hiding rows, the board says so above the table.</p>
   <div class="filter-panel">
@@ -2897,9 +2964,79 @@ html.cp-open #compaBtn{display:none}
 </div>
 </div>
 
+<!-- ======================= EASY (v5.24, step 1: the empty shell) ======================= -->
+<!-- The four views of the customer app. Hidden in God view; the Easy tabs open them. The next steps fill them (Today, My bets, Learn, Settings). -->
+<section class="view eview" id="v-etoday" aria-label="Today"><h2 class="ev-h">Today</h2><p class="ev-p">Easy Today: coming in the next step.</p></section>
+<section class="view eview" id="v-ebets" aria-label="My bets"><h2 class="ev-h">My bets</h2><p class="ev-p">Easy My bets: coming in the next step.</p></section>
+<section class="view eview" id="v-elearn" aria-label="Learn"><h2 class="ev-h">Learn</h2><p class="ev-p">Easy Learn: coming in the next step.</p></section>
+<section class="view eview" id="v-esettings" aria-label="Settings"><h2 class="ev-h">Settings</h2><p class="ev-p">Easy Settings: coming in the next step.</p></section>
+
 </div>
 <script>
 const SCREENER_VERSION='v5.23';
+const DEV_APP=true;   // v5.24: the dev app. A customer build sets this false: then the View as switch, the Customer view banner and every Back to God mode control are never built.
+/* v5.24 (owner 11/20: "we need to differentiate already"; "for me in GOD mode, let me tell the difference of what they cant see and i can"): levels.
+   EASY_REGISTRY is the list the "Who sees what" panel shows: one row per feature (folded from the full map), each with a selector that exists in the page
+   (a test checks every one). Version 1 is read-only. A level is a label and a view only: it never changes a price, a stake, a floor or a result. */
+const EASY_REGISTRY=[
+  ['Board tab','Bottom tabs','god','The full price list with ten chance tabs and every detail. Easy gets one short list on Today instead.','.tabs .tab[data-view="v-board"]'],
+  ['Live Games tab','Bottom tabs','god','Game Hub, live edges and live bets; needs exchange prices and spends the owner’s calls.','.tabs .tab[data-view="v-live"]'],
+  ['Parlay tab','Bottom tabs','god','Pick’em entries built from the board. Customers bet singles only.','.tabs .tab[data-view="v-parlay"]'],
+  ['Bet log tab','Bottom tabs','god','The whole log with its tools. Easy gets a plain My bets list.','.tabs .tab[data-view="v-log"]'],
+  ['Settings tab (full)','Bottom tabs','god','Every dial the owner uses. Easy has its own short Settings.','.tabs .tab[data-view="v-settings"]'],
+  ['Today tab','Bottom tabs, Easy view','easy','The few prices worth paying right now, and a pick page with what to type.','.tabs .tab[data-view="v-etoday"]'],
+  ['My bets tab','Bottom tabs, Easy view','easy','Bets in play, won and lost, and an honest So far line.','.tabs .tab[data-view="v-ebets"]'],
+  ['Learn tab','Bottom tabs, Easy view','easy','Short lessons: what a price is, what an edge is, why any one bet can lose.','.tabs .tab[data-view="v-elearn"]'],
+  ['Settings tab (short)','Bottom tabs, Easy view','easy','Money set aside, my apps, light or dark. Nothing else.','.tabs .tab[data-view="v-esettings"]'],
+  ['More menu (Filters, Leagues, Parole, Moneylines)','Board panel','god','Research views and filters a newcomer does not need.','#boardMore'],
+  ['Leagues','More menu','god','Every league with games soon; spends BettingPros and Odds API calls.','#subTabs .tab[data-view="v-leagues"]'],
+  ['Parole','More menu','god','Posting your own price on Novig; needs an exchange account.','#subTabs .tab[data-view="v-parole"]'],
+  ['Moneylines','More menu','god','Price research only: no stake, no decision.','#subTabs .tab[data-view="v-money"]'],
+  ['+ Add a bet','Bet log row','god','The full entry form. Easy logs a bet with I placed it.','#subTabs .tab[data-view="v-add"]'],
+  ['Performance','Bet log row','god','Calendar, the 1,000-bet Scorecard and the honesty tests.','#subTabs .tab[data-view="v-perf"]'],
+  ['Reports','Bet log row','god','Results by day, month, year, with breakdowns and the closing line.','#subTabs .tab[data-view="v-reports"]'],
+  ['Version tag','Header','god','A builder’s detail.','#verTag'],
+  ['Sync chip','Header','god','Syncing the log to the owner’s Worker.','#syncChip'],
+  ['Layout button (phone or computer)','Header','god','Opens the phone frame on a computer.','#layoutBtn'],
+  ['Light and dark button','Header','easy','Customers can choose light or dark too.','#themer'],
+  ['Board date','Header','god','Which day’s board is open.','#slate'],
+  ['Board count box','Header','god','Pass, skipped and already-bet counts for the Board.','.statbox'],
+  ['Today bar','Under the header','god','Per-book totals for the day; opens the Bet log.','#todayBar'],
+  ['Score strip','Under the header','god','ESPN scores; the owner’s game watcher.','#scoreStrip'],
+  ['Sources row and API dock','Bottom dock','god','BettingPros, Pinnacle and the other sources, with their allowances.','#apiRow'],
+  ['BettingPros Load and Refresh','Bottom dock','god','Spends the owner’s daily calls.','#loadApi'],
+  ['Source chips','Bottom dock','god','One chip per data source, with its key and allowance.','#srcBar'],
+  ['Chance tabs (Boring to AWOL)','Board','god','Ten ways to slice the board; Easy uses one rule.','#modeBar'],
+  ['Filter and sort bar','Board','god','Sport, book, player, sort order.','.board-bar'],
+  ['Send the Sentinels','Board','god','Live price re-check on the exchanges.','#shopBtn'],
+  ['Scout now','Board','god','Loads every sport with a game soon, using calls.','#scoutBtn'],
+  ['Pick cards (score, EV, six checks, price chart)','Board','god','Detail for people who love the math. Easy shows its own plain card.','#placeCards'],
+  ['Type this ticket','Board card, then Easy pick page','easy','Exactly what to type at the book. Easy reuses it.','#placeCards'],
+  ['El Compa chat','Floating button','god','The owner’s AI companion (personal edition).','#compaBtn'],
+  ['AI screenshot reader','Board','god','Reads prices from a screenshot; uses AI credit.','#aiShotBtn'],
+  ['Connection note and books-not-read warning','Top of the page','god','About the Worker passphrase and exchange reads.','#fillWarn'],
+  ['Connect (Worker and passphrase)','Settings','god','Keys and passphrase never show to customers.','#srcSettings'],
+  ['API credits and usage','Settings','god','The owner’s allowances.','#credPanel'],
+  ['Your rules at a glance','Settings','god','A read-only view of the owner’s screens and sizing.','#rulesGlance'],
+  ['My plan','Settings','god','The owner’s daily reminder.','#planPanel'],
+  ['Schedule (Scout, Sentinels, alerts)','Settings','god','Runs while the page is open (personal edition).','#schedPanel'],
+  ['Layout and colours','Settings','god','Phone or computer, palette. Easy keeps only light or dark.','#layoutPanel'],
+  ['Your bets on every device (sync)','Settings','god','Sync password and the Worker store.','#syncPanel'],
+  ['AI helper','Settings','god','The AI switch; the owner’s personal edition.','#aiPanel'],
+  ['Your exchange bets','Settings','god','Read-only Kalshi, Polymarket US and Novig accounts.','#myBooksPanel'],
+  ['Screens (odds range, floors, fees)','Settings','god','The decision rules: never a customer dial.','#oMin'],
+  ['Money set aside','Settings, Stake sizing','easy','The one sizing number Easy shows. Kelly and caps stay God.','#bank'],
+  ['My apps (books I use)','Settings, Screens','easy','Which books the person bets at.','#bookChecks'],
+  ['Sports list','Settings','god','Default sport and every league.','#sportsPanel'],
+  ['Team logos','Settings','god','Your own logo for any team.','#teamLogoPanel'],
+  ['Bet calendar and bet tools','Bet log','god','Calendar, CSV, backup, restore, Send my log.','#lcPanel'],
+  ['Orders waiting at books','Bet log','god','Exchange accounts only.','#logOrders'],
+  ['The log table','Bet log','god','Every bet with its editor. Easy gets a plain list.','#logBody'],
+  ['Scorecard (the 1,000-bet test)','Performance','god','Shows whether the edge is real or luck so far.','#scorePanel'],
+  ['Reports panel','Reports','god','Breakdowns, closing line, calibration.','#rpPanel'],
+  ['Game Hub and live edges','Live Games','god','ESPN games and live exchange prices.','#hubPanel'],
+  ['Parlays panel','Parlay','god','Pick’em apps, slips, best entry.','#pkPanel']
+];
 /* v3.54: shorter stat names on screen (Receptions → Rec, Rushing Yards → Rush Yds). Display only: saved bets keep the
    full name, which grading and matching read. The full name stays in the tooltip. */
 const STAT_SHORT=[
@@ -4729,7 +4866,7 @@ function apiDockPaint(){ const chip=document.getElementById('bpChip'); if(!chip)
 function boardMorePaint(){ const list=document.getElementById('boardMoreList'), box=document.getElementById('boardMore'); if(!list || !box) return;
   const items=[...document.querySelectorAll('#subTabs .tab[data-group="board"]')].filter(t=>!t.hidden);
   list.innerHTML='<div class="bm-x" role="button" tabindex="0" aria-label="Close this menu">✕ Close</div>'+   /* v5.14: a visible close, a div so the list of buttons is unchanged */
-    '<button type="button" data-f="1">🔎 Filters &amp; sort'+(window._barOpen?' (open)':'')+'</button>'+items.map((t,i)=>'<button type="button" data-i="'+i+'">'+t.innerHTML+'</button>').join(''); box.hidden=false; }   /* v4.96 (Alonzo: "only Send the Sentinels button" ... "put it on More"): Filters lives in More; the bar shows Filters only while it is open, to close it */
+    '<button type="button" data-f="1" data-lv="god">🔎 Filters &amp; sort'+(window._barOpen?' (open)':'')+'</button>'+items.map((t,i)=>'<button type="button" data-i="'+i+'"'+(t.dataset.lv?' data-lv="'+t.dataset.lv+'"':'')+'>'+t.innerHTML+'</button>').join(''); box.hidden=false; /* v5.24: data-lv on each item (level labels) */ }   /* v4.96 (Alonzo: "only Send the Sentinels button" ... "put it on More"): Filters lives in More; the bar shows Filters only while it is open, to close it */
 document.addEventListener('click', e=>{ const x=e.target.closest && e.target.closest('#boardMoreList .bm-x'); if(x){ const bx=document.getElementById('boardMore'); if(bx) bx.open=false; } });   // v5.14: the × closes More
 document.addEventListener('keydown', e=>{ if((e.key==='Enter'||e.key===' ') && e.target.classList && e.target.classList.contains('bm-x')){ e.preventDefault(); e.target.click(); } });   // v5.14
 document.addEventListener('click', e=>{ const b=e.target.closest && e.target.closest('#boardMoreList button'); if(!b) return;
@@ -10437,6 +10574,51 @@ document.querySelector('.tabs').addEventListener('click',()=>setTimeout(()=>docu
   fix(); new MutationObserver(soon).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
   document.addEventListener('keydown',e=>{ if(e.key!=='Enter'&&e.key!==' ') return; const el=e.target; if(!el.matches||!el.matches(SEL)) return; e.preventDefault(); el.click(); });
 })();
+/* v5.24 (owner 11/20: "we need to differentiate already"): View as. html[data-viewas] is 'god' (the default) or 'easy', read from mbev.viewAs (this device only,
+   not synced) in the head script before the first paint. body.dataset.view is still the open tab. In Easy the five God tabs and every God view are hidden by CSS
+   (the God markup stays: several nodes are read at startup); a click on a God tab does nothing, and in God an Easy tab does nothing. All hoisted. */
+function easyLevel(){ return document.documentElement.getAttribute('data-viewas')==='easy'?'easy':'god'; }
+function easyTabOk(t){ const isE=!!(t && t.classList && t.classList.contains('etab')); return easyLevel()==='easy'?isE:!isE; }
+function easyGoTab(){ const want=easyLevel()==='easy'?document.querySelector('.tabs .tab.etab.on')||document.querySelector('.tabs .tab.etab[data-view="v-etoday"]'):document.querySelector('.tabs .tab[data-view="v-board"][data-src="api"]'); if(want) want.click(); }
+function easyApplyLevel(go){ const l=easyLevel();
+  document.querySelectorAll('#easySwitchBox [data-level]').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.level===l)));
+  const bn=document.getElementById('easyBanner'); if(bn) bn.hidden=l!=='easy';
+  if(go) easyGoTab(); }
+function easySetLevel(l){ l=l==='easy'?'easy':'god'; const was=easyLevel(); lsSafeSet('mbev.viewAs',l); document.documentElement.setAttribute('data-viewas',l); easyApplyLevel(was!==l); }
+function easyLabelsSet(on){ lsSafeSet('mbev.viewLabels',on?'1':'0'); easyLabelsPaint(on); }
+function easyLabelsPaint(on){ if(on) document.documentElement.setAttribute('data-labels','1'); else document.documentElement.removeAttribute('data-labels');
+  const b=document.getElementById('easyLabelsBtn'); if(b) b.setAttribute('aria-checked',String(!!on)); }
+function easyWhoFilter(){ return window._easyWho||'all'; }
+function easyLvInfo(l){ return l==='easy'?{g:'🟢',n:'Customers see this'}:l==='plus'?{g:'⭐',n:'Plus (later)'}:{g:'⚡',n:'God only'}; }
+function easyWhoPaint(){ const body=document.getElementById('easyWhoBody'); if(!body) return; const f=easyWhoFilter(), all=EASY_REGISTRY, c={god:0,plus:0,easy:0};
+  all.forEach(r=>{ c[r[2]]=(c[r[2]]||0)+1; });
+  let h='<div class="ew-counts" role="group" aria-label="Filter by level">'+['god','plus','easy'].map(l=>'<button type="button" class="ew-cnt" data-ew="'+l+'" data-ewlv="'+l+'" aria-pressed="'+(f===l)+'"><b>'+c[l]+'</b> '+easyLvInfo(l).g+' '+esc(easyLvInfo(l).n)+'</button>').join('')+
+    '<button type="button" class="ew-cnt" data-ew="all" aria-pressed="'+(f==='all')+'"><b>'+all.length+'</b> All</button></div>'+
+    '<p class="ew-note">Showing '+(f==='all'?'all '+all.length:c[f]+' of '+all.length)+' features. Version 1 is read-only. To move a feature to another level, tell El Capataz.</p>';
+  ['god','plus','easy'].forEach(l=>{ if(f!=='all' && f!==l) return; const rows=all.filter(r=>r[2]===l), i=easyLvInfo(l);
+    h+='<div class="ew-grp" data-ewlv="'+l+'"><span class="ew-pill" data-ewlv="'+l+'">'+i.g+' '+esc(i.n)+'</span> <b>'+rows.length+(rows.length===1?' feature':' features')+'</b></div>';
+    if(!rows.length) h+='<p class="ew-empty">Nothing is assigned to Plus yet.</p>';
+    else h+='<ul class="ew-list">'+rows.map(r=>'<li class="ew-row" data-ewlv="'+l+'"><b class="ew-f">'+esc(r[0])+'</b><span class="ew-w">'+esc(r[1])+'</span><span class="ew-y">'+esc(r[3])+'</span></li>').join('')+'</ul>'; });
+  body.innerHTML=h; }
+/* The dev-only pieces (the View as section in Settings, the Customer view banner, every Back to God mode control) are built here, and only when DEV_APP is true. */
+function easyBuildDevUi(){ if(!DEV_APP) return;
+  const w=document.querySelector('.wrap'); if(w && !document.getElementById('easyBanner')){ const b=document.createElement('div'); b.id='easyBanner'; b.className='easy-banner easy-only'; b.setAttribute('role','note'); b.hidden=true;
+    b.innerHTML='<span class="eb-long">Customer view: this is what an Easy subscriber sees · </span><span class="eb-short">Customer view · </span><button type="button" id="easyBack">Back to God mode</button>'; w.insertBefore(b,w.firstChild);
+    document.getElementById('easyBack').addEventListener('click',()=>easySetLevel('god')); }
+  const st=document.getElementById('v-settings'); if(st && !document.getElementById('easySwitchBox')){ const d=document.createElement('div'); d.className='panel god-only easy-sw'; d.id='easySwitchBox'; d.setAttribute('data-lv','god');
+    d.innerHTML='<h2>View as</h2><p class="es-line">Changes only what you see. Prices, stakes and results do not change.</p>'+
+      '<div class="es-seg" role="radiogroup" aria-label="View as"><button type="button" role="radio" class="g" data-level="god" aria-checked="true">⚡ God</button><button type="button" role="radio" class="e" data-level="easy" aria-checked="false">🟢 Easy</button><button type="button" role="radio" class="p" id="easyLvPlus" aria-checked="false" disabled>⭐ Plus (later)</button></div>'+
+      '<div class="es-row"><span class="es-tx"><b>Show who sees what</b><small>Labels on tabs, tools and sections. Information only.</small></span><button type="button" role="switch" class="es-sw" id="easyLabelsBtn" aria-checked="false" aria-label="Show who sees what"><span class="es-knob"></span></button></div>'+
+      '<p class="es-legend">⚡ God only · ⭐ Plus (later) · 🟢 Customers see this</p>'+
+      '<details class="easy-who" id="easyWho"><summary>Who sees what</summary><div id="easyWhoBody"></div></details>';
+    st.insertBefore(d,st.firstChild);
+    d.querySelectorAll('[data-level]').forEach(b=>b.addEventListener('click',()=>easySetLevel(b.dataset.level)));
+    document.getElementById('easyLabelsBtn').addEventListener('click',()=>easyLabelsSet(document.documentElement.getAttribute('data-labels')!=='1'));
+    document.getElementById('easyWho').addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-ew]'); if(!b) return; window._easyWho=b.dataset.ew; easyWhoPaint(); });
+    easyWhoPaint(); easyLabelsPaint(document.documentElement.getAttribute('data-labels')==='1'); }
+  easyApplyLevel(false); }
+/* the guard: a click on a tab that does not belong to the open level is stopped before any handler sees it (more than 20 code paths click God tabs, and eight tabs carry their own extra listeners) */
+document.addEventListener('click',e=>{ const t=e.target.closest && e.target.closest('.tab'); if(t && !easyTabOk(t)){ e.stopImmediatePropagation(); e.preventDefault(); } },true);
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
@@ -14127,6 +14309,7 @@ paintModes();
 (function(){ const cb=document.getElementById('notesAll'); cb.checked=notesAll;
   cb.addEventListener('change',()=>{ notesAll=cb.checked; openNotes.clear(); saveNotesAll(); refresh(); }); })();
 restoreBoard(); refreshBudget();
+try{ easyBuildDevUi(); easyApplyLevel(easyLevel()==='easy'); }catch(e){ console.error(e); }   // v5.24: the Easy start-up tab (God keeps the Board) and the dev pieces, after the board is restored
 /*SYNC-CORE-START*/
 /* v3.03 sync core — pure functions (tested on their own). Records are merged three ways: what this device has, what the
    cloud has, and the version both last agreed on ("base", kept as one short hash per field). A field changed on only
