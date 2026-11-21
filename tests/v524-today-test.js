@@ -235,15 +235,15 @@ const bodyText=p=>p.evaluate(()=>document.body.innerText);
    if(W===1280||W===390){ await p.click('#ezPick [data-ez="seg"][data-seg="what"]'); await p.waitForTimeout(150); await shot(p,'b3a-pick-'+tag+'.png'); if(wide) await p.evaluate(()=>window.scrollTo(0,0)); await shot(p,'b3a-today-'+tag+'.png'); }
    check('10: '+tag+': no page errors', A.errors.length===0 && A.consoleBad.length===0, {e:A.errors,c:A.consoleBad}); await A.ctx.close(); }
 
- // ---------- 11. the full form: a price that changed since the card (nothing saved silently; the form opens in the pick page); God stays as it was ----------
+ // ---------- 11. the exchange form: What filled? (v5.24 step 4 replaced the God form here); a changed live price is said calmly, and the form is still used ----------
  { const A=await open(b,390,844,{practice:{rows:EXROWS}}), p=A.page; const k=await p.evaluate(()=>easyList().picks.find(x=>x.book==='Polymarket US').key);
    await p.click('#ezList .ez-card[data-key="'+k.replace(/"/g,'\\"')+'"] [data-ez="open"]'); await p.waitForTimeout(250); const n0=await p.evaluate(()=>logged.length);
-   await p.click('#ezPlaced'); await p.waitForTimeout(3500); await p.waitForFunction(()=>!document.getElementById('ezPlaced').disabled,null,{timeout:8000});
-   const F=await p.evaluate(()=>({n:logged.length, note:(document.getElementById('ezNote')||{}).innerText||'', form:!!document.querySelector('#ezHost .editor'), btn:document.getElementById('ezPlaced').innerText, title:document.getElementById('ezPickTitle').innerText}));
-   check('11a: when the live price is not the card\'s price, nothing is saved, the calm reason shows, and the full form opens inside the pick page', F.n===n0 && /price changed|few offers|closer look/.test(F.note) && /Nothing was saved yet\./.test(F.note) && F.form && F.btn==='I placed it', F);
+   await p.click('#ezPlaced'); await p.waitForSelector('#ezHost .ez-fillf'); await p.waitForFunction(()=>/The price changed/.test((document.getElementById('ezFNote')||{}).innerText||''),null,{timeout:9000});
+   const F=await p.evaluate(()=>({n:logged.length, note:(document.getElementById('ezFNote')||{}).innerText||'', form:!!document.querySelector('#ezHost .ez-fillf'), god:!!document.querySelector('#ezHost .editor'), btn:document.getElementById('ezPlaced').innerText, title:document.getElementById('ezPickTitle').innerText}));
+   check('11a: when the live price is not the card\'s price, nothing is saved, the calm message shows, and What filled? opens inside the pick page (no God form)', F.n===n0 && /The price changed\. Check the price at the book, then tell us what filled\./.test(F.note) && F.form && !F.god && F.btn==='I placed it', F);
    await shot(p,'b3a-form-light-390.png');
    // a repaint while the form is open does not destroy it
-   await p.evaluate(()=>{ easyPaintToday(); refresh(); }); await p.waitForTimeout(300); const keep=await p.evaluate(()=>!!document.querySelector('#ezHost .editor')); check('11b: a repaint while the full form is open leaves the form alone', keep, keep);
+   await p.evaluate(()=>{ easyPaintToday(); refresh(); }); await p.waitForTimeout(300); const keep=await p.evaluate(()=>!!document.querySelector('#ezHost .ez-fillf')); check('11b: a repaint while What filled? is open leaves the form alone', keep, keep);
    check('11c: no page errors', A.errors.length===0, A.errors); await A.ctx.close(); }
 
  // ---------- 12. God stays as it was ----------

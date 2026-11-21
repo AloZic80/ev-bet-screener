@@ -2180,6 +2180,15 @@ html[data-viewas="easy"] #savedToast{display:none !important}   /* the God Saved
 .ex .ex-msg:empty{display:none}
 .ex .ex-dev{border-style:dashed}
 @media (max-width:420px){ .ex .ex-strip{gap:6px} .ex .ex-v{font-size:18px} }
+/* v5.24 (step 4): What filled? (the exchange form) and a line that says what changed on a moved card */
+#v-etoday .ez-fillf{border:1px solid var(--ez-rule); border-radius:12px; padding:12px 14px; background:var(--panel); margin:8px 0}
+#v-etoday .ez-fh{margin:0 0 6px; font-size:20px}
+#v-etoday .ez-frow{display:grid; gap:4px; margin:10px 0}
+#v-etoday .ez-frow label{font-size:16px; font-weight:600; color:var(--ink)}
+#v-etoday .ez-frow input{min-height:48px; width:100%; max-width:240px; font:inherit; font-size:18px; padding:6px 10px; border:1px solid var(--ez-rule); border-radius:8px; background:var(--page); color:var(--ink)}
+#v-etoday .ez-fwarn{margin:6px 0; font-size:16px; font-weight:600; color:var(--ink)}
+#v-etoday .ez-fwarn:empty{display:none}
+#v-etoday .ez-why{margin:4px 0; font-size:16px; font-weight:600; color:var(--ink)}
 </style>
 </head>
 <body>
@@ -5586,7 +5595,7 @@ function easyFamTable(){ if(easyFamTable.T) return easyFamTable.T; const T={
   'fb.passyds':['throws for','yard','yards','',0], 'fb.rushyds':['runs for','yard','yards','',0], 'fb.recyds':['gains','yard','yards',' catching passes',0],
   'fb.rec':['catches','pass','passes','',1], 'fb.rushatt':['runs with the ball','time','times','',0], 'fb.passatt':['throws the ball','time','times','',0],
   'fb.passcmp':['completes','pass','passes','',1], 'fb.passtd':['throws','touchdown pass','touchdown passes','',1], 'fb.passtd2':['throws','touchdown pass','touchdown passes','',1],
-  'fb.rushrec':['runs and catches for','yard','yards',' together',0], 'fb.sacks':['sacks the quarterback','time','times','',0], 'fb.defsacks':['sacks the quarterback','time','times','',0],
+  'fb.rushrec':['runs and catches for','yard','yards',' together',0], /* v5.24 (step 4, review money 15): the sack families are not shown: a shared sack counts as half (it loses an Over 0.5) and "Defense Sacks" may be a team total */
   'hk.sog':['takes','shot on goal','shots on goal','',1], 'hk.goals':['scores','goal','goals','',1], 'hk.ast':['gets','assist','assists','',1], 'hk.pts':['gets','point','points','',1], 'hk.saves':['makes','save','saves','',1] };
   return (easyFamTable.T=T); }
 function easyGameSports(){ return /^(NFL|NCAAF|NBA|NCAAB|WNBA|NHL|MLB)$/; }   /* v5.24: game lines whose unit and rules are stated; soccer (a draw loses the team bet), tennis, MMA and cricket are not */
@@ -5617,10 +5626,10 @@ function easySentence(r, raw){ const f=easyFamily(r); if(!f) return null; const 
   return t==null ? null : (raw ? t : esc(t)); }
 /* a short meaning for a sports word, one line */
 function easyGlossTable(){ if(easyGlossTable.T) return easyGlossTable.T; const T={
-  'rebound':'A rebound is catching the ball after a missed shot.', 'steal':'A steal is taking the ball away from the other team.', 'assist':'An assist is a pass that leads straight to a teammate’s basket (in hockey, to a goal).',
+  'rebound':'A rebound is catching the ball after a missed shot.', 'steal':'A steal is taking the ball away from the other team.', 'assist':'An assist is a pass that sets up a teammate’s score. In hockey, up to two players who touch the puck just before a goal each get an assist.',
   'block':'A block is knocking away an opponent’s shot.', 'point':'Points are what a player scores: 1 for a free throw, 2 for a shot, 3 for a long shot (in hockey, each goal and each assist counts 1).', 'three-pointer':'A three-pointer is a shot made from behind the long arc.',
-  'combo':'Added together means the player’s numbers in each stat are summed into one number.', 'passing yard':'Passing yards are the yards the ball travels on the quarterback’s completed throws.', 'rushing yard':'Rushing yards are the yards a player gains running with the ball.',
-  'receiving yard':'Receiving yards are the yards a player gains after catching a pass.', 'reception':'A reception is catching a pass.', 'rushing attempt':'A rushing attempt is each time a player is handed the ball and runs with it.',
+  'combo':'Added together means the player’s numbers in each stat are summed into one number.', 'passing yard':'Passing yards are the yards gained on the quarterback’s completed passes, including the run after the catch.', 'rushing yard':'Rushing yards are the yards a player gains running with the ball.',
+  'receiving yard':'Receiving yards are the yards gained on the passes a player catches, counted from the line of scrimmage to where he is stopped.', 'reception':'A reception is catching a pass.', 'rushing attempt':'A rushing attempt is each time a player is handed the ball and runs with it.',
   'passing attempt':'A passing attempt is each time the quarterback throws the ball.', 'completion':'A completion is a throw that a teammate catches.', 'touchdown pass':'A touchdown pass is a throw that a teammate catches in the end zone.',
   'sack':'A sack is tackling the quarterback before he can throw.', 'shot on goal':'A shot on goal is a shot the goalie must stop, or that scores.', 'goal':'A goal is the puck going into the net.', 'save':'A save is the goalie stopping a shot.',
   'moneyline':'A moneyline bet wins if that team wins the game, by any score.', 'spread':'A spread bet gives or takes points: the team must win by more than the number, or lose by less than it.', 'total':'A game total bet is on both teams’ scores added together.',
@@ -5633,17 +5642,24 @@ function easyGlossKeys(r){ const f=easyFamily(r); if(!f) return []; const id=f.i
   'fb.passyds':['passing yard'], 'fb.rushyds':['rushing yard'], 'fb.recyds':['receiving yard'], 'fb.rec':['reception'], 'fb.rushatt':['rushing attempt'], 'fb.passatt':['passing attempt'], 'fb.passcmp':['completion'], 'fb.passtd':['touchdown pass'], 'fb.passtd2':['touchdown pass'],
   'fb.rushrec':['combo','rushing yard','receiving yard'], 'fb.sacks':['sack'], 'fb.defsacks':['sack'], 'hk.sog':['shot on goal'], 'hk.goals':['goal'], 'hk.ast':['assist'], 'hk.pts':['point','goal','assist'], 'hk.saves':['save'], 'gl.moneyline':['moneyline'], 'gl.spread':['spread'], 'gl.total':['total'] };
   return (M[id]||[]).concat(bk==='kalshi'||bk==='poly' ? ['share','limit order'] : []); }
-function easyPriceText(r){ const bk=LIVE_BOOK(r&&r.book); return (bk==='kalshi'||bk==='poly') ? Math.round(r.offeredProb*100)+'¢' : fmtOdds(r&&r.offeredRaw); }   /* v5.24: a sportsbook price as printed (-300), a Kalshi or Polymarket price in cents */
+function easyPriceText(r){ const bk=LIVE_BOOK(r&&r.book); return (bk==='kalshi'||bk==='poly') ? easyCentsOf(r)+'¢' : fmtOdds(r&&r.offeredRaw); }   /* v5.24: a sportsbook price as printed (-300), a Kalshi or Polymarket price in cents */
+function easyCentsOf(r){ const x=r.offeredProb*100, n=Math.round(x); return Math.abs(x-n)<=0.13 ? n : Math.ceil(x-1e-9); }   /* v5.24 (step 4, review money 7): the cents a share would be charged, in the same unit as the limit. A price that is a whole cent apart from the rounding of American odds (48.08 is 48) stays that cent; any other is rounded UP (73.61 is 74¢), so a card never says "costs 74¢" next to "limit 73¢" */
 function easyBreakEven(r){ const p=r&&r.offeredProb; if(!(p>0 && p<1)) return null; const f=feeRate(r.book, p, cfgRead().fees); return p*(1+f); }   /* v5.24: the chance the price needs to be right, fee included (no fee at a sportsbook) */
 /* the money: the God card’s own arithmetic (placeCardHtml line 5312); a Kalshi or Polymarket US pick uses the ticket’s numbers (shares, limit, most it can cost, pays) so the card and the ticket agree */
 function easyNums(r){ const cfg=cfgRead(), p=r.offeredProb, okP=p>0 && p<1, st=+r.stake||0, bk=LIVE_BOOK(r.book), mx=easyMostOf(r), fee=okP?feeRate(r.book,p,cfg.fees):0, over=!(mx!=null && okP && p<=mx+1e-9);
   if(bk==='kalshi' || bk==='poly'){ const k=(mx!=null && st>0 && okP) ? (bk==='kalshi' ? kalshiHow(r,st,p,mx) : polyHow(r,st,mx)) : null;
     if(!k) return {kind:bk, ok:false, st, pay:null, back:null, wins:null, shares:null, limit:null, cost:null, payout:null, fee, mx, over};
     return {kind:bk, ok:true, st, pay:k.cost, back:k.payout, wins:+Math.max(0,k.payout-k.cost).toFixed(2), shares:k.shares, limit:k.lim, cost:k.cost, payout:k.payout, fee, mx, over, how:k}; }
-  const exch=/kalshi|polymarket|novig|prophet|predict|sporttrade|fliff/i.test(r.book||'');
-  const sc=+st.toFixed(2);   // v5.24 (step 3a): the stake is rounded to cents FIRST, then wins and back come from that stake, so the card equals the saved bet and My bets (the God card works from the unrounded stake: Lakers $8.4375 wins $5.62, the saved $8.44 bet wins $5.63)
-  const back=(sc>0 && okP) ? (exch ? Math.floor(sc/(p*(1+fee))*100+1e-6)/100 : Math.round(sc/(p*(1+fee))*100-1e-6)/100) : null;
-  return {kind:bk||'book', ok:back!=null, st:sc, pay:sc, back, wins:back==null?null:+Math.max(0,back-sc).toFixed(2), shares:null, limit:null, cost:sc, payout:back, fee, mx, over}; }
+  const S=okP ? easySavedAs(r, st) : null, sc=S ? S.stake : +st.toFixed(2);   /* v5.24 (step 4, review money 4 to 6): the stake in cents and the price the bet form will save (a %-priced book through its 0.1-point box, a decimal-priced row as its rounded American price), valued by betProfit itself: the card, the confirmation and My bets are one number to the cent */
+  const wins=(S && sc>0 && S.wins!=null) ? S.wins : null, back=wins==null ? null : +(sc+wins).toFixed(2);
+  return {kind:bk||'book', ok:back!=null, st:sc, pay:sc, back, wins, shares:null, limit:null, cost:sc, payout:back, fee:S?S.fee:fee, mx, over, odds:S?S.odds:null}; }
+/* the bet the form saves, as a plain record (no write): the stake in cents and the price as it is saved, so its win is betProfit of that record. A %-priced book (PM_BOOK: Novig ...) saves the price from the 0.1-point % box, then whole American odds; any other book saves the odds text through priceText */
+function easySavedAs(r, st){ const cfg=cfgRead(), sc=+(+st||0).toFixed(2); let odds, prob;
+  if(PM_BOOK.test(String(r.book||''))){ const at=parseFloat((r.offeredProb*100).toFixed(1)); if(!(at>0 && at<100)) return null; prob=at/100; odds=fmtOdds(Math.round(americanOf(prob))); }
+  else { odds=priceText(String(r.offeredRaw==null?'':r.offeredRaw)).replace(/^(\d)/,'+$1'); prob=toProb(odds); }
+  if(prob==null) return null;
+  const fee=feeRate(r.book, prob, cfg.fees, false), wins=betProfit({odds, stake:sc, result:'win', snap:{fee:+fee.toFixed(5)}});
+  return {stake:sc, odds, prob, fee, wins}; }
 /* never worse than: the strictest price her exact most allows. A price is fine only if the chance it charges is at or below her most, so it is rounded toward the stricter price (-253.36 is -253, -358.72 is -358, never -359) */
 function easyImplied(am){ return am>0 ? 100/(am+100) : (-am)/((-am)+100); }
 function easyStrictFrom(mx, cents){ if(!(mx>0 && mx<1)) return null;   /* v5.24: the rule on a plain number (her exact most as a chance), so it can be tested on thousands of values */
@@ -5659,16 +5675,16 @@ function easyStrictPrice(r){ const mx=easyMostOf(r); return easyStrictFrom(mx, L
 function easyEdgeLines(r){ const a=r&&r.actProb, net=r&&r.actNet, be=easyBreakEven(r); if(a==null || net==null || be==null) return null;
   const A=+(a*100).toFixed(1), B=+(be*100).toFixed(1), d=+(A-B).toFixed(1), E=+(net*100).toFixed(1), ae=Math.abs(E).toFixed(1);   /* the points are the difference of the two numbers shown, so the screen adds up */
   const l1='La Contadora’s chance ('+A.toFixed(1)+'%) is '+(d===0?'the same as':Math.abs(d).toFixed(1)+' points '+(d>0?'above':'below'))+' what the price assumes ('+B.toFixed(1)+'%).';
-  const l2='Edge '+(E>=0?'+':'-')+ae+'%: about '+ae+' cents '+(E>=0?'back':'lost')+' for each $1 put in, on average, over many bets.';
+  const l2='Edge '+(E>=0?'+':'-')+ae+'%: about '+ae+' cents '+(E>=0?'more back':'less back')+' for each $1 put in, on average, over many bets.';   /* v5.24 (step 4, review money 13): more or less BACK, never "cents back" (that reads as getting 5.9 cents) */
   return {line1:l1, line2:l2, chance:A, assumes:B, points:d, edge:E}; }
 function easyMoney(x){ return '$'+(+x).toFixed(2); }
 /* what the price means in dollars (never a bare -300), then the money for this pick and the rule for a better price */
 function easyFairText(r){ const n=easyNums(r), s=easyStrictPrice(r), bk=LIVE_BOOK(r.book); if(!n || !n.ok || !s) return null;
   if(n.kind==='kalshi' || n.kind==='poly'){ const sh=n.kind==='kalshi'?n.shares.toFixed(2):String(n.shares);
-    return {mean:'A share costs '+Math.round(r.offeredProb*100)+'¢ and pays $1 if it happens, nothing if it does not.', here:'Here: '+sh+' shares cost at most '+easyMoney(n.cost)+' (fee included) and pay '+easyMoney(n.payout)+' if it happens.', rule:'Place it only with a limit of '+s.text+' or lower. A higher limit is not worth it.'}; }
-  const am=Math.round(americanOf(r.offeredProb)), mean=am<0 ? fmtOdds(am)+' means you bet $'+Math.abs(am)+' to win $100.' : (am===0?'':fmtOdds(am)+' means you bet $100 to win $'+am+'.');
+    return {mean:'A share costs '+easyCentsOf(r)+'¢ and pays $1 if it happens, nothing if it does not.', here:'Here: '+sh+' shares cost at most '+easyMoney(n.cost)+' (fee included) and pay '+easyMoney(n.payout)+' if it happens.', rule:'Place it only with a limit of '+s.text+' or lower. A higher limit is not worth it.'}; }
+  const mean=ezMean(easyPriceText(r));   /* v5.24 (step 4, review money 11): the meaning of the price as it is shown (+100 says +100 and bet $100 to win $100, never -100) */
   const here='Here: bet '+easyMoney(n.st)+' to win '+easyMoney(n.wins)+' (you get '+easyMoney(n.back)+' back).';
-  const rule = s.value>0 ? 'Place it only at '+s.text+' or a bigger plus number. Anything smaller is not worth it.' : 'A smaller minus number is a better price. Place it only at '+s.text+' or a smaller minus number; at '+(s.nextWorse.value)+' or a bigger minus number, do not place it.';
+  const rule = s.value>0 ? 'A bigger plus number is a better price. Place it only at '+s.text+' or a bigger plus number. Anything smaller is not worth it.' : 'A smaller minus number is a better price. Place it only at '+s.text+' or a smaller minus number; at '+(s.nextWorse.value)+' or a bigger minus number, do not place it.';
   return {mean, here, rule, text:mean+' '+here+' '+rule}; }
 function easyExpires(r){ const s=Date.parse((r.gameInfo&&r.gameInfo.startISO)||r.start||''); if(isNaN(s) || s<Date.now()) return null;
   const t=new Date(s).toLocaleTimeString('en-US',{hour:'numeric', minute:'2-digit', timeZone:'America/Chicago'});
@@ -5679,13 +5695,20 @@ function easyBookWords(r){ const L=easyLineOf(r), stat=L?L.stat:'', k=String(r.k
   if(k==='moneyline') return {find:nm, market:'Moneyline', pick:nm};
   if(k==='spread') return {find:nm, market:'Spread', pick:nm+' '+String(r.market||'').replace(/\s*Spread$/i,'')};
   return {find:AH?easyTeamFull(AH[0])+' at '+easyTeamFull(AH[1]):String(r.name||''), market:'Game total', pick:side+' '+(L?L.line:'')}; }
+/* the market on a Kalshi or Polymarket US page, in words (a team bet: the favourite for a spread, so an underdog is the NO side of the other team’s market), and the ladder step of a prop (Over 12.5 is the 13+ market) */
+function easyExMarket(r){ const k=String(r.kind||''), AH=giTeamsOf(r), me=AH?easyTeamOf(r, r.team||r.name):null, opp=(AH&&me)?AH.find(x=>x!==me):null, L=easyLineOf(r), stat=L?L.stat:'';
+  if(k==='prop'){ const n=L ? Math.floor(L.line)+1 : ''; return {words:String(r.name||'')+' '+n+'+ '+stat, ladder:n+'+'}; }
+  if(k==='moneyline') return {words:'the '+(me?easyTeamFull(me):String(r.name||''))+' to win', ladder:''};
+  if(k==='spread'){ const n=parseFloat(String(r.market||'').replace(/\s*Spread$/i,'')), fav=n<0?me:opp; return {words:'the '+(fav?easyTeamFull(fav):'other team')+' to win by over '+(isFinite(n)?Math.abs(n):''), ladder:''}; }
+  return {words:'the game total', ladder:''}; }
 /* "Type this": data, not HTML. A sportsbook pick: five steps. Kalshi / Polymarket US: one labelled row per thing to type, in the book’s order, plus the money in one line */
 function easyTypeThis(r){ const bk=LIVE_BOOK(r.book), w=easyBookWords(r), bn=bookLabel(r.book), n=easyNums(r), s=easyStrictPrice(r), plain=easySentence(r,true)||'';
   const none='The app does not place bets for you. The bet itself is your own tap at the book.';
   if(!n || !n.ok || !s) return null;
   if(bk==='kalshi' || bk==='poly'){ const k=n.how, fp=feePaidOf(r.book, k.lim/100), ex=easyExpires(r), rows=[], isK=bk==='kalshi';
     rows.push({label:'Order type', value:'Limit', note:'Not Market. A Limit order never pays more than its price; a Market order on a thin book can.'});
-    rows.push({label:'Side', value:isK?k.btn:k.btn+(k.plus?' on '+k.plus:''), note:'This button means: '+plain+(k.underNote?' (NO on the “'+(parseFloat(r.market)+0.5)+'+” market is the Under)':'')});
+    const mk=easyExMarket(r), isP=String(r.kind||'')==='prop', under=(isP && k.underNote) ? ' (NO on the “'+mk.ladder+'” market is the Under)' : '', hint=isK ? '' : String(k.what||'').split(' · ').slice(1).join(' · ');   /* v5.24 (step 4, review money 1, 2, 17): the Side row names WHICH market to press it on and the side (a team bet: the other team’s market for an underdog; a prop Over names its “13+” market too), in the book’s own words; Polymarket US adds its Yes / No hint */
+    rows.push({label:'Side', value:isK ? k.btn+' on the market for '+mk.words : k.btn+(k.plus?' on '+k.plus:''), note:'This button means: '+plain+under+(isK ? '' : ' The market is '+mk.words+'.'+(hint ? ' Polymarket US: '+hint+'.' : ''))});
     if(isK) rows.push({label:'Shares', value:k.shares.toFixed(2), note:'Kalshi takes 0.01 shares. A share pays $1 if it happens.'});
     rows.push({label:'Limit price', value:k.lim+'¢', note:fp?'About '+(fp.q*100).toFixed(1)+'¢ a share with the fee.':'The most to pay a share.'});
     if(!isK) rows.push({label:'Shares', value:String(k.shares), note:'Whole shares. A share pays $1 if it happens.'});
@@ -5693,15 +5716,23 @@ function easyTypeThis(r){ const bk=LIVE_BOOK(r.book), w=easyBookWords(r), bn=boo
     if(ex) rows.push({label:'Expires', value:ex.text, note:ex.note});
     return {kind:'exchange', book:bn, bookKey:bk, rows, inMoney:'In money: pay at most '+easyMoney(k.cost)+' now. If it happens you get '+easyMoney(k.payout)+' back (a profit of '+easyMoney(k.payout-k.cost)+'). If it does not, you lose the '+easyMoney(k.cost)+'.', never:s.text, none}; }
   const steps=['Open '+bn+' and find '+w.find+'.', 'Pick the “'+w.market+'” bet and choose “'+w.pick+'”.', 'Type the stake: '+easyMoney(n.st)+'.',
-    'Check the price is '+s.text+(s.kind==='american'?(s.value>0?' or a bigger plus number':' or a smaller minus number'):' or lower')+'. It showed '+easyPriceText(r)+' when the app read it. If it is worse, do not place it.', 'Place it, then tap I placed it here to save a note in My bets.'];
+    'Check the price is '+s.text+(s.kind==='american'?(s.value>0?' or a bigger plus number':' or a smaller minus number (any plus number is also fine)'):' or lower')+'. It showed '+easyPriceText(r)+' when the app read it. If it is worse, do not place it.', 'Place it, then tap I placed it here to save a note in My bets.'];
   return {kind:'book', book:bn, bookKey:bk||'', steps, never:s.text, inMoney:null, none}; }
 /* the picks for Today: what the God board lists as a best bet at 60% or more (scApproved, not a pasted row, game open), in a book the person has, in words we can say for certain, in the board’s own order */
+/* every rule for a pick except the God board’s own approval (and with it the stake): the game is open, her chance is high enough, the price is within her most, a book the person has, a family we can say in plain words, and (v5.24 step 4) an exchange pick that can really be bought at or under its limit and is not a game total (an exchange game total may show Over / Under or Yes / No: unverified) */
+function easyRowOk(r, minChance){ return !!(r && !easyIsPaste(r) && liveState(r)==='open' && r.actProb!=null && r.actProb>=minChance-1e-9 && easyPriceOk(r) && easyBooksOk(r) && !isDrawRow(r) && easyFamily(r) && easySentence(r,true) && easyExOk(r)); }
+function easyExOk(r){ const bk=LIVE_BOOK(r&&r.book); if(bk!=='kalshi' && bk!=='poly') return true; const f=easyFamily(r), s=easyStrictPrice(r); return !!(f && f.kind!=='total' && s && easyCentsOf(r)<=s.value); }
 function easyList(minChance){ minChance=minChance==null?0.60:minChance; const seen={}, out=[];
-  (lastRows||[]).filter(r=>r && !easyIsPaste(r) && scApproved(r) && liveState(r)==='open' && r.actProb!=null && r.actProb>=minChance-1e-9 && easyPriceOk(r) && easyBooksOk(r) && !isDrawRow(r) && easyFamily(r) && easySentence(r,true))
+  (lastRows||[]).filter(r=>r && scApproved(r) && easyRowOk(r, minChance))
     .sort((a,b)=>(rowBand(b)-rowBand(a)) || (mathKey(b)-mathKey(a)) || (sentScore(b).total-sentScore(a).total) || (a.idx-b.idx))
     .forEach(r=>{ const key=pxKey(r); if(seen[key]) return; const n=easyNums(r); if(!n.ok) return; seen[key]=1;
       out.push({key, r, sentence:easySentence(r), family:easyFamily(r).id, chance:r.actProb, edge:r.actNet, nums:n, strict:easyStrictPrice(r), price:easyPriceText(r), book:bookLabel(r.book)}); });
   return {picks:out.slice(0,5), waiting:out.slice(5), total:out.length}; }
+/* v5.24 (step 4): the picks that pass every easyList rule EXCEPT the stake: the God board would approve them but the bet it sizes is $0 (under the $1 minimum, or a game or daily cap leaves less than $1). Today says so instead of "a normal day". Display only: no stake, floor or cap is changed */
+function easyListNoStake(minChance){ minChance=minChance==null?0.60:minChance; const seen={}; let n=0;
+  (lastRows||[]).filter(r=>r && r.pass && !(r.stake>0) && !r.prior && !r.waitOrder && !r.removed && !r.moved && !r.glConflict && !r.hiddenDup && !rowAwol(r) && !rowOld(r) && evDisplayState(r)==='actionable' && scAhead(r) && !r.longShot && !r.tier && !r.xWhy && easyRowOk(r, minChance))
+    .forEach(r=>{ const key=pxKey(r); if(!seen[key]){ seen[key]=1; n++; } });
+  return {total:n, keys:Object.keys(seen)}; }
 function easyRowByKey(key){ return (lastRows||[]).find(r=>r && pxKey(r)===key) || null; }
 /* remember what Today showed (memory, and this tab’s session storage): a pick that later stops qualifying only because its price moved is shown as "not worth it now" */
 function easySeen(){ if(!window._easySeen){ window._easySeen={}; try{ const s=sessionStorage.getItem('easySeen'); if(s) window._easySeen=JSON.parse(s)||{}; }catch(e){ window._easySeen={}; } } return window._easySeen; }
@@ -5712,39 +5743,68 @@ function easyMovedList(){ const S=easySeen(), inList={}, out=[]; easyList().pick
     if(liveState(r)!=='open' || rowAwol(r) || rowOld(r) || !(r.offeredProb>0 && r.offeredProb<1)) return;
     const mx=easyMostOf(r), f=feeRate(r.book, r.offeredProb, cfgRead().fees); if(mx!=null && r.offeredProb<=mx+1e-9) return;   /* the price is still fine: it left for another reason */
     const fm=mx!=null?feeRate(r.book, mx, cfgRead().fees):0, s=S[key];
-    out.push({key, r, sentence:esc(s.sentence), oldPrice:s.price, newPrice:easyPriceText(r), breakEven:r.offeredProb*(1+f), most:mx!=null?mx*(1+fm):null, book:bookLabel(r.book), why:'Not worth it now'}); });
+    const nowPrice=easyPriceText(r), priceMoved=String(s.price)!==String(nowPrice), chanceMoved=s.chance!=null && r.actProb!=null && Math.abs(s.chance-r.actProb)>=0.0005;   /* v5.24 (step 4, review money 9): what changed, the price, La Contadora’s chance, or both */
+    out.push({key, r, sentence:esc(s.sentence), oldPrice:s.price, newPrice:nowPrice, breakEven:r.offeredProb*(1+f), most:mx!=null?mx*(1+fm):null, book:bookLabel(r.book), why:'Not worth it now', priceMoved, chanceMoved}); });
   return out; }
-/* I placed it: the app’s own bet form on a hidden host, then its own Save, so the saved bet is the same as a real "I bet this" tap with no edits (never addToLog directly). opt.host (a visible .pcard) = where the full form opens when the pick needs a look */
+/* v5.24 (step 4, review saves S1): Easy remembers the bets it saved itself, in this tab (memory and this tab’s session storage). A bet it did not save (a God bet, a bet from another device, a bet logged from a book fill) is never undone or removed here. Each one keeps a short signature of the record as saved, so a bet that was graded, sold, linked to a fill or edited afterwards is not undone either */
+function easyOwn(){ if(!window._easyOwn){ window._easyOwn={}; try{ const o=JSON.parse(sessionStorage.getItem('easyOwn')||'null'); if(o && typeof o==='object') window._easyOwn=o; }catch(e){ window._easyOwn={}; } } return window._easyOwn; }
+function easyOwnSave(){ try{ sessionStorage.setItem('easyOwn', JSON.stringify(easyOwn())); }catch(e){} }
+function easySig(b){ b=b||{}; return JSON.stringify([b.name, b.market, b.side||null, b.book, b.odds, b.stake, b.towin==null?null:b.towin, !!b.free, b.date||null, b.start||null, b.lostAmt==null?null:b.lostAmt, b.result||null, b.sold?1:0, b.fillRef||null, b.fillBook||null, b.autoFrom||null, (b.fills||[]).length, (b.edits||[]).length, b.accountingSource||null, b.gradedBy||null, b.paidReal?1:0]); }
+function easyMark(b, key){ const O=easyOwn(); O[b.id]={key, sig:easySig(b)}; easyOwnSave(); const S=easySeen(); if(S[key]) S[key].placed=true; }
+function easyForget(id){ const O=easyOwn(), o=O[id]; delete O[id]; easyOwnSave(); if(o){ const S=easySeen(); if(S[o.key]) S[o.key].placed=false; } return o||null; }
+function easyChanged(b){ const o=easyOwn()[b.id]; return !!(b.result || b.sold || b.fillRef || b.fillBook || (b.fills && b.fills.length) || b.autoFrom || (b.edits && b.edits.length) || !o || o.sig!==easySig(b)); }
+function easyStored(id){ try{ const a=JSON.parse(localStorage.getItem('mbev.log')||'[]'); return Array.isArray(a) && a.some(x=>x && x.id===id); }catch(e){ return false; } }
+/* the log did not reach storage (S2): take the bet out of memory again so Today keeps the pick and nothing says Saved; the person is told in plain words (never swallowed) */
+function easyUnsave(b){ const i=(logged||[]).indexOf(b); if(i>=0) logged.splice(i,1); saveLog(); try{ const t=document.getElementById('savedToast'); if(t) t.classList.remove('on'); }catch(e){} try{ renderLog(); renderPerf(); }catch(e){} refresh(); }
+function easyAfterSave(nb, key){ if(!easyStored(nb.id)){ easyUnsave(nb); return {saved:false, reason:'storage'}; } easyMark(nb, key); return {saved:true, id:nb.id, key}; }
+/* I placed it: the app’s own bet form on a hidden host, then its own Save, so the saved bet is the same as a real "I bet this" tap with no edits (never addToLog directly). opt.host (a visible .pcard) = where the full form opens when the pick needs a look. Only one save at a time; the row is read again after the live-price wait */
 async function easyPlacedSave(r0, opt){ opt=opt||{}; const key=typeof r0==='string'?r0:pxKey(r0), r=easyRowByKey(key) || (typeof r0==='string'?null:r0);
   if(!r) return {saved:false, reason:'gone'};
   if(r.prior || r.waitOrder || r.removed) return {saved:false, reason:'already'};
   if(!scApproved(r) || liveState(r)!=='open') return {saved:false, reason:'notpick'};
-  const full=(reason, msg)=>{ if(opt.host){ opt.host.querySelectorAll('.editor').forEach(e=>e.remove()); openBetEditor(opt.host, r); } return {saved:false, reason, msg:msg||'', formOpen:!!opt.host}; };
+  if(window._easySaving) return {saved:false, reason:'busy'};   /* a second tap while a save is in flight is ignored */
+  const full=(reason, msg)=>{ if(opt.host){ opt.host.querySelectorAll('.editor').forEach(e=>e.remove()); const rf=easyRowByKey(key)||r; openBetEditor(opt.host, rf); easyWireForm(opt.host.querySelector('.editor'), key, rf); } return {saved:false, reason, msg:msg||'', formOpen:!!opt.host}; };
   const host=document.createElement('div'); host.className='pcard'; host.style.cssText='position:fixed;left:0;top:120px;width:700px;visibility:hidden;pointer-events:none'; document.body.appendChild(host);
-  let res=null;
+  let res=null; window._easySaving=true;
   try{ openBetEditor(host, r); const ed=host.querySelector('.editor'); if(!ed) return full('noform');
     if(LIVE_BOOK(r.book)){ const live=ed.querySelector('.eb-live'), t0=Date.now(); while(live && /checking/.test(live.textContent) && Date.now()-t0<4000) await new Promise(x=>setTimeout(x,100));   /* the form reads the live price once: let it finish */
       if(ed.querySelector('.eb-thin')) { res=['thin', (live.textContent||'')]; }
       else { const pi=ed.querySelector('.eb-pct'), shown=parseFloat(pi&&pi.value), card=+(r.offeredProb*100).toFixed(1); if(isNaN(shown) || Math.abs(shown-card)>0.05+1e-9) res=['moved', 'the live price is '+shown.toFixed(1)+'% (card '+card.toFixed(1)+'%)']; } }
+    const r2=easyRowByKey(key);   /* v5.24 (step 4, review saves S1-2): the row as it is now, after the wait: bet elsewhere, gone, moved or no longer open means nothing is saved */
+    if(!r2 || r2.prior || r2.waitOrder || r2.removed || r2.moved || liveState(r2)!=='open') return {saved:false, reason:(!r2 ? 'gone' : (r2.prior || r2.waitOrder || r2.removed || r2.moved) ? 'already' : 'notpick')};
+    if(!res && (r2.offeredRaw!==r.offeredRaw || r2.offeredProb!==r.offeredProb)) res=['moved', 'the price changed while this was saving'];
     if(!res){ const tag=ed.querySelector('.eb-check .tag'); if(!tag || !tag.classList.contains('t-live')) res=['check', tag?tag.textContent:'no verdict']; }   /* only a plain "Worth it" is saved without a look */
-    if(!res){ const n0=logged.length; window._easyFam=passFam(r); try{ ed.querySelector('.eb-save').click(); }finally{ window._easyFam=null; }   /* v5.24 (step 3a): the snapshot reads the pick’s own chance tab for this one Save, cleared in finally */
-      if(logged.length>n0){ const b=logged[logged.length-1]; window._easyPlaced=window._easyPlaced||{}; window._easyPlaced[b.id]=key; const S=easySeen(); if(S[key]) S[key].placed=true; return {saved:true, id:b.id, key}; }
+    if(!res){ const ids0=new Set((logged||[]).map(b=>b && b.id)); window._easyFam=passFam(r); try{ ed.querySelector('.eb-save').click(); }finally{ window._easyFam=null; }   /* v5.24 (step 3a): the snapshot reads the pick’s own chance tab for this one Save, cleared in finally */
+      const nb=(logged||[]).filter(b=>b && !ids0.has(b.id));   /* the bet this click made, found by its new id (never the last one in the log) */
+      if(nb.length===1) return easyAfterSave(nb[0], key);
       res=['asks', (ed.querySelector('.eb-msg')||{}).textContent||'']; } }
-  finally { host.remove(); }
+  finally { host.remove(); window._easySaving=false; }
   return full(res[0], res[1]); }
-/* undo: removes a bet saved by easyPlacedSave through the app’s own removal (removeBet, "Never placed, $0"), then takes that fresh $0 record off the removed list too, so the pick is back on Today as if it was never tapped */
-function easyUndo(id){ const key=(window._easyPlaced||{})[id], bet=logged.find(b=>b.id===id); if(!key || !bet) return {removed:false, reason:key?'gone':'not from Easy'};
-  removeBet(bet, 0); const i=removedBets.map(x=>x.id).lastIndexOf(id); if(i>=0 && !(removedBets[i].lost>0)){ removedBets.splice(i,1); saveRemoved(); }
-  delete window._easyPlaced[id]; const S=easySeen(); if(S[key]) S[key].placed=false; refresh(); return {removed:true, key}; }
+/* the full form on the pick page (a sportsbook pick that needs a look): its Save records the pick’s own tab, and the bet that Save makes (found by its new id) is the one Easy confirms and can undo */
+function easyWireForm(ed, key, r){ if(!ed) return; let ids0=null; const isSave=e=>!!(e.target && e.target.closest && e.target.closest('.eb-save'));
+  ed.addEventListener('click', e=>{ if(isSave(e)){ ids0=new Set((logged||[]).map(b=>b && b.id)); window._easyFam=passFam(r); } }, true);
+  ed.addEventListener('click', e=>{ if(!isSave(e)) return; window._easyFam=null; if(!ids0) return; const nb=(logged||[]).filter(b=>b && !ids0.has(b.id)); ids0=null; if(nb.length!==1) return;
+    const out=easyAfterSave(nb[0], key), s=ezS(); if(out.saved){ s.formSaved=nb[0].id; } else { s.formSaved=null; s.msg=easyStorageMsg(); } }, false); }
+function easyStorageMsg(){ return 'This bet could not be saved on this device because its storage is full, so it is not in My bets and the pick stays on Today. If you placed it at the book, the book still has it. Free some space on this device, then try again.'; }
+/* undo: removes a bet saved by Easy itself through the app’s own removal (removeBet, "Never placed, $0"), then takes that fresh $0 record off the removed list too, so the pick is back on Today as if it was never tapped. A bet Easy did not save in this tab, or one that changed after it was saved (a result, a sale, a book fill, an edit), stays */
+function easyUndo(id){ const O=easyOwn()[id], bet=(logged||[]).find(b=>b && b.id===id); if(!O) return {removed:false, reason:'not from Easy'};
+  if(!bet) return {removed:false, reason:'gone'};
+  if(easyChanged(bet)) return {removed:false, reason:'changed'};
+  const key=O.key; removeBet(bet, 0); const i=removedBets.map(x=>x.id).lastIndexOf(id); if(i>=0 && !(removedBets[i].lost>0)){ removedBets.splice(i,1); saveRemoved(); }
+  easyForget(id); refresh(); return {removed:true, key}; }
+function easyUndoMsg(r){ if(r && r.removed){ const L=easyList(), back=L.picks.concat(L.waiting).some(p=>p.key===r.key) && !ezSkipped()[r.key]; return back ? 'Removed from My bets. The pick is back on Today.' : 'Removed from My bets. The pick is not on Today any more, because its game has started or its price changed.'; }
+  if(r && r.reason==='not from Easy') return 'This bet was not saved here, so it stays.';
+  if(r && r.reason==='gone') return 'That bet is no longer in My bets.';
+  return 'This bet has changed since you saved it, so it stays. To remove it, open My bets and use Logged by mistake? Remove it, which asks first.'; }
 /* My bets: singles only, from the saved result (never recomputed), the profit from betProfit; counts come from the same list */
 function easyBetLabel(b){ const px={kind:b.kind, name:b.name, market:b.market, side:b.side||sideOf(b), sport:b.sport, team:b.team, game:b.game, gameInfo:b.gameInfo}; let raw=null; try{ raw=easySentence(px,true); }catch(e){ raw=null; }
   if(!raw){ const k=b.kind||'', nm=String(b.name||''), sd=px.side==='U'?'Under':'Over'; raw = k==='moneyline' ? nm+' to win' : k==='spread' ? nm+' '+String(b.market||'').replace(/\s*Spread$/i,'')+' spread' : k==='total' ? ('Both teams together score '+(sd==='Under'?'under ':'over ')+String(b.market||'').replace(/\s*Total.*$/i,'')+(b.game?' ('+String(b.game).replace(/\s*@\s*/,' at ')+')':'')) :   /* v5.24 (step 3b): a game total in plain words (the name of a total bet is the word Over or Under) */
      (nm+' · '+sd+' '+String(b.market||'')).trim(); }
   return {text:raw, html:esc(raw)}; }
-function easyStatusOf(b){ return b.sold ? 'sold' : b.result==='win' ? 'won' : b.result==='loss' ? 'lost' : b.result==='push' ? 'push' : 'open'; }
+function easyStatusOf(b){ return b.sold ? 'sold' : (b.result==='win' && betProfit(b)==null) ? 'nopx' : b.result==='win' ? 'won' : b.result==='loss' ? 'lost' : b.result==='push' ? 'push' : 'open'; }
 function easyBetRow(b){ const pr=betProfit(b), l=easyBetLabel(b); return {id:b.id, status:easyStatusOf(b), label:l.text, labelHtml:l.html, book:b.book, price:b.odds, stake:+b.stake||0, atRisk:b.free?0:(+b.stake||0), profit:pr, day:gameDayOf(b), started:betLocked(b), free:!!b.free, bet:b}; }
 function easySingles(){ return (logged||[]).filter(b=>b && b.kind!=='parlay').map(easyBetRow).sort((a,b)=>(a.day<b.day?1:a.day>b.day?-1:0)); }
-function easyLedger(){ return easySingles().filter(x=>x.status!=='open'); }
+function easyLedger(){ return easySingles().filter(x=>x.status!=='open' && x.status!=='nopx'); }   /* v5.24 (step 4, review money 16): a win whose price was not saved (status nopx) is listed in My bets as "price not saved" and left out of So far: it is not a plain win with $0 */
 function easyInPlay(){ const bets=easySingles().filter(x=>x.status==='open'); return {bets, count:bets.length, atRisk:+bets.reduce((t,x)=>t+x.atRisk,0).toFixed(2), parlaysNotShown:(logged||[]).filter(b=>b && b.kind==='parlay' && easyStatusOf(b)==='open').length}; }
 function easySoFar(){ const L=easyLedger(), c=s=>L.filter(x=>x.status===s).length, listed=+L.reduce((t,x)=>t+(x.profit||0),0).toFixed(2), cancelled=+(removedBets||[]).filter(x=>x && x.lost>0 && x.kind!=='parlay').reduce((t,x)=>t+x.lost,0).toFixed(2);
   return {bets:L.length, won:c('won'), lost:c('lost'), push:c('push'), sold:c('sold'), profit:+(listed-cancelled).toFixed(2), profitListed:listed, cancelled}; }
@@ -5782,10 +5842,13 @@ function ezCardHtml(p, sel){ const k=esc(p.key), g=ezGlossKeys(p.r)[0], gOn=!!ez
     (g ? '<button type="button" class="ez-gl" data-ez="gl" data-key="'+k+'" data-g="'+esc(g)+'" data-k="gl:'+k+'" aria-expanded="'+gOn+'">'+esc(ezGlossLabel(g))+'</button>'+(gOn?'<p class="ez-glp">'+esc(easyGloss(g))+'</p>':'') : '')+
     ezTrioHtml(p)+
     '<div class="ez-acts"><button type="button" class="ez-btn" data-ez="open" data-key="'+k+'" data-k="open:'+k+'">See this pick</button><button type="button" class="ez-btn link" data-ez="type" data-key="'+k+'" data-k="type:'+k+'">Type this</button></div></article>'; }
-function ezMovedHtml(m){ const k=esc(m.key), be=(m.breakEven*100).toFixed(1), mo=m.most!=null ? (m.most*100).toFixed(1) : null;
-  return '<article class="ez-card moved" data-key="'+k+'" aria-label="Not worth it now">'+ezMeta(m.r, m.book)+'<h3 class="ez-sent">Not worth it now</h3><p class="ez-q">'+m.sentence+'</p>'+
-    '<div class="ez-pair"><div><div class="ez-l">Price before</div><b>'+esc(m.oldPrice)+'</b><div class="ez-s">'+esc(ezMean(m.oldPrice))+'</div></div><div><div class="ez-l">Price now</div><b>'+esc(m.newPrice)+'</b><div class="ez-s">'+esc(ezMean(m.newPrice))+'</div></div></div>'+
-    '<p>At '+esc(m.newPrice)+' the price needs a '+be+'% chance to break even.'+(mo!=null?' The most La Contadora would pay is '+mo+'%.':'')+'</p>'+
+function ezMovedHtml(m){ const k=esc(m.key); let be=(m.breakEven*100).toFixed(1), mo=m.most!=null ? (m.most*100).toFixed(1) : null;
+  if(mo!=null && be===mo){ be=(m.breakEven*100).toFixed(2); mo=(m.most*100).toFixed(2); }   /* v5.24 (step 4, review money 10): never the same number twice: more digits, or "right at the limit" */
+  const atLimit=mo!=null && be===mo, cause=m.priceMoved&&m.chanceMoved ? 'What changed: the price and La Contadora’s chance.' : m.priceMoved ? 'What changed: the price.' : m.chanceMoved ? 'What changed: La Contadora’s chance. The price is the same.' : 'What changed: the price now needs more than the chance La Contadora gives it.';   /* v5.24 (step 4, review money 9) */
+  const pair=m.priceMoved ? '<div class="ez-pair"><div><div class="ez-l">Price before</div><b>'+esc(m.oldPrice)+'</b><div class="ez-s">'+esc(ezMean(m.oldPrice))+'</div></div><div><div class="ez-l">Price now</div><b>'+esc(m.newPrice)+'</b><div class="ez-s">'+esc(ezMean(m.newPrice))+'</div></div></div>'
+    : '<div class="ez-pair"><div><div class="ez-l">Price now</div><b>'+esc(m.newPrice)+'</b><div class="ez-s">'+esc(ezMean(m.newPrice))+'</div></div></div>';
+  return '<article class="ez-card moved" data-key="'+k+'" aria-label="Not worth it now">'+ezMeta(m.r, m.book)+'<h3 class="ez-sent">Not worth it now</h3><p class="ez-q">'+m.sentence+'</p><p class="ez-why">'+esc(cause)+'</p>'+pair+
+    '<p>At '+esc(m.newPrice)+' the price needs a '+be+'% chance to break even.'+(mo!=null ? (atLimit ? ' That is right at the limit of what La Contadora would pay.' : ' The most La Contadora would pay is '+mo+'%.') : '')+'</p>'+
     '<p class="ez-strong">Skip it, or check back later.</p>'+
     '<div class="ez-acts"><button type="button" class="ez-btn sec" data-ez="dismiss" data-key="'+k+'" data-k="dismiss:'+k+'">Skip it</button></div></article>'; }
 function ezTodayHtml(V){ let h='';
@@ -5797,6 +5860,7 @@ function ezTodayHtml(V){ let h='';
   const ago=V.board.minutes!=null ? '<p class="ez-soft ez-ago">Prices checked '+esc(ezAgo(V.board.minutes))+'.</p>' : '';
   if(!V.shown.length){
     if(V.total>0) h+='<h2 class="ez-h">Nothing left on today’s list</h2><p>You skipped what the app found. That is a fine answer. Check back later.</p>'+ago;
+    else if(V.noStake>0) h+='<h2 class="ez-h">Nothing to place with the money you set aside</h2><p>'+V.noStake+(V.noStake===1?' price is':' prices are')+' worth paying today, but the bet the app suggests is under $1 with the money you set aside. Put a bigger number in <button type="button" class="ez-btn link ez-inl" data-ez="settings" data-k="settings">Settings</button> to see '+(V.noStake===1?'it':'them')+'.</p>'+ago;   /* v5.24 (step 4): display only, no stake or cap changes */
     else if(V.moved.length) h+='<h2 class="ez-h">Nothing worth paying right now</h2><p>That is a normal moment. Check back later.</p>'+ago;
     else h+='<h2 class="ez-h">Nothing worth paying today. That is a normal day.</h2><p>The app checked the prices and none cost less than they should. Skipping is a fine answer. Check back later.</p>'+ago; }
   else h+='<h2 class="ez-h">'+V.shown.length+' price'+(V.shown.length===1?'':'s')+' worth paying right now</h2>'+ago;
@@ -5841,7 +5905,7 @@ function ezPaneHtml(sel){ const s=ezS(), c=sel.confirm;
 function ezFind(key){ const V=window._ezV; if(!V) return null; return V.shown.concat(V.waiting).find(p=>p.key===key) || null; }
 function ezToast(t){ const s=ezS(); s.toast=t; const el=document.getElementById('ezToast'); if(el){ el.textContent=t; el.hidden=!t; } clearTimeout(ezToast.t); if(t) ezToast.t=setTimeout(()=>{ s.toast=''; const e=document.getElementById('ezToast'); if(e){ e.textContent=''; e.hidden=true; } },5000); }
 function ezConfirmFromBet(b, key, p){ const row=easyBetRow(b), wins=betProfit(Object.assign({}, b, {result:'win'})), ex=/kalshi|polymarket/i.test(String(b.book||''));   /* an exchange pick says the ticket’s own numbers (whole shares), the ones the person types */
-  const text=row.label+' '+bookLabel(b.book)+(ex ? (p && p.nums && p.nums.ok ? ' · cost at most '+easyMoney(p.nums.cost)+' · pays '+easyMoney(p.nums.payout)+' if it happens' : ' · cost '+easyMoney(b.stake)+' · pays '+easyMoney(+b.stake+wins)+' if it happens') : ' · '+(b.odds!=null?fmtOdds(b.odds)+' · ':'')+'bet '+easyMoney(b.stake)+' · wins '+easyMoney(wins)+' (back '+easyMoney(+b.stake+wins)+')')+'.';
+  const text=row.label+' '+bookLabel(b.book)+(ex ? ' · cost '+easyMoney(b.stake)+' · pays '+easyMoney(+b.stake+wins)+' if it happens'   /* v5.24 (step 4): what was saved, which is what the person typed in What filled */ : ' · '+(b.odds!=null?fmtOdds(b.odds)+' · ':'')+'bet '+easyMoney(b.stake)+' · wins '+easyMoney(wins)+' (back '+easyMoney(+b.stake+wins)+')')+'.';
   return {key, id:b.id, text}; }
 function ezPlacePane(){ const root=document.getElementById('v-etoday'), list=document.getElementById('ezList'); if(!root || !list || !root.classList.contains('on') || !ezWide()) return;
   const l=list.getBoundingClientRect(), a=root.getBoundingClientRect(); root.style.setProperty('--ezTop', Math.max(8, Math.round(l.top))+'px'); root.style.setProperty('--ezLeft', Math.round(l.right+16)+'px'); root.style.setProperty('--ezW', Math.max(300, Math.round(a.right-l.right-16))+'px'); }
@@ -5849,12 +5913,15 @@ function easyPaintToday(){ if(!window._ezReady || easyLevel()!=='easy') return; 
   const s=ezS(); let V=null;
   try{
     if(s.form){ const host=document.getElementById('ezHost');
-      if(logged.length>s.formN){ const b=logged[logged.length-1]; window._easyPlaced=window._easyPlaced||{}; if(!window._easyPlaced[b.id]) window._easyPlaced[b.id]=s.form; s.confirm=ezConfirmFromBet(b, s.form, s.formPick); s.key=s.form; s.form=null; s.msg=null; }
-      else if(!host || !host.querySelector('.editor')) s.form=null; }
+      if(s.formIds && !s.formGoneSaid && Array.from(s.formIds).some(id=>!(logged||[]).some(b=>b && b.id===id))){ s.formGoneSaid=true; s.msg='A bet was removed by another device while this form was open. Check My bets before you save.'; }   /* v5.24 (step 4, review saves S3-3) */
+      const sv=s.formSaved ? (logged||[]).find(b=>b && b.id===s.formSaved) : null;
+      if(sv){ s.confirm=ezConfirmFromBet(sv, s.form, s.formPick); s.key=s.form; s.form=null; s.formKind=null; s.formSaved=null; s.msg=null; }   /* v5.24 (step 4, review saves S1-1): the bet this form’s own Save made, found by its new id; never the last bet in the log */
+      else if(!host || !host.querySelector('.editor, .ez-fillf')) { s.form=null; s.formKind=null; } }
     const st=ezStore(), B=ezBoard(), welcome=!st.welcomed; let all=[], moved=[], skippedN=0, total=0;
     if(B.state==='ok' && !welcome){ const L=easyList(0.60), sk=ezSkipped(); const every=L.picks.concat(L.waiting); total=every.length; all=every.filter(p=>!sk[p.key]); skippedN=total-all.length;
       moved=easyMovedList().filter(m=>!sk[m.key]); }
-    V={welcome, board:B, shown:all.slice(0,5), waiting:all.slice(5), moved, skippedN, total, selKey:null}; window._ezV=V;
+    let noStake=0; if(B.state==='ok' && !welcome && !total){ try{ noStake=easyListNoStake(0.60).total; }catch(e){ noStake=0; } }
+    V={welcome, board:B, shown:all.slice(0,5), waiting:all.slice(5), moved, skippedN, total, noStake, selKey:null}; window._ezV=V;
     const wide=ezWide(); let sel=null;
     if(s.key){ const i=V.shown.findIndex(p=>p.key===s.key);
       if(i>=0) sel={p:V.shown[i], idx:i, total:V.shown.length, extra:false}; else { const w=V.waiting.find(p=>p.key===s.key); if(w) sel={p:w, extra:true}; }
@@ -5879,7 +5946,9 @@ function easyPaintToday(){ if(!window._ezReady || easyLevel()!=='easy') return; 
   }catch(e){ console.error(e); }
   try{ ezPlacePane(); }catch(e){ console.error(e); }
   try{ easyRemember(); }catch(e){ console.error(e); } }
-async function ezPlaced(key){ const s=ezS(); if(s.busy || s.form) return; const p=ezFind(key); if(!p) return; const btn=document.getElementById('ezPlaced'); s.busy=true; s.msg=null;
+async function ezPlaced(key){ const s=ezS(); if(s.busy) return; if(s.form){ if(s.formKind==='fill'){ const f=document.getElementById('ezFSh'); if(f) f.focus(); } return; } const p=ezFind(key); if(!p) return;
+  if(ezIsEx(p)){ ezFillOpen(key, p); return; }   /* v5.24 (step 4): an exchange pick asks what actually filled; a sportsbook pick keeps the one-tap save */
+  const btn=document.getElementById('ezPlaced'); s.busy=true; s.msg=null;
   if(btn){ btn.disabled=true; btn.textContent='Saving…'; btn.setAttribute('aria-busy','true'); }
   const nt=document.getElementById('ezNote'); if(nt) nt.innerHTML=''; let res=null;
   try{ res=await easyPlacedSave(key, {host:document.getElementById('ezHost')}); }
@@ -5888,11 +5957,74 @@ async function ezPlaced(key){ const s=ezS(); if(s.busy || s.form) return; const 
   if(res && res.saved){ const b=logged.find(x=>x.id===res.id); s.confirm=b ? ezConfirmFromBet(b, key, p) : {key, id:res.id, text:'Saved.'}; s.key=key; s.msg=null; s.last.pane=null; }
   else { const R={moved:'The price changed. Check the price at the book and open the full form below. Nothing was saved yet.', thin:'This book has few offers right now, so the price may not hold. Check the price at the book and open the full form below. Nothing was saved yet.',
       check:'The app wants a closer look before it saves this one. Use the full form below. Nothing was saved yet.', asks:'The app wants a closer look before it saves this one. Use the full form below. Nothing was saved yet.', noform:'The app could not open the form for this pick. Nothing was saved.',
-      already:'This bet is already in My bets. Nothing new was saved.', gone:'This pick is no longer on the board. Nothing was saved.', notpick:'This pick is no longer on the list. Nothing was saved.', error:'That did not save. Nothing was added to My bets. Try the full form or check back later.'};
+      already:'This bet is already in My bets. Nothing new was saved.', gone:'This pick is no longer on the board. Nothing was saved.', notpick:'This pick is no longer on the list. Nothing was saved.', error:'That did not save. Nothing was added to My bets. Try the full form or check back later.', busy:'A save is already in progress. Wait a moment.', storage:easyStorageMsg()};
     s.msg=R[res.reason] || 'That did not save. Nothing was added to My bets.';
-    if(res.formOpen && res.reason!=='noform'){ s.form=key; s.formPick=p; s.formN=logged.length; const h=document.getElementById('ezHost'); if(h && h.scrollIntoView) h.scrollIntoView({block:'nearest'}); }
+    if(res.formOpen && res.reason!=='noform'){ s.form=key; s.formKind='full'; s.formPick=p; s.formN=logged.length; s.formIds=new Set((logged||[]).map(b=>b && b.id)); s.formGoneSaid=false; s.formSaved=null; const h=document.getElementById('ezHost'); if(h && h.scrollIntoView) h.scrollIntoView({block:'nearest'}); }
     else s.last.pane=null;
     if(btn && document.contains(btn)){ btn.disabled=false; btn.textContent='I placed it'; btn.removeAttribute('aria-busy'); } }
+  easyPaintToday(); return res; }
+/* v5.24 (step 4): the exchange form, "What filled?" (Kalshi and Polymarket US). The ticket says whole shares and a limit; what really filled can differ, so the person types the shares and the price they got. The record is saved through the app’s own bet form in its % mode with those typed values (Cost, @ % and Pays back, the way a person types a fill by hand), so it is the same record. No God form and no EV words are ever shown here */
+function easyFillMath(r, shares, cents){ const bk=LIVE_BOOK(r&&r.book), cfg=cfgRead(), q0=+shares, c=+cents; if(bk!=='kalshi' && bk!=='poly') return null;
+  const q=bk==='kalshi' ? Math.round(q0*100)/100 : q0; if(!(q>0) || !(c>=1 && c<=99) || (bk==='poly' && q!==Math.floor(q))) return null;
+  const L=c/100; let cost;
+  if(bk==='kalshi'){ const rate=(+cfg.fees.kalshi||0)/100, fee=Math.ceil(rate*q*L*(1-L)*100-1e-9)/100; cost=Math.ceil((q*L+fee)*100-1e-9)/100; }   /* the most it can cost, as kalshiHow works it: shares x price + the fee rounded up to the cent */
+  else { const per=L*(1+feeRate('Polymarket US', L, cfg.fees)); cost=Math.ceil(q*per*100-1e-9)/100; }   /* as polyHow works it: whole shares x (price + fee), rounded up */
+  return {shares:q, cents:c, cost, payout:+q.toFixed(2), wins:+(q-cost).toFixed(2)}; }
+async function easyFillSave(key, shares, cents, opt){ opt=opt||{}; const r=easyRowByKey(key); if(!r) return {saved:false, reason:'gone'};
+  const bk=LIVE_BOOK(r.book); if(bk!=='kalshi' && bk!=='poly') return {saved:false, reason:'notex'};
+  if(r.prior || r.waitOrder || r.removed) return {saved:false, reason:'already'};
+  if(liveState(r)!=='open') return {saved:false, reason:'notpick'};
+  const M=easyFillMath(r, shares, cents); if(!M) return {saved:false, reason:(bk==='poly' && +shares!==Math.floor(+shares)) ? 'whole' : 'numbers'};
+  if(window._easySaving) return {saved:false, reason:'busy'};
+  const host=document.createElement('div'); host.className='pcard'; host.style.cssText='position:fixed;left:0;top:120px;width:700px;visibility:hidden;pointer-events:none'; document.body.appendChild(host);
+  window._easySaving=true;
+  try{ openBetEditor(host, r); const ed=host.querySelector('.editor'); if(!ed) return {saved:false, reason:'noform'};
+    const live=ed.querySelector('.eb-live'), t0=Date.now(); while(live && /checking/.test(live.textContent) && Date.now()-t0<4000) await new Promise(x=>setTimeout(x,100));   /* the form reads the live price once: let it finish, then the typed values replace it */
+    const r2=easyRowByKey(key); if(!r2 || r2.prior || r2.waitOrder || r2.removed || r2.moved || liveState(r2)!=='open') return {saved:false, reason:(!r2 ? 'gone' : (r2.prior || r2.waitOrder || r2.removed || r2.moved) ? 'already' : 'notpick')};
+    const cI=ed.querySelector('.eb-cost'), pI=ed.querySelector('.eb-pct'), wI=ed.querySelector('.eb-win'), md=ed.querySelector('.eb-mode');
+    if(md.value!=='pct'){ md.value='pct'; md.dispatchEvent(new Event('change')); }
+    cI.value=M.cost.toFixed(2); pI.value=String(M.cents); wI.value=M.payout.toFixed(2); ed._own={cost:true, pct:true, win:true};   /* the three boxes are the person’s own, as when typed by hand */
+    [cI, pI, wI].forEach(x=>x.dispatchEvent(new Event('input')));
+    const sb=ed.querySelector('.eb-save'), ids0=new Set((logged||[]).map(b=>b && b.id)); let nb=[];
+    const press=()=>{ window._easyFam=passFam(r); try{ sb.click(); }finally{ window._easyFam=null; } nb=(logged||[]).filter(b=>b && !ids0.has(b.id)); };
+    press();
+    if(nb.length===0 && !sb.disabled){ const m=(ed.querySelector('.eb-msg')||{}).textContent||'', st=easyStrictPrice(r), over=st && M.cents>st.value;
+      if(m && ((sb.dataset.ok==='1' && over) || opt.force)) press();   /* a price above her most was warned about already; a limit the person set needs a second tap of Save */
+      if(nb.length===0) return {saved:false, reason:'asks', msg:m}; }
+    if(nb.length!==1) return {saved:false, reason:'asks', msg:''};
+    const out=easyAfterSave(nb[0], key); return out.saved ? Object.assign(out, {cost:M.cost, payout:M.payout}) : out; }
+  finally { host.remove(); window._easyFam=null; window._easySaving=false; } }
+function ezFillHtml(p){ const n=p.nums, isK=n.kind==='kalshi', sh=isK ? n.shares.toFixed(2) : String(n.shares);
+  return '<div class="ez-fillf" role="group" aria-labelledby="ezFTitle"><h3 class="ez-fh" id="ezFTitle" tabindex="-1">What filled?</h3>'+
+    '<p class="ez-small">Check the order at '+esc(p.book)+', then type what really filled. Nothing is saved until you tap Save.</p><div id="ezFNote" role="status"></div>'+
+    '<div class="ez-frow"><label for="ezFSh">Shares</label><input id="ezFSh" type="number" inputmode="decimal" min="0" step="'+(isK?'0.01':'1')+'" value="'+esc(sh)+'" data-k="fsh"></div>'+
+    '<div class="ez-frow"><label for="ezFPx">Price per share, in cents</label><input id="ezFPx" type="number" inputmode="decimal" min="1" max="99" step="1" value="'+n.limit+'" data-k="fpx"></div>'+
+    '<p class="ez-fwarn" id="ezFWarn" role="status"></p><p class="ez-inmoney" id="ezFLine" role="status"></p>'+
+    '<div class="ez-two"><button type="button" class="ez-btn" id="ezFSave" data-ez="fillsave" data-key="'+esc(p.key)+'" data-k="fillsave">Save what filled</button><button type="button" class="ez-btn sec" data-ez="fillno" data-k="fillno">Not now</button></div></div>'; }
+function ezFillUpdate(){ const s=ezS(); if(!s.form || s.formKind!=='fill') return; const p=s.formPick, sh=document.getElementById('ezFSh'), px=document.getElementById('ezFPx'), line=document.getElementById('ezFLine'), warn=document.getElementById('ezFWarn'); if(!p || !sh || !px || !line || !warn) return;
+  const r=easyRowByKey(p.key)||p.r, q=parseFloat(sh.value), c=parseFloat(px.value), M=easyFillMath(r, q, c), lim=p.nums.limit;
+  line.textContent = M ? 'That costs '+easyMoney(M.cost)+' with the fee and pays '+easyMoney(M.payout)+' if it happens.' : (p.nums.kind==='poly' && q>0 && q!==Math.floor(q) ? 'Polymarket US takes whole shares.' : 'Type the shares and the price you got to see what it costs.');
+  warn.textContent = c>lim ? 'This is above the most La Contadora would pay ('+lim+'¢). You can still save what really filled.' : ''; }
+function ezFillOpen(key, p){ const s=ezS(); s.form=key; s.formKind='fill'; s.formPick=p; s.formIds=new Set((logged||[]).map(b=>b && b.id)); s.formGoneSaid=false; s.formSaved=null; s.fillForce=false; s.msg=null;
+  const h=document.getElementById('ezHost'); if(h){ h.innerHTML=ezFillHtml(p); ezFillUpdate(); try{ h.scrollIntoView({block:'nearest'}); }catch(e){} const f=document.getElementById('ezFSh'); if(f) f.focus({preventScroll:true}); }
+  const nt=document.getElementById('ezNote'); if(nt) nt.innerHTML='';
+  ezFillPeek(key); }
+/* the live price, read once in the background: if it is not the card’s price the form says so, calmly, and still takes what filled */
+async function ezFillPeek(key){ const r=easyRowByKey(key); if(!r) return; const host=document.createElement('div'); host.className='pcard'; host.style.cssText='position:fixed;left:0;top:120px;width:700px;visibility:hidden;pointer-events:none'; document.body.appendChild(host); let why='';
+  try{ openBetEditor(host, r); const ed=host.querySelector('.editor'); if(!ed) return; const live=ed.querySelector('.eb-live'), t0=Date.now(); while(live && /checking/.test(live.textContent) && Date.now()-t0<4000) await new Promise(x=>setTimeout(x,100));
+    if(ed.querySelector('.eb-thin')) why='thin'; else { const pi=ed.querySelector('.eb-pct'), shown=parseFloat(pi&&pi.value), card=+(r.offeredProb*100).toFixed(1); if(!isNaN(shown) && Math.abs(shown-card)>0.05+1e-9) why='moved'; } }
+  finally{ host.remove(); }
+  const s=ezS(), nt=document.getElementById('ezFNote'); if(why && nt && s.form===key && s.formKind==='fill') nt.innerHTML='<div class="ez-note">'+esc(why==='thin' ? 'This book has few offers right now, so the price may not hold. Check the price at the book, then tell us what filled.' : 'The price changed. Check the price at the book, then tell us what filled.')+'</div>'; }
+async function ezFillSaveUi(key){ const s=ezS(); if(s.busy || !s.form || s.formKind!=='fill') return; const p=s.formPick, sh=document.getElementById('ezFSh'), px=document.getElementById('ezFPx'), btn=document.getElementById('ezFSave'), nt=document.getElementById('ezFNote'); if(!p || !sh || !px) return;
+  s.busy=true; if(btn){ btn.disabled=true; btn.textContent='Saving…'; btn.setAttribute('aria-busy','true'); } let res=null;
+  try{ res=await easyFillSave(key, parseFloat(sh.value), parseFloat(px.value), {force:!!s.fillForce}); }catch(e){ console.error(e); res={saved:false, reason:'error'}; }
+  s.busy=false;
+  if(res && res.saved){ const b=logged.find(x=>x.id===res.id); s.confirm=b ? ezConfirmFromBet(b, key, p) : {key, id:res.id, text:'Saved.'}; s.key=key; s.form=null; s.formKind=null; s.msg=null; s.fillForce=false; s.last.pane=null; }
+  else { const R={already:'This bet is already in My bets. Nothing new was saved.', gone:'This pick is no longer on the board. Nothing was saved.', notpick:'This pick is no longer open. Nothing was saved.', busy:'A save is already in progress. Wait a moment.', storage:easyStorageMsg(),
+      numbers:'Type the shares and the price you got, then tap Save again. Nothing was saved.', whole:'Polymarket US takes whole shares. Nothing was saved.', asks:'This goes past a limit you set. If it really filled, tap Save what filled again. Nothing was saved yet.', noform:'The app could not save this one. Nothing was saved.', error:'That did not save. Nothing was added to My bets.'};
+    const txt=R[res.reason] || 'That did not save. Nothing was added to My bets.'; s.fillForce=res.reason==='asks';
+    if(res.reason==='already' || res.reason==='gone' || res.reason==='notpick'){ s.form=null; s.formKind=null; s.msg=txt; s.last.pane=null; }
+    else { if(nt) nt.innerHTML='<div class="ez-note">'+esc(txt)+'</div>'; if(btn && document.contains(btn)){ btn.disabled=false; btn.textContent='Save what filled'; btn.removeAttribute('aria-busy'); } } }
   easyPaintToday(); return res; }
 function ezClick(e){ const t=e.target.closest ? e.target.closest('[data-ez]') : null; if(!t || !document.getElementById('v-etoday').contains(t)) return; const a=t.dataset.ez, key=t.dataset.key, s=ezS();
   if(a==='open' || a==='type'){ s.key=key; s.seg=a==='type'?'type':'what'; s.confirm=null; s.msg=null; s.form=null; s.focusPane=true; s.backKey=(a==='type'?'type:':'open:')+key; }
@@ -5904,7 +6036,10 @@ function ezClick(e){ const t=e.target.closest ? e.target.closest('[data-ez]') : 
   else if(a==='dismiss'){ ezSkip(key,true); ezToast('Skipped for today. Nothing else happens.'); }
   else if(a==='unskip'){ ezSkipClear(); }
   else if(a==='welcome'){ const o=ezStore(); o.welcomed=1; ezStoreSave(o); }
-  else if(a==='undo'){ const r=easyUndo(t.dataset.id); s.confirm=null; s.key=null; ezToast(r && r.removed ? 'Removed from My bets. The pick is back on Today.' : 'That bet could not be removed here. Open My bets to remove it.'); }
+  else if(a==='undo'){ const r=easyUndo(t.dataset.id); s.confirm=null; s.key=null; ezToast(easyUndoMsg(r)); }
+  else if(a==='fillsave'){ ezFillSaveUi(key); return; }
+  else if(a==='fillno'){ s.form=null; s.formKind=null; s.fillForce=false; const h=document.getElementById('ezHost'); if(h) h.innerHTML=''; s.msg=null; }
+  else if(a==='settings'){ const b=document.querySelector('.tabs .tab.etab[data-view="v-esettings"]'); s.key=null; s.confirm=null; if(b) b.click(); }
   else if(a==='gobets'){ const b=document.querySelector('.tabs .tab.etab[data-view="v-ebets"]'); s.key=null; s.confirm=null; if(b) b.click(); }
   else if(a==='nobook'){ ezToast('Open the '+t.textContent.replace(/^Open /,'')+' app on your phone.'); return; }
   else if(a==='book'){ return; }
@@ -5912,6 +6047,7 @@ function ezClick(e){ const t=e.target.closest ? e.target.closest('[data-ez]') : 
 function easyTodayInit(){ if(window._ezReady) return; const root=document.getElementById('v-etoday'); if(!root) return;
   root.innerHTML='<div class="ez-list" id="ezList"></div><aside class="ez-pick" id="ezPick" aria-label="Pick"></aside><div class="ez-toast" id="ezToast" role="status" aria-live="polite" hidden></div>';
   root.addEventListener('click', ezClick);
+  root.addEventListener('input', e=>{ if(e.target && e.target.closest && e.target.closest('.ez-fillf')) ezFillUpdate(); });   /* v5.24 (step 4): the live line under What filled? */
   document.addEventListener('keydown', e=>{ if(e.key==='Escape' && easyLevel()==='easy' && root.classList.contains('on') && !ezWide() && ezS().key && !ezS().busy){ const s=ezS(); s.focusKey=s.backKey||null; s.key=null; s.confirm=null; s.form=null; s.msg=null; easyPaintToday(); } });
   document.querySelectorAll('.tabs .tab.etab').forEach(t=>t.addEventListener('click', ()=>{ const s=ezS(); s.key=null; s.confirm=null; s.msg=null; s.form=null; setTimeout(easyPaintToday,0); }));
   window._ezReady=true; setInterval(()=>{ if(document.visibilityState==='visible') easyPaintToday(); }, 30000);
@@ -5926,15 +6062,18 @@ function exSet(root, key, html){ const S=exS(); if(S.last[key]===html) return; c
   root.innerHTML=html; S.last[key]=html; if(fk){ const e=root.querySelector('[data-k="'+fk.replace(/"/g,'')+'"]'); if(e && e.focus) e.focus({preventScroll:true}); } }
 function exDate(day){ const m=String(day||'').match(/^(\d{4})-(\d\d)-(\d\d)$/); return m ? new Date(Date.UTC(+m[1], +m[2]-1, +m[3], 12)).toLocaleDateString('en-US',{month:'short', day:'numeric', timeZone:'UTC'}) : ''; }
 function exMoney(x){ x=+x||0; return '$'+(Math.abs(x-Math.round(x))<0.005 ? Math.round(x).toLocaleString('en-US') : x.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2})); }
-function exTagWord(s){ return s==='won' ? 'Won' : s==='lost' ? 'Lost' : s==='push' ? 'Money back' : s==='sold' ? 'Sold' : 'In play'; }
-function exRowHtml(x, S){ const b=x.bet, open=x.status==='open', amt=open ? '' : money(x.profit==null ? 0 : x.profit, true);
+function exTagWord(s){ return (s==='won' || s==='nopx') ? 'Won' : s==='lost' ? 'Lost' : s==='push' ? 'Money back' : s==='sold' ? 'Sold' : 'In play'; }
+function exRowHtml(x, S){ const b=x.bet, open=x.status==='open', amt=open ? '' : x.status==='nopx' ? 'Price not saved' : money(x.profit==null ? 0 : x.profit, true);
   const meta='At '+esc(x.book||'the book')+' · '+(x.free ? 'free bet, nothing of yours at risk' : 'put in '+money(x.stake));
-  const pend=(open && b.result==='?') ? '<div class="ex-m">Result not found yet. It stays in play until it is found.</div>' : '';
+  const pend=(open && b.result==='?') ? '<div class="ex-m">Result not found yet. It stays in play until it is found.</div>' : x.status==='nopx' ? '<div class="ex-m">Won, but the price was not saved, so the money is not counted in So far.</div>' : '';
   let act='';
-  if(open){ if(S.rm===x.id) act='<div class="ex-ask" role="group" aria-label="Remove this bet"><p>Remove this bet from My bets? Use this only if you logged it by mistake.</p><div class="ex-two"><button type="button" class="ex-btn" data-ex="rmyes" data-id="'+esc(x.id)+'" data-k="rmyes:'+esc(x.id)+'">Yes, remove it</button><button type="button" class="ex-btn sec" data-ex="rmno" data-k="rmno:'+esc(x.id)+'">Keep it</button></div></div>';
+  if(open && easyOwn()[x.id]){ if(S.rm===x.id) act='<div class="ex-ask" role="group" aria-label="Remove this bet"><p>Remove this bet from My bets? Use this only if you logged it by mistake.</p><div class="ex-two"><button type="button" class="ex-btn" data-ex="rmyes" data-id="'+esc(x.id)+'" data-k="rmyes:'+esc(x.id)+'">Yes, remove it</button><button type="button" class="ex-btn sec" data-ex="rmno" data-k="rmno:'+esc(x.id)+'">Keep it</button></div></div>';
     else act='<button type="button" class="ex-btn link" data-ex="rm" data-id="'+esc(x.id)+'" data-k="rm:'+esc(x.id)+'">Logged by mistake? Remove it</button>'; }
   return '<li class="ex-row" data-id="'+esc(x.id)+'" data-st="'+x.status+'"><div class="ex-l"><div class="ex-top"><span class="ex-tag">'+exTagWord(x.status)+'</span><span class="ex-d">'+esc(exDate(x.day))+'</span></div><div class="ex-t">'+x.labelHtml+'</div><div class="ex-m">'+meta+'</div>'+pend+act+'</div><div class="ex-amt">'+(amt ? '<span class="ex-nw">'+amt+'</span>' : '')+'</div></li>'; }
 function exOrder(list){ const ix=x=>(logged||[]).indexOf(x.bet); return list.map((x,i)=>[x,i]).sort((a,b)=>(a[0].day<b[0].day?1:a[0].day>b[0].day?-1:(ix(b[0])-ix(a[0]))||(a[1]-b[1]))).map(a=>a[0]); }   /* newest game day first; on one day the bet saved last comes first */
+/* My bets counts singles only (a parlay is not a pick Easy offers). In the dev app, when parlays exist, a small note says what the totals leave out, so the numbers can be matched to the Bet log; a customer build (DEV_APP false) never shows it */
+function easyParlayNote(){ if(typeof DEV_APP==='undefined' || !DEV_APP) return ''; const P=(logged||[]).filter(b=>b && b.kind==='parlay'); if(!P.length) return '';
+  const settled=+P.reduce((t,b)=>{ const x=betProfit(b); return t+(x==null?0:x); },0).toFixed(2); return 'Dev: these totals leave out '+P.length+(P.length===1?' parlay':' parlays')+' ('+money(settled, true)+' settled).'; }
 function exBetsHtml(){ const S=exS(), all=exOrder(easySingles()), play=all.filter(x=>x.status==='open'), done=all.filter(x=>x.status!=='open'), ip=easyInPlay(), so=easySoFar(), bank=cfgRead().bank;
   const cnt={all:all.length, play:play.length, won:done.filter(x=>x.status==='won').length, lost:done.filter(x=>x.status==='lost').length}, f=S.filter;
   const rows=play.concat(done).filter(x=>f==='all' || (f==='play' && x.status==='open') || (f==='won' && x.status==='won') || (f==='lost' && x.status==='lost'));
@@ -5944,6 +6083,7 @@ function exBetsHtml(){ const S=exS(), all=exOrder(easySingles()), play=all.filte
   const n=so.bets, extra=(so.push ? ' · money back '+so.push : '')+(so.sold ? ' · sold '+so.sold : '');
   h+='<p class="ex-sofar">'+(n ? 'So far: '+n+(n===1?' bet':' bets')+' · won '+so.won+' · lost '+so.lost+extra+' · <span class="ex-nw">'+esc(money(so.profit, true))+'</span>' : 'So far: no settled bets yet.')+'</p>';
   h+='<p>Winning more often than losing can still be down: each loss costs more than each win pays. Only settled bets count in So far. Bets in play are not won or lost yet.</p>';
+  { const pn=easyParlayNote(); if(pn) h+='<p class="ex-soft ex-dev" role="note">'+esc(pn)+'</p>'; }
   if(S.back) h+='<div class="ex-note" role="status"><p>Removed from My bets: '+esc(S.back.text)+'</p><div class="ex-two"><button type="button" class="ex-btn" data-ex="back" data-k="back">Put it back</button><button type="button" class="ex-btn sec" data-ex="backok" data-k="backok">OK</button></div></div>';
   if(S.note) h+='<div class="ex-note" role="status"><p>'+esc(S.note)+'</p></div>';
   h+='<div class="ex-filters" role="group" aria-label="Show">'+[['all','All'],['play','In play'],['won','Won'],['lost','Lost']].map(a=>'<button type="button" class="ex-f" data-ex="filter" data-f="'+a[0]+'" data-k="f:'+a[0]+'" aria-pressed="'+(f===a[0])+'">'+a[1]+' ('+cnt[a[0]]+')</button>').join('')+'</div>';
@@ -5954,12 +6094,13 @@ function exBetsHtml(){ const S=exS(), all=exOrder(easySingles()), play=all.filte
 function easyPaintBets(){ if(!window._exReady || easyLevel()!=='easy') return; const root=exEl('exBets'); if(!root) return; try{ exSet(root,'bets',exBetsHtml()); }catch(e){ console.error(e); } }
 /* remove a bet from My bets: the app’s own removal (removeBet, "never placed, $0"), then that fresh $0 record leaves the removed list too, so the log is as if it was never saved. The bet is kept in memory so it can be put back. Only an open single */
 function easyRemoveBet(id){ const bet=(logged||[]).find(b=>b && b.id===id); if(!bet || bet.kind==='parlay' || easyStatusOf(bet)!=='open') return {removed:false, reason:'not open'};
-  const idx=logged.indexOf(bet), text=easyBetLabel(bet).text; removeBet(bet, 0);
+  if(!easyOwn()[id]) return {removed:false, reason:'not here'};   /* v5.24 (step 4, review saves S1-1): only a bet Easy saved itself in this tab */
+  const idx=logged.indexOf(bet), text=easyBetLabel(bet).text, own=easyOwn()[id]; removeBet(bet, 0);
   const i=removedBets.map(x=>x.id).lastIndexOf(id); if(i>=0 && !(removedBets[i].lost>0)){ removedBets.splice(i,1); saveRemoved(); }
-  const P=window._easyPlaced||{}; if(P[id]){ const S=easySeen(), key=P[id]; if(S[key]) S[key].placed=false; delete P[id]; }
-  window._exGone={id, bet, idx, text}; refresh(); return {removed:true, id, text}; }
+  easyForget(id);
+  window._exGone={id, bet, idx, text, own}; refresh(); return {removed:true, id, text}; }
 function easyRestoreBet(id){ const g=window._exGone; if(!g || g.id!==id || (logged||[]).some(b=>b && b.id===id)) return {restored:false};
-  logged.splice(Math.min(g.idx, logged.length), 0, g.bet); saveLog(); renderLog(); renderPerf(); refresh(); window._exGone=null; return {restored:true}; }
+  logged.splice(Math.min(g.idx, logged.length), 0, g.bet); saveLog(); renderLog(); renderPerf(); if(g.own){ easyOwn()[g.id]=g.own; easyOwnSave(); const S=easySeen(); if(S[g.own.key]) S[g.own.key].placed=true; } refresh(); window._exGone=null; return {restored:true}; }
 /* Learn: ten short lessons, one open at a time. A function (not a const) so a paint can always reach it */
 function exLessons(){ return [
  ['What this app does','<p>This app checks the price of a bet. Betting apps and exchanges (places that sell bets) put a price on every outcome, and some prices cost more than they should.</p><p><b>La Contadora</b> (Spanish for the accountant) is the part of the app that checks each price. It shows you the few that cost less than they should.</p><p>The app does not tell you to bet, and it never places a bet for you. You decide, and you place it yourself at the book.</p>'],
@@ -5970,7 +6111,7 @@ function exLessons(){ return [
  ['How to place it','<p>Every pick has a <b>Type this</b> page. It says exactly what to type at the book.</p><h4>At a betting app</h4><ol class="ex-steps"><li>Open the app.</li><li>Find the player or the game and choose the side the pick names.</li><li>Type the amount the pick shows.</li><li>Check the price. If it is worse than the most the pick names, do not place it.</li><li>Place it, come back, and tap I placed it.</li></ol><h4>At an exchange</h4><p>You buy shares. Use <b>Limit, not Market</b>. Limit means you never pay more than the price you type. Market pays whatever is asked, which costs more when few people are selling.</p><p>Check the price before you confirm. <b>I placed it only saves a note in My bets.</b> The app never places a bet for you.</p>'],
  ['How much to put in','<p>Only money you set aside and can afford to lose. The number in Settings is your own number, not an account. The app suggests how much to put in on each bet from it. You can always put in less.</p><p>Never place a bet to win back a loss. If you are not certain, skip. Skipping costs nothing.</p>'],
  ['Why a record matters more than a good or bad week','<p>A few wins or losses in a row say very little. The honest measure is My bets: how many bets are settled, how many won, how many lost, and the money.</p><p>Winning more often than losing can still be down, because each loss costs more than each win pays. Bets in play are not counted until they settle.</p><p>The count sits next to the money so you can see how small or how large the record is.</p>'],
- ['Words','<p><b>Price</b>: what it costs to try to win $1.<br><b>Chance</b>: about how many times in 100 it happens, as La Contadora figures it.<br><b>Edge</b>: the chance is higher than the price assumes.<br><b>Line</b>: the number a player is compared with. “7 or more” means he must reach 7.<br><b>Rebound</b>: catching the ball after a missed shot.<br><b>Steal</b>: taking the ball away from the other team.<br><b>Assist</b>: a pass that leads straight to a basket.<br><b>Runs with the ball</b>: each time a player is handed the ball and runs with it.<br><b>Catch</b>: catching a pass.<br><b>Share</b>: a piece that pays $1 if it happens.<br><b>Limit</b>: never pay more than the price you type.<br><b>Market</b>: pay whatever is asked.<br><b>In play</b>: placed, not settled yet.<br><b>Settled</b>: the game is over and the bet is won or lost.<br><b>Money back</b>: the bet came out even, so the amount you put in returns.</p>'],
+ ['Words','<p><b>Price</b>: what it costs to try to win $1.<br><b>Chance</b>: about how many times in 100 it happens, as La Contadora figures it.<br><b>Edge</b>: the chance is higher than the price assumes.<br><b>Line</b>: the number a player is compared with. “7 or more” means he must reach 7.<br><b>Rebound</b>: catching the ball after a missed shot.<br><b>Steal</b>: taking the ball away from the other team.<br><b>Assist</b>: a pass that sets up a teammate’s score.<br><b>Runs with the ball</b>: each time a player is handed the ball and runs with it.<br><b>Catch</b>: catching a pass.<br><b>Share</b>: a piece that pays $1 if it happens.<br><b>Limit</b>: never pay more than the price you type.<br><b>Market</b>: pay whatever is asked.<br><b>In play</b>: placed, not settled yet.<br><b>Settled</b>: the game is over and the bet is won or lost.<br><b>Money back</b>: the bet came out even, so the amount you put in returns.</p>'],
  ['If betting stops being fun','<p>Stop, and talk to someone. Help: 1-800-GAMBLER (placeholder, to be confirmed by a lawyer). Age and state rules are to be confirmed by a real lawyer before anyone else uses the app.</p>']
 ]; }
 function exLearnHtml(){ const S=exS(); let h='<h2 class="ev-h">Learn</h2><p class="ex-soft">Short lessons in plain words.</p>';
@@ -6010,7 +6151,7 @@ function exClick(e){ const t=e.target.closest ? e.target.closest('[data-ex]') : 
   if(a==='filter'){ S.filter=t.dataset.f; S.note=''; }
   else if(a==='rm'){ S.rm=t.dataset.id; S.note=''; S.focusK='rmno:'+t.dataset.id; }
   else if(a==='rmno'){ const id=S.rm; S.rm=null; S.focusK='rm:'+id; }
-  else if(a==='rmyes'){ const r=easyRemoveBet(t.dataset.id); S.rm=null; if(r.removed){ S.back={id:r.id, text:r.text}; S.note=''; S.focusK='back'; } else { S.back=null; S.note='That bet could not be removed here. Only a bet still in play can be removed.'; } }
+  else if(a==='rmyes'){ const r=easyRemoveBet(t.dataset.id); S.rm=null; if(r.removed){ S.back={id:r.id, text:r.text}; S.note=''; S.focusK='back'; } else { S.back=null; S.note=r.reason==='not here' ? 'This bet was not saved here, so it stays.' : 'That bet could not be removed here. Only a bet still in play can be removed.'; } }
   else if(a==='back'){ const r=easyRestoreBet(S.back&&S.back.id); S.back=null; S.note=r.restored ? 'Put back in My bets.' : 'That bet could not be put back. You can add it again from Today.'; }
   else if(a==='backok'){ S.back=null; }
   else if(a==='lesson'){ const n=+t.dataset.n; S.lesson=S.lesson===n ? null : n; S.focusK='l'+n; easyPaintLearn(); return; }
@@ -7547,7 +7688,8 @@ function lsSafeSet(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){
   for(const c of LS_CACHES){ if(c===k) continue; try{ localStorage.removeItem(c); }catch(e){} try{ localStorage.setItem(k,v); return true; }catch(e){} } return false; }
 function saveFailNote(bad){ let el=document.getElementById('saveFail'); if(!bad){ if(el) el.remove(); return; }
   if(!el){ el=document.createElement('div'); el.id='saveFail'; el.setAttribute('role','alert'); document.body.prepend(el); }
-  el.textContent='⚠ Your bet log (or a book fill you added or ignored) could not be saved on this device: the browser storage is full ('+Math.round(lsSize()/1024)+' KB used). Your last change will be lost when the page reloads. Tell Claude Code.'; }
+  let easy=false; try{ easy=easyLevel()==='easy'; }catch(e){ easy=false; }   /* v5.24 (step 4, review saves S2): in Easy the banner never says God words */
+  el.textContent=easy ? 'Your last change could not be saved on this device because its storage is full. It will be lost when the page reloads. Free some space on this device, then try again.' : '⚠ Your bet log (or a book fill you added or ignored) could not be saved on this device: the browser storage is full ('+Math.round(lsSize()/1024)+' KB used). Your last change will be lost when the page reloads. Tell Claude Code.'; }
 function saveLog(){ saveFailNote(!lsSafeSet('mbev.log',JSON.stringify(logged))); if(typeof renderTodayBar==='function') setTimeout(renderTodayBar,0); if(document.body && document.body.dataset.view==='v-reports' && !window._rpPend){ window._rpPend=1; setTimeout(()=>{ window._rpPend=0; rpRender(); },50); }   /* v4.91 review: many saves in a row paint once */ /* v4.89: an open report follows every change to the log */ syncTouched(); }   // v3.82: no more silent failures
 /* v2.63: what the screener said about a row, in one word — saved with every bet you log.
    "On the list" = the screener had a stake on it (BET / RISK / OUTLIER / LIMITED) and the game hadn't started. */
