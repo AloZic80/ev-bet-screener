@@ -18,6 +18,7 @@ Status words: **active** (the rule now), **unverified** (believed, not confirmed
 | `decisions/plan-and-blocks-v1.md` | My plan (a reminder only), the 1,000-bet blocks from 11/11, the band study rules (v5.10) |
 | `decisions/ai-helper-v1.md` | The AI helper (app side, v5.15): proposals only (Use / Ignore), off until set up, aiCall and its plain error words, the `mbev.ai.*` data points and what reads them with the AI off |
 | `decisions/publishing.md` | Branch, tests, publish, notes |
+| `decisions/tiers-and-easy.md` | God / Easy / Plus levels, the Easy app (Today, My bets, Learn, Settings), the View-as switch, the safety and wording rules Easy must keep |
 
 ## Incidents (bugs that came back; the test that now stops each)
 | File | Covers |

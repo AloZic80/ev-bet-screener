@@ -30,3 +30,6 @@ To do on the next Worker change: remove src/apisports.js, its two routes and its
 - Dev mode (now): running-survey labels (tab edge highlights, "so far" badges) show live with no minimum sample, always with the count ("so far · N bets"). A label never changes a decision, stake, order or tab content.
 - Reports, the Scorecard and the 1,000-bet test keep their careful small-sample wording in both modes.
 - Regular mode: after 1,000+ settled bets, on the owner's word. Highlights get sample gates, as a paid version would have. Nothing is built for the switch yet.
+
+## v5.24 levels (2026-11-21)
+God (⚡) is this personal edition and stays the default. Easy (🟢) is what a paying newcomer would see: Today, My bets, Learn, Settings. Plus (⭐) is reserved, nothing assigned. The "Back to God mode" switch and the "who sees what" labels exist only while `DEV_APP` is true. Easy has no AI helper, scout, alerts or God words. Details: `memory/decisions/tiers-and-easy.md`.
