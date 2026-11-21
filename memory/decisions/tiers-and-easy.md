@@ -43,3 +43,8 @@ Four takes were drawn (La Lista, Uno a la vez, El Coach, La Libreta). Judges: ne
 - Skip is as plain as Place. No God-only words on Easy screens (EV, CLV, Kelly, hold, the model's chance, stale, outlier, Sentinels, moneyline, O/U).
 - No key, passphrase, email or sync password on screen, in a log, a URL or an export. In a customer build there is no "Back to God mode" element, text or handler (DEV_APP false).
 - Tab handler guard: Easy refuses a God view (20+ code paths click God tabs); God DOM stays present, hidden by CSS (several nodes are read unguarded at startup).
+
+## Built in v5.24 (customer-build notes)
+- `DEV_APP` is defined once in its own tiny head script; the head sets `data-viewas` from it, so a customer build is Easy at first paint even with a forged `mbev.viewAs`.
+- A real customer build still needs a build step that strips the dev strings from the page source (not built; owner decision).
+- Open owner decisions: minimum stake for small banks; Easy price freshness (suggest 30 min); Easy ownership this tab vs device; hide exchange picks that cannot fill at their limit; sportsbook fallback form; Novig +219/+220; a fill on a finished game; push grading of whole-number props; lawyer items (age/place gate, real help number, stake limits); G1 vs G2 labels; timers spend Worker calls; how Easy gets fresh prices.
