@@ -78,7 +78,7 @@ const SNAP=()=>{ const vis=e=>{ const r=e.getBoundingClientRect(); return r.widt
       await p.click('.tabs .tab.etab[data-view="'+v+'"]'); await p.waitForTimeout(100); const q=await p.evaluate(SNAP);
       check('Easy '+W+' '+theme+': the '+t+' tab opens its own empty view and nothing else', q.viewsShown.join()===v && q.on.join()===v && q.bodyView===v, {shown:q.viewsShown, on:q.on, body:q.bodyView}); }
     const ph=await p.evaluate(()=>[...document.querySelectorAll('.eview')].map(v=>v.querySelector('h2').textContent+' / '+v.querySelector('p').textContent));
-    check('Easy '+W+' '+theme+': Today now has its real content (v5.24 step 3a); My bets, Learn and Settings still have their placeholder heading and line', ph.length===4 && !/coming in the next step/.test(ph[0]) && ph.slice(1).every(x=>/coming in the next step/.test(x)), ph);   // v5.24 (step 3a): Today is built
+    check('Easy '+W+' '+theme+': Today, My bets, Learn and Settings all have their real content (v5.24 steps 3a and 3b), no placeholder line is left', ph.length===4 && ph.every(x=>!/coming in the next step/.test(x)) && /^My bets \//.test(ph[1]) && /^Learn \//.test(ph[2]) && /^Settings \//.test(ph[3]), ph);   // v5.24 (step 3b): My bets, Learn and Settings are built too (3a: Today)
     // Back to God mode
     await p.click('#easyBack'); await p.waitForTimeout(200); s=await p.evaluate(SNAP);
     check('Easy '+W+' '+theme+': Back to God mode returns to God: five tabs, the Board open, no banner, the key says god', s.level==='god' && s.tabs.join('|')==='Board|Live Games|Parlay|Bet log|Settings' && s.on.join()==='v-board' && s.bodyView==='v-board' && !(s.banner&&s.banner.shown) && s.key==='god' && s.etabsShown===0, s);
