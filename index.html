@@ -5421,6 +5421,188 @@ function scExpiresHtml(r){ const s=Date.parse((r.gameInfo&&r.gameInfo.startISO)|
   const t=new Date(s).toLocaleTimeString('en-US',{hour:'numeric', minute:'2-digit', timeZone:'America/Chicago'});
   return '<div class="sc-tkt-exp"><span>Expires</span><b>before '+esc(t)+' CT</b><small class="sc-kx-s">the start · if it only offers Good ’til canceled, cancel what has not filled by then</small></div>'; }
 function scTicket(r){ const s=scKalshiLine(r)||scPolyLine(r); if(!s) return ''; return '<div class="sc-tkt"><div class="sc-tkt-h">Type this</div>'+s+scExpiresHtml(r)+'</div>'; }
+/* v5.24 (Easy, step 2 of 2: the engine, no screens): every function below is a hoisted declaration, prefixed easy, in this one block. They only READ the board
+   (lastRows after audit), the log and the app’s own functions (scApproved, maxPriceFor, okProbR, polyHow, kalshiHow, betProfit ...); nothing here changes a stake,
+   a floor, a fee or a grade. A pick is a row the God board already lists as a best bet at 60% or more, in plain words, or it is not shown. */
+function easyIsPaste(r){ return String((r&&r.src)||'').startsWith('paste'); }   /* v5.24: isPasteRow is a const further down: this one is hoisted */
+function easyMostOf(r){ return (r && r.fairProb!=null) ? maxPriceFor(okProbR(r), r.book, cfgRead().eMin) : null; }   /* v5.24: La Contadora’s exact most (a chance), never the rounded display */
+function easyPriceOk(r){ const p=r&&r.offeredProb, mx=easyMostOf(r); return p>0 && p<1 && mx!=null && p<=mx+1e-9; }   /* v5.24: the price is not past her most */
+function easyBooksOk(r){ const c=cfgRead(); return !!r.book && (!c.books.length || c.books.some(b=>bookIsMine(r.book,b))); }   /* v5.24: a book the person has (an empty list lets every book through, as the audit does) */
+function easyLineOf(r){ const m=String((r&&r.market)||'').match(/^([+-]?\d+(?:\.\d+)?)\s*(.*)$/); return m?{line:parseFloat(m[1]), stat:m[2]}:null; }
+/* the words: count phrase ("5 or more", "3 or fewer", "at least 1"); only a .5 line is worded: a whole number can push, and the grader counts a push as a loss until the owner decides */
+function easyCount(line, side){ const L=+line; if(!isFinite(L) || L<0 || Math.abs(L-Math.floor(L)-0.5)>1e-9) return null; const n=Math.floor(L);
+  if(side==='U') return n===0 ? {n:0, text:'no', one:false, under:true} : {n:n, text:n+' or fewer', one:false, under:true};
+  if(side==='O') return n===0 ? {n:1, text:'at least 1', one:true, under:false} : {n:n+1, text:(n+1)+' or more', one:false, under:false};
+  return null; }
+/* the allow-list: [verb, one, many, tail, zeroOk (an Under 0.5 can be said as "no <many>")]; any family not here is not shown (WNBA, Total Bases, Threes Made, doubles, kicking ...) */
+function easyFamTable(){ if(easyFamTable.T) return easyFamTable.T; const T={
+  'bb.pts':['scores','point','points','',1], 'bb.reb':['grabs','rebound','rebounds','',1], 'bb.ast':['gets','assist','assists','',1], 'bb.stl':['gets','steal','steals','',1],
+  'bb.blk':['blocks','shot','shots','',1], 'bb.3pm':['makes','three-point shot','three-point shots','',1],
+  'bb.pra':['gets','point, rebound and assist','points, rebounds and assists',' added together',0], 'bb.pr':['gets','point and rebound','points and rebounds',' added together',0],
+  'bb.pa':['gets','point and assist','points and assists',' added together',0], 'bb.ra':['gets','rebound and assist','rebounds and assists',' added together',0],
+  'fb.passyds':['throws for','yard','yards','',0], 'fb.rushyds':['runs for','yard','yards','',0], 'fb.recyds':['gains','yard','yards',' catching passes',0],
+  'fb.rec':['catches','pass','passes','',1], 'fb.rushatt':['runs with the ball','time','times','',0], 'fb.passatt':['throws the ball','time','times','',0],
+  'fb.passcmp':['completes','pass','passes','',1], 'fb.passtd':['throws','touchdown pass','touchdown passes','',1], 'fb.passtd2':['throws','touchdown pass','touchdown passes','',1],
+  'fb.rushrec':['runs and catches for','yard','yards',' together',0], 'fb.sacks':['sacks the quarterback','time','times','',0], 'fb.defsacks':['sacks the quarterback','time','times','',0],
+  'hk.sog':['takes','shot on goal','shots on goal','',1], 'hk.goals':['scores','goal','goals','',1], 'hk.ast':['gets','assist','assists','',1], 'hk.pts':['gets','point','points','',1], 'hk.saves':['makes','save','saves','',1] };
+  return (easyFamTable.T=T); }
+function easyGameSports(){ return /^(NFL|NCAAF|NBA|NCAAB|WNBA|NHL|MLB)$/; }   /* v5.24: game lines whose unit and rules are stated; soccer (a draw loses the team bet), tennis, MMA and cricket are not */
+/* the family: null for everything not verified in plain words; the pick is then not shown */
+function easyFamily(r){ if(!r || easyIsPaste(r) || isDrawRow(r)) return null; const k=String(r.kind||''), side=r.side||'';
+  const mf=marketFamilyOf(r); if(!mf || !mf.mapped || (mf.qualifiers && mf.qualifiers.length)) return null;   /* alternate, half, quarter, period, power play, first, last, anytime: another bet */
+  const L=easyLineOf(r), sp=String(r.sport||'').toUpperCase();
+  if(k==='prop'){ if(side!=='O' && side!=='U') return null; const e=easyFamTable()[mf.key]; if(!e || !L || !easyCount(L.line, side)) return null;
+    if(side==='U' && easyCount(L.line,'U').n===0 && !e[4]) return null; return {id:mf.key, kind:'prop', verb:e[0], one:e[1], many:e[2], tail:e[3], label:mf.label}; }
+  if(!easyGameSports().test(sp)) return null;
+  if(k==='moneyline') return /^Moneyline$/i.test(String(r.market||'').trim()) ? {id:'gl.moneyline', kind:'moneyline', label:mf.label} : null;
+  if(k==='spread'){ const m=String(r.market||'').match(/^([+-]\d+(?:\.\d+)?)\s+Spread$/i); if(!m || !easyCount(Math.abs(parseFloat(m[1])),'O')) return null; return {id:'gl.spread', kind:'spread', label:mf.label}; }
+  if(k==='total'){ const m=String(r.market||'').match(/^(\d+(?:\.\d+)?)\s+Total$/i); if(!m || (side!=='O' && side!=='U') || !easyCount(parseFloat(m[1]), side)) return null; return {id:'gl.total', kind:'total', label:mf.label}; }
+  return null; }   /* parlay legs, fills and anything else: null */
+function easyBigCity(loc){ return /^(Los Angeles|New York|Chicago)$/i.test(String(loc||'')); }   /* v5.24: two teams in one city: say the whole name */
+function easyTeamOf(r, name){ const AH=giTeamsOf(r); if(!AH) return null; const n=String(name||''); return giTeamFor(r, n) || AH.find(x=>normAbbr(x.abbr)===normAbbr(n)) || null; }
+function easyTeamFull(t){ return t ? ((t.loc&&t.nick) ? t.loc+' '+t.nick : (t.name||t.abbr||'')) : ''; }
+function easyTeamShort(t){ return t ? ((t.loc && !easyBigCity(t.loc)) ? t.loc : easyTeamFull(t)) : ''; }
+function easyUnitWord(c, sport){ const u=totalUnit(sport).toLowerCase(); return c && c.one ? u.replace(/s$/,'') : u; }
+/* one plain sentence (HTML-escaped unless raw is true); null when it cannot be said for certain */
+function easySentence(r, raw){ const f=easyFamily(r); if(!f) return null; const side=r.side||'', L=easyLineOf(r); let t=null;
+  if(f.kind==='prop'){ const c=easyCount(L.line, side), tm=easyTeamOf(r, r.team), who=String(r.name||'').trim(); if(!who) return null;
+    t=who+(tm?' ('+easyTeamShort(tm)+')':'')+' '+f.verb+' '+c.text+' '+(c.one?f.one:f.many)+f.tail+'.'; }
+  else if(f.kind==='moneyline'){ const AH=giTeamsOf(r), me=AH?easyTeamOf(r, r.team||r.name):null; if(!me) return null; const opp=AH.find(x=>x!==me); t='The '+easyTeamFull(me)+' win their game against '+easyTeamShort(opp)+'.'; }
+  else if(f.kind==='spread'){ const AH=giTeamsOf(r), me=AH?easyTeamOf(r, r.team||r.name):null; if(!me) return null; const n=parseFloat(String(r.market).match(/^([+-]\d+(?:\.\d+)?)/)[1]), c=easyCount(Math.abs(n), n<0?'O':'U');
+    t=n<0 ? 'The '+easyTeamFull(me)+' win their game by '+c.text+' '+easyUnitWord(c, r.sport)+'.' : (c.n===0 ? 'The '+easyTeamFull(me)+' win their game.' : 'The '+easyTeamFull(me)+' win their game, or lose by '+c.text+' '+easyUnitWord(c, r.sport)+'.'); }
+  else if(f.kind==='total'){ const AH=giTeamsOf(r); if(!AH) return null; const c=easyCount(L.line, side); t='The '+easyTeamFull(AH[0])+' and '+easyTeamFull(AH[1])+' score '+c.text+' '+easyUnitWord(c, r.sport)+' together.'; }
+  return t==null ? null : (raw ? t : esc(t)); }
+/* a short meaning for a sports word, one line */
+function easyGlossTable(){ if(easyGlossTable.T) return easyGlossTable.T; const T={
+  'rebound':'A rebound is catching the ball after a missed shot.', 'steal':'A steal is taking the ball away from the other team.', 'assist':'An assist is a pass that leads straight to a teammate’s basket (in hockey, to a goal).',
+  'block':'A block is knocking away an opponent’s shot.', 'point':'Points are what a player scores: 1 for a free throw, 2 for a shot, 3 for a long shot (in hockey, each goal and each assist counts 1).', 'three-pointer':'A three-pointer is a shot made from behind the long arc.',
+  'combo':'Added together means the player’s numbers in each stat are summed into one number.', 'passing yard':'Passing yards are the yards the ball travels on the quarterback’s completed throws.', 'rushing yard':'Rushing yards are the yards a player gains running with the ball.',
+  'receiving yard':'Receiving yards are the yards a player gains after catching a pass.', 'reception':'A reception is catching a pass.', 'rushing attempt':'A rushing attempt is each time a player is handed the ball and runs with it.',
+  'passing attempt':'A passing attempt is each time the quarterback throws the ball.', 'completion':'A completion is a throw that a teammate catches.', 'touchdown pass':'A touchdown pass is a throw that a teammate catches in the end zone.',
+  'sack':'A sack is tackling the quarterback before he can throw.', 'shot on goal':'A shot on goal is a shot the goalie must stop, or that scores.', 'goal':'A goal is the puck going into the net.', 'save':'A save is the goalie stopping a shot.',
+  'moneyline':'A moneyline bet wins if that team wins the game, by any score.', 'spread':'A spread bet gives or takes points: the team must win by more than the number, or lose by less than it.', 'total':'A game total bet is on both teams’ scores added together.',
+  'share':'A share is a contract that pays $1 if the pick happens and nothing if it does not.', 'limit order':'A Limit order never pays more than the price you type; a Market order can pay more.',
+  'la-contadora':'La Contadora (Spanish for the accountant) is the part of the app that checks each price.', 'edge':'An edge means the price is better than the true chance, so over many bets the math says it should pay; any one bet can lose.' };
+  return (easyGlossTable.T=T); }
+function easyGloss(key){ const g=easyGlossTable()[String(key||'')]; return g || null; }
+function easyGlossKeys(r){ const f=easyFamily(r); if(!f) return []; const id=f.id, bk=LIVE_BOOK(r.book), M={
+  'bb.pts':['point'], 'bb.reb':['rebound'], 'bb.ast':['assist'], 'bb.stl':['steal'], 'bb.blk':['block'], 'bb.3pm':['three-pointer'], 'bb.pra':['combo','point','rebound','assist'], 'bb.pr':['combo','point','rebound'], 'bb.pa':['combo','point','assist'], 'bb.ra':['combo','rebound','assist'],
+  'fb.passyds':['passing yard'], 'fb.rushyds':['rushing yard'], 'fb.recyds':['receiving yard'], 'fb.rec':['reception'], 'fb.rushatt':['rushing attempt'], 'fb.passatt':['passing attempt'], 'fb.passcmp':['completion'], 'fb.passtd':['touchdown pass'], 'fb.passtd2':['touchdown pass'],
+  'fb.rushrec':['combo','rushing yard','receiving yard'], 'fb.sacks':['sack'], 'fb.defsacks':['sack'], 'hk.sog':['shot on goal'], 'hk.goals':['goal'], 'hk.ast':['assist'], 'hk.pts':['point','goal','assist'], 'hk.saves':['save'], 'gl.moneyline':['moneyline'], 'gl.spread':['spread'], 'gl.total':['total'] };
+  return (M[id]||[]).concat(bk==='kalshi'||bk==='poly' ? ['share','limit order'] : []); }
+function easyPriceText(r){ const bk=LIVE_BOOK(r&&r.book); return (bk==='kalshi'||bk==='poly') ? Math.round(r.offeredProb*100)+'¢' : fmtOdds(r&&r.offeredRaw); }   /* v5.24: a sportsbook price as printed (-300), a Kalshi or Polymarket price in cents */
+function easyBreakEven(r){ const p=r&&r.offeredProb; if(!(p>0 && p<1)) return null; const f=feeRate(r.book, p, cfgRead().fees); return p*(1+f); }   /* v5.24: the chance the price needs to be right, fee included (no fee at a sportsbook) */
+/* the money: the God card’s own arithmetic (placeCardHtml line 5312); a Kalshi or Polymarket US pick uses the ticket’s numbers (shares, limit, most it can cost, pays) so the card and the ticket agree */
+function easyNums(r){ const cfg=cfgRead(), p=r.offeredProb, okP=p>0 && p<1, st=+r.stake||0, bk=LIVE_BOOK(r.book), mx=easyMostOf(r), fee=okP?feeRate(r.book,p,cfg.fees):0, over=!(mx!=null && okP && p<=mx+1e-9);
+  if(bk==='kalshi' || bk==='poly'){ const k=(mx!=null && st>0 && okP) ? (bk==='kalshi' ? kalshiHow(r,st,p,mx) : polyHow(r,st,mx)) : null;
+    if(!k) return {kind:bk, ok:false, st, pay:null, back:null, wins:null, shares:null, limit:null, cost:null, payout:null, fee, mx, over};
+    return {kind:bk, ok:true, st, pay:k.cost, back:k.payout, wins:+Math.max(0,k.payout-k.cost).toFixed(2), shares:k.shares, limit:k.lim, cost:k.cost, payout:k.payout, fee, mx, over, how:k}; }
+  const exch=/kalshi|polymarket|novig|prophet|predict|sporttrade|fliff/i.test(r.book||'');
+  const back=(st>0 && okP) ? (exch ? Math.floor(st/(p*(1+fee))*100+1e-6)/100 : Math.round(st/(p*(1+fee))*100-1e-6)/100) : null;
+  return {kind:bk||'book', ok:back!=null, st, pay:st, back, wins:back==null?null:+Math.max(0,back-st).toFixed(2), shares:null, limit:null, cost:st, payout:back, fee, mx, over}; }
+/* never worse than: the strictest price her exact most allows. A price is fine only if the chance it charges is at or below her most, so it is rounded toward the stricter price (-253.36 is -253, -358.72 is -358, never -359) */
+function easyImplied(am){ return am>0 ? 100/(am+100) : (-am)/((-am)+100); }
+function easyStrictFrom(mx, cents){ if(!(mx>0 && mx<1)) return null;   /* v5.24: the rule on a plain number (her exact most as a chance), so it can be tested on thousands of values */
+  if(cents){ let c=Math.floor(mx*100); while((c+1)/100<=mx) c++; while(c>0 && c/100>mx) c--; if(c<1) return null;
+    return {kind:'cents', value:c, text:c+'¢', implied:c/100, most:mx, nextWorse:{value:c+1, text:(c+1)+'¢', implied:(c+1)/100}}; }
+  let am;
+  if(mx<0.5){ let A=Math.max(101, Math.ceil(100*(1-mx)/mx)); while(easyImplied(A)>mx) A++; while(A-1>100 && easyImplied(A-1)<=mx) A--; if(easyImplied(A)>mx) return null; am=A; }
+  else { let N=Math.max(100, Math.floor(100*mx/(1-mx))); while(N>100 && easyImplied(-N)>mx) N--; while(easyImplied(-(N+1))<=mx) N++; am=N===100?100:-N; }
+  const worse=am>100 ? am-1 : am===100 ? -101 : am-1;
+  return {kind:'american', value:am, text:am>0?'+'+am:String(am), implied:easyImplied(am), most:mx, nextWorse:{value:worse, text:worse>0?'+'+worse:String(worse), implied:easyImplied(worse)}}; }
+function easyStrictPrice(r){ const mx=easyMostOf(r); return easyStrictFrom(mx, LIVE_BOOK(r.book)==='kalshi' || LIVE_BOOK(r.book)==='poly'); }
+/* the edge, in two lines (never "the gap is the edge"): her chance against the chance the price needs, then what the edge means in cents */
+function easyEdgeLines(r){ const a=r&&r.actProb, net=r&&r.actNet, be=easyBreakEven(r); if(a==null || net==null || be==null) return null;
+  const A=+(a*100).toFixed(1), B=+(be*100).toFixed(1), d=+(A-B).toFixed(1), E=+(net*100).toFixed(1), ae=Math.abs(E).toFixed(1);   /* the points are the difference of the two numbers shown, so the screen adds up */
+  const l1='La Contadora’s chance ('+A.toFixed(1)+'%) is '+(d===0?'the same as':Math.abs(d).toFixed(1)+' points '+(d>0?'above':'below'))+' what the price assumes ('+B.toFixed(1)+'%).';
+  const l2='Edge '+(E>=0?'+':'-')+ae+'%: about '+ae+' cents '+(E>=0?'back':'lost')+' for each $1 put in, on average, over many bets.';
+  return {line1:l1, line2:l2, chance:A, assumes:B, points:d, edge:E}; }
+function easyMoney(x){ return '$'+(+x).toFixed(2); }
+/* what the price means in dollars (never a bare -300), then the money for this pick and the rule for a better price */
+function easyFairText(r){ const n=easyNums(r), s=easyStrictPrice(r), bk=LIVE_BOOK(r.book); if(!n || !n.ok || !s) return null;
+  if(n.kind==='kalshi' || n.kind==='poly'){ const sh=n.kind==='kalshi'?n.shares.toFixed(2):String(n.shares);
+    return {mean:'A share costs '+Math.round(r.offeredProb*100)+'¢ and pays $1 if it happens, nothing if it does not.', here:'Here: '+sh+' shares cost at most '+easyMoney(n.cost)+' (fee included) and pay '+easyMoney(n.payout)+' if it happens.', rule:'Place it only with a limit of '+s.text+' or lower. A higher limit is not worth it.'}; }
+  const am=Math.round(americanOf(r.offeredProb)), mean=am<0 ? fmtOdds(am)+' means you bet $'+Math.abs(am)+' to win $100.' : (am===0?'':fmtOdds(am)+' means you bet $100 to win $'+am+'.');
+  const here='Here: bet '+easyMoney(n.st)+' to win '+easyMoney(n.wins)+' (you get '+easyMoney(n.back)+' back).';
+  const rule = s.value>0 ? 'Place it only at '+s.text+' or a bigger plus number. Anything smaller is not worth it.' : 'A smaller minus number is a better price. Place it only at '+s.text+' or a smaller minus number; at '+(s.nextWorse.value)+' or a bigger minus number, do not place it.';
+  return {mean, here, rule, text:mean+' '+here+' '+rule}; }
+function easyExpires(r){ const s=Date.parse((r.gameInfo&&r.gameInfo.startISO)||r.start||''); if(isNaN(s) || s<Date.now()) return null;
+  const t=new Date(s).toLocaleTimeString('en-US',{hour:'numeric', minute:'2-digit', timeZone:'America/Chicago'});
+  return {text:'before '+t+' CT', note:'The start. If the book only offers Good ’til canceled, cancel what has not filled by then.'}; }
+function easyBookWords(r){ const L=easyLineOf(r), stat=L?L.stat:'', k=String(r.kind||''), side=r.side==='U'?'Under':'Over';
+  if(k==='prop') return {find:String(r.name||''), market:stat, pick:side+' '+(L?L.line:'')};
+  const AH=giTeamsOf(r), me=AH?easyTeamOf(r, r.team||r.name):null, nm=me?easyTeamFull(me):String(r.name||'');
+  if(k==='moneyline') return {find:nm, market:'Moneyline', pick:nm};
+  if(k==='spread') return {find:nm, market:'Spread', pick:nm+' '+String(r.market||'').replace(/\s*Spread$/i,'')};
+  return {find:AH?easyTeamFull(AH[0])+' at '+easyTeamFull(AH[1]):String(r.name||''), market:'Game total', pick:side+' '+(L?L.line:'')}; }
+/* "Type this": data, not HTML. A sportsbook pick: five steps. Kalshi / Polymarket US: one labelled row per thing to type, in the book’s order, plus the money in one line */
+function easyTypeThis(r){ const bk=LIVE_BOOK(r.book), w=easyBookWords(r), bn=bookLabel(r.book), n=easyNums(r), s=easyStrictPrice(r), plain=easySentence(r,true)||'';
+  const none='The app does not place bets for you. The bet itself is your own tap at the book.';
+  if(!n || !n.ok || !s) return null;
+  if(bk==='kalshi' || bk==='poly'){ const k=n.how, fp=feePaidOf(r.book, k.lim/100), ex=easyExpires(r), rows=[], isK=bk==='kalshi';
+    rows.push({label:'Order type', value:'Limit', note:'Not Market. A Limit order never pays more than its price; a Market order on a thin book can.'});
+    rows.push({label:'Side', value:isK?k.btn:k.btn+(k.plus?' on '+k.plus:''), note:'This button means: '+plain+(k.underNote?' (NO on the “'+(parseFloat(r.market)+0.5)+'+” market is the Under)':'')});
+    if(isK) rows.push({label:'Shares', value:k.shares.toFixed(2), note:'Kalshi takes 0.01 shares. A share pays $1 if it happens.'});
+    rows.push({label:'Limit price', value:k.lim+'¢', note:fp?'About '+(fp.q*100).toFixed(1)+'¢ a share with the fee.':'The most to pay a share.'});
+    if(!isK) rows.push({label:'Shares', value:String(k.shares), note:'Whole shares. A share pays $1 if it happens.'});
+    rows.push({label:'Most it can cost', value:easyMoney(k.cost), note:'The fee is included.'}); rows.push({label:'Pays if it happens', value:easyMoney(k.payout), note:'You get this back if the pick happens, and nothing back if it does not.'});
+    if(ex) rows.push({label:'Expires', value:ex.text, note:ex.note});
+    return {kind:'exchange', book:bn, bookKey:bk, rows, inMoney:'In money: pay at most '+easyMoney(k.cost)+' now. If it happens you get '+easyMoney(k.payout)+' back (a profit of '+easyMoney(k.payout-k.cost)+'). If it does not, you lose the '+easyMoney(k.cost)+'.', never:s.text, none}; }
+  const steps=['Open '+bn+' and find '+w.find+'.', 'Pick the “'+w.market+'” bet and choose “'+w.pick+'”.', 'Type the stake: '+easyMoney(n.st)+'.',
+    'Check the price is '+s.text+(s.kind==='american'?(s.value>0?' or a bigger plus number':' or a smaller minus number'):' or lower')+'. It showed '+easyPriceText(r)+' when the app read it. If it is worse, do not place it.', 'Place it, then tap I placed it here to save a note in My bets.'];
+  return {kind:'book', book:bn, bookKey:bk||'', steps, never:s.text, inMoney:null, none}; }
+/* the picks for Today: what the God board lists as a best bet at 60% or more (scApproved, not a pasted row, game open), in a book the person has, in words we can say for certain, in the board’s own order */
+function easyList(minChance){ minChance=minChance==null?0.60:minChance; const seen={}, out=[];
+  (lastRows||[]).filter(r=>r && !easyIsPaste(r) && scApproved(r) && liveState(r)==='open' && r.actProb!=null && r.actProb>=minChance-1e-9 && easyPriceOk(r) && easyBooksOk(r) && !isDrawRow(r) && easyFamily(r) && easySentence(r,true))
+    .sort((a,b)=>(rowBand(b)-rowBand(a)) || (mathKey(b)-mathKey(a)) || (sentScore(b).total-sentScore(a).total) || (a.idx-b.idx))
+    .forEach(r=>{ const key=pxKey(r); if(seen[key]) return; const n=easyNums(r); if(!n.ok) return; seen[key]=1;
+      out.push({key, r, sentence:easySentence(r), family:easyFamily(r).id, chance:r.actProb, edge:r.actNet, nums:n, strict:easyStrictPrice(r), price:easyPriceText(r), book:bookLabel(r.book)}); });
+  return {picks:out.slice(0,5), waiting:out.slice(5), total:out.length}; }
+function easyRowByKey(key){ return (lastRows||[]).find(r=>r && pxKey(r)===key) || null; }
+/* remember what Today showed (memory, and this tab’s session storage): a pick that later stops qualifying only because its price moved is shown as "not worth it now" */
+function easySeen(){ if(!window._easySeen){ window._easySeen={}; try{ const s=sessionStorage.getItem('easySeen'); if(s) window._easySeen=JSON.parse(s)||{}; }catch(e){ window._easySeen={}; } } return window._easySeen; }
+function easyRemember(){ const S=easySeen(), L=easyList(); L.picks.forEach(p=>{ S[p.key]={key:p.key, sentence:easySentence(p.r,true), price:easyPriceText(p.r), prob:p.r.offeredProb, chance:p.r.actProb, most:easyMostOf(p.r), book:bookLabel(p.r.book), at:Date.now()}; });
+  try{ sessionStorage.setItem('easySeen', JSON.stringify(S)); }catch(e){} return Object.keys(S).length; }
+function easyMovedList(){ const S=easySeen(), inList={}, out=[]; easyList().picks.concat(easyList().waiting).forEach(p=>{ inList[p.key]=1; });
+  Object.keys(S).forEach(key=>{ if(inList[key]) return; const r=easyRowByKey(key); if(!r || easyIsPaste(r) || r.prior || r.waitOrder || r.removed || r.moved || S[key].placed) return;   /* a bet already placed or on the board as ALREADY BET is never "moved" */
+    if(liveState(r)!=='open' || rowAwol(r) || rowOld(r) || !(r.offeredProb>0 && r.offeredProb<1)) return;
+    const mx=easyMostOf(r), f=feeRate(r.book, r.offeredProb, cfgRead().fees); if(mx!=null && r.offeredProb<=mx+1e-9) return;   /* the price is still fine: it left for another reason */
+    const fm=mx!=null?feeRate(r.book, mx, cfgRead().fees):0, s=S[key];
+    out.push({key, r, sentence:esc(s.sentence), oldPrice:s.price, newPrice:easyPriceText(r), breakEven:r.offeredProb*(1+f), most:mx!=null?mx*(1+fm):null, book:bookLabel(r.book), why:'Not worth it now'}); });
+  return out; }
+/* I placed it: the app’s own bet form on a hidden host, then its own Save, so the saved bet is the same as a real "I bet this" tap with no edits (never addToLog directly). opt.host (a visible .pcard) = where the full form opens when the pick needs a look */
+async function easyPlacedSave(r0, opt){ opt=opt||{}; const key=typeof r0==='string'?r0:pxKey(r0), r=easyRowByKey(key) || (typeof r0==='string'?null:r0);
+  if(!r) return {saved:false, reason:'gone'};
+  if(r.prior || r.waitOrder || r.removed) return {saved:false, reason:'already'};
+  if(!scApproved(r) || liveState(r)!=='open') return {saved:false, reason:'notpick'};
+  const full=(reason, msg)=>{ if(opt.host){ opt.host.querySelectorAll('.editor').forEach(e=>e.remove()); openBetEditor(opt.host, r); } return {saved:false, reason, msg:msg||'', formOpen:!!opt.host}; };
+  const host=document.createElement('div'); host.className='pcard'; host.style.cssText='position:fixed;left:0;top:120px;width:700px;visibility:hidden;pointer-events:none'; document.body.appendChild(host);
+  let res=null;
+  try{ openBetEditor(host, r); const ed=host.querySelector('.editor'); if(!ed) return full('noform');
+    if(LIVE_BOOK(r.book)){ const live=ed.querySelector('.eb-live'), t0=Date.now(); while(live && /checking/.test(live.textContent) && Date.now()-t0<4000) await new Promise(x=>setTimeout(x,100));   /* the form reads the live price once: let it finish */
+      if(ed.querySelector('.eb-thin')) { res=['thin', (live.textContent||'')]; }
+      else { const pi=ed.querySelector('.eb-pct'), shown=parseFloat(pi&&pi.value), card=+(r.offeredProb*100).toFixed(1); if(isNaN(shown) || Math.abs(shown-card)>0.05+1e-9) res=['moved', 'the live price is '+shown.toFixed(1)+'% (card '+card.toFixed(1)+'%)']; } }
+    if(!res){ const tag=ed.querySelector('.eb-check .tag'); if(!tag || !tag.classList.contains('t-live')) res=['check', tag?tag.textContent:'no verdict']; }   /* only a plain "Worth it" is saved without a look */
+    if(!res){ const n0=logged.length; ed.querySelector('.eb-save').click();
+      if(logged.length>n0){ const b=logged[logged.length-1]; window._easyPlaced=window._easyPlaced||{}; window._easyPlaced[b.id]=key; const S=easySeen(); if(S[key]) S[key].placed=true; return {saved:true, id:b.id, key}; }
+      res=['asks', (ed.querySelector('.eb-msg')||{}).textContent||'']; } }
+  finally { host.remove(); }
+  return full(res[0], res[1]); }
+/* undo: removes a bet saved by easyPlacedSave through the app’s own removal (removeBet, "Never placed, $0"), then takes that fresh $0 record off the removed list too, so the pick is back on Today as if it was never tapped */
+function easyUndo(id){ const key=(window._easyPlaced||{})[id], bet=logged.find(b=>b.id===id); if(!key || !bet) return {removed:false, reason:key?'gone':'not from Easy'};
+  removeBet(bet, 0); const i=removedBets.map(x=>x.id).lastIndexOf(id); if(i>=0 && !(removedBets[i].lost>0)){ removedBets.splice(i,1); saveRemoved(); }
+  delete window._easyPlaced[id]; const S=easySeen(); if(S[key]) S[key].placed=false; refresh(); return {removed:true, key}; }
+/* My bets: singles only, from the saved result (never recomputed), the profit from betProfit; counts come from the same list */
+function easyBetLabel(b){ const px={kind:b.kind, name:b.name, market:b.market, side:b.side||sideOf(b), sport:b.sport, team:b.team, game:b.game, gameInfo:b.gameInfo}; let raw=null; try{ raw=easySentence(px,true); }catch(e){ raw=null; }
+  if(!raw){ const k=b.kind||'', nm=String(b.name||''), sd=px.side==='U'?'Under':'Over'; raw = k==='moneyline' ? nm+' to win' : k==='spread' ? nm+' '+String(b.market||'').replace(/\s*Spread$/i,'')+' spread' : k==='total' ? nm+' '+sd+' '+b.market : (nm+' · '+sd+' '+String(b.market||'')).trim(); }
+  return {text:raw, html:esc(raw)}; }
+function easyStatusOf(b){ return b.sold ? 'sold' : b.result==='win' ? 'won' : b.result==='loss' ? 'lost' : b.result==='push' ? 'push' : 'open'; }
+function easyBetRow(b){ const pr=betProfit(b), l=easyBetLabel(b); return {id:b.id, status:easyStatusOf(b), label:l.text, labelHtml:l.html, book:b.book, price:b.odds, stake:+b.stake||0, atRisk:b.free?0:(+b.stake||0), profit:pr, day:gameDayOf(b), started:betLocked(b), free:!!b.free, bet:b}; }
+function easySingles(){ return (logged||[]).filter(b=>b && b.kind!=='parlay').map(easyBetRow).sort((a,b)=>(a.day<b.day?1:a.day>b.day?-1:0)); }
+function easyLedger(){ return easySingles().filter(x=>x.status!=='open'); }
+function easyInPlay(){ const bets=easySingles().filter(x=>x.status==='open'); return {bets, count:bets.length, atRisk:+bets.reduce((t,x)=>t+x.atRisk,0).toFixed(2), parlaysNotShown:(logged||[]).filter(b=>b && b.kind==='parlay' && easyStatusOf(b)==='open').length}; }
+function easySoFar(){ const L=easyLedger(), c=s=>L.filter(x=>x.status===s).length, listed=+L.reduce((t,x)=>t+(x.profit||0),0).toFixed(2), cancelled=+(removedBets||[]).filter(x=>x && x.lost>0 && x.kind!=='parlay').reduce((t,x)=>t+x.lost,0).toFixed(2);
+  return {bets:L.length, won:c('won'), lost:c('lost'), push:c('push'), sold:c('sold'), profit:+(listed-cancelled).toFixed(2), profitListed:listed, cancelled}; }
 function scPolyLine(r){ if(LIVE_BOOK(r.book)!=='poly' || r.fairProb==null || !(r.offeredProb>0 && r.offeredProb<1)) return '';   /* v4.79: what to type on Polymarket US, on the card (like the Kalshi line) */
   const st=+r.stake||0, mx=maxPriceFor(okProbR(r), r.book, cfgRead().eMin); if(!(st>0) || mx==null || r.offeredProb>mx+1e-9) return '';
   const k=polyHow(r,st,mx); if(!k) return '';
