@@ -57,7 +57,7 @@ const SNAP=()=>{ const vis=e=>{ const r=e.getBoundingClientRect(); return r.widt
     const X=await boot(b,W,900,{theme,ls:{'mbev.viewAs':'easy'}}); const p=X.p; let s=await p.evaluate(SNAP);
     check('Easy '+W+' '+theme+': four tabs Today|My bets|Learn|Settings, the five God tabs hidden', s.tabs.join('|')==='Today|My bets|Learn|Settings' && s.godTabsShown===0, {tabs:s.tabs, god:s.godTabsShown});
     check('Easy '+W+' '+theme+': #v-etoday is the only visible view and is the open one; body[data-view] follows; no sub-tab row', s.viewsShown.join()==='v-etoday' && s.on.join()==='v-etoday' && s.bodyView==='v-etoday' && s.bodyGroup==='etoday' && s.sub===0, s);
-    check('Easy '+W+' '+theme+': the slim banner shows, one line, 36 px, with the exact words', s.banner && s.banner.shown && s.banner.h===36 && (W>640 ? s.banner.text==='Customer view: this is what an Easy subscriber sees · Back to God mode' : s.banner.text==='Customer view · Back to God mode'), s.banner);
+    check('Easy '+W+' '+theme+': the slim banner shows, one line, 44 px, with the exact words', s.banner && s.banner.shown && s.banner.h===44 && (W>640 ? s.banner.text==='Customer view: this is what an Easy subscriber sees · Back to God mode' : s.banner.text==='Customer view · Back to God mode'), s.banner);
     const chrome=await p.evaluate(()=>{ const vis=e=>{ if(!e) return false; const r=e.getBoundingClientRect(); return r.width>0&&r.height>0&&getComputedStyle(e).display!=='none'; };
       const dock=document.getElementById('apiDock'), dh=Math.round(dock.getBoundingClientRect().height), v=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dockH'));
       return {todayBar:vis(document.getElementById('todayBar')), tbFold:vis(document.getElementById('tbFoldBtn')), strip:vis(document.getElementById('scoreStrip')), ssFold:vis(document.getElementById('ssFoldBtn')), apiRow:vis(document.getElementById('apiRow')), compa:vis(document.getElementById('compaBtn')),
@@ -189,7 +189,7 @@ const SNAP=()=>{ const vis=e=>{ const r=e.getBoundingClientRect(); return r.widt
       const ratio=(f,g)=>{ const a=L(f), c=L(g); return (Math.max(a,c)+.05)/(Math.min(a,c)+.05); };
       const back=document.getElementById('easyBack'); const cs=getComputedStyle(back), bg=getComputedStyle(document.getElementById('easyBanner')).backgroundColor;
       return {small, backH:Math.round(bk.height), backW:Math.round(bk.width), banH:Math.round(ban.height), tabs, backContrast:Math.round(ratio(rgb(cs.color),rgb(bg))*100)/100, textContrast:Math.round(ratio(rgb(getComputedStyle(document.getElementById('easyBanner')).color),rgb(bg))*100)/100, sw:document.documentElement.scrollWidth-innerWidth}; });
-    check('Sizes '+W+' '+theme+': the banner is 36 px, its Back to God mode control is at least 44 px tall, text 12 px or more, contrast 4.5:1, the Easy tabs are 44 px or more', E.banH===36 && E.backH>=44 && E.backW>=44 && !E.small.length && E.backContrast>=4.5 && E.textContrast>=4.5 && E.tabs.every(h=>h>=44) && E.sw<=0, E);
+    check('Sizes '+W+' '+theme+': the banner is 44 px, its Back to God mode control is at least 44 px tall, text 12 px or more, contrast 4.5:1, the Easy tabs are 44 px or more', E.banH===44 && E.backH>=44 && E.backW>=44 && !E.small.length && E.backContrast>=4.5 && E.textContrast>=4.5 && E.tabs.every(h=>h>=44) && E.sw<=0, E);
     check('Sizes '+W+' '+theme+': no page errors', !X.errs.length, X.errs);
     await X.ctx.close(); }
 
