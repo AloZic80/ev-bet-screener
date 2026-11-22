@@ -9415,7 +9415,7 @@ async function autoGradeLog(){
     /* v4.40 (Alonzo, 11/9, Novig "Lekkerimaki 2+ Yes"): bets logged from a Novig fill before v4.40 could carry Novig's strike as the line ("2 Shots On Goal")
        when the bet was "2+", which is Over 1.5. Once: the line becomes N−0.5 (Over), the old text goes in edits; an ESPN or automatic PUSH at N (exactly N)
        is a WIN at N−0.5. Wins and losses stand (a loss at Over N with fewer than N is a loss at N−0.5 too); your own grades are never touched. */
-    logged.forEach(b=>{ if(b.fixPlus40) return; b.fixPlus40=1; if(b.voided || b.autoFrom!=='novig' || (b.kind&&b.kind!=='prop') || (b.side&&b.side!=='O')) return;
+    logged.forEach(b=>{ if(b.fixPlus40 || b.voided) return; /* v5.25 review 2 (R2-1): a void is not marked done, so an un-void is still converted */ b.fixPlus40=1; if(b.autoFrom!=='novig' || (b.kind&&b.kind!=='prop') || (b.side&&b.side!=='O')) return;
       const ln=lineOfMarket(b.market); if(ln==null || !Number.isInteger(ln) || ln<1) return;
       (b.edits=b.edits||[]).push({at:new Date().toISOString(), before:{market:b.market}, note:'v4.40: Novig '+ln+'+ is Over '+(ln-0.5)});
       b.market=(ln-0.5)+' '+statOfMarket(b.market); b.side='O'; if(b.betnow) b.betnow=String(b.betnow).replace(new RegExp('^(O\\s+)?'+ln+'\\b'),'O '+(ln-0.5));
@@ -12268,7 +12268,7 @@ async function checkResultsRun(){
     else { ev=findGame(scoreboardCache[b.sport], b.game);
     if(!ev && gl) ev=findGameAny(scoreboardCache[b.sport], b.game, b.name); }   // v2.59: "NO-PIT" style games
     if(nvGated(b)){ if(ev && !ownGameOk(b, ev)) ev=null; } else ev=ownGameFor(b, scoreboardCache[b.sport]||[], gl);
-    if(ev && isNaN(Date.parse(b.start)) && b.date && ctDay(Date.parse(ev.date))!==b.date && gamesFor(b, await fetchScoreboardDay(b.sport, b.date), gl).length) ev=null;   // v5.25 round 2 (review G-3): its own date had these teams (a postponed game): never the next day’s makeup   // v5.25 (GRADING-1): only the bet's own game: a later meeting of the same teams never re-grades it   // v5.25 round 2 (G-1, G-3, G-4, G-5): one rule, ownGameFor
+    if(ev && isNaN(Date.parse(b.start)) && b.date && ctDay(Date.parse(ev.date))!==b.date && gamesFor(b, (await fetchScoreboardDay(b.sport, b.date)).filter(e=>evOkFor(b,e)), gl).length) ev=null; /* v5.25 review 2 (R2-3): only own-date games the 4-hour rule allows */   // v5.25 round 2 (review G-3): its own date had these teams (a postponed game): never the next day’s makeup   // v5.25 (GRADING-1): only the bet's own game: a later meeting of the same teams never re-grades it   // v5.25 round 2 (G-1, G-3, G-4, G-5): one rule, ownGameFor
     const gi=gameStatusOf(ev);
     if(!gi){ continue; }
     if(gi.state!=='post'){ if(!had) b.result='pending'; continue; }   // v3.84: had
