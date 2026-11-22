@@ -173,3 +173,33 @@ These are not errors. The code does what was decided; the auditors measured the 
 - The live Worker and the live books (no keys here, by rule).
 - The books' own fee and payout pages: this session's network does not reach them.
 - A real phone, and Safari's storage limit.
+
+## 8. Second check of the second group (Sun 2026-11-22, about 9:30 PM CT)
+
+Four skeptics re-ran the second group's 25 claims. None was refuted. **23 confirmed** (13 of them narrower than first claimed), 2 are written rules.
+Totals now: **71 second looks: 58 confirmed, 10 by design, 2 unverifiable, 1 unreachable.**
+
+| Id | Verdict | What the second look added |
+|---|---|---|
+| PRICES-1 typed "Consensus odds" used with the vig in | Confirmed, S1 | Own check: Cover 56, consensus -110/-110, FanDuel +100 → app BET $9.11, right $5.25. Saved hand bets can be listed (consOdds + snap.market). |
+| PRICES-2 thin exchange book in "What should I bet?" | Confirmed, narrower, S1 | Only with no cover % typed and no board row for that bet. |
+| PRICES-3 pasted "−110" read as +110 | Confirmed, S1 | The dash case is the realistic one; none of the practice bets is affected. |
+| PRICES-4 Draw games drop the team moneylines | Confirmed, S2 | Depends on row order; missed bets only. |
+| PRICES-5 Sportsbook API estimated fair unlabelled | Confirmed, narrower, S2 | The error goes either way, not only up. |
+| PRICES-6 whole-number lines, no push in EV | Confirmed, S3 | About 6 cents per $10 on market-driven rows. |
+| PARLAY-1 a promo sticks to every later entry | Confirmed, S1 | Wider: on combo apps the boost cannot be cleared on screen. |
+| PARLAY-2 combo haircut over-stakes | Confirmed, narrower, S1 | 1.4 to 2.3× only for favourite + long-shot mixes; typical combos 1.05 to 1.10×. |
+| PARLAY-3 Flex DNP keeps the old one-miss payout | Confirmed, S1 | |
+| PARLAY-4 entry stake pushed up to $1 | By design | Documented for the Parlays tab; the 1.5% floor for entries is an open question. |
+| PARLAY-5 size cards ignore the 5% hit minimum | Confirmed, S2 | |
+| PARLAY-6 PrizePicks table for every app | By design | Outside payouts not verified. |
+| WORKER-1 switched-off moneyline quotes kept | Confirmed, narrower, S1 | The +300 example is thrown out by the 40% cap; the risk is a dead quote a little off the market (+3% to +40%). |
+| WORKER-2 Polymarket first of two games | Confirmed, narrower, S2 | MLB series only. |
+| WORKER-3 unknown team gets the other side | Confirmed, narrower, S3 | Board cards always send a matching code. |
+| WORKER-4 OddsPapi reserve overspent | Confirmed, S2 | |
+| WORKER-5 Kalshi soccer NO fill | Confirmed, narrower, S2 | Worse when a matching card is on the board (marks the wrong card ALREADY BET). |
+| STATS-2 Watch study's old random generator | Confirmed, S2 | The ranges are unstable; the count of distinct resamples was overstated. |
+| STATS-3 90% vs 95% in the 1,000-bet verdict | Confirmed, S2 | History leans toward the document being the newer wording. |
+| STATS-1 exchange CLV against the ask | Confirmed, narrower, S2 | Even when the market does not move; positive only when the spread widens. |
+| STATS-4 verdict read after every bet | Confirmed, narrower, S2 | Does not apply to your log today (your CLV half fails). |
+| STATS-5, 6, 7, 8 wording and counting | Confirmed, narrower, S2/S3 | Small. |
