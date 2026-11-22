@@ -4,6 +4,7 @@
 // Screenshots go to EASY_SHOTS when that environment variable is a folder.
 const path=require('path'), fs=require('fs');
 const { chromium } = require('playwright');
+require('./practice-fixtures.js').CFG.gameCapPct='20';   // v5.26 (STAKE-1, Build B): the game cap now holds over the board's own rows of a game; the practice board's KC @ DEN had $56 on its $40 cap (Pacheco listed), so the cap is raised here as in v517-tabrows (the caps are not what this test is about)
 const html=fs.readFileSync(process.argv[2]||path.join(__dirname,'..','index.html'),'utf8');
 const K=require('./v524-easy-kit.js')(html), { T, FORBID, GODONLY, EMOJI, PROMISE, MEASURE, inView, rect, shot }=K, R=K.mk(), check=R.check;
 const ALLOW='.ex-l2';

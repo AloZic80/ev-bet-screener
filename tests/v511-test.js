@@ -323,7 +323,7 @@ async function newPage(b, file, W, dev){
     await q.selectOption('#abHost .eb-book','Bovada'); await pz();
     await q.fill('#abHost .eb-odds','+100'); await q.fill('#abHost .eb-stake','1.52'); await q.fill('#abHost .eb-win-o','1.52'); await q.fill('#abPlaced','2026-11-15T11:05'); await pz(1800);   // the exchange check (1.2 s) has answered
     const snap=()=>q.evaluate(()=>{ const v=id=>{ const e=document.getElementById(id); return e?e.value:null; }, h=document.getElementById('abHost'), e=c=>h.querySelector(c), on=e=>!!(e && e.offsetParent!==null);
-      return {vals:['abSport','abType','abGame','abGameFree','abDate','abPlaced','abPlayer','abTeam','abTeamFree','abStat','abPick','abLine','abResult','abProj','abCover','abCons'].map(id=>id+'='+v(id)),
+      return {vals:['abSport','abType','abGame','abGameFree','abDate','abPlaced','abPlayer','abTeam','abTeamFree','abStat','abPick','abLine','abResult','abProj','abCover','abCons','abConsO'].map(id=>id+'='+v(id)),
         ed:['.eb-book','.eb-mode','.eb-odds','.eb-stake','.eb-win-o','.eb-tot-o'].map(c=>c+'='+(e(c)?e(c).value:null)),
         shown:['abSport','abType','abGame','abDate','abPlaced','abTeam','abLine','abResult','abHost','abMore','abVerdict','abAsk','abPlayer','abStat','abPick'].filter(id=>on(document.getElementById(id))),
         par:[...document.querySelectorAll('#addBetPanel .ab-par')].filter(on).length, verdict:document.getElementById('abVerdict').innerHTML,

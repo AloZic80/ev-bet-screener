@@ -163,6 +163,9 @@ const runs = [
   ['v5.25 (Build A, owner "FIX" 11/21): results you can trust: Check results never re-grades an old bet from a later meeting of the same teams, Live Games never settles tomorrow’s bet from tonight’s final, a postponed game is not a 0-0 final, a same-name player or game 1 of a doubleheader never grades the bet, a void stays void, a prop exactly on a whole-number line is a push, a book result read late is kept', 'v525-grading-test.js', []],
   ['v5.25 (Build A): Bet log › More › Check my history: read-only regrade of every settled single from its own game day, lists what would change (rematch flips, whole-number props), nothing changes until a tap, one tap changes one bet', 'v525-history-test.js', []],
   ['v5.25 (Build A): storage guard: no sync tombstone for a bet that did not save (the Worker keeps it), room made from Watch sightings, old Watch records and old grade history (never bets), Storage used in Settings and over 80% on the Bet log, settings saves say when they fail', 'v525-storage-test.js', []],
+  ['v5.26 (Build B, owner "BUILD ALL" 11/22): money from the book’s fills: two orders priced at what all the contracts cost, a win pays $1 a contract, partial sales add up by sale id after their fee', 'v526-money-test.js', []],
+  ['v5.26 (Build B): the limits applied everywhere: the game cap over the board’s rows, a free bet counts $0, + Add a bet sizes like the board, the bet form says the board’s $0, Easy’s amount', 'v526-limits-test.js', []],
+  ['v5.26 (Build B): prices typed and read: both consensus sides, thin books, the Odds box, a Draw game, also at FanDuel Predicts, a start saved hours off', 'v526-inputs-test.js', []],
 ];
 const run = (file, args) => spawnSync(process.execPath, [path.join(__dirname, file), ...args], { encoding: 'utf8', timeout: 300000 });
 const last = r => ((r.stdout || '') + (r.stderr || '')).trim().split('\n').pop();

@@ -5,6 +5,7 @@
 // 7 small bankroll, 8 My bets dev note. Boots the practice copy (tests/practice-copy.js, Sunday 2026-11-15 12:00 PM CT).
 const path=require('path'), fs=require('fs');
 const { chromium } = require('playwright');
+require('./practice-fixtures.js').CFG.gameCapPct='20';   // v5.26 (STAKE-1, Build B): the game cap now holds over the board's own rows of a game; the practice board's KC @ DEN had $56 on its $40 cap (Pacheco listed), so the cap is raised here as in v517-tabrows (the caps are not what this test is about)
 const html=fs.readFileSync(process.argv[2]||path.join(__dirname,'..','index.html'),'utf8');
 const K=require('./v524-easy-kit.js')(html);
 const T=K.mk(), check=T.check, tx=K.T;
