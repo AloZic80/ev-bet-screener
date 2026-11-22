@@ -27,3 +27,8 @@
 18. snap.mode and snap.listed.tab record the God tab in use; Easy has no tabs -> record the tab its chance belongs to (tabOfChance), not the open view.
 19. Brief sample: the Lakers win is +$5.63 (not +$5.62) at the saved $8.44 stake.
 20. `saveRemoved`, `saveParlays`, `saveLogDays` swallow storage errors (the bet log itself does not). Report, do not fix.
+
+## From check-app.md (whole-app check of live v5.23, 3 AM)
+21. All good: the live site serves exactly main (sha256 match), v5.23; 156 steps (390 and 1280, light and dark: every tab, More item, chance tab, Why this play?, I bet this (cancelled), Scout/Schedule, Reports, calendar, + Add a bet single and parlay, Paste and Sample) with no page errors and no sideways scroll; the only console errors are 2 per combo on Live Games, caused by the practice copy blocking ESPN's core feed (not the app). Quick tests: invariants 35/0, v523 25/0, v522 13/0, v521 16/0, v513-firstrun 34/0.
+22. Paste > Sample adds 4 made-up rows to the SAVED board (35 to 39) and Parlay goes 13 to 15; they survive a reload until Clear is pressed. During that paste the header said "0 to bet now of 39" while the saved board has 18 (unclear if intended).
+23. The Moneylines table header is clipped at 390 px (unconfirmed whether it scrolls inside its own box).
