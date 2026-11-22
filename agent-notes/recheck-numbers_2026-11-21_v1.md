@@ -174,7 +174,7 @@ These are not errors. The code does what was decided; the auditors measured the 
 - The books' own fee and payout pages: this session's network does not reach them.
 - A real phone, and Safari's storage limit.
 
-## 8. Second check of the second group (Sun 2026-11-22, about 9:30 PM CT)
+## 8. Second check of the second group (Sat 2026-11-21, about 9:30 PM CT)
 
 Four skeptics re-ran the second group's 25 claims. None was refuted. **23 confirmed** (13 of them narrower than first claimed), 2 are written rules.
 Totals now: **71 second looks: 58 confirmed, 10 by design, 2 unverifiable, 1 unreachable.**
