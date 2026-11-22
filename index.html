@@ -2210,6 +2210,16 @@ html[data-viewas="easy"] button.themer{width:44px; height:44px}
   html.ez-kb .head, html.ez-kb #apiDock, html.ez-kb #v-etoday .ez-bar{display:none !important}
   html.ez-kb #v-etoday.ez-ovl .ez-pick{bottom:0}
 }
+/* v5.25 (Build A): settings save note, storage used, Check my history */
+#cfgSaveFail{position:sticky; top:0; z-index:50; padding:10px 16px; background:var(--out-bg); color:var(--loss); font-weight:700; font-size:14px; border-bottom:1px solid var(--loss)}
+.storage-warn{margin:0 0 12px; padding:10px 14px; border:1px solid var(--warn); border-radius:8px; color:var(--warn); font-size:14px}
+.storage-use{margin:6px 0 0}
+.hist-out{display:grid; gap:8px; margin-top:8px}
+.hist-out:empty{display:none}
+.hist-row{border:1px solid var(--rule); border-radius:8px; padding:10px 12px; display:grid; gap:4px; font-size:14px}
+.hist-btns{display:flex; flex-wrap:wrap; gap:8px; margin-top:4px}
+.hist-btns button{min-height:40px}
+.hist-tag{font-size:12px; border:1px solid var(--rule); border-radius:10px; padding:1px 6px}
 </style>
 </head>
 <body>
@@ -2602,6 +2612,7 @@ html[data-viewas="easy"] button.themer{width:44px; height:44px}
 <div class="panel rg-panel" id="rulesGlance" data-lv="god">   <!-- v4.38: Augi's rules layout: everything La Contadora uses, in one place -->
   <h2>Your rules at a glance <span class="cn-chip">saved in this browser · no secrets</span></h2>
   <div class="rg-grid" id="rgGrid"></div>
+  <p class="hint storage-use" id="storageUse" role="status"></p><!-- v5.25 (ENG-2): how full this browser’s storage is -->
   <p class="hint" style="margin:6px 0 0">Change any of them in Screens and Stake sizing below; this updates as you type. A mode does not change any of them. Each tab lists only its own bets, by La Contadora’s chance: 😴 Boring = High Cover + Heavy Favorite (75%+), 🛋️ Tranqui = Strong (70–75%), 💪 Machín = Solid (65–70%), ⚖️ Parejo = Lean (60–65%), 🪙 Volado = Slight Lean (55–60%), 🎲 Dado = On the Line (50–55%)<!-- v5.16 (owner: more tabs) -->, 🍀 Suertudo = Coin Flip (45–50%), 🔮 Brujo = Unlikely (under 45%). The ones that just missed and the Hail Marys are not offered as bets: they stay in 👀 Watch, and you can log one yourself with + Add a bet.<!-- v5.13 (owner: no daily Suertudo/Brujo bets) --></p>
 </div>
 <div class="panel plan-panel" id="planPanel" data-lv="god">   <!-- v5.10 (owner, Sun 11/15: "id say 11/11 ... BUILD IT ALL"): My plan, a reminder only (saved and synced with the settings) -->
@@ -2896,6 +2907,7 @@ html[data-viewas="easy"] button.themer{width:44px; height:44px}
 
 <!-- ======================= LOG ======================= -->
 <div class="view" id="v-log">
+<div class="storage-warn" id="storageWarn" role="status" hidden></div><!-- v5.25 (ENG-2): a calm note over 80% -->
 <div class="panel look-out" id="lookOut" hidden></div>   <!-- v3.57: bets not graded yet, automatically or by you -->
 <div class="panel log-orders" id="logOrders" hidden></div>   <!-- v4.17: orders waiting at your books (not bets until they fill) -->
 <div class="panel" id="lcPanel">   <!-- v4.36: Augi's Bet log, step 3: his bet calendar, the day, cover bands, track by, import, on our log and math -->
@@ -2939,7 +2951,7 @@ html[data-viewas="easy"] button.themer{width:44px; height:44px}
     <label class="bar-item" title="Download your bets as a spreadsheet (CSV opens in Excel, Numbers and Google Sheets)">Download <select id="csvDay" class="bar-sel"><option value="">All days</option></select></label><button class="ghost" id="csvDl">⬇ CSV</button><!-- v4.16 -->
     <button class="ghost" id="checkResults">Check results</button>
   </div>
-  <details class="help more" data-help="log-more"><summary>More <span class="meta">CSV text · closing lines · back up · restore · delete</span></summary><!-- v4.25: the buttons you press once a month, in a drop-down -->
+  <details class="help more" data-help="log-more"><summary>More <span class="meta">CSV text · closing lines · back up · restore · check my history · delete</span></summary><!-- v4.25: the buttons you press once a month, in a drop-down -->
   <div class="row" style="margin-top:6px">
     <button class="ghost" id="csvBtn">Show as CSV</button>
     <button class="ghost" id="grabClose" title="Best 5–15 minutes before the game starts. Uses 1 API call per game.">Grab closing lines</button>
@@ -2950,8 +2962,10 @@ html[data-viewas="easy"] button.themer{width:44px; height:44px}
     <span id="backupStatus" style="font-size:13px;color:var(--soft)"></span>
     <button class="ghost" id="shareLog" title="Saves a copy of your bet log on your Worker for 24 hours (no keys, no passwords, no notes) and gives you a code to paste to El Capataz (Claude Code), so he can read your bets">📤 Send my log to El Capataz</button><!-- v5.22 -->
     <span id="shareStatus" style="font-size:13px;color:var(--soft)"></span>
+    <button class="ghost god-only" id="histCheck" title="Grades each settled bet again from its own game day and lists the ones that would change. Nothing changes until you tap.">🔎 Check my history</button><span id="histStatus" class="meta" role="status" style="font-size:13px;color:var(--soft)"></span><!-- v5.25 (Build A): read-only, changes nothing until you tap -->
     <button class="ghost" id="wipe">Delete every logged bet</button>
   </div>
+  <div id="histOut" class="hist-out"></div><!-- v5.25 -->
   </details>
   <textarea id="csvOut" style="display:none; margin-top:12px; min-height:120px" spellcheck="false" readonly></textarea>
 </div>
@@ -6449,7 +6463,7 @@ function isSweet(r,c){
          !isNaN(odds) && odds>=c.oMin && odds<=c.oMax;
 }
 function saveSweet(){ try{ const o={}; SW_IDS.forEach(k=>o[k]=document.getElementById(k).value);
-  SW_CHECKS.forEach(k=>o[k]=document.getElementById(k).checked); localStorage.setItem(SWEET_KEY,JSON.stringify(o)); }catch(e){} syncTouched(); }
+  SW_CHECKS.forEach(k=>o[k]=document.getElementById(k).checked); cfgSaveFailNote(!lsSafeSet(SWEET_KEY,JSON.stringify(o))); }catch(e){} syncTouched(); }   // v5.25 (ENG-1): the safe save, and a note when it fails
 function loadSweet(){ try{ const o=JSON.parse(localStorage.getItem(SWEET_KEY)||'null'); if(!o) return;
   SW_IDS.forEach(k=>{ if(o[k]!==undefined) document.getElementById(k).value=o[k]; });
   SW_CHECKS.forEach(k=>{ if(o[k]!==undefined) document.getElementById(k).checked=!!o[k]; }); }catch(e){} }
@@ -7150,8 +7164,14 @@ function gameStatusOf(ev){
   const comp=(ev.competitions&&ev.competitions[0])||{};
   const teams=compsOf(ev).map(c=>{ const t=c.team||{}; return {ha:c.homeAway, id:t.id||'', abbr:normAbbr(t.abbreviation), name:t.shortDisplayName||t.name||t.abbreviation||'', loc:t.location||'', nick:t.name||'', logo:t.logo||'', rec:(c.records&&c.records[0]&&c.records[0].summary)||'', color:t.color||'', alt:t.alternateColor||''}; });
   const tv=[...new Set([].concat(...(comp.broadcasts||[]).map(b=>b.names||[])))].slice(0,2).join(' · ');
-  return {state:st.state, detail:st.shortDetail||'', timeCT, eventId:ev.id, startISO:isNaN(dt)?null:dt.toISOString(), teams, tv};   // v2.69: teams + tv
+  return {state:st.state, detail:st.shortDetail||'', timeCT, eventId:ev.id, startISO:isNaN(dt)?null:dt.toISOString(), teams, tv, played:evPlayed(ev)};   // v2.69: teams + tv   // v5.25: + played (a postponed or cancelled game is not)
 }
+/* v5.25 (GRADING-3, Build A): ESPN lists a postponed or cancelled game as state "post" with completed false and a 0-0 score (STATUS_POSTPONED,
+   checked against real ESPN data). Such a game has no winner: it is never graded; the bet stays open with a Look out reason. A test event with no
+   completed flag at all still counts as played. */
+function evNotPlayedName(ev){ const st=(ev&&ev.status&&ev.status.type)||{}; return /POSTPONED|CANCELED|CANCELLED|SUSPENDED|FORFEIT/i.test(String(st.name||'')+' '+String(st.description||'')); }
+function evPlayed(ev){ if(!ev) return false; const st=(ev.status&&ev.status.type)||{}; if(st.completed===false) return false; return !evNotPlayedName(ev); }
+function notPlayedWhy(){ return 'game postponed / cancelled: ask the book; usually the stake comes back'; }   // v5.25
 /* v2.59: game lines (moneyline / spread / total) graded from the final score */
 const GL_KINDS=/^(moneyline|spread|total)$/;
 function teamsOf(s){ const m=String(s||'').match(/\b([A-Z]{2,4})\s*(?:@|-|vs\.?)\s*([A-Z]{2,4})\b/); return m?[normAbbr(m[1]),normAbbr(m[2])]:null; }
@@ -7354,7 +7374,7 @@ const NFL_STAT_RULES=[
   [/LONG\w*\s*RUSH|RUSH\w*\s*LONG/, [['rushing','LONG']]],
   [/RECEPTION|\bRECS?\b/, [['receiving','REC']]],
 ];
-function nflStat(box, playerName, market){
+function nflStat(box, playerName, market, strict){   // v5.25: strict = only a stat found in the wanted table (used to pick a game by the player, never to grade)
   if(!box || !box.boxscore || !box.boxscore.players) return null;
   const m=String(market||'').toUpperCase().replace(/^[+-]?[\d.]+\s+/,'');
   const rule=NFL_STAT_RULES.find(([re])=>re.test(m));
@@ -7377,6 +7397,7 @@ function nflStat(box, playerName, market){
     }
   }
   if(found) return total;
+  if(strict) return null;   // v5.25 (GRADING-4)
   return anywhere ? 0 : null;   // played but nothing in those tables = 0; not in the box score at all = can't tell
 }
 /* v2.64: basketball — sum every stat the market names (Points + Rebounds + Assists, Pts + Ast …) */
@@ -7408,8 +7429,8 @@ function hoopsStat(box, playerName, market){
   return null;
 }
 /* Market text -> which boxscore labels to sum, per sport. Best-effort; returns null (shown as "?") if unmatched. */
-function statForMarket(box, playerName, market, sport){
-  if(sport==='NFL' || sport==='NCAAF') return nflStat(box, playerName, market);          // v2.64
+function statForMarket(box, playerName, market, sport, strict){
+  if(sport==='NFL' || sport==='NCAAF') return nflStat(box, playerName, market, strict);   // v5.25: strict passed on          // v2.64
   if(sport==='NBA' || sport==='WNBA' || sport==='NCAAB') return hoopsStat(box, playerName, market);
   const m=(market||'').toUpperCase();
   const rules = {
@@ -7451,6 +7472,7 @@ function gradeBet(b, box){
   const ls=lineSide(b.market, b.betnow, b.line);
   if(!ls) return null;
   const line=ls.line, side=ls.side;
+  if(val===line) return {val, line, side, push:true};   // v5.25 (GRADING-K1): exactly on a whole-number line is a push (stake back), for the Over and the Under
   const won = side==='O' ? val>line : val<line;
   return {val, line, side, won};
 }
@@ -7463,6 +7485,7 @@ function gradeRow(r, box){
   const lineMatch=(r.market||'').match(/([\d.]+)/);
   const line = lineMatch?parseFloat(lineMatch[1]):null;
   if(line===null) return null;
+  if(val===line) return {val, line, push:true};   // v5.25 (GRADING-K1): exactly on the line is a push
   const won = r.side==='U' ? val<line : val>line;
   return {val, line, won};
 }
@@ -7483,7 +7506,7 @@ function qualityScore(r){
   return r.gross||0;   // not enough history yet — fall back to the stated EV
 }
 async function attachAutoGrades(rows){
-  const finals = rows.filter(r=>r.gameInfo && r.gameInfo.state==='post');
+  const finals = rows.filter(r=>r.gameInfo && r.gameInfo.state==='post' && r.gameInfo.played!==false);   // v5.25 (GRADING-3): a postponed or cancelled game is not graded
   const need = new Map();
   finals.forEach(r=>need.set(r.sport+':'+r.gameInfo.eventId, {sport:r.sport, eventId:r.gameInfo.eventId}));
   const boxes={};
@@ -7497,7 +7520,7 @@ async function attachAutoGrades(rows){
       const ev=(scoreboardCache[r.sport]||[]).find(e=>String(e.id)===String(r.gameInfo.eventId));
       g = ev ? gradeGameLine(r, ev) : null;
       if(g && g.push){ r.autoGrade='push'; return; }
-    } else g = gradeRow(r, boxes[r.sport+':'+r.gameInfo.eventId]);
+    } else { g = gradeRow(r, boxes[r.sport+':'+r.gameInfo.eventId]); if(g && g.push){ r.autoGrade='push'; return; } }   // v5.25 (GRADING-K1): a prop on its line is a push, and no won:false goes to the grade history
     r.autoGrade = g===null ? '?' : (g.won?'win':'loss');
     if(g!==null){
       const key=[document.getElementById('slate').value, r.sport, r.name, r.market, r.offeredRaw].join('|');
@@ -7809,7 +7832,33 @@ function saveFailNote(bad){ let el=document.getElementById('saveFail'); if(!bad)
   if(!el){ el=document.createElement('div'); el.id='saveFail'; el.setAttribute('role','alert'); document.body.prepend(el); }
   let easy=false; try{ easy=easyLevel()==='easy'; }catch(e){ easy=false; }   /* v5.24 (step 4, review saves S2): in Easy the banner never says God words */
   el.textContent=easy ? 'Your last change could not be saved on this device because its storage is full. It will be lost when the page reloads. Free some space on this device, then try again.' : '⚠ Your bet log (or a book fill you added or ignored) could not be saved on this device: the browser storage is full ('+Math.round(lsSize()/1024)+' KB used). Your last change will be lost when the page reloads. Tell Claude Code.'; }
-function saveLog(){ saveFailNote(!lsSafeSet('mbev.log',JSON.stringify(logged))); if(typeof renderTodayBar==='function') setTimeout(renderTodayBar,0); if(document.body && document.body.dataset.view==='v-reports' && !window._rpPend){ window._rpPend=1; setTimeout(()=>{ window._rpPend=0; rpRender(); },50); }   /* v4.91 review: many saves in a row paint once */ /* v4.89: an open report follows every change to the log */ syncTouched(); }   // v3.82: no more silent failures
+/* v5.25 (ENG-1): a setting that could not be saved says so in its own note; the bet log banner is never cleared by a settings save. */
+function cfgSaveFailNote(bad){ let el=document.getElementById('cfgSaveFail'); if(!bad){ if(el) el.remove(); return; }
+  if(!el){ el=document.createElement('div'); el.id='cfgSaveFail'; el.setAttribute('role','alert'); document.body.prepend(el); }
+  el.textContent='⚠ A setting you changed could not be saved on this device: the browser storage is full. It is used until the page reloads, then the old value comes back.'; }
+/* v5.25 (ENG-2, Build A): when the bet log still does not fit after the caches, make room in this order and only as far as needed: Watch sightings,
+   then the oldest pruned Watch records, then grade-history entries older than 30 days. Bets are never dropped. True when the log was saved. */
+function logMakeRoom(){ const v=JSON.stringify(logged), put=()=>{ try{ localStorage.setItem('mbev.log',v); return true; }catch(e){ return false; } }, wput=A=>{ try{ localStorage.setItem('mbev.watchObs',JSON.stringify(A)); }catch(e){} };
+  try{ const A=watchAll(); let n=0; A.forEach(o=>{ if(o && o.sig){ o.nSig=Math.max(+o.nSig||0,o.sig.length); delete o.sig; n++; } }); if(n){ wput(A); if(put()) return true; }
+    const P=A.filter(o=>o && o.pruned).sort((x,y)=>String(x.first||x.at||'')<String(y.first||y.at||'')?-1:1), step=Math.max(20,Math.ceil(P.length/10));
+    for(let i=0;i<P.length;i+=step){ const drop=new Set(P.slice(i,i+step)); for(let j=A.length-1;j>=0;j--) if(drop.has(A[j])) A.splice(j,1); wput(A); if(put()) return true; } }catch(e){}
+  try{ const cut=ctDay(Date.now()-30*86400e3); let n=0; Object.keys(gradeHistory).forEach(k=>{ const d=String(k).slice(0,10); if(/^\d{4}-\d{2}-\d{2}$/.test(d) && d<cut){ delete gradeHistory[k]; n++; } });
+    if(n){ try{ localStorage.setItem('mbev.gradehistory', JSON.stringify(gradeHistory)); }catch(e){} if(put()) return true; } }catch(e){}
+  return false; }
+function saveLog(){ let ok=lsSafeSet('mbev.log',JSON.stringify(logged)); if(!ok) ok=logMakeRoom(); window._logSaveBad=!ok; saveFailNote(!ok);   /* v5.25 (ENG-2): more room before giving up; the state is kept so sync never deletes a bet that did not save */ if(typeof renderTodayBar==='function') setTimeout(renderTodayBar,0); if(document.body && document.body.dataset.view==='v-reports' && !window._rpPend){ window._rpPend=1; setTimeout(()=>{ window._rpPend=0; rpRender(); },50); }   /* v4.91 review: many saves in a row paint once */ /* v4.89: an open report follows every change to the log */ syncTouched(); }   // v3.82: no more silent failures
+/* v5.25 (ENG-2, Build A): how full this browser's storage is (Chromium and Firefox give a site about 5,242,880 characters), and about how many more
+   bets fit at the size of the bets already saved (plus the sync bookkeeping when sync is on). Settings shows it; the Bet log says so calmly over 80%. */
+function lsQuota(){ return 5242880; }
+function storageUseInfo(){ const used=lsSize(), q=lsQuota(), n=(logged||[]).length; let per=1500;
+  try{ if(n>=5) per=Math.max(600, Math.round(JSON.stringify(logged).length/n)); }catch(e){}
+  try{ if(SY && SY.on) per+=360; }catch(e){}
+  const free=Math.max(0,q-used); return {used, q, pct:Math.min(100,Math.round(used/q*100)), more:Math.floor(free/per)}; }
+function storageUseRender(){ const I=storageUseInfo(), txt='Storage used: '+I.pct+'% of this browser’s space (about '+I.more.toLocaleString('en-US')+' more bets fit)';
+  const a=document.getElementById('storageUse'); if(a) a.textContent=txt+'.';
+  const w=document.getElementById('storageWarn'); if(w){ if(I.pct>80){ w.hidden=false; w.textContent=txt+'. When it is full, new bets cannot be saved on this device: back up the bet log (More › Back up) and tell El Capataz.'; } else { w.hidden=true; w.textContent=''; } }
+  return I; }
+document.addEventListener('click', e=>{ if(e.target.closest && e.target.closest('.tab[data-view="v-settings"], .tab[data-view="v-log"]')) setTimeout(()=>{ try{ storageUseRender(); }catch(err){} },0); });   // v5.25
+setTimeout(()=>{ try{ storageUseRender(); }catch(e){} }, 1200);   // v5.25
 /* v2.63: what the screener said about a row, in one word — saved with every bet you log.
    "On the list" = the screener had a stake on it (BET / RISK / OUTLIER / LIMITED) and the game hadn't started. */
 function saidOf(r){
@@ -7894,7 +7943,7 @@ function resultBadge(b){
 let logRenderLater=false;
 function logEditorOpen(){ return !!document.querySelector('#logBody tr.pl-ed, #logBody tr.editor'); }
 setInterval(()=>{ if(logRenderLater && !logEditorOpen()){ logRenderLater=false; try{ renderLog(); }catch(e){} } }, 1000);
-function renderLog(){ setTimeout(()=>{ try{ csvDays(); }catch(e){} try{ lcRender(); }catch(e){ console.error(e); } },0);   // v4.16: the CSV day list follows the log   // v4.36: and the bet calendar
+function renderLog(){ setTimeout(()=>{ try{ csvDays(); }catch(e){} try{ lcRender(); }catch(e){ console.error(e); } try{ storageUseRender(); }catch(e){} },0);   /* v5.25: + storage used */   // v4.16: the CSV day list follows the log   // v4.36: and the bet calendar
   if(logEditorOpen()){ logRenderLater=true; return; }   // v3.86
   const tb=document.getElementById('logBody'), empty=document.getElementById('logEmpty');
   tb.innerHTML='';
@@ -8032,7 +8081,8 @@ function gradesReapply(){ const G=gradesLoad(); let n=0;
     b.result=g.r; b.gradedBy='manual'; b.resultSrc='you'; delete b.why; n++; });
   if(n) saveLog(); return n; }
 function lookOutWhy(b){
-  if(b.sold || b.voided || b.result==='win' || b.result==='loss' || b.result==='push') return '';
+  if(b.sold || b.result==='win' || b.result==='loss' || b.result==='push') return '';
+  if(b.voided) return 'voided, but its push was lost: press Push';   // v5.25 (GRADING-6): a void with no result is not hidden
   const today=ctDay(Date.now()), day=gameDayOf(b)||b.date||'';
   if(b.kind==='parlay') return day && day<today ? 'parlay: set how many legs hit' : '';
   if(b.result==='?') return 'cannot grade it automatically'+(b.why&&b.why.reason?': '+b.why.reason:'');
@@ -8230,7 +8280,7 @@ function gameFraction(ev, sport){
 function liveOpenBets(){
   const now=Date.now();
   return logged.filter(b=>{
-    if(b.kind==='parlay' || b.sold || b.result==='win' || b.result==='loss' || b.result==='push') return false;
+    if(b.kind==='parlay' || b.sold || b.voided || b.result==='win' || b.result==='loss' || b.result==='push') return false;   // v5.25 (GRADING-6): + a voided bet
     const t=b.start?Date.parse(b.start):NaN;
     if(!isNaN(t)) return t > now-14*3600e3 && t < now+24*3600e3;
     return b.date===ctDay(now);
@@ -8240,6 +8290,7 @@ function betPayout(b){ const p=betProfit(Object.assign({},b,{result:'win',sold:n
 function liveStatus(b, ev, box){
   if(!ev){ const t=Date.parse(b.start); return {cls:'wait', text:!isNaN(t) && t>Date.now() ? 'Not started' : 'Game not known yet', bar:null}; }   /* v4.77: a start still ahead is "Not started" */   // v4.76: without its game the app cannot tell (was "Not started")
   const st=(ev&&ev.status)||{}, state=(st.type&&st.type.state)||'pre';
+  if(state==='post' && !evPlayed(ev)) return {cls:'wait', text:'Postponed or cancelled: ask the book (usually the stake comes back)', bar:null, done:true};   // v5.25 (GRADING-3)
   const lm=String(b.market||'').match(/^([+-]?[\d.]+)/);
   let L=lm?parseFloat(lm[1]):null;
   const side=b.side || (String(b.betnow||'').trim().toUpperCase().startsWith('U')?'U':'O');   // same rule as grading
@@ -8276,6 +8327,7 @@ function propVerdict(S, L, side, proj, state, f, unit){
   if(L==null) return {cls:'wait', text:'Now '+fmt(S)};
   const max=Math.max(L*1.5, S*1.1, (proj||0)*1.05, 1);
   const bar={S, L, side:side==='U'?'U':'O', proj, max}, doneBar={S, L, side:side==='U'?'U':'O', proj:null, max};
+  if(state==='post' && S===L) return {cls:'close', text:'Push — finished at '+fmt(S)+', on the line (stake back)', bar:doneBar, done:true};   // v5.25 (GRADING-K1): exactly on the line
   if(side==='O'){
     if(S>L) return {cls:'good', text:'Over hit ✓ ('+fmt(S)+')', bar:doneBar, done:true};
     if(state==='post') return {cls:'bad', text:'Lost — finished at '+fmt(S), bar:doneBar, done:true};
@@ -8733,7 +8785,7 @@ async function renderLive(force){
     const SBv=await Promise.all(sports.map(fetchScoreboard));
     const groups=new Map(), SB={}; sports.forEach((sp,i)=>{ SB[sp]=(SBv&&SBv[i])||scoreboardCache[sp]||[]; });   /* v4.78: from what each fetch returned */   /* v4.77: the scoreboards as read now (another refresh can clear the cache while a box score loads) */
     for(const b of bets){
-      const evs=SB[b.sport]||[];
+      const evs=(SB[b.sport]||[]).filter(ev=>{ if(!evOkFor(b,ev)) return false; const s=Date.parse(b.start), t=Date.parse(ev.date); return isNaN(s) || (!isNaN(t) && Math.abs(t-s)<6*3600e3); });   // v5.25 (GRADING-2): only the bet's own game (tonight's final never settles tomorrow's bet on the same teams)
       const ev=findGame(evs,b.game)||findGameAny(evs,b.game,b.name,b.matchup)||await liveGameByPlayer(b,evs);   // v4.76: + by the player's box score (Novig props name no teams)
       const k=ev?b.sport+':'+ev.id:'?:'+b.sport+':'+gameKey(b.game)+(teamsOf(b.game)?'':':'+(b.start||b.date||''));   // v4.76: two unknown games are not one
       if(!groups.has(k)) groups.set(k,{ev,sport:b.sport,game:b.game,bets:[]});
@@ -8758,7 +8810,7 @@ async function renderLive(force){
     for(const g of groups.values()){
       const state=g.ev&&g.ev.status&&g.ev.status.type&&g.ev.status.type.state;
       // a game that just went final: settle its bets like "Check results"
-      if(state==='post') g.bets.forEach(b=>{
+      if(state==='post' && evPlayed(g.ev)) g.bets.forEach(b=>{   // v5.25 (GRADING-3): a postponed or cancelled game settles nothing
         const r = GL_KINDS.test(b.kind||'') ? gradeGameLine(b,g.ev) : (boxDone(g.box) ? gradeBet(b,g.box) : null);   // v4.76: only from the final box score (Check results does it later otherwise)
         if(r){ b.result = r.push?'push':(r.won?'win':'loss'); settled++; }
       });
@@ -9207,6 +9259,22 @@ function evOkFor(b, ev){
   if(b.dateSet && b.date && ctDay(t)===b.date) return true;   // v3.97 (Alonzo: "you already know it lost"): its game day was set (by you, the form or the book): a game played that day is its game, even when the bet was saved days later (Saquon 11/1, logged 11/5)
   return t >= at-4*3600e3;
 }
+/* v5.25 (GRADING-1, GRADING-2, Build A): is this ESPN event the bet's OWN game? With a saved start: the event starts within 6 hours of it.
+   With no start: its game day (Central) is the bet's date or the day after, and the 4-hour rule holds. Used by Check results, Live Games and
+   Check my history, so a later meeting of the same two teams never grades an old bet. */
+function ownGameOk(b, ev){ if(!b || !ev) return false; const t=Date.parse(ev.date), s=Date.parse(b.start); if(isNaN(t)) return false;
+  if(!isNaN(s)) return Math.abs(t-s)<6*3600e3;
+  if(!b.date) return false; const d=ctDay(t); return (d===b.date || d===dayPlus(b.date,1)) && evOkFor(b,ev); }
+/* v5.25 (GRADING-5): among the games that match a bet, the one at its saved start: within 60 seconds, else the closest within 6 hours
+   (ESPN moves game 2 of a doubleheader when game 1 runs long); the first match only when none is that close or there is no start. */
+function pickByStart(b, list){ list=(list||[]).filter(Boolean); if(!list.length) return null; const s=Date.parse(b&&b.start); if(isNaN(s)) return list[0];
+  const d=e=>{ const t=Date.parse(e.date); return isNaN(t)?Infinity:Math.abs(t-s); };
+  const ex=list.find(e=>d(e)<60e3); if(ex) return ex;
+  const near=list.filter(e=>d(e)<6*3600e3).sort((x,y)=>d(x)-d(y)); return near[0]||list[0]; }
+function gamesFor(b, evs, gl){ evs=evs||[];   // v5.25: every event that findGame / findGameAny would take, in the same order of preference
+  let L=evs.filter(e=>findGame([e],b.game)); if(L.length) return L;
+  L=evs.filter(e=>findGameAny([e],b.game,b.matchup)); if(L.length) return L;
+  return gl ? evs.filter(e=>findGameAny([e],b.name)) : []; }
 /* v4.72 (agreed with ChatGPT, owner "BUILD" 11/11; Commanders-Rams Under 44.5 was graded from Broncos-Panthers): a Novig game total is graded
    only from the one ESPN game that has Novig's own teams at Novig's kickoff (within 90 minutes), full game only. That game's ESPN id is then frozen
    (b.espnEv) and used on every later run. No teams, no kickoff, a part-game market, no game or two games: no grade, "NOVIG EVENT MISMATCH · review".
@@ -9234,7 +9302,7 @@ async function findBetGame(b){
   else { const from=gameDayOf(b)||today; days=[from, dayPlus(from,1), dayPlus(from,2), today].filter((d,i,a)=>a.indexOf(d)===i).sort(); }   // v2.85: upcoming days too (Monday night)
   for(const d of days){   // 1) by the teams saved with the bet
     const evs=(await fetchScoreboardDay(b.sport, d)).filter(ev=>evOkFor(b,ev));
-    const ev=findGame(evs,b.game)||findGameAny(evs,b.game,b.matchup)||(gl?findGameAny(evs,b.name):null);
+    const ev=pickByStart(b, gamesFor(b, evs, gl));   // v5.25 (GRADING-5): the game at the bet's own start, not the first of a doubleheader
     if(ev) return ev;
   }
   if(gl){   // v3.18: game number ("32749") or nickname only — v3.23: or codes ESPN spells differently (EMICH, MIZZ, TRO) — the team by name, at the saved start time
@@ -9251,11 +9319,18 @@ async function findBetGame(b){
   }
   if(gl || !b.name || teamsOf(b.game)) return null;   // teams known but no match: don't guess by player
   for(const d of days){   // 2) no teams saved: the finished game whose box score has this player
-    const evs=(await fetchScoreboardDay(b.sport, d)).filter(ev=>{ const g=gameStatusOf(ev); return g && g.state==='post' && evOkFor(b,ev); });
+    const all=(await fetchScoreboardDay(b.sport, d)).filter(ev=>evOkFor(b,ev)), s0=Date.parse(b.start);
+    let evs=all.filter(ev=>{ const g=gameStatusOf(ev); return g && g.state==='post'; });
+    if(!isNaN(s0)){   /* v5.25 (GRADING-4, NHL Sebastian Aho): with a saved start, a game at that start (within 60 s) is the only candidate; else the games within
+      6 hours, closest first, and no guess while a closer one has not finished. Only then the others, as before. */
+      const dist=ev=>Math.abs(Date.parse(ev.date)-s0), ex=all.filter(ev=>dist(ev)<60e3);
+      if(ex.length){ evs=ex.filter(ev=>evs.includes(ev)); if(evs.length<ex.length) evs=[]; }
+      else { const near=all.filter(ev=>dist(ev)<6*3600e3).sort((x,y)=>dist(x)-dist(y)); if(near.length){ const k=near.findIndex(ev=>!evs.includes(ev)); evs=(k<0?near:near.slice(0,k)); } } }
     for(const ev of evs){
       const box=await fetchBoxscore(b.sport, ev.id, true);
-      if(statForMarket(box, b.name, b.market, b.sport)!==null) return ev;
+      if(statForMarket(box, b.name, b.market, b.sport, true)!==null) return ev;   // v5.25 (GRADING-4): only a stat found in its own table picks the game
     }
+    if(!isNaN(s0) && all.some(ev=>Math.abs(Date.parse(ev.date)-s0)<6*3600e3)) return null;   // v5.25: a game near its start exists: wait for it, never a far one
   }
   return null;
 }
@@ -9302,17 +9377,18 @@ async function autoGradeLog(){
   try{
     const cutoff=ctDay(Date.now()-4*86400e3), today=ctDay(Date.now());
     const recent=b=>ESPN_MAP[b.sport] && b.kind!=='parlay' && ((gameDayOf(b)>=cutoff && gameDayOf(b)<=today) || (b.date>=cutoff && b.date<=today));
-    const settled=b=>b.sold || b.result==='win' || b.result==='loss' || b.result==='push';
+    const settled=b=>b.sold || b.voided || b.result==='win' || b.result==='loss' || b.result==='push';   // v5.25 (GRADING-6): a voided bet is settled (stake back), like a result you set
     // v2.81: bets already settled but saved without a start time — only fix their day, don't re-grade
     let changed=0;
     const undated=logged.filter(b=>recent(b) && settled(b) && !b.start && !b.noStart);
     // v2.82: undo matches to a game that started more than 4 h before the bet was saved (v2.80–2.81 bug)
     // v2.83: also when the board date was still the day before (bet saved today, matched to yesterday's game)
     logged.forEach(b=>{ if(!recent(b) || b.fix83 || !b.start) return; b.fix83=1; if(b.manual || b.autoRes===false) return;   // v3.50: never strip a hand-added bet's game day or a manual result
-      const t=Date.parse(b.start), at=Date.parse(b.snap&&b.snap.at);   // only a real save time
+      if(b.voided || b.gradedBy==='book' || b.gradedBy==='import' || b.gradedBy==='manual' || (b.resultSrc && b.resultSrc!=='ESPN')) return;   // v5.25 (GRADING-8): a result from the book, an import, a void or you is never cleared here
+      const t=Date.parse(b.start), at=Date.parse(b.placedAt||(b.snap&&b.snap.at));   // only a real save time   // v5.25 (GRADING-8): when you placed it (the book says), else when it was saved
       if(!isNaN(t) && !isNaN(at) && t<at-4*3600e3 && ctDay(t)<ctDay(at)){ delete b.start; delete b.noStart; if(!b.sold && b.autoRes!==false) delete b.result; changed++; } });
     // v2.85: graded, but its game hasn't started yet → that grade came from the wrong game
-    logged.forEach(b=>{ if(b.sold || !b.start || !(b.result==='win'||b.result==='loss'||b.result==='push')) return;
+    logged.forEach(b=>{ if(b.sold || b.voided || b.gradedBy==='manual' || b.gradedBy==='import' || b.gradedBy==='book' || !b.start || !(b.result==='win'||b.result==='loss'||b.result==='push')) return;   // v5.25 (GRADING-6): a void, your own result, an import or the book's settlement is kept
       const t=Date.parse(b.start); if(!isNaN(t) && t>Date.now()){ delete b.result; changed++; } });
     logged.forEach(b=>{ if(b.fixSog94 || b.gradedBy==='manual' || b.gradedBy==='import' || b.gradedBy==='book' || b.sold || !(b.sport==='NHL'||b.sport==='MLS') || !/SHOT/i.test(b.market||'') || !/GOAL/i.test(b.market||'')) return; b.fixSog94=1;   // v3.94: graded as goals before; grade it again   // v3.95: only "Shots On Goal" (plain "Shots" was graded right)
       if(b.result==='win'||b.result==='loss'||b.result==='push'||b.result==='?'){ if(b.resultSrc && b.resultSrc!=='ESPN') return; delete b.result; delete b.why; changed++; } });
@@ -9348,11 +9424,13 @@ async function autoGradeLog(){
         continue; }
       const gi=gameStatusOf(ev); if(!gi){ const S0=settlementFor(b); if(S0){ setFromSettlement(b,S0); changed++; continue; } const rsn=nvReviewText(b)||'game not found on ESPN'; if(!b.why || b.why.reason!==rsn){ b.why={at:Date.now(), reason:rsn, market:b.market||''}; changed++; } continue; }   /* v4.72: a Novig total that cannot be matched says so */
       // v2.80: keep the real start time and teams, so the bet counts on the day the game is played
-      if(gi.startISO && b.start!==gi.startISO){ b.start=gi.startISO; changed++; }
+      if(gi.startISO && b.start!==gi.startISO && (isNaN(Date.parse(b.start)) || Math.abs(Date.parse(gi.startISO)-Date.parse(b.start))<6*3600e3)){ b.start=gi.startISO; changed++; }   // v5.25 (GRADING-5): never the start of a game far from the saved one
       if(!teamsOf(b.game)){ const a=gi.teams.find(t=>t.ha==='away'), h=gi.teams.find(t=>t.ha==='home'); if(a&&h){ b.game=a.abbr+' @ '+h.abbr; changed++; } }
       if(GL_KINDS.test(b.kind||'') && b.kind!=='total' && b.team && !gi.teams.some(t=>t.abbr===normAbbr(b.team))){   // v3.18: e.g. CSUS → SAC
         const t=gi.teams.find(x=>teamNameIs({abbreviation:x.abbr,name:x.nick,shortDisplayName:x.name,location:x.loc}, b.name)); if(t){ b.team=t.abbr; changed++; } }
       if(gi.state!=='post') continue;
+      if(!evPlayed(ev)){ const S2=settlementFor(b); if(S2){ setFromSettlement(b,S2); changed++; continue; }   /* v5.25 (GRADING-3): postponed or cancelled: no grade; the book's settlement if there is one, else Look out says why */
+        const rsn=notPlayedWhy(); if(!b.why || b.why.reason!==rsn){ b.why={at:Date.now(), reason:rsn, market:b.market||''}; changed++; } if(b.result!=='?'){ b.result='?'; changed++; } continue; }
       const box = GL_KINDS.test(b.kind||'') ? null : await fetchBoxscore(b.sport, gi.eventId, true);
       const g = GL_KINDS.test(b.kind||'') ? gradeGameLine(b,ev) : gradeBet(b, box);
       if(!g){ const S1=settlementFor(b); if(S1){ setFromSettlement(b,S1); changed++; continue; }
@@ -9695,7 +9773,7 @@ async function watchCloseScan(){ const now=Date.now(); if(watchCloseBusy || now-
 async function watchGrade(){ const A=watchAll(), now=Date.now(); let n=0;
   for(const o of A){ try{
     if(o.result || !o.start || now<Date.parse(o.start)+5*3600e3 || now>Date.parse(o.start)+30*86400e3 || !ESPN_MAP[o.sport]) continue;
-    const ev=await findBetGame(o); if(!ev) continue; const gi=gameStatusOf(ev); if(!gi || gi.state!=='post') continue;
+    const ev=await findBetGame(o); if(!ev) continue; const gi=gameStatusOf(ev); if(!gi || gi.state!=='post' || !evPlayed(ev)) continue;   /* v5.25 (GRADING-3): not a postponed game */
     const gl=GL_KINDS.test(o.kind||''), box=gl?null:await fetchBoxscore(o.sport, gi.eventId, true), g=gl?gradeGameLine(o,ev):gradeBet(o, box);
     if(!g) continue; o.result=g.push?'push':(g.won?'win':'loss'); o.gradedAt=new Date().toISOString(); o.gradedBy='espn'; n++;
   }catch(e){} }
@@ -12162,24 +12240,82 @@ async function checkResultsRun(){
   await Promise.all(sports.map(fetchScoreboard));
   for(const b of logged){
     if(b.sold || b.kind==='parlay') continue;   // a cashed-out bet keeps its sale result; parlays are graded by hand
-    if(b.gradedBy==='manual' || b.gradedBy==='import') continue;   // v3.84 (Alonzo: "I press Check results again, they come back"): your own result wins here too   /* v4.72: and an imported one */
+    if(b.gradedBy==='manual' || b.gradedBy==='import' || b.voided) continue;   // v3.84 (Alonzo: "I press Check results again, they come back"): your own result wins here too   /* v4.72: and an imported one */   /* v5.25 (GRADING-6): and a void */
     const had=/^(win|loss|push)$/.test(b.result||'') ? b.result : null;   // v3.84: a settled result is not erased when ESPN cannot grade it
     const gl=GL_KINDS.test(b.kind||'');
     let ev;
     if(nvGated(b)) ev=nvPick(b, scoreboardCache[b.sport]).ev||null;   /* v4.72: a Novig total only from its own verified game */
     else { ev=findGame(scoreboardCache[b.sport], b.game);
     if(!ev && gl) ev=findGameAny(scoreboardCache[b.sport], b.game, b.name); }   // v2.59: "NO-PIT" style games
+    if(ev && !ownGameOk(b, ev)){ const own=pickByStart(b, gamesFor(b, (scoreboardCache[b.sport]||[]).filter(e=>ownGameOk(b,e)), gl)); ev=nvGated(b)?null:own; }   // v5.25 (GRADING-1): only the bet's own game: a later meeting of the same teams never re-grades it
     const gi=gameStatusOf(ev);
     if(!gi){ continue; }
     if(gi.state!=='post'){ if(!had) b.result='pending'; continue; }   // v3.84: had
+    if(!evPlayed(ev)) continue;   // v5.25 (GRADING-3): postponed or cancelled: nothing is graded (the automatic grader says why in Look out)
     if(gl){ const g=gradeGameLine(b, ev); b.result = g===null ? (had||'?') : g.push ? 'push' : (g.won?'win':'loss'); continue; }   // v3.84: had
     const box=await fetchBoxscore(b.sport, gi.eventId, true);
     const g=gradeBet(b, box);
-    b.result = g===null ? (had||'?') : (g.won?'win':'loss');   // v3.84: had
+    b.result = g===null ? (had||'?') : g.push ? 'push' : (g.won?'win':'loss');   // v3.84: had   // v5.25 (GRADING-K1): + push
   }
   saveLog(); renderLog(); renderPerf();
   btn.textContent=was; btn.disabled=false;
 }
+/* v5.25 (Build A, owner "FIX" 11/21): Check my history, read-only. Every settled single (not yours by hand, imported, sold, voided or a parlay) is graded
+   again on a COPY, from its own game day (the day of its start, or its date and the day after when there is no start), against its own game only
+   (ownGameOk, the rule Check results now uses). It lists every bet whose new grade differs from the saved one; nothing changes until you tap
+   "Use the new result" (that bet only: result, regradedFrom, regradedAt; its snapshot is never touched) or "Keep mine" (marked as your own result,
+   never listed again). One ESPN scoreboard read per sport and day, kept for the run. */
+function histEligible(b){ return !!(b && b.kind!=='parlay' && !b.sold && !b.voided && b.gradedBy!=='manual' && b.gradedBy!=='import' && /^(win|loss|push)$/.test(b.result||'') && ESPN_MAP[b.sport]); }
+function histDaysOf(b){ const s=Date.parse(b.start); if(!isNaN(s)) return [ctDay(s)]; return b.date ? [b.date, dayPlus(b.date,1)] : []; }
+async function histScoreboard(cache, bad, sport, day){ const k=sport+'|'+day; if(k in cache) return cache[k];
+  let evs=null; try{ const res=await fetch('https://site.api.espn.com/apis/site/v2/sports/'+ESPN_MAP[sport]+'/scoreboard?dates='+day.replace(/-/g,'')+'&limit=300'+(sport==='NCAAF'?'&groups=80':''));
+    if(res.ok){ const j=await res.json(); evs=(j&&Array.isArray(j.events))?j.events:null; } }catch(e){ evs=null; }
+  if(!evs) bad.add(sport+' '+day); cache[k]=evs||[]; return cache[k]; }
+function histResWord(r){ return r==='win'?'Won':r==='loss'?'Lost':r==='push'?'Push':r==='none'?'Not played (postponed / cancelled)':String(r||'-'); }
+function histScoreTxt(ev){ const tm=compsOf(ev), a=tm.find(c=>c.homeAway==='away'), h=tm.find(c=>c.homeAway==='home'), sc=finalScores(ev), ab=c=>normAbbr(c&&c.team&&c.team.abbreviation);
+  const t=Date.parse(ev.date), d=isNaN(t)?'':new Date(t).toLocaleDateString('en-US',{timeZone:'America/Chicago',month:'numeric',day:'numeric',year:'2-digit'});
+  return (a&&h ? ab(a)+' '+(sc[ab(a)]!=null?sc[ab(a)]:'?')+' @ '+ab(h)+' '+(sc[ab(h)]!=null?sc[ab(h)]:'?') : 'game')+(d?' · '+d:''); }
+async function histRegrade(b, cache, bad){   // → {res, ev, val, line} or {skip:'why'}
+  const c=JSON.parse(JSON.stringify(b)), gl=GL_KINDS.test(c.kind||''), days=histDaysOf(c); if(!days.length) return {skip:'no game day saved'};
+  let evs=[]; for(const d of days) evs=evs.concat(await histScoreboard(cache, bad, c.sport, d));
+  const own=evs.filter(e=>ownGameOk(c,e)); let ev=null;
+  if(nvGated(c)) ev=nvPick(c, own).ev||null;
+  else ev=pickByStart(c, gamesFor(c, own, gl));
+  if(!ev && !gl && c.name && !teamsOf(c.game)){ const s=Date.parse(c.start), dist=e=>isNaN(s)?0:Math.abs(Date.parse(e.date)-s);
+    for(const e of own.slice().sort((x,y)=>dist(x)-dist(y))){ if(((e.status&&e.status.type)||{}).state!=='post') continue; const bx=await fetchBoxscore(c.sport, e.id, true); if(statForMarket(bx, c.name, c.market, c.sport, true)!==null){ ev=e; break; } } }
+  if(!ev) return {skip:'its game was not found on ESPN'};
+  const st=(ev.status&&ev.status.type)||{}; if(st.state!=='post') return {skip:'its game is not final'};
+  if(!evPlayed(ev)) return {res:'none', ev};
+  if(gl){ const g=gradeGameLine(c, ev); return g ? {res:g.push?'push':(g.won?'win':'loss'), ev, val:g.val} : {skip:'the game line could not be read'}; }
+  const bx=await fetchBoxscore(c.sport, ev.id, true); if(!boxDone(bx)) return {skip:'the final box score did not load'};
+  const g=gradeBet(c, bx); return g ? {res:g.push?'push':(g.won?'win':'loss'), ev, val:g.val, line:g.line} : {skip:'the stat was not found in the box score'}; }
+function histRowHtml(x){ const b=x.b, day=gameDayOf(b)||b.date||'', on=x.line!=null && x.val===x.line && Number.isInteger(x.line), what=betLabel(b), nm=String(b.name||'');
+  const head=what && what.toLowerCase().startsWith(nm.toLowerCase()) ? '<b>'+esc(what)+'</b>' : '<b>'+esc(nm)+'</b> '+esc(what);   /* as in Look out: "PHI Moneyline", not "PHI PHI Moneyline" */
+  return '<div class="hist-row" data-id="'+esc(String(b.id))+'"><div class="hist-what">'+head+' <span class="meta">'+esc(day?dayLabel(day):'no date')+' · '+esc(bookLabel(b.book))+' · $'+(+b.stake||0).toFixed(2)+(b.resultSrc&&b.resultSrc!=='ESPN'&&b.resultSrc!=='you'?' · settled by '+esc(b.resultSrc):'')+'</span></div>'+
+    '<div class="hist-was">Saved: <b>'+esc(histResWord(b.result))+'</b> · Graded again: <b>'+esc(histResWord(x.res))+'</b>'+(x.val!=null?' <span class="meta">('+esc(String(x.val))+(x.line!=null?' on a line of '+esc(String(x.line)):'')+')</span>':'')+(on?' <span class="hist-tag">exactly on the line</span>':'')+'</div>'+
+    '<div class="meta">'+esc(histScoreTxt(x.ev))+'</div>'+
+    '<div class="hist-btns"><button type="button" class="log sm hist-use" data-id="'+esc(String(b.id))+'">'+(x.res==='none'?'Use the new result (Push, stake back)':'Use the new result')+'</button><button type="button" class="ghost sm hist-keep" data-id="'+esc(String(b.id))+'">Keep mine</button></div></div>'; }
+async function histCheckRun(){
+  const btn=document.getElementById('histCheck'), st=document.getElementById('histStatus'), out=document.getElementById('histOut'); if(!btn || !st || !out) return;
+  if(window._histBusy) return; window._histBusy=true; btn.disabled=true; out.innerHTML='';
+  const cache={}, bad=new Set(), L=logged.filter(histEligible), found=[]; let done=0, skipped=0;
+  try{
+    for(const b of L){ done++; if(done===1 || done%5===0) st.textContent='Checking '+done+' of '+L.length+'…';
+      try{ const r=await histRegrade(b, cache, bad); if(r.skip){ skipped++; continue; } if(r.res!==b.result) found.push(Object.assign({b}, r)); }catch(e){ skipped++; } }
+    window._histRes={}; found.forEach(x=>{ window._histRes[String(x.b.id)]=x; });
+    histPaint(L.length, skipped, bad);
+  } finally{ window._histBusy=false; btn.disabled=false; } }
+function histPaint(n, skipped, bad){ const st=document.getElementById('histStatus'), out=document.getElementById('histOut'); if(!st || !out) return;
+  if(n!=null) window._histMeta={n, skipped, bad:[...(bad||[])]}; const M=window._histMeta||{n:0,skipped:0,bad:[]}, R=Object.values(window._histRes||{});
+  st.textContent=M.n+' bet'+(M.n===1?'':'s')+' checked · '+R.length+' would change'+(M.skipped?' · '+M.skipped+' could not be checked again':'')+'. Nothing changes until you tap.';
+  out.innerHTML=(M.bad.length?'<p class="hint hist-bad">ESPN could not be read for '+esc(M.bad.join(', '))+': bets on those days were not checked.</p>':'')+R.map(histRowHtml).join(''); }
+document.addEventListener('click', e=>{
+  const u=e.target.closest && e.target.closest('#histOut .hist-use'), k=e.target.closest && e.target.closest('#histOut .hist-keep');
+  if(!u && !k) return; const id=(u||k).dataset.id, x=(window._histRes||{})[id], b=logged.find(y=>y && String(y.id)===id); if(!x || !b) return;
+  if(u){ b.regradedFrom=b.result; b.regradedAt=new Date().toISOString(); b.result=x.res==='none'?'push':x.res; delete b.why; }
+  else { b.gradedBy='manual'; }
+  delete window._histRes[id]; saveLog(); renderLog(); renderPerf(); try{ refresh(); }catch(err){} histPaint(); });
+document.getElementById('histCheck').addEventListener('click', ()=>{ histCheckRun(); });
 (function(){
   const onBox=document.getElementById('oddsApiOn'), ctr=document.getElementById('oddsApiControls'),
         keyIn=document.getElementById('oddsApiKey');
@@ -12249,7 +12385,7 @@ function save(){
     KEYS.forEach(k=>o[k]=document.getElementById(k).value);
     CHECKS.forEach(k=>o[k]=document.getElementById(k).checked);
     o.cfgVer=3.03;
-    localStorage.setItem('mbev.cfg',JSON.stringify(o));
+    cfgSaveFailNote(!lsSafeSet('mbev.cfg',JSON.stringify(o)));   // v5.25 (ENG-1): the safe save, and a note when it fails (was silent)
   }catch(e){}
   syncTouched();
 }
@@ -14435,7 +14571,7 @@ async function syncFills(force){
         const c=logged.filter(b=>!b.sold && !b.fillRef && LIVE_BOOK(b.book)===st.book && b.result!=='win' && b.result!=='loss' && betMatches(st.bet,b));
         if(c.length===1){ bets=c; noteFillRef(c[0],{book:st.book, ref:st.ref, side:st.side||null}); changed=true; } }
       bets.forEach(b=>{
-        if(b.gradedBy==='manual' || b.gradedBy==='import') return;   // v3.38: your own result wins   /* v4.72: and an imported one */
+        if(b.gradedBy==='manual' || b.gradedBy==='import' || b.voided) return;   // v3.38: your own result wins   /* v4.72: and an imported one */   /* v5.25 (GRADING-6): and a void */
         let res=null;
         if(st.book==='kalshi'){ const r=String(st.result||''); res = r==='void'||r==='scalar' ? 'push' : (r==='yes'||r==='no') ? (r===(b.fillSide||st.side||'yes')?'win':'loss') : null; }
         else if(st.book==='poly'){
@@ -15237,9 +15373,10 @@ function syncMergeColl(local, rc, rd, st, join){
   Object.keys(rd).forEach(id=>{ if(!have.has(id) && !(+st.T[id]>=+rd[id])) st.T[id]=+rd[id]; });   // keep the cloud's tombstones
   return {out, changed, push, n}; }
 // what this device changed since it last looked: new stamps, and tombstones for what disappeared
-function syncDetectColl(list, st, now){
+function syncDetectColl(list, st, now, keepGone){   // v5.25 (ENG-2): keepGone = make no tombstone for what is missing (the bet log could not be saved)
   let n=0; const seen=new Set();
   list.forEach(([id,v])=>{ seen.add(id); const h=syncQuick(v); if(st.H[id]!==h){ st.H[id]=h; st.S[id]=now; delete st.T[id]; n++; } });
+  if(keepGone) return n;
   Object.keys(st.H).forEach(id=>{ if(!seen.has(id)){ delete st.H[id]; delete st.S[id]; st.T[id]=now; n++; } });
   return n; }
 // after a successful exchange: the version both sides now share becomes the base
@@ -15260,11 +15397,12 @@ const SYNC_SETS={cfg:'mbev.cfg', sweet:'mbev.sweet2', maker:'mbev.makerFees', gr
 function syncLS(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v); return true; }catch(e){ return v===undefined?null:false; } }
 function syncDev(){ const u=navigator.userAgent||''; return /iPhone/.test(u)?'iPhone':/iPad/.test(u)?'iPad':/Android/.test(u)?'Android':/Macintosh/.test(u)?'Mac':/Windows/.test(u)?'Windows PC':/CrOS/.test(u)?'Chromebook':/Linux/.test(u)?'Linux PC':'browser'; }
 function syncNewMeta(){ return {v:1, rev:0, brev:0, c:{}, s:{}, bsig:'', at:0, dirty:false, joined:false}; }
-function syncMeta(){ let m=null; try{ m=JSON.parse(syncLS('mbev.syncMeta')||'null'); }catch(e){} SY.meta=(m&&m.v===1&&m.c)?m:syncNewMeta(); return SY.meta; }
+function syncMeta(){ let m=null; try{ m=JSON.parse(syncLS('mbev.syncMeta')||'null'); }catch(e){} SY.meta=(m&&m.v===1&&m.c)?m:syncNewMeta(); if(SY.meta.logFail) SY.meta.rev=-1; return SY.meta; }   // v5.25 (ENG-2): after a failed log save, read the cloud copy first (a bet that did not save comes back from it)
 function syncMetaSave(){ const M=SY.meta;
   if(syncLS('mbev.syncMeta', JSON.stringify(M))!==false) return;
   Object.values(M.c).forEach(st=>{ st.B={}; });   // storage full: drop the merge bases (merges fall back to newer-wins) rather than lose the meta
-  syncLS('mbev.syncMeta', JSON.stringify(M)); }
+  syncLS('mbev.syncMeta', JSON.stringify(M));
+  if(window._logSaveBad===true && lsSafeSet('mbev.log', JSON.stringify(logged))){ window._logSaveBad=false; saveFailNote(false); } }   // v5.25 (ENG-2): the room the meta freed is used to save the bet log again
 function syncSt(c){ const M=SY.meta, st=M.c[c]||(M.c[c]={S:{},T:{},B:{},H:{}}); ['S','T','B','H'].forEach(k=>{ st[k]=st[k]||{}; }); return st; }
 function betSig(b){ return [b.date, nrm(b.name), String(b.market||'').toLowerCase(), b.side||'', LIVE_BOOK(b.book)||String(b.book||'').toLowerCase(), b.odds, (+b.stake||0).toFixed(2)].concat(b.kind==='parlay' && b.key ? [b.key] : []).join('|'); }   // v5.11 (bug): a parlay with its own key (saved from v5.11 on) is never taken for a copy of another parlay with the same day, name, book, price and stake when a device joins the sync; others keep their sig
 function syncEnsureIds(){ let n=0;   // older bets saved without an id get one built from what they are — the same on every device
@@ -15298,7 +15436,8 @@ function syncDetect(reload){
   if(!SY || !SY.on) return 0;
   const M=reload===false?SY.meta:syncMeta(), now=Date.now(); let n=0;
   syncEnsureIds();
-  Object.entries(syncColls()).forEach(([c,spec])=>{ n+=syncDetectColl(spec.list(), syncSt(c), now); });
+  const keep=window._logSaveBad===true || !!M.logFail; if(window._logSaveBad===true && !M.logFail){ M.logFail=1; n++; }   // v5.25 (ENG-2): never a tombstone for a bet while the bet log could not be saved
+  Object.entries(syncColls()).forEach(([c,spec])=>{ n+=syncDetectColl(spec.list(), syncSt(c), now, c==='log' && keep); });
   Object.entries(SYNC_SETS).forEach(([nm,k])=>{ const raw=syncLS(k); if(raw==null) return; const h=syncHashStr(raw), x=M.s[nm]||(M.s[nm]={h:'',m:0}); if(x.h!==h){ x.h=h; x.m=now; n++; } });
   if(n){ M.dirty=true; syncMetaSave(); }
   return n; }
@@ -15424,6 +15563,7 @@ async function syncNow(opts){
             syncDetect(false);   // anything typed while we waited counts as a change made now
             SY.applying=true; let res;
             try{ res=syncMergeAll(d.j, join); } finally{ SY.applying=false; }
+            if(M.logFail && window._logSaveBad===false){ delete M.logFail; }   // v5.25 (ENG-2): the cloud copy was read and the log saves again: deletions count again
             if(join) summary=res.stat;
             M.rev=d.stale?-1:(d.rev||rev); M.joined=true;
             push=res.push;   // after a merge, only what the cloud lacks needs to go up
