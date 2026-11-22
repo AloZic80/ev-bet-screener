@@ -5820,7 +5820,7 @@ function easyForget(id){ const O=easyOwn(), o=O[id]; delete O[id]; easyOwnSave()
 function easyChanged(b, soft){ const o=easyOwn()[b.id], res=(soft && (b.result==='pending' || b.result==='?')) ? null : b.result; return !!(res || b.sold || b.fillRef || b.fillBook || (b.fills && b.fills.length) || b.autoFrom || (b.edits && b.edits.length) || !o || o.sig!==easySig(b)); }
 function easyStored(id){ try{ const a=JSON.parse(localStorage.getItem('mbev.log')||'[]'); return Array.isArray(a) && a.some(x=>x && x.id===id); }catch(e){ return false; } }
 /* the log did not reach storage (S2): take the bet out of memory again so Today keeps the pick and nothing says Saved; the person is told in plain words (never swallowed) */
-function easyUnsave(b){ const i=(logged||[]).indexOf(b); if(i>=0) logged.splice(i,1); saveLog(); try{ const t=document.getElementById('savedToast'); if(t) t.classList.remove('on'); }catch(e){} try{ renderLog(); renderPerf(); }catch(e){} refresh(); }
+function easyUnsave(b){ const i=(logged||[]).indexOf(b); if(i>=0){ logged.splice(i,1); syncMarkGone('log',[b&&b.id]); }   /* v5.25 round 2 (HS-1) */ saveLog(); try{ const t=document.getElementById('savedToast'); if(t) t.classList.remove('on'); }catch(e){} try{ renderLog(); renderPerf(); }catch(e){} refresh(); }
 function easyAfterSave(nb, key){ if(!easyStored(nb.id)){ easyUnsave(nb); return {saved:false, reason:'storage'}; } easyMark(nb, key); return {saved:true, id:nb.id, key}; }
 /* I placed it: the app’s own bet form on a hidden host, then its own Save, so the saved bet is the same as a real "I bet this" tap with no edits (never addToLog directly). opt.host (a visible .pcard) = where the full form opens when the pick needs a look. Only one save at a time; the row is read again after the live-price wait */
 async function easyPlacedSave(r0, opt){ opt=opt||{}; const key=typeof r0==='string'?r0:pxKey(r0), pk=opt.pick || (typeof r0==='string'?null:{r:r0, rowBook:r0.book, rowRaw:r0.offeredRaw}), r=easyRowFor(key, pk);   /* v5.24 (step 5, review saves S1-2): the row this pick showed (its book and price), never another row of the same key */
@@ -7666,7 +7666,7 @@ loadRemoved();
 function lineOnly(b){ return String(b.betnow||b.market||'').replace(/\s+[+-]\d+$/,''); }
 function removeBet(bet, lost){
   const i=logged.indexOf(bet); if(i<0) return;
-  logged.splice(i,1);
+  logged.splice(i,1); syncMarkGone('log',[bet&&bet.id]);   // v5.25 round 2 (HS-1): a bet you remove is a deletion even while a failed save holds tombstones back
   removedBets.push(Object.assign({}, bet, {removedAt:new Date().toISOString(), lost:+(lost||0), placed:lost>0}));
   saveLog(); saveRemoved(); renderLog(); renderPerf(); refresh();
 }
@@ -7841,7 +7841,7 @@ function cfgSaveFailNote(bad){ let el=document.getElementById('cfgSaveFail'); if
 function logMakeRoom(){ const v=JSON.stringify(logged), put=()=>{ try{ localStorage.setItem('mbev.log',v); return true; }catch(e){ return false; } }, wput=A=>{ try{ localStorage.setItem('mbev.watchObs',JSON.stringify(A)); }catch(e){} };
   try{ const A=watchAll(); let n=0; A.forEach(o=>{ if(o && o.sig){ o.nSig=Math.max(+o.nSig||0,o.sig.length); delete o.sig; n++; } }); if(n){ wput(A); if(put()) return true; }
     const P=A.filter(o=>o && o.pruned).sort((x,y)=>String(x.first||x.at||'')<String(y.first||y.at||'')?-1:1), step=Math.max(20,Math.ceil(P.length/10));
-    for(let i=0;i<P.length;i+=step){ const drop=new Set(P.slice(i,i+step)); for(let j=A.length-1;j>=0;j--) if(drop.has(A[j])) A.splice(j,1); wput(A); if(put()) return true; } }catch(e){}
+    for(let i=0;i<P.length;i+=step){ const drop=new Set(P.slice(i,i+step)); for(let j=A.length-1;j>=0;j--) if(drop.has(A[j])) A.splice(j,1); syncForgetLocal('watch',[...drop].map(o=>o.k)); wput(A); if(put()) return true; } }catch(e){}   // v5.25 round 2 (HS-5): dropped on this device only
   try{ const cut=ctDay(Date.now()-30*86400e3); let n=0; Object.keys(gradeHistory).forEach(k=>{ const d=String(k).slice(0,10); if(/^\d{4}-\d{2}-\d{2}$/.test(d) && d<cut){ delete gradeHistory[k]; n++; } });
     if(n){ try{ localStorage.setItem('mbev.gradehistory', JSON.stringify(gradeHistory)); }catch(e){} if(put()) return true; } }catch(e){}
   return false; }
@@ -8786,7 +8786,7 @@ async function renderLive(force){
     const groups=new Map(), SB={}; sports.forEach((sp,i)=>{ SB[sp]=(SBv&&SBv[i])||scoreboardCache[sp]||[]; });   /* v4.78: from what each fetch returned */   /* v4.77: the scoreboards as read now (another refresh can clear the cache while a box score loads) */
     for(const b of bets){
       const evs=(SB[b.sport]||[]).filter(ev=>{ if(!evOkFor(b,ev)) return false; const s=Date.parse(b.start), t=Date.parse(ev.date); return isNaN(s) || (!isNaN(t) && Math.abs(t-s)<6*3600e3); });   // v5.25 (GRADING-2): only the bet's own game (tonight's final never settles tomorrow's bet on the same teams)
-      const ev=findGame(evs,b.game)||findGameAny(evs,b.game,b.name,b.matchup)||await liveGameByPlayer(b,evs);   // v4.76: + by the player's box score (Novig props name no teams)
+      const ev=ownGameFor(b, SB[b.sport]||[], true)||await liveGameByPlayer(b,evs);   // v5.25 round 2 (G-1, G-5): the game at the bet's start (game 2 of a doubleheader), or the only game of its teams that day   // v4.76: + by the player's box score (Novig props name no teams)
       const k=ev?b.sport+':'+ev.id:'?:'+b.sport+':'+gameKey(b.game)+(teamsOf(b.game)?'':':'+(b.start||b.date||''));   // v4.76: two unknown games are not one
       if(!groups.has(k)) groups.set(k,{ev,sport:b.sport,game:b.game,bets:[]});
       groups.get(k).bets.push(b);
@@ -9270,11 +9270,25 @@ function ownGameOk(b, ev){ if(!b || !ev) return false; const t=Date.parse(ev.dat
 function pickByStart(b, list){ list=(list||[]).filter(Boolean); if(!list.length) return null; const s=Date.parse(b&&b.start); if(isNaN(s)) return list[0];
   const d=e=>{ const t=Date.parse(e.date); return isNaN(t)?Infinity:Math.abs(t-s); };
   const ex=list.find(e=>d(e)<60e3); if(ex) return ex;
-  const near=list.filter(e=>d(e)<6*3600e3).sort((x,y)=>d(x)-d(y)); return near[0]||list[0]; }
+  const near=list.filter(e=>d(e)<6*3600e3).sort((x,y)=>d(x)-d(y)); return near[0]||(list.length===1?list[0]:null); }   // v5.25 round 2 (G-5): far from the saved start, only when it is the one game that matches
 function gamesFor(b, evs, gl){ evs=evs||[];   // v5.25: every event that findGame / findGameAny would take, in the same order of preference
   let L=evs.filter(e=>findGame([e],b.game)); if(L.length) return L;
   L=evs.filter(e=>findGameAny([e],b.game,b.matchup)); if(L.length) return L;
   return gl ? evs.filter(e=>findGameAny([e],b.name)) : []; }
+/* v5.25 round 2 (review G-1, G-3, G-4, G-5): the bet's own game among a list of events, the one rule for Check results, Live Games and Check my history.
+   With a saved start: the matching games within 6 hours, the one at the start (pickByStart, so game 2 of a doubleheader is game 2); else, when it is the
+   only game of these teams that Central day, that game (a start saved in the wrong zone or a moved game). With no start: a settled bet (or one you added
+   with its date) only on its own game day; an open bet on its date or the day after (the 4-hour rule); an open NFL or college football bet also the only
+   game of these teams in the 7 days from its date. */
+function ownGameFor(b, evs, gl){ if(!b) return null; const C=gamesFor(b, (evs||[]).filter(e=>e && !isNaN(Date.parse(e.date)) && evOkFor(b,e)), gl); if(!C.length) return null;
+  const s=Date.parse(b.start), dayOf=e=>ctDay(Date.parse(e.date)), done=!!(b.sold || b.voided || /^(win|loss|push)$/.test(b.result||''));
+  if(!isNaN(s)){ const near=C.filter(e=>Math.abs(Date.parse(e.date)-s)<6*3600e3); if(near.length) return pickByStart(b, near);
+    const same=C.filter(e=>dayOf(e)===ctDay(s)); return same.length===1 && teamsOf(b.game) ? same[0] : null; }
+  if(!b.date) return null;
+  const own=gameDayOf(b)||b.date, days=(done || (b.manual && b.dateSet)) ? [own] : [b.date, dayPlus(b.date,1)];
+  for(const d of days){ const D=C.filter(e=>dayOf(e)===d); if(D.length) return D[0]; }   /* its own date first: a postponed game on it is not swapped for the next day’s makeup */
+  if(!done && ESPN_WEEK_BASED.has(b.sport) && teamsOf(b.game)){ const W=C.filter(e=>{ const d=dayOf(e); return d>=b.date && d<=dayPlus(b.date,6); }); if(W.length===1) return W[0]; }
+  return null; }
 /* v4.72 (agreed with ChatGPT, owner "BUILD" 11/11; Commanders-Rams Under 44.5 was graded from Broncos-Panthers): a Novig game total is graded
    only from the one ESPN game that has Novig's own teams at Novig's kickoff (within 90 minutes), full game only. That game's ESPN id is then frozen
    (b.espnEv) and used on every later run. No teams, no kickoff, a part-game market, no game or two games: no grade, "NOVIG EVENT MISMATCH · review".
@@ -9299,6 +9313,7 @@ async function findBetGame(b){
     const seen=new Set(), U=evs.filter(e=>e && !seen.has(e.id) && seen.add(e.id)); const r=nvPick(b, U); return r.ev||null; }
   let days;
   if(b.start && !isNaN(Date.parse(b.start))) days=[gameDayOf(b)];
+  else if(b.dateSet && b.date) days=[b.date];   // v5.25 round 2 (review G-3): a bet whose game day was set is looked for on that day only (never the next day’s game of a series)
   else { const from=gameDayOf(b)||today; days=[from, dayPlus(from,1), dayPlus(from,2), today].filter((d,i,a)=>a.indexOf(d)===i).sort(); }   // v2.85: upcoming days too (Monday night)
   for(const d of days){   // 1) by the teams saved with the bet
     const evs=(await fetchScoreboardDay(b.sport, d)).filter(ev=>evOkFor(b,ev));
@@ -9319,17 +9334,22 @@ async function findBetGame(b){
   }
   if(gl || !b.name || teamsOf(b.game)) return null;   // teams known but no match: don't guess by player
   for(const d of days){   // 2) no teams saved: the finished game whose box score has this player
-    const all=(await fetchScoreboardDay(b.sport, d)).filter(ev=>evOkFor(b,ev)), s0=Date.parse(b.start);
+    const all=(await fetchScoreboardDay(b.sport, d)).filter(ev=>evOkFor(b,ev)), s0=Date.parse(b.start); let pend=false;   // v5.25 round 2: pend = a closer game is still to finish
     let evs=all.filter(ev=>{ const g=gameStatusOf(ev); return g && g.state==='post'; });
     if(!isNaN(s0)){   /* v5.25 (GRADING-4, NHL Sebastian Aho): with a saved start, a game at that start (within 60 s) is the only candidate; else the games within
       6 hours, closest first, and no guess while a closer one has not finished. Only then the others, as before. */
       const dist=ev=>Math.abs(Date.parse(ev.date)-s0), ex=all.filter(ev=>dist(ev)<60e3);
-      if(ex.length){ evs=ex.filter(ev=>evs.includes(ev)); if(evs.length<ex.length) evs=[]; }
-      else { const near=all.filter(ev=>dist(ev)<6*3600e3).sort((x,y)=>dist(x)-dist(y)); if(near.length){ const k=near.findIndex(ev=>!evs.includes(ev)); evs=(k<0?near:near.slice(0,k)); } } }
+      if(ex.length){ evs=ex.filter(ev=>evs.includes(ev)); if(evs.length<ex.length){ evs=[]; pend=true; } }
+      else { const near=all.filter(ev=>dist(ev)<6*3600e3).sort((x,y)=>dist(x)-dist(y)); if(near.length){ const k=near.findIndex(ev=>!evs.includes(ev)); evs=(k<0?near:near.slice(0,k)); if(k>=0) pend=true; } } }
+    const lists=[];
     for(const ev of evs){
       const box=await fetchBoxscore(b.sport, ev.id, true);
       if(statForMarket(box, b.name, b.market, b.sport, true)!==null) return ev;   // v5.25 (GRADING-4): only a stat found in its own table picks the game
+      if(boxHasPlayer(box, b.name)) lists.push(ev);
     }
+    /* v5.25 round 2 (review G-2: a QB Under rushing yards with no carry, an RB with no catch): no game has the stat in its own table, so the player's own
+       game is read as before (played = 0): the one at the saved start, or the only finished game that lists him while no closer game is still to finish. */
+    if(lists.length){ const ex1=!isNaN(s0) && lists.find(ev=>Math.abs(Date.parse(ev.date)-s0)<60e3); if(ex1) return ex1; if(lists.length===1 && !pend) return lists[0]; }
     if(!isNaN(s0) && all.some(ev=>Math.abs(Date.parse(ev.date)-s0)<6*3600e3)) return null;   // v5.25: a game near its start exists: wait for it, never a far one
   }
   return null;
@@ -9390,12 +9410,12 @@ async function autoGradeLog(){
     // v2.85: graded, but its game hasn't started yet → that grade came from the wrong game
     logged.forEach(b=>{ if(b.sold || b.voided || b.gradedBy==='manual' || b.gradedBy==='import' || b.gradedBy==='book' || !b.start || !(b.result==='win'||b.result==='loss'||b.result==='push')) return;   // v5.25 (GRADING-6): a void, your own result, an import or the book's settlement is kept
       const t=Date.parse(b.start); if(!isNaN(t) && t>Date.now()){ delete b.result; changed++; } });
-    logged.forEach(b=>{ if(b.fixSog94 || b.gradedBy==='manual' || b.gradedBy==='import' || b.gradedBy==='book' || b.sold || !(b.sport==='NHL'||b.sport==='MLS') || !/SHOT/i.test(b.market||'') || !/GOAL/i.test(b.market||'')) return; b.fixSog94=1;   // v3.94: graded as goals before; grade it again   // v3.95: only "Shots On Goal" (plain "Shots" was graded right)
+    logged.forEach(b=>{ if(b.fixSog94 || b.voided || b.gradedBy==='manual' || b.gradedBy==='import' || b.gradedBy==='book' || b.sold || !(b.sport==='NHL'||b.sport==='MLS') || !/SHOT/i.test(b.market||'') || !/GOAL/i.test(b.market||'')) return; b.fixSog94=1;   // v3.94: graded as goals before; grade it again   // v3.95: only "Shots On Goal" (plain "Shots" was graded right)
       if(b.result==='win'||b.result==='loss'||b.result==='push'||b.result==='?'){ if(b.resultSrc && b.resultSrc!=='ESPN') return; delete b.result; delete b.why; changed++; } });
     /* v4.40 (Alonzo, 11/9, Novig "Lekkerimaki 2+ Yes"): bets logged from a Novig fill before v4.40 could carry Novig's strike as the line ("2 Shots On Goal")
        when the bet was "2+", which is Over 1.5. Once: the line becomes N−0.5 (Over), the old text goes in edits; an ESPN or automatic PUSH at N (exactly N)
        is a WIN at N−0.5. Wins and losses stand (a loss at Over N with fewer than N is a loss at N−0.5 too); your own grades are never touched. */
-    logged.forEach(b=>{ if(b.fixPlus40) return; b.fixPlus40=1; if(b.autoFrom!=='novig' || (b.kind&&b.kind!=='prop') || (b.side&&b.side!=='O')) return;
+    logged.forEach(b=>{ if(b.fixPlus40) return; b.fixPlus40=1; if(b.voided || b.autoFrom!=='novig' || (b.kind&&b.kind!=='prop') || (b.side&&b.side!=='O')) return;
       const ln=lineOfMarket(b.market); if(ln==null || !Number.isInteger(ln) || ln<1) return;
       (b.edits=b.edits||[]).push({at:new Date().toISOString(), before:{market:b.market}, note:'v4.40: Novig '+ln+'+ is Over '+(ln-0.5)});
       b.market=(ln-0.5)+' '+statOfMarket(b.market); b.side='O'; if(b.betnow) b.betnow=String(b.betnow).replace(new RegExp('^(O\\s+)?'+ln+'\\b'),'O '+(ln-0.5));
@@ -9424,7 +9444,7 @@ async function autoGradeLog(){
         continue; }
       const gi=gameStatusOf(ev); if(!gi){ const S0=settlementFor(b); if(S0){ setFromSettlement(b,S0); changed++; continue; } const rsn=nvReviewText(b)||'game not found on ESPN'; if(!b.why || b.why.reason!==rsn){ b.why={at:Date.now(), reason:rsn, market:b.market||''}; changed++; } continue; }   /* v4.72: a Novig total that cannot be matched says so */
       // v2.80: keep the real start time and teams, so the bet counts on the day the game is played
-      if(gi.startISO && b.start!==gi.startISO && (isNaN(Date.parse(b.start)) || Math.abs(Date.parse(gi.startISO)-Date.parse(b.start))<6*3600e3)){ b.start=gi.startISO; changed++; }   // v5.25 (GRADING-5): never the start of a game far from the saved one
+      if(gi.startISO && b.start!==gi.startISO && (isNaN(Date.parse(b.start)) || Math.abs(Date.parse(gi.startISO)-Date.parse(b.start))<6*3600e3 || (teamsOf(b.game) && (await fetchScoreboardDay(b.sport, ctDay(Date.parse(b.start)))).filter(e=>findGame([e],b.game)||findGameAny([e],b.game)).length===1))){ b.start=gi.startISO; changed++; }   // v5.25 round 2 (G-5): or the only game of its teams that day (a moved game or a start saved in the wrong zone)   // v5.25 (GRADING-5): never the start of a game far from the saved one
       if(!teamsOf(b.game)){ const a=gi.teams.find(t=>t.ha==='away'), h=gi.teams.find(t=>t.ha==='home'); if(a&&h){ b.game=a.abbr+' @ '+h.abbr; changed++; } }
       if(GL_KINDS.test(b.kind||'') && b.kind!=='total' && b.team && !gi.teams.some(t=>t.abbr===normAbbr(b.team))){   // v3.18: e.g. CSUS → SAC
         const t=gi.teams.find(x=>teamNameIs({abbreviation:x.abbr,name:x.nick,shortDisplayName:x.name,location:x.loc}, b.name)); if(t){ b.team=t.abbr; changed++; } }
@@ -12161,7 +12181,7 @@ function rpCsvDl(){ const S=rpSet(); if(!S.L.length && !S.Rm.length){ alert('No 
 document.getElementById('wipe').addEventListener('click',()=>{
   if(!logged.length) return;
   if(confirm('Delete all '+logged.length+' logged bets? This cannot be undone.'+(SY&&SY.on?' ☁ Sync is on: they are deleted on your other devices too.':''))){
-    logged=[]; saveLog(); renderLog(); renderPerf(); refresh();
+    syncMarkGone('log', logged.map(b=>b&&b.id)); logged=[]; saveLog(); renderLog(); renderPerf(); refresh();   // v5.25 round 2 (HS-1)
   }
 });
 /* ============ closing-line grab (v2.50) ============
@@ -12240,14 +12260,15 @@ async function checkResultsRun(){
   await Promise.all(sports.map(fetchScoreboard));
   for(const b of logged){
     if(b.sold || b.kind==='parlay') continue;   // a cashed-out bet keeps its sale result; parlays are graded by hand
-    if(b.gradedBy==='manual' || b.gradedBy==='import' || b.voided) continue;   // v3.84 (Alonzo: "I press Check results again, they come back"): your own result wins here too   /* v4.72: and an imported one */   /* v5.25 (GRADING-6): and a void */
+    if(b.gradedBy==='manual' || b.gradedBy==='import' || b.voided || b.gradedBy==='book' || (b.resultSrc && b.resultSrc!=='ESPN' && b.resultSrc!=='you')) continue;   // v5.25 round 2 (G-6): the book's settlement stays   // v3.84 (Alonzo: "I press Check results again, they come back"): your own result wins here too   /* v4.72: and an imported one */   /* v5.25 (GRADING-6): and a void */
     const had=/^(win|loss|push)$/.test(b.result||'') ? b.result : null;   // v3.84: a settled result is not erased when ESPN cannot grade it
     const gl=GL_KINDS.test(b.kind||'');
     let ev;
     if(nvGated(b)) ev=nvPick(b, scoreboardCache[b.sport]).ev||null;   /* v4.72: a Novig total only from its own verified game */
     else { ev=findGame(scoreboardCache[b.sport], b.game);
     if(!ev && gl) ev=findGameAny(scoreboardCache[b.sport], b.game, b.name); }   // v2.59: "NO-PIT" style games
-    if(ev && !ownGameOk(b, ev)){ const own=pickByStart(b, gamesFor(b, (scoreboardCache[b.sport]||[]).filter(e=>ownGameOk(b,e)), gl)); ev=nvGated(b)?null:own; }   // v5.25 (GRADING-1): only the bet's own game: a later meeting of the same teams never re-grades it
+    if(nvGated(b)){ if(ev && !ownGameOk(b, ev)) ev=null; } else ev=ownGameFor(b, scoreboardCache[b.sport]||[], gl);
+    if(ev && isNaN(Date.parse(b.start)) && b.date && ctDay(Date.parse(ev.date))!==b.date && gamesFor(b, await fetchScoreboardDay(b.sport, b.date), gl).length) ev=null;   // v5.25 round 2 (review G-3): its own date had these teams (a postponed game): never the next day’s makeup   // v5.25 (GRADING-1): only the bet's own game: a later meeting of the same teams never re-grades it   // v5.25 round 2 (G-1, G-3, G-4, G-5): one rule, ownGameFor
     const gi=gameStatusOf(ev);
     if(!gi){ continue; }
     if(gi.state!=='post'){ if(!had) b.result='pending'; continue; }   // v3.84: had
@@ -12265,7 +12286,7 @@ async function checkResultsRun(){
    (ownGameOk, the rule Check results now uses). It lists every bet whose new grade differs from the saved one; nothing changes until you tap
    "Use the new result" (that bet only: result, regradedFrom, regradedAt; its snapshot is never touched) or "Keep mine" (marked as your own result,
    never listed again). One ESPN scoreboard read per sport and day, kept for the run. */
-function histEligible(b){ return !!(b && b.kind!=='parlay' && !b.sold && !b.voided && b.gradedBy!=='manual' && b.gradedBy!=='import' && /^(win|loss|push)$/.test(b.result||'') && ESPN_MAP[b.sport]); }
+function histEligible(b){ return !!(b && b.kind!=='parlay' && !b.sold && !b.voided && b.gradedBy!=='manual' && b.gradedBy!=='import' && b.gradedBy!=='book' && !(b.resultSrc && b.resultSrc!=='ESPN' && b.resultSrc!=='you') &&   /* v5.25 round 2 (G-6, HS-6): the book's settlement stands */ /^(win|loss|push)$/.test(b.result||'') && ESPN_MAP[b.sport]); }
 function histDaysOf(b){ const s=Date.parse(b.start); if(!isNaN(s)) return [ctDay(s)]; return b.date ? [b.date, dayPlus(b.date,1)] : []; }
 async function histScoreboard(cache, bad, sport, day){ const k=sport+'|'+day; if(k in cache) return cache[k];
   let evs=null; try{ const res=await fetch('https://site.api.espn.com/apis/site/v2/sports/'+ESPN_MAP[sport]+'/scoreboard?dates='+day.replace(/-/g,'')+'&limit=300'+(sport==='NCAAF'?'&groups=80':''));
@@ -12278,9 +12299,10 @@ function histScoreTxt(ev){ const tm=compsOf(ev), a=tm.find(c=>c.homeAway==='away
 async function histRegrade(b, cache, bad){   // → {res, ev, val, line} or {skip:'why'}
   const c=JSON.parse(JSON.stringify(b)), gl=GL_KINDS.test(c.kind||''), days=histDaysOf(c); if(!days.length) return {skip:'no game day saved'};
   let evs=[]; for(const d of days) evs=evs.concat(await histScoreboard(cache, bad, c.sport, d));
+  if(days.some(d=>bad.has(c.sport+' '+d))) return {skip:'ESPN could not be read for its game day'};   // v5.25 round 2 (HS-2): never from the other day
   const own=evs.filter(e=>ownGameOk(c,e)); let ev=null;
   if(nvGated(c)) ev=nvPick(c, own).ev||null;
-  else ev=pickByStart(c, gamesFor(c, own, gl));
+  else ev=ownGameFor(c, evs, gl);   // v5.25 round 2: the same rule as Check results
   if(!ev && !gl && c.name && !teamsOf(c.game)){ const s=Date.parse(c.start), dist=e=>isNaN(s)?0:Math.abs(Date.parse(e.date)-s);
     for(const e of own.slice().sort((x,y)=>dist(x)-dist(y))){ if(((e.status&&e.status.type)||{}).state!=='post') continue; const bx=await fetchBoxscore(c.sport, e.id, true); if(statForMarket(bx, c.name, c.market, c.sport, true)!==null){ ev=e; break; } } }
   if(!ev) return {skip:'its game was not found on ESPN'};
@@ -12301,7 +12323,7 @@ async function histCheckRun(){
   const cache={}, bad=new Set(), L=logged.filter(histEligible), found=[]; let done=0, skipped=0;
   try{
     for(const b of L){ done++; if(done===1 || done%5===0) st.textContent='Checking '+done+' of '+L.length+'…';
-      try{ const r=await histRegrade(b, cache, bad); if(r.skip){ skipped++; continue; } if(r.res!==b.result) found.push(Object.assign({b}, r)); }catch(e){ skipped++; } }
+      try{ const r=await histRegrade(b, cache, bad); if(r.skip){ skipped++; continue; } const nr=r.res==='none'?'push':r.res; if(nr!==b.result) found.push(Object.assign({b, saved:b.result}, r));   /* v5.25 round 2 (HS-3): compare what a tap would write; saved = the result when listed (HS-4) */ }catch(e){ skipped++; } }
     window._histRes={}; found.forEach(x=>{ window._histRes[String(x.b.id)]=x; });
     histPaint(L.length, skipped, bad);
   } finally{ window._histBusy=false; btn.disabled=false; } }
@@ -12312,6 +12334,7 @@ function histPaint(n, skipped, bad){ const st=document.getElementById('histStatu
 document.addEventListener('click', e=>{
   const u=e.target.closest && e.target.closest('#histOut .hist-use'), k=e.target.closest && e.target.closest('#histOut .hist-keep');
   if(!u && !k) return; const id=(u||k).dataset.id, x=(window._histRes||{})[id], b=logged.find(y=>y && String(y.id)===id); if(!x || !b) return;
+  if(!histEligible(b) || b.result!==x.saved){ delete window._histRes[id]; histPaint(); const st=document.getElementById('histStatus'); if(st) st.textContent+=' A bet changed since the check was left as it is.'; return; }   // v5.25 round 2 (HS-4): a result set since the check is never overwritten
   if(u){ b.regradedFrom=b.result; b.regradedAt=new Date().toISOString(); b.result=x.res==='none'?'push':x.res; delete b.why; }
   else { b.gradedBy='manual'; }
   delete window._histRes[id]; saveLog(); renderLog(); renderPerf(); try{ refresh(); }catch(err){} histPaint(); });
@@ -15368,6 +15391,7 @@ function syncMergeColl(local, rc, rd, st, join){
   });
   Object.keys(rc).forEach(id=>{ if(have.has(id)) return; const r=rc[id]; if(!r || r.v===undefined) return;
     const rm=+r.m||0, del=+st.T[id]||0;
+    if(st.X && st.X[id]) return;   // v5.25 round 2 (HS-5): dropped here for room: not put back on this device
     if(del && del>=rm){ push=true; return; }   // deleted here after its last change elsewhere
     out.push([id,r.v]); st.S[id]=rm; st.H[id]=syncQuick(r.v); delete st.T[id]; changed=true; n.added++; });
   Object.keys(rd).forEach(id=>{ if(!have.has(id) && !(+st.T[id]>=+rd[id])) st.T[id]=+rd[id]; });   // keep the cloud's tombstones
@@ -15403,6 +15427,10 @@ function syncMetaSave(){ const M=SY.meta;
   Object.values(M.c).forEach(st=>{ st.B={}; });   // storage full: drop the merge bases (merges fall back to newer-wins) rather than lose the meta
   syncLS('mbev.syncMeta', JSON.stringify(M));
   if(window._logSaveBad===true && lsSafeSet('mbev.log', JSON.stringify(logged))){ window._logSaveBad=false; saveFailNote(false); } }   // v5.25 (ENG-2): the room the meta freed is used to save the bet log again
+/* v5.25 round 2 (HS-1, HS-5): a deletion you made is written to the sync bookkeeping at once (so it is never held back), and Watch records dropped to make
+   room on a full device are forgotten here only: no deletion mark, and the cloud copy does not put them back on this device (st.X). */
+function syncMarkGone(c, ids){ try{ if(!SY || !SY.on) return; if(!SY.meta) syncMeta(); const st=syncSt(c), now=Date.now(); (ids||[]).forEach(id=>{ if(id==null) return; delete st.H[id]; delete st.S[id]; st.T[id]=now; }); SY.meta.dirty=true; syncMetaSave(); }catch(e){} }
+function syncForgetLocal(c, ids){ try{ if(!SY || !SY.on) return; if(!SY.meta) syncMeta(); const st=syncSt(c); st.X=st.X||{}; (ids||[]).forEach(id=>{ if(id==null) return; delete st.H[id]; delete st.S[id]; st.X[id]=1; }); syncMetaSave(); }catch(e){} }
 function syncSt(c){ const M=SY.meta, st=M.c[c]||(M.c[c]={S:{},T:{},B:{},H:{}}); ['S','T','B','H'].forEach(k=>{ st[k]=st[k]||{}; }); return st; }
 function betSig(b){ return [b.date, nrm(b.name), String(b.market||'').toLowerCase(), b.side||'', LIVE_BOOK(b.book)||String(b.book||'').toLowerCase(), b.odds, (+b.stake||0).toFixed(2)].concat(b.kind==='parlay' && b.key ? [b.key] : []).join('|'); }   // v5.11 (bug): a parlay with its own key (saved from v5.11 on) is never taken for a copy of another parlay with the same day, name, book, price and stake when a device joins the sync; others keep their sig
 function syncEnsureIds(){ let n=0;   // older bets saved without an id get one built from what they are — the same on every device

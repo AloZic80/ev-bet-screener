@@ -3,6 +3,7 @@
 // (b) at the wall the bet log makes room from Watch sightings, then the oldest pruned Watch records, then grade history older than 30 days, never from bets;
 // (c) Settings says how full storage is and about how many more bets fit; the Bet log says so calmly over 80%;
 // (d) a setting that cannot be saved says so in its own note, and a settings save never hides the bet log banner.
+// Round 2 (review HS-1, HS-5): a bet removed on purpose after a failed save stays removed; Watch records dropped for room are dropped on this device only.
 const path=require('path'); const INDEX=path.join(__dirname,'..','index.html');
 const { chromium } = require('playwright'); const fs=require('fs'); const zlib=require('zlib');
 const html=fs.readFileSync(process.argv[2]||INDEX,'utf8');
@@ -95,6 +96,38 @@ const addBet=(p,id)=>p.evaluate(id=>{ addToLog({name:'New Guy', sport:'NBA', mar
     await p.evaluate(()=>{ localStorage.removeItem('zfill'); saveFailNote(true); save(); });
     const d3=await p.evaluate(()=>({log:!!document.getElementById('saveFail'), cfg:!!document.getElementById('cfgSaveFail'), stored:JSON.parse(localStorage.getItem('mbev.cfg')||'{}').bank}));
     check('(d) once it saves, its note goes and the bet log banner stays', d3.log && !d3.cfg && d3.stored==='12500.55555', d3);
+    allErrs.push(...errs); await ctx.close(); }
+  // ================= v5.25 round 2 (review HS-1, HS-5): sync after a failed save =================
+  const mkWorker=()=>{ const W={srv:{rev:0, doc:null, nonce:''}, down:false};
+    W.route=(u,r)=>{ if(!/api\.0xbeta\.dev/.test(u)) return null; const req=r.request(), U=new URL(u), H={'access-control-allow-origin':'http://app.test','access-control-allow-credentials':'true','access-control-allow-headers':'*','access-control-expose-headers':'*','content-type':'application/json'}, srv=W.srv;
+      if(req.method()==='OPTIONS') return r.fulfill({status:204,headers:H,body:''});
+      if(W.down && /^\/sync/.test(U.pathname)) return r.fulfill({status:500,headers:H,body:'{}'});
+      if(U.pathname==='/sync/head') return r.fulfill({headers:H, body:JSON.stringify({doc:srv.doc?{rev:srv.rev}:null, board:{rev:0}})});
+      if(U.pathname==='/sync' && req.method()==='GET') return r.fulfill({headers:Object.assign({'x-sync-nonce':srv.nonce,'x-sync-rev':String(srv.rev)},H), body:srv.doc?JSON.stringify(srv.doc):JSON.stringify({empty:true})});
+      if(U.pathname==='/sync' && req.method()==='PUT'){ let bd=req.postDataBuffer(); if((req.headers()['x-sync-enc']||'')==='gzip') bd=zlib.gunzipSync(bd); const d=JSON.parse(bd.toString()); srv.rev++; srv.doc=d; srv.nonce=d.nonce; return r.fulfill({headers:H, body:JSON.stringify({ok:true, head:{rev:srv.rev}})}); }
+      if(/^\/sync\/board/.test(U.pathname)) return r.fulfill({headers:H, body:JSON.stringify({ok:true, head:{rev:1}})});
+      return r.fulfill({headers:H, body:'{}'}); }; return W; };
+  const small=i=>{ const x=mkBet(i); x.snap={at:x.snap.at}; return x; };
+  // HS-1: one failed save, the Worker down, then a bet you remove on purpose: it stays removed (a deletion mark goes up)
+  { const W=mkWorker(); const {ctx,p,errs}=await boot(b,{'mbev.log':JSON.stringify(Array.from({length:30},(_,i)=>small(i))), 'mbev.syncOn':'1', 'mbev.syncKey':'k'.repeat(64)}, W.route);
+    await p.waitForTimeout(4000); await fill(p,0); W.down=true; await addBet(p,'NEWBET'); await p.waitForTimeout(6000);
+    await p.evaluate(()=>localStorage.removeItem('zfill'));
+    await p.evaluate(()=>{ removeBet(logged.find(x=>x.id==='seed-0'), 0); });
+    W.down=false; await p.waitForTimeout(2000); await p.evaluate(()=>syncNow({force:true})); await p.waitForTimeout(3000); await p.evaluate(()=>syncNow({force:true})); await p.waitForTimeout(2000);
+    const r=await p.evaluate(()=>({here:logged.some(x=>x.id==='seed-0'), n:logged.length, newbet:logged.some(x=>x.id==='NEWBET')}));
+    const sv={has0:!!(W.srv.doc&&W.srv.doc.coll.log['seed-0']), del0:!!(W.srv.doc&&W.srv.doc.del.log&&W.srv.doc.del.log['seed-0']), hasNew:!!(W.srv.doc&&W.srv.doc.coll.log.NEWBET)};
+    check('HS-1: a bet removed on purpose after a failed save stays removed (here and on the Worker, with its deletion mark); the unsaved bet is kept', !r.here && !sv.has0 && sv.del0 && r.newbet && sv.hasNew, {r, sv});
+    allErrs.push(...errs); await ctx.close(); }
+  // HS-5: Watch records dropped to make room are forgotten on this device only: no deletion mark, and the cloud copy does not bring them back here
+  { const W=mkWorker(); const WR=[]; for(let i=0;i<60;i++) WR.push({k:'old'+i, at:'2026-10-'+String(1+(i%28)).padStart(2,'0')+'T00:00:00Z', first:'2026-10-'+String(1+(i%28)).padStart(2,'0')+'T00:00:00Z', sport:'NBA', result:'win', gradedAt:'2026-10-30T00:00:00Z', pruned:true, pad:'y'.repeat(500)});
+    const {ctx,p,errs}=await boot(b,{'mbev.log':JSON.stringify(Array.from({length:20},(_,i)=>small(i))), 'mbev.watchObs':JSON.stringify(WR), 'mbev.syncOn':'1', 'mbev.syncKey':'k'.repeat(64)}, W.route);
+    await p.waitForTimeout(5000); const cloud0=W.srv.doc?Object.keys(W.srv.doc.coll.watch||{}).length:0;
+    await fill(p,0); await addBet(p,'WALLW'); await p.waitForTimeout(6000); await p.evaluate(()=>syncNow({force:true})); await p.waitForTimeout(3000);
+    const r=await p.evaluate(()=>{ const m=JSON.parse(localStorage.getItem('mbev.syncMeta')), st=m.c.watch||{}; return {saved:JSON.parse(localStorage.getItem('mbev.log')).some(x=>x.id==='WALLW'), here:watchAll().length, T:Object.keys(st.T||{}).length, X:Object.keys(st.X||{}).length}; });
+    const del=W.srv.doc&&W.srv.doc.del&&W.srv.doc.del.watch?Object.keys(W.srv.doc.del.watch).length:0;
+    check('HS-5: Watch records dropped for room leave no deletion mark (here or on the Worker) and are not put back on this device', cloud0===60 && r.saved && r.here<60 && r.T===0 && r.X===60-r.here && del===0, {cloud0, r, del});
+    const m=await p.evaluate(()=>{ const st={S:{},T:{},B:{},H:{},X:{w1:1}}; const o=syncMergeColl([], {w1:{v:{k:'w1'},m:5}, w2:{v:{k:'w2'},m:5}}, {}, st, false); return o.out.map(x=>x[0]).join(','); });
+    check('HS-5: the merge skips only the dropped ids', m==='w2', m);
     allErrs.push(...errs); await ctx.close(); }
   check('no page errors', !allErrs.length, allErrs.slice(0,5));
   console.log(`\n${pass} passed, ${fail} failed`); await b.close(); process.exit(fail?1:0);
