@@ -2,6 +2,7 @@
 // Sunday 2026-11-15 12:00 PM CT) and checks every easy* function against the app's own numbers: the God board, the God cards' text, the "Type this" ticket, the Bet log.
 const path=require('path'), fs=require('fs');
 const { chromium } = require('playwright');
+require('./practice-fixtures.js').CFG.gameCapPct='20';   // v5.26 (STAKE-1, Build B): the game cap now holds over the board's own rows of a game; the practice board's KC @ DEN had $56 on its $40 cap (Pacheco listed), so the cap is raised here as in v517-tabrows (the caps are not what this test is about)
 const { openPractice } = require('./practice-copy.js');
 const html=fs.readFileSync(process.argv[2]||path.join(__dirname,'..','index.html'),'utf8');
 let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?'PASS ':'FAIL ')+n+'  → '+JSON.stringify(got===undefined?null:got).slice(0,700)); };

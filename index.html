@@ -38,7 +38,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.25</title>
+<title>0xBeta Screener v5.26</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -2228,7 +2228,7 @@ html[data-viewas="easy"] button.themer{width:44px; height:44px}
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.25</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.26</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2473,6 +2473,7 @@ html[data-viewas="easy"] button.themer{width:44px; height:44px}
     <div class="field"><label for="abProj">Projection</label><input id="abProj" type="number" step="0.1"></div>
     <div class="field"><label for="abCover">Cover probability %</label><input id="abCover" type="number" step="0.1" min="1" max="99"></div>
     <div class="field"><label for="abCons">Consensus odds</label><input id="abCons" type="text" placeholder="e.g. -122"></div>
+    <div class="field"><label for="abConsO" title="The consensus price of the other side of this bet (the card shows both: O -122 | U -102). With both, the vig is taken out; with one side only there is no market check.">Other side</label><input id="abConsO" type="text" placeholder="e.g. -102"></div>
   </div>
   </details>
   <div class="ab-modebar">
@@ -3159,7 +3160,7 @@ html[data-viewas="easy"] button.themer{width:44px; height:44px}
 
 </div>
 <script>
-const SCREENER_VERSION='v5.25';
+const SCREENER_VERSION='v5.26';
 /* v5.24 (step 5): DEV_APP is now defined once, in the head script at the top of this file (the first paint reads it too) */
 if(!DEV_APP) document.documentElement.setAttribute('data-viewas','easy');   // v5.24 (step 3b): a customer build is Easy whatever mbev.viewAs holds
 /* v5.24 (owner 11/20: "we need to differentiate already"; "for me in GOD mode, let me tell the difference of what they cant see and i can"): levels.
@@ -3268,6 +3269,16 @@ function priceText(t){   // v3.54: one box for any price — American (-110, +12
   if(/^\d+\.\d+$/.test(t)){ const d=parseFloat(t); if(d>1) return d>=2?'+'+Math.round((d-1)*100):String(-Math.round(100/(d-1))); }
   return t;
 }
+/* v5.26 (PRICES-3, Build B): the Odds box of the bet form, + Add a bet and the To win link, read one way. A typographic minus or dash (a sportsbook page's
+   U+2212, en dash, ...) is a minus, as on the Paste board (cleanPaste). Then only EVEN (EV, PK), a % (52%), a decimal with a point above 1.00 (1.91, 2.50)
+   or a whole American price of 100 or more in size (-110, +120, 120) is a price; anything else (52, +99, -50, 1,91, 5/2, 2) is refused (null), and Save
+   asks for the odds with its usual message. '' when the box is empty. Saved bets are never rewritten; toProb is unchanged everywhere else. Hoisted. */
+function oddsIn(t){ const s=String(t==null?'':t).replace(/[\u2212\u2012\u2013\u2014\u2015\uFE63\uFF0D]/g,'-').replace(/[\u200B-\u200D\u2060\uFEFF\u00AD]/g,'').replace(/[\u00A0\u2007\u202F\u2009\u200A]/g,' ').trim();
+  if(!s) return ''; if(/^(EVEN|EV|PK)$/i.test(s)) return s.toUpperCase();
+  if(/^\d+(?:\.\d+)?\s*%$/.test(s)){ const o=priceText(s); return /%/.test(o)?null:o; }
+  if(/^\d+\.\d+$/.test(s)) return parseFloat(s)>1 ? priceText(s) : null;
+  const m=s.match(/^([+-]?)\s*(\d+)$/); if(m && +m[2]>=100) return (m[1]==='-'?'-':'+')+String(+m[2]);
+  return null; }
 function pct(x,d){ return (x*100).toFixed(d===undefined?1:d)+'%'; }
 function feeRate(bookRaw, prob, cfg, live){   // v3.03: Polymarket US on Kalshi's curve (6.95%); Novig's 6% curve only once the game is live
   const b=(bookRaw||'').toLowerCase();
@@ -3525,7 +3536,7 @@ function pairUp(rows){
       if((da==='O'&&db==='U')||(da==='U'&&db==='O')) match = a.name===b.name && a.market===b.market &&
         la!==null&&lb!==null&&Math.abs(la-lb)<1e-6;
       else if((da==='F'&&db==='D')||(da==='D'&&db==='F')) match = la!==null&&lb!==null&&Math.abs(Math.abs(la)-Math.abs(lb))<1e-6;
-      else if(da==='ML'&&db==='ML') match = a.name!==b.name;
+      else if(da==='ML'&&db==='ML') match = a.name!==b.name && !list.some(isDrawRow) && !(()=>{ try{ return isSoccer(a.sport); }catch(e){ return false; } })();   // v5.26 (PRICES-4): in a game with a Draw the two teams are not both sides (they add to 100% less the Draw): each is judged on its own EV
       if(match){ const s=a.fairProb+b.fairProb; a.pairSum=s; b.pairSum=s; }
     }
   });
@@ -3865,7 +3876,7 @@ function auditCore(rows,cfg){
       const same = logged.filter(L=>!L.sold && L.kind!=='parlay' && onBoard(L) && inGame(L));   // v4.47
       if(same.length){
         r.corr = same.length;
-        const inPlay = same.reduce((t,b)=>t+(b.stake||0),0);
+        const inPlay = same.reduce((t,b)=>t+(b.free?0:(+b.stake||0)),0);   // v5.26 (STAKE-5): a free bet is $0 of your money here too
         r.gameInPlay = inPlay;
         // v2.50: weight existing bets by how they move with this one (rules of thumb, not measured):
         // same team + same direction 1.5x, same team + opposite direction 0.75x, otherwise 1x.
@@ -3873,7 +3884,7 @@ function auditCore(rows,cfg){
         r.gameWeighted = same.reduce((t,L)=>{
           let w=1;
           if(L.team && r.team && L.team===r.team && L.side && r.side) w = L.side===r.side ? 1.5 : 0.75;
-          return t+(L.stake||0)*w;
+          return t+(L.free?0:(+L.stake||0))*w;   // v5.26 (STAKE-5): a free bet counts $0
         },0);
         const sameP=L=>nm(L.name)===nm(r.name) || samePlayerAs(L,r);   // v4.47: worded by the book too (Lekkerimäki, a first initial)
         r.samePlayerX = same.some(sameP);   // v4.50: any bet you hold on this player, a 🍀 / 🔮 extra included: it blocks another extra
@@ -3929,10 +3940,10 @@ function auditCore(rows,cfg){
       // v2.50: game cap — one bet per player, correlated bets count more, $10 is hard
       if(r.samePlayer && !r.prior){ s=0; const H=r.samePlayerBet, he=H?heldActEv(H):null, me=r.actNet!=null?r.actNet:r.net, sg=x=>(x>=0?'+':'')+pct(x);
         r.flags.push(['warn', H ? 'PLAYER EXPOSURE · already hold '+playerBetLabel(H)+': no additional stake'+(he!=null && me!=null ? ' · this one '+(me>he+0.0001?'looks better':me<he-0.0001?'looks worse':'is about the same')+' ('+sg(me)+' vs '+sg(he)+' when you took yours)':'') : 'PLAYER EXPOSURE · already have a bet on this player: no additional stake']); }   // v4.47: says which bet   // v4.48: ChatGPT's wording, and better or worse than the one you hold (not added either way)
-      else if(s>0 && r.gameInPlay){
-        const room=Math.max(0, Math.min(cfg.gameCap-(r.gameWeighted||0), cfg.gameCap-r.gameInPlay));
+      else if(s>0 && (r.gameInPlay || cfg.gameCap>0)){   // v5.26 (STAKE-1): the cap holds with nothing logged on the game too (one bet over it was let through)
+        const room=Math.max(0, Math.min(cfg.gameCap-(r.gameWeighted||0), cfg.gameCap-(r.gameInPlay||0)));
         if(s>room){ s=room; r.capTrimmed=true; r.capBy='game'; r.capAudit.push('per-game cap'); }   /* v5.01: + the cap label */
-        if(room<cfg.sMin) r.flags.push(['warn','game cap reached ($'+cfg.gameCap.toFixed(2)+' on this game'+((r.gameWeighted||0)>r.gameInPlay+0.004?', correlation-weighted':'')+')']);
+        if(room<cfg.sMin) r.flags.push(['warn','game cap reached ($'+cfg.gameCap.toFixed(2)+' on this game'+((r.gameWeighted||0)>(r.gameInPlay||0)+0.004?', correlation-weighted':'')+')']);
       }
       if(s>0 && s<cfg.sMin-1e-9){
         if(!r.flags.some(f=>/game cap|one per player|daily max/.test(f[1]))) r.flags.push(['warn','stake under the $'+cfg.sMin.toFixed(2)+' minimum — skip']);
@@ -4074,6 +4085,7 @@ function auditCore(rows,cfg){
           if((+r.stake||0)>s+0.005){ r.capBy='lsml'; (r.capAudit=r.capAudit||[]).push('long-shot moneyline minimum'); }   /* v5.01: + the cap label */
           r.stake=+(+s).toFixed(2); used[d]=n+1; inGame[g]=(inGame[g]||0)+1; r.lsmlN=n+1; });
     window._lsml={used, inGame, gk}; }
+  applyGameCaps(rows,cfg);   // v5.26 (STAKE-1): the game cap over the board's own rows, before the daily max
   applyDayLimits(rows,cfg,slateDay);
   try{ extrasAssign(rows,cfg,slateDay); }catch(e){ console.error(e); }   // v4.50: 🍀 Just missed and 🔮 Hail Marys, after the best bets are final
   rows.forEach(r=>{ if(!(r.stake>0) || !r.kalshiFit || Math.abs(r.kalshiFit.budget-r.stake)>0.005) delete r.kalshiFit; if(!(r.tier && r.xStake>0) || !r.xKalshiFit || Math.abs(r.xKalshiFit.budget-r.xStake)>0.005) delete r.xKalshiFit; });   /* v5.05 (Los Desconfiados): a Kalshi fit is kept only while the row's stake (or its extra's) still uses it; a later pass that set it to $0 (game started, one per player, caps, AWOL, daily max) leaves none for a fill to save */
@@ -4114,9 +4126,26 @@ function kalshiFractionalFit(cashBudget, currentAsk, maxLimit, actProb, cfg, flo
 function kalshiFitRow(r, budget, cfg){ cfg=cfg||cfgRead(); const P=r&&r.offeredProb; if(!(P>0 && P<1)) return null;   // v5.05
   const q=r.actProb!=null?r.actProb:okProb(r.fairProb, r.mktProb), mx=q!=null?maxPriceFor(q,'Kalshi',cfg.eMin):null, ok=mx!=null && mx>=P-1e-9;
   return kalshiFractionalFit(budget, P, ok?mx:Math.min(0.99, Math.ceil(P*100-1e-9)/100), q, cfg, ok?undefined:null); }
+/* v5.26 (STAKE-1, Build B, owner "BUILD ALL" 11/22; the cap's size unchanged): the game cap was checked row by row against money already in the Bet log only,
+   so five $10 props on one game could all list under a $20 cap. Now the board's own rows of one game share its room, best first (mathKey, as the daily max):
+   room = the cap − the logged money on the game (as auditCore counts it, same team and side 1.5×) − what the better rows of that game already took (weighted
+   the same way against this row). The last one is trimmed if it stays at or above the smallest bet, else it gets $0 with "game cap reached". A game is its
+   ESPN event, else its game text and start hour. Off when the cap is 0. Hoisted. */
+function applyGameCaps(rows,cfg){ cfg=cfg||cfgRead(); const cap=+cfg.gameCap||0; if(!(cap>0)) return;
+  const gid=r=>(r.gameInfo&&r.gameInfo.eventId)?'e'+r.gameInfo.eventId:(r.game?gameKey(r.game)+'|'+String((r.gameInfo&&r.gameInfo.startISO)||'').slice(0,13):'');
+  const took={}, wOf=(a,r)=>(a.team && r.team && a.team===r.team && a.side && r.side) ? (a.side===r.side?1.5:0.75) : 1;
+  rows.filter(r=>r && r.stake>0 && !r.prior && !r.waitOrder && !r.hiddenDup && gid(r)).sort((a,b)=>mathKey(b)-mathKey(a)).forEach(r=>{
+    const g=gid(r), T=took[g]=took[g]||[], plain=T.reduce((t,x)=>t+x.stake,0), wt=T.reduce((t,x)=>t+x.stake*wOf(x,r),0);
+    const room=Math.max(0, Math.min(cap-(r.gameWeighted||0)-wt, cap-(r.gameInPlay||0)-plain));
+    if(r.stake>room+1e-9){ let s=+Math.floor(room*100+1e-6)/100;
+      if(s>0 && /kalshi/i.test(r.book||'')){ const k=kalshiFitRow(r,s,cfg); if(k){ r.contracts=k.shares; r.kalshiFit=k; } else s=0; }
+      if(s>0 && /polymarket/i.test(r.book||'')) r.contracts=Math.floor(s/r.offeredProb);
+      if(s>=cfg.sMin-1e-9){ r.stake=s; r.capTrimmed=true; r.capBy='game'; (r.capAudit=r.capAudit||[]).push('per-game cap'); }
+      else { r.stake=0; delete r.contracts; if(!r.flags.some(f=>/^game cap reached/.test(f[1]))) r.flags.push(['warn','game cap reached ($'+cap.toFixed(2)+' on this game, with the better bets on it)']); return; } }
+    T.push({stake:+r.stake, team:r.team, side:r.side}); }); }
 function applyDayLimits(rows,cfg,slateDay){
   const used={};      // "day|pool" → $ already logged · v3.16: + your Make orders still waiting (full possible fill)
-  logged.forEach(b=>{ if(b.sold) return; const d=gameDayOf(b), k=d+'|'+poolOf(b); used[k]=(used[k]||0)+(+b.stake||0); });   // v4.50: long shots have no caps here any more (they are Hail Marys: extrasAssign)
+  logged.forEach(b=>{ if(b.sold) return; const d=gameDayOf(b), k=d+'|'+poolOf(b); used[k]=(used[k]||0)+(b.free?0:(+b.stake||0)); });   /* v5.26 (STAKE-5): a free bet counts $0, as on every screen */   // v4.50: long shots have no caps here any more (they are Hail Marys: extrasAssign)
   try{ ((myOrders&&myOrders.orders)||[]).forEach(o=>{ if(o.action==='sell' || o.price==null) return; const t=orderStart(o); if(t==null || t<Date.now()) return;
     const k=ctDay(t)+'|proj'; used[k]=(used[k]||0)+(+o.price||0)*(+o.qty||0); }); }catch(e){}
   // best first = edge after blending with the market; outliers (least trustworthy) go last
@@ -5469,7 +5498,7 @@ function altBooksAll(r){ if(!r || r.kind==='parlay' || !(r.offeredProb>0)) retur
     if(m.state==='no_offer' || m.state==='gone_line_moved'){ if(e && before(e)) delete by[id]; gone.push({book:n, m}); }
     else if(e && before(e)) e.why=m.note||'could not refresh'; else if(!e) miss.push({book:n, m}); });
   const mine=[], ref=[];
-  Object.values(by).forEach(e=>{ const mx=act!=null?maxPriceFor(act, e.book, cfg.eMin):null, f=feeRate(e.book,e.p,cfg.fees), net=r.fairProb!=null?actNetOf(r.fairProb, r.mktProb, e.p, f):null;
+  Object.values(by).forEach(e=>{ const fb=e.x?e.x.book:e.book /* v5.26 (EV-3): the row's real book for the math (the label "FD Predicts" has no fee) */, mx=act!=null?maxPriceFor(act, fb, cfg.eMin):null, f=feeRate(fb,e.p,cfg.fees), net=r.fairProb!=null?actNetOf(r.fairProb, r.mktProb, e.p, f):null;
     const gap=r.mktProb!=null&&isFinite(r.mktProb)?Math.abs(e.p-r.mktProb):null, far=gap!=null && gap>0.08+1e-9, passes=mx!=null && e.p<=mx+1e-9;
     const fresh=!!e.at && !e.why && now-e.at<=lim, old=!fresh, state=far?'verify':!fresh?'seen':passes?'ok':'over';
     if(far && e.x){ try{ e.x.verifyLine={gap:+gap.toFixed(4), price:+e.p.toFixed(4), market:+r.mktProb.toFixed(4), book:e.book, quoteAt:e.at, marketAt:rowSeenAt(r)||null, why:'price far from the market'}; }catch(_){} } else if(e.x && e.x.verifyLine) delete e.x.verifyLine;   /* v5.01 */
@@ -5490,7 +5519,7 @@ function altBooksHtml(r){ if(!r || r.kind==='parlay' || !(r.offeredProb>0)) retu
       (a.net!=null?' · her EV here '+(a.net>=0?'+':'')+P(a.net)+' after fees':'')+(a.at?' · read '+ag+' ago':' · price time unknown: check the book')+(a.why?' · could not refresh: '+a.why:'')+
       (a.state==='seen'?' · not confirmed now'+(a.passes?' (the last-seen price was inside her limit)':''):'')+(a.far?' · ⚠ VERIFY LINE/MARKET · price '+P(a.p)+', market '+P(a.mkt)+' · gap '+(a.gap*100).toFixed(1)+' pts':'')+'. Tap to open it; I bet this sizes the stake at its price.';
     const cls='sc-alt book'+(a.ok?' ok':' over')+(a.old?' old':'')+(a.state==='seen'?' seen':'')+(a.far?' far':'');
-    const fp=feePaidOf(a.book, a.p), body=logo+'<b>'+esc(String(a.odds||fmtOdds(Math.round(americanOf(a.p)))))+'</b><small>'+P(a.p)+(fp?' → '+P(fp.q)+' with fee':'')+' · '+word+(a.old&&a.at?' · ⏱ '+ag:a.old?' · ⏱ ?':'')+'</small>';   /* v5.14 (Las Karens review 2, item 3): the price paid with the fee next to the listed one (OK up to already counts the fee) */
+    const fp=feePaidOf(a.x?a.x.book:a.book, a.p) /* v5.26 (EV-3): the real book */, body=logo+'<b>'+esc(String(a.odds||fmtOdds(Math.round(americanOf(a.p)))))+'</b><small>'+P(a.p)+(fp?' → '+P(fp.q)+' with fee':'')+' · '+word+(a.old&&a.at?' · ⏱ '+ag:a.old?' · ⏱ ?':'')+'</small>';   /* v5.14 (Las Karens review 2, item 3): the price paid with the fee next to the listed one (OK up to already counts the fee) */
     if(a.x) return '<span class="'+cls+'" role="button" tabindex="0" data-alt-idx="'+a.x.idx+'" title="'+esc(tip)+'">'+body+'</span>';
     const src=LIVE_BOOK(a.book), kc=src==='kalshi'?kalshiCopyInfo(r, a.q, a.p, a.mx, r):null /* v5.20 */, u=(()=>{ try{ const v=bookUrl(src, a.q, 0); return v && /^(https:\/\/|novigapp:\/\/)/.test(v)?v:null; }catch(e){ return null; } })();
     return u?'<a class="'+cls.replace(' book',' sc-link')+'" href="'+esc(u)+'"'+(kc?kalshiAnchorAttrs(kc):'')+(/^https:/.test(u)?' target="_blank" rel="noopener"':'')+' title="'+esc(kc&&kc.name?tip.replace(/Tap to open it; I bet this sizes the stake at its price\.$/,'Kalshi game page · copies the market (“'+kc.name+'”, '+kc.side+(kc.lim?', limit '+kc.lim+'¢':'')+'). I bet this sizes the stake at its price.'):tip)+'">'+body+'</a>':'<span class="'+cls+' nolink" title="'+esc(tip.replace(/\. Tap to open it; I bet this sizes the stake at its price\.$/,'. No direct link here: open '+bookLabel(a.book)+' and search for this bet.'))+'">'+body+'</span>'; };   /* v5.11 (bug): no link, so the words no longer say Tap to open it */
@@ -5767,25 +5796,41 @@ function easyList(minChance){ minChance=minChance==null?0.60:minChance; const se
       out.push({key, r, rowBook:r.book, rowRaw:r.offeredRaw, sentence:easySentence(r), family:easyFamily(r).id, chance:r.actProb, edge:r.actNet, nums:n, strict:easyStrictPrice(r), price:easyPriceText(r), book:bookLabel(r.book)}); });
   return {picks:out.slice(0,5), waiting:out.slice(5), total:out.length}; }
 /* v5.24 (step 4): the picks that pass every easyList rule EXCEPT the stake: the God board would approve them but the bet it sizes is $0 (under the $1 minimum, or a game or daily cap leaves less than $1). Today says so instead of "a normal day". Display only: no stake, floor or cap is changed */
-function easyListNoStake(minChance){ minChance=minChance==null?0.60:minChance; const seen={}, cause={}; let n=0;
+function easyListNoStake(minChance){ minChance=minChance==null?0.60:minChance; const seen={}, cause={}, wantR=[]; let n=0;
   (lastRows||[]).filter(r=>r && r.pass && !(r.stake>0) && !r.prior && !r.waitOrder && !r.removed && !r.moved && !r.glConflict && !r.hiddenDup && !rowAwol(r) && !rowOld(r) && evDisplayState(r)==='actionable' && scAhead(r) && !r.longShot && !r.tier && !r.xWhy && easyRowOk(r, minChance))
-    .forEach(r=>{ const key=pxKey(r); if(!seen[key]){ seen[key]=1; n++; cause[key]=easyNoStakeCause(r); } });
-  const out={total:n, keys:Object.keys(seen), min:0, day:0, game:0, player:0, other:0, need:null}; Object.keys(cause).forEach(k=>{ out[cause[k]]++; }); if(out.min>0){ try{ out.need=easyBankNeed(out.keys); }catch(e){ out.need=null; } } return out; }
+    .forEach(r=>{ const key=pxKey(r); if(!seen[key]){ seen[key]=1; n++; cause[key]=easyNoStakeCause(r); wantR.push(r); } });   /* v5.26 (STAKE-4, EASY6-1): the rows themselves, not only their keys */
+  const out={total:n, keys:Object.keys(seen), min:0, day:0, game:0, player:0, other:0, need:null}; Object.keys(cause).forEach(k=>{ out[cause[k]]++; }); if(out.min>0){ try{ out.need=easyBankNeed(out.keys, wantR); }catch(e){ out.need=null; } } return out; }
 /* v5.24 (step 5, review money N1): WHY a pick has no suggested bet, from the flag the God board kept when it sized the bet: the day's max, the game's cap, one bet per player, or only the $1 minimum. Only "min" is about the size of the money set aside; a limit that is used up is never answered by a bigger number */
 /* v5.24 (step 6, Karens 1): the smallest money set aside (a clean number, rounded UP) at which at least one of these picks would get a bet of at least the minimum. A re-run of the board’s own sizing steps on the rows it already holds, for each trial amount: the Kelly share of it up to the largest bet (outliers and no-market rows held to the minimum), the game’s limit, then the day’s limit taken best first (mathKey) after the bets already logged and the orders waiting. Display only: no stake, floor or cap is changed. null when no amount up to $100,000 does it */
-function easyBankNeed(keys){ const c=cfgRead(), want={}; (keys||[]).forEach(k=>{ want[k]=1; }); if(!(c.sMin>0) || !(c.kelly>0)) return null;
+/* v5.26 (STAKE-4, EASY6-1, Build B): counted only for a row Easy itself would list (wantRows: the rows easyListNoStake found, not every row sharing their key,
+   such as an outlier at another book); each trial replays the board's one bet per player and one side per game (the best by her EV keeps its stake), then
+   the game cap over the rows of each game (applyGameCaps) and the daily max, best first; a free bet counts $0 (STAKE-5); and never an amount at or under
+   the money already set aside. null (the sentence is left out) when no amount up to $100,000 lists one. */
+function easyBankNeed(keys, wantRows){ const c=cfgRead(), want={}, wantR=new Set((wantRows||[]).filter(Boolean)); (keys||[]).forEach(k=>{ want[k]=1; }); if(!(c.sMin>0) || !(c.kelly>0)) return null;
+  const isWant=r=>wantR.size ? wantR.has(r) : !!want[pxKey(r)];   /* v5.26: rows when given; keys alone as before */
   const slate=((document.getElementById('slate')||{}).value || ctDay(Date.now())), flagged=r=>(r.flags||[]).some(f=>/^(daily max reached|game cap reached)|under the \$.*minimum/.test(String(f&&f[1]||'')));
-  const rows=(lastRows||[]).filter(r=>r && r.pass && !r.prior && !r.waitOrder && !r.removed && !r.hiddenDup && !r.longShot && !r.samePlayer && !(r.glConflict) && r.actNet>0 && r.offeredProb>0 && r.offeredProb<1 && (r.stake>0 || flagged(r) || want[pxKey(r)])).map(r=>({r, key:pxKey(r), per:c.kelly*(r.actNet*c.shrink)/(1/r.offeredProb-1), day:rowDay(r,slate), pool:poolOf(r), score:mathKey(r)})).sort((a,b)=>b.score-a.score);
-  const used0={}; (logged||[]).forEach(b=>{ if(!b || b.sold) return; const k=gameDayOf(b)+'|'+poolOf(b); used0[k]=(used0[k]||0)+(+b.stake||0); });
+  const gid=r=>(r.gameInfo&&r.gameInfo.eventId)?'e'+r.gameInfo.eventId:(r.game?gameKey(r.game)+'|'+String((r.gameInfo&&r.gameInfo.startISO)||'').slice(0,13):'');
+  const rows=(lastRows||[]).filter(r=>r && r.pass && !r.prior && !r.waitOrder && !r.removed && !r.hiddenDup && !r.longShot && !r.samePlayer && !(r.glConflict) && r.actNet>0 && r.offeredProb>0 && r.offeredProb<1 && (r.stake>0 || flagged(r) || isWant(r))).map(r=>({r, key:pxKey(r), per:c.kelly*(r.actNet*c.shrink)/(1/r.offeredProb-1), day:rowDay(r,slate), pool:poolOf(r), score:mathKey(r), g:gid(r), gl:/^(moneyline|spread|total)$/.test(r.kind||'')})).sort((a,b)=>b.score-a.score);
+  const used0={}; (logged||[]).forEach(b=>{ if(!b || b.sold) return; const k=gameDayOf(b)+'|'+poolOf(b); used0[k]=(used0[k]||0)+(b.free?0:(+b.stake||0)); });   /* v5.26 (STAKE-5): a free bet counts $0 */
   try{ ((myOrders&&myOrders.orders)||[]).forEach(o=>{ if(o.action==='sell' || o.price==null) return; const t=orderStart(o); if(t==null || t<Date.now()) return; const k=ctDay(t)+'|proj'; used0[k]=(used0[k]||0)+(+o.price||0)*(+o.qty||0); }); }catch(e){}
+  const ce=r=>r.actNet!=null?r.actNet:(r.net!=null?r.net:-1), wOf=(a,r)=>(a.team && r.team && a.team===r.team && a.side && r.side) ? (a.side===r.side?1.5:0.75) : 1;
   const tries=[]; for(let x=50;x<=2000;x+=50) tries.push(x); for(let x=2250;x<=10000;x+=250) tries.push(x); for(let x=11000;x<=100000;x+=1000) tries.push(x);
-  for(const B of tries){ const used=Object.assign({}, used0), gcap=B*c.gameCapPct/100;
-    for(const q of rows){ const r=q.r; let st=Math.min(c.sMax, B*q.per); if(r.outlier || r.noMkt) st=Math.min(st, c.sMin);
-      if(st>0 && r.gameInPlay){ const room=Math.max(0, Math.min(gcap-(r.gameWeighted||0), gcap-r.gameInPlay)); if(st>room) st=room; }
-      if(st<c.sMin-1e-9) continue;
+  for(const B of tries){ if(B<=(+c.bank||0)+1e-9) continue;   /* v5.26: never an amount at or under the one set aside */
+    const used=Object.assign({}, used0), gcap=B*c.gameCapPct/100, st=new Map();
+    for(const q of rows){ const r=q.r; let x=Math.min(c.sMax, B*q.per); if(r.outlier || r.noMkt || lsmlRow(r)) x=Math.min(x, c.sMin);
+      if(x>0 && (r.gameInPlay || gcap>0)){ const room=Math.max(0, Math.min(gcap-(r.gameWeighted||0), gcap-(r.gameInPlay||0))); if(x>room) x=room; }
+      if(x>=c.sMin-1e-9) st.set(q, x); }
+    /* the board's one bet per player in a game (props) and one side or total per game (game lines): the best by her EV, then the bigger stake */
+    const G=[]; rows.forEach(q=>{ if(!st.has(q)) return; const r=q.r, ax=q.gl?(r.kind==='total'?'total':'side'):null;
+      const g=G.find(x=>x.gl===q.gl && (q.gl ? (gameKey(x.L[0].r.game)===gameKey(r.game) && x.ax===ax) : (x.g===q.g && samePlayerAs(x.L[0].r, r)))); if(g) g.L.push(q); else G.push({g:q.g, gl:q.gl, ax, L:[q]}); });
+    G.forEach(g=>{ if(g.L.length<2) return; g.L.sort((a,b)=>(Math.abs(ce(b.r)-ce(a.r))>=0.0001?ce(b.r)-ce(a.r):0) || (st.get(b)-st.get(a))); g.L.slice(1).forEach(q=>st.delete(q)); });
+    const took={};
+    for(const q of rows){ if(!st.has(q)) continue; const r=q.r; let x=st.get(q);
+      if(q.g && gcap>0){ const T=took[q.g]=took[q.g]||[], plain=T.reduce((t,y)=>t+y.x,0), wt=T.reduce((t,y)=>t+y.x*wOf(y.r,r),0), room=Math.max(0, Math.min(gcap-(r.gameWeighted||0)-wt, gcap-(r.gameInPlay||0)-plain));
+        if(x>room+1e-9){ x=+Math.max(0,room).toFixed(2); if(x<c.sMin-1e-9) continue; } }
       const cap=B*(q.pool==='mev' ? c.dayMaxMevPct : c.dayMaxPct)/100, k=q.day+'|'+q.pool, room=cap-(used[k]||0); if(!(cap>0)) continue;
-      if(st>room+1e-9){ st=+Math.max(0,room).toFixed(2); if(st<c.sMin-1e-9) continue; }
-      used[k]=(used[k]||0)+st; if(want[q.key]) return B; } }
+      if(x>room+1e-9){ x=+Math.max(0,room).toFixed(2); if(x<c.sMin-1e-9) continue; }
+      used[k]=(used[k]||0)+x; if(q.g) (took[q.g]=took[q.g]||[]).push({x, r}); if(isWant(r)) return B; } }
   return null; }
 function easyNoStakeCause(r){ const fl=(r.flags||[]).map(f=>String(f&&f[1]||'')), has=re=>fl.some(t=>re.test(t));
   if(has(/^daily max reached/)) return 'day'; if(has(/^game cap reached/)) return 'game'; if(has(/PLAYER EXPOSURE|one per player/)) return 'player';
@@ -6531,7 +6576,7 @@ function ebTwWire(ed){
   (ed._own=ed._own||{}).pay='';
   const c2=x=>(Math.round(x*100)/100).toFixed(2), isFree=()=>{ const f=q('.eb-free'); return !!(f && f.checked); };
   const decOf=()=>{ const t=String((oI&&oI.value)||'').trim(); if(/^\d+\.\d+$/.test(t) && parseFloat(t)>1) return parseFloat(t);   // a decimal price as typed (2.00, 1.91)
-    const p=toProb(priceText(t).replace(/^(\d)/,'+$1')); return p>0 && p<1 ? 1/p : null; };   // American or %, read as Save reads it
+    const p=toProb(oddsIn(t)||''); return p>0 && p<1 ? 1/p : null; };   // American or %, read as Save reads it   // v5.26 (PRICES-3): oddsIn
   let held=null; const pairIn=()=>(parseFloat(sI.value)||0)+'|'+isFree();   // v5.10 (review S14): a box you emptied by hand stays empty until the Stake or the Free bet tick really changes (+ Add a bet re-sends Stake events with no change)
   const sync=hold=>{ if(hold) held={el:hold, at:pairIn()}; else if(held && held.at!==pairIn()) held=null;
     const s=parseFloat(sI.value), S=s>0?s:null, free=isFree(), back=free?0:S, src=ed._own.pay, keep=held&&held.el;
@@ -6707,7 +6752,7 @@ function openBetEditor(tr, r, opt){
   const priceNow=()=>{
     const cfg=cfgRead(), book=bookSel.value;
     if(pmMode()){ const pr=pmPrice(); if(!pr) return null; return {prob:pr.prob, fee:pr.allIn?0:feeRate(book,pr.prob,cfg.fees,liveG())}; }
-    const o=priceText(ed.querySelector('.eb-odds').value).replace(/^(\d)/,'+$1'); const prob=toProb(o);
+    const o=oddsIn(ed.querySelector('.eb-odds').value)||''; const prob=toProb(o);   // v5.26 (PRICES-3): dashes cleaned, a price that is not one refused
     return prob===null?null:{prob, fee:feeRate(book,prob,cfg.fees,liveG())};
   };
   function valueCheck(){
@@ -6743,17 +6788,28 @@ function openBetEditor(tr, r, opt){
   const saveBtnEl=ed.querySelector('.eb-save');
   // v2.71: what the screener would stake at the price you typed (same sizing; the board's caps still apply)
   let recK=null;   // v5.05: the Kalshi fit behind the recommended stake (shares and limit, shown with it)
+  let recWhy='';   // v5.26 (STAKE-3): the board's reason when it gave this card $0 for a limit
   function recStake(){
     recK=null;   // v5.05
+    recWhy='';   // v5.26
     if(opt.edit || lineChanged()) return null;
     if(r.tier) return +(+r.xStake||0).toFixed(2);   // v4.50: an extra has a fixed stake
     const pr=priceNow(); if(!pr) return null;
+    /* v5.26 (STAKE-3, Build B): a card the board gave $0 for a limit (daily max, game cap, a player you hold, one side a game, long-shot moneylines, model-only,
+       gap research, outliers) gets $0 here too, with the board's own words, whatever price is typed; at the card's own price and book, any $0 of the board stands */
+    if(!isHost && Array.isArray(r.flags) && (lastRows||[]).indexOf(r)>=0 && !(r.stake>0) && !(r.hold && r.hold.stake>0)){   /* a row of the board you are looking at */
+      const LIM=/^(daily max reached|game cap reached|PLAYER EXPOSURE|LONG-SHOT ML|model-only limit|model only: one a game|MONEYLINE GAP RESEARCH|outlier limit reached|risk-bet limit reached)|is the better bet on this game|you already bet .* one (side|total) bet per game/;
+      const fl=r.flags.map(x=>String(x&&x[1]||'')), lim=fl.filter(t=>LIM.test(t)).pop();
+      if(lim){ recWhy=lim; return 0; }
+      const same=r.offeredProb>0 && Math.abs(pr.prob-r.offeredProb)<0.0005 && (!r.book || bookSel.value===r.book);
+      if(same){ recWhy=r.pass===false?(fl.filter(t=>t).pop()||'the board gave it no stake'):'the board gave it no stake'; return 0; } }
     const cfg=cfgRead(), p=pr.prob, f=pr.fee, b=1/p-1; if(!(b>0)) return null;
     if(r.fairProb==null) return null;
     const anet=actNetOf(r.fairProb, r.mktProb, p, f);   /* v4.53: La Contadora's EV at the price you typed (it was the blend, and it did not look at the floor) */
     if(!(anet>0) || anet<cfg.eMin-1e-9) return 0;
     let st=kellyFor(cfg, anet, p);
     if(r.outlier) st=Math.min(st, cfg.sMin);
+    if(r.noMkt || r.lsmlN) st=Math.min(st, cfg.sMin);   // v5.26 (STAKE-3): no market check (or a long-shot moneyline): the smallest bet, as the board
     if(r.longShot) st=0;   // v4.50: a long shot is a Hail Mary, never sized as a best bet
     if(r.stake>0) st=Math.min(st, r.stake);
     if(st>=cfg.sMin-1e-9 && /kalshi/i.test(bookSel.value||'')){ st=Math.floor(st*100+1e-6)/100 /* v5.05: down to the cent, like the board and + Add a bet */; const k=kalshiFitRow({offeredProb:p, actProb:okProb(r.fairProb, r.mktProb)}, st, cfg); if(!k) return 0; recK=k; }   /* v5.05: the budget stays the stake, in 0.01 shares (kalshiFitRow, as the card and strip); EV and the floor at the smooth fee (anet above); the v4.53 whole contracts at the rounded fee are gone */
@@ -6778,7 +6834,7 @@ function openBetEditor(tr, r, opt){
     if(r.tier && !opt.edit){ const x=extraLine(r); el.innerHTML+=' <span class="tag t-warn">'+(r.tier==='lucky'?'🍀 Just missed: ':'🔮 Hail Mary: ')+esc(x.t)+'</span>'; }   // v4.50
     { const pe=ed.querySelector('.eb-plan'); if(pe){ const P=planCfg(), a=opt.edit ? planActOfBet(opt.edit, P) : (v && v.fairAt!=null ? okProb(v.fairAt, v.mktAt) : r.actProb); pe.innerHTML=isHost ? '' : planOutHtml(a, P); } }   /* v5.10: My plan’s reminder under the chance and decision line: her chance at the line in the form (a saved bet: its saved chance, if placed since the plan’s date); no block, no extra click. + Add a bet says it in its verdict */
     const rs=recStake(), re=ed.querySelector('.eb-rec');
-    if(re) re.textContent = rs==null ? '' : (r.tier && !opt.edit ? (r.tier==='lucky'?'just missed: the smallest bet, $':'a Hail Mary: $')+rs.toFixed(2) : 'recommended at this price: $'+rs.toFixed(2));
+    if(re) re.textContent = rs==null ? '' : (r.tier && !opt.edit ? (r.tier==='lucky'?'just missed: the smallest bet, $':'a Hail Mary: $')+rs.toFixed(2) : 'recommended at this price: $'+rs.toFixed(2)+(recWhy?' · the board: '+recWhy:''));   // v5.26 (STAKE-3): + why the board gave it $0
     if(re && rs>0 && /kalshi/i.test(bookSel.value||'')){ const k=kalFormFit(), pr=priceNow(); if(k && Math.abs(k.budget-rs)<0.005) re.textContent+=' · '+k.shares.toFixed(2)+' shares at a limit of '+k.limitCents+'¢ (most it can cost $'+(Math.ceil(k.maximumCost*100-1e-9)/100).toFixed(2)+(pr?', about $'+(Math.ceil(k.estimatedCurrentCost*100-1e-9)/100).toFixed(2)+' at '+Math.round(pr.prob*100)+'¢':'')+')'; }   /* v5.05: the same shares as the card, the strip and the Max payout box; "about" = the Cost box (Los Desconfiados) */
   }
   ed.querySelectorAll('input,select').forEach(x=>{ x.addEventListener('input',showCheck); x.addEventListener('change',showCheck); });
@@ -6845,7 +6901,8 @@ function openBetEditor(tr, r, opt){
       ed._slip = pr.allIn ? {listed:pr.listed!=null?+pr.listed.toFixed(4):null, real:+prob.toFixed(4), win:parseFloat(ed.querySelector('.eb-win').value)||null, read:pr.read} : null;   // v3.17
     } else {
       stake=parseFloat(ed.querySelector('.eb-stake').value)||0;
-      let oddsTxt=priceText(ed.querySelector('.eb-odds').value);   // v3.54: decimal (v3.49) or % become American odds, the format the app stores
+      let oddsTxt=oddsIn(ed.querySelector('.eb-odds').value);   // v3.54: decimal (v3.49) or % become American odds, the format the app stores
+      if(oddsTxt===null){ ebSay('Type the odds (e.g. -110 or +120), or leave them blank and fill Stake and To win $'); return; }   // v5.26 (PRICES-3): not a price (52, +99, 5/2, 1,91): refused, not read as another price
       const winO=parseFloat(ed.querySelector('.eb-win-o').value);
       if(!oddsTxt && stake>0 && winO>0) oddsTxt=fmtOdds(Math.round(americanOf(1/(1+winO/stake))));   // v3.47: odds from stake + to win
       odds=oddsTxt.replace(/^(\d)/,'+$1');
@@ -8147,6 +8204,20 @@ function feePaidOf(book, p, cfg){ if(!(p>0 && p<1)) return null; const c=cfg||cf
 function oddsShownTxt(b){ const x=paidOddsOf(b); return x ? x.odds : fmtOdds(b && b.odds); }   /* the price shown for a bet: the one paid */
 function oddsShownHtml(b){ const x=paidOddsOf(b); if(!x) return esc(fmtOdds(b && b.odds));
   return '<span title="The price you paid, fee included: '+esc(x.txt)+'. A win pays at this price.">'+esc(x.odds)+'</span><div class="meta odds-paid">'+esc(x.listed)+' + fee</div>'; }
+/* v5.26 (PROFIT-2, Build B, owner "BUILD ALL" 11/22): a position sold in part at the book. syncFills adds each sale once, by its own id (b.soldBy: contracts
+   and cash after the sale's fee); soldFills and soldCash are their sums. null when nothing was sold, when it was all sold (b.sold) or when the contracts bought
+   are not known. Bets sold in part before v5.26 have no soldBy (only the last sale, with no fee) and keep their old profit. Hoisted. */
+function partSoldOf(b){ if(!b || b.kind==='parlay' || b.free || b.sold || !b.soldBy) return null; const q=+b.fillQty||0, s=+b.soldFills||0;
+  if(!(q>0) || !(s>1e-9) || s>=q-1e-9) return null; return {q, sold:s, cash:+b.soldCash||0}; }
+/* v5.26 (PROFIT-1, PROFIT-3): what a bet that still equals its book fills makes if it wins: $1 for each contract still held, plus the cash of any sale, minus
+   what it cost (fillQty − fillCost), never from its odds rounded to a whole American price, nor at the last order's price for every contract. Only a bet the
+   app logged from its fills (autoFrom), never corrected by you or an import, whose stake is still what the fills cost, and no To win typed. A Kalshi result
+   whose payout (bookPaid) is not one dollar a contract held means the contracts saved are not the book's: then the odds are used, as before. Hoisted. */
+function fillWinOf(b){ if(!b || b.kind==='parlay' || b.free || b.towin>0) return null; const st=+b.stake||0, q=+b.fillQty||0; if(!(st>0) || !(q>0)) return null;
+  const PS=partSoldOf(b); if(PS) return +(PS.cash+(PS.q-PS.sold)-st).toFixed(2);
+  if(!b.autoFrom || b.accountingSource==='user' || b.accountingSource==='import' || !(b.fills||[]).length || !(Math.abs(st-(+b.fillCost||0))<0.005)) return null;
+  if(b.bookPaid!=null && b.resultSrc==='Kalshi' && b.result==='win' && Math.abs((+b.bookPaid)-q)>0.01) return null;
+  return +(q-st).toFixed(2); }
 function betProfit(b){
   const st=b.free?0:(+b.stake||0);   // v3.98: a free bet (bonus bet) is not your money: it costs nothing when it loses, and a win is the winnings only
   if(b.kind==='parlay'){ const stR=+b.stake||0, pay=b.parlay&&b.parlay.payout;   // v4.03: a free parlay that wins pays its winnings (payout − stake: the stake does not come back); one that misses costs nothing
@@ -8155,10 +8226,12 @@ function betProfit(b){
     if(pay==null) return null; if(b.free) return +Math.max(0,(+pay)-stR).toFixed(2);
     return +((+pay)-stR).toFixed(2); }   // v2.73   // v3.98: typed winnings
   if(b.sold) return +((+b.sold.price||0) - st).toFixed(2);
-  if(b.result==='loss') return b.free?0:(b.lostAmt>=0?-(+b.lostAmt):-st);   // v3.98: what you really lost (a partial cash-out), if you typed it
-  if(b.result==='push') return 0;
+  const PS=partSoldOf(b);   // v5.26 (PROFIT-2): part of the position sold at the book, the rest settled
+  if(b.result==='loss') return b.free?0:(b.lostAmt>=0?-(+b.lostAmt):(PS?+(PS.cash-st).toFixed(2):-st));   // v3.98: what you really lost (a partial cash-out), if you typed it   // v5.26 (PROFIT-2): else the cash from the sales comes back
+  if(b.result==='push') return PS ? +(PS.cash+st*(PS.q-PS.sold)/PS.q-st).toFixed(2) : 0;   // v5.26 (PROFIT-2): the part not sold is refunded; the sales keep their cash
   if(b.result==='win'){
     if(b.towin>0) return +(+b.towin).toFixed(2);   // v3.51: the To win $ you typed — v3.54: on any book, fee or not   // v3.98: or the winnings you typed after it won (a boost pays more than the odds)
+    { const fw=fillWinOf(b); if(fw!=null) return fw; }   // v5.26 (PROFIT-1, PROFIT-3): a bet that still equals its fills pays $1 a contract held, plus the cash of any sale, minus what it cost
     const p=toProb(b.odds); if(p==null) return null;
     const fee=betFeeOf(b), st0=+b.stake||0;   // fee charged on top of the price (Kalshi): stake = cost × (1 + fee)   // v5.11 (bug): b.fee, else snap.fee (a Kalshi or Polymarket US fill never edited counted its win as if no fee was paid)
     return +(st0*((1/p)-1-fee)/(1+fee)).toFixed(2);   // v3.98: a free bet wins the same winnings (its stake does not come back)
@@ -9183,6 +9256,7 @@ function renderTodayBar(){   // v2.75: per book — bet · won · lost · riding
       if(betLocked(b)){ x.playing++; x.playingAmt+=mine; } else { x.toPlay++; x.toPlayAmt+=mine; }
       if(b.kind==='parlay') x.toWin+=Math.max(0,(+(b.parlay&&b.parlay.pays&&b.parlay.pays.all)||0)-(+b.stake||0));   // v5.11 (bug): the profit if it wins is Pays − entry for a free entry too (betProfit); mine is $0 for a free bet, so a free $5 entry paying $25 showed +$25.00 instead of +$20.00
       else if(b.towin>0) x.toWin+=+b.towin;   // v3.54: the To win you typed
+      else if(fillWinOf(b)!=null) x.toWin+=fillWinOf(b);   // v5.26 (PROFIT-1, PROFIT-3): a bet that still equals its fills, from its contracts (betProfit)
       else { const q=toProb(b.odds), f=betFeeOf(b); if(q) x.toWin+=st*((1/q)-1-f)/(1+f); }   // v5.11 (bug): the fee saved with the bet too (snap.fee), as betProfit
     }
   });
@@ -9267,10 +9341,21 @@ function ownGameOk(b, ev){ if(!b || !ev) return false; const t=Date.parse(ev.dat
   if(!b.date) return false; const d=ctDay(t); return (d===b.date || d===dayPlus(b.date,1)) && evOkFor(b,ev); }
 /* v5.25 (GRADING-5): among the games that match a bet, the one at its saved start: within 60 seconds, else the closest within 6 hours
    (ESPN moves game 2 of a doubleheader when game 1 runs long); the first match only when none is that close or there is no start. */
+/* v5.26 (R2-2, Build B, from Build A's review): no game of the bet's teams within 6 hours of its saved start. The nearest is its game only when it is clearly
+   the nearest: within 12 hours, and the next one at least twice as far (a Friday bet whose start was saved 6 hours late, with Saturday's day game 13 hours
+   away, is Friday's). Otherwise none: the bet stays open and Look out says why (ownFarWhy). Hoisted. */
+function clearNearest(b, list){ const s=Date.parse(b&&b.start); if(isNaN(s)) return null;
+  const L=(list||[]).filter(Boolean).map(e=>({e, d:Math.abs(Date.parse(e.date)-s)})).filter(x=>isFinite(x.d)).sort((x,y)=>x.d-y.d), seen=new Set(), U=L.filter(x=>{ const k=String(x.e.id||x.e.date); if(seen.has(k)) return false; seen.add(k); return true; });
+  const W=window._ownFar=window._ownFar||{}, id=b&&(b.id||b.key);
+  if(!U.length){ return null; }
+  if(U[0].d<=12*3600e3 && !(U.length>1 && U[1].d<2*U[0].d)){ if(id) delete W[id]; return U[0].e; }
+  if(id) W[id]='no game of these teams within 6 hours of the saved start, and the nearest ('+Math.round(U[0].d/3600e3)+' h away) is not clearly the one'+(U.length>1?' (the next is '+Math.round(U[1].d/3600e3)+' h away)':'')+': pick its game in Edit, or set the result';
+  return null; }
+function ownFarWhy(b){ const W=window._ownFar||{}, id=b&&(b.id||b.key); return (id && W[id]) || ''; }   /* v5.26 (R2-2): the Look out reason clearNearest left */
 function pickByStart(b, list){ list=(list||[]).filter(Boolean); if(!list.length) return null; const s=Date.parse(b&&b.start); if(isNaN(s)) return list[0];
   const d=e=>{ const t=Date.parse(e.date); return isNaN(t)?Infinity:Math.abs(t-s); };
   const ex=list.find(e=>d(e)<60e3); if(ex) return ex;
-  const near=list.filter(e=>d(e)<6*3600e3).sort((x,y)=>d(x)-d(y)); return near[0]||(list.length===1?list[0]:null); }   // v5.25 round 2 (G-5): far from the saved start, only when it is the one game that matches
+  const near=list.filter(e=>d(e)<6*3600e3).sort((x,y)=>d(x)-d(y)); return near[0]||clearNearest(b, list); }   // v5.25 round 2 (G-5): far from the saved start, only when it is the one game that matches   // v5.26 (R2-2): and only when it is clearly the nearest (clearNearest)
 function gamesFor(b, evs, gl){ evs=evs||[];   // v5.25: every event that findGame / findGameAny would take, in the same order of preference
   let L=evs.filter(e=>findGame([e],b.game)); if(L.length) return L;
   L=evs.filter(e=>findGameAny([e],b.game,b.matchup)); if(L.length) return L;
@@ -9283,7 +9368,7 @@ function gamesFor(b, evs, gl){ evs=evs||[];   // v5.25: every event that findGam
 function ownGameFor(b, evs, gl){ if(!b) return null; const C=gamesFor(b, (evs||[]).filter(e=>e && !isNaN(Date.parse(e.date)) && evOkFor(b,e)), gl); if(!C.length) return null;
   const s=Date.parse(b.start), dayOf=e=>ctDay(Date.parse(e.date)), done=!!(b.sold || b.voided || /^(win|loss|push)$/.test(b.result||''));
   if(!isNaN(s)){ const near=C.filter(e=>Math.abs(Date.parse(e.date)-s)<6*3600e3); if(near.length) return pickByStart(b, near);
-    const same=C.filter(e=>dayOf(e)===ctDay(s)); return same.length===1 && teamsOf(b.game) ? same[0] : null; }
+    return teamsOf(b.game) ? clearNearest(b, C) : null; }   /* v5.26 (R2-2): the nearest game of its teams only when it is clearly the nearest (it was: the only one that Central day, which took Saturday's day game for a Friday bet saved 6 hours late) */
   if(!b.date) return null;
   const own=gameDayOf(b)||b.date, days=(done || (b.manual && b.dateSet)) ? [own] : [b.date, dayPlus(b.date,1)];
   for(const d of days){ const D=C.filter(e=>dayOf(e)===d); if(D.length) return D[0]; }   /* its own date first: a postponed game on it is not swapped for the next day’s makeup */
@@ -9312,10 +9397,12 @@ async function findBetGame(b){
     for(const d of [d0, dayPlus(d0,-1), dayPlus(d0,1)]) evs.push(...((await fetchScoreboardDay(b.sport, d))||[]));
     const seen=new Set(), U=evs.filter(e=>e && !seen.has(e.id) && seen.add(e.id)); const r=nvPick(b, U); return r.ev||null; }
   let days;
-  if(b.start && !isNaN(Date.parse(b.start))) days=[gameDayOf(b)];
+  if(b.start && !isNaN(Date.parse(b.start))){ const d0=gameDayOf(b), evs=[], seen=new Set();   /* v5.26 (R2-2): the day before and after too, so a game far from a start saved hours off is taken only when it is clearly the nearest */
+    for(const d of [d0, dayPlus(d0,-1), dayPlus(d0,1)]) ((await fetchScoreboardDay(b.sport, d))||[]).forEach(e=>{ if(e && !seen.has(e.id) && evOkFor(b,e)){ seen.add(e.id); evs.push(e); } });
+    const ev=pickByStart(b, gamesFor(b, evs, gl)); if(ev) return ev; days=[d0]; }   /* the steps below (by team name, by the player) look on its own day, as before */
   else if(b.dateSet && b.date) days=[b.date];   // v5.25 round 2 (review G-3): a bet whose game day was set is looked for on that day only (never the next day’s game of a series)
   else { const from=gameDayOf(b)||today; days=[from, dayPlus(from,1), dayPlus(from,2), today].filter((d,i,a)=>a.indexOf(d)===i).sort(); }   // v2.85: upcoming days too (Monday night)
-  for(const d of days){   // 1) by the teams saved with the bet
+  if(!(b.start && !isNaN(Date.parse(b.start)))) for(const d of days){   // 1) by the teams saved with the bet   /* v5.26 (R2-2): with a start, done above over three days */
     const evs=(await fetchScoreboardDay(b.sport, d)).filter(ev=>evOkFor(b,ev));
     const ev=pickByStart(b, gamesFor(b, evs, gl));   // v5.25 (GRADING-5): the game at the bet's own start, not the first of a doubleheader
     if(ev) return ev;
@@ -9392,6 +9479,11 @@ function setFromSettlement(b,S){ b.result = S.outcome==='void' ? 'push' : (S.out
    fees), shared by stake when one position holds several bets. Winnings you typed are never replaced. */
 function polyPaid(b,S){ if(!b || !S || S.book!=='poly' || S.outcome!=='win' || b.result!=='win' || b.paidReal || b.towin>0 || !(+S.pnl>0)) return false;
   const share=+S.cost>0?Math.min(1,(+b.stake||0)/(+S.cost)):1; b.towin=+((+S.pnl)*share).toFixed(2); b.paidReal=true; b.towinSrc='book'; return true; }
+/* v5.26 (R2-2): may the grader move a saved start to this game's? Only when it is clearly the nearest game of the bet's teams (clearNearest) among the
+   days around the saved start. Hoisted. */
+async function startFixOk(b, ev){ try{ const s=Date.parse(b.start); if(isNaN(s) || !ev) return false; const d0=ctDay(s), L=[], seen=new Set();
+  for(const d of [d0, dayPlus(d0,-1), dayPlus(d0,1)]) ((await fetchScoreboardDay(b.sport, d))||[]).forEach(e=>{ if(e && !seen.has(e.id) && (findGame([e],b.game)||findGameAny([e],b.game))){ seen.add(e.id); L.push(e); } });
+  const n=clearNearest(b, L); return !!n && String(n.id)===String(ev.id); }catch(e){ return false; } }
 async function autoGradeLog(){
   if(agBusy || logBusy>0) return; agBusy=true; logBusy++;
   try{
@@ -9442,9 +9534,9 @@ async function autoGradeLog(){
         const old=findGame(E,b.game)||findGameAny(E,b.game);
         if(old && !isNaN(at) && Date.parse(old.date)<at-5*3600e3){ b.wrongGame18=b.game; b.game=''; changed++; }
         continue; }
-      const gi=gameStatusOf(ev); if(!gi){ const S0=settlementFor(b); if(S0){ setFromSettlement(b,S0); changed++; continue; } const rsn=nvReviewText(b)||'game not found on ESPN'; if(!b.why || b.why.reason!==rsn){ b.why={at:Date.now(), reason:rsn, market:b.market||''}; changed++; } continue; }   /* v4.72: a Novig total that cannot be matched says so */
+      const gi=gameStatusOf(ev); if(!gi){ const S0=settlementFor(b); if(S0){ setFromSettlement(b,S0); changed++; continue; } const rsn=nvReviewText(b)||ownFarWhy(b)||'game not found on ESPN';   /* v5.26 (R2-2): or why the nearest game was not taken */ if(!b.why || b.why.reason!==rsn){ b.why={at:Date.now(), reason:rsn, market:b.market||''}; changed++; } continue; }   /* v4.72: a Novig total that cannot be matched says so */
       // v2.80: keep the real start time and teams, so the bet counts on the day the game is played
-      if(gi.startISO && b.start!==gi.startISO && (isNaN(Date.parse(b.start)) || Math.abs(Date.parse(gi.startISO)-Date.parse(b.start))<6*3600e3 || (teamsOf(b.game) && (await fetchScoreboardDay(b.sport, ctDay(Date.parse(b.start)))).filter(e=>findGame([e],b.game)||findGameAny([e],b.game)).length===1))){ b.start=gi.startISO; changed++; }   // v5.25 round 2 (G-5): or the only game of its teams that day (a moved game or a start saved in the wrong zone)   // v5.25 (GRADING-5): never the start of a game far from the saved one
+      if(gi.startISO && b.start!==gi.startISO && (isNaN(Date.parse(b.start)) || Math.abs(Date.parse(gi.startISO)-Date.parse(b.start))<6*3600e3 || (teamsOf(b.game) && await startFixOk(b, ev)))){ b.start=gi.startISO; changed++; }   /* v5.26 (R2-2): far from the saved start, only the game that is clearly the nearest (startFixOk), not the only one that Central day */   // v5.25 round 2 (G-5): or the only game of its teams that day (a moved game or a start saved in the wrong zone)   // v5.25 (GRADING-5): never the start of a game far from the saved one
       if(!teamsOf(b.game)){ const a=gi.teams.find(t=>t.ha==='away'), h=gi.teams.find(t=>t.ha==='home'); if(a&&h){ b.game=a.abbr+' @ '+h.abbr; changed++; } }
       if(GL_KINDS.test(b.kind||'') && b.kind!=='total' && b.team && !gi.teams.some(t=>t.abbr===normAbbr(b.team))){   // v3.18: e.g. CSUS → SAC
         const t=gi.teams.find(x=>teamNameIs({abbreviation:x.abbr,name:x.nick,shortDisplayName:x.name,location:x.loc}, b.name)); if(t){ b.team=t.abbr; changed++; } }
@@ -10111,7 +10203,7 @@ function colVal(r,k){
     case 'ev': return r.gross;
     case 'fee': return r.fee;
     case 'net': return r.actNet!=null?r.actNet:r.net;   // v4.53: what the column shows
-    case 'stake': return r.stake||null;
+    case 'stake': return (r.prior||r.waitOrder)?null:(r.stake||null);   // v5.26 round 2: already bet: no stake to sort on
   }
   return null;
 }
@@ -11267,7 +11359,7 @@ function boardAsText(rows){
     r.name, r.matchup||r.game||'', r.sport, ((r.side?r.side+' ':'')+(r.market||'')).trim(), r.book||'',
     r.offeredRaw, r.fairProb!=null?pct(r.fairProb):'', r.stars!=null?r.stars+'★':'',
     r.l15N?pct(r.l15Hit,0)+' L15':(r.seasonN?pct(r.seasonHit,0)+' season':''),
-(r.actNet!=null?r.actNet:r.net)!=null?pct(r.actNet!=null?r.actNet:r.net):'', r.stake?('$'+r.stake.toFixed(2)):'', isSweet(r,sw)?'yes':''
+(r.actNet!=null?r.actNet:r.net)!=null?pct(r.actNet!=null?r.actNet:r.net):'', r.stake && !r.prior && !r.waitOrder?('$'+r.stake.toFixed(2)):'' /* v5.26 round 2: an already-bet row or a waiting order has no stake to place */, isSweet(r,sw)?'yes':''
   ].join('\t'))).join('\n');
 }
 document.getElementById('copyBoard').addEventListener('click',async ()=>{
@@ -11807,7 +11899,7 @@ function rpTn(w){ return w?'<em class="rp-tn">'+esc(w)+': read with care</em>':'
 function rpSample(n){ return n<10?'too few to rank':n<30?'extremely preliminary':n<100?'early sample':''; }
 function rpPct(x){ return x==null?'—':(x>=0?'+':'−')+Math.abs(x*100).toFixed(1)+'%'; }
 function rpCls(v,step){ return (v>0.005?'pl-up':v<-0.005?'pl-down':'')+dClsR(v,step||0.01); } /* v5.04: ▲/▼ from the shown rounding: $ to the cent, ROI (step 0.001) to 0.1%; colour rule unchanged */
-function rpToWin(b){ if(b.kind==='parlay'){ const pay=b.parlay&&b.parlay.payout, all=+(b.parlay&&b.parlay.pays&&b.parlay.pays.all)||0; return b.towin>0?+b.towin:(pay>0?(+pay)-(+b.stake||0):((!b.result||b.result==='pending') && all>0 ? Math.max(0,all-(+b.stake||0)) /* v5.12 (bug): a pending parlay wins Pays if all hit − entry (betProfit; a free entry too) */ : null)); } if(b.towin>0) return +b.towin; const p=toProb(b.odds); if(p==null||!(p>0&&p<1)) return null; const fee=betFeeOf(b); return (+b.stake||0)*((1/p)-1-fee)/(1+fee); }   /* review: the same fee formula as betProfit */   // v5.11 (bug): and the same fee (b.fee, else snap.fee)
+function rpToWin(b){ if(b.kind==='parlay'){ const pay=b.parlay&&b.parlay.payout, all=+(b.parlay&&b.parlay.pays&&b.parlay.pays.all)||0; return b.towin>0?+b.towin:(pay>0?(+pay)-(+b.stake||0):((!b.result||b.result==='pending') && all>0 ? Math.max(0,all-(+b.stake||0)) /* v5.12 (bug): a pending parlay wins Pays if all hit − entry (betProfit; a free entry too) */ : null)); } if(b.towin>0) return +b.towin; { const fw=fillWinOf(b); if(fw!=null) return fw; /* v5.26 (PROFIT-1, PROFIT-3): from its contracts, as betProfit */ } const p=toProb(b.odds); if(p==null||!(p>0&&p<1)) return null; const fee=betFeeOf(b); return (+b.stake||0)*((1/p)-1-fee)/(1+fee); }   /* review: the same fee formula as betProfit */   // v5.11 (bug): and the same fee (b.fee, else snap.fee)
 function twTotal(b, tw){ return +(+(+tw).toFixed(2)+(b.free?0:(+b.stake||0))).toFixed(2); }   /* v5.10: a single bet's total payout if it wins: the To win as shown + the stake back (a free bet's stake does not come back). Display only */
 function lgTwHtml(b){ if(!b || b.kind==='parlay' || b.sold || betProfit(b)!=null) return ''; const tw=rpToWin(b); if(tw==null || !(tw>0)) return '';   /* v5.10: the Bet log row of an open single: to win and the total, small print (the same To win as Reports) */
   return '<div class="meta lg-tw" title="If it wins: the profit (To win) and what comes back with your stake (Total payout)">to&nbsp;win&nbsp;$'+tw.toFixed(2)+' ·&nbsp;total&nbsp;$'+twTotal(b,tw).toFixed(2)+'</div>'; }
@@ -13103,11 +13195,15 @@ function abRowFields(){
   else { name=team||''; market='Moneyline'; missing=!team?'team':''; }
   if(!ev && !freeGame) missing=missing||'game';   // v3.47: a typed game is enough (graded by hand)
   const cov=parseFloat($ab('abCover').value), fair=cov>0&&cov<100?cov/100:null;
-  const consRaw=$ab('abCons').value.trim().replace(/^(\d)/,'+$1'), cons=consRaw?toProb(consRaw):null;
+  /* v5.26 (PRICES-1, Build B): the market chance from the consensus with the vig taken out, as the Worker does for the board: this side ÷ (this side + the
+     other side), only when the two add up to a real book (over 98% and under 125%). One side alone is not a market price (no market check: the smallest
+     bet, said in the verdict). Both prices are saved (snap.consensus.bet_side / other_side). */
+  const consT=String($ab('abCons').value||'').trim(), consOT=String(($ab('abConsO')||{}).value||'').trim(), consRaw=oddsIn(consT)||'', consORaw=oddsIn(consOT)||'', pa=consRaw?toProb(consRaw):null, pb=consORaw?toProb(consORaw):null, pSum=pa!=null&&pb!=null?pa+pb:null;
+  const cons=pSum!=null && pa>0 && pb>0 && pSum>0.98 && pSum<1.25 ? +(pa/pSum).toFixed(4) : null;
   const pj=parseFloat($ab('abProj').value);
   const cfg=cfgRead(), w=cfg.mWeight;
   return { name, market, side:sd, kind:ty, sport:sp, game, matchup:game, team:(ty==='spread'||ty==='moneyline')?team:null,
-    fairProb:fair, fairRaw:fair!=null?fmtOdds(Math.round(americanOf(fair))):null, mktProb:cons, consOdds:cons!=null?consRaw:null,
+    fairProb:fair, fairRaw:fair!=null?fmtOdds(Math.round(americanOf(fair))):null, mktProb:cons, consOdds:pa!=null?consRaw:null, consOtherOdds:pb!=null?consORaw:null, _cons:pa!=null&&pb==null?'one':pa==null&&pb!=null?'other':pSum!=null&&cons==null?'bad':null,   /* v5.26 (PRICES-1) */ _consNo:[consT&&oddsIn(consT)===null?['Consensus odds',consT]:null, consOT&&oddsIn(consOT)===null?['Other side',consOT]:null].filter(Boolean),   /* v5.26 round 2 (B3): a box that could not be read */
     blendProb: fair!=null&&cons!=null ? cons+w*(fair-cons) : fair, projValue:isNaN(pj)?null:pj,
     gameInfo:gi, gameStart:(ev&&ev.date)||null, gameDay:($ab('abDate')&&$ab('abDate').value)||((ev&&ev.date&&!isNaN(Date.parse(ev.date)))?ctDay(Date.parse(ev.date)):null), dateSet:!!($ab('abDate')&&$ab('abDate').value), src:'manual', evModel:fair!=null?'projection':null, net:null, stake:0, idx:-1, pass:true, flags:[],
     _missing:missing, _line:ln };
@@ -13119,7 +13215,7 @@ function abPrice(){   // the price typed in the editor below (same reading as Sa
     const ed=h.querySelector('.editor'), pr=ed&&ed._pmPrice?ed._pmPrice():null; if(!pr) return null;
     return pr.allIn ? {prob:pr.prob, fee:0, book, stake:pr.cost} : {prob:pr.prob, fee:feeRate(book,pr.prob,cfg.fees,live), book, stake:pr.cost>0?pr.cost:0};
   }
-  const o=priceText(q('.eb-odds').value).replace(/^(\d)/,'+$1'), p=toProb(o);
+  const o=oddsIn(q('.eb-odds').value)||'', p=toProb(o);   // v5.26 (PRICES-3): read as Save reads it
   return p==null?null:{prob:p, fee:feeRate(book,p,cfg.fees,live), book, stake:parseFloat(q('.eb-stake').value)||0, odds:o};
 }
 function abUpdate(){ abUpdate94(); }
@@ -13178,7 +13274,7 @@ function fillManualFromRow(L, r){   // next Load: an unchecked manual bet picks 
       saveLog(); renderLog(); renderPerf(); renderTodayBar();
       try{ aiSlipSaved(L); }catch(e){ console.warn('ai slip note', e); }   // v5.15: the slip data point (what was read, what you changed); the bet is already saved
       $ab('abMsg').innerHTML='<b>Saved:</b> '+esc(L.name)+' — '+esc(betLabel(L))+' · $'+(+L.stake||0).toFixed(2)+' on '+esc(bookLabel(L.book))+(L.result?' · <b>'+({win:'WON',loss:'LOST',push:'PUSH'}[L.result]||'')+'</b>'+(L.result==='win'&&betProfit(L)!=null?' +$'+betProfit(L).toFixed(2):''):'')+(L.net==null?' · <span class="meta">unchecked until the next Load</span>':'');
-      ['abPlayer','abLine','abProj','abCover','abCons'].forEach(id=>$ab(id).value='');
+      ['abPlayer','abLine','abProj','abCover','abCons','abConsO'].forEach(id=>$ab(id).value='');   // v5.26 (PRICES-1): + the other side
     }
     abOpenEditor();
   }).observe($ab('abHost'),{childList:true});
@@ -14347,16 +14443,16 @@ function autoAddFromDesc(f){ const b=f.bet, book=FILL_NAME[f.book], prob=+f.pric
   addToLog({name, sport:String(b.sport||'').toUpperCase(), kind:b.kind, market, side:b.side||'', team:b.team?normAbbr(b.team):null, game, matchup:game, book,
     offeredRaw:fmtOdds(Math.round(americanOf(prob))), offeredProb:prob, stake, fee, gameDay:isNaN(st)?undefined:ctDay(st), dateSet:!isNaN(st)||undefined,
     gameInfo:isNaN(st)?null:{state:'pre', startISO:new Date(st).toISOString(), teams:[]}});
-  const L=logged[logged.length-1]; L.autoFrom=f.book; L.fills=[f.id]; L.fillQty=+f.qty||0; L.fillCost=stake; L.fillFee=+(+f.fee||0).toFixed(4) /* v5.12 (bug): the fee in fillCost, so a later order adds to it (linkFill) */; noteFillRef(L,f);
-  if(f.soldFor!=null) L.sold={price:+(+f.soldFor).toFixed(2), at:new Date(f.soldAt||Date.now()).toISOString(), auto:true};
+  const L=logged[logged.length-1]; L.autoFrom=f.book; L.fills=[f.id]; L.fillQty=+f.qty||0; L.fillCost=stake; L.fillFee=+(+f.fee||0).toFixed(4) /* v5.12 (bug): the fee in fillCost, so a later order adds to it (linkFill) */; L.fillBy={[f.id]:{q:L.fillQty, cost:stake, fee:L.fillFee}} /* v5.26 round 2 (B2) */; noteFillRef(L,f);
+  if(f.soldFor!=null){ if((+f.soldQty||0)>=(+f.qty||0)-1e-6) L.sold={price:+(+f.soldFor).toFixed(2), at:new Date(f.soldAt||Date.now()).toISOString(), auto:true}; else if((+f.soldQty||0)>1e-9) soldAdd(L, 'n:'+f.id, +f.soldQty, +f.soldFor, f.soldAt); }   // v5.26 (PROFIT-2): a Novig hedge of part of it is a part sale, not SOLD
   notePlaced(L,f); saveLog(); }
 function autoAddFromRow(r,f){   // a bet on your board — log it for you, at the price and cost the book filled
   const book=FILL_NAME[f.book], prob=f.price, stake=+((+f.cost||0)+(+f.fee||0)).toFixed(2);
   const fee=f.fee!=null&&f.cost?(+f.fee)/(+f.cost):feeRate(book,prob,cfgRead().fees);
   const gross=r.fairProb!=null?r.fairProb/prob-1:null;
   addToLog(Object.assign({}, r, {book, offeredRaw:fmtOdds(Math.round(americanOf(prob))), offeredProb:prob, stake, fee, gross, net:gross==null?null:(gross-fee)/(1+fee), said:saidOf(r), _fill:true /* v4.86: a fill is your own bet in its record */}));
-  const L=logged[logged.length-1]; L.autoFrom=f.book; L.fills=[f.id]; L.fillQty=+f.qty||0; L.fillCost=stake; L.fillFee=+(+f.fee||0).toFixed(4) /* v5.12 (bug): the fee in fillCost, so a later order adds to it (linkFill) */; noteFillRef(L,f);
-  if(f.soldFor!=null) L.sold={price:+f.soldFor.toFixed(2), at:new Date(f.soldAt||Date.now()).toISOString(), auto:true};
+  const L=logged[logged.length-1]; L.autoFrom=f.book; L.fills=[f.id]; L.fillQty=+f.qty||0; L.fillCost=stake; L.fillFee=+(+f.fee||0).toFixed(4) /* v5.12 (bug): the fee in fillCost, so a later order adds to it (linkFill) */; L.fillBy={[f.id]:{q:L.fillQty, cost:stake, fee:L.fillFee}} /* v5.26 round 2 (B2) */; noteFillRef(L,f);
+  if(f.soldFor!=null){ if((+f.soldQty||0)>=(+f.qty||0)-1e-6) L.sold={price:+f.soldFor.toFixed(2), at:new Date(f.soldAt||Date.now()).toISOString(), auto:true}; else if((+f.soldQty||0)>1e-9) soldAdd(L, 'n:'+f.id, +f.soldQty, +f.soldFor, f.soldAt); }   // v5.26 (PROFIT-2): a Novig hedge of part of it is a part sale, not SOLD
   notePlaced(L,f); saveLog();   // v3.96
 }
 document.addEventListener('click',e=>{
@@ -14493,20 +14589,48 @@ function placedRead(inp){ if(!inp) return null; const tz=(()=>{ try{ return Intl
 function noteFillRef(b,f){ b.fillBook=f.book; b.fillRef=f.ref||b.fillRef||null; b.fillSide=f.side||b.fillSide||null; b.fillOutcome=f.outcome||b.fillOutcome||null;
   if(f.book==='novig'){ const fb=f.bet||{}; if(fb.eventId) b.nvEvent=String(fb.eventId); if(fb.part) b.nvPart=String(fb.part);   /* v4.72: Novig's event (provenance), a part-game market, and the orders behind the fills */
     const os=[].concat(f.order||[], f.orders||[]).filter(Boolean).map(String); if(os.length) b.nvOrders=[...new Set((b.nvOrders||[]).concat(os))]; } }
+/* v5.26 (PROFIT-1): the price and fee rate of everything a bet holds from the book: (fillCost − fillFee) ÷ fillQty, and fillFee ÷ (fillCost − fillFee).
+   Only for a bet of two or more orders whose fee is known (fillFee); one order keeps its own price, as before. Hoisted. */
+function fillAvgOf(b){ if(!b || (b.fills||[]).length<2 || b.fillFee==null) return null; const q=+b.fillQty||0, c=+b.fillCost||0, fe=+b.fillFee||0, net=c-fe;
+  if(!(q>0) || !(net>0)) return null; const price=net/q; return price>0 && price<1 ? {price, fee:fe/net} : null; }
+/* v5.26 round 2 (B2, Build B review): the orders a bet holds, one record each (b.fillBy[id] = {q, cost, fee}), so a re-read of one order that grew replaces
+   that order only. A bet saved before v5.26 gets them from what is known for sure: no order yet (empty), one order (its totals), or a new order on a bet
+   of several (the old totals as one record, 'pre'). A re-read of one of several old orders: that order's share is estimated from the contracts last seen
+   for it (fillSeen) at the price it fills at now, and only when that leaves a sane rest; else null, and the totals are kept as they are. Hoisted. */
+function fillBySeed(b, f, ids, had, stake){ const F=b.fills||[], fe=b.fillFee!=null?+b.fillFee:null;
+  /* v5.26 round 3 (R2-1): the share of one old order inside a record that covers several (pre): the contracts last seen for it (fillSeen) at the cost it
+     fills at now; null when that is not safe (nothing seen, the order shrank, or the rest would not be a real amount) */
+  const share=P=>{ let pq=0; try{ const sn=fillSeen[f.book+':'+f.id]; pq=sn?+sn.q||0:0; }catch(e){ pq=0; } const nq=+f.qty||0; if(!(pq>0) || !(nq>=pq-1e-9)) return null;
+    const oc=stake*pq/nq, of=f.fee!=null?(+f.fee)*pq/nq:null, rest={q:(+P.q||0)-pq, cost:(+P.cost||0)-oc, fee:P.fee!=null&&of!=null?(+P.fee)-of:null, ids:(P.ids||[]).filter(id=>!ids.includes(id))};
+    if(rest.q<-1e-9 || rest.cost<-0.004) return null; if(rest.q<=1e-9){ return rest.ids.length ? null : 'empty'; } if(!(rest.cost>0.004)) return null;
+    rest.q=+rest.q.toFixed(4); rest.cost=+rest.cost.toFixed(2); if(rest.fee!=null) rest.fee=Math.max(0,+rest.fee.toFixed(4)); return rest; };
+  if(b.fillBy && typeof b.fillBy==='object'){ const FB=Object.assign({}, b.fillBy), P=FB.pre;
+    if(P && Array.isArray(P.ids) && P.ids.some(id=>ids.includes(id))){ const r=share(P); if(r==null) return null; if(r==='empty') delete FB.pre; else FB.pre=r; }   /* v5.26 round 3 (R2-1): an old order of 'pre' read again comes out of 'pre' first (it was counted twice) */
+    else if(P && !Array.isArray(P.ids) && !ids.some(id=>FB[id])) return null;   /* a 'pre' that does not say which orders it holds (round 2): the totals are kept */
+    return FB; }
+  if(!F.length) return {};
+  if(F.length===1) return {[F[0]]:{q:+b.fillQty||0, cost:+b.fillCost||0, fee:fe}};
+  const P0={q:+b.fillQty||0, cost:+b.fillCost||0, fee:fe, ids:F.slice()};   /* v5.26 round 3 (R2-1): the old orders it holds */
+  if(!had.length) return {pre:P0};
+  const r=share(P0); if(r==null) return null; return r==='empty' ? {} : {pre:r}; }
 function linkFill(b,f){   // you saved it already — link, and flag differences
   noteFillRef(b,f); notePlaced(b,f);   // v3.96
   const stake=+((+f.cost||0)+(+f.fee||0)).toFixed(2);
   const ids=[f.id].concat(f.ids||[]);
   const fk=!(b.fills||[]).length || b.fillFee!=null;   // v5.12 (bug): the fee of the fills this bet already has is known (none yet, or counted in fillFee); a bet linked before v5.12 has none counted
   const had=(b.fills||[]).filter(id=>ids.includes(id));
+  const FB=fillBySeed(b, f, ids, had, stake);   // v5.26 round 2 (B2): each order's own contracts, cost and fee, before b.fills changes
   b.fills=(b.fills||[]).filter(id=>!ids.includes(id)).concat(f.id);
   const q0=+b.fillQty||0;   // v5.11 (bug): the contracts this bet had before this read
-  if(had.length){ b.fillQty=+f.qty||0; b.fillCost=stake; b.fillFee=+(+f.fee||0).toFixed(4); }   // re-read of the same order: replace, don't add   // v5.12 (bug): its fee too, like fillCost
+  if(FB){ ids.forEach(id=>{ delete FB[id]; }); FB[f.id]={q:+f.qty||0, cost:stake, fee:f.fee!=null?+(+f.fee).toFixed(4):null}; b.fillBy=FB; let q=0, c=0, fe=0, fu=false; Object.keys(FB).forEach(k=>{ q+=+FB[k].q||0; c+=+FB[k].cost||0; if(FB[k].fee==null) fu=true; else fe+=+FB[k].fee; });
+    b.fillQty=+q.toFixed(4); b.fillCost=+c.toFixed(2); if(fu) delete b.fillFee; else b.fillFee=+fe.toFixed(4); }   /* v5.26 round 2 (B2): the bet is the sum of its orders; a re-read of one order replaces that order only (it replaced the whole bet with it) */
+  else if(had.length){ if((b.fills||[]).length<=1){ b.fillQty=+f.qty||0; b.fillCost=stake; b.fillFee=+(+f.fee||0).toFixed(4); } }   // re-read of the same order: replace, don't add   // v5.12 (bug): its fee too, like fillCost   /* v5.26 round 2 (B2): a bet of several orders saved before v5.26 whose own share of this order is not known keeps its totals (replacing them with one order lost the others) */
   else { b.fillQty=(b.fillQty||0)+(+f.qty||0); b.fillCost=+(((b.fillCost||0)+stake)).toFixed(2); if(fk) b.fillFee=+((+b.fillFee||0)+(+f.fee||0)).toFixed(4); }   // v5.12 (bug): the fee of every order added, as fillCost adds every cost; unknown when the fills linked before were not counted
   if(b.accountingSource==='user'){ const m1=toProb(b.odds), p1=+f.price||0; if((+b.fillQty||0)>q0+1e-9 && (m1==null || (p1 && Math.abs(p1-m1)>0.006) || Math.abs(b.fillCost-(+b.stake||0))>0.06)) b.fillDiff={price:p1||m1, stake:b.fillCost, fee:b.fillFee!=null?b.fillFee:null, at:f.ts}; return; }   /* v5.12 (bug): the fee of all the orders in fillCost (fillFee), or none when it is not known (Fix then keeps the fee the bet has) */   // v5.11 (bug): a stake or price you corrected (accountingSource user) is never put back, but when the order grew (more contracts than before) and the book now says another price or cost, the Fix / Keep mine line says so, so the extra money is not hidden. Its fee is the book's total only on a re-read of the same order; for another order it is left out, so Fix keeps the fee the bet has
   if(b.accountingSource==='import' || b.accountingSource==='user'){ delete b.fillDiff; return; }   /* v4.71: a stake and odds you corrected (import fix) are never put back by a re-read of the book's fills */
-  if(b.autoFrom){ b.stake=b.fillCost; if(f.price) b.odds=fmtOdds(Math.round(americanOf(f.price))); delete b.fillDiff; return; }
-  const mine=toProb(b.odds), px=f.price;
+  const avg=fillAvgOf(b);   // v5.26 (PROFIT-1): a bet of two or more orders is priced at what all its contracts cost, not at the last order's price
+  if(b.autoFrom){ b.stake=b.fillCost; if(avg){ b.odds=fmtOdds(Math.round(americanOf(avg.price))); b.fee=avg.fee; } else if(f.price) b.odds=fmtOdds(Math.round(americanOf(f.price))); delete b.fillDiff; return; }   // v5.26 (PROFIT-1): and the fee rate of all of them (b.fee; snap is never rewritten)
+  const mine=toProb(b.odds), px=avg?avg.price:f.price;   // v5.26 (PROFIT-1): Fix offers the average price too
   if(mine==null || (px && Math.abs(px-mine)>0.006) || Math.abs(b.fillCost-(+b.stake||0))>0.06) b.fillDiff={price:px||mine, stake:b.fillCost, fee:b.fillFee!=null?b.fillFee:null, at:f.ts};   // v5.12 (bug): the fee of all the orders in fillCost (fillFee), not only this one; none when it is not known, so Fix keeps the fee the bet has
   else delete b.fillDiff;
 }
@@ -14532,6 +14656,15 @@ function pendingAutoAdd(){ let changed=false;
     return true; });
   if(changed){ saveFills(); saveLog(); try{ renderLog(); renderPerf(); refresh(); }catch(e){} }
   return changed; }
+/* v5.26 (PROFIT-2, GRADING-7): one sale of a position, kept by its id (a Kalshi or Polymarket sell, or a Novig hedge), so a re-read replaces it and never
+   adds it twice. soldFills and soldCash are the sums (cash after each sale's fee). A bet sold in part before v5.26 (soldFills with no soldBy) keeps that sale
+   as 'old'. When the sales reach the contracts bought the bet is SOLD for the cash of all of them. Hoisted. */
+function soldAdd(b, id, qty, cash, ts, seen){ if(!b) return; const S=b.soldBy=b.soldBy||{};
+  const same=!!(seen && seen.s==='sold' && Math.abs((+seen.q||0)-(+b.soldFills||0))<1e-6);   /* v5.26 round 2 (B1): the sale saved before v5.26 came from this same sell order (it grew): it is replaced, not kept beside it */
+  if(!Object.keys(S).length && (+b.soldFills||0)>0 && !S[id] && !same) S.old={q:+b.soldFills||0, cash:+b.soldCash||0};
+  S[id]={q:+qty||0, cash:+(+cash||0).toFixed(4), at:ts||null};
+  let q=0, c=0; Object.keys(S).forEach(k=>{ q+=+S[k].q||0; c+=+S[k].cash||0; }); b.soldFills=+q.toFixed(4); b.soldCash=+c.toFixed(2);
+  const bought=+b.fillQty||0; if(bought>0 && b.soldFills>=bought-1e-9 && !b.sold) b.sold={price:b.soldCash, at:new Date(ts||Date.now()).toISOString(), auto:true}; }
 async function syncFills(force){
   if(fillBusy || (!force && (wkPaused() || Date.now()-fillAt<(wkIdle()?180000:60000)))) return; fillBusy=true;   // v4.24: every minute while you use the page, every 3 when it is left open; paused when the Worker is over its limit
   try{ pendingAutoAdd(); }catch(e){}   // v3.90: what is already waiting, whatever the book answers
@@ -14566,8 +14699,7 @@ async function syncFills(force){
       if(seen && seen.s!=='pending' && Math.abs((seen.q||0)-(+f.qty||0))<1e-6 && !fillLost(f,seen)) return;   // nothing new on this order   // v3.91: unless its bet went missing
       if(f.action==='sell'){   // a sell that covers the whole position marks the bet sold
         const b=betForFill(Object.assign({},f,{action:'buy'}));
-        if(b && !b.sold){ b.soldFills=+f.qty||0; b.soldCash=+((+f.price||0)*(+f.qty||0)).toFixed(2);
-          const bought=(b.fillQty||0); if(bought && b.soldFills>=bought-1e-9){ b.sold={price:b.soldCash, at:new Date(f.ts||Date.now()).toISOString(), auto:true}; }
+        if(b && !b.sold){ soldAdd(b, 's:'+f.id, +f.qty||0, (+f.price||0)*(+f.qty||0)-(+f.fee||0), f.ts, seen);   // v5.26 (PROFIT-2): each sale added once by its id (a re-read replaces its own), after its fee; SOLD when the sales reach the contracts bought
           changed=true; fillSeen[key]={s:'sold',q:+f.qty||0}; return; }
         fillPending.push(f); fillSeen[key]={s:'pending',q:+f.qty||0}; return;
       }
@@ -14585,7 +14717,8 @@ async function syncFills(force){
     // a Novig sale closes the bet it offsets: whole position → SOLD with the cash back
     (j.fills||[]).forEach(f=>{ if(f.soldFor==null) return;
       const b=linkedTo(f), full=(f.soldQty||0)>=(+f.qty||0)-1e-6;
-      if(b && full && !b.sold){ b.sold={price:+f.soldFor.toFixed(2), at:new Date(f.soldAt||Date.now()).toISOString(), auto:true}; changed=true; }
+      if(b && !b.sold && (+b.fillQty||0)>0 && (+f.soldQty||0)>1e-9){ const o=(b.soldBy||{})['n:'+f.id]; if(!o || Math.abs(o.q-(+f.soldQty))>1e-9 || Math.abs(o.cash-(+f.soldFor))>0.004){ soldAdd(b, 'n:'+f.id, +f.soldQty, +f.soldFor, f.soldAt); changed=true; } }   // v5.26 (PROFIT-2): a Novig hedge of part of the position counts too (its cash: $1 a pair held, minus the hedge's cost)
+      if(b && full && !b.sold && !((+b.fillQty||0)>0)){ b.sold={price:+f.soldFor.toFixed(2), at:new Date(f.soldAt||Date.now()).toISOString(), auto:true}; changed=true; }   // v5.26: with the contracts bought known, soldAdd decides
       const pf=fillPending.find(p=>p.book===f.book && p.id===f.id); if(pf){ pf.soldFor=f.soldFor; pf.soldAt=f.soldAt; pf.soldQty=f.soldQty; } });
     // v2.96 / v3.03: the book's own result wins over ESPN grading (Polymarket: the position's realized profit)
     (j.settlements||[]).forEach(st=>{
@@ -14596,6 +14729,7 @@ async function syncFills(force){
       bets.forEach(b=>{
         if(b.gradedBy==='manual' || b.gradedBy==='import' || b.voided) return;   // v3.38: your own result wins   /* v4.72: and an imported one */   /* v5.25 (GRADING-6): and a void */
         let res=null;
+        if(st.book==='kalshi' && !st.side && (+b.soldFills||0)>0) return;   // v5.26 (PROFIT-2): Kalshi settled a market where you held nothing (yes and no both 0 after your sales): no result for the bet from it
         if(st.book==='kalshi'){ const r=String(st.result||''); res = r==='void'||r==='scalar' ? 'push' : (r==='yes'||r==='no') ? (r===(b.fillSide||st.side||'yes')?'win':'loss') : null; }
         else if(st.book==='poly'){
           if(st.side && b.fillSide && st.side!==b.fillSide) return;   // another position in that market
@@ -14796,6 +14930,7 @@ function makeShrink(ctx){   // v3.16 (Bestie #2): when a Make is most likely to 
   if(!isNaN(qa) && Date.now()-qa>10*60e3) return 'the price is more than 10 minutes old';
   return ''; }
 function makeTotal(s, cfg, ctx){ if(makeShrink(ctx)) return cfg.sMin; return Math.max(cfg.sMin, Math.floor(s*MAKE_SIZE*100+1e-6)/100); }
+function abOpTeam(f){ const t=teamsOf(f&&f.game); return t && f.team ? (normAbbr(f.team)===t[0]?t[1]:t[0]) : null; }   /* v5.26 (STAKE-2): the other team of a moneyline typed in + Add a bet; hoisted */
 function abStake(o){
   const cfg=cfgRead(), net=netAtP(o.fair,o.p,o.fee), notes=[];
   if(!(net>=cfg.eMin)) return {s:0, net, why: net<=0 ? 'no edge — you\'d lose '+Math.abs(net*100).toFixed(1)+'% on average' : SG94(net)+' net is under your '+pct(cfg.eMin)+' floor'};
@@ -14807,12 +14942,16 @@ function abStake(o){
   const aN=actNetOf(o.fair,o.mkt,o.p,o.fee), aNet=aN!=null?aN:net;
   if(!(aNet>0)) return {s:0, net, aNet, why:'no edge once blended with the market'};
   if(aNet<cfg.eMin-1e-9) return {s:0, net, aNet, why:'with the market it is '+SG94(aNet)+', under your '+pct(cfg.eMin)+' floor'};   /* v4.54: a Make too (its rungs are capped on her chance now) */
+  const today=ctDay(Date.now()), day=o.day||today;   // v5.26 (STAKE-2): the room of the bet's own game day (it was today's for a bet on tomorrow's game)
+  const R=o.kind ? abRules(o, day) : null; if(R && R.why) return {s:0, net, aNet, why:R.why};   // v5.26 (STAKE-2): the board's limits, in the board's words
   let s=kellyFor(cfg, aNet, o.p);
   if(o.outlier){ s=Math.min(s,cfg.sMin); notes.push('outlier — held to the minimum'); }
-  const today=ctDay(Date.now()), used=logged.filter(x=>!x.sold && gameDayOf(x)===today && poolOf(x)==='proj').reduce((t,x)=>t+(+x.stake||0),0);
-  const hold=+(window._onHold||0), room=cfg.dayMax-used-hold; if(s>room){ s=Math.max(0,room); notes.push('trimmed to your daily max ($'+used.toFixed(2)+' bet'+(hold?' + $'+hold.toFixed(2)+' posted, awaiting bond':'')+' of $'+cfg.dayMax.toFixed(2)+')'); }
-  if(o.game){ const inG=logged.filter(x=>!x.sold && x.game===o.game && !(x.result==='win'||x.result==='loss'||x.result==='push')).reduce((t,x)=>t+(+x.stake||0),0);
-    const gr=cfg.gameCap-inG; if(s>gr){ s=Math.max(0,gr); notes.push('game cap: $'+inG.toFixed(2)+' already on '+o.game); } }
+  if(R && R.lsmlN){ if(s>cfg.sMin) s=cfg.sMin; notes.push('long-shot moneyline: the smallest bet ('+R.lsmlN+' of '+LSML.day+' on that game day · one a game)'); }   // v5.26 (STAKE-2): as the board (exposure.md v4.68)
+  const used=logged.filter(x=>!x.sold && gameDayOf(x)===day && poolOf(x)==='proj').reduce((t,x)=>t+(x.free?0:(+x.stake||0)),0);   // v5.26 (STAKE-5): a free bet counts $0
+  const hold=+(window._onHold||0), room=cfg.dayMax-used-hold; if(s>room){ s=Math.max(0,room); notes.push('trimmed to your daily max ($'+used.toFixed(2)+' bet'+(hold?' + $'+hold.toFixed(2)+' posted, awaiting bond':'')+' of $'+cfg.dayMax.toFixed(2)+(day!==today?' for '+dayLabel(day)+'’s games':'')+')'); }
+  if(o.game){ const G=logged.filter(x=>!x.sold && x.kind!=='parlay' && !(x.result==='win'||x.result==='loss'||x.result==='push') && x.game && gameKey(x.game)===gameKey(o.game) && (gameDayOf(x)||x.date||'')===day);   /* v5.26 round 2: the same game as the board counts it (team codes in either order, its game day), not the exact text */
+    const inG=G.reduce((t,x)=>t+(x.free?0:(+x.stake||0)),0), inW=G.reduce((t,x)=>t+(x.free?0:(+x.stake||0))*((x.team && o.team && normAbbr(x.team)===normAbbr(o.team) && x.side && o.side) ? (x.side===o.side?1.5:0.75) : 1),0);   // v5.26 (STAKE-5): a free bet counts $0   /* v5.26 round 2: same team and side 1.5×, as the board */
+    const gr=Math.min(cfg.gameCap-inW, cfg.gameCap-inG); if(s>gr){ s=Math.max(0,gr); notes.push('game cap: $'+inG.toFixed(2)+' already on '+o.game); } }
   let n=null;
   if(o.noMkt && s>cfg.sMin){ s=cfg.sMin; notes.push('no market price to check it against: held to the minimum'); }   /* v4.53: as the board does */
   let kal=null;   // v5.05
@@ -14823,6 +14962,26 @@ function abStake(o){
   if(s<cfg.sMin-1e-9) return {s:0, net, why:(notes.length?notes[notes.length-1]+' — leaves $'+s.toFixed(2)+', under your $'+cfg.sMin.toFixed(2)+' minimum':s<0.5&&o.mkt!=null?'edge too thin once blended with the market':'Kelly says $'+s.toFixed(2)+', under your $'+cfg.sMin.toFixed(2)+' minimum'), notes};
   return {s, net, aNet, n, kal, notes, pctBank:cfg.bank>0?s/cfg.bank:null};   // v5.05: + kal (Kalshi shares, 2 decimals)
 }
+/* v5.26 (STAKE-2, Build B): the board's limits for a bet sized in + Add a bet (o.kind, o.name, o.team, o.sport, o.game; day = its game day), so it says what
+   the board says: a moneyline with the model 8+ points above the market is research only; a long-shot moneyline (her chance under 45%) needs a market
+   price, is one a game and LSML.day a game day (logged ones counted, lsmlBet) and then the smallest bet; a player you already hold a bet on in that game
+   gets nothing more; past MODEL_ONLY.day bets with no market check that day, none. {why} = $0 with the board's words; {lsmlN} = the long-shot hold. Hoisted. */
+function abRules(o, day){ if(!o || !o.kind) return null; const fair=o.fair, mkt=o.mkt;
+  if(o.kind==='moneyline' && mkt!=null && fair!=null && fair-mkt>LSML.gap+1e-9) return {why:'MONEYLINE GAP RESEARCH · model 8+ points above market ('+(fair*100).toFixed(1)+'% vs '+(mkt*100).toFixed(1)+'%): no automatic stake, kept as research'};
+  const gk=g=>g?gameKey(g):'', dayOfL=L=>gameDayOf(L)||L.date||'';
+  if(o.kind==='prop' && o.name){ const me={kind:'prop', name:o.name, sport:o.sport, team:o.team};
+    const H=logged.find(L=>L && !L.sold && L.kind!=='parlay' && !L.tier && dayOfL(L)===day && (!L.game || !o.game || gk(L.game)===gk(o.game)) && samePlayerAs(L, me));
+    if(H) return {why:'PLAYER EXPOSURE · already hold '+playerBetLabel(H)+': no additional stake'}; }
+  let lsmlN=null;
+  if(o.kind==='moneyline'){ const q=okProb(fair, mkt); if(q!=null && q<LSML.below-1e-9){
+    if(mkt==null) return {why:'LONG-SHOT ML · no market price: not offered in any mode'};
+    let n=0, inG=0; logged.forEach(b=>{ if(!lsmlBet(b) || dayOfL(b)!==day) return; n++; if(o.game && gk(b.game||b.matchup)===gk(o.game)) inG++; });
+    if(inG>=LSML.game) return {why:'LONG-SHOT ML · one a game, and one is already in this game'};
+    if(n>=LSML.day) return {why:'LONG-SHOT ML limit reached ('+LSML.day+' a game day)'};
+    lsmlN=n+1; } }
+  if(o.noMkt){ const M=logged.filter(b=>b && !b.sold && b.snap && b.snap.modelOnly && dayOfL(b)===day); if(o.game && M.filter(b=>gk(b.game||b.matchup)===gk(o.game)).length>=MODEL_ONLY.game) return {why:'model only: one a game, and one is already in this game'};   /* v5.26 round 2: the board's one-a-game rule too */
+    if(M.length>=MODEL_ONLY.day) return {why:'model-only limit reached ('+MODEL_ONLY.day+' a day, no market confirmation) — skip'}; }
+  return lsmlN ? {lsmlN} : null; }
 // fair value: your cover % → the same bet on your board → the exchanges' middle price
 function abFair(f){
   const X=abX&&abX.key===abKey(f)?abX:null;
@@ -14857,8 +15016,8 @@ async function abAsk(manual){
       if(q&&q.ok){ (mine?me:op).push({src:sr, book:BOOK_NAME[sr], q}); liveQuotes[d.id]=q; }
       else if(q&&mine) notes.push(BOOK_NAME[sr]+': '+String(q.note||'no match').replace(/^(Kalshi|Polymarket|Novig): /,'')); });
     const mids=[], from=new Set();
-    me.forEach(x=>{ if(x.q.bid>0){ mids.push((x.q.price+x.q.bid)/2); from.add(x.book); } });
-    op.forEach(x=>{ if(x.q.bid>0){ mids.push(1-(x.q.price+x.q.bid)/2); from.add(x.book); } });
+    me.forEach(x=>{ if(x.q.bid>0 && !thinQ(x.q)){ mids.push((x.q.price+x.q.bid)/2); from.add(x.book); } });   // v5.26 (PRICES-2): a thin book (ask more than 10 points over its bid, v5.21) is no price: its middle never sets the fair chance
+    op.forEach(x=>{ if(x.q.bid>0 && !thinQ(x.q)){ mids.push(1-(x.q.price+x.q.bid)/2); from.add(x.book); } });
     if(abKey(abRowFields())!==key) return;   // the form changed while we waited
     abX={key, at:Date.now(), me, op, mid:mids.length?mids.reduce((a,b)=>a+b,0)/mids.length:null, from:[...from].join(' + '), notes};
     const got=[...new Set(me.concat(op).map(x=>x.book))];
@@ -14902,7 +15061,7 @@ function abUpdate94(){
     cand.forEach(c=>{ const fs=c.side==='me'?fair:1-fair, ms=mkt==null?null:(c.side==='me'?mkt:1-mkt);
       c.net=netAtP(fs,c.p,c.fee); c.out=c.side==='me'&&isOut(c.net);
       { const a=actNetOf(fs,ms,c.p,c.fee); c.her=a!=null?a:c.net; }   /* v4.53: La Contadora's EV at that price: what the verdict shows and ranks on (c.net is the model's) */
-      c.st=abStake({fair:fs, mkt:ms, p:c.p, fee:c.fee, book:c.book, outlier:c.out, outLimit:usedOut>=outN, game:f.game, noMkt:ms==null && !FA.ex}); });
+      c.st=abStake({fair:fs, mkt:ms, p:c.p, fee:c.fee, book:c.book, outlier:c.out, outLimit:usedOut>=outN, game:f.game, noMkt:ms==null && !FA.ex, kind:f.kind, sport:f.sport, name:c.side==='me'?f.name:(f.kind==='moneyline'?abOpTeam(f):f.name), team:c.side==='me'?f.team:(f.kind==='moneyline'?abOpTeam(f):f.team), side:c.side==='me'?(f.side||''):(f.side==='O'?'U':f.side==='U'?'O':''), day:f.gameDay||null}); });   // v5.26 (STAKE-2): the bet, its side and its game day, so the board's limits apply
     const typed=cand.find(c=>c.typed), best=cand.filter(c=>c.st.s>0).sort((a,b)=>b.her-a.her)[0]||null;
     const mdlOf=c=>Math.abs(c.her-c.net)>=0.0005?' <span class="meta">(model alone '+SG94(c.net)+')</span>':'';
     const lbl=c=>(c.side==='me'?me:opTxt)+' at '+esc(bookLabel(c.book))+' '+P94(c.p);
@@ -14946,6 +15105,8 @@ function abUpdate94(){
   { const hEd=$ab('abHost')&&$ab('abHost').querySelector('.editor'); if(hEd){ const was=hEd._kalHost; hEd._kalHost=kalH; if(hEd._kalSync && (kalH||was)) hEd._kalSync(); } }   // v5.05 (K6): the form shows this verdict's shares (none in Make my own or with no verdict); other books: nothing runs
   // ---- the working, same lines as before
   if(fair!=null){ const caP=okProb(fair, mkt); L.push((mkt!=null?'Market '+P94(mkt)+' no-vig ('+esc(FA.mktSrc||'market')+') · ':'')+(FA.ex?'Fair ':'Model ')+P94(fair)+' from '+FA.src+(caP!=null&&!FA.ex?' · La Contadora '+P94(caP)+(mkt!=null?' (what the bet uses)':' (no market: the model alone)'):'')); }   /* v5.14 (Las Karens review 2, item 2): in order Market (no-vig) · Model · La Contadora; it said Fair for the model’s number (Fair stays only when it is the exchanges’ middle price) */
+  (f._consNo||[]).forEach(x=>L.push(esc(x[0])+': could not read this price ('+esc(x[1])+'): type it like -110, +120, 1.91 or 52%. It is not used.'));   /* v5.26 round 2 (B3): said, not left silently empty */
+  if(f._cons && FA.mktSrc!=='consensus'){ L.push(f._cons==='bad' ? 'Consensus odds: the two sides add up to '+P94(toProb(f.consOdds)+toProb(f.consOtherOdds))+', not a real book (it must be over 98% and under 125%), so they are not used as the market: check both prices.' : 'Consensus odds: one side only'+(f._cons==='other'?' (the other side)':'')+', so the vig cannot be taken out and it is not used as the market. Type both sides for a market check'+(mkt==null?'; until then there is no market check and the bet is held to the smallest bet':'')+'.'); }   /* v5.26 (PRICES-1): said plainly */
   if(f.projValue!=null && f._line!=null && f.kind==='prop'){ const d=f.projValue-f._line; L.push('Projection '+f.projValue+' vs line '+f._line+' ('+(d>=0?'+':'')+(Math.round(d*10)/10)+')'); }
   if(gap!=null) L.push('Market check ('+esc(FA.mktSrc||'market')+'): '+pct(mkt)+', '+(FA.ex?'fair':'the model')+' is '+(gap>=0?'+':'−')+Math.abs(gap*100).toFixed(1)+' pts '+(gap>=0?'above':'below')+' it'+(gap>gapCut?' — <b>too far: outlier</b>, stake held to the minimum':''));   // v5.14: the model, not fair
   const today=ctDay(Date.now()), usedDay=+((dayStats()[today]||{}).staked)||0;   /* v5.14 (Las Karens review 2, item 1): the same number as the Bet log strip and the Hard stop (dayStats().staked of today: parlay and pick’em entries and sold bets included, a free bet at $0); the stake sizing above (abStake) is unchanged */
@@ -14972,13 +15133,13 @@ function abMakeLadder(f, fair, mkt, book, X, isOut, outLimit){
   rungs=rungs.filter(inRange);
   let takeNote='';
   if(ask!=null && rungs.some(p=>p>=ask-1e-9)){
-    const tf=feeRate(book,ask,cfg.fees), ts=abStake({fair, mkt, p:ask, fee:tf, book, outlier:isOut(netAtP(fair,ask,tf)), outLimit, game:f.game});
+    const tf=feeRate(book,ask,cfg.fees), ts=abStake({fair, mkt, p:ask, fee:tf, book, outlier:isOut(netAtP(fair,ask,tf)), outLimit, game:f.game, kind:f.kind, sport:f.sport, name:f.name, team:f.team, side:f.side||'', day:f.gameDay||null});   // v5.26 (STAKE-2)
     takeNote = ts.s>0 ? '🟢 '+esc(bookLabel(book))+' already sells it at '+P94(ask)+' → '+SG94(ts.net)+' net, $'+ts.s.toFixed(2)+'. <b>Taking beats posting</b> — switch to Take a price.'
                       : esc(bookLabel(book))+' sells it at '+P94(ask)+' right now — a post at or above that would just fill instantly, so those rungs are dropped.';
     rungs=rungs.filter(p=>p<ask-1e-9); }
   if(!rungs.length) return {level:takeNote?'ok':'bad', head:takeNote?'🟢 TAKE it — don\'t post':'🔴 SKIP — no rung fits your odds range', lines:[takeNote||('Breakeven after your floor is '+P94(mx)+', outside your '+fmtOdds(cfg.oMin)+' to '+fmtOdds(cfg.oMax)+' range.')]};
   const mid=rungs[Math.min(1,rungs.length-1)];
-  const st=abStake({fair, mkt, p:mid, fee:feeFn(mid), book, outlier:isOut(netAtP(fair,mid,feeFn(mid))), outLimit, game:f.game, make:true});
+  const st=abStake({fair, mkt, p:mid, fee:feeFn(mid), book, outlier:isOut(netAtP(fair,mid,feeFn(mid))), outLimit, game:f.game, make:true, kind:f.kind, sport:f.sport, name:f.name, team:f.team, side:f.side||'', day:f.gameDay||null});   // v5.26 (STAKE-2)
   if(!(st.s>0)){ const ln=takeNote?[takeNote]:[];
     if(mkt!=null && /blended/.test(st.why||'')) ln.push('The market has it at '+pct(mkt)+'. Posting at '+P94(mid)+' is above what the market pays — it only gets taken when someone knows more than the market. Lower your cover % or wait for the market to move.');
     return {level:'bad', head:'🔴 SKIP posting — '+esc(st.why||'no stake'), lines:ln}; }
@@ -16229,7 +16390,7 @@ function compaWhen(iso){ const t=Date.parse(iso||''); return isNaN(t)?null:new D
 function compaSide(r){ return r.side==='O'?'Over':r.side==='U'?'Under':(r.side||null); }
 /* one card, short (the context and the board summary) and full (get_card); only what the card already shows */
 function compaCard(r){ return {key:pxKey(r), player:r.name||null, team:r.team||null, sport:r.sport||null, market:r.market||null, side:compaSide(r), book:bookLabel(r.book)||String(r.book||''), price:r.offeredRaw||null,
-  stake:r.stake>0?+(+r.stake).toFixed(2):0, chance:compaPct(r.actProb), tab:tabWord(tabOfChance(r.actProb))||null, game:r.game||r.matchup||null, start:compaWhen(startOf(r))}; }
+  stake:r.stake>0 && !r.prior && !r.waitOrder?+(+r.stake).toFixed(2):0 /* v5.26 round 2: already bet: no stake */, already:r.prior?true:undefined, chance:compaPct(r.actProb), tab:tabWord(tabOfChance(r.actProb))||null, game:r.game||r.matchup||null, start:compaWhen(startOf(r))}; }
 function compaCardFull(r){ const c=compaCard(r), n=(()=>{ try{ return aiNewsOf(r); }catch(e){ return null; } })();
   return Object.assign(c, {approved:scApproved(r), passes:!!r.pass, fairPrice:r.fairRaw||null, marketChance:compaPct(r.mktProb), modelChance:compaPct(r.fairProb), evLaContadora:r.actNet!=null?compaPct(r.actNet):null,
     alreadyBet:!!r.prior, awol:rowAwol(r), oldPrice:rowOld(r), priceState:evDisplayState(r), outsidePlan:planOut(r.actProb), stars:r.stars!=null?r.stars:null, kind:r.kind||null,

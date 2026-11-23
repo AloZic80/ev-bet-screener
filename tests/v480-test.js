@@ -25,7 +25,7 @@ const ROWS=[
   Object.assign(prop('kxsp','Seattle Kraken','SEA','+1.5 Spread','',0.62,0.70,0.68,G3,'NHL'),{kind:'spread',book:'Kalshi',src:'api:NHL:lines'}),   // Kalshi underdog spread
   Object.assign(prop('draw','Draw','ARS','Moneyline','',0.278,0.31,0.30,G4,'EPL'),{kind:'moneyline',src:'api:EPL:lines',matchup:'ARS vs CHE'})];  // a soccer Draw (team = home)
 async function open(b, W, init){ const ctx=await b.newContext({timezoneId:'America/Chicago',viewport:{width:W,height:900}}); await ctx.clock.install({time:new Date(NOW)});
-  await ctx.addInitScript(([R,d])=>{ try{ if(sessionStorage.getItem('s')) return; sessionStorage.setItem('s','1'); localStorage.clear(); localStorage.setItem('mbev.cfg',JSON.stringify({books:'Novig, Kalshi',bank:'500',cfgVer:3.03})); localStorage.setItem('mbev.cards','1');
+  await ctx.addInitScript(([R,d])=>{ try{ if(sessionStorage.getItem('s')) return; sessionStorage.setItem('s','1'); localStorage.clear(); localStorage.setItem('mbev.cfg',JSON.stringify({books:'Novig, Kalshi',bank:'500',cfgVer:3.03,gameCapPct:'20' /* v5.26 (STAKE-1): the game cap now holds over the board's own rows; raised here, as in v517-tabrows (the caps are not what this test is about) */})); localStorage.setItem('mbev.cards','1');
     localStorage.setItem('mbev.board',JSON.stringify({v:1,savedAt:new Date().toISOString(),slate:d,rows:R})); }catch(e){} },[ROWS,DAY]);
   if(init) await ctx.addInitScript(init);
   const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));

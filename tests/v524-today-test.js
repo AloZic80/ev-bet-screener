@@ -4,6 +4,7 @@
 // Screenshots (390 and 1280, light and dark) go to SHOTS when the environment variable EASY_SHOTS is a folder.
 const path=require('path'), fs=require('fs');
 const { chromium } = require('playwright');
+require('./practice-fixtures.js').CFG.gameCapPct='20';   // v5.26 (STAKE-1, Build B): the game cap now holds over the board's own rows of a game; the practice board's KC @ DEN had $56 on its $40 cap (Pacheco listed), so the cap is raised here as in v517-tabrows (the caps are not what this test is about)
 const { openPractice, fixtures: F } = require('./practice-copy.js');
 const html=fs.readFileSync(process.argv[2]||path.join(__dirname,'..','index.html'),'utf8');
 const SHOTS=process.env.EASY_SHOTS||'';

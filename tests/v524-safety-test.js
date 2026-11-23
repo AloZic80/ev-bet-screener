@@ -3,6 +3,7 @@
 // The customer build is this same file with DEV_APP set to false (a text replace in memory), as a paid build would be.
 const path=require('path'), fs=require('fs');
 const { chromium } = require('playwright');
+require('./practice-fixtures.js').CFG.gameCapPct='20';   // v5.26 (STAKE-1, Build B): the game cap now holds over the board's own rows of a game; the practice board's KC @ DEN had $56 on its $40 cap (Pacheco listed), so the cap is raised here as in v517-tabrows (the caps are not what this test is about)
 const html=fs.readFileSync(process.argv[2]||path.join(__dirname,'..','index.html'),'utf8');
 const cust=html.replace('const DEV_APP=true','const DEV_APP=false'); if(cust===html) throw new Error('the DEV_APP flag was not found');
 const K=require('./v524-easy-kit.js')(html), { T, FORBID, GODONLY, EMOJI, PROMISE, inView, rect }=K, R=K.mk(), check=R.check;

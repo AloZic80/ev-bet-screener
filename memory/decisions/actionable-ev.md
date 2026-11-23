@@ -23,6 +23,11 @@ Stake = `kellyFor(cfg, actNet, price)` = bankroll × Kelly × (actNet × haircut
 | EV shown (card pill, table +EV, Live Games, Copy board, Sort › +EV) | `actNet`; the model's `net` is labelled Model EV | `placeCardHtml`, `renderCore`, `colVal` |
 | Sweet spot, ◎ ring, 🎟 leg (70% on `actProb` since v4.53's review), extras | `actProb` / `actNet` | `isSweet`, `ringOf`, `ringAssign`, `extrasAssign` |
 | + Add a bet with no market price | held to the smallest bet, like the board (v4.53) | `abStake` (`noMkt`) |
+| + Add a bet's market price from Consensus odds (v5.26, PRICES-1) | this side ÷ (this side + the Other side), only when the two add to over 98% and under 125% (as the Worker); one side alone is no market check (smallest bet, said in the verdict); both sides saved in `snap.consensus` | `abRowFields` (`abCons`, `abConsO`) |
+| + Add a bet's fair chance from the exchanges (v5.26, PRICES-2) | the middle of each book, leaving out a thin book (`thinQ`: ask more than 10 points over its bid) | `abAsk` |
+| The Odds box (bet form, + Add a bet, To win link; v5.26, PRICES-3) | dashes and the typographic minus are a minus; only EVEN, a %, a decimal above 1.00 or a whole American price of 100+ is a price, else "Type the odds" | `oddsIn` |
+| A game with a Draw (v5.26, PRICES-4) | the two team moneylines are not paired as both sides; each is judged on its own EV | `pairUp` |
+| "also at" math (v5.26, EV-3) | OK up to, the fee and the EV of a board row use its real book (a FanDuel Predicts row has its fee), the label only for display | `altBooksAll` |
 | A Parlay pick's chance (filters, `pkDist`, EV, Kelly, ranking) | `actProb` (v4.55, saved with `pk.policy` = `actProb-v2`) | `pkProbOf`, `pkLegs`, `pkLegsPriced` |
 | Model-only bets (no market price) | smallest bet, at most 5 a game day and 1 a game, best `actNet` first (v4.55, `snap.modelOnly`) | `MODEL_ONLY`, `auditCore` |
 | Outlier Make | must also beat the market's breakeven (kept, v4.55 test) | Parole ladder |
