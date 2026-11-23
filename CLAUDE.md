@@ -79,6 +79,8 @@
 - **A ChatGPT reply is a proposal, not a go** (owner, 2026-11-10: "don't just build after they respond. You should have questions and not until you both
   agree to build, is when it will be built"). When the owner pastes one: check it against the code, answer with questions and objections in a block he
   can paste back, and build nothing. Build only when Claude Code and ChatGPT agree on the exact scope and the owner says build.
+- **Answer first** (owner, 2026-11-23: "I want you to first answer before you start to build, always answer with a yes, no, why, etc."):
+  a question gets a plain answer (yes / no / why / what it would take) and nothing is built until he says build.
 - Never push to `main`. Work on a feature branch and push that. Open a pull request only when the owner asks.
 - Change only what was asked, found by exact text. Don't reformat, rename or reorder. Report anything else you notice instead of fixing it.
 - Keep the file's style: long one-line records, a `// vX.YY:` comment on lines you change, and new CSS in a versioned block
