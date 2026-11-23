@@ -25,7 +25,7 @@ meetings, etc, and weekend its almost ALL DAY"; "sound on"; then "BUILD ALL".
 - God only: `jvActive()` = `DEV_APP && easyLevel()==='god' && on`; `#jvPop` is hidden in Easy by CSS too.
 
 ## Tests
-`tests/v527-jarvis-test.js`.
+`tests/v527-jarvis-test.js`, `v527-jarvis2-test.js`, `v527-jarvis3-test.js`, `v527-jarvis4-test.js` (shared setup `v527-jarvis-lib.js`).
 
 ## Round 2 (2026-11-23, review of 69e5685)
 - J1–J3: the pick on screen is identified by its key, book and price, never a board idx. `jvRecheck` (called from `render` after every board render, so also after sync and fill imports, and on every tick) closes it when it is gone or already bet ("already in your Bet log", marked done), and redraws it when its book, price, stake, OK up to or ticket changed (an open bet form is closed). I bet this and Save check again first (`jvCurRow`, `jvSig`); Save on a changed or already-bet pick is refused.
@@ -48,3 +48,9 @@ meetings, etc, and weekend its almost ALL DAY"; "sound on"; then "BUILD ALL".
 
 ## Round 5 (2026-11-23)
 - Owner spec "big, top of the screen, impossible to miss": at the top of the page (scrollY 8 px or less before the change) nothing is held: the pop-up opens in view and pushes the page down, and closing just closes; no chip there. Scrolled down, the round-4 hold and the chip are unchanged.
+
+## Round 6 (2026-11-23, review of 38f505c)
+- D1: the page is held still only when the pop-up is entirely above the screen (its bottom at 0 or above). Any part of it in view: the fold, a redraw or the late news line grow or shrink it downward, with no scroll.
+- D2: a new pick opens in view (no hold, no chip) while the page is scrolled less than the header's height (`jvHeadH`, measured each time: about 210 px on a phone, 130–150 px on a computer); further down it opens above the screen with the chip.
+- D3: the chip goes in the right gutter, outside the page column, when there are 200 px or more (the 1960 px screen); otherwise it is hidden while a button, link, field, tab or fold is under its box (checked with `elementsFromPoint` on each scroll frame and resize).
+- Tests: split in four files (`v527-jarvis-test.js`, `v527-jarvis2-test.js`, `v527-jarvis3-test.js`, `v527-jarvis4-test.js`) over `v527-jarvis-lib.js`, each well under run-all.js's 300 s per file; the away digest uses `clock.fastForward`.

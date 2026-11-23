@@ -2234,7 +2234,7 @@ html[data-viewas="easy"] #jvPop{display:none !important}
 #jvPop{position:relative; top:auto; left:auto; transform:none; z-index:auto; max-height:none; overflow:visible; margin:8px auto 0; width:min(760px, calc(100% - 16px))}   /* v5.27 (round 3, N4): in the page, at the top, never over it */
 html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (round 4, N5): Jarvis keeps the page still itself */
 #jvChip{position:fixed; top:4px; left:50%; transform:translateX(-50%); z-index:9997; height:32px; max-width:calc(100vw - 16px); padding:0 14px; border-radius:16px; border:2px solid var(--accent); background:var(--panel); color:var(--ink); font:inherit; font-size:14px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; box-shadow:0 4px 14px rgba(0,0,0,.2); cursor:pointer}   /* v5.27 (round 4, N6) */
-#jvChip[hidden]{display:none !important} @media (max-width:699px){ #jvChip{left:auto; right:8px; transform:none; height:30px; top:3px} } html[data-viewas="easy"] #jvChip{display:none !important}
+#jvChip[hidden]{display:none !important} #jvChip.jv-probe{visibility:hidden; pointer-events:none} #jvChip.gutter{left:auto; right:8px; transform:none}   /* v5.27 (round 6, D3) */ @media (max-width:699px){ #jvChip{left:auto; right:8px; transform:none; height:30px; top:3px} } html[data-viewas="easy"] #jvChip{display:none !important}
 #jvPop .jv-more>summary{list-style:none} #jvPop .jv-more>summary::-webkit-details-marker{display:none} #jvPop .jv-mk::before{content:"▸"; display:inline-block; width:1.2em} #jvPop .jv-more[open]>summary .jv-mk::before{content:"▾"}   /* v5.27 (round 3, N2) */
 #jvPop .jv-more{margin:6px 0} #jvPop .jv-more>summary{cursor:pointer; min-height:44px; display:flex; align-items:center; font-size:14px; font-weight:700; color:var(--soft)}   /* v5.27 (round 2, J9) */
 #jvPop .jv-pc{display:block; margin:8px 0 0; padding:0; border:0; background:none; box-shadow:none; min-height:0; width:auto; max-width:none}
@@ -14180,8 +14180,14 @@ function jvEl(){ let el=document.getElementById('jvPop'); if(!el){ el=document.c
    element after it (the page) is read; right after, the page is scrolled back by exactly the difference. The browser's own scroll anchoring is off while it happens
    (html.jv-noanc), so it is not corrected twice. Scrolled down, the pop-up then sits above the screen and the chip (jvChipPaint) says it is there; at the very top it opens in view (round 5). Hoisted. */
 function jvAnchor(){ const el=document.getElementById('jvPop'); let a=el && el.nextElementSibling; while(a){ const p=getComputedStyle(a).position; if(p!=='fixed' && p!=='absolute' && a.getClientRects().length) return a; a=a.nextElementSibling; } return null; }
-function jvKeepStart(){ const h=document.documentElement; h.classList.add('jv-noanc'); clearTimeout(jvKeepStart._t); const a=jvAnchor(); return {a, t:a?a.getBoundingClientRect().top:null, y:window.scrollY||0}; }
-function jvKeepEnd(k){ if(k && k.y>8 && k.a && k.a.isConnected && k.t!=null){   /* v5.27 (round 5, owner spec "big, top of the screen"): at the top of the page (8 px or less) nothing is held: the pop-up opens in view and pushes the page down */ const d=k.a.getBoundingClientRect().top-k.t; if(Math.abs(d)>0.5) window.scrollBy(0, d); }
+/* v5.27 (round 6, D1-D2): which changes are held. A pop-up already on screen (any part of it) just grows or shrinks downward: nothing is held. One entirely above the screen
+   (its bottom at 0 or above) is held, so the page does not move under you. A new one opens in view, pushing the page down, while you are scrolled less than the header's
+   height (measured each time); further down it opens above the screen with the chip. */
+function jvHeadH(){ const hd=document.querySelector('.head'), el=document.getElementById('jvPop'); if(!hd) return 100; const ph=(el && !el.hidden)?el.offsetHeight:0; return Math.max(0, hd.getBoundingClientRect().bottom+(window.scrollY||0)-ph); }
+function jvKeepStart(){ const h=document.documentElement; h.classList.add('jv-noanc'); clearTimeout(jvKeepStart._t); const a=jvAnchor(), el=document.getElementById('jvPop'), shown=!!(el && !el.hidden);
+  const hold=shown ? el.getBoundingClientRect().bottom<=0 : (window.scrollY||0)>=jvHeadH();
+  return {a, t:a?a.getBoundingClientRect().top:null, y:window.scrollY||0, hold}; }
+function jvKeepEnd(k){ if(k && k.hold && k.a && k.a.isConnected && k.t!=null){ const d=k.a.getBoundingClientRect().top-k.t; if(Math.abs(d)>0.5) window.scrollBy(0, d); }
   jvKeepStart._t=setTimeout(()=>document.documentElement.classList.remove('jv-noanc'), 500); try{ jvChipPaint(); }catch(e){} }
 function jvKeep(f){ const k=jvKeepStart(); try{ f(); } finally { jvKeepEnd(k); } }
 function jvPump(){ if(!jvActive()){ jvClose(true); return; } if(window._jvCur || !jvOpen()) return;
@@ -14249,8 +14255,15 @@ function jvChipEl(){ let c=document.getElementById('jvChip'); if(!c){ c=document
 function jvChipPaint(){ const el=document.getElementById('jvPop'), cur=window._jvCur, c=document.getElementById('jvChip');
   const off=!!(el && !el.hidden && cur && el.getBoundingClientRect().bottom<24), busy=!!document.querySelector('.editor, html.cp-open, dialog[open], .modal.on, .ab-host[open]');
   if(!off || busy || !jvActive()){ if(c) c.hidden=true; return; }
-  const n=cur.digest?0:1+jvMoreN(), b=jvChipEl(); const sm=innerWidth<700; b.textContent=cur.digest?(sm?'🤖 Away list ↑':'🤖 Jarvis: while you were away ↑'):(sm?'🤖 ':'🤖 Jarvis: ')+n+' pick'+(n===1?'':'s')+' ↑';   /* on a phone, short and at the top right: clear of the header buttons */ b.setAttribute('aria-label', b.textContent.replace('↑','')+', go up to see'); b.hidden=false; }
+  const n=cur.digest?0:1+jvMoreN(), b=jvChipEl(); const sm=innerWidth<700; b.textContent=cur.digest?(sm?'🤖 Away list ↑':'🤖 Jarvis: while you were away ↑'):(sm?'🤖 ':'🤖 Jarvis: ')+n+' pick'+(n===1?'':'s')+' ↑';   /* on a phone, short and at the top right: clear of the header buttons */ b.setAttribute('aria-label', b.textContent.replace('↑','')+', go up to see');
+  /* v5.27 (round 6, D3): in the right gutter, outside the page column, when there is room; otherwise it steps aside while a button or link is under its box (checked as you scroll) */
+  const wr=(document.querySelector('.wrap')||document.body).getBoundingClientRect(), gut=innerWidth-wr.right;
+  b.classList.toggle('gutter', gut>=200); b.style.maxWidth=gut>=200?Math.floor(gut-16)+'px':'';
+  b.classList.add('jv-probe'); b.hidden=false; let under=false;
+  if(!b.classList.contains('gutter')){ const r=b.getBoundingClientRect(); for(let x=r.left+3; x<r.right && !under; x+=10) for(let y=r.top+3; y<r.bottom && !under; y+=7){ for(const e of document.elementsFromPoint(x, y)){ if(e===b || b.contains(e)) continue; if(e.closest('button, a[href], input, select, textarea, summary, label, [role="button"], [role="tab"], .tab')){ under=true; break; } } } }
+  b.classList.remove('jv-probe'); b.hidden=under; }
 window.addEventListener('scroll', ()=>{ if(window._jvChipRaf) return; window._jvChipRaf=requestAnimationFrame(()=>{ window._jvChipRaf=0; try{ jvChipPaint(); }catch(e){} }); }, {passive:true});
+window.addEventListener('resize', ()=>{ try{ jvChipPaint(); }catch(e){} }, {passive:true});
 function jvClose(all){ const el=document.getElementById('jvPop'); if(el) jvKeep(()=>{ el.hidden=true; el.innerHTML=''; el.classList.remove('near','dg'); }); window._jvCur=null; if(all){ window._jvQ=[]; window._jvDigest=null; } try{ jvChipPaint(); }catch(e){} }
 function jvNext(){ jvClose(false); jvPump(); }
 function jvAlarm(r, near){ { const R=jvRun(), k=pxKey(r), t=(R.toned||{})[k]; if(t && Date.now()-t<25*60e3) return; R.toned=R.toned||{}; R.toned[k]=Date.now(); jvRunSet(R); }   // v5.27 (round 3, N3): one tone and notification a pick (another tab may have rung already); again after a Not now
