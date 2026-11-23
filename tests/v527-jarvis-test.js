@@ -27,7 +27,7 @@ const NOTIF=perm=>`window._notes=[]; window.Notification=class{ constructor(t,o)
 async function open(b, W, opt){ opt=opt||{};
   const ctx=await b.newContext({timezoneId:'America/Chicago',viewport:{width:W,height:opt.h||900}}); await ctx.clock.install({time:new Date(opt.at||NOW)});
   await ctx.addInitScript(([R,d,o])=>{ try{ if(sessionStorage.getItem('s')) return; sessionStorage.setItem('s','1'); localStorage.clear(); localStorage.setItem('mbev.cfg',JSON.stringify({books:'Novig, Kalshi',bank:'500',cfgVer:3.03})); localStorage.setItem('mbev.cards','1');
-    localStorage.setItem('mbev.board',JSON.stringify({v:1,savedAt:new Date().toISOString(),slate:d,rows:R})); if(o.jarvis) localStorage.setItem('mbev.jarvis',JSON.stringify(o.jarvis));
+    localStorage.setItem('mbev.board',JSON.stringify({v:1,savedAt:new Date().toISOString(),slate:d,rows:R})); localStorage.setItem('mbev.jarvis',JSON.stringify(o.jarvis||{}));   /* a test browser opts in (round 3, N4) */
     if(o.ai){ localStorage.setItem('mbev.ai.on','1'); localStorage.setItem('mbev.ai.status',JSON.stringify({setUp:true, spentToday:0, spentMonth:0, capDay:5, capMonth:90, at:Date.now()})); localStorage.setItem('mbev.pass','pw'); }
     if(o.log) localStorage.setItem('mbev.ai.log',JSON.stringify(o.log)); }catch(e){} },[ROWS,DAY,{jarvis:opt.jarvis||null, ai:!!opt.ai, log:opt.aiLog||null}]);
   await ctx.addInitScript(NOTIF(opt.notif||'default')); if(opt.init) await ctx.addInitScript(opt.init);
@@ -83,7 +83,7 @@ const click=async(p,sel)=>{ await ev(p,s=>{ const b=document.querySelector(s); i
     await ev(X.p,()=>{ const c=document.querySelector('#jvWeek .jv-day[data-d="3"] [data-jv="off"]'); c.checked=true; c.dispatchEvent(new Event('change',{bubbles:true})); });
     const e3=await ev(X.p,()=>{ const J=JSON.parse(localStorage.getItem('mbev.jarvis')); return {off:J.days[3].off, wedIn:jvInWin(Date.parse('2026-11-11T18:10:00Z'))}; });
     check('add a window (6:00–7:30 PM), remove one, a day off: saved in mbev.jarvis and used', JSON.stringify(e1)==='[["12:00","13:00"],["15:00","15:30"],["18:00","19:30"]]' && JSON.stringify(e2)==='[["15:00","15:30"],["18:00","19:30"]]' && e3.off && !e3.wedIn, {e1,e2,e3});
-    await ev(X.p,()=>{ localStorage.removeItem('mbev.jarvis'); jvPaint(true); });
+    await ev(X.p,()=>{ localStorage.setItem('mbev.jarvis','{}'); jvPaint(true); });
     await click(X.p,'#jvQuiet');
     const q1=await ev(X.p,()=>({open:jvOpen(), now:document.getElementById('jvNow').textContent, btn:document.getElementById('jvQuiet').textContent, mins:Math.round((jvRun().quiet-Date.now())/60e3), at3:jvOpen(Date.parse('2026-11-10T21:10:00Z'))}));
     check('Quiet for 1 hour: closed now inside the window, for 60 minutes (the 3 PM window opens as usual); the panel says until when', !q1.open && /^Quiet until 1:1\d PM\.$/.test(q1.now) && q1.btn==='End quiet' && q1.mins===60 && q1.at3, q1);
@@ -186,7 +186,7 @@ const click=async(p,sel)=>{ await ev(p,s=>{ const b=document.querySelector(s); i
     const pz=await pop(X.p);
     check('Worker paused: picks still pop from the board, with no AI call and no Scout', pz && X.S.ai.length===nNews && (await ev(X.p,()=>window._runs.length))===0, {pop:pz&&pz.head, ai:X.S.ai.length-nNews});
     // a notification while the tab is hidden
-    await ev(X.p,()=>{ Object.defineProperty(document,'hidden',{configurable:true, get:()=>true}); jvClose(true); const R=jvRun(); R.seen={}; jvRunSet(R); window._notes=[]; jvTick(); });
+    await ev(X.p,()=>{ Object.defineProperty(document,'hidden',{configurable:true, get:()=>true}); jvClose(true); const R=jvRun(); R.seen={}; R.toned={}; jvRunSet(R); window._notes=[]; jvTick(); });
     const nt=await ev(X.p,()=>window._notes.slice());
     check('with notifications allowed and the tab hidden: a notification for the pick', nt.length===1 && /^🤖 Jarvis · Bet this$/.test(nt[0].t) && / · \$\d+\.\d\d$/.test(nt[0].body), nt);
     await ev(X.p,()=>{ Object.defineProperty(document,'hidden',{configurable:true, get:()=>false}); });
@@ -203,7 +203,7 @@ const click=async(p,sel)=>{ await ev(p,s=>{ const b=document.querySelector(s); i
     const e=await ev(X.p,()=>({cur:!!window._jvCur, el:!!(document.getElementById('jvPop')&&!document.getElementById('jvPop').hidden), active:jvActive()}));
     check('nothing pops in Easy', !e.cur && !e.el && !e.active, e);
     await ev(X.p,()=>{ document.documentElement.setAttribute('data-viewas','god'); });
-    const same=await ev(X.p,()=>{ const snap=()=>lastRows.map(r=>r.apiKey+':'+(!!r.pass)+':'+(+r.stake||0).toFixed(2)+':'+r.idx).join(','); const a=snap(); localStorage.setItem('mbev.jarvis',JSON.stringify({on:false})); refresh(); const b=snap(); localStorage.removeItem('mbev.jarvis'); refresh(); return {same:a===b && snap()===a}; });
+    const same=await ev(X.p,()=>{ const snap=()=>lastRows.map(r=>r.apiKey+':'+(!!r.pass)+':'+(+r.stake||0).toFixed(2)+':'+r.idx).join(','); const a=snap(); localStorage.setItem('mbev.jarvis',JSON.stringify({on:false})); refresh(); const b=snap(); localStorage.setItem('mbev.jarvis','{}'); refresh(); return {same:a===b && snap()===a}; });
     check('stakes, decisions and order are the same with Jarvis on and off', same.same, same);
     check('no page errors (off)', !X.errs.length, X.errs);
     await X.ctx.close();
@@ -323,5 +323,51 @@ const click=async(p,sel)=>{ await ev(p,s=>{ const b=document.querySelector(s); i
     const w=await ev(X.p,()=>{ const k=window._jvCur.k, c=[...document.querySelectorAll('#placeCards .pcard')].find(x=>x.dataset.pck===k), p=document.getElementById('jvPop').getBoundingClientRect(); if(!c) return null; const r=c.getBoundingClientRect(); return {top:r.top, popBottom:p.bottom, atEnd:Math.ceil(scrollY+innerHeight)>=document.documentElement.scrollHeight-2, why:c.querySelector('details.sc-why').open}; });
     check('J9: open on a computer; Why? puts the card below the pop-up with Why this play? open', d2===true && w && w.why && (w.top>=w.popBottom-1 || w.atEnd), {d2, w});
     check('no page errors (J9)', !X.errs.length, X.errs); await X.ctx.close(); });
+
+  // ================= 8. round 3 (the review of af32355): each check fails on that commit =================
+  await safe('round 3: N1 the right book', async()=>{
+    X=await open(b,1280,{}); await X.p.waitForTimeout(1500); await fresh(X.p);
+    await click(X.p,'#jvPop .jv-later');
+    const r=await ev(X.p,async()=>{ const shown=document.querySelector('#jvPop .jv-pick').textContent; window._rab=[]; quoteFor=async(x,bk)=>{ if(window._rec) window._rab.push(x.name+' @ '+bk); return null; };   /* the book-open handler asks the book for the row it opens */
+      const w={location:{}, close(){}, focus(){}, document:{write(){},close(){}}}; slipWindow=()=>w;
+      lastRows=lastRows.filter(x=>x.name!=='Justin Jefferson'); refresh(); window._rec=1; document.querySelector('#jvPop .jv-open').click();   // the rows shift; the tap comes before the pop-up redraws
+      await new Promise(z=>setTimeout(z,200)); const now=document.querySelector('#jvPop .jv-pick').textContent; document.querySelector('#jvPop .jv-open').click(); await new Promise(z=>setTimeout(z,200));
+      return {shown, now, rab:window._rab}; });
+    const nm=x=>x.split(' Over')[0];
+    check('N1: after the rows shift, Open the book opens the slip of the pick the pop-up shows (never another player’s by an old idx; a tap before the redraw is held and the pop-up redrawn)', r.rab.length>=1 && r.rab.every(x=>x.indexOf(nm(r.now))===0), r);
+    check('no page errors (N1)', !X.errs.length, X.errs); await X.ctx.close(); });
+  await safe('round 3: N2 ticket on a phone', async()=>{
+    X=await open(b,390,{ai:true, h:844}); await X.p.waitForTimeout(1500); await fresh(X.p);
+    for(let i=0;i<4;i++){ const s0=await pop(X.p); if(s0 && /Horvat/.test(s0.pick)) break; await click(X.p,'#jvPop .jv-later'); }
+    const t=await ev(X.p,()=>{ const k=document.querySelector('#jvPop .sc-tkt'), d=document.querySelector('#jvPop details.jv-more'), el=document.getElementById('jvPop');
+      return {pick:document.querySelector('#jvPop .jv-pick').textContent, tkt:!!k && k.getClientRects().length>0 && !k.closest('details:not([open])'), dOpen:d&&d.open, mark:d?getComputedStyle(d.querySelector('.jv-mk'),'::before').content:null, sw:document.documentElement.scrollWidth, vw:innerWidth, over:el.scrollWidth>el.clientWidth+1}; });
+    check('N2: at 390 px the Kalshi “Type this” ticket is in view; only the news and price-move lines fold, with a ▸ marker; the pop-up fits', /Horvat/.test(t.pick) && t.tkt && t.dOpen===false && /▸/.test(t.mark||'') && t.sw<=t.vw+1 && !t.over, t);
+    const k2=await ev(X.p,()=>{ const d=document.querySelector('#jvPop details.jv-more'); d.open=true; d.dispatchEvent(new Event('toggle')); const c=window._jvCur; c.sig=''; jvRecheck(); const d2=document.querySelector('#jvPop details.jv-more'); return {open:d2&&d2.open, mark:d2?getComputedStyle(d2.querySelector('.jv-mk'),'::before').content:null}; });
+    check('N2: opened by you, it stays open (▾) when the pop-up redraws', k2.open===true && /▾/.test(k2.mark||''), k2);
+    await X.ctx.close(); });
+  const W8=`(()=>{ const o=Storage.prototype.setItem; window._w={}; Storage.prototype.setItem=function(k,v){ window._w[k]=(window._w[k]||0)+1; return o.call(this,k,v); }; })();`;
+  await safe('round 3: N3 quiet lease', async()=>{
+    for(const [at,lbl,max] of [['2026-11-10T16:00:00Z','outside a window (10 AM)',0],['2026-11-10T18:05:00Z','inside a window, one tab',12]]){
+      X=await open(b,1280,{at:Date.parse(at), init:W8}); await X.p.waitForTimeout(1500);
+      const w0=await ev(X.p,()=>window._w['mbev.jarvisLease']||0); await X.p.clock.runFor(10*M); await X.p.waitForTimeout(200); const w1=await ev(X.p,()=>window._w['mbev.jarvisLease']||0);
+      check('N3: mbev.jarvisLease writes in 10 minutes '+lbl+': '+(w1-w0)+' (at most '+max+')', w1-w0<=max, {w0,w1}); await X.ctx.close(); }
+    X=await open(b,1280,{}); await X.p.waitForTimeout(1500); await fresh(X.p);
+    const o=await ev(X.p,()=>{ const want=lastRows.filter(scApproved).sort((a,b)=>mathKey(b)-mathKey(a)).map(r=>pxKey(r)); const c=window._jvCur; const R=jvRun(); delete R.seen[c.k]; jvRunSet(R); window._jvQ.push({k:c.k, near:false}); jvClose(false); window._beeps=0; jvPump();   // handed back by another tab, queued last
+      return {first:window._jvCur.k===want[0], beeps:window._beeps}; });
+    check('N3: a pick handed back by another tab pops in La Contadora’s order, with no second tone', o.first && o.beeps===0, o);
+    await X.ctx.close(); });
+  await safe('round 3: N4 never over the page', async()=>{
+    for(const W of [390,1000,1280,1960]){
+      X=await open(b,W,{}); await X.p.waitForTimeout(1500); await fresh(X.p); await X.p.waitForTimeout(100);
+      const c=await ev(X.p,()=>{ const ids=['#themer','#layoutBtn','#sbFoldBtn','#ssFoldBtn','.tabs .tab[data-view="v-board"]','.tabs .tab[data-view="v-settings"]']; const out={};
+        ids.forEach(s=>{ const e=document.querySelector(s); if(!e || !e.getClientRects().length) return; e.scrollIntoView({block:'center'}); const r=e.getBoundingClientRect(); const h=document.elementFromPoint(r.left+r.width/2, r.top+r.height/2); out[s]=!!h && !h.closest('#jvPop'); });
+        return {shown:!document.getElementById('jvPop').hidden, pos:getComputedStyle(document.getElementById('jvPop')).position, out}; });
+      check('N4 '+W+' px: the pop-up sits in the page, and the header buttons and tabs are not covered by it', c.shown && c.pos!=='fixed' && Object.values(c.out).length>=3 && Object.values(c.out).every(Boolean), c);
+      check('no page errors (N4 '+W+')', !X.errs.length, X.errs); await X.ctx.close(); }
+    X=await open(b,1280,{}); await X.p.waitForTimeout(1500);
+    const t=await ev(X.p,()=>{ localStorage.removeItem('mbev.jarvis'); jvClose(true); localStorage.removeItem('mbev.jarvisRun'); window._jvRunMem=null; window._jvRunLast=null; window._jvWasOpen=false; jvTick(); const off={active:jvActive(), pop:!!window._jvCur, open:jvOpen(), wd:navigator.webdriver};
+      localStorage.setItem('mbev.jarvis','{}'); jvTick(); return {off, on:{active:jvActive(), pop:!!window._jvCur}}; });
+    check('N4: a test browser (navigator.webdriver) that never saved mbev.jarvis gets no Jarvis even inside a window; once mbev.jarvis is saved, it pops', t.off.wd && t.off.open && !t.off.active && !t.off.pop && t.on.active && t.on.pop, t);
+    await X.ctx.close(); });
   console.log(`\n${pass} passed, ${fail} failed`); await b.close(); process.exit(fail?1:0);
 })();

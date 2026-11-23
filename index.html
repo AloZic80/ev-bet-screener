@@ -2231,6 +2231,8 @@ html[data-viewas="easy"] #jvPop{display:none !important}
 #jvPop .jv-ok{margin-top:4px; font-size:14px; font-weight:700; color:var(--gain)} #jvPop .jv-nm{margin-top:4px; font-size:15px; font-weight:800; color:var(--warn)}
 #jvPop .jv-g{display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:8px; margin:10px 0} #jvPop .jv-k{border:1px solid var(--rule); border-radius:8px; padding:6px 10px; min-width:0} #jvPop .jv-k span{display:block; font-size:12.5px; color:var(--soft)} #jvPop .jv-k b{font-size:18px; overflow-wrap:anywhere}
 #jvPop .jv-ai, #jvPop .jv-mv{margin:6px 0; font-size:14px; overflow-wrap:anywhere} #jvPop .jv-ai:empty{display:none}
+#jvPop{position:relative; top:auto; left:auto; transform:none; z-index:auto; max-height:none; overflow:visible; margin:8px auto 0; width:min(760px, calc(100% - 16px))}   /* v5.27 (round 3, N4): in the page, at the top, never over it */
+#jvPop .jv-more>summary{list-style:none} #jvPop .jv-more>summary::-webkit-details-marker{display:none} #jvPop .jv-mk::before{content:"▸"; display:inline-block; width:1.2em} #jvPop .jv-more[open]>summary .jv-mk::before{content:"▾"}   /* v5.27 (round 3, N2) */
 #jvPop .jv-more{margin:6px 0} #jvPop .jv-more>summary{cursor:pointer; min-height:44px; display:flex; align-items:center; font-size:14px; font-weight:700; color:var(--soft)}   /* v5.27 (round 2, J9) */
 #jvPop .jv-pc{display:block; margin:8px 0 0; padding:0; border:0; background:none; box-shadow:none; min-height:0; width:auto; max-width:none}
 #jvPop .jv-b{display:flex; flex-wrap:wrap; gap:8px; align-items:center} #jvPop .jv-b button, #jvPop .jv-b a{min-height:44px; padding:0 16px; font-size:15px; box-sizing:border-box}
@@ -14101,10 +14103,11 @@ function jvGet(){ let o=null; try{ o=JSON.parse(localStorage.getItem('mbev.jarvi
   return {on:o.on!==false, sound:o.sound!==false, plan:o.plan!==false, near:o.near!==false, days}; }
 function jvSet(J){ lsSafeSet('mbev.jarvis', JSON.stringify(J)); try{ syncTouched(); }catch(e){} jvPaint(); }
 function jvRun(){ let o=null, raw=null; try{ raw=localStorage.getItem('mbev.jarvisRun'); o=JSON.parse(raw||'null'); }catch(e){} if(raw!=null) window._jvRunLast=raw; o=(o && typeof o==='object')?o:(window._jvRunMem||{}); const d=ctDay(Date.now());
-  if(o.day!==d){ o.day=d; o.seen={}; o.snooze={}; o.skip={}; o.done={}; o.near=0; o.nearNo={}; o.asked={}; o.nearAsk=0; o.scCalls=0; }   // v5.27 (round 2, J4): + scCalls, Jarvis’s BettingPros calls today
+  if(o.day!==d){ o.day=d; o.seen={}; o.snooze={}; o.skip={}; o.done={}; o.near=0; o.nearNo={}; o.asked={}; o.nearAsk=0; o.scCalls=0; o.toned={}; }   // v5.27 (round 2, J4): + scCalls, Jarvis’s BettingPros calls today
   ['seen','snooze','skip','done','nearNo','asked'].forEach(k=>{ if(!o[k] || typeof o[k]!=='object') o[k]={}; }); o.near=+o.near||0; o.nearAsk=+o.nearAsk||0; if(!Array.isArray(o.away)) o.away=[]; return o; }
 function jvRunSet(R){ window._jvRunMem=R; const s=JSON.stringify(R); if(s===window._jvRunLast) return; if(lsSafeSet('mbev.jarvisRun', s)) window._jvRunLast=s; }   /* kept in memory too (storage full) */   // v5.27 (round 2, J6): written only when something changed
-function jvActive(){ try{ return !!DEV_APP && easyLevel()==='god' && jvGet().on; }catch(e){ return false; } }
+function jvActive(){ try{ return !!DEV_APP && easyLevel()==='god' && jvGet().on && !jvAutomated(); }catch(e){ return false; } }
+function jvAutomated(){ try{ return !!navigator.webdriver && localStorage.getItem('mbev.jarvis')==null; }catch(e){ return false; } }   /* v5.27 (round 3, N4): a browser driven by a test (navigator.webdriver) gets Jarvis only when it saved mbev.jarvis itself; the owner’s own browser has it on by default */
 /* the windows: Central time, by weekday; a day marked off has none; Quiet for 1 hour wins over everything, Talk now opens until midnight */
 function jvWinOn(w, min, prev){ const s=scMin(w[0]), e=scMin(w[1]); if(e>s) return !prev && min>=s && min<e; if(e<s) return prev ? min<e : min>=s; return false; }
 function jvInWin(t, J){ J=J||jvGet(); const c=scNowCT(t), D=J.days[c.wd], Y=J.days[(c.wd+6)%7];
@@ -14121,7 +14124,7 @@ function jvMidnight(t){ let x=t-(t%60000)+(1440-scNowCT(t).min)*60e3; for(let i=
 function jvTabId(){ return window._jvTab||(window._jvTab=Math.random().toString(36).slice(2,10)); }
 function jvLease(){ try{ const o=JSON.parse(localStorage.getItem('mbev.jarvisLease')||'null'); return (o && typeof o==='object')?o:null; }catch(e){ return null; } }
 function jvLeader(take){ const me=jvTabId(), L=jvLease(), now=Date.now(), mine=!!L && L.id===me, free=!L || !(now-(+L.at||0)<90e3);
-  if(take || mine || free){ if(!mine || now-(+L.at||0)>20e3 || (take && now-(+L.at||0)>5e3)){ try{ localStorage.setItem('mbev.jarvisLease', JSON.stringify({id:me, at:now})); }catch(e){ return true; } } return true; }
+  if(take || mine || free){ if(!mine || now-(+L.at||0)>60e3){ try{ localStorage.setItem('mbev.jarvisLease', JSON.stringify({id:me, at:now})); }catch(e){ return true; } } return true; }   /* v5.27 (round 3, N3): written when taken or near its end, about once a minute, and only inside a window (callers) */
   return false; }
 function jvTakes(r){ try{ return jvActive() && jvOpen() && jvPlanOk(r, jvGet()); }catch(e){ return false; } }   /* v5.27 (round 2, J5): inside a Jarvis window, Jarvis (not the 🔔 alert) tells you about this pick */
 function jvJit(a, b){ return Math.round((a+Math.random()*(b-a))*60e3+Math.random()*50e3); }   /* minutes, plus up to 50 seconds: never on the minute */
@@ -14169,11 +14172,13 @@ function jvNearScan(J){ if(window._jvNearBusy || !aiOn() || wkPaused()) return; 
   window._jvNearBusy=true; R.nearAsk++; jvRunSet(R);
   jvNews(c).then(decide, ()=>decide(null)).finally(()=>{ window._jvNearBusy=false; }); }
 /* the pop-up: one at a time */
-function jvEl(){ let el=document.getElementById('jvPop'); if(!el){ el=document.createElement('div'); el.id='jvPop'; el.setAttribute('role','alertdialog'); el.setAttribute('aria-label','Jarvis'); el.hidden=true; document.body.appendChild(el); } return el; }
+function jvEl(){ let el=document.getElementById('jvPop'); if(!el){ el=document.createElement('div'); el.id='jvPop'; el.setAttribute('role','alertdialog'); el.setAttribute('aria-label','Jarvis'); el.hidden=true; document.body.insertBefore(el, document.body.firstChild); } return el; }   /* v5.27 (round 3, N4): the first thing on the page, in the flow: it pushes the page down and never covers a control */
+function jvKeep(f){ const el=document.getElementById('jvPop'), h0=(el && !el.hidden)?el.offsetHeight:0, y=window.scrollY||0; f(); const h1=(el && !el.hidden)?el.offsetHeight:0; if(y>0 && h1!==h0) window.scrollBy(0, h1-h0); }   /* scrolled down: what you are looking at does not move when it opens, changes or closes */
 function jvPump(){ if(!jvActive()){ jvClose(true); return; } if(window._jvCur || !jvOpen()) return;
   if(!jvLeader()) return;   // v5.27 (round 2, J8): one tab pops at a time
   if(window._jvDigest && window._jvDigest.length){ jvShowDigest(); return; }
   const Q=window._jvQ||(window._jvQ=[]), R=jvRun(), now=Date.now();
+  { const mk=it=>{ const x=jvRowFor(it.k, it.near); return x?(it.near?-10:0)+mathKey(x):-99; }; Q.sort((a,b)=>mk(b)-mk(a)); }   // v5.27 (round 3, N3): always La Contadora’s order (a pick handed back by another tab included); near-misses after
   while(Q.length){ const it=Q.shift(), r=jvRowFor(it.k, it.near); if(!r || !jvFree(it.k, R, now) || (it.near && R.near>=2)) continue;
     delete R.snooze[it.k]; R.seen[it.k]=now; if(it.near) R.near++; jvRunSet(R);
     window._jvCur={k:it.k, near:!!it.near}; jvShow(r, !!it.near); jvAlarm(r, !!it.near);   // v5.27 (round 2, J2): no idx; the pick is its key, book and price
@@ -14184,7 +14189,7 @@ function jvKv(k, v){ return '<div class="jv-k"><span>'+k+'</span><b>'+v+'</b></d
 /* v5.27 (round 2, J1-J3): the pick on screen is found again by its key (jvRowFor: still approved, not already bet, no order waiting) after every board render, sync and fill
    import (render calls jvRecheck), on every tick, and before I bet this and Save: gone or already bet closes it ("already in your Bet log"); new numbers (book, price, stake,
    OK up to, ticket) redraw it, and an open bet form is closed (it would hold the old stake). Hoisted. */
-function jvSig(r, near){ return [r.book, r.offeredRaw, near?'':(+r.stake||0).toFixed(2), jvOkTxt(r, jvMax(r)), near?'':scTicket(r)].join('§'); }
+function jvSig(r, near){ return [r.idx /* v5.27 (round 3, N1): a shifted row redraws, so the book button always points at the row shown */, r.book, r.offeredRaw, near?'':(+r.stake||0).toFixed(2), jvOkTxt(r, jvMax(r)), near?'':scTicket(r)].join('§'); }
 function jvCurRow(c){ if(!c || c.digest) return null; const r=jvRowFor(c.k, c.near); return (r && !r.prior && !r.waitOrder)?r:null; }
 function jvNote(t){ try{ kalshiToast(t); }catch(e){} }
 function jvRecheck(){ const c=window._jvCur; if(!c || c.digest) return; if(!jvActive()){ jvClose(true); return; }
@@ -14194,7 +14199,8 @@ function jvRecheck(){ const c=window._jvCur; if(!c || c.digest) return; if(!jvAc
   if(jvSig(r, c.near)===c.sig) return;
   jvShow(r, c.near); const m=document.querySelector('#jvPop .jv-msg'); if(m) m.textContent=ed?'The numbers changed, so the bet form was closed: check them and press I bet this again.':'The numbers changed: these are the new ones.'; }
 function jvMoreN(){ const R=jvRun(), now=Date.now(), c=window._jvCur; let nn=R.near; return (window._jvQ||[]).filter(it=>{ if(c && it.k===c.k) return false; if(!jvRowFor(it.k, it.near) || !jvFree(it.k, R, now)) return false; if(it.near){ if(nn>=2) return false; nn++; } return true; }).length; }   /* J9: only what will show */
-function jvShow(r, near){ const el=jvEl(), mx=jvMax(r), st=+r.stake||0, bk=bookLabel(r.book)||String(r.book||'the book'), at=rowSeenAt(r), more=jvMoreN();
+function jvShow(r, near){ jvKeep(()=>jvShow0(r, near)); }
+function jvShow0(r, near){ const el=jvEl(), mx=jvMax(r), st=+r.stake||0, bk=bookLabel(r.book)||String(r.book||'the book'), at=rowSeenAt(r), more=jvMoreN();
   { const c=window._jvCur; if(c){ c.book=r.book; c.raw=r.offeredRaw; c.stake=st; c.sig=jvSig(r, near); c.t=jvPickTxt(r); } }
   const slip=!!(LIVE_BOOK(r.book) || /draftkings|prizepicks/i.test(r.book||'')), hl=slip?slipLinkFor(r, st):null;   /* the card’s own book link rule (slipLinkFor on a phone, else the book-open handler) */
   const open=!slip ? '<span class="jv-self">Open '+esc(bk)+' yourself</span>'
@@ -14207,24 +14213,28 @@ function jvShow(r, near){ const el=jvEl(), mx=jvMax(r), st=+r.stake||0, bk=bookL
     '<div class="jv-pick">'+esc(jvPickTxt(r))+'</div><div class="jv-game">'+esc(jvGameTxt(r))+'</div>'+
     (near?'<div class="jv-nm">Just missed · not approved · the app gives it no stake</div>':'<div class="jv-ok">La Contadora approves it</div>')+
     '<div class="jv-g">'+jvKv('Book', esc(bk))+(near?'':jvKv('Stake', '$'+st.toFixed(2)))+(mx!=null?jvKv(near?'Approved only at':'Price must be', esc(jvOkTxt(r, mx))+' or better'):'')+jvKv('Price read', at?esc(ageLong(Date.now()-at))+' ago':'time unknown')+'</div>'+
-    (()=>{ const tk=near?'':scTicket(r), inner=tk+(aiOn()?'<div class="jv-ai">'+ai+'</div>':'')+(mvTxt?'<div class="jv-mv">'+esc(mvTxt)+'</div>':''); if(!inner) return '';
-      return '<details class="jv-more"'+(innerWidth>=700?' open':'')+'><summary>'+(tk?'What to type':'More')+(aiOn()?' · news':'')+(mvTxt?' · price move':'')+'</summary>'+inner+'</details>'; })()+   /* v5.27 (round 2, J9): folded on a phone, open on a computer */
+    (near?'':scTicket(r))+   /* v5.27 (round 3, N2): what to type is always in view, at every width */
+    (()=>{ const inner=(aiOn()?'<div class="jv-ai">'+ai+'</div>':'')+(mvTxt?'<div class="jv-mv">'+esc(mvTxt)+'</div>':''); if(!inner) return ''; const c=window._jvCur, op=(c && c.moreOpen!=null)?c.moreOpen:innerWidth>=700;
+      return '<details class="jv-more"'+(op?' open':'')+'><summary><span class="jv-mk" aria-hidden="true"></span>'+[aiOn()?'News':'', mvTxt?'Price move':''].filter(Boolean).join(' · ')+'</summary>'+inner+'</details>'; })()+   /* v5.27 (round 3, N2): only the news and price-move lines fold (on a phone), and stay as you left them */
     '<div class="pcard jv-pc"><div class="jv-b">'+open+'<button type="button" class="act jv-bet">I bet this</button><button type="button" class="ghost jv-later">Not now</button><button type="button" class="ghost jv-skip">Skip today</button><button type="button" class="linkbtn jv-why">Why?</button></div></div>'+
     '<div class="meta jv-msg" role="status"></div>';
   el.hidden=false; }
+document.addEventListener('toggle', e=>{ const d=e.target; if(d && d.classList && d.classList.contains('jv-more') && d.closest('#jvPop') && window._jvCur) window._jvCur.moreOpen=d.open; }, true);   // v5.27 (round 3, N2)
 function jvDigestItems(R){ return R.away.map(x=>{ const L=(lastRows||[]).filter(r=>r && pxKey(r)===x.k), r=L.find(scApproved)||L[0]||null; let st;
   if(!r) st='no longer on the board'; else if(!scAhead(r)) st='started'; else if(!scApproved(r)) st=r.prior?'already bet':'no longer approved';
   else if(x.p>0 && r.offeredProb>0 && Math.abs(r.offeredProb-x.p)>=0.005) st='price moved '+(r.offeredProb>x.p?'up':'down')+' '+(Math.abs(r.offeredProb-x.p)*100).toFixed(1)+' pts · still approved, it pops next';
   else st='still approved, it pops next';
   return {t:x.t, at:x.at, st}; }); }
-function jvShowDigest(){ const el=jvEl(), D=window._jvDigest||[]; window._jvCur={k:'', digest:true}; el.classList.remove('near'); el.classList.add('dg');
+function jvShowDigest(){ jvKeep(jvShowDigest0); }
+function jvShowDigest0(){ const el=jvEl(), D=window._jvDigest||[]; window._jvCur={k:'', digest:true}; el.classList.remove('near'); el.classList.add('dg');
   el.innerHTML='<div class="jv-h"><b class="jv-t">🤖 Jarvis · While you were away</b><span class="jv-n">'+D.length+' pick'+(D.length===1?'':'s')+'</span></div>'+
     '<ul class="jv-dl">'+D.slice(0,10).map(x=>'<li><b>'+esc(x.t)+'</b> <span class="meta">seen '+esc(scClock(x.at))+' · '+esc(x.st)+'</span></li>').join('')+(D.length>10?'<li class="meta">and '+(D.length-10)+' more</li>':'')+'</ul>'+
     '<div class="jv-b"><button type="button" class="act jv-dg-go">OK</button></div>';
   el.hidden=false; try{ if(jvGet().sound) perfBeep(); }catch(e){} }
-function jvClose(all){ const el=document.getElementById('jvPop'); if(el){ el.hidden=true; el.innerHTML=''; el.classList.remove('near','dg'); } window._jvCur=null; if(all){ window._jvQ=[]; window._jvDigest=null; } }
+function jvClose(all){ const el=document.getElementById('jvPop'); if(el) jvKeep(()=>{ el.hidden=true; el.innerHTML=''; el.classList.remove('near','dg'); }); window._jvCur=null; if(all){ window._jvQ=[]; window._jvDigest=null; } }
 function jvNext(){ jvClose(false); jvPump(); }
-function jvAlarm(r, near){ if(jvGet().sound){ try{ jvAudioWake(true); perfBeep(); }catch(e){} }
+function jvAlarm(r, near){ { const R=jvRun(), k=pxKey(r), t=(R.toned||{})[k]; if(t && Date.now()-t<25*60e3) return; R.toned=R.toned||{}; R.toned[k]=Date.now(); jvRunSet(R); }   // v5.27 (round 3, N3): one tone and notification a pick (another tab may have rung already); again after a Not now
+  if(jvGet().sound){ try{ jvAudioWake(true); perfBeep(); }catch(e){} }
   try{ if(document.hidden && 'Notification' in window && Notification.permission==='granted'){ const n=new Notification(near?'🤖 Jarvis · Just missed, no stake':'🤖 Jarvis · Bet this', {body:jvPickTxt(r)+' · '+(bookLabel(r.book)||String(r.book||''))+(near?'':' · $'+(+r.stake||0).toFixed(2)), tag:'jv|'+pxKey(r)}); n.onclick=()=>{ try{ window.focus(); n.close(); }catch(e){} }; } }
   catch(e){ window._jvNoCtor=true; } }
 function jvAudioWake(force){ try{ if(!force && !(jvActive() && jvGet().sound)) return; const AC=window.AudioContext||window.webkitAudioContext; if(AC && !window._perfAC) window._perfAC=new AC(); if(window._perfAC && window._perfAC.state==='suspended') window._perfAC.resume(); }catch(e){} }
@@ -14247,7 +14257,7 @@ function jvTick(){ if(!jvActive()){ if(window._jvCur || (window._jvQ||[]).length
   const now=Date.now(), open=jvOpen(now), R=jvRun();
   if(open && !window._jvWasOpen){ if(R.away.length){ window._jvDigest=jvDigestItems(R); R.away=[]; } R.nextAt=now+jvJit(0.5, 2); jvRunSet(R); }
   window._jvWasOpen=open;
-  if(!jvLeader()){ const c=window._jvCur; if(c && !document.querySelector('#jvPop .editor')){ if(!c.digest){ const R4=jvRun(); delete R4.seen[c.k]; if(c.near) R4.near=Math.max(0,R4.near-1); jvRunSet(R4); } jvClose(true); } }   // v5.27 (round 2, J8): another tab is the one in use: it pops
+  if(open && !jvLeader()){ const c=window._jvCur; if(c && !document.querySelector('#jvPop .editor')){   /* v5.27 (round 3, N3): outside a window no lease is taken or renewed */ if(!c.digest){ const R4=jvRun(); delete R4.seen[c.k]; if(c.near) R4.near=Math.max(0,R4.near-1); jvRunSet(R4); } jvClose(true); } }   // v5.27 (round 2, J8): another tab is the one in use: it pops
   jvRecheck();   // v5.27 (round 2, J1-J3)
   jvCollect();
   if(open){ const R3=jvRun(); if(!(R3.nextAt>0)){ R3.nextAt=now+jvJit(0.5, 2); jvRunSet(R3); } else if(now>=R3.nextAt){ R3.nextAt=now+jvJit(10, 15); jvRunSet(R3); jvScout(); } }
@@ -14294,11 +14304,14 @@ document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest ||
   if(t.closest('.jv-why')){ jvWhy(cur.k); return; }
   if(t.closest('.jv-bet')){ const r=jvCurRow(cur); if(!r || jvSig(r, cur.near)!==cur.sig){ jvRecheck(); if(window._jvCur===cur && r){ const m=document.querySelector('#jvPop .jv-msg'); if(m) m.textContent='The numbers changed: check them and press I bet this again.'; } return; }   // v5.27 (round 2, J1-J3): never an idx, never an already-bet or changed pick
     const host=document.querySelector('#jvPop .jv-pc'); if(host) openBetEditor(host, r); return; } });
+document.addEventListener('click', e=>{ const o=e.target && e.target.closest && e.target.closest('#jvPop .jv-open'); if(!o || !window._jvCur) return; const cur=window._jvCur, r=jvCurRow(cur);   // v5.27 (round 3, N1): Open the book opens the row the pop-up shows, found by its key now, never an old data-idx
+  if(!r || jvSig(r, cur.near)!==cur.sig){ e.preventDefault(); e.stopImmediatePropagation(); jvRecheck(); const m=document.querySelector('#jvPop .jv-msg'); if(m && window._jvCur) m.textContent='The board changed: check the pick and press Open the book again.'; return; }
+  o.setAttribute('data-idx', String(r.idx)); }, true);
 document.addEventListener('click', e=>{ const b=e.target && e.target.closest && e.target.closest('#jvPop .eb-save'); if(!b || !window._jvCur) return; const cur=window._jvCur, ids0=new Set((logged||[]).map(x=>x && x.id));
   { const r=jvCurRow(cur); if(!r || jvSig(r, cur.near)!==cur.sig){ e.preventDefault(); e.stopImmediatePropagation(); if(!r) jvRecheck(); else { jvShow(r, cur.near); const m=document.querySelector('#jvPop .jv-msg'); if(m) m.textContent='Not saved: the numbers changed. Check them and press I bet this again.'; } return; } }   // v5.27 (round 2, J1): a pick already bet, or changed, is never saved from here
   setTimeout(()=>{ if(!(logged||[]).some(x=>x && !ids0.has(x.id))) return; const R=jvRun(); R.done[cur.k]=1; jvRunSet(R); if(window._jvCur===cur) jvNext(); }, 0); }, true);   /* the bet the form saved: done, never again */
 document.addEventListener('pointerdown', ()=>jvAudioWake(), {passive:true});   /* a sound needs one tap on the page first (browser rule) */
-['pointerdown','keydown','focus'].forEach(k=>window.addEventListener(k, ()=>{ try{ if(jvActive()){ jvLeader(true); }   /* the tab you use takes the lease; it pops at its next check, and the other tab closes its pop-up now (the storage event) */ }catch(e){} }, {passive:true, capture:true}));   // v5.27 (round 2, J8): the tab you use takes the pop-ups
+['pointerdown','keydown','focus'].forEach(k=>window.addEventListener(k, ()=>{ try{ if(jvActive() && jvOpen()){ const L=jvLease(); if(!L || L.id!==jvTabId()) jvLeader(true); }   /* v5.27 (round 3, N3): only inside a window, and only to take it (renewal is the tick's) */   /* the tab you use takes the lease; it pops at its next check, and the other tab closes its pop-up now (the storage event) */ }catch(e){} }, {passive:true, capture:true}));   // v5.27 (round 2, J8): the tab you use takes the pop-ups
 window.addEventListener('storage', e=>{ if(e.key==='mbev.jarvisLease'){ try{ jvTick(); }catch(_){} } });
 window.addEventListener('pagehide', ()=>{ try{ const L=jvLease(); if(L && L.id===jvTabId()) localStorage.removeItem('mbev.jarvisLease'); }catch(e){} });   // a tab that closes or reloads lets go of the lease
 document.addEventListener('toggle', e=>{ if(e.target && e.target.id==='jarvisPanel' && e.target.open) jvPaint(true); }, true);   /* opened: the week as saved (another device may have changed it) */
