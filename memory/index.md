@@ -19,6 +19,7 @@ Status words: **active** (the rule now), **unverified** (believed, not confirmed
 | `decisions/ai-helper-v1.md` | The AI helper (app side, v5.15): proposals only (Use / Ignore), off until set up, aiCall and its plain error words, the `mbev.ai.*` data points and what reads them with the AI off |
 | `decisions/publishing.md` | Branch, tests, publish, notes |
 | `decisions/tiers-and-easy.md` | God / Easy / Plus levels, the Easy app (Today, My bets, Learn, Settings), the View-as switch, the safety and wording rules Easy must keep |
+| `decisions/jarvis-v1.md` | 🤖 Jarvis (v5.27): the weekly windows, what pops and why, the numbers it reads from the board, near-misses, the loop and what it never does |
 
 ## Incidents (bugs that came back; the test that now stops each)
 | File | Covers |

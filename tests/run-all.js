@@ -166,6 +166,7 @@ const runs = [
   ['v5.26 (Build B, owner "BUILD ALL" 11/22): money from the book’s fills: two orders priced at what all the contracts cost, a win pays $1 a contract, partial sales add up by sale id after their fee', 'v526-money-test.js', []],
   ['v5.26 (Build B): the limits applied everywhere: the game cap over the board’s rows, a free bet counts $0, + Add a bet sizes like the board, the bet form says the board’s $0, Easy’s amount', 'v526-limits-test.js', []],
   ['v5.26 (Build B): prices typed and read: both consensus sides, thin books, the Odds box, a Draw game, also at FanDuel Predicts, a start saved hours off', 'v526-inputs-test.js', []],
+  ['v5.27 (owner "BUILD ALL" 11/22): 🤖 Jarvis: the weekly windows (weekday, past midnight, Talk now, Quiet 1 h), each new approved bet pops once with the card’s numbers, I bet this saves the normal way and never pops again, Not now and Skip today, near-misses (2 a day, news check), the away digest, no AI call with the AI off or the Worker paused, nothing in Easy or a customer build, 390, 1000, 1280 and 1960 px', 'v527-jarvis-test.js', []],
 ];
 const run = (file, args) => spawnSync(process.execPath, [path.join(__dirname, file), ...args], { encoding: 'utf8', timeout: 300000 });
 const last = r => ((r.stdout || '') + (r.stderr || '')).trim().split('\n').pop();
