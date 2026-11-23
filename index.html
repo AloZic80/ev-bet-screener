@@ -14178,10 +14178,10 @@ function jvNearScan(J){ if(window._jvNearBusy || !aiOn() || wkPaused()) return; 
 function jvEl(){ let el=document.getElementById('jvPop'); if(!el){ el=document.createElement('div'); el.id='jvPop'; el.setAttribute('role','alertdialog'); el.setAttribute('aria-label','Jarvis'); el.hidden=true; document.body.insertBefore(el, document.body.firstChild); } return el; }   /* v5.27 (round 3, N4): the first thing on the page, in the flow: it pushes the page down and never covers a control */
 /* v5.27 (round 4, N5): a steady page. Before every change of the pop-up's height (open, redraw, Not now, Skip today, close, a late news line, the fold) the top of the first
    element after it (the page) is read; right after, the page is scrolled back by exactly the difference. The browser's own scroll anchoring is off while it happens
-   (html.jv-noanc), so it is not corrected twice. At the very top this scrolls the pop-up just above the screen: the chip (jvChipPaint) then says it is there. Hoisted. */
+   (html.jv-noanc), so it is not corrected twice. Scrolled down, the pop-up then sits above the screen and the chip (jvChipPaint) says it is there; at the very top it opens in view (round 5). Hoisted. */
 function jvAnchor(){ const el=document.getElementById('jvPop'); let a=el && el.nextElementSibling; while(a){ const p=getComputedStyle(a).position; if(p!=='fixed' && p!=='absolute' && a.getClientRects().length) return a; a=a.nextElementSibling; } return null; }
-function jvKeepStart(){ const h=document.documentElement; h.classList.add('jv-noanc'); clearTimeout(jvKeepStart._t); const a=jvAnchor(); return {a, t:a?a.getBoundingClientRect().top:null}; }
-function jvKeepEnd(k){ if(k && k.a && k.a.isConnected && k.t!=null){ const d=k.a.getBoundingClientRect().top-k.t; if(Math.abs(d)>0.5) window.scrollBy(0, d); }
+function jvKeepStart(){ const h=document.documentElement; h.classList.add('jv-noanc'); clearTimeout(jvKeepStart._t); const a=jvAnchor(); return {a, t:a?a.getBoundingClientRect().top:null, y:window.scrollY||0}; }
+function jvKeepEnd(k){ if(k && k.y>8 && k.a && k.a.isConnected && k.t!=null){   /* v5.27 (round 5, owner spec "big, top of the screen"): at the top of the page (8 px or less) nothing is held: the pop-up opens in view and pushes the page down */ const d=k.a.getBoundingClientRect().top-k.t; if(Math.abs(d)>0.5) window.scrollBy(0, d); }
   jvKeepStart._t=setTimeout(()=>document.documentElement.classList.remove('jv-noanc'), 500); try{ jvChipPaint(); }catch(e){} }
 function jvKeep(f){ const k=jvKeepStart(); try{ f(); } finally { jvKeepEnd(k); } }
 function jvPump(){ if(!jvActive()){ jvClose(true); return; } if(window._jvCur || !jvOpen()) return;
