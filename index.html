@@ -2264,7 +2264,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 #abHost .eb-book{max-width:min(100%, calc(100vw - 120px)); min-width:0; text-overflow:ellipsis}
 .cp-diff{border-collapse:collapse; margin:6px 0; font-size:13px; width:100%; table-layout:fixed} .cp-diff th, .cp-diff td{border-bottom:1px solid var(--rule); padding:3px 6px; text-align:left; overflow-wrap:anywhere}
 .cp-ovr{color:var(--warn); font-weight:600; margin:4px 0}
-#compaShot{min-height:44px; min-width:44px; align-self:stretch}
+#compaShot{min-height:44px; min-width:44px; align-self:flex-end}   /* v5.28 (round 2): 44 px, not stretched to the whole form (140 px) */
 </style>
 </head>
 <body>
@@ -16423,11 +16423,11 @@ async function aiSlipFill(o){ let evF=null; const g=id=>document.getElementById(
     try{ await abLoadGames(); }catch(e){}
     const D=aiBetDay(o); read.day=D.day||null; if(D.day){ try{ await aiGamesAround(ss.value, D.day); }catch(e){} }
     g('abType').value=ty;
-    const gs=g('abGame'), gf=g('abGameFree'); evF=aiGameFind(o, abEvents, D.day);
+    const gs=g('abGame'), gf=g('abGameFree'); const fromPl=D.src==='placed' && D.placed && D.placed.time; evF=aiGameFind(o, abEvents, D.day, fromPl?D.placed.t:0);   // v5.28 (round 2, F2)
     if(evF){ gs.value=String(evF.id); if(gf) gf.value=''; read.game=String(evF.id); } else { aiGameNone(gs); const mt=aiMatchupTxt(o); if(gf) gf.value=mt; read.game=mt||null; }
     try{ abFields(); }catch(e){}
     if(!evF && D.day && g('abDate')) g('abDate').value=D.day;
-    mark(gs,'game',!evF); mark(g('abDate'),'gamedate',!D.day);
+    mark(gs,'game',!evF || D.src!=='game'); mark(g('abDate'),'gamedate',!D.day);   // v5.28 (round 2, F2): a game found from the placed day (no game date printed) is marked ⚠
     read.market=L0.market||null; read.line=L0.line!=null?+L0.line:null; read.side=L0.side||null;
     if(ty==='prop'){ g('abPlayer').value=L0.player||''; g('abStat').value=L0.market||''; read.player=L0.player||null; mark(g('abPlayer'),'player',!L0.player); mark(g('abStat'),'market',!L0.market); }
     const sd=aiOU(L0.side)||(/anytime/i.test(m)?'O':''), ln=L0.line!=null?L0.line:(/anytime/i.test(m)?0.5:null); if(sd) g('abPick').value=sd; if(ty==='prop'||ty==='total') mark(g('abPick'),'side',!sd);
@@ -16492,7 +16492,7 @@ function aiCtWall(y, mo, d, h, mi, se){ for(const off of [5,6]){ const t=Date.UT
     new Intl.DateTimeFormat('en-US',{timeZone:'America/Chicago', hourCycle:'h23', year:'numeric', month:'numeric', day:'numeric', hour:'numeric', minute:'numeric'}).formatToParts(new Date(t)).forEach(p=>{ P[p.type]=+p.value; });
     if(P.year===y && P.month===mo && P.day===d && P.hour===h && P.minute===mi) return t; }
   return Date.UTC(y,mo-1,d,h+6,mi,se||0); }
-function aiWhenCT(txt, yr){ const s=String(txt||'').replace(/\s+/g,' ').trim(); if(!s) return null; yr=yr||+ctDay(Date.now()).slice(0,4);
+function aiWhenCT(txt, ref){ const s=String(txt||'').replace(/\s+/g,' ').trim(); if(!s) return null; ref=ref>1e11?ref:Date.now(); const yr=+ctDay(ref).slice(0,4);   // v5.28 (round 2, F6): ref = the time to be near (the placed time, else now); a date printed with no year takes the year nearest to it (Dec 31 + "Jan 3" is the next year)
   if(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s) && /(Z|[+-]\d\d:?\d\d)$/.test(s)){ const t=Date.parse(s); return isNaN(t)?null:{t, day:ctDay(t), time:true}; }
   const M='jan feb mar apr may jun jul aug sep oct nov dec'.split(' '); let y=0, mo=0, d=0, m=s.match(/\b([A-Za-z]{3,9})\.?\s+(\d{1,2})(?:st|nd|rd|th)?\b,?(?:\s+(\d{4}))?/);
   if(m && M.indexOf(m[1].slice(0,3).toLowerCase())>=0){ mo=M.indexOf(m[1].slice(0,3).toLowerCase())+1; d=+m[2]; y=m[3]?+m[3]:yr; }
@@ -16502,8 +16502,9 @@ function aiWhenCT(txt, yr){ const s=String(txt||'').replace(/\s+/g,' ').trim(); 
   const tm=s.match(/\b(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp])\.?\s?[Mm]\b/)||s.match(/\b(\d{1,2}):(\d{2})(?::(\d{2}))?\b/);
   let h=12, mi=0, se=0; if(tm){ h=+tm[1]; mi=+tm[2]; se=+(tm[3]||0); if(tm[4]){ const pm=/p/i.test(tm[4]); if(h===12) h=pm?12:0; else if(pm) h+=12; } }
   if(h>23 || mi>59 || se>59) return null;
+  if(!/\b\d{4}\b/.test(s) && !/\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/.test(s)){ let best=y, bd=Infinity; [yr-1, yr, yr+1].forEach(c=>{ const dd=Math.abs(aiCtWall(c,mo,d,h,mi,se)-ref); if(dd<bd){ bd=dd; best=c; } }); y=best; }   // v5.28 (round 2, F6): no year printed: the nearest one
   return {t:aiCtWall(y,mo,d,h,mi,se), day:y+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0'), time:!!tm}; }
-function aiBetDay(o){ o=o||{}; const pl=aiWhenCT(o.placedAt), gd=aiWhenCT(o.gameDate, pl?+pl.day.slice(0,4):0);   /* the game day printed, else the placed day (Central) */
+function aiBetDay(o){ o=o||{}; const pl=aiWhenCT(o.placedAt), gd=aiWhenCT(o.gameDate, pl?pl.t:0);   // v5.28 (round 2, F6): the game date nearest the placed time   /* the game day printed, else the placed day (Central) */
   return gd?{day:gd.day, src:'game', placed:pl}:pl?{day:pl.day, src:'placed', placed:pl}:{day:'', src:'', placed:null}; }
 function aiAmOf(stake, ret){ return stake>0 && ret>stake ? Math.round(americanOf(stake/ret)) : null; }   /* cost 26.80, paid 40.00: −203 (a 67% price) */
 /* How well a team name read from a picture fits an ESPN competitor: 2 = its abbreviation, nickname or full name; 1 = its city only; 0 = no. */
@@ -16513,8 +16514,8 @@ function aiTeamHit(txt, c){ const t=nrmT(txt), tm=(c&&c.team)||{}; if(!t) return
 function aiReadTeams(o){ const L0=((o&&o.legs)||[])[0]||{};
   return [].concat(String(o.game||'').split(/\s+(?:@|vs\.?|v\.?|at)\s+|\s+[-–]\s+|,/i), String(o.finalScore||'').split(/,|\s[-–]\s/), [L0.team, /money|to win|spread|\bml\b|handicap/i.test(L0.market||'')?L0.side:'']).map(x=>String(x||'').trim()).filter(Boolean); }
 /* The one game on ESPN whose teams were read, on the game day or the day before or after; none when no game fits or two fit as well. Never the first game in the list. */
-function aiGameFind(o, evs, day){ if(!day) return null; const ok=new Set([dayPlus(day,-1), day, dayPlus(day,1)]), R=aiReadTeams(o||{}); if(!R.length) return null;
-  const sc=(evs||[]).filter(ev=>ev && ev.date && ok.has(ctDay(Date.parse(ev.date)))).map(ev=>({ev, s:compsOf(ev).reduce((a,c)=>a+Math.max(0,...R.map(x=>aiTeamHit(x,c))),0)})).filter(x=>x.s>=2).sort((a,b)=>b.s-a.s);
+function aiGameFind(o, evs, day, placedT){ if(!day) return null; const ok=new Set(placedT?[day, dayPlus(day,1)]:[dayPlus(day,-1), day, dayPlus(day,1)]), R=aiReadTeams(o||{}); if(!R.length) return null;   // v5.28 (round 2, F2): a day from the placed time: that day and the next, and only games starting at or after the placed time minus 4 hours (never one over before the bet)
+  const sc=(evs||[]).filter(ev=>ev && ev.date && ok.has(ctDay(Date.parse(ev.date))) && !(placedT && Date.parse(ev.date)<placedT-4*3600e3)).map(ev=>({ev, s:compsOf(ev).reduce((a,c)=>a+Math.max(0,...R.map(x=>aiTeamHit(x,c))),0)})).filter(x=>x.s>=2).sort((a,b)=>b.s-a.s);
   return !sc.length || (sc[1] && sc[1].s===sc[0].s) ? null : sc[0].ev; }
 function aiMatchupTxt(o){ const g=String((o&&o.game)||'').trim(), p=g.split(/\s+(?:@|vs\.?|v\.?|at)\s+/i).map(x=>x.trim()).filter(Boolean);
   if(p.length!==2) return g.slice(0,40); const ab=x=>{ const w=x.split(/\s+/)[0]; return /^[A-Z]{2,4}$/.test(w)?w:x; }; return (ab(p[0])+' @ '+ab(p[1])).slice(0,40); }
@@ -16569,35 +16570,37 @@ function lcShotTicket(b, pic, k){ if(!b || typeof b!=='object') return null;
   let t; try{ t=lcParse({type:'augi-bet-import', v:2, importId:'shot', singles:par?[]:[e], parlays:par?[e]:[]}).tickets[0]; }catch(err){ return null; }
   if(!st) t.stake=null; if(!ret) t.ret=null; if(!D.day) t.day='';
   t.id='imp-shot-'+lcShotHash([book, D.day, kind, nrmT(t.player||''), lcShotCanon(par?e.legsText:lcMkt(t)), t.side||'', st, placed||''].join('|'));
+  if(!placed) t.id+='-'+pic+'-'+k;   // v5.28 (round 2, F1): with no time read, two cards of one picture never share an id
   t.shot={pic, n:k, unclear:U, conf:String(b.confidence||''), res:R, from, bookSure:bk.sure, noLine, need, read:{book:String(b.book||'').slice(0,60), status:String(b.status||''), stake:st, payout:pay, pricePct:pct, game:String(b.game||'').slice(0,80), final:String(b.finalScore||'').slice(0,60), placedAt:String(b.placedAt||'').slice(0,60)}};
   return t; }
-function lcShotKeyT(t){ const par=t.kind==='parlay'; return {day:t.day||'', par, kind:par?'parlay':(t.bk||'prop'), name:t.player||'', side:t.side||'', mk:lcShotCanon(par?(t.legsText||''):lcMkt(t)), stake:+t.stake||0, picks:+(t.picks||(t.legs||[]).length)||0, book:t.book||''}; }
-function lcShotKeyB(b){ const par=b.kind==='parlay'; return {day:gameDayOf(b)||b.date||'', par, kind:par?'parlay':(b.kind||'prop'), name:b.name||'', side:String(b.side||'').charAt(0).toUpperCase(), mk:lcShotCanon(par?((b.parlay&&b.parlay.legs)||''):b.market), stake:+b.stake||0, picks:+(b.parlay&&b.parlay.picks)||0, book:b.book||''}; }
+function lcShotKeyT(t){ const par=t.kind==='parlay'; return {day:t.day||'', par, kind:par?'parlay':(t.bk||'prop'), name:t.player||'', side:t.side||'', mk:lcShotCanon(par?(t.legsText||''):lcMkt(t)), stake:+t.stake||0, picks:+(t.picks||(t.legs||[]).length)||0, book:t.book||'', at:Date.parse(t.placedAt||'')||0}; }   // v5.28 (round 2, F1): + at
+function lcShotKeyB(b){ const par=b.kind==='parlay'; return {day:gameDayOf(b)||b.date||'', par, kind:par?'parlay':(b.kind||'prop'), name:b.name||'', side:String(b.side||'').charAt(0).toUpperCase(), mk:lcShotCanon(par?((b.parlay&&b.parlay.legs)||''):b.market), stake:+b.stake||0, picks:+(b.parlay&&b.parlay.picks)||0, book:b.book||'', at:Date.parse(b.placedAt||'')||0}; }   // v5.28 (round 2, F1): + at
 /* the same ticket, stake read twice: within 4% (at least 10¢), so a fee counted once and not the other time is still the same bet (screenshot rows only; a file keeps lcHave’s own match) */
 function lcShotNear(a, b){ if(!(a>0) || !(b>0)) return true; return Math.abs(a-b)<=Math.max(0.10, 0.04*Math.max(a,b)); }
 function lcShotName(a, b, team){ const x=nrmT(a), y=nrmT(b); if(!x || !y) return false; if(x===y) return true; const X=x.split(' '), Y=y.split(' ');
   if(team) return X[X.length-1]===Y[Y.length-1] || (X.length===1 && X[0]===Y[0]) || (Y.length===1 && Y[0]===X[0]);
   return X[X.length-1]===Y[Y.length-1] && X[0].charAt(0)===Y[0].charAt(0); }
 function lcShotSameK(a, b){ if(!a.day || a.day!==b.day || a.par!==b.par || !lcShotNear(a.stake,b.stake)) return false;
+  if(a.at && b.at && Math.abs(a.at-b.at)>150e3) return false;   // v5.28 (round 2, F1): placed more than ~2 minutes apart: two buys (Read slip saves to the minute)
   if(a.par) return (!!a.mk && a.mk===b.mk) || (!!a.picks && a.picks===b.picks && nrmT(bookLabel(a.book))===nrmT(bookLabel(b.book)));
   return a.kind===b.kind && a.side===b.side && a.mk===b.mk && lcShotName(a.name, b.name, a.kind!=='prop'); }
 function lcShotSame(u, t){ return u.id===t.id || lcShotSameK(lcShotKeyT(u), lcShotKeyT(t)); }
 function lcShotHave(t){ const k=lcShotKeyT(t); return logged.some(b=>b && (b.id===t.id || lcShotSameK(lcShotKeyB(b), k))); }
 function lcShotVals(box){ const q=c=>box.querySelector(c), f=c=>{ const e=q(c); if(!e || e.value==='') return null; const v=parseFloat(e.value); return isFinite(v)?v:null; };
-  return {day:(q('.lc-day')||{}).value||'', book:((q('.lc-book')||{}).value||'').trim(), st:f('.lc-st'), ret:f('.lc-ret'), res:(q('.lc-res')||{}).value, paid:f('.lc-paid'), lineOn:!!q('.lc-line'), line:f('.lc-line')}; }
+  return {day:(q('.lc-day')||{}).value||'', book:((q('.lc-book')||{}).value||'').trim(), st:f('.lc-st'), ret:f('.lc-ret'), res:(q('.lc-res')||{}).value, paid:f('.lc-paid'), lineOn:!!q('.lc-line'), line:f('.lc-line'), needPaid:box.dataset.needpaid==='1'}; }   // v5.28 (round 2, F3): + needPaid
 function lcShotNeed(v){ const n=[]; if(!lcValidDay(v.day)) n.push('the game day'); if(!v.book) n.push('the book'); if(!(v.st>0)) n.push('the cost');
   if(!(v.ret>(v.st||0))) n.push('what it returns if it wins'); if(v.res==='?' || v.res==null) n.push('the result');
-  if((v.res==='sold' && !(v.paid>=0)) || (v.res==='win' && v.paid!=null && !(v.paid>(v.st||0)))) n.push('what it paid back');
+  if((v.res==='sold' && !(v.paid>=0)) || (v.res==='win' && v.paid!=null && !(v.paid>(v.st||0))) || (v.res==='win' && v.needPaid && v.paid==null)) n.push('what it paid back');   // v5.28 (round 2, F3): a win whose return was only worked out from the % or the contracts needs what the book paid
   if(v.lineOn && v.line==null) n.push('the line'); return n; }
 function lcShotRowHtml(t, i){ const S=t.shot, R=S.read, U=S.unclear, have=lcShotHave(t), uc=k=>[].concat(k).some(x=>U.some(u=>u.indexOf(x)>=0))?' lc-unc':'', lineOn=t.kind!=='parlay' && t.bk!=='moneyline';
-  const res=t.result||S.res, need=lcShotNeed({day:t.day, book:t.book, st:t.stake, ret:t.ret, res, paid:R.payout, lineOn, line:lineOn&&!S.noLine?t.point:null}), ok=!have && !need.length;
+  const res=t.result||S.res, needPaid=R.payout==null && (S.from==='pct' || S.from==='contracts'), need=lcShotNeed({day:t.day, book:t.book, st:t.stake, ret:t.ret, res, paid:R.payout, lineOn, line:lineOn&&!S.noLine?t.point:null, needPaid}), ok=!have && !need.length;   /* v5.28 (round 2, F3): + needPaid */
   const nm=t.kind==='parlay'?(t.picks||t.legs.length)+'-pick parlay: '+(t.legsText||t.legs.map(lcLegText).join('; ')):t.bk==='moneyline'?t.player+' Moneyline':t.bk==='spread'?t.player+' '+(S.noLine?'?':(t.point>0?'+':'')+t.point)+' Spread':t.bk==='total'?t.player+' '+(t.side==='O'?'Over':'Under')+' '+(S.noLine?'?':t.point)+' Total':t.player+' '+(t.side==='O'?'Over':'Under')+' '+(S.noLine?'?':t.point)+' '+t.market;
   const rd=[R.stake?'Bought $'+R.stake.toFixed(2):'cost not read', R.payout!=null?'paid $'+(+R.payout).toFixed(2):'', R.pricePct!=null?R.pricePct+'%':'', R.status||'', t.placedAt?'placed '+lcShotWhen(t.placedAt):(R.placedAt?'placed '+R.placedAt:''), R.game, R.final?'final '+R.final:''].filter(Boolean).join(' · ');
   const opt=(v,l)=>'<option value="'+v+'"'+(res===v?' selected':'')+'>'+l+'</option>';
-  return '<div class="lc-imp lc-shot'+(have?' lc-had':'')+'" data-i="'+i+'"><label class="lc-tk"><input type="checkbox" class="lc-on"'+(ok?' checked':'')+(ok?'':' disabled')+'><span>'+esc(nm)+(t.game&&t.kind!=='parlay'&&t.bk!=='total'?' · '+esc(t.game):'')+' <span class="meta">· '+esc(t.book||'book not read')+(S.bookSure?'':' ⚠')+'</span>'+(have?' <span class="meta lc-have">· already in your Bet log</span>':'')+'</span></label>'+
+  return '<div class="lc-imp lc-shot'+(have?' lc-had':'')+'" data-i="'+i+'"'+(needPaid?' data-needpaid="1"':'')+'><label class="lc-tk"><input type="checkbox" class="lc-on"'+(ok?' checked':'')+(ok?'':' disabled')+'><span>'+esc(nm)+(t.game&&t.kind!=='parlay'&&t.bk!=='total'?' · '+esc(t.game):'')+' <span class="meta">· '+esc(t.book||'book not read')+(S.bookSure?'':' ⚠')+'</span>'+(have?' <span class="meta lc-have">· already in your Bet log</span>':'')+'</span></label>'+
     '<div class="meta lc-read">📷 '+esc(rd)+(t.stake>0&&t.ret>t.stake?' · odds '+esc(fmtOdds(Math.round(americanOf(t.stake/t.ret)))):'')+(t.result&&t.profit!=null?' · profit '+(t.profit>=0?'+':'−')+'$'+Math.abs(t.profit).toFixed(2):'')+(S.from==='pct'||S.from==='contracts'?' · the win return is worked out from the % price':'')+'</div>'+
     '<div class="row"><label class="f'+uc(['gamedate','placedat'])+(t.day?'':' lc-unc')+'">Game day<input type="date" class="lc-day" value="'+esc(t.day||'')+'"></label><label class="f'+(S.bookSure?uc('book'):' lc-unc')+'">Book<input type="text" class="lc-book" value="'+esc(t.book||'')+'"></label><label class="f'+uc('stake')+'">Cost $<input type="number" class="lc-st" step="0.01" min="0.01" value="'+(t.stake>0?t.stake:'')+'"></label><label class="f'+uc(['payout','towin','odds'])+(S.from==='pct'||S.from==='contracts'?' lc-unc':'')+'">Return if it wins $<input type="number" class="lc-ret" step="0.01" min="0.01" value="'+(t.ret>0?t.ret:'')+'"></label></div>'+
-    '<div class="row"><label class="f'+uc('status')+(res==='?'?' lc-unc':'')+'">Result<select class="lc-res">'+opt('?','Choose…')+opt('','Open (not settled)')+opt('win','Won')+opt('loss','Lost')+opt('push','Push / void')+opt('sold','Sold / cashed out')+'</select></label><label class="f'+uc('payout')+'">Paid back $<input type="number" class="lc-paid" step="0.01" min="0" value="'+(R.payout!=null?+R.payout:'')+'"></label>'+(lineOn?'<label class="f'+uc('line')+(S.noLine?' lc-unc':'')+'">Line<input type="number" class="lc-line" step="0.5" value="'+(S.noLine?'':t.point)+'"></label>':'')+'</div>'+
+    '<div class="row"><label class="f'+uc('status')+(res==='?'?' lc-unc':'')+'">Result<select class="lc-res">'+opt('?','Choose…')+opt('','Open (not settled)')+opt('win','Won')+opt('loss','Lost')+opt('push','Push / void')+opt('sold','Sold / cashed out')+'</select></label><label class="f'+uc('payout')+(needPaid&&res==='win'?' lc-unc':'')+'">Paid back $<input type="number" class="lc-paid" step="0.01" min="0" value="'+(R.payout!=null?+R.payout:'')+'"></label>'+(lineOn?'<label class="f'+uc('line')+(S.noLine?' lc-unc':'')+'">Line<input type="number" class="lc-line" step="0.5" value="'+(S.noLine?'':t.point)+'"></label>':'')+'</div>'+
     (U.length?'<div class="ai-warn">⚠ Not clear on the screenshot: '+esc(U.join(', '))+'. Check the marked boxes.</div>':'')+
     '<div class="lc-need"'+(need.length&&!have?'':' hidden')+'>'+esc(need.length?'Fill in '+need.join(', ')+' to import this one.':'')+'</div></div>'; }
 function lcShotCheck(box, typed){ const v=lcShotVals(box), need=lcShotNeed(v), cb=box.querySelector('.lc-on'), nd=box.querySelector('.lc-need'), had=box.classList.contains('lc-had');
@@ -16607,7 +16610,7 @@ function lcShotCheck(box, typed){ const v=lcShotVals(box), need=lcShotNeed(v), c
 function lcShotApply(box, r){ const v=lcShotVals(box), need=lcShotNeed(v); if(need.length) return 'fill in '+need.join(', ')+' for '+(r.player||'a screenshot bet')+'.';
   if(v.lineOn) r.point=v.line;
   if(v.res===''){ delete r.result; delete r.profit; }
-  else { const paid=v.paid!=null?v.paid:null; r.result=v.res;
+  else { const paid=v.paid!=null?v.paid:null; r.result=v.res; if(v.res==='win' && !r.free && paid>r.stake) r.ret=+paid.toFixed(2);   // v5.28 (round 2, F3): a win's return is what the book paid (the odds follow it)
     r.profit=+(v.res==='win'?(r.free?(paid>0?paid:r.ret-r.stake):(paid>0?paid:r.ret)-r.stake):v.res==='loss'?(r.free?0:-r.stake):v.res==='push'?0:(paid||0)-r.stake).toFixed(2); }
   return lcShotHave(r)?'have':''; }
 function lcShotMsg(st, read, dup, errs){ const rows=lcRows.filter(t=>t.shot), have=rows.filter(lcShotHave).length, need=[...document.querySelectorAll('#lcImpList .lc-shot:not(.lc-had) .lc-on:disabled')].length;
@@ -16625,7 +16628,7 @@ async function lcShotRun(files){ const msg=document.getElementById('lcImpMsg'); 
       const r=await aiCall('slips', {image:img.image, mediaType:img.mediaType}); img=null;
       if(!r.ok){ errs.push(r.err); if(['off','cap','locked','not_set_up','unknown_job','network','bad_key'].includes(r.code)) break; continue; }
       st.pics++; read++; st.partial+=Math.max(0, Math.min(50, Math.round(+r.out.partial||0)));
-      (Array.isArray(r.out.bets)?r.out.bets:[]).slice(0,60).forEach((b,k)=>{ const t=lcShotTicket(b, st.pics, k); if(!t) return; if(lcRows.some(u=>u.shot && lcShotSame(u,t))){ dup++; return; } lcRows.push(t); }); }
+      (Array.isArray(r.out.bets)?r.out.bets:[]).slice(0,60).forEach((b,k)=>{ const t=lcShotTicket(b, st.pics, k); if(!t) return; if(lcRows.some(u=>u.shot && u.shot.pic!==t.shot.pic && lcShotSame(u,t))){ dup++; return; }   /* v5.28 (round 2, F1): two cards of one picture are two bets */ lcRows.push(t); }); }
     lcImpPaint(); msg.textContent=lcShotMsg(st, read, dup, errs);
   } finally { window._lcShotBusy=false; } }
 function lcShotPick(inp){ const imgs=[...((inp&&inp.files)||[])].filter(f=>/^image\//.test(f.type||'')); if(!imgs.length) return false; lcShotRun(imgs); try{ inp.value=''; }catch(e){} return true; }
@@ -17099,8 +17102,15 @@ async function cpFillForm(a){ const F=cpFv(a&&a.fields); if(!Object.keys(F).leng
 /* edit_bet */
 function cpLockedRes(b){ return /^(win|loss|push|sold)$/.test(String(b.result||'')) && (b.gradedBy==='manual' || b.gradedBy==='import' || b.gradedBy==='book' || b.accountingSource==='book'); }
 function cpNumsIn(t){ return (String(t||'').replace(/,/g,'').match(/\d+(?:\.\d+)?/g)||[]).map(Number); }
+/* v5.28 (round 2, F4): the stakes the owner states: a number with $ in front, or next to a stake word (stake, bet, risk, wager, cost, paid), or followed by dollars / bucks; never a line, a day count or a % */
+function cpStakesIn(t){ const s=String(t||'').replace(/,/g,''), out=[], no=/^\s*(?:days?|hours?|hrs?|minutes?|mins?|weeks?|line|points?|pts|%|x\b|yards?|yds|rebounds?|assists?)/i; let m;
+  const A=/\$\s?(\d+(?:\.\d+)?)/g; while((m=A.exec(s))) out.push(+m[1]);
+  const B=/\b(?:stake|bet|risk|wager|cost|paid)\b(?:\s+(?:to|of|is|was|at|be|now|=|:))*\s*\$?\s?(\d+(?:\.\d+)?)/gi; while((m=B.exec(s))){ if(!no.test(s.slice(m.index+m[0].length))) out.push(+m[1]); }
+  const C=/(\d+(?:\.\d+)?)\s*(?:dollars|bucks|usd)\b/gi; while((m=C.exec(s))) out.push(+m[1]);
+  return out; }
 function cpNamesBet(t, b){ const T=' '+nrmT(t)+' ', W=nrmT([b.name, b.team].join(' ')).split(' ').filter(w=>w.length>=3); return W.some(w=>T.indexOf(' '+w+' ')>=0); }
-function cpResSaid(t, r){ const T=nrmT(t); return ({win:/\b(won|win|winner|hit|cashed)\b/, loss:/\b(lost|loss|lose|missed)\b/, push:/\b(push|pushed)\b/, void:/\b(void|voided|canceled|cancelled|refunded)\b/})[r].test(T); }
+function cpResSaid(t, r){ const T=nrmT(t); if(/\?/.test(String(t||'')) || /\bif\b/.test(T) || (/\b(won|win|winner)\b/.test(T) && /\b(lost|loss|lose)\b/.test(T))) return false;   // v5.28 (round 2, F5): a question, a conditional, or both win and loss words is not an override
+  return ({win:/\b(won|win|winner|hit|cashed)\b/, loss:/\b(lost|loss|lose|missed)\b/, push:/\b(push|pushed)\b/, void:/\b(void|voided|canceled|cancelled|refunded)\b/})[r].test(T); }
 function cpShow(b){ const pr=/^(win|loss|push|sold)$/.test(String(b.result||''))?betProfit(b):null;
   return {'Book':bookLabel(b.book)||String(b.book||''), 'Game':b.game||'', 'Game start':b.start?compaWhen(b.start)||'':'', 'Game day':gameDayOf(b)||'', 'Player or team':b.name||'', 'Team':b.team||'', 'Market':b.market||'', 'Side':compaSide(b)||'',
     'Odds':String(b.odds||''), 'Stake':'$'+(+b.stake||0).toFixed(2), 'Result':compaResOf(b)+(b.gradedBy?' (set by '+b.gradedBy+')':''), 'Profit':pr==null?'':(pr>=0?'+':'−')+'$'+Math.abs(pr).toFixed(2), 'Free bet':b.free?'yes':'no', 'Placed':b.placedAt?lcShotWhen(b.placedAt):''}; }
@@ -17120,8 +17130,10 @@ function cpEditPlan(c){ const a=c.input||{}, b=(logged||[]).find(x=>x && String(
   if(b.kind==='parlay') return {what:'Change the parlay '+String(b.name||'').slice(0,60), cost:'nothing', bad:'El Compa does not edit parlays: open it in the Bet log.'};
   const ok=[], refused=[]; let override=false;
   cpPairs(a.changes).sort((x,y)=>CP_ORDER.indexOf(x[0])-CP_ORDER.indexOf(y[0])).forEach(([f,v])=>{ const n=aiNum(v);
-    if(f==='stake'){ if(!(n>0)) return refused.push('stake: not a number'); if(!cpNumsIn(own).some(x=>Math.abs(x-n)<0.005)) return refused.push('stake: you did not state the new stake ($'+n.toFixed(2)+') in your message'); return ok.push([f, +n.toFixed(2)]); }
+    if(f==='stake'){ if(!(n>0)) return refused.push('stake: not a number'); if(!cpStakesIn(own).some(x=>Math.abs(x-n)<0.005))   /* v5.28 (round 2, F4): a stated stake, not any number */  return refused.push('stake: you did not state the new stake ($'+n.toFixed(2)+') in your message'); return ok.push([f, +n.toFixed(2)]); }
     if(f==='result'){ const r=({won:'win', win:'win', lost:'loss', loss:'loss', push:'push', void:'void'})[String(v).toLowerCase()]; if(!r) return refused.push('result: win, loss, push or void only');
+      if((r==='void'?'push':r)===b.result) return refused.push('result: already '+b.result+' (who set it stays as it is)');   // v5.28 (round 2, F5): the same result again is not a change (it relabelled a book or import result as yours)
+     
       if(cpLockedRes(b) && (r==='void'?'push':r)!==b.result){ if(cpNamesBet(own,b) && cpResSaid(own,r)) override=true; else return refused.push('result: '+b.result+' was set by '+(b.gradedBy==='manual'?'you':b.gradedBy==='import'?'an import':'your book')+'; name this bet and the new result in your message to change it'); }
       return ok.push([f, r]); }
     if(f==='odds'){ const o=oddsIn(v); if(!o || toProb(o)==null) return refused.push('odds: not American odds ('+v+')'); return ok.push([f, o]); }

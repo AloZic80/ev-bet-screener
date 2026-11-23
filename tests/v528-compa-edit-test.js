@@ -32,6 +32,9 @@ function answer(input){ const M=input.messages||[], last=String((M[M.length-1]||
   if(/find/.test(last)) return one('t_find','find_bets',{text:'49ers', day:'', book:''},false);
   if(/jokic line/.test(last)) return one('t_e1','edit_bet',{id:'b-open', changes:[{field:'line', value:'12.5'},{field:'odds', value:'-115'}]},true);
   if(/stake/.test(last)) return one('t_e2','edit_bet',{id:'b-open', changes:[{field:'stake', value:'9'}]},true);
+  if(/12\.5 line/.test(last)) return one('t_e4','edit_bet',{id:'b-open', changes:[{field:'stake', value:'12.5'}]},true);   // round 2, F4
+  if(/days ago/.test(last)) return one('t_e5','edit_bet',{id:'b-open', changes:[{field:'stake', value:'2'}]},true);
+  if(/lose\?|\bif the\b/.test(last)) return one('t_e6','edit_bet',{id:'b-ml', changes:[{field:'result', value:'loss'}]},true);   // round 2, F5
   if(/a loss|lost/.test(last)) return one('t_e3','edit_bet',{id:'b-ml', changes:[{field:'result', value:'loss'}]},true);
   return ok('Unknown in this test.'); }
 async function worker(route){ const req=route.request(), u=new URL(req.url());
@@ -94,6 +97,15 @@ const lastResult=name=>{ for(let i=CALLS.length-1;i>=0;i--){ const c=CALLS[i]; i
   check('4. with "set the jokic stake to 9" the ask shows Stake $5.00 → $9.00', A && A.rows.some(r=>r[0]==='Stake' && r[1]==='$5.00' && r[2]==='$9.00'), A);
   await answerAsk(S.p,true); await S.p.waitForTimeout(900); B=await bet(S.p,'b-open');
   check('4. Yes: stake 9, history kept (2 edits), snap unchanged', B.stake===9 && B.edits.length===2 && B.edits[1].before.stake===5 && JSON.stringify(B.snap)===JSON.stringify(before.snap), B);
+  // R2 F4: a number that is not a stated stake is refused
+  for(const [msg, n] of [['move it to the 12.5 line', '12.50'], ['I bet it 2 days ago', '2.00']]){ await send(S.p, msg); A=await ask(S.p);
+    check('R2 F4. "'+msg+'": the stake $'+n+' is refused (not a stated stake)', A && new RegExp('stake: you did not state the new stake \\(\\$'+n.replace('.','\\.')+'\\)').test(A.t) && !A.rows.length, A); await answerAsk(S.p,false); await S.p.waitForTimeout(700); }
+  check('R2 F4. stake still 9', (await bet(S.p,'b-open')).stake===9, null);
+  // R2 F5: a question or a conditional is not an override
+  for(const msg of ['did the 49ers lose?', 'if the 49ers lost, mark it a loss']){ await send(S.p, msg); A=await ask(S.p);
+    check('R2 F5. "'+msg+'": not an override (refused)', A && /result: win was set by an import/.test(A.t) && !/overrides/.test(A.t), A); await answerAsk(S.p,false); await S.p.waitForTimeout(700); }
+  { const P=await ev(S.p,()=>{ compaPush('user','SF 49ers bet: a win is a win'); const P=cpEditPlan({input:{id:'b-ml', changes:[{field:'result',value:'win'}]}}); return {bad:P.bad||null, refused:P.refused, rows:P.rows||null}; });
+    check('R2 F5. the same result again ("a win is a win") changes nothing, and does not relabel the import result as yours', /result: already win/.test(P.bad||'') && !P.rows, P); }
   // 5. a result set by an import is not changed without the override words
   await send(S.p,'mark that one a loss'); A=await ask(S.p);
   check('5. a result set by an import, the owner not naming the bet: refused ("set by an import; name this bet and the new result")', A && /result: win was set by an import; name this bet and the new result in your message to change it/.test(A.t) && !/overrides/.test(A.t), A);

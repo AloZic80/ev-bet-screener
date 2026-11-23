@@ -156,7 +156,7 @@ const SAVED=p=>ev(p,()=>logged.filter(b=>String(b.id).startsWith('imp-')).map(b=
   check('7. (b) the team is SF', F.team==='SF', F.team);
   check('7. (c) the book is DK Predictions, shown as "DK Predictions (exchange · price in %)", DraftKings as "DraftKings (sportsbook)", with the exchange line under it', F.book==='DraftKings Predictions' && F.bookTxt==='DK Predictions (exchange · price in %)' && F.dkTxt==='DraftKings (sportsbook)' && /DK Predictions is the DraftKings exchange, not the DraftKings sportsbook/.test(F.note), F);
   check('7. (d)(e) the price: % mode, Cost 26.80 @ 65%, Pays back 40.00 (and the odds box -203, never 0; Total payout 40.00)', F.mode==='pct' && F.cost==='26.80' && F.pct==='65' && F.pays==='40.00' && F.odds==='-203' && F.tot==='40.00', F);
-  check('7. (f) the result is Won; placed at 6:35 PM (Central); nothing marked ⚠', F.result==='win' && F.placed==='2026-11-22T18:35' && !F.unc.length, F);
+  check('7. (f) the result is Won; placed at 6:35 PM (Central); only the game marked ⚠ (round 2, F2: found from the placed day, no game date printed)', F.result==='win' && F.placed==='2026-11-22T18:35' && F.unc.length===1 && /^Game/.test(F.unc[0]), F);
   await S.p.click('#abHost .eb-save'); await S.p.waitForTimeout(900);
   V=await ev(S.p,()=>{ const L=logged[logged.length-1]; return L?{book:L.book, result:L.result, stake:L.stake, profit:betProfit(L), game:L.game, team:L.team, name:L.name, day:gameDayOf(L), kind:L.kind}:null; });
   check('7. Save: a won DK Predictions bet on SF, MIN @ SF, Nov 22, cost 26.80, profit +13.20 (paid − cost)', V && V.book==='DraftKings Predictions' && V.result==='win' && V.stake===26.8 && Math.abs(V.profit-13.2)<0.005 && V.game==='MIN @ SF' && V.team==='SF' && V.day==='2026-11-22' && V.kind==='moneyline', V);
@@ -174,4 +174,34 @@ const SAVED=p=>ev(p,()=>logged.filter(b=>String(b.id).startsWith('imp-')).map(b=
   st=await ev(S.p,()=>({view:document.body.dataset.view, open:document.querySelector('.lc-impbox').open}));
   check('7. Open Bet log › Import: the Bet log, the import box open, the same picture read there (3 rows)', st.view==='v-log' && st.open && nAi('slips')===n0+1 && /^Read 3 bets from 1 picture/.test(m), {st, m});
   check('7. no page errors', !S.errs.length, S.errs); await S.ctx.close();
+  // ===== R2 (review round 2) =====
+  // F1: a second real buy of the same trade (7:40 PM next to the logged 6:57 PM) is a new bet; two cards of one picture are two bets
+  S=await open(b); await toLog(S.p);
+  await S.p.setInputFiles('#lcFile', pic()); await waitMsg(S.p,/Read 3 bets/); await ev(S.p,()=>document.getElementById('lcImpSave').click()); await S.p.waitForTimeout(400);
+  const PUR2=Object.assign({},PUR,{stake:27.1, placedAt:'Nov 22, 2026 at 7:40:12 PM'});
+  Q=[{bets:[PUR2], partial:0, unclear:[]}]; await S.p.setInputFiles('#lcFile', pic(5)); m=await waitMsg(S.p,/Read 1 bet/); R=await rows(S.p);
+  check('R2 F1. a second buy of the Purdy trade (27.10 at 7:40 PM, the 6:57 PM one logged) is not "already in your Bet log" and is ticked', R.length===1 && R[0].on && !R[0].dis && !/already/.test(R[0].t) && !/already/.test(m), {m, R});
+  await ev(S.p,()=>document.getElementById('lcImpSave').click()); await S.p.waitForTimeout(400); V=await SAVED(S.p);
+  check('R2 F1. it saves: 4 bets, two Purdy buys', V.length===4 && V.filter(x=>x.name==='Brock Purdy').length===2, V.map(x=>[x.name,x.stake]));
+  Q=[{bets:[PUR, Object.assign({},PUR,{placedAt:'Nov 22, 2026 at 7:40:12 PM'})], partial:0, unclear:[]}]; await S.p.setInputFiles('#lcFile', pic(6)); m=await waitMsg(S.p,/Read 2 bets/); R=await rows(S.p);
+  check('R2 F1. two cards of one picture (same trade, 6:57 and 7:40 PM): 2 rows, none "read twice"', R.length===2 && !/read twice/.test(m), {m, n:R.length});
+  check('R2 F1. the 6:57 PM one is already in the log, the 7:40 PM one too (just saved)', R.every(r=>/already in your Bet log/.test(r.t)), R.map(r=>r.t.slice(0,90)));
+  // F3: a won trade with no payout read needs what it paid back before it can be ticked
+  Q=[{bets:[Object.assign({},ML,{payout:undefined, placedAt:'Nov 22, 2026 at 8:10:00 PM'})], partial:0, unclear:[]}]; await S.p.setInputFiles('#lcFile', pic(7)); await waitMsg(S.p,/Read 3 bets/); R=(await rows(S.p)).slice(-1);
+  let nd=await ev(S.p,()=>{ const b=[...document.querySelectorAll('#lcImpList .lc-shot')].pop(); return {need:b.querySelector('.lc-need').textContent, unc:!!b.querySelector('label.lc-unc .lc-paid')}; });
+  check('R2 F3. a won trade with no payout read (return from the %): not tickable, "Fill in what it paid back", Paid back marked ⚠', R[0] && R[0].dis && !R[0].on && R[0].paid==='' && /what it paid back/.test(nd.need) && nd.unc, {R, nd});
+  await S.p.locator('#lcImpList .lc-shot').last().locator('.lc-paid').fill('40'); await S.p.waitForTimeout(100); R=(await rows(S.p)).slice(-1);
+  check('R2 F3. typed Paid back 40: ticked', R[0].on && !R[0].dis, R[0]);
+  await ev(S.p,()=>document.getElementById('lcImpSave').click()); await S.p.waitForTimeout(400); V=await SAVED(S.p);
+  const ml8=V.find(x=>x.placedAt==='2026-11-23T02:10:00.000Z');
+  check('R2 F3. saved with what the book paid: odds -203, profit +13.20 (not -186 / +14.43 from the %)', ml8 && ml8.odds==='-203' && ml8.profit===13.2, ml8);
+  // F6: the year nearest the placed date, or today
+  const yr=await ev(S.p,()=>({a:aiBetDay({placedAt:'Dec 31, 2026 at 7:00 PM', gameDate:'Sun, Jan 3'}).day, b:aiWhenCT('Dec 30 8:00 PM', Date.parse('2027-01-02T18:00:00Z')).day, c:aiWhenCT('Nov 22 6:35 PM').day, d:aiWhenCT('Nov 22, 2026 at 6:35 PM', Date.parse('2028-06-01T00:00:00Z')).day}));
+  check('R2 F6. Dec 31, 2026 + "Sun, Jan 3" → 2027-01-03; "Dec 30" read Jan 2, 2027 → 2026-12-30; a printed year is kept', yr.a==='2027-01-03' && yr.b==='2026-12-30' && yr.c==='2026-11-22' && yr.d==='2026-11-22', yr);
+  check('R2 no page errors', !S.errs.length, S.errs); await S.ctx.close();
+  // F2: Read slip never picks a game that ended before the bet was placed
+  S=await open(b); await openAdd(S.p);
+  SLIP=Object.assign({}, SLIP1, {placedAt:'Nov 23, 2026 at 9:05 AM', finalScore:''}); await readSlip(S.p); F=await form(S.p);
+  check('R2 F2. placed Mon 9:05 AM, MIN @ SF was Sun 3:25 PM: the game is left empty with ⚠ (not the finished game)', F.game==='' && F.unc.some(x=>/^Game/.test(x)), F);
+  check('R2 F2. no page errors', !S.errs.length, S.errs); await S.ctx.close();
   await b.close(); console.log('\n'+pass+' passed, '+fail+' failed ('+Math.round((Date.now()-t0)/1000)+' s)'); process.exit(fail?1:0); })();
