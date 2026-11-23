@@ -116,7 +116,7 @@ const SAVED=p=>ev(p,()=>logged.filter(b=>String(b.id).startsWith('imp-')).map(b=
   check('5. the bet with an unknown result: not tickable until a result is chosen ("Fill in the result")', (fresh[1]||{}).dis && (fresh[1]||{}).res==='?' && /the result/.test((m[1]||{}).need), {r:fresh[1], m:m[1]});
   await ev(S.p,()=>document.getElementById('lcImpSave').click()); await S.p.waitForTimeout(300);
   V=await SAVED(S.p); m=await ev(S.p,()=>document.getElementById('lcImpMsg').textContent);
-  check('5. Save leaves the two blocked rows out (0 saved, 2 left out)', V.length===0 && /2 left out/.test(m), {n:V.length, m});
+  check('5. Save leaves the two blocked rows out (0 saved; v5.29: "Nothing ticked: 2 bets need a box filled first")', V.length===0 && /^Nothing ticked: 2 bets need a box filled first \(the ⚠ ones\)\.$/.test(m), {n:V.length, m});
   check('5. no bet without a stake was saved', V.every(x=>x.stake>0), V.map(x=>x.stake));
   await S.ctx.close();
   S=await open(b); await toLog(S.p);

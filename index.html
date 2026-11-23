@@ -38,7 +38,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.28</title>
+<title>0xBeta Screener v5.29</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -2265,6 +2265,18 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 .cp-diff{border-collapse:collapse; margin:6px 0; font-size:13px; width:100%; table-layout:fixed} .cp-diff th, .cp-diff td{border-bottom:1px solid var(--rule); padding:3px 6px; text-align:left; overflow-wrap:anywhere}
 .cp-ovr{color:var(--warn); font-weight:600; margin:4px 0}
 #compaShot{min-height:44px; min-width:44px; align-self:flex-end}   /* v5.28 (round 2): 44 px, not stretched to the whole form (140 px) */
+/* v5.29 (owner 11/23: "when I Saved Bet, it went NOWHERE"): + Add a bet says next to Save what happened: saved (green, with Show it) or why not (red) */
+#abHost .eb-msg.ab-say{display:block; width:100%; box-sizing:border-box; margin-top:6px; padding:8px 12px; border-radius:8px; font-weight:600; font-size:14px; white-space:normal; overflow-wrap:anywhere}
+#abHost .eb-msg.ab-yes{background:var(--live-bg); color:var(--live)}
+#abHost .eb-msg.ab-no{background:transparent; color:var(--loss); border:1px solid var(--loss)}
+#abHost .eb-msg.eb-warn{background:transparent; color:var(--loss); border:1px solid var(--loss)}   /* v5.29: a refusal next to + Add a bet's Save is red (the editor's own checks: price, cost, limits) */
+#addBetPanel .ab-need, #addBetPanel .ai-unclear .ab-need, #addBetPanel label.ai-unclear .ab-need{outline:2px solid var(--loss); outline-offset:1px}   /* v5.29: red over the ⚠ amber */
+#abHost .eb-msg .ab-show{margin-left:8px; min-height:32px; color:inherit; text-decoration:underline}
+.lc-impsay{margin-top:6px; padding:8px 12px; border-radius:8px; font-weight:600; font-size:14px; overflow-wrap:anywhere; max-width:100%; box-sizing:border-box}
+.lc-impsay.ab-yes{background:var(--live-bg); color:var(--live)} .lc-impsay.ab-no{color:var(--loss); border:1px solid var(--loss)}
+.lc-impsay .ab-show{margin-left:8px; min-height:32px; color:inherit; text-decoration:underline}
+.lc-shot.lo-flash{outline:2px solid var(--loss); outline-offset:2px}
+.lc-shot .lc-need:not([hidden]){display:block; color:var(--loss); font-weight:600; font-size:14px; overflow-wrap:anywhere; max-width:100%}   /* v5.29: the missing box, plain on a 390 px phone */
 </style>
 </head>
 <body>
@@ -2273,7 +2285,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.28</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.29</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2996,7 +3008,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
     <div class="row lc-drop" id="lcImpDrop" style="margin-top:6px"><input type="file" id="lcFile" accept=".json,application/json,image/*" multiple aria-label="Bet import file or screenshots"><button type="button" class="ghost sm" id="lcImpClip">📋 Paste a screenshot</button></div><!-- v5.28: pictures too (pick several, paste or drop) -->
     <div class="meta" id="lcImpMsg" role="status" style="margin-top:6px"></div>
     <div id="lcImpList"></div>
-    <div class="row" style="margin-top:6px"><button type="button" class="act" id="lcImpSave" hidden>Save the ticked tickets to my Bet log</button></div>
+    <div class="row" style="margin-top:6px"><button type="button" class="act" id="lcImpSave" hidden>Save the ticked tickets to my Bet log</button></div><div id="lcImpSay" class="lc-impsay" role="status" hidden></div><!-- v5.29: the answer under the Save button too -->
   </details>
 </div>
 <!-- v2.63 -->
@@ -3225,7 +3237,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 
 </div>
 <script>
-const SCREENER_VERSION='v5.28';
+const SCREENER_VERSION='v5.29';
 /* v5.24 (step 5): DEV_APP is now defined once, in the head script at the top of this file (the first paint reads it too) */
 if(!DEV_APP) document.documentElement.setAttribute('data-viewas','easy');   // v5.24 (step 3b): a customer build is Easy whatever mbev.viewAs holds
 /* v5.24 (owner 11/20: "we need to differentiate already"; "for me in GOD mode, let me tell the difference of what they cant see and i can"): levels.
@@ -5424,13 +5436,16 @@ function lcImpPaint(){ const el=document.getElementById('lcImpList');
     return '<div class="lc-imp lc-fix" data-f="'+i+'"><label class="lc-tk"><input type="checkbox" class="lc-on"'+(ok?' checked':' disabled')+'><span><b>Fix</b> '+esc(f.name)+' · '+esc(f.day)+(f.book?' · '+esc(f.book):'')+' · $'+f.stake.toFixed(2)+': '+esc(ch)+
       (ok?'':' <span class="meta">· '+(done?'already done':tg==='many'?'more than one bet matches: fix it by hand':'no bet matches (already fixed, or not in this log)')+'</span>')+'</span></label>'+(f.note?'<div class="meta">'+esc(f.note)+'</div>':'')+'</div>'; }).join('');   /* v4.70 */
   el.innerHTML+=fx;
-  document.getElementById('lcImpSave').hidden=!lcRows.length && !(window._lcFix||[]).length; }
+  document.getElementById('lcImpSave').hidden=!lcRows.length && !(window._lcFix||[]).length; lcImpSay(''); }   // v5.29: a new list clears the answer under Save
 document.addEventListener('click',e=>{ const t=e.target; if(!t.closest || !t.closest('#lcPanel')) return;
   const d=t.closest('.lc-d'); if(d){ lcDay=d.dataset.day; lcRender(); return; }
   if(t.closest('#lcPrev')||t.closest('#lcNext')){ const [y,m]=lcMonth.split('-').map(Number), n=new Date(Date.UTC(y,m-1+(t.closest('#lcPrev')?-1:1),1)); lcMonth=n.toISOString().slice(0,7); lcRender(); return; }
   if(t.closest('#lcToday')){ lcDay=ctDay(Date.now()); lcMonth=lcDay.slice(0,7); lcRender(); return; }
   if(t.closest('#lcShow')){ logDayFilter=lcDay; renderLog(); const f=document.getElementById('logFilter'); if(f) setTimeout(()=>f.scrollIntoView({block:'start',behavior:'smooth'}),50); return; }
   if(t.closest('#lcImpSave')){ const msg=document.getElementById('lcImpMsg'); let add=0, skip=0, fixed=0; const out=[], fixes=[];
+    { const on=document.querySelectorAll('#lcImpList .lc-on:checked').length; if(!on){ const bl=[...document.querySelectorAll('#lcImpList .lc-shot:not(.lc-had)')].filter(b=>{ const c=b.querySelector('.lc-on'); return c && c.disabled; });   // v5.29: nothing ticked: say why, at the first blocked row
+      const w=bl.length?'Nothing ticked: '+bl.length+' bet'+(bl.length===1?' needs':'s need')+' a box filled first (the ⚠ ones).':'Nothing ticked: tick the tickets to save.'; msg.textContent=w; lcImpSay(w, false);
+      if(bl[0]){ bl[0].classList.add('lo-flash'); try{ bl[0].scrollIntoView({block:'center'}); }catch(_){} setTimeout(()=>bl[0].classList.remove('lo-flash'),2200); } return; } }
     try{ document.querySelectorAll('#lcImpList .lc-fix').forEach(box=>{ const f=(window._lcFix||[])[+box.dataset.f]; if(!f || !box.querySelector('.lc-on').checked){ skip++; return; } const tg=lcFixTarget(f); if(!tg || tg==='many' || lcFixDone(tg,f)){ skip++; return; } fixes.push([tg,f]); });   /* v4.70 */
       document.querySelectorAll('#lcImpList .lc-imp:not(.lc-fix)').forEach(box=>{ const r=Object.assign({}, lcRows[+box.dataset.i]); if(!box.querySelector('.lc-on').checked){ skip++; return; }
         const day=box.querySelector('.lc-day').value, book=box.querySelector('.lc-book').value.trim(), st=parseFloat(box.querySelector('.lc-st').value), ret=parseFloat(box.querySelector('.lc-ret').value);
@@ -5443,7 +5458,9 @@ document.addEventListener('click',e=>{ const t=e.target; if(!t.closest || !t.clo
       const open=out.filter(b=>!b.result||b.result==='pending').length;
       msg.textContent='Saved '+add+' ticket'+(add===1?'':'s')+' to your Bet log'+(fixed?' · fixed '+fixed+' bet'+(fixed===1?'':'s'):'')+(skip?' · '+skip+' left out':'')+'.'+(open?' '+open+' have no result yet: Check results grades them, or Look out asks you.':'');
       if(add||fixed){ window._lcFix=[]; lcRows=[]; lcImpPaint(); const f=document.getElementById('lcFile'); if(f) f.value=''; if(out[0]){ lcDay=gameDayOf(out[0])||lcDay; lcMonth=lcDay.slice(0,7); lcRender(); } }
-    }catch(err){ msg.textContent='Not saved: '+err.message; }
+      if((add||fixed) && window._logSaveBad===true){ msg.textContent='Not saved on this device: the Bet log could not be saved (storage full), so '+(add?add+' ticket'+(add===1?'':'s'):'the fixes')+' would be gone after a reload. Back up the Bet log (Bet log › More) and free some space, then save again.'; lcImpSay(msg.textContent, false, out[0]&&out[0].id); }   // v5.29
+      else lcImpSay(msg.textContent+(out[0]?' → Bet log › '+abDayWord(gameDayOf(out[0])||out[0].date):''), !!(add||fixed), out[0]&&out[0].id);   // v5.29: under the Save button too; red when nothing was saved
+    }catch(err){ msg.textContent='Not saved: '+err.message; lcImpSay(msg.textContent, false); }   // v5.29: + under the Save button
     return; } });
 document.addEventListener('change',async e=>{ const t=e.target;
   if(t && t.id==='lcPeriod'){ lcPeriod=t.value; try{ localStorage.setItem('mbev.lcPeriod',lcPeriod); }catch(_){} lcRender(); return; }
@@ -13291,6 +13308,29 @@ function abPrice(){   // the price typed in the editor below (same reading as Sa
   return p==null?null:{prob:p, fee:feeRate(book,p,cfg.fees,live), book, stake:parseFloat(q('.eb-stake').value)||0, odds:o};
 }
 function abUpdate(){ abUpdate94(); }
+/* v5.29 (owner 11/23: "when I Saved Bet, it went NOWHERE. I don't see it"): + Add a bet never does nothing. abSay puts the answer next to Save (green: saved, red: why not, with Show it when a bet
+   is named) and scrolls it into view; abDupOf finds the same bet already in the Bet log (the import screenshot match: day, kind, side, market, name, stake within 4%, placed within ~2½ min, the same book when both are known); logShowBet opens the Bet log on that bet's game day and scrolls it into view. Hoisted. */
+function abDayWord(day){ const d=new Date(String(day||'')+'T12:00:00Z'); return isNaN(d)?String(day||'no date'):d.toLocaleDateString('en-US',{weekday:'short', month:'short', day:'numeric', timeZone:'UTC'}).replace(',',''); }
+function abSay(ed, text, ok, id){ const m=ed&&ed.querySelector('.eb-msg'); if(!m) return; m.classList.remove('eb-warn'); m.classList.add('ab-say'); m.classList.toggle('ab-yes', !!ok); m.classList.toggle('ab-no', !ok);
+  m.innerHTML=esc(text)+(id?' <button type="button" class="linkbtn ab-show" data-id="'+esc(id)+'">Show it</button>':''); abSayView(ed, m); }
+function abSayView(ed, m){ try{ const sb=ed.querySelector('.eb-save'), r1=sb?sb.getBoundingClientRect():m.getBoundingClientRect(), r2=m.getBoundingClientRect(), dock=document.getElementById('apiDock'), bot=innerHeight-(dock?dock.getBoundingClientRect().height:0)-8;   // the button and the answer both in view, above the bottom bar
+  if(r2.bottom>bot) window.scrollBy(0, Math.min(r2.bottom-bot, r1.top-8)); else if(r1.top<0) window.scrollBy(0, r1.top-8); }catch(e){} }
+function abNeedMark(what){ document.querySelectorAll('#addBetPanel .ab-need').forEach(x=>x.classList.remove('ab-need')); if(!what) return;   // v5.29: the missing box outlined in red and focused (without scrolling away from Save)
+  const ts=$ab('abTeam'), id={game:'abGame', player:'abPlayer', stat:'abStat', line:'abLine', team:(ts && ts.style.display!=='none')?'abTeam':'abTeamFree'}[what], el=id&&$ab(id); if(!el) return; el.classList.add('ab-need'); try{ el.focus({preventScroll:true}); }catch(e){} }
+document.addEventListener('change', e=>{ const t=e.target; if(t && t.classList && t.classList.contains('ab-need')) t.classList.remove('ab-need'); if(t && t.id==='abGameFree' && $ab('abGame')) $ab('abGame').classList.remove('ab-need'); });
+document.addEventListener('input', e=>{ const t=e.target; if(t && t.classList && t.classList.contains('ab-need')) t.classList.remove('ab-need'); if(t && t.id==='abGameFree' && $ab('abGame')) $ab('abGame').classList.remove('ab-need'); });
+function abDupOf(f, ed){ try{ const q=c=>ed.querySelector(c), pr=abPrice(), st=pr&&pr.stake>0?pr.stake:(parseFloat((q('.eb-stake')||{}).value)||0), book=(q('.eb-book')||{}).value||'', pl=placedRead($ab('abPlaced'));
+  const k=lcShotKeyB({kind:f.kind, name:f.name, side:f.side, market:f.market, date:f.gameDay||'', dateSet:true, manual:true, book, stake:st, placedAt:pl&&!pl.err?pl.iso:undefined});
+  if(!k.day) return null;
+  return logged.find(b=>b && b.kind!=='parlay' && lcShotSameK(lcShotKeyB(b), k) && !(book && b.book && nrmT(bookLabel(book))!==nrmT(bookLabel(b.book))))||null; }catch(e){ return null; } }
+function abSrcWord(b){ return (String(b.id||'').startsWith('imp-') || b.gradedBy==='import' || b.srcType==='import')?'imported':(b.manual||b.srcType==='manual')?'added by hand':(b.fillRef||b.fill)?'from your book':'from the board'; }
+function logShowBet(id){ const i=logged.findIndex(b=>b && b.id===id); if(i<0) return false; const b=logged[i], d=gameDayOf(b)||b.date||'';
+  const t=document.querySelector('.tab[data-view="v-log"]'); if(t) t.click();
+  if(logDayFilter && logDayFilter!==d) logDayFilter=null; if(logBandFilter!=null) logBandFilter=null; logDays=logDays||{}; logDays[d]=true; saveLogDays(); renderLog();
+  setTimeout(()=>{ const el=document.querySelector('#logBody [data-i="'+i+'"]'), tr=el&&el.closest('tr'); if(tr){ tr.classList.add('lo-flash'); try{ tr.scrollIntoView({block:'center'}); }catch(e){} setTimeout(()=>tr.classList.remove('lo-flash'),2200); } }, 60); return true; }
+function lcImpSay(text, ok, id){ const m=document.getElementById('lcImpSay'); if(!m) return; if(!text){ m.hidden=true; m.textContent=''; return; } m.hidden=false; m.className='lc-impsay '+(ok?'ab-yes':'ab-no');   // v5.29: the import's answer under its Save button
+  m.innerHTML=esc(text)+(id?' <button type="button" class="linkbtn ab-show" data-id="'+esc(id)+'">Show it</button>':''); try{ m.scrollIntoView({block:'nearest'}); }catch(e){} }
+document.addEventListener('click', e=>{ const b=e.target && e.target.closest && e.target.closest('#abHost .ab-show, #lcImpSay .ab-show'); if(!b) return; e.preventDefault(); logShowBet(b.dataset.id); });
 function abOpenEditor(){
   const host=$ab('abHost'); host.innerHTML='';
   let last=''; try{ last=localStorage.getItem('mbev.abBook')||''; }catch(e){}
@@ -13305,11 +13345,13 @@ function abOpenEditor(){
   const save=ed.querySelector('.eb-save');
   save.addEventListener('click',e=>{   // runs before the editor's own save
     const f=abRowFields(); Object.assign(abR,f);
-    if(f._missing){ e.stopImmediatePropagation(); ed.querySelector('.eb-msg').textContent='Add the '+f._missing+' first — ESPN needs it to grade the bet'; return; }
+    if(f._missing){ e.stopImmediatePropagation(); abSay(ed, 'Not saved: add the '+f._missing+' first'+(f._missing==='game'?' (pick it in the Game list above, or type it)':'')+' — ESPN needs it to grade the bet.'); abNeedMark(f._missing); return; }   // v5.29: in red next to Save, scrolled into view (was a quiet grey line)
     // v3.48: a bet already placed logs from Save bet in either mode (Make mode no longer blocks it)
     try{ localStorage.setItem('mbev.abBook', ed.querySelector('.eb-book').value); }catch(_){}
     abR._result=$ab('abResult').value||'';   // v3.54: already over — save it graded, and skip the "worth it?" second press
-    if(!abR._result && f.gameDay && f.gameDay < ctDay(Date.now()-30*86400e3)){ e.stopImmediatePropagation(); ed.querySelector('.eb-msg').textContent='That game was more than 30 days ago, too far back to grade itself: set Result (won, lost or push) first'; return; }   // v3.97: grading now reaches 30 days back (was 4)
+    if(!abR._result && f.gameDay && f.gameDay < ctDay(Date.now()-30*86400e3)){ e.stopImmediatePropagation(); abSay(ed, 'Not saved: that game was more than 30 days ago, too far back to grade itself: set Result (won, lost or push) first.'); return; }   // v3.97: grading now reaches 30 days back (was 4)   // v5.29: in red next to Save
+    if(save.dataset.dup!=='1'){ const D=abDupOf(f, ed); if(D){ e.stopImmediatePropagation(); save.dataset.dup='1'; save.textContent='Save bet anyway'; abSay(ed, 'Not saved: already in your Bet log ('+abDayWord(gameDayOf(D)||D.date)+', '+abSrcWord(D)+'). Press Save bet anyway only if this is a second bet.', false, D.id); return; } }   // v5.29: the same bet already in the log (an import, Read slip twice)
+    { const n0=logged.length; setTimeout(()=>{ const m=ed.querySelector('.eb-msg'); if(ed.isConnected && logged.length===n0 && m && !m.textContent.trim()) abSay(ed, 'Not saved: the form could not be saved. Check the boxes (the ones marked ⚠ most) and press Save bet again.'); }, 400); }   // v5.29: never nothing
     if(abR._result){ save.dataset.ok='1'; save.dataset.lc='1'; save.dataset.byResult='1'; }
     else if(save.dataset.byResult){ delete save.dataset.ok; delete save.dataset.lc; delete save.dataset.byResult; }   // Result cleared: the checks apply again
   }, true);
@@ -13348,6 +13390,12 @@ function fillManualFromRow(L, r){   // next Load: an unchecked manual bet picks 
       try{ aiSlipSaved(L); }catch(e){ console.warn('ai slip note', e); }   // v5.15: the slip data point (what was read, what you changed); the bet is already saved
       $ab('abMsg').innerHTML='<b>Saved:</b> '+esc(L.name)+' — '+esc(betLabel(L))+' · $'+(+L.stake||0).toFixed(2)+' on '+esc(bookLabel(L.book))+(L.result?' · <b>'+({win:'WON',loss:'LOST',push:'PUSH'}[L.result]||'')+'</b>'+(L.result==='win'&&betProfit(L)!=null?' +$'+betProfit(L).toFixed(2):''):'')+(L.net==null?' · <span class="meta">unchecked until the next Load</span>':'');
       ['abPlayer','abLine','abProj','abCover','abCons','abConsO'].forEach(id=>$ab(id).value='');   // v5.26 (PRICES-1): + the other side
+      abOpenEditor();   // v5.29: the new form first, then the answer next to its Save
+      const ed2=$ab('abHost').querySelector('.editor'), dw=abDayWord(gameDayOf(L)||L.date), txt=(L.kind==='moneyline'?L.name+' moneyline':L.name+' '+betLabel(L))+' · '+bookLabel(L.book)+' · $'+(+L.stake||0).toFixed(2)+(L.result?' · '+({win:'Won',loss:'Lost',push:'Push'}[L.result]||L.result):'')+' → Bet log › '+dw;
+      if(window._logSaveBad===true){ if(ed2) abSay(ed2, 'Saved on this page only: the Bet log could not be saved on this device (storage full), so it is gone after a reload. Back up the Bet log (Bet log › More) and free some space. '+txt, false, L.id); }
+      else { if(ed2) abSay(ed2, 'Saved: '+txt, true, L.id); try{ savedToast('✓ Saved: '+txt); }catch(e){} }
+      abNeedMark(''); { const so=$ab('aiSlipOut'); if(so && /Filled in from the slip/.test(so.textContent)) so.innerHTML='<span class="meta">Saved. The form is empty again for the next bet.</span>'; }   // v5.29: the form is reset, so it is plain the bet went in
+      return;
     }
     abOpenEditor();
   }).observe($ab('abHost'),{childList:true});
@@ -16311,6 +16359,12 @@ function aiErrText(code, j){ j=j||{};
     bad_key:'The Anthropic key on your Worker was not accepted. Check the key on the Worker.', rejected:'Anthropic did not accept this request. Try a different picture or question.',
     network:'Could not reach your Worker. Check your connection and try again.', off:'The AI helper is off. Turn it on in Settings › AI helper.'})[code]
     || 'The AI helper could not answer'+(j.status?' (error '+(+j.status||'')+')':'')+'. Nothing was changed.'; }
+/* v5.29: the Worker sends Anthropic's own short error message as detail (with error:'rejected' and others): shown after the app's words, plain text (every place shows err escaped or as textContent), cut to 200 characters */
+function aiErrDetail(j){ const d=String((j&&j.detail)||'').replace(/\s+/g,' ').trim().slice(0,200); return d?' Anthropic said: “'+d+'”':''; }
+/* v5.29: a picture from an iPhone can come with an empty type, or as HEIC. A file is a picture when its type starts with image/, or its type is empty and its name ends in a picture extension, or (pick: a file picker) its type is empty and its name is not a .json or text file. */
+function aiIsPic(f, pick){ if(!f) return false; const t=String(f.type||''), n=String(f.name||'').toLowerCase(); if(/^image\//i.test(t)) return true; if(t) return false;
+  if(/\.(png|jpe?g|heic|heif|webp|gif)$/.test(n)) return true; return !!pick && !/\.(json|txt|csv|pdf|html?|zip)$/.test(n); }
+var AI_NOT_PIC='That file is not a picture I can read (PNG or JPG screenshot).';   // v5.29
 function aiLogAdd(job, usd, err){ const L=aiGet('log',[]); const o={at:new Date().toISOString(), job, usd:+(+usd||0).toFixed(5)}; if(err) o.err=String(err).slice(0,20); L.push(o); while(L.length>200) L.shift(); aiPut('log', L); }
 /* The one way the app talks to the AI helper: POST API_BASE/ai with the passphrase header like the other Worker calls (apiHeaders; the fetch wrapper turns it into the cookie when that mode is on). */
 async function aiCall(job, input){
@@ -16323,7 +16377,7 @@ async function aiCall(job, input){
   if(j && j.usd!=null) aiLogAdd(job, j.usd, j.ok?'':j.error);
   if(res.status===401) return {ok:false, code:'locked', err:aiErrText('locked')};
   if(!j || typeof j!=='object') return {ok:false, code:'http', err:aiErrText('http', {status:res.status})};
-  if(!j.ok){ if(j.error==='not_set_up'){ const s=aiSt(); s.setUp=false; aiPutLocal('status', s); } try{ aiPanelPaint(); }catch(e){} return {ok:false, code:j.error||'api', err:aiErrText(j.error||'api', Object.assign({status:res.status}, j))}; }
+  if(!j.ok){ if(j.error==='not_set_up'){ const s=aiSt(); s.setUp=false; aiPutLocal('status', s); } try{ aiPanelPaint(); }catch(e){} return {ok:false, code:j.error||'api', err:aiErrText(j.error||'api', Object.assign({status:res.status}, j))+aiErrDetail(j)}; }   // v5.29: + Anthropic's own reason (the Worker's detail), as text, 200 characters at most
   try{ aiPanelPaint(); }catch(e){}
   return {ok:true, out:(j.out&&typeof j.out==='object')?j.out:{}, usd:+j.usd||0}; }
 async function aiStatusCheck(){
@@ -16355,15 +16409,15 @@ function aiImageFrom(file){ return new Promise((res, rej)=>{ const u=URL.createO
   im.onload=()=>{ try{ const W=im.naturalWidth||1, H=im.naturalHeight||1, k=Math.min(1, 1600/Math.max(W,H)), w=Math.max(1,Math.round(W*k)), h=Math.max(1,Math.round(H*k)), c=document.createElement('canvas'); c.width=w; c.height=h;
     const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,w,h); x.drawImage(im,0,0,w,h); const d=c.toDataURL('image/jpeg',0.85); URL.revokeObjectURL(u); res({image:d.slice(d.indexOf(',')+1), mediaType:'image/jpeg', w, h}); }catch(e){ rej(e); } };
   im.onerror=()=>{ URL.revokeObjectURL(u); rej(new Error('not a picture')); }; im.src=u; }); }
-function aiImgOf(dt){ if(!dt) return null; let f=[...(dt.files||[])].find(x=>/^image\//.test(x.type||'')); if(!f && dt.items) for(const it of dt.items){ if(it.kind==='file' && /^image\//.test(it.type||'')){ f=it.getAsFile(); break; } } return f||null; }
+function aiImgOf(dt){ if(!dt) return null; let f=[...(dt.files||[])].find(x=>aiIsPic(x)); if(!f && dt.items) for(const it of dt.items){ if(it.kind!=='file') continue; if(/^image\//.test(it.type||'')){ f=it.getAsFile(); break; } if(!it.type){ const g=it.getAsFile(); if(aiIsPic(g)){ f=g; break; } } } return f||null; }   // v5.29: + an empty type with a picture name (iPhone)
 async function aiClipImage(){ try{ if(!navigator.clipboard || !navigator.clipboard.read) return null; const items=await navigator.clipboard.read(); for(const it of items){ const t=(it.types||[]).find(x=>/^image\//.test(x)); if(t){ const b=await it.getType(t); return new File([b], 'clip', {type:t}); } } }catch(e){} return null; }
 function aiDropWire(pre, onFile){ const g=id=>document.getElementById(id), pick=g(pre+'Pick'), file=g(pre+'File'), drop=g(pre+'Drop'), clip=g(pre+'Clip'); if(!pick || !file || !drop) return;
   pick.addEventListener('click',()=>file.click());
-  file.addEventListener('change',()=>{ const f=file.files&&file.files[0]; if(f) onFile(f); file.value=''; });
+  file.addEventListener('change',()=>{ const f=file.files&&file.files[0]; file.value=''; if(!f) return; if(aiIsPic(f, true)) onFile(f); else { const o=g(pre+'Out'); if(o) o.innerHTML='<span class="ai-err">'+esc(AI_NOT_PIC)+'</span>'; } });   // v5.29: never silent
   if(clip) clip.addEventListener('click', async ()=>{ const f=await aiClipImage(); if(f) onFile(f); else { const o=g(pre+'Out'); if(o) o.innerHTML='<span class="meta">No picture found on the clipboard. Copy a screenshot, then press Ctrl+V here (on a phone: long-press here, then Paste), or pick the file.</span>'; } });
   ['dragenter','dragover'].forEach(k=>drop.addEventListener(k,e=>{ e.preventDefault(); drop.classList.add('ai-over'); }));
   drop.addEventListener('dragleave',()=>drop.classList.remove('ai-over'));
-  drop.addEventListener('drop',e=>{ e.preventDefault(); drop.classList.remove('ai-over'); const f=aiImgOf(e.dataTransfer); if(f) onFile(f); }); }
+  drop.addEventListener('drop',e=>{ e.preventDefault(); drop.classList.remove('ai-over'); const f=aiImgOf(e.dataTransfer); if(f) onFile(f); else if(e.dataTransfer && (e.dataTransfer.files||[]).length){ const o=g(pre+'Out'); if(o) o.innerHTML='<span class="ai-err">'+esc(AI_NOT_PIC)+'</span>'; } }); }   // v5.29: never silent
 function aiNum(v){ const n=typeof v==='number'?v:parseFloat(String(v==null?'':v).replace(/[^0-9.+-]/g,'')); return isFinite(n)?n:null; }
 function aiOddsTxt(v){ const n=aiNum(v); return n==null?String(v||''):(n>0?'+'+n:String(n)); }
 function aiOU(s){ const t=String(s||'').trim(); return /^o(ver)?\b/i.test(t)?'O':/^u(nder)?\b/i.test(t)?'U':''; }
@@ -16424,7 +16478,8 @@ async function aiSlipFill(o){ let evF=null; const g=id=>document.getElementById(
     const D=aiBetDay(o); read.day=D.day||null; if(D.day){ try{ await aiGamesAround(ss.value, D.day); }catch(e){} }
     g('abType').value=ty;
     const gs=g('abGame'), gf=g('abGameFree'); const fromPl=D.src==='placed' && D.placed && D.placed.time; evF=aiGameFind(o, abEvents, D.day, fromPl?D.placed.t:0);   // v5.28 (round 2, F2)
-    if(evF){ gs.value=String(evF.id); if(gf) gf.value=''; read.game=String(evF.id); } else { aiGameNone(gs); const mt=aiMatchupTxt(o); if(gf) gf.value=mt; read.game=mt||null; }
+    let tie=null; if(!evF && !D.day && aiSettledTxt(o.status)){ const RF=await aiRecentFinal(o, ss.value); if(RF){ if(RF.sport!==ss.value){ ss.value=RF.sport; try{ await abLoadGames(); }catch(e){} } aiGamesAdd(RF.ties); if(RF.ev) evF=RF.ev; else tie=RF.ties; } }   // v5.29: a settled ticket with no placed time and no game date: the team’s most recent final game in the last 10 days (marked ⚠); two as likely: none, listed first
+    if(evF){ gs.value=String(evF.id); if(gf) gf.value=''; read.game=String(evF.id); } else { aiGameNone(gs); if(tie) [...tie].reverse().forEach(ev=>{ const op=[...gs.options].find(x=>x.value===String(ev.id)), ph=[...gs.options].find(x=>x.value===''); if(op && ph) ph.after(op); }); gs.value=''; const mt=aiMatchupTxt(o); if(gf) gf.value=mt; read.game=mt||null; }   // v5.29: + the equally likely games first
     try{ abFields(); }catch(e){}
     if(!evF && D.day && g('abDate')) g('abDate').value=D.day;
     mark(gs,'game',!evF || D.src!=='game'); mark(g('abDate'),'gamedate',!D.day);   // v5.28 (round 2, F2): a game found from the placed day (no game date printed) is marked ⚠
@@ -16517,6 +16572,21 @@ function aiReadTeams(o){ const L0=((o&&o.legs)||[])[0]||{};
 function aiGameFind(o, evs, day, placedT){ if(!day) return null; const ok=new Set(placedT?[day, dayPlus(day,1)]:[dayPlus(day,-1), day, dayPlus(day,1)]), R=aiReadTeams(o||{}); if(!R.length) return null;   // v5.28 (round 2, F2): a day from the placed time: that day and the next, and only games starting at or after the placed time minus 4 hours (never one over before the bet)
   const sc=(evs||[]).filter(ev=>ev && ev.date && ok.has(ctDay(Date.parse(ev.date))) && !(placedT && Date.parse(ev.date)<placedT-4*3600e3)).map(ev=>({ev, s:compsOf(ev).reduce((a,c)=>a+Math.max(0,...R.map(x=>aiTeamHit(x,c))),0)})).filter(x=>x.s>=2).sort((a,b)=>b.s-a.s);
   return !sc.length || (sc[1] && sc[1].s===sc[0].s) ? null : sc[0].ev; }
+/* v5.29 (owner 11/23: "when I Saved Bet, it went NOWHERE"): a settled ticket (won, lost, push, void) with no placed time and no game date was played already. Its game is the most recent
+   final game in the last 10 days with the team(s) read (the best match first, then the latest); two equally likely on that day: none (both returned as ties). The sport read first,
+   else the one picked, else each sport of + Add a bet in turn. Never a game not yet over. Hoisted. */
+function aiSettledTxt(st){ return /^(won|win|lost|loss|push|void|cashed ?out|sold)$/i.test(String(st||'').trim()); }
+async function aiRecentFinal(o, sp0){ const R=aiReadTeams(o||{}); if(!R.length) return null; const today=ctDay(Date.now()), days=[0,1,2,3,4,5,6,7,8,9,10].map(n=>dayPlus(today,-n));
+  const S=String((o&&o.sport)||'').toUpperCase(), known=!!(S && ESPN_MAP[S]), opts=[...((($ab('abSport')||{}).options)||[])].map(x=>x.value), list=[...new Set([known?S:'', sp0||''].concat(known?[]:opts).filter(Boolean))];
+  for(const sp of list){ let evs=[]; try{ evs=[].concat(...await Promise.all(days.map(d=>fetchScoreboardDay(sp,d)))); }catch(e){}
+    const seen=new Set(), sc=evs.filter(ev=>{ if(!ev || !ev.date || seen.has(String(ev.id))) return false; seen.add(String(ev.id)); const st=(ev.status&&ev.status.type)||{}; return (st.state==='post' || st.completed===true) && Date.parse(ev.date)<=Date.now(); })
+      .map(ev=>({ev, t:Date.parse(ev.date), s:compsOf(ev).reduce((a,c)=>a+Math.max(0,...R.map(x=>aiTeamHit(x,c))),0)})).filter(x=>x.s>=2);
+    if(!sc.length) continue;
+    const best=Math.max(...sc.map(x=>x.s)), top=sc.filter(x=>x.s===best).sort((a,b)=>b.t-a.t), d0=ctDay(top[0].t), ties=top.filter(x=>ctDay(x.t)===d0).map(x=>x.ev);
+    return {sport:sp, ev:ties.length===1?ties[0]:null, ties}; }
+  return null; }
+function aiGamesAdd(add){ const seen=new Set(abEvents.map(e=>String(e.id))); add=(add||[]).filter(e=>e && !seen.has(String(e.id)) && gameStatusOf(e)); if(!add.length) return;   // v5.29: games found outside the list's 3 days back
+  abEvents=abEvents.concat(add).sort((a,b)=>Date.parse(a.date)-Date.parse(b.date)); const sel=$ab('abGame'), keep=sel.value; sel.innerHTML=abEvents.map(abGameOptHtml).join(''); sel.value=keep; }
 function aiMatchupTxt(o){ const g=String((o&&o.game)||'').trim(), p=g.split(/\s+(?:@|vs\.?|v\.?|at)\s+/i).map(x=>x.trim()).filter(Boolean);
   if(p.length!==2) return g.slice(0,40); const ab=x=>{ const w=x.split(/\s+/)[0]; return /^[A-Z]{2,4}$/.test(w)?w:x; }; return (ab(p[0])+' @ '+ab(p[1])).slice(0,40); }
 /* + Add a bet's game list (abLoadGames): the days around a slip's game day when they are outside the 3 days back to 3 ahead it loads. */
@@ -16628,10 +16698,19 @@ async function lcShotRun(files){ const msg=document.getElementById('lcImpMsg'); 
       const r=await aiCall('slips', {image:img.image, mediaType:img.mediaType}); img=null;
       if(!r.ok){ errs.push(r.err); if(['off','cap','locked','not_set_up','unknown_job','network','bad_key'].includes(r.code)) break; continue; }
       st.pics++; read++; st.partial+=Math.max(0, Math.min(50, Math.round(+r.out.partial||0)));
-      (Array.isArray(r.out.bets)?r.out.bets:[]).slice(0,60).forEach((b,k)=>{ const t=lcShotTicket(b, st.pics, k); if(!t) return; if(lcRows.some(u=>u.shot && u.shot.pic!==t.shot.pic && lcShotSame(u,t))){ dup++; return; }   /* v5.28 (round 2, F1): two cards of one picture are two bets */ lcRows.push(t); }); }
+      const BB=Array.isArray(r.out.bets)?r.out.bets.slice(0,60):[], RF={};   /* v5.29: a settled bet with no game day: the day of its team’s most recent final game (last 10 days, marked ⚠) */
+      for(let k=0;k<BB.length;k++){ const b=BB[k]; if(b && typeof b==='object' && !aiBetDay(b).day && aiSettledTxt(b.status)){ try{ RF[k]=await aiRecentFinal(b, String(b.sport||'').toUpperCase()); }catch(e){} } }
+      BB.forEach((b,k)=>{ const t=lcShotTicket(b, st.pics, k); if(!t) return; const F=RF[k]; if(F && F.ev && !t.day){ const tt=abTeams(F.ev); t.day=ctDay(Date.parse(F.ev.date)); if(!t.game && tt) t.game=tt.away+' @ '+tt.home; if(!t.sport) t.sport=F.sport; t.shot.unclear=t.shot.unclear.concat(['gamedate (from the team’s last final game on ESPN: check it)']); } if(lcRows.some(u=>u.shot && u.shot.pic!==t.shot.pic && lcShotSame(u,t))){ dup++; return; }   /* v5.28 (round 2, F1): two cards of one picture are two bets */ lcRows.push(t); }); }
     lcImpPaint(); msg.textContent=lcShotMsg(st, read, dup, errs);
+    return {read, errs};   // v5.29: what this run read, for El Compa (cpShot)
   } finally { window._lcShotBusy=false; } }
-function lcShotPick(inp){ const imgs=[...((inp&&inp.files)||[])].filter(f=>/^image\//.test(f.type||'')); if(!imgs.length) return false; lcShotRun(imgs); try{ inp.value=''; }catch(e){} return true; }
+function lcShotPick(inp){ const all=[...((inp&&inp.files)||[])], imgs=all.filter(f=>aiIsPic(f, true)); if(!all.length) return false;   // v5.29: + iPhone pictures with an empty type; anything else that is not a .json says why
+  if(!imgs.length){ if(all.some(f=>/json/i.test(f.type||'') || /\.json$/i.test(f.name||''))) return false; const m=document.getElementById('lcImpMsg'); if(m) m.textContent=AI_NOT_PIC; try{ inp.value=''; }catch(e){} return true; }
+  lcShotRun(imgs); try{ inp.value=''; }catch(e){} return true; }
+/* v5.29: one short line per screenshot row, for El Compa (read_last_slip) */
+function lcShotDesc(t){ const S=t.shot||{}, nm=t.kind==='parlay'?(t.picks||(t.legs||[]).length)+'-pick parlay: '+(t.legsText||''):t.bk==='moneyline'?t.player+' Moneyline':t.bk==='spread'?t.player+' '+(S.noLine?'?':(t.point>0?'+':'')+t.point)+' Spread':t.bk==='total'?t.player+' '+(t.side==='O'?'Over':'Under')+' '+(S.noLine?'?':t.point)+' Total':t.player+' '+(t.side==='O'?'Over':'Under')+' '+(S.noLine?'?':t.point)+' '+t.market;
+  const res=t.result||S.res, rw={win:'won', loss:'lost', push:'push', sold:'sold', '':'open'}[res]||'result not read';
+  return String([nm, t.book||'book not read', t.day||'day not read', t.stake>0?'cost $'+(+t.stake).toFixed(2):'cost not read', t.ret>0?'returns $'+(+t.ret).toFixed(2):'', rw, lcShotHave(t)?'already in the Bet log':''].filter(Boolean).join(' · ')).slice(0,240); }
 function lcShotGo(file){ const t=document.querySelector('.tab[data-view="v-log"]'); if(t) t.click(); const d=document.querySelector('.lc-impbox'); if(d){ d.open=true; setTimeout(()=>{ try{ d.scrollIntoView({block:'start'}); }catch(e){} },60); } if(file) lcShotRun([file]); }
 document.addEventListener('input', e=>{ const b=e.target&&e.target.closest&&e.target.closest('#lcImpList .lc-shot'); if(b && !e.target.classList.contains('lc-on')) lcShotCheck(b, true); });
 document.addEventListener('change', e=>{ const b=e.target&&e.target.closest&&e.target.closest('#lcImpList .lc-shot'); if(b && !e.target.classList.contains('lc-on')) lcShotCheck(b, true); });
@@ -16645,7 +16724,7 @@ document.addEventListener('paste', e=>{ if(e.target && e.target.closest && e.tar
   ['dragenter','dragover'].forEach(k=>dz.addEventListener(k,e=>{ e.preventDefault(); dz.classList.add('ai-over'); }));
   dz.addEventListener('dragleave',()=>dz.classList.remove('ai-over'));
   dz.addEventListener('drop',e=>{ e.preventDefault(); dz.classList.remove('ai-over'); const fs=[...((e.dataTransfer&&e.dataTransfer.files)||[])]; if(!fs.length) return;
-    const im=fs.filter(f=>/^image\//.test(f.type||'')); if(im.length){ lcShotRun(im); return; }
+    const im=fs.filter(f=>aiIsPic(f)); if(im.length){ lcShotRun(im); return; }   // v5.29: + an empty type with a picture name
     const inp=document.getElementById('lcFile'); try{ inp.files=e.dataTransfer.files; inp.dispatchEvent(new Event('change',{bubbles:true})); }catch(err){} }); })();
 /* ---- 3. prices: "📷 Add prices from a screenshot" on the Board. Each row read is matched to the same prop or line already on the board (its fair price); it becomes a board row on
    the book in the screenshot with src 'ai-shot', priced by La Contadora like any row, its price time = when it was read. A row with no fair price on the board cannot be priced: not added. ---- */
@@ -17008,8 +17087,10 @@ async function compaAct(c, P){ const a=c.input||{}, G=scGet();
     const o=res.out, N=aiGet('news',{}), k=aiNewsKey(r); N[k]={status:String(o.status||'unknown'), summary:String(o.summary||'').slice(0,400), sources:(o.sources||[]).slice(0,5).map(s=>({title:String(s.title||'').slice(0,120), url:String(s.url||'').slice(0,300), seen:s.seen})), checkedAt:o.checkedAt||new Date().toISOString(), day:k.split('|')[2]};
     aiPut('news', N); setTimeout(()=>{ try{ refresh(); }catch(e){} }, 0);
     return {done:true, status:aiNewsWord(N[k].status), summary:N[k].summary, sources:N[k].sources.map(s=>({title:s.title, url:s.url, fromItsSearch:s.seen!==false})), note:'A label only: news never changes La Contadora’s decision or the stake.'}; }
-  if(c.name==='read_last_slip'){ const P2=window._aiSlipProp, S=aiGet('slips',[]), s=P2?Object.assign({}, P2):S.length?Object.assign({}, S[S.length-1].fields||{}, {book:S[S.length-1].book}):null; if(!s) return {done:true, result:'No slip has been read yet.'};
-    delete s.ticketId; return {done:true, slip:s}; }
+  if(c.name==='read_last_slip'){ const P2=window._aiSlipProp, S=aiGet('slips',[]), s=P2?Object.assign({}, P2):S.length?Object.assign({}, S[S.length-1].fields||{}, {book:S[S.length-1].book}):null;
+    const I=(typeof lcRows!=='undefined'&&Array.isArray(lcRows)?lcRows:[]).filter(t=>t&&t.shot), imp=I.length?{where:'Bet log › Import (📷 screenshots, not saved until the owner presses Save)', count:I.length, bets:I.slice(0,30).map(lcShotDesc)}:null;   // v5.29: the 📷 reader too
+    if(!s && !imp) return {done:true, result:'No slip has been read yet, and no screenshot is waiting in Bet log › Import.'};
+    const o={done:true}; if(s){ delete s.ticketId; o.slip=s; } else o.slip='Read slip has not read one yet.'; if(imp){ o.screenshotImport=imp; o.result='Bet log › Import has '+I.length+' bet'+(I.length===1?'':'s')+' read from screenshots (not saved until you press Save).'; } return o; }
   if(c.name==='edit_bet') return cpEditDo(c, P);   /* v5.28 */
   return {done:false, error:'Unknown action.'}; }
 /* the confirm card: resolves true on Do it, false on No (or when the chat is closed or cleared) */
@@ -17165,13 +17246,16 @@ function cpEditDo(c, P){ if(P.bad) return {done:false, error:P.bad, refused:P.re
   if(bad) return {done:false, error:'Changed on this page, but the Bet log could not be saved on this device (storage full), so it is not synced. Back up the bet log and free some space.'};
   return {done:true, result:'Changed: '+P.rows.map(r=>r[0]+' '+r[1]+' → '+r[2]).join('; ')+(P.refused.length?'. Not changed: '+P.refused.join('; '):''), changed:P.rows.map(r=>({field:r[0], before:r[1], after:r[2]}))}; }
 /* a picture in the chat: the slips job, then the Bet log import preview */
-async function cpShot(files){ const im=[...(files||[])].filter(f=>/^image\//.test(f.type||'')); if(!im.length) return;
-  if(easyLevel()!=='god') return; if(!aiOn()){ compaPush('note', 'Turn on the AI helper in Settings to read screenshots.'); return; }
+async function cpShot(files){ const all=[...(files||[])], im=all.filter(f=>aiIsPic(f, true)); if(!all.length) return;   // v5.29: + iPhone pictures with an empty type (or HEIC); never silent
+  if(!im.length){ compaPush('note', AI_NOT_PIC); return; }
+  compaPush('note', 'Reading '+im.length+' picture'+(im.length===1?'':'s')+' for your Bet log…'+(im.length<all.length?' ('+(all.length-im.length)+(all.length-im.length===1?' other file is not a picture and was left out.)':' other files are not pictures and were left out.)'):''));   // v5.29: said before anything that can fail
+  if(easyLevel()!=='god'){ compaPush('note', 'Reading screenshots is in God view only (Settings › View as).'); return; } if(!aiOn()){ compaPush('note', 'Turn on the AI helper in Settings to read screenshots.'); return; }
   if(wkPaused()){ compaPush('note', 'Your Worker is paused, so nothing was sent. Add the screenshot again later.'); return; }
-  compaPush('note', 'Reading '+im.length+' picture'+(im.length===1?'':'s')+' for your Bet log…');
-  lcShotGo(null); await lcShotRun(im);
+  lcShotGo(null); const run=await lcShotRun(im)||{};
+  if(run.read==null){ const w=String((document.getElementById('lcImpMsg')||{}).textContent||''); compaPush('note', w?w.slice(0,600):'Nothing was read. Try again.'); return; }   // v5.29: it stopped before reading (busy, AI off, Worker paused): say what the import line says
+  if(run.read===0 && (run.errs||[]).length){ compaPush('note', 'No bets were read. '+run.errs.join(' ').slice(0,600)); return; }   // v5.29: this picture failed: say why (rows from an earlier picture do not count)
   const n=lcRows.filter(t=>t.shot).length, m=String((document.getElementById('lcImpMsg')||{}).textContent||'');
-  compaPush('note', n?n+' bet'+(n===1?'':'s')+' read: check them in the Bet log › Import and press Save the ticked tickets. Nothing is saved until you do.':'No bets were read. '+m.slice(0,240)); }
+  compaPush('note', n?n+' bet'+(n===1?'':'s')+' read: check them in the Bet log › Import and press Save the ticked tickets. Nothing is saved until you do.':'No bets were read. '+m.slice(0,600)); }   // v5.29: room for Anthropic's reason
 (function(){ const p=document.getElementById('compaPanel'), f=document.getElementById('compaForm'); if(!p || !f) return;
   const bt=document.createElement('button'); bt.type='button'; bt.id='compaShot'; bt.className='ghost sm'; bt.setAttribute('aria-label','Read bet screenshots into your Bet log'); bt.title='Screenshots of bets: read into Bet log › Import'; bt.textContent='📷';
   const fi=document.createElement('input'); fi.type='file'; fi.id='compaShotFile'; fi.accept='image/*'; fi.multiple=true; fi.hidden=true;
