@@ -123,6 +123,26 @@ let SERVE={fills:[], settlements:[]};
   SERVE={fills:[buy('ob','KX-OOO',0.60,10,6.00,0.17,'Otto Old',{ts:NOW-2.5*H}), buy('oa','KX-OOO',0.40,15,6.00,0.25,'Otto Old')], settlements:[]}; await sync();
   const Oo=await get('Otto Old');
   check('B2: an older bet of two orders (no per-order record) keeps both: 25 contracts, $12.42', Oo && Oo.fillQty===25 && Math.abs(Oo.stake-12.42)<0.005, Oo);
+  // ---- round 3 (R2-1): bets of two orders saved before round 2 (no per-order record), then more orders come or grow. A 10 @ 40¢ ($4.17), B 10 @ 60¢ ($6.17)
+  const oldTwo=async(name,ref)=>{ SERVE={fills:[buy(ref+'a',ref,0.40,10,4.00,0.17,name)], settlements:[]}; await sync();
+    SERVE={fills:[buy(ref+'b',ref,0.60,10,6.00,0.17,name,{ts:NOW-2.5*H}), buy(ref+'a',ref,0.40,10,4.00,0.17,name)], settlements:[]}; await sync();
+    await p.evaluate(n=>{ const x=logged.find(y=>y.name===n); delete x.fillBy; saveLog(); }, name); };
+  // X1: a new order C 10 @ 50¢ ($5.18) arrives, then A grows to 15 ($6.25): 35 contracts, $6.25 + $6.17 + $5.18 = $17.60 (it read 45, $21.78)
+  await oldTwo('Xena One','KX-X1');
+  SERVE={fills:[buy('X1c','KX-X1',0.50,10,5.00,0.18,'Xena One',{ts:NOW-2*H}), buy('KX-X1b','KX-X1',0.60,10,6.00,0.17,'Xena One',{ts:NOW-2.5*H}), buy('KX-X1a','KX-X1',0.40,10,4.00,0.17,'Xena One')], settlements:[]}; await sync();
+  SERVE.fills[2]=buy('KX-X1a','KX-X1',0.40,15,6.00,0.25,'Xena One'); await sync(); await sync();
+  const X1=await get('Xena One');
+  check('R2-1 X1: an old two-order bet, a new order, then an old order grows: 35 contracts for $17.60, +$17.40 if it wins (it read 45, $21.78)', X1 && X1.fillQty===35 && Math.abs(X1.stake-17.60)<0.006 && Math.abs(X1.toWin-17.40)<0.006, X1);
+  // X2: A grows to 15 ($6.25), then B grows to 14 @ 60¢ ($8.40 + $0.24 = $8.64): 29 contracts, $14.89 (it read 39, $21.07)
+  await oldTwo('Xavi Two','KX-X2');
+  SERVE={fills:[buy('KX-X2b','KX-X2',0.60,10,6.00,0.17,'Xavi Two',{ts:NOW-2.5*H}), buy('KX-X2a','KX-X2',0.40,15,6.00,0.25,'Xavi Two')], settlements:[]}; await sync();
+  SERVE.fills[0]=buy('KX-X2b','KX-X2',0.60,14,8.40,0.24,'Xavi Two',{ts:NOW-2.5*H}); await sync(); await sync();
+  const X2=await get('Xavi Two');
+  check('R2-1 X2: an old two-order bet, A grows, then B grows: 29 contracts for $14.89 (it read 39, $21.07)', X2 && X2.fillQty===29 && Math.abs(X2.stake-14.89)<0.006, X2);
+  // X3: re-reads only change nothing: 20 contracts, $10.34
+  await oldTwo('Xia Three','KX-X3'); await sync(); await sync();
+  const X3=await get('Xia Three');
+  check('R2-1 X3: an old two-order bet read again with nothing new: 20 contracts, $10.34', X3 && X3.fillQty===20 && Math.abs(X3.stake-10.34)<0.005, X3);
   check('no page errors', !errs.length, errs);
   await b.close(); console.log('\n'+pass+' passed, '+fail+' failed'); process.exit(fail?1:0);
 })().catch(e=>{ console.error(e); process.exit(1); });

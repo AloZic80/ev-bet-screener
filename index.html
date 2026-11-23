@@ -14597,13 +14597,22 @@ function fillAvgOf(b){ if(!b || (b.fills||[]).length<2 || b.fillFee==null) retur
    that order only. A bet saved before v5.26 gets them from what is known for sure: no order yet (empty), one order (its totals), or a new order on a bet
    of several (the old totals as one record, 'pre'). A re-read of one of several old orders: that order's share is estimated from the contracts last seen
    for it (fillSeen) at the price it fills at now, and only when that leaves a sane rest; else null, and the totals are kept as they are. Hoisted. */
-function fillBySeed(b, f, ids, had, stake){ if(b.fillBy && typeof b.fillBy==='object') return Object.assign({}, b.fillBy); const F=b.fills||[], fe=b.fillFee!=null?+b.fillFee:null;
+function fillBySeed(b, f, ids, had, stake){ const F=b.fills||[], fe=b.fillFee!=null?+b.fillFee:null;
+  /* v5.26 round 3 (R2-1): the share of one old order inside a record that covers several (pre): the contracts last seen for it (fillSeen) at the cost it
+     fills at now; null when that is not safe (nothing seen, the order shrank, or the rest would not be a real amount) */
+  const share=P=>{ let pq=0; try{ const sn=fillSeen[f.book+':'+f.id]; pq=sn?+sn.q||0:0; }catch(e){ pq=0; } const nq=+f.qty||0; if(!(pq>0) || !(nq>=pq-1e-9)) return null;
+    const oc=stake*pq/nq, of=f.fee!=null?(+f.fee)*pq/nq:null, rest={q:(+P.q||0)-pq, cost:(+P.cost||0)-oc, fee:P.fee!=null&&of!=null?(+P.fee)-of:null, ids:(P.ids||[]).filter(id=>!ids.includes(id))};
+    if(rest.q<-1e-9 || rest.cost<-0.004) return null; if(rest.q<=1e-9){ return rest.ids.length ? null : 'empty'; } if(!(rest.cost>0.004)) return null;
+    rest.q=+rest.q.toFixed(4); rest.cost=+rest.cost.toFixed(2); if(rest.fee!=null) rest.fee=Math.max(0,+rest.fee.toFixed(4)); return rest; };
+  if(b.fillBy && typeof b.fillBy==='object'){ const FB=Object.assign({}, b.fillBy), P=FB.pre;
+    if(P && Array.isArray(P.ids) && P.ids.some(id=>ids.includes(id))){ const r=share(P); if(r==null) return null; if(r==='empty') delete FB.pre; else FB.pre=r; }   /* v5.26 round 3 (R2-1): an old order of 'pre' read again comes out of 'pre' first (it was counted twice) */
+    else if(P && !Array.isArray(P.ids) && !ids.some(id=>FB[id])) return null;   /* a 'pre' that does not say which orders it holds (round 2): the totals are kept */
+    return FB; }
   if(!F.length) return {};
   if(F.length===1) return {[F[0]]:{q:+b.fillQty||0, cost:+b.fillCost||0, fee:fe}};
-  if(!had.length) return {pre:{q:+b.fillQty||0, cost:+b.fillCost||0, fee:fe}};
-  let pq=0; try{ const sn=fillSeen[f.book+':'+f.id]; pq=sn?+sn.q||0:0; }catch(e){ pq=0; } const nq=+f.qty||0; if(!(pq>0) || !(nq>=pq-1e-9)) return null;
-  const oc=stake*pq/nq, of=f.fee!=null?(+f.fee)*pq/nq:null, rest={q:(+b.fillQty||0)-pq, cost:(+b.fillCost||0)-oc, fee:fe!=null&&of!=null?fe-of:null};
-  if(!(rest.q>1e-9) || !(rest.cost>0.004)) return null; rest.cost=+rest.cost.toFixed(2); if(rest.fee!=null) rest.fee=Math.max(0,+rest.fee.toFixed(4)); return {pre:rest}; }
+  const P0={q:+b.fillQty||0, cost:+b.fillCost||0, fee:fe, ids:F.slice()};   /* v5.26 round 3 (R2-1): the old orders it holds */
+  if(!had.length) return {pre:P0};
+  const r=share(P0); if(r==null) return null; return r==='empty' ? {} : {pre:r}; }
 function linkFill(b,f){   // you saved it already — link, and flag differences
   noteFillRef(b,f); notePlaced(b,f);   // v3.96
   const stake=+((+f.cost||0)+(+f.fee||0)).toFixed(2);
