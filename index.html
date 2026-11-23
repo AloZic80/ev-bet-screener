@@ -2231,6 +2231,7 @@ html[data-viewas="easy"] #jvPop{display:none !important}
 #jvPop .jv-ok{margin-top:4px; font-size:14px; font-weight:700; color:var(--gain)} #jvPop .jv-nm{margin-top:4px; font-size:15px; font-weight:800; color:var(--warn)}
 #jvPop .jv-g{display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:8px; margin:10px 0} #jvPop .jv-k{border:1px solid var(--rule); border-radius:8px; padding:6px 10px; min-width:0} #jvPop .jv-k span{display:block; font-size:12.5px; color:var(--soft)} #jvPop .jv-k b{font-size:18px; overflow-wrap:anywhere}
 #jvPop .jv-ai, #jvPop .jv-mv{margin:6px 0; font-size:14px; overflow-wrap:anywhere} #jvPop .jv-ai:empty{display:none}
+#jvPop .jv-more{margin:6px 0} #jvPop .jv-more>summary{cursor:pointer; min-height:44px; display:flex; align-items:center; font-size:14px; font-weight:700; color:var(--soft)}   /* v5.27 (round 2, J9) */
 #jvPop .jv-pc{display:block; margin:8px 0 0; padding:0; border:0; background:none; box-shadow:none; min-height:0; width:auto; max-width:none}
 #jvPop .jv-b{display:flex; flex-wrap:wrap; gap:8px; align-items:center} #jvPop .jv-b button, #jvPop .jv-b a{min-height:44px; padding:0 16px; font-size:15px; box-sizing:border-box}
 #jvPop .jv-b .linkbtn{padding:0 8px; color:var(--soft); text-decoration:underline}
@@ -2683,6 +2684,7 @@ html[data-viewas="easy"] #jvPop{display:none !important}
   <p class="hint" style="margin:4px 0 0">A window whose end is before its start runs past midnight. Talk now opens Jarvis until midnight; Quiet for 1 hour closes it for an hour.</p>
   <h3 class="set-h">What the $100 is doing</h3>
   <div class="meta" id="jvSpend"></div>
+  <div class="meta" id="jvScouts"></div>
   <p class="hint" style="margin:8px 0 0">Inside a window Jarvis checks every 10 to 15 minutes with the Scout (at most once an hour, inside your scout cap) or the Sentinels, and pops up each new bet La Contadora approves: her stake, her most, the book and what to type. The AI only adds a news line; it never changes a pick, a stake or the order. Jarvis never places a bet: I bet this opens the card’s own bet form. Runs while this page is open.</p>
 </details>
 <details class="panel fold" id="layoutPanel" data-lv="god">   <!-- v3.54 -->  <!-- v4.95: closed until tapped (Alonzo: "if its a drop down, dont open it by default, unless told to") -->
@@ -4554,6 +4556,7 @@ function passWhereHtml(W){ if(!W || !W.n) return '';
     (W.jail?'<div class="meta">🔒 '+W.jail+' in Skipping Jail: passed at the Pull price, fail at the live price (counted in the skipped).</div>':'')+
     (x?'<div class="meta">The tab buttons also count '+x+' offered to you: not approved by La Contadora.</div>':'')+'</div></details>'; }
 function render(rows,cfg){
+  setTimeout(()=>{ try{ jvRecheck(); }catch(e){} },0);   // v5.27 (round 2, J1-J3): after every board render (sync and fill imports redraw the board too), the Jarvis pop-up checks its pick again
   if(boardEditorOpen() && !_boardForce){ _boardPending=[rows,cfg]; return; }   // v4.12: wait while you are placing a bet
   _boardPending=null;
   const A=boardAnchor(); try{ return renderCore(rows,cfg); } finally { boardAnchorBack(A); if(A) window._bAnchor={A, t:Date.now()}; }   // v4.23: the board stays where you are
@@ -13978,7 +13981,8 @@ function scAlertCheck(baseline){ if(window._scBusy || window._perfHold) return; 
   const P=planCfg(), S=scSeenGet(), fresh=[];
   (lastRows||[]).forEach(r=>{ if(!scApproved(r)) return; if(A.plan && planOut(r.actProb, P)) return; const k=scAlertKey(r); if(S.k[k]) return; S.k[k]=Date.now(); if(!baseline) fresh.push(r); });
   scSeenSet(S); if(fresh.length) scAlert(fresh, A); }
-function scAlert(fresh, A){ const T=fresh.map(scAlertText); let shown=false;
+function scAlert(fresh, A){ fresh=fresh.filter(r=>!jvTakes(r)); if(!fresh.length) return;   // v5.27 (round 2, J5): inside a Jarvis window, Jarvis pops these: no second sound, notification or banner
+  const T=fresh.map(scAlertText); let shown=false;
   try{ if('Notification' in window && Notification.permission==='granted'){ fresh.forEach((r,i)=>{ const n=new Notification('✅ New approved bet', {body:T[i].replace(/^✅ New: /,''), tag:'sc|'+scAlertKey(r)}); n.onclick=()=>{ try{ window.focus(); n.close(); }catch(e){} }; }); shown=true; } }
   catch(e){ window._scNoCtor=true; shown=false; }
   try{ perfBeep(); }catch(e){}
@@ -13995,7 +13999,7 @@ function scBannerPaint(el){ const I=el._scI||[]; if(!I.length){ el.classList.rem
 async function scNewsAll(fresh, items){ for(let i=0;i<fresh.length && i<5;i++){ const r=fresh[i]; if(!(r.kind==='prop' || GL_KINDS.test(r.kind||''))) continue;
   const gl=r.kind!=='prop', gi=r.gameInfo||{}, inp={game:String(r.game||r.matchup||'').slice(0,80), sport:r.sport||'', market:gl?r.kind:statOfMarket(r.market), startISO:gi.startISO||null};
   if(gl) inp.team=r.team||r.name; else { inp.player=r.name; if(r.team) inp.team=r.team; }
-  let res=null; try{ res=await aiCall('news', inp); }catch(e){ res=null; }
+  let res=null; const c0=jvNewsOf(r); if(c0) res={ok:true, out:c0}; else { try{ res=await aiNewsOnce(aiNewsKey(r), inp); }catch(e){ res=null; } }   // v5.27 (round 2, J5): today's check is reused, one in flight is shared with Jarvis
   let word='news check failed';
   if(res && res.ok){ const o=res.out, N=aiGet('news',{}), k=aiNewsKey(r);
     N[k]={status:String(o.status||'unknown'), summary:String(o.summary||'').slice(0,400), sources:(o.sources||[]).slice(0,5).map(s=>({title:String(s.title||'').slice(0,120), url:String(s.url||'').slice(0,300), seen:s.seen})), checkedAt:o.checkedAt||new Date().toISOString(), day:k.split('|')[2]};
@@ -14096,10 +14100,10 @@ function jvGet(){ let o=null; try{ o=JSON.parse(localStorage.getItem('mbev.jarvi
   for(let d=0; d<7; d++){ const x=S && S[d]; days[d]=(x && typeof x==='object') ? {off:!!x.off, w:(Array.isArray(x.w)?x.w:[]).map(w=>Array.isArray(w)?[jvT(w[0]),jvT(w[1])]:[null,null]).filter(w=>w[0] && w[1]).slice(0,8)} : D[d]; }
   return {on:o.on!==false, sound:o.sound!==false, plan:o.plan!==false, near:o.near!==false, days}; }
 function jvSet(J){ lsSafeSet('mbev.jarvis', JSON.stringify(J)); try{ syncTouched(); }catch(e){} jvPaint(); }
-function jvRun(){ let o=null; try{ o=JSON.parse(localStorage.getItem('mbev.jarvisRun')||'null'); }catch(e){} o=(o && typeof o==='object')?o:(window._jvRunMem||{}); const d=ctDay(Date.now());
-  if(o.day!==d){ o.day=d; o.seen={}; o.snooze={}; o.skip={}; o.done={}; o.near=0; o.nearNo={}; o.asked={}; o.nearAsk=0; }
+function jvRun(){ let o=null, raw=null; try{ raw=localStorage.getItem('mbev.jarvisRun'); o=JSON.parse(raw||'null'); }catch(e){} if(raw!=null) window._jvRunLast=raw; o=(o && typeof o==='object')?o:(window._jvRunMem||{}); const d=ctDay(Date.now());
+  if(o.day!==d){ o.day=d; o.seen={}; o.snooze={}; o.skip={}; o.done={}; o.near=0; o.nearNo={}; o.asked={}; o.nearAsk=0; o.scCalls=0; }   // v5.27 (round 2, J4): + scCalls, Jarvis’s BettingPros calls today
   ['seen','snooze','skip','done','nearNo','asked'].forEach(k=>{ if(!o[k] || typeof o[k]!=='object') o[k]={}; }); o.near=+o.near||0; o.nearAsk=+o.nearAsk||0; if(!Array.isArray(o.away)) o.away=[]; return o; }
-function jvRunSet(R){ window._jvRunMem=R; lsSafeSet('mbev.jarvisRun', JSON.stringify(R)); }   /* kept in memory too (storage full) */
+function jvRunSet(R){ window._jvRunMem=R; const s=JSON.stringify(R); if(s===window._jvRunLast) return; if(lsSafeSet('mbev.jarvisRun', s)) window._jvRunLast=s; }   /* kept in memory too (storage full) */   // v5.27 (round 2, J6): written only when something changed
 function jvActive(){ try{ return !!DEV_APP && easyLevel()==='god' && jvGet().on; }catch(e){ return false; } }
 /* the windows: Central time, by weekday; a day marked off has none; Quiet for 1 hour wins over everything, Talk now opens until midnight */
 function jvWinOn(w, min, prev){ const s=scMin(w[0]), e=scMin(w[1]); if(e>s) return !prev && min>=s && min<e; if(e<s) return prev ? min<e : min>=s; return false; }
@@ -14111,6 +14115,15 @@ function jvNextTxt(J){ const c=scNowCT(), N=['Sun','Mon','Tue','Wed','Thu','Fri'
   for(let d=0; d<8; d++){ const wd=(c.wd+d)%7, D=J.days[wd]; if(!D || D.off) continue; const W=D.w.filter(w=>d>0 || scMin(w[0])>c.min).sort((a,b)=>scMin(a[0])-scMin(b[0]));
     if(W.length) return 'next window '+(d===0?'today':d===1?'tomorrow':N[wd])+' at '+scTimeTxt(W[0][0]); }
   return 'no windows set'; }
+const JV_SCOUT_DAY=3;   // v5.27 (round 2, J4): Jarvis’s own BettingPros calls a day, inside the scout cap (owner keeps Jarvis on)
+function jvMidnight(t){ let x=t-(t%60000)+(1440-scNowCT(t).min)*60e3; for(let i=0;i<3;i++){ const m=scNowCT(x).min; if(m===0) break; x+=(m>=720?1440-m:-m)*60e3; } return x; }   /* v5.27 (round 2, J7): the next Central midnight, also on the days the clocks change */
+/* v5.27 (round 2, J8): with two tabs open only one pops: the last tab you used holds a short lease (mbev.jarvisLease, renewed on each tick; free after 90 s without one) */
+function jvTabId(){ return window._jvTab||(window._jvTab=Math.random().toString(36).slice(2,10)); }
+function jvLease(){ try{ const o=JSON.parse(localStorage.getItem('mbev.jarvisLease')||'null'); return (o && typeof o==='object')?o:null; }catch(e){ return null; } }
+function jvLeader(take){ const me=jvTabId(), L=jvLease(), now=Date.now(), mine=!!L && L.id===me, free=!L || !(now-(+L.at||0)<90e3);
+  if(take || mine || free){ if(!mine || now-(+L.at||0)>20e3 || (take && now-(+L.at||0)>5e3)){ try{ localStorage.setItem('mbev.jarvisLease', JSON.stringify({id:me, at:now})); }catch(e){ return true; } } return true; }
+  return false; }
+function jvTakes(r){ try{ return jvActive() && jvOpen() && jvPlanOk(r, jvGet()); }catch(e){ return false; } }   /* v5.27 (round 2, J5): inside a Jarvis window, Jarvis (not the 🔔 alert) tells you about this pick */
 function jvJit(a, b){ return Math.round((a+Math.random()*(b-a))*60e3+Math.random()*50e3); }   /* minutes, plus up to 50 seconds: never on the minute */
 /* the words and numbers, all from the board row */
 function jvPickTxt(r){ const sd=r.side==='O'?'Over ':r.side==='U'?'Under ':'', gl=GL_KINDS.test(r.kind||'');
@@ -14130,11 +14143,12 @@ function jvFree(k, R, now){ if(R.done[k] || R.skip[k]) return false; const z=R.s
 function jvNewsOf(r){ try{ const x=aiGet('news',{})[aiNewsKey(r)]; if(x && x.checkedAt && ctDay(Date.parse(x.checkedAt))===ctDay(Date.now())) return x; }catch(e){} return null; }
 function jvNewsWarn(x){ return !!x && /^(out|questionable|limited)$/.test(String(x.status||'')); }
 function jvNewsLine(x){ if(!x) return ''; return (jvNewsWarn(x)?'⚠ ':'📰 ')+aiNewsWord(x.status)+(x.summary?': '+String(x.summary).slice(0,160):'')+' · AI news check, a label only'; }
+function aiNewsOnce(k, inp){ const F=window._aiNewsFly||(window._aiNewsFly={}); if(F[k]) return F[k]; const pr=aiCall('news', inp); F[k]=pr; pr.then(()=>{ delete F[k]; }, ()=>{ delete F[k]; }); return pr; }   /* v5.27 (round 2, J5): a news call already on its way for this pick (aiNewsKey) is shared, never sent twice. Hoisted */
 async function jvNews(r){ if(!aiOn() || wkPaused() || !r || !(r.kind==='prop' || GL_KINDS.test(r.kind||''))) return null; const k=aiNewsKey(r), R=jvRun();
   if(R.asked[k]) return jvNewsOf(r); R.asked[k]=Date.now(); jvRunSet(R);
   const gl=r.kind!=='prop', gi=r.gameInfo||{}, inp={game:String(r.game||r.matchup||'').slice(0,80), sport:r.sport||'', market:gl?r.kind:statOfMarket(r.market), startISO:gi.startISO||null};
   if(gl) inp.team=r.team||r.name; else { inp.player=r.name; if(r.team) inp.team=r.team; }
-  let res=null; try{ res=await aiCall('news', inp); }catch(e){ res=null; } if(!res || !res.ok) return null;
+  let res=null; const c0=jvNewsOf(r); if(c0) return c0; try{ res=await aiNewsOnce(k, inp); }catch(e){ res=null; } if(!res || !res.ok) return null;   // v5.27 (round 2, J5): one call a pick a day, shared with the 🔔 news check
   const o=res.out||{}, N=aiGet('news',{});
   N[k]={status:String(o.status||'unknown'), summary:String(o.summary||'').slice(0,400), sources:(o.sources||[]).slice(0,5).map(s=>({title:String(s.title||'').slice(0,120), url:String(s.url||'').slice(0,300), seen:s.seen})), checkedAt:o.checkedAt||new Date().toISOString(), day:k.split('|')[2]};
   aiPut('news', N); return N[k]; }
@@ -14157,19 +14171,34 @@ function jvNearScan(J){ if(window._jvNearBusy || !aiOn() || wkPaused()) return; 
 /* the pop-up: one at a time */
 function jvEl(){ let el=document.getElementById('jvPop'); if(!el){ el=document.createElement('div'); el.id='jvPop'; el.setAttribute('role','alertdialog'); el.setAttribute('aria-label','Jarvis'); el.hidden=true; document.body.appendChild(el); } return el; }
 function jvPump(){ if(!jvActive()){ jvClose(true); return; } if(window._jvCur || !jvOpen()) return;
+  if(!jvLeader()) return;   // v5.27 (round 2, J8): one tab pops at a time
   if(window._jvDigest && window._jvDigest.length){ jvShowDigest(); return; }
   const Q=window._jvQ||(window._jvQ=[]), R=jvRun(), now=Date.now();
   while(Q.length){ const it=Q.shift(), r=jvRowFor(it.k, it.near); if(!r || !jvFree(it.k, R, now) || (it.near && R.near>=2)) continue;
     delete R.snooze[it.k]; R.seen[it.k]=now; if(it.near) R.near++; jvRunSet(R);
-    window._jvCur={k:it.k, near:!!it.near, idx:r.idx}; jvShow(r, !!it.near); jvAlarm(r, !!it.near);
+    window._jvCur={k:it.k, near:!!it.near}; jvShow(r, !!it.near); jvAlarm(r, !!it.near);   // v5.27 (round 2, J2): no idx; the pick is its key, book and price
     if(aiOn() && !wkPaused() && !it.near && !jvNewsOf(r) && !R.asked[aiNewsKey(r)]){ const cur=window._jvCur, put=x=>{ if(window._jvCur!==cur) return; const a=document.querySelector('#jvPop .jv-ai'); if(a) a.textContent=x?jvNewsLine(x):''; };
       jvNews(r).then(put, ()=>put(null)); }   /* only the AI line changes: an open bet form is never redrawn */
     return; } }
 function jvKv(k, v){ return '<div class="jv-k"><span>'+k+'</span><b>'+v+'</b></div>'; }
-function jvShow(r, near){ const el=jvEl(), mx=jvMax(r), st=+r.stake||0, bk=bookLabel(r.book)||String(r.book||'the book'), at=rowSeenAt(r), more=(window._jvQ||[]).length;
+/* v5.27 (round 2, J1-J3): the pick on screen is found again by its key (jvRowFor: still approved, not already bet, no order waiting) after every board render, sync and fill
+   import (render calls jvRecheck), on every tick, and before I bet this and Save: gone or already bet closes it ("already in your Bet log"); new numbers (book, price, stake,
+   OK up to, ticket) redraw it, and an open bet form is closed (it would hold the old stake). Hoisted. */
+function jvSig(r, near){ return [r.book, r.offeredRaw, near?'':(+r.stake||0).toFixed(2), jvOkTxt(r, jvMax(r)), near?'':scTicket(r)].join('§'); }
+function jvCurRow(c){ if(!c || c.digest) return null; const r=jvRowFor(c.k, c.near); return (r && !r.prior && !r.waitOrder)?r:null; }
+function jvNote(t){ try{ kalshiToast(t); }catch(e){} }
+function jvRecheck(){ const c=window._jvCur; if(!c || c.digest) return; if(!jvActive()){ jvClose(true); return; }
+  const r=jvCurRow(c), ed=document.querySelector('#jvPop .editor');
+  if(!r){ const bet=(lastRows||[]).some(x=>x && pxKey(x)===c.k && (x.prior || x.waitOrder)); if(bet){ const R=jvRun(); R.done[c.k]=1; jvRunSet(R); jvNote('🤖 Jarvis: '+(c.t||'that pick')+' is already in your Bet log.'); }
+    jvNext(); return; }
+  if(jvSig(r, c.near)===c.sig) return;
+  jvShow(r, c.near); const m=document.querySelector('#jvPop .jv-msg'); if(m) m.textContent=ed?'The numbers changed, so the bet form was closed: check them and press I bet this again.':'The numbers changed: these are the new ones.'; }
+function jvMoreN(){ const R=jvRun(), now=Date.now(), c=window._jvCur; let nn=R.near; return (window._jvQ||[]).filter(it=>{ if(c && it.k===c.k) return false; if(!jvRowFor(it.k, it.near) || !jvFree(it.k, R, now)) return false; if(it.near){ if(nn>=2) return false; nn++; } return true; }).length; }   /* J9: only what will show */
+function jvShow(r, near){ const el=jvEl(), mx=jvMax(r), st=+r.stake||0, bk=bookLabel(r.book)||String(r.book||'the book'), at=rowSeenAt(r), more=jvMoreN();
+  { const c=window._jvCur; if(c){ c.book=r.book; c.raw=r.offeredRaw; c.stake=st; c.sig=jvSig(r, near); c.t=jvPickTxt(r); } }
   const slip=!!(LIVE_BOOK(r.book) || /draftkings|prizepicks/i.test(r.book||'')), hl=slip?slipLinkFor(r, st):null;   /* the card’s own book link rule (slipLinkFor on a phone, else the book-open handler) */
   const open=!slip ? '<span class="jv-self">Open '+esc(bk)+' yourself</span>'
-    : hl ? '<a class="pp-open sc-link jv-open" data-idx="'+r.idx+'" href="'+esc(hl)+'"'+(LIVE_BOOK(r.book)==='kalshi'?kalshiAnchorAttrs(kalshiCopyInfo(r, kalshiQOf(r), r.offeredProb, null, r)):'')+(/^https:/.test(hl)?' target="_blank" rel="noopener"':'')+'>Open the book ↗</a>'
+    : hl ? '<a class="pp-open sc-link jv-open" data-idx="'+r.idx /* the book-open handler reads it; redrawn with the row after every render */+'" href="'+esc(hl)+'"'+(LIVE_BOOK(r.book)==='kalshi'?kalshiAnchorAttrs(kalshiCopyInfo(r, kalshiQOf(r), r.offeredProb, null, r)):'')+(/^https:/.test(hl)?' target="_blank" rel="noopener"':'')+'>Open the book ↗</a>'
     : '<button type="button" class="pp-open jv-open" data-idx="'+r.idx+'">Open the book ↗</button>';
   const mv=pxMove(r), mvTxt=(mv && Math.abs(mv.dp)>=0.01)?'Price '+(mv.dp<0?'fell':'rose')+' '+(Math.abs(mv.dp)*100).toFixed(1)+' pts in '+mv.mins+' min (the app’s own reading)':'';
   const nx=aiOn()?jvNewsOf(r):null, ai=!aiOn()?'':nx?esc(jvNewsLine(nx)):(near || wkPaused() || jvRun().asked[aiNewsKey(r)])?'':'📰 Checking the news…';
@@ -14178,8 +14207,8 @@ function jvShow(r, near){ const el=jvEl(), mx=jvMax(r), st=+r.stake||0, bk=bookL
     '<div class="jv-pick">'+esc(jvPickTxt(r))+'</div><div class="jv-game">'+esc(jvGameTxt(r))+'</div>'+
     (near?'<div class="jv-nm">Just missed · not approved · the app gives it no stake</div>':'<div class="jv-ok">La Contadora approves it</div>')+
     '<div class="jv-g">'+jvKv('Book', esc(bk))+(near?'':jvKv('Stake', '$'+st.toFixed(2)))+(mx!=null?jvKv(near?'Approved only at':'Price must be', esc(jvOkTxt(r, mx))+' or better'):'')+jvKv('Price read', at?esc(ageLong(Date.now()-at))+' ago':'time unknown')+'</div>'+
-    (near?'':scTicket(r))+
-    (aiOn()?'<div class="jv-ai">'+ai+'</div>':'')+(mvTxt?'<div class="jv-mv">'+esc(mvTxt)+'</div>':'')+
+    (()=>{ const tk=near?'':scTicket(r), inner=tk+(aiOn()?'<div class="jv-ai">'+ai+'</div>':'')+(mvTxt?'<div class="jv-mv">'+esc(mvTxt)+'</div>':''); if(!inner) return '';
+      return '<details class="jv-more"'+(innerWidth>=700?' open':'')+'><summary>'+(tk?'What to type':'More')+(aiOn()?' · news':'')+(mvTxt?' · price move':'')+'</summary>'+inner+'</details>'; })()+   /* v5.27 (round 2, J9): folded on a phone, open on a computer */
     '<div class="pcard jv-pc"><div class="jv-b">'+open+'<button type="button" class="act jv-bet">I bet this</button><button type="button" class="ghost jv-later">Not now</button><button type="button" class="ghost jv-skip">Skip today</button><button type="button" class="linkbtn jv-why">Why?</button></div></div>'+
     '<div class="meta jv-msg" role="status"></div>';
   el.hidden=false; }
@@ -14201,20 +14230,25 @@ function jvAlarm(r, near){ if(jvGet().sound){ try{ jvAudioWake(true); perfBeep()
 function jvAudioWake(force){ try{ if(!force && !(jvActive() && jvGet().sound)) return; const AC=window.AudioContext||window.webkitAudioContext; if(AC && !window._perfAC) window._perfAC=new AC(); if(window._perfAC && window._perfAC.state==='suspended') window._perfAC.resume(); }catch(e){} }
 function jvWhy(k){ try{ const bt=document.querySelector('.tab[data-view="v-board"]'); if(bt && bt.getAttribute('aria-selected')!=='true') bt.click(); }catch(e){}
   setTimeout(()=>{ const d=[...document.querySelectorAll('#placeCards details.sc-why')].find(x=>x.dataset.pck===k), m=document.querySelector('#jvPop .jv-msg');
-    if(d){ d.open=true; try{ (d.closest('.pcard')||d).scrollIntoView({block:'center'}); }catch(e){} if(m) m.textContent='Its card is open on the board, under this pop-up: Why this play? is open.'; }
+    if(d){ d.open=true; try{ const cd=d.closest('.pcard')||d, pp=document.getElementById('jvPop'); cd.scrollIntoView({block:'start'}); const pb=pp&&!pp.hidden?pp.getBoundingClientRect().bottom:0; window.scrollBy(0, cd.getBoundingClientRect().top-pb-8); }catch(e){} if(m) m.textContent='Its card is open on the board, below this pop-up: Why this play? is open.'; }   /* v5.27 (round 2, J9): the card’s top sits below the pop-up */
     else if(m) m.textContent='Its card is not in view on the board (a filter, a tab or the cards are off). Clear the filters to see it.'; }, 150); }
 /* the loop: every 30 seconds; inside a window, the Scout or the Sentinels every 10 to 15 minutes */
 async function jvScout(){ if(window._scBusy || wkPaused()) return 'skip';
   const S=scRunGet(), now=Date.now(), G=scGet(), c=scNowCT(now);
   if((S.autoRan && now-S.autoRan<8*60e3) || G.rows.some(row=>S.fired[row.id]===c.day && c.min>=scMin(row.t) && c.min<scMin(row.t)+15)){ jvCollect(); return 'recent'; }   /* their own schedule has just run */
-  const R=jvRun(), big=!R.scoutAt || now-R.scoutAt>=60*60e3; if(big){ R.scoutAt=now; jvRunSet(R); }
-  let out=''; try{ out=await scRunRow(big?G.scout:scRowNorm({id:'jarvis', src:'sent'}), 'scout'); }catch(e){ out=''; }
+  /* v5.27 (round 2, J4): Jarvis’s own BettingPros scouts use at most JV_SCOUT_DAY calls a day of the scout cap, and none while a ⏰ set time is still to come today (the Sentinels only) */
+  const R=jvRun(), left=JV_SCOUT_DAY-(+R.scCalls||0), later=G.rows.some(row=>scDayOk(row.days, c.wd) && S.fired[row.id]!==c.day && c.min<scMin(row.t)+10);
+  const big=!later && left>=scCost(G.scout) && (!R.scoutAt || now-R.scoutAt>=60*60e3); if(big){ R.scoutAt=now; jvRunSet(R); }
+  const u0=scRunGet().used; let out='';
+  try{ out=await scRunRow(big?Object.assign({}, G.scout, {cap:Math.min(G.scout.cap, left)}):scRowNorm({id:'jarvis', src:'sent'}), 'scout'); }catch(e){ out=''; }
+  if(big){ const R2=jvRun(); R2.scCalls=(+R2.scCalls||0)+Math.max(0, scRunGet().used-u0); jvRunSet(R2); }
   try{ jvCollect(); }catch(e){} return out; }
 function jvTick(){ if(!jvActive()){ if(window._jvCur || (window._jvQ||[]).length) jvClose(true); window._jvWasOpen=false; return; }
   const now=Date.now(), open=jvOpen(now), R=jvRun();
   if(open && !window._jvWasOpen){ if(R.away.length){ window._jvDigest=jvDigestItems(R); R.away=[]; } R.nextAt=now+jvJit(0.5, 2); jvRunSet(R); }
   window._jvWasOpen=open;
-  const c=window._jvCur; if(c && !c.digest && !document.querySelector('#jvPop .editor') && !jvRowFor(c.k, c.near)){ if((lastRows||[]).some(x=>x && pxKey(x)===c.k && x.prior)){ const R2=jvRun(); R2.done[c.k]=1; jvRunSet(R2); } jvNext(); }
+  if(!jvLeader()){ const c=window._jvCur; if(c && !document.querySelector('#jvPop .editor')){ if(!c.digest){ const R4=jvRun(); delete R4.seen[c.k]; if(c.near) R4.near=Math.max(0,R4.near-1); jvRunSet(R4); } jvClose(true); } }   // v5.27 (round 2, J8): another tab is the one in use: it pops
+  jvRecheck();   // v5.27 (round 2, J1-J3)
   jvCollect();
   if(open){ const R3=jvRun(); if(!(R3.nextAt>0)){ R3.nextAt=now+jvJit(0.5, 2); jvRunSet(R3); } else if(now>=R3.nextAt){ R3.nextAt=now+jvJit(10, 15); jvRunSet(R3); jvScout(); } }
   try{ jvPaintNow(); }catch(e){} }
@@ -14227,7 +14261,8 @@ function jvPaintNow(){ const g=id=>document.getElementById(id); if(!g('jarvisPan
   const tk=g('jvTalk'); if(tk){ tk.textContent=R.talk>now?'Stop talking':'Talk now'; tk.setAttribute('aria-pressed', R.talk>now?'true':'false'); }
   const qt=g('jvQuiet'); if(qt){ qt.textContent=R.quiet>now?'End quiet':'Quiet for 1 hour'; qt.setAttribute('aria-pressed', R.quiet>now?'true':'false'); }
   const nn=g('jvNotifNote'); if(nn){ const P=('Notification' in window)?Notification.permission:'none'; nn.textContent=window._jvNoCtor?'This browser does not show notifications from a page: the pop-up and the sound still work.':P==='granted'?'Notifications are on: one for each pick while this page is in the background.':P==='denied'?'This browser blocks notifications for this site: the pop-up and the sound still work.':P==='none'?'No notifications in this browser (on an iPhone they need the app added to the Home Screen).':''; }
-  const sp=g('jvSpend'); if(sp) sp.textContent=jvSpendTxt(); }
+  const sp=g('jvSpend'); if(sp) sp.textContent=jvSpendTxt();
+  const sc=g('jvScouts'); if(sc) sc.textContent='Jarvis scouts today: '+(+R.scCalls||0)+' of '+JV_SCOUT_DAY+' BettingPros calls (from your scout cap). With a ⏰ set time still to come today, Jarvis only sends the Sentinels.'; }   // v5.27 (round 2, J4)
 function jvPaint(force){ const g=id=>document.getElementById(id); if(!g('jarvisPanel')) return; const J=jvGet(), N=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const set=(id,p,v)=>{ const el=g(id); if(el) el[p]=v; }; set('jvOn','checked',J.on); set('jvSound','checked',J.sound); set('jvPlan','checked',J.plan); set('jvNear','checked',J.near);
   const wk=g('jvWeek'); /* drawn on open and after add, remove or off; never while a time is typed */ if(wk && (force || !wk.children.length)) wk.innerHTML=[1,2,3,4,5,6,0].map(d=>{ const D=J.days[d];
@@ -14242,7 +14277,7 @@ document.addEventListener('change', e=>{ const t=e.target; if(!t || !t.closest |
 document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest) return; const b=t.closest('#jarvisPanel button'); if(!b) return; const now=Date.now();
   if(b.id==='jvQuiet' || b.id==='jvTalk'){ const R=jvRun();
     if(b.id==='jvQuiet'){ R.quiet=R.quiet>now?0:now+3600e3; if(R.quiet){ R.talk=0; const c=window._jvCur; if(c && !c.digest) delete R.seen[c.k]; } }   /* quiet: the pick on screen comes back after the hour */
-    else if(R.talk>now) R.talk=0; else { R.talk=now+(1440-scNowCT(now).min)*60e3-new Date(now).getSeconds()*1000; R.quiet=0; }
+    else if(R.talk>now) R.talk=0; else { R.talk=jvMidnight(now); R.quiet=0; }   // v5.27 (round 2, J7)
     jvRunSet(R); if(R.quiet>now) jvClose(true); jvTick(); jvPaintNow(); return; }
   if(b.id==='jvNotif'){ jvAudioWake(true); try{ if('Notification' in window && Notification.permission==='default') Notification.requestPermission().then(jvPaintNow, jvPaintNow); }catch(err){ window._jvNoCtor=true; } jvPaintNow(); return; }
   const li=b.closest('.jv-day'); if(!li) return; const J=jvGet(), D=J.days[+li.dataset.d]; if(!D) return;
@@ -14257,10 +14292,15 @@ document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest ||
   if(t.closest('.jv-later')){ const R=jvRun(); R.snooze[cur.k]=Date.now()+30*60e3; jvRunSet(R); jvNext(); return; }
   if(t.closest('.jv-skip')){ const R=jvRun(); R.skip[cur.k]=1; jvRunSet(R); jvNext(); return; }
   if(t.closest('.jv-why')){ jvWhy(cur.k); return; }
-  if(t.closest('.jv-bet')){ const r=jvRowFor(cur.k, cur.near)||(lastRows||[]).find(x=>x && x.idx===cur.idx), host=document.querySelector('#jvPop .jv-pc'); if(r && host) openBetEditor(host, r); return; } });
+  if(t.closest('.jv-bet')){ const r=jvCurRow(cur); if(!r || jvSig(r, cur.near)!==cur.sig){ jvRecheck(); if(window._jvCur===cur && r){ const m=document.querySelector('#jvPop .jv-msg'); if(m) m.textContent='The numbers changed: check them and press I bet this again.'; } return; }   // v5.27 (round 2, J1-J3): never an idx, never an already-bet or changed pick
+    const host=document.querySelector('#jvPop .jv-pc'); if(host) openBetEditor(host, r); return; } });
 document.addEventListener('click', e=>{ const b=e.target && e.target.closest && e.target.closest('#jvPop .eb-save'); if(!b || !window._jvCur) return; const cur=window._jvCur, ids0=new Set((logged||[]).map(x=>x && x.id));
+  { const r=jvCurRow(cur); if(!r || jvSig(r, cur.near)!==cur.sig){ e.preventDefault(); e.stopImmediatePropagation(); if(!r) jvRecheck(); else { jvShow(r, cur.near); const m=document.querySelector('#jvPop .jv-msg'); if(m) m.textContent='Not saved: the numbers changed. Check them and press I bet this again.'; } return; } }   // v5.27 (round 2, J1): a pick already bet, or changed, is never saved from here
   setTimeout(()=>{ if(!(logged||[]).some(x=>x && !ids0.has(x.id))) return; const R=jvRun(); R.done[cur.k]=1; jvRunSet(R); if(window._jvCur===cur) jvNext(); }, 0); }, true);   /* the bet the form saved: done, never again */
 document.addEventListener('pointerdown', ()=>jvAudioWake(), {passive:true});   /* a sound needs one tap on the page first (browser rule) */
+['pointerdown','keydown','focus'].forEach(k=>window.addEventListener(k, ()=>{ try{ if(jvActive()){ jvLeader(true); }   /* the tab you use takes the lease; it pops at its next check, and the other tab closes its pop-up now (the storage event) */ }catch(e){} }, {passive:true, capture:true}));   // v5.27 (round 2, J8): the tab you use takes the pop-ups
+window.addEventListener('storage', e=>{ if(e.key==='mbev.jarvisLease'){ try{ jvTick(); }catch(_){} } });
+window.addEventListener('pagehide', ()=>{ try{ const L=jvLease(); if(L && L.id===jvTabId()) localStorage.removeItem('mbev.jarvisLease'); }catch(e){} });   // a tab that closes or reloads lets go of the lease
 document.addEventListener('toggle', e=>{ if(e.target && e.target.id==='jarvisPanel' && e.target.open) jvPaint(true); }, true);   /* opened: the week as saved (another device may have changed it) */
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ try{ jvTick(); }catch(e){} } });
 setInterval(()=>{ try{ jvTick(); }catch(e){ console.error(e); } }, 30e3);

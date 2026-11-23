@@ -25,15 +25,15 @@ const ROWS=[
   prop('n3','Auston Matthews','TOR','3.5 Shots','O',0.60,0.62,0.599,G3,'NHL')];
 const NOTIF=perm=>`window._notes=[]; window.Notification=class{ constructor(t,o){ window._notes.push({t, body:(o||{}).body, tag:(o||{}).tag}); } close(){} static get permission(){ return '${perm}'; } static requestPermission(){ window._askedPerm=1; return Promise.resolve('${perm}'); } };`;
 async function open(b, W, opt){ opt=opt||{};
-  const ctx=await b.newContext({timezoneId:'America/Chicago',viewport:{width:W,height:900}}); await ctx.clock.install({time:new Date(opt.at||NOW)});
+  const ctx=await b.newContext({timezoneId:'America/Chicago',viewport:{width:W,height:opt.h||900}}); await ctx.clock.install({time:new Date(opt.at||NOW)});
   await ctx.addInitScript(([R,d,o])=>{ try{ if(sessionStorage.getItem('s')) return; sessionStorage.setItem('s','1'); localStorage.clear(); localStorage.setItem('mbev.cfg',JSON.stringify({books:'Novig, Kalshi',bank:'500',cfgVer:3.03})); localStorage.setItem('mbev.cards','1');
     localStorage.setItem('mbev.board',JSON.stringify({v:1,savedAt:new Date().toISOString(),slate:d,rows:R})); if(o.jarvis) localStorage.setItem('mbev.jarvis',JSON.stringify(o.jarvis));
     if(o.ai){ localStorage.setItem('mbev.ai.on','1'); localStorage.setItem('mbev.ai.status',JSON.stringify({setUp:true, spentToday:0, spentMonth:0, capDay:5, capMonth:90, at:Date.now()})); localStorage.setItem('mbev.pass','pw'); }
     if(o.log) localStorage.setItem('mbev.ai.log',JSON.stringify(o.log)); }catch(e){} },[ROWS,DAY,{jarvis:opt.jarvis||null, ai:!!opt.ai, log:opt.aiLog||null}]);
-  await ctx.addInitScript(NOTIF(opt.notif||'default'));
+  await ctx.addInitScript(NOTIF(opt.notif||'default')); if(opt.init) await ctx.addInitScript(opt.init);
   const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
   const S={ai:[], news:opt.news||'ok', live:0, props:0};
-  await p.route('**/*',r=>{ const req=r.request(), u=req.url();
+  await (opt.ctxRoute?ctx:p).route('**/*',r=>{ const req=r.request(), u=req.url();
     if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:opt.html||html});
     if(/api\.0xbeta\.dev\/ai\/status/.test(u)) return r.fulfill({contentType:'application/json',body:JSON.stringify({setUp:!!opt.ai, spentToday:0.2, spentMonth:3.1, capDay:5, capMonth:90})});
     if(/api\.0xbeta\.dev\/ai$/.test(u)){ if(req.method()==='OPTIONS') return r.fulfill({status:204, headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'POST, GET, OPTIONS'}});
@@ -232,5 +232,96 @@ const click=async(p,sel)=>{ await ev(p,s=>{ const b=document.querySelector(s); i
     check(W+' px: no page errors', !X.errs.length, X.errs);
     await X.ctx.close();
   });
+
+  // ================= 7. round 2 (the review of 69e5685): each check fails on that commit =================
+  const fresh=p=>ev(p,()=>{ localStorage.removeItem('mbev.jarvisRun'); window._jvRunMem=null; window._jvRunLast=null; jvClose(true); window._jvWasOpen=false; jvTick(); });
+  const cardSave=(p,k)=>ev(p,k=>{ const r=lastRows.find(x=>pxKey(x)===k && scApproved(x)); const w=document.createElement('div'); w.id='fakeCards'; w.innerHTML=placeCardHtml(r,cfgRead(),{}); document.body.appendChild(w); const c=w.firstElementChild; openBetEditor(c, r); c.querySelector('.eb-save').click(); w.remove(); return logged.length; }, k);
+  await safe('round 2: J1 already bet', async()=>{
+    X=await open(b,1280,{}); await X.p.waitForTimeout(1500); await fresh(X.p);
+    const P=await pop(X.p); const n=await cardSave(X.p, P.key); await X.p.waitForTimeout(200);
+    const a=await ev(X.p,k=>({cur:(window._jvCur||{}).k, toast:(document.getElementById('kalToast')||{}).textContent||'', done:!!jvRun().done[k]}), P.key);
+    check('J1: a pick placed from its card leaves the pop-up at once (after the board render, no tick) and says it is already in the Bet log', n===1 && a.cur!==P.key && /already in your Bet log/.test(a.toast) && a.done, {n, a});
+    const Q=await pop(X.p); await click(X.p,'#jvPop .jv-bet');
+    await ev(X.p,k=>{ const r=lastRows.find(x=>pxKey(x)===k && scApproved(x)); r.prior={id:'elsewhere'}; }, Q.key);   // placed elsewhere, before any render
+    const n0=await ev(X.p,()=>logged.length); await click(X.p,'#jvPop .eb-save'); await X.p.waitForTimeout(150);
+    const b1=await ev(X.p,k=>({n:logged.length, cur:(window._jvCur||{}).k, form:!!document.querySelector('#jvPop .editor')}), Q.key);
+    check('J1: Save in the pop-up on a pick that became already bet is refused (nothing logged) and the pop-up moves on', b1.n===n0 && b1.cur!==Q.key, b1);
+    check('no page errors (J1)', !X.errs.length, X.errs); await X.ctx.close(); });
+  await safe('round 2: J2 idx shift', async()=>{
+    X=await open(b,1280,{}); await X.p.waitForTimeout(1500); await fresh(X.p);
+    await click(X.p,'#jvPop .jv-later'); const P=await pop(X.p);
+    await ev(X.p,k=>{ const r=lastRows.find(x=>pxKey(x)===k); r.offeredProb=0.70; r.offeredRaw='-233'; lastRows=lastRows.filter(x=>x.name!=='Justin Jefferson'); refresh(); }, P.key); await X.p.waitForTimeout(150);
+    const Q=await pop(X.p); await click(X.p,'#jvPop .jv-bet');
+    const ed=await ev(X.p,()=>{ const e=document.querySelector('#jvPop .editor'); return e?e.querySelector('b').textContent:null; });
+    check('J2: after a reload shifts the rows, a pick no longer approved leaves the pop-up, and I bet this opens the form of the pick shown (never another player by idx)', Q && Q.key!==P.key && ed && ed.indexOf(Q.pick.split(' Over')[0])===0, {was:P.pick, now:Q&&Q.pick, ed});
+    check('no page errors (J2)', !X.errs.length, X.errs); await X.ctx.close(); });
+  await safe('round 2: J3 stale numbers', async()=>{
+    X=await open(b,1280,{}); await X.p.waitForTimeout(1500); await fresh(X.p);
+    const P=await pop(X.p);
+    const st=await ev(X.p,k=>{ const r=lastRows.find(x=>pxKey(x)===k); r.offeredProb=0.56; r.offeredRaw='-127'; refresh(); }, P.key); await X.p.waitForTimeout(150);
+    const Q=await pop(X.p); const cur=await ev(X.p,k=>{ const r=lastRows.find(x=>pxKey(x)===k && scApproved(x)); return '$'+(+r.stake).toFixed(2); }, P.key);
+    check('J3: a new price redraws the pop-up after the render with the row’s current stake (no tick)', Q && Q.key===P.key && Q.kv.Stake===cur && Q.kv.Stake!==P.kv.Stake, {before:P.kv.Stake, now:Q&&Q.kv.Stake, row:cur});
+    await click(X.p,'#jvPop .jv-bet');
+    await ev(X.p,k=>{ const c=JSON.parse(localStorage.getItem('mbev.cfg')); c.bank='2000'; localStorage.setItem('mbev.cfg',JSON.stringify(c)); loadCfg(); refresh(); }, P.key); await X.p.waitForTimeout(150);
+    const z=await ev(X.p,k=>({form:!!document.querySelector('#jvPop .editor'), stake:(document.querySelector('#jvPop .jv-k:nth-child(2) b')||{}).textContent, row:'$'+(+lastRows.find(x=>pxKey(x)===k && scApproved(x)).stake).toFixed(2), msg:(document.querySelector('#jvPop .jv-msg')||{}).textContent}), P.key);
+    check('J3: with the form open, new numbers close the form and redraw; the next form opens at the row’s current stake', !z.form && z.stake===z.row && /numbers changed/.test(z.msg), z);
+    await click(X.p,'#jvPop .jv-bet'); const es=await ev(X.p,k=>({ed:(document.querySelector('#jvPop .eb-stake')||{}).value, row:(+lastRows.find(x=>pxKey(x)===k && scApproved(x)).stake).toFixed(2)}), P.key);
+    check('J3: …and it does', es.ed===es.row, es);
+    check('no page errors (J3)', !X.errs.length, X.errs); await X.ctx.close(); });
+  await safe('round 2: J4 scout share', async()=>{
+    X=await open(b,1280,{}); await X.p.waitForTimeout(1500);
+    const r=await ev(X.p,async()=>{ const runs=[]; scRunRow=async(row)=>{ runs.push(row.src+':'+row.cap); if(row.src==='bp_props'){ const R=scRunGet(); R.used+=Math.min(2,row.cap); scRunSet(R); } return 'ok'; };
+      localStorage.removeItem('mbev.schedRun'); for(let i=0;i<3;i++){ const R=jvRun(); R.scoutAt=0; jvRunSet(R); await jvScout(); }
+      document.querySelector('.tab[data-view="v-settings"]').click(); document.getElementById('jarvisPanel').open=true; jvPaint(true); const txt=document.getElementById('jvScouts').textContent;
+      const G=JSON.parse(localStorage.getItem('mbev.sched')||'{}'); G.rows=[{id:'z',sp:'NHL',src:'bp_props',pages:2,t:'17:00',days:'all',cap:2}]; localStorage.setItem('mbev.sched',JSON.stringify(G));
+      const R=jvRun(); R.scCalls=0; R.scoutAt=0; jvRunSet(R); runs.push('|'); await jvScout(); return {runs, txt}; });
+    check('J4: Jarvis’s own BettingPros scouts stay inside 3 calls a day (one scout of 2, then the Sentinels), and the panel says “Jarvis scouts today: 2 of 3”', r.runs.slice(0,3).join()==='bp_props:3,sent:0,sent:0' && /^Jarvis scouts today: 2 of 3/.test(r.txt), r);
+    check('J4: with a ⏰ set time still to come today, Jarvis sends only the Sentinels', r.runs[r.runs.length-1]==='sent:0', r.runs);
+    check('no page errors (J4)', !X.errs.length, X.errs); await X.ctx.close(); });
+  await safe('round 2: J5 one alert, one news call', async()=>{
+    X=await open(b,1280,{ai:true, notif:'granted'}); await X.p.waitForTimeout(2500);
+    const r=await ev(X.p,async()=>{ Object.defineProperty(document,'hidden',{configurable:true, get:()=>true}); const a=lastRows.find(x=>x.apiKey==='a'); window._notes=[]; window._beeps=0;
+      scAlert([a], {on:true, news:false}); const inside={notes:window._notes.length, beeps:window._beeps, banner:!!document.querySelector('#scAlert.on')};
+      const R=jvRun(); R.quiet=Date.now()+3600e3; jvRunSet(R); scAlert([a], {on:true, news:false}); const outside={notes:window._notes.length, beeps:window._beeps};
+      R.quiet=0; jvRunSet(R); Object.defineProperty(document,'hidden',{configurable:true, get:()=>false}); return {inside, outside}; });
+    check('J5: inside a Jarvis window the 🔔 alert stays quiet for the picks Jarvis pops (no sound, notification or banner); outside it alerts as before', r.inside.notes===0 && r.inside.beeps===0 && !r.inside.banner && r.outside.notes===1 && r.outside.beeps===1, r);
+    const n0=X.S.ai.length;
+    await ev(X.p,async()=>{ localStorage.removeItem('mbev.ai.news'); const R=jvRun(); R.asked={}; jvRunSet(R); const c=lastRows.find(x=>x.apiKey==='b'); await Promise.all([scNewsAll([c],[{k:'zz'}]), jvNews(c)]); });
+    const calls=X.S.ai.slice(n0).map(x=>x.input&&x.input.player);
+    check('J5: the 🔔 news check and Jarvis share one AI news call for the same pick', calls.length===1, calls);
+    check('no page errors (J5)', !X.errs.length, X.errs); await X.ctx.close(); });
+  await safe('round 2: J6 writes', async()=>{
+    X=await open(b,1280,{init:`(()=>{ const o=Storage.prototype.setItem; window._w=0; Storage.prototype.setItem=function(k,v){ if(k==='mbev.jarvisRun') window._w++; return o.call(this,k,v); }; })();`}); await X.p.waitForTimeout(1500);
+    const w=await ev(X.p,()=>{ jvTick(); jvTick(); const a=window._w; for(let i=0;i<6;i++) jvTick(); return {a, b:window._w}; });
+    check('J6: mbev.jarvisRun is written only when something changed (six quiet ticks: no write)', w.b===w.a, w);
+    await X.ctx.close(); });
+  await safe('round 2: J7 Talk now on a clock-change day', async()=>{
+    X=await open(b,1280,{at:Date.parse('2026-11-01T05:30:00Z') /* Sun Nov 1, 12:30 AM CDT; clocks fall back at 2 AM */}); await X.p.waitForTimeout(1500);
+    const t=await ev(X.p,()=>{ document.querySelector('.tab[data-view="v-settings"]').click(); document.getElementById('jarvisPanel').open=true; jvPaint(true); document.getElementById('jvTalk').click(); return new Date(jvRun().talk).toLocaleString('en-US',{timeZone:'America/Chicago'}); });
+    check('J7: Talk now ends at the next Central midnight, also on the day the clocks change', t==='11/2/2026, 12:00:00 AM', t);
+    await X.ctx.close(); });
+  await safe('round 2: J8 two tabs', async()=>{
+    X=await open(b,1280,{ctxRoute:true}); await X.p.waitForTimeout(3000);
+    const [B]=await Promise.all([X.ctx.waitForEvent('page'), X.p.evaluate(()=>{ window.open('http://app.test/'); })]); await B.waitForTimeout(3500);
+    await B.evaluate(()=>{ scRunRow=async()=>'ok'; perfBeep=()=>{}; jvTick(); }); await X.p.evaluate(()=>jvTick()); await B.waitForTimeout(200);
+    const a=await pop(X.p), bb=await pop(B);
+    check('J8: two tabs open: only one shows the pop-up', (!!a)!==(!!bb), {A:a&&a.pick, B:bb&&bb.pick});
+    await X.ctx.close(); });
+  await safe('round 2: J9 count and phone', async()=>{
+    X=await open(b,390,{ai:true, h:844}); await X.p.waitForTimeout(1500); await fresh(X.p);
+    const P=await pop(X.p);
+    const m=await ev(X.p,()=>{ const R=jvRun(); const q=window._jvQ[0]; R.skip[q.k]=1; jvRunSet(R); const c=window._jvCur; c.sig=''; jvRecheck(); return (document.querySelector('#jvPop .jv-n')||{}).textContent||''; });
+    const nb=parseInt(P.more,10), na=parseInt(m,10);
+    check('J9: “N more after this” counts only picks that will show (one queued pick skipped: one fewer)', nb>=2 && na===nb-1, {before:P.more, after:m});
+    const d=await ev(X.p,()=>{ const x=document.querySelector('#jvPop details.jv-more'); return x?{open:x.open, ai:!!x.querySelector('.jv-ai')}:null; });
+    check('J9: at 390 px the ticket and the AI line are folded under a toggle', d && !d.open && d.ai, d);
+    await X.ctx.close();
+    X=await open(b,1280,{h:800, ai:true}); await X.p.waitForTimeout(1500); await fresh(X.p);
+    for(let i=0;i<5;i++){ const has=await ev(X.p,()=>{ const k=(window._jvCur||{}).k; return !!k && [...document.querySelectorAll('#placeCards .pcard')].some(x=>x.dataset.pck===k); }); if(has) break; await click(X.p,'#jvPop .jv-later'); }
+    const d2=await ev(X.p,()=>{ const x=document.querySelector('#jvPop details.jv-more'); return x?x.open:null; });
+    await click(X.p,'#jvPop .jv-why'); await X.p.waitForTimeout(400);
+    const w=await ev(X.p,()=>{ const k=window._jvCur.k, c=[...document.querySelectorAll('#placeCards .pcard')].find(x=>x.dataset.pck===k), p=document.getElementById('jvPop').getBoundingClientRect(); if(!c) return null; const r=c.getBoundingClientRect(); return {top:r.top, popBottom:p.bottom, atEnd:Math.ceil(scrollY+innerHeight)>=document.documentElement.scrollHeight-2, why:c.querySelector('details.sc-why').open}; });
+    check('J9: open on a computer; Why? puts the card below the pop-up with Why this play? open', d2===true && w && w.why && (w.top>=w.popBottom-1 || w.atEnd), {d2, w});
+    check('no page errors (J9)', !X.errs.length, X.errs); await X.ctx.close(); });
   console.log(`\n${pass} passed, ${fail} failed`); await b.close(); process.exit(fail?1:0);
 })();

@@ -26,3 +26,11 @@ meetings, etc, and weekend its almost ALL DAY"; "sound on"; then "BUILD ALL".
 
 ## Tests
 `tests/v527-jarvis-test.js`.
+
+## Round 2 (2026-11-23, review of 69e5685)
+- J1–J3: the pick on screen is identified by its key, book and price, never a board idx. `jvRecheck` (called from `render` after every board render, so also after sync and fill imports, and on every tick) closes it when it is gone or already bet ("already in your Bet log", marked done), and redraws it when its book, price, stake, OK up to or ticket changed (an open bet form is closed). I bet this and Save check again first (`jvCurRow`, `jvSig`); Save on a changed or already-bet pick is refused.
+- J4: Jarvis's own BettingPros scouts use at most `JV_SCOUT_DAY` = 3 calls a day of the scout cap (`scCalls` in `mbev.jarvisRun`), and none while a ⏰ set time is still to come today. The panel says "Jarvis scouts today: n of 3".
+- J5: inside an open Jarvis window, `scAlert` skips the picks Jarvis pops (`jvTakes`); outside, the 🔔 alert works as before. One AI news call a pick: `aiNewsOnce` (shared in-flight call by `aiNewsKey`) plus today's cache, in both `jvNews` and `scNewsAll`.
+- J6: `mbev.jarvisRun` is written only when it changed. J7: Talk now ends at the next Central midnight (`jvMidnight`, also on clock-change days).
+- J8: one tab pops at a time: `mbev.jarvisLease` {id, at}, taken by the tab you use (pointer, key, focus), renewed each tick, free after 90 s or when the tab closes or reloads (pagehide). The tab that loses it closes its pop-up at once (storage event); the one that takes it pops at its next check, never in the middle of a tap.
+- J9: "N more after this" counts only picks that will show (`jvMoreN`); the ticket, AI and price-move lines sit in a `details` toggle, folded under 700 px; Why? scrolls the card below the pop-up.
