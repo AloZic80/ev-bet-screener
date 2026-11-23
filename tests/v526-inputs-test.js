@@ -67,6 +67,15 @@ async function open(b, o){ o=o||{};
     const sv=await S.p.evaluate(()=>{ addToLog(Object.assign(abRowFields(), {name:'Cons Saved', book:'DraftKings', offeredRaw:'-110', offeredProb:0.5238, stake:5, fee:0})); const L=logged[logged.length-1]; return L.snap.consensus; });
     check('PRICES-1: both consensus prices are saved with the bet (snap.consensus)', sv && sv.bet_side==='−110'.replace('−','-') && sv.other_side==='-110', sv);
     allErrs.push(...S.errs); await S.ctx.close(); }
+  // ---------- round 2 (B3): a Consensus box that cannot be read says so; an already-bet row offers no stake in Copy board, the companion card or Sort
+  { const RW=[row({name:'Abe Already',market:'1.5 Shots',team:'AWC',game:'AWC @ HMC',matchup:'AWC @ HMC',book:'Novig',offeredProb:0.5,fairProb:0.56,mktProb:0.56,gameInfo:GI(3,'AWC','HMC'),apiKey:'ab'})];
+    const S=await open(b,{rows:RW});
+    const X=await S.p.evaluate(()=>{ const set=(id,v)=>{ const e=document.getElementById(id); if(e) e.value=v; }; set('abCover','58'); set('abCons','52'); set('abConsO','-110'); const f=abRowFields();
+      const r=lastRows.find(x=>x.apiKey==='ab'), st0=+r.stake||0; addToLog(Object.assign({}, r)); saveLog(); refresh(); const r2=lastRows.find(x=>x.apiKey==='ab');
+      return {no:f._consNo, mkt:f.mktProb, st0, prior:!!r2.prior, internal:+r2.stake||0, txt:boardAsText([r2]).split('\n')[1], card:compaCard(r2).stake, sort:colVal(r2,'stake')}; });
+    check('B3: "52" in Consensus odds is not used and is named ("Consensus odds: could not read this price")', X.mkt===null && Array.isArray(X.no) && X.no.length===1 && X.no[0][0]==='Consensus odds' && X.no[0][1]==='52', X);
+    check('already bet: the row is ALREADY BET, and Copy board, the companion card and Sort show no stake for it', X.prior && !/\$\d/.test(X.txt.split('\t')[10]||'') && X.card===0 && X.sort===null, X);
+    allErrs.push(...S.errs); await S.ctx.close(); }
   // ---------- PRICES-2: a thin exchange book does not set the fair chance ----------
   // Novig ask 50 / bid 49 (middle 49.5); Kalshi ask 65 / bid 43.5 (21.5 points wide: thin). Fair from the tight book alone: 49.5% (it was 51.88%, the average)
   { const S=await open(b,{live:u=>{ const D=JSON.parse(decodeURIComponent(u.split('bets=')[1])); const R={}; D.forEach(d=>{ if(/novig:me/.test(d.id)) R[d.id]={ok:true, price:0.50, bid:0.49}; else if(/kalshi:me/.test(d.id)) R[d.id]={ok:true, price:0.65, bid:0.435}; }); return {results:R}; }});

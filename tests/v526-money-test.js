@@ -101,6 +101,28 @@ let SERVE={fills:[], settlements:[]};
   const Nn=await p.evaluate(()=>{ const x=logged.find(y=>y.name==='Nils Nord' && y.side==='O'); return x?{soldFills:x.soldFills, soldCash:x.soldCash, sold:!!x.sold, toWin:rpToWin(x), n:logged.filter(y=>y.name==='Nils Nord').length}:null; });
   check('PROFIT-2: a Novig hedge of 4 of 10 is a sale of 4 for $2.20; the bet stays open (not SOLD) and would make +$3.20 if it wins', Nn && Nn.soldFills===4 && Math.abs(Nn.soldCash-2.2)<0.005 && !Nn.sold && Math.abs(Nn.toWin-3.2)<0.005, Nn);
 
+  // ---- round 2 (B1): a part sale saved by v5.25 (soldFills 3, no soldBy) whose sell order grows to 5 after the upgrade: 5 sold, not 8
+  // 10 at 50¢ ($5.18). The order sells 5 at 70¢ in all ($3.50 − $0.08 = $3.42). A loss: 3.42 − 5.18 = −$1.76 (the double count read +$0.34)
+  SERVE={fills:[buy('u1','KX-UUU',0.50,10,5.00,0.18,'Uma Upgrade')], settlements:[]}; await sync();
+  await p.evaluate(()=>{ const x=logged.find(y=>y.name==='Uma Upgrade'); x.soldFills=3; x.soldCash=2.1; delete x.soldBy; fillSeen['kalshi:us1']={s:'sold',q:3}; saveLog(); });
+  SERVE.fills.unshift(sell('us1','KX-UUU',0.70,5,0.08,'Uma Upgrade')); SERVE.settlements=[{book:'kalshi', ref:'KX-UUU', side:'yes', result:'no', outcome:'loss', payout:0, ts:NOW-H}]; await sync();
+  const Uu=await get('Uma Upgrade');
+  check('B1: a v5.25 part sale whose own sell order grew is replaced, not added: 5 sold for $3.42, the loss −$1.76 (it read 8 sold, +$0.34)', Uu && Uu.soldFills===5 && Math.abs(Uu.soldCash-3.42)<0.005 && !Uu.sold && Math.abs(Uu.profit+1.76)<0.005, Uu);
+  // ---- round 2 (B2): order A 10 @ 40¢ ($4.00 + $0.17) and order B 10 @ 60¢ ($6.00 + $0.17); A then fills 5 more: 15 @ 40¢ = $6.00 + $0.25.
+  // The bet: 25 contracts, $6.25 + $6.17 = $12.42; a win 25 − 12.42 = +$12.58 (the re-read of A replaced the bet with A alone: 15, $6.25)
+  SERVE={fills:[buy('ra','KX-RRR',0.40,10,4.00,0.17,'Rita Reread')], settlements:[]}; await sync();
+  SERVE={fills:[buy('rb','KX-RRR',0.60,10,6.00,0.17,'Rita Reread',{ts:NOW-2.5*H}), buy('ra','KX-RRR',0.40,10,4.00,0.17,'Rita Reread')], settlements:[]}; await sync();
+  SERVE={fills:[buy('rb','KX-RRR',0.60,10,6.00,0.17,'Rita Reread',{ts:NOW-2.5*H}), buy('ra','KX-RRR',0.40,15,6.00,0.25,'Rita Reread')], settlements:[]}; await sync();
+  let Rr=await get('Rita Reread');
+  check('B2: one order of a two-order bet grows: the bet is 25 contracts for $12.42 (it became 15 for $6.25)', Rr && Rr.fillQty===25 && Math.abs(Rr.stake-12.42)<0.005 && Math.abs(Rr.fillCost-12.42)<0.005, Rr);
+  check('B2: open, a win would make +$12.58', Rr && Math.abs(Rr.toWin-12.58)<0.005, Rr&&Rr.toWin);
+  // a bet of two orders saved before round 2 (no fillBy): A's share is worked out from the 10 contracts last seen for it, so the same $12.42
+  SERVE={fills:[buy('oa','KX-OOO',0.40,10,4.00,0.17,'Otto Old')], settlements:[]}; await sync();
+  SERVE={fills:[buy('ob','KX-OOO',0.60,10,6.00,0.17,'Otto Old',{ts:NOW-2.5*H}), buy('oa','KX-OOO',0.40,10,4.00,0.17,'Otto Old')], settlements:[]}; await sync();
+  await p.evaluate(()=>{ const x=logged.find(y=>y.name==='Otto Old'); delete x.fillBy; saveLog(); });
+  SERVE={fills:[buy('ob','KX-OOO',0.60,10,6.00,0.17,'Otto Old',{ts:NOW-2.5*H}), buy('oa','KX-OOO',0.40,15,6.00,0.25,'Otto Old')], settlements:[]}; await sync();
+  const Oo=await get('Otto Old');
+  check('B2: an older bet of two orders (no per-order record) keeps both: 25 contracts, $12.42', Oo && Oo.fillQty===25 && Math.abs(Oo.stake-12.42)<0.005, Oo);
   check('no page errors', !errs.length, errs);
   await b.close(); console.log('\n'+pass+' passed, '+fail+' failed'); process.exit(fail?1:0);
 })().catch(e=>{ console.error(e); process.exit(1); });

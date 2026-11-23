@@ -85,6 +85,18 @@ async function open(b, o){ o=o||{};
     check('STAKE-2: the 4th long-shot moneyline of the game day: $0, "LONG-SHOT ML limit reached (3 a game day)"', A.ls[0]===0 && /LONG-SHOT ML limit reached \(3 a game day\)/.test(A.ls[1]||''), A.ls);
     check('STAKE-2: the 6th bet of the day with no market check: $0, "model-only limit reached (5 a day …)" (it was $1.00)', A.m6[0]===0 && /model-only limit reached \(5 a day/.test(A.m6[1]||''), A.m6);
     allErrs.push(...S.errs); await S.ctx.close(); }
+  // ---------- round 2: + Add a bet keeps the board's model-only one-a-game rule, and finds the game like the board (team codes in either order) with 1.5× for the same team and side
+  { const mo=logBet('mo1',{name:'Model Guy', stake:1, date:'2026-11-11', start:iso(KO+24*3600e3), game:'AWF @ HMF', snap:{at:iso(NOW-3600e3), modelOnly:true}});
+    const held=logBet('gc10',{name:'Gail Cap', team:'AWG', side:'O', stake:10, date:'2026-11-11', start:iso(KO+24*3600e3), game:'HMG @ AWG'});
+    const S=await open(b,{rows:[prop('x','Board Filler','0.5 Shots',0.50,0.52,0.52,5)], log:[mo, held]});
+    const A=await S.p.evaluate(()=>{ const o=(x)=>Object.assign({fee:0, book:'Novig', outLimit:false, sport:'NHL', day:'2026-11-11'}, x);
+      const m=abStake(o({fair:0.55, mkt:null, noMkt:true, p:0.50, kind:'prop', name:'Other Guy', team:'AWF', game:'AWF @ HMF'}));
+      // $10 logged on Gail Cap (AWG, Over) in "HMG @ AWG"; a $10 bet on another AWG Over in "AWG @ HMG": room min(20 − 10 × 1.5, 20 − 10) = $5 (it was $10: the text did not match)
+      const g=abStake(o({fair:0.55, mkt:0.56, p:0.50, kind:'prop', name:'Gus Same', team:'AWG', side:'O', game:'AWG @ HMG'}));
+      return {m:[m.s, m.why], g:[g.s, (g.notes||[]).join(' ')]}; });
+    check('round 2: a second bet with no market check in a game that already has one: $0, "model only: one a game"', A.m[0]===0 && /model only: one a game/.test(A.m[1]||''), A.m);
+    check('round 2: + Add a bet finds the game whatever the order of its teams, and counts the same team and side 1.5×: $5.00 (it was $10)', A.g[0]===5 && /game cap/.test(A.g[1]), A.g);
+    allErrs.push(...S.errs); await S.ctx.close(); }
   // ---------- STAKE-3: $100 logged on today's games: the board gives every card $0 ("daily max reached"); the bet form must not say $10
   { const S=await open(b,{rows:[prop('dm','Dana Daymax','1.5 Shots',0.50,0.55,0.56,2)], log:[logBet('full',{stake:100})]});
     const X=await S.rows();
