@@ -2262,6 +2262,9 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 .ab-bknote{flex-basis:100%; width:100%; margin:2px 0 4px; font-size:13px; color:var(--warn)}
 #abHost .editor-row > label:has(> .eb-book){max-width:100%; min-width:0; box-sizing:border-box}
 #abHost .eb-book{max-width:min(100%, calc(100vw - 120px)); min-width:0; text-overflow:ellipsis}
+.cp-diff{border-collapse:collapse; margin:6px 0; font-size:13px; width:100%; table-layout:fixed} .cp-diff th, .cp-diff td{border-bottom:1px solid var(--rule); padding:3px 6px; text-align:left; overflow-wrap:anywhere}
+.cp-ovr{color:var(--warn); font-weight:600; margin:4px 0}
+#compaShot{min-height:44px; min-width:44px; align-self:stretch}
 </style>
 </head>
 <body>
@@ -16632,7 +16635,7 @@ document.addEventListener('change', e=>{ const b=e.target&&e.target.closest&&e.t
 document.addEventListener('click', e=>{ const t=e.target; if(!t.closest) return;
   if(t.closest('#aiSlipToImp')){ const f=window._aiSlipMany; window._aiSlipMany=null; lcShotGo(f); return; }
   if(t.closest('#lcImpClip')){ (async()=>{ const f=await aiClipImage(); if(f) lcShotRun([f]); else { const m=document.getElementById('lcImpMsg'); if(m) m.textContent='No picture found on the clipboard. Copy a screenshot, then press Paste (or Ctrl+V here), or choose the file.'; } })(); } });
-document.addEventListener('paste', e=>{ const box=document.querySelector('.lc-impbox'), dz=document.getElementById('lcImpDrop'); if(!box || !box.open || !dz || !aiVisible(dz) || easyLevel()!=='god') return;
+document.addEventListener('paste', e=>{ if(e.target && e.target.closest && e.target.closest('#compaPanel')) return; const box=document.querySelector('.lc-impbox'), dz=document.getElementById('lcImpDrop'); if(!box || !box.open || !dz || !aiVisible(dz) || easyLevel()!=='god') return;
   const P=document.getElementById('addBetPanel'); if(P && P.open && aiVisible(document.getElementById('aiSlipDrop'))) return;
   const f=aiImgOf(e.clipboardData); if(!f) return; e.preventDefault(); e.stopImmediatePropagation(); lcShotRun([f]); }, true);
 (function(){ const dz=document.getElementById('lcImpDrop'); if(!dz) return;
@@ -16974,6 +16977,9 @@ function compaRead(name, a){ a=a||{};
   if(name==='get_plan') return compaPlan();
   if(name==='get_schedule') return compaSched();
   if(name==='get_alerts') return compaAlerts();
+  if(name==='find_bets') return cpFindBets(a);   /* v5.28 */
+  if(name==='fill_bet_form') return cpFillForm(a);   /* v5.28: fills, never saves (a promise: compaSend awaits it) */
+  if(name==='edit_bet') return {error:'edit_bet always asks first; it was not run.'};   /* v5.28: never without the ask, whatever the Worker says */
   return {error:'unknown read tool'}; }
 /* an action, in plain words for the confirm card, with the cost the app itself counts when it can (else what El Compa wrote) */
 function compaPlanOf(c){ const a=c.input||{}, G=scGet(), mc=a.cost&&typeof a.cost==='object'&&a.cost.text?String(a.cost.text).slice(0,80):'cost unknown';
@@ -16984,6 +16990,7 @@ function compaPlanOf(c){ const a=c.input||{}, G=scGet(), mc=a.cost&&typeof a.cos
   if(c.name==='send_sentinels') return {what:'Send the Sentinels (re-check the cards at live Kalshi, Polymarket US and Novig prices)', cost:'no feed calls'};
   if(c.name==='check_news'){ const r=compaRows().find(x=>pxKey(x)===String(a.cardKey||'')); return r?{what:'Check the news for '+(r.kind==='prop'?r.name:(r.team||r.name)), cost:'no feed calls, one AI news check (a few cents)'}:{what:'Check the news for a card that is not on the board', cost:mc, bad:'No card with that key on the board now.'}; }
   if(c.name==='read_last_slip') return {what:'Read back the last bet slip the app read', cost:'nothing'};
+  if(c.name==='edit_bet') return cpEditPlan(c);   /* v5.28: before → after */
   return {what:'Run an action the app does not know ('+String(c.name||'').slice(0,30)+')', cost:mc, bad:'Unknown action.'}; }
 async function compaAct(c, P){ const a=c.input||{}, G=scGet();
   if(P.bad) return {done:false, error:P.bad};
@@ -17000,6 +17007,7 @@ async function compaAct(c, P){ const a=c.input||{}, G=scGet();
     return {done:true, status:aiNewsWord(N[k].status), summary:N[k].summary, sources:N[k].sources.map(s=>({title:s.title, url:s.url, fromItsSearch:s.seen!==false})), note:'A label only: news never changes La Contadora’s decision or the stake.'}; }
   if(c.name==='read_last_slip'){ const P2=window._aiSlipProp, S=aiGet('slips',[]), s=P2?Object.assign({}, P2):S.length?Object.assign({}, S[S.length-1].fields||{}, {book:S[S.length-1].book}):null; if(!s) return {done:true, result:'No slip has been read yet.'};
     delete s.ticketId; return {done:true, slip:s}; }
+  if(c.name==='edit_bet') return cpEditDo(c, P);   /* v5.28 */
   return {done:false, error:'Unknown action.'}; }
 /* the confirm card: resolves true on Do it, false on No (or when the chat is closed or cleared) */
 function compaConfirm(c){ const P=compaPlanOf(c); return new Promise(res=>{ window._cpAsk={c, P, res}; compaPaint(); compaOpen(); }).then(ok=>({ok, P})); }
@@ -17010,7 +17018,7 @@ function compaPaint(){ const list=document.getElementById('compaList'); if(!list
   let h=o.msgs.length?'':'<p class="cp-empty meta">Hola, Jefe. Ask me about the board, a card, your plan, your bet log or your schedule. I can also scout, run a Schedule row or send the Sentinels for you, and I ask before anything that spends calls. La Contadora decides the bets; I explain them.</p>';
   h+=o.msgs.map(m=>'<div class="cp-m cp-'+(m.role==='user'?'me':m.role==='assistant'?'him':'note')+'">'+compaRich(m.content)+'</div>').join('');
   if(window._cpBusy && !A) h+='<div class="cp-m cp-note cp-busy">El Compa is thinking…</div>';
-  if(A) h+='<div class="cp-ask" role="group" aria-label="El Compa asks before acting"><div><b>El Compa wants to:</b> '+esc(A.P.what)+' · <span class="cp-cost">'+esc(A.P.cost)+'</span></div><div class="cp-ask-b"><button type="button" class="act sm" data-cp="yes">Do it</button><button type="button" class="ghost sm" data-cp="no">No</button></div></div>';
+  if(A) h+='<div class="cp-ask" role="group" aria-label="El Compa asks before acting"><div><b>El Compa wants to:</b> '+esc(A.P.what)+' · <span class="cp-cost">'+esc(A.P.cost)+'</span></div>'+(A.P.table||'')+'<div class="cp-ask-b"><button type="button" class="act sm" data-cp="yes">Do it</button><button type="button" class="ghost sm" data-cp="no">No</button></div></div>';
   list.innerHTML=h; list.scrollTop=list.scrollHeight;
   const sb=document.getElementById('compaSend'); if(sb) sb.disabled=!!window._cpBusy; }
 function compaOpen(){ const p=document.getElementById('compaPanel'); if(!p || !aiOn()) return; p.hidden=false; document.documentElement.classList.add('cp-open'); compaPaint(); const i=document.getElementById('compaIn'); if(i && !window._cpAsk) try{ i.focus({preventScroll:true}); }catch(e){} }
@@ -17033,7 +17041,8 @@ async function compaSend(text){ text=String(text||'').trim(); if(!text || window
       if(said.length){ compaPush('assistant', said.join('\n\n')); said.length=0; }
       const results=[];
       for(const c of calls){ let out;
-        if(!c.action){ try{ out=compaRead(c.name, c.input); }catch(e){ out={error:'The app could not read that: '+String(e&&e.message||e).slice(0,120)}; } results.push({id:c.id, content:JSON.stringify(out).slice(0,8000)}); continue; }
+        if(!c.action){ try{ out=await compaRead(c.name, c.input); }   /* v5.28: await (fill_bet_form loads the games first) */
+         catch(e){ out={error:'The app could not read that: '+String(e&&e.message||e).slice(0,120)}; } results.push({id:c.id, content:JSON.stringify(out).slice(0,8000)}); continue; }
         const {ok, P}=await compaConfirm(c); if(window._cpStop) return;
         if(!ok){ compaPush('note', 'You said No: '+P.what+'. Nothing was run.'); results.push({id:c.id, content:JSON.stringify({done:false, ownerSaid:'No', note:'Nothing was run.'})}); continue; }
         compaPush('note', 'Running: '+P.what+'…');
@@ -17057,6 +17066,110 @@ async function compaSend(text){ text=String(text||'').trim(); if(!text || window
   document.getElementById('compaIn').addEventListener('keydown',e=>{ if(e.key==='Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); go(); } });
   document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !p.hidden) compaClose(); });
   compaPaint();
+})();
+/* ---- v5.28 (owner 11/23: "Build it all! Now"): El Compa fills the bet form, finds bets, edits one bet (asks first) and reads screenshots into Bet log › Import.
+   fill_bet_form: fills + Add a bet through the same reader as 📷 Read slip (aiSlipFill: the game only by its teams and day, never the first in the list), marks every box it
+   filled ⚠ until you touch it or save, and never presses Save. find_bets: read only. edit_bet: always asks (before → after); the stake only with the new stake in your own
+   message; a result you, an import or your book set only when your message names the bet and the new result ("overrides a result you or your book set"); snap is never
+   touched; the old values go in the bet's edits; saved with saveLog (a failed save is said, not swallowed), so sync runs as for a hand edit. A picture in the chat goes to the
+   slips job and opens the Bet log import preview; no picture goes into the chat or its history. AI off, Worker paused, Easy or a customer build: nothing is called. Hoisted. */
+function cpOwnerText(){ const M=compaGet().msgs.filter(m=>m.role==='user'); return M.length?String(M[M.length-1].content||''):''; }
+function cpFv(list){ const o={}; (Array.isArray(list)?list:[]).slice(0,30).forEach(x=>{ if(x && typeof x.field==='string') o[x.field]=String(x.value==null?'':x.value).slice(0,120).trim(); }); return o; }
+function cpPairs(list){ return (Array.isArray(list)?list:[]).slice(0,20).filter(x=>x && typeof x.field==='string').map(x=>[x.field, String(x.value==null?'':x.value).slice(0,120).trim()]); }
+function cpBetRow(b){ return {id:String(b.id||''), day:gameDayOf(b)||b.date||'', book:bookLabel(b.book)||String(b.book||''), name:b.name||'', market:b.market||'', side:compaSide(b)||'', kind:b.kind||'prop', stake:+(+b.stake||0).toFixed(2), odds:b.odds||null, result:compaResOf(b), resultSetBy:b.gradedBy||null, game:b.game||null}; }
+function cpFindBets(a){ a=a||{}; const t=nrmT(a.text||''), d=String(a.day||'').trim(), bk=nrmT(a.book||'');
+  const L=(logged||[]).filter(b=>b && b.id && (!d || (gameDayOf(b)||b.date)===d) && (!bk || nrmT(bookLabel(b.book)).includes(bk) || nrmT(b.book).includes(bk)) && (!t || nrmT([b.name,b.market,b.team,b.game].join(' ')).includes(t)));
+  const S=L.slice().sort((x,y)=>String(gameDayOf(y)||'').localeCompare(String(gameDayOf(x)||''))).slice(0,20);
+  return {count:L.length, shown:S.length, bets:S.map(cpBetRow), note:'Use the id with edit_bet. Only settled bets win or lose.'}; }
+async function cpFillForm(a){ const F=cpFv(a&&a.fields); if(!Object.keys(F).length) return {done:false, error:'No fields were given.'};
+  if(easyLevel()!=='god' || !aiOn()) return {done:false, error:'The bet form is not available here.'};
+  const num=v=>aiNum(v), ty=String(F.type||'').toLowerCase(), mk=F.market||(ty==='moneyline'?'Moneyline':ty==='spread'?'Spread':ty==='total'?'Total':'');
+  const st={won:'won', win:'won', lost:'lost', loss:'lost', push:'push', void:'void', open:'open'}[String(F.result||'').toLowerCase()]||'open';
+  const o={book:F.book||'', kind:'single', status:st, placedAt:F.placedAt||'', stake:num(F.stake), odds:num(F.odds), toWin:num(F.toWin), totalPayout:num(F.totalPayout), pricePct:num(F.pricePct), free:/^(y|yes|true)$/i.test(F.free||''),
+    game:F.game||'', gameDate:F.gameDate||'', sport:F.sport||'', legs:[{player:(ty==='prop'||!ty)?(F.player||''):'', team:F.team||'', market:mk, line:num(F.line), side:F.side||((ty==='moneyline'||ty==='spread')?(F.team||''):'')}], unclear:[], confidence:'high'};
+  const tb=document.querySelector('.tab[data-view="v-add"]'); if(tb) tb.click(); const P=document.getElementById('addBetPanel'); if(!P) return {done:false, error:'The bet form is not on this page.'};
+  if(!P.open){ P.open=true; P.dispatchEvent(new Event('toggle')); }
+  await aiSlipFill(o); window._aiSlip=null;   /* not a slip read: no slip data point */
+  const g=id=>document.getElementById(id), ed=document.querySelector('#abHost .editor'), q=c=>ed&&ed.querySelector(c), pm=!!(q('.eb-mode')&&q('.eb-mode').value==='pct');
+  const box={book:q('.eb-book'), sport:g('abSport'), type:g('abType'), game:g('abGame'), gameDate:g('abDate'), team:g('abTeam'), player:g('abPlayer'), market:g('abStat'), line:g('abLine'), side:g('abPick'), odds:pm?q('.eb-pct'):q('.eb-odds'), pricePct:pm?q('.eb-pct'):q('.eb-odds'), stake:pm?q('.eb-cost'):q('.eb-stake'), toWin:pm?q('.eb-win'):q('.eb-win-o'), totalPayout:pm?q('.eb-win'):q('.eb-tot-o'), placedAt:g('abPlaced'), result:g('abResult'), free:null};
+  const filled=[]; Object.keys(F).forEach(k=>{ const el=box[k]; if(el && el.getClientRects().length){ (el.closest('.field')||el.closest('label')||el).classList.add('ai-unclear'); filled.push(k); } });
+  const sel=g('abGame'), gm=sel&&sel.value?String((sel.selectedOptions[0]||{}).textContent||''):'', out=g('aiSlipOut');
+  if(out) out.innerHTML='<div class="ai-ok">Filled in by El Compa. Nothing is saved: check every box marked ⚠, then press Save bet.</div>';
+  return {done:true, saved:false, filled, game:gm?gm.slice(0,60):'not found on ESPN: '+(((g('abGameFree')||{}).value)||'nothing')+' typed in, marked ⚠', book:ed?bookLabel(q('.eb-book').value):'', note:'Nothing is saved. Alonzo checks the boxes marked ⚠ and presses Save bet himself.'}; }
+/* edit_bet */
+function cpLockedRes(b){ return /^(win|loss|push|sold)$/.test(String(b.result||'')) && (b.gradedBy==='manual' || b.gradedBy==='import' || b.gradedBy==='book' || b.accountingSource==='book'); }
+function cpNumsIn(t){ return (String(t||'').replace(/,/g,'').match(/\d+(?:\.\d+)?/g)||[]).map(Number); }
+function cpNamesBet(t, b){ const T=' '+nrmT(t)+' ', W=nrmT([b.name, b.team].join(' ')).split(' ').filter(w=>w.length>=3); return W.some(w=>T.indexOf(' '+w+' ')>=0); }
+function cpResSaid(t, r){ const T=nrmT(t); return ({win:/\b(won|win|winner|hit|cashed)\b/, loss:/\b(lost|loss|lose|missed)\b/, push:/\b(push|pushed)\b/, void:/\b(void|voided|canceled|cancelled|refunded)\b/})[r].test(T); }
+function cpShow(b){ const pr=/^(win|loss|push|sold)$/.test(String(b.result||''))?betProfit(b):null;
+  return {'Book':bookLabel(b.book)||String(b.book||''), 'Game':b.game||'', 'Game start':b.start?compaWhen(b.start)||'':'', 'Game day':gameDayOf(b)||'', 'Player or team':b.name||'', 'Team':b.team||'', 'Market':b.market||'', 'Side':compaSide(b)||'',
+    'Odds':String(b.odds||''), 'Stake':'$'+(+b.stake||0).toFixed(2), 'Result':compaResOf(b)+(b.gradedBy?' (set by '+b.gradedBy+')':''), 'Profit':pr==null?'':(pr>=0?'+':'−')+'$'+Math.abs(pr).toFixed(2), 'Free bet':b.free?'yes':'no', 'Placed':b.placedAt?lcShotWhen(b.placedAt):''}; }
+function cpEditApply(x, C){ C.forEach(([f,v])=>{
+  if(f==='book') x.book=v; else if(f==='game') x.game=v; else if(f==='start'){ x.start=v; if(x.dateSet) x.date=ctDay(Date.parse(v)); }
+  else if(f==='team'){ x.team=v; if(x.kind==='moneyline'||x.kind==='spread') x.name=v; } else if(f==='player') x.name=v;
+  else if(f==='market'){ const ln=lineOfMarket(x.market); x.market=(x.kind||'prop')==='prop'?(ln!=null?ln+' ':'')+v:v; }
+  else if(f==='line') x.market=x.kind==='spread'?(v>0?'+':'')+v+' Spread':x.kind==='total'?v+' Total':v+' '+statOfMarket(x.market);
+  else if(f==='side') x.side=v; else if(f==='odds') x.odds=v; else if(f==='stake') x.stake=v;
+  else if(f==='free'){ if(v) x.free=true; else delete x.free; }
+  else if(f==='placedAt') placedSet(x, v, 'user_entered');
+  else if(f==='result'){ x.result=v==='void'?'push':v; x.gradedBy='manual'; x.resultSrc='you'; delete x.why; delete x.sold; if(x.result!=='win'){ delete x.towin; delete x.paidReal; } }
+  else if(f==='profit'){ x.towin=v; x.paidReal=true; } else if(f==='totalPayout'){ x.towin=+(v-(x.free?0:(+x.stake||0))).toFixed(2); x.paidReal=true; } }); }
+const CP_ORDER=['book','game','start','team','player','market','line','side','odds','stake','free','placedAt','result','profit','totalPayout'];
+function cpEditPlan(c){ const a=c.input||{}, b=(logged||[]).find(x=>x && String(x.id)===String(a.id||'')), own=cpOwnerText();
+  if(!b) return {what:'Change a bet that is not in your Bet log ('+String(a.id||'').slice(0,40)+')', cost:'nothing', bad:'No bet with that id. Use find_bets first.'};
+  if(b.kind==='parlay') return {what:'Change the parlay '+String(b.name||'').slice(0,60), cost:'nothing', bad:'El Compa does not edit parlays: open it in the Bet log.'};
+  const ok=[], refused=[]; let override=false;
+  cpPairs(a.changes).sort((x,y)=>CP_ORDER.indexOf(x[0])-CP_ORDER.indexOf(y[0])).forEach(([f,v])=>{ const n=aiNum(v);
+    if(f==='stake'){ if(!(n>0)) return refused.push('stake: not a number'); if(!cpNumsIn(own).some(x=>Math.abs(x-n)<0.005)) return refused.push('stake: you did not state the new stake ($'+n.toFixed(2)+') in your message'); return ok.push([f, +n.toFixed(2)]); }
+    if(f==='result'){ const r=({won:'win', win:'win', lost:'loss', loss:'loss', push:'push', void:'void'})[String(v).toLowerCase()]; if(!r) return refused.push('result: win, loss, push or void only');
+      if(cpLockedRes(b) && (r==='void'?'push':r)!==b.result){ if(cpNamesBet(own,b) && cpResSaid(own,r)) override=true; else return refused.push('result: '+b.result+' was set by '+(b.gradedBy==='manual'?'you':b.gradedBy==='import'?'an import':'your book')+'; name this bet and the new result in your message to change it'); }
+      return ok.push([f, r]); }
+    if(f==='odds'){ const o=oddsIn(v); if(!o || toProb(o)==null) return refused.push('odds: not American odds ('+v+')'); return ok.push([f, o]); }
+    if(f==='line'){ if(n==null) return refused.push('line: not a number'); if(b.kind==='moneyline') return refused.push('line: a moneyline has no line'); return ok.push([f, n]); }
+    if(f==='side'){ const s=aiOU(v); if(!s || !((b.kind||'prop')==='prop' || b.kind==='total')) return refused.push('side: Over or Under, on a prop or a total'); return ok.push([f, s]); }
+    if(f==='profit' || f==='totalPayout'){ if(n==null) return refused.push(f+': not a number'); return ok.push([f, +n.toFixed(2)]); }
+    if(f==='start' || f==='placedAt'){ const w=aiWhenCT(v); if(!w || !w.time) return refused.push(f+': not a date and time ('+v+')'); return ok.push([f, new Date(w.t).toISOString()]); }
+    if(f==='free') return ok.push([f, /^(y|yes|true|1)$/i.test(v)]);
+    if(f==='book'){ const k=aiBookOf(v); return ok.push([f, k.book||v.slice(0,60)]); }
+    if(['game','team','player','market'].includes(f)){ if(!v) return refused.push(f+': empty'); return ok.push([f, v.slice(0,80)]); }
+    refused.push(f+': not a field El Compa can change'); });
+  const x=JSON.parse(JSON.stringify(b)); cpEditApply(x, ok);
+  if(ok.some(([f])=>f==='profit'||f==='totalPayout') && x.result!=='win'){ for(let i=ok.length-1;i>=0;i--) if(ok[i][0]==='profit'||ok[i][0]==='totalPayout'){ refused.push(ok[i][0]+': only for a won bet'); ok.splice(i,1); } }
+  const y=JSON.parse(JSON.stringify(b)); cpEditApply(y, ok);
+  const B0=cpShow(b), B1=cpShow(y), rows=Object.keys(B0).filter(k=>B0[k]!==B1[k]).map(k=>[k, B0[k], B1[k]]);
+  const name=(b.name||'')+' · '+(gameDayOf(b)||'')+' · '+(bookLabel(b.book)||'');
+  const table='<table class="cp-diff"><thead><tr><th scope="col"></th><th scope="col">Before</th><th scope="col">After</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+esc(r[0])+'</td><td>'+esc(r[1])+'</td><td><b>'+esc(r[2])+'</b></td></tr>').join('')+'</tbody></table>'
+    +(override?'<div class="cp-ovr">⚠ This overrides a result you or your book set.</div>':'')+(refused.length?'<div class="meta">Not changed: '+esc(refused.join('; '))+'</div>':'');
+  if(!rows.length) return {what:'Change your bet '+name, cost:'nothing', table, bad:'Nothing to change'+(refused.length?': '+refused.join('; '):' (it already says that).'), refused};
+  return {what:'Change your bet '+name+(override?' · overrides a result you or your book set':''), cost:'nothing', table, id:b.id, C:ok, rows, refused, override}; }
+function cpEditDo(c, P){ if(P.bad) return {done:false, error:P.bad, refused:P.refused||[]};
+  const b=(logged||[]).find(x=>x && String(x.id)===String(P.id)); if(!b) return {done:false, error:'The bet is no longer in your Bet log.'};
+  const keys=['book','game','start','date','name','team','market','side','odds','stake','free','result','gradedBy','resultSrc','why','sold','towin','paidReal','placedAt','placedAtSource'], before={};
+  keys.forEach(k=>{ if(k in b) before[k]=JSON.parse(JSON.stringify(b[k])); });
+  cpEditApply(b, P.C); if(P.C.some(([f])=>f==='result')) try{ gradeRemember(b); }catch(e){}
+  (b.edits=b.edits||[]).push({at:new Date().toISOString(), before, note:'El Compa edit (you said Yes): '+P.rows.map(r=>r[0]).join(', ')+(P.override?' · overrides a result you or your book set':'')});
+  saveLog(); const bad=window._logSaveBad===true;
+  try{ renderLog(); renderPerf(); renderTodayBar(); refresh(); }catch(e){}
+  if(bad) return {done:false, error:'Changed on this page, but the Bet log could not be saved on this device (storage full), so it is not synced. Back up the bet log and free some space.'};
+  return {done:true, result:'Changed: '+P.rows.map(r=>r[0]+' '+r[1]+' → '+r[2]).join('; ')+(P.refused.length?'. Not changed: '+P.refused.join('; '):''), changed:P.rows.map(r=>({field:r[0], before:r[1], after:r[2]}))}; }
+/* a picture in the chat: the slips job, then the Bet log import preview */
+async function cpShot(files){ const im=[...(files||[])].filter(f=>/^image\//.test(f.type||'')); if(!im.length) return;
+  if(easyLevel()!=='god') return; if(!aiOn()){ compaPush('note', 'Turn on the AI helper in Settings to read screenshots.'); return; }
+  if(wkPaused()){ compaPush('note', 'Your Worker is paused, so nothing was sent. Add the screenshot again later.'); return; }
+  compaPush('note', 'Reading '+im.length+' picture'+(im.length===1?'':'s')+' for your Bet log…');
+  lcShotGo(null); await lcShotRun(im);
+  const n=lcRows.filter(t=>t.shot).length, m=String((document.getElementById('lcImpMsg')||{}).textContent||'');
+  compaPush('note', n?n+' bet'+(n===1?'':'s')+' read: check them in the Bet log › Import and press Save the ticked tickets. Nothing is saved until you do.':'No bets were read. '+m.slice(0,240)); }
+(function(){ const p=document.getElementById('compaPanel'), f=document.getElementById('compaForm'); if(!p || !f) return;
+  const bt=document.createElement('button'); bt.type='button'; bt.id='compaShot'; bt.className='ghost sm'; bt.setAttribute('aria-label','Read bet screenshots into your Bet log'); bt.title='Screenshots of bets: read into Bet log › Import'; bt.textContent='📷';
+  const fi=document.createElement('input'); fi.type='file'; fi.id='compaShotFile'; fi.accept='image/*'; fi.multiple=true; fi.hidden=true;
+  f.insertBefore(fi, f.firstChild); f.insertBefore(bt, f.firstChild);
+  bt.addEventListener('click',()=>fi.click()); fi.addEventListener('change',()=>{ const fs=[...(fi.files||[])]; fi.value=''; cpShot(fs); });
+  p.addEventListener('paste',e=>{ const im=aiImgOf(e.clipboardData); if(!im) return; e.preventDefault(); e.stopPropagation(); cpShot([im]); });
+  ['dragenter','dragover'].forEach(k=>p.addEventListener(k,e=>{ if(e.dataTransfer && [...(e.dataTransfer.types||[])].includes('Files')) e.preventDefault(); }));
+  p.addEventListener('drop',e=>{ const fs=[...((e.dataTransfer&&e.dataTransfer.files)||[])]; if(!fs.length) return; e.preventDefault(); cpShot(fs); });
+  /* the ⚠ El Compa put on the form goes once a bet is saved */
+  document.addEventListener('click',e=>{ if(!(e.target.closest && e.target.closest('#abHost .eb-save'))) return; const n0=logged.length; setTimeout(()=>{ if(logged.length>n0) document.querySelectorAll('#addBetPanel .ai-unclear').forEach(x=>x.classList.remove('ai-unclear')); }, 800); }, true);
 })();
 </script>
 </body>
