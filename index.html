@@ -2232,6 +2232,9 @@ html[data-viewas="easy"] #jvPop{display:none !important}
 #jvPop .jv-g{display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:8px; margin:10px 0} #jvPop .jv-k{border:1px solid var(--rule); border-radius:8px; padding:6px 10px; min-width:0} #jvPop .jv-k span{display:block; font-size:12.5px; color:var(--soft)} #jvPop .jv-k b{font-size:18px; overflow-wrap:anywhere}
 #jvPop .jv-ai, #jvPop .jv-mv{margin:6px 0; font-size:14px; overflow-wrap:anywhere} #jvPop .jv-ai:empty{display:none}
 #jvPop{position:relative; top:auto; left:auto; transform:none; z-index:auto; max-height:none; overflow:visible; margin:8px auto 0; width:min(760px, calc(100% - 16px))}   /* v5.27 (round 3, N4): in the page, at the top, never over it */
+html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (round 4, N5): Jarvis keeps the page still itself */
+#jvChip{position:fixed; top:4px; left:50%; transform:translateX(-50%); z-index:9997; height:32px; max-width:calc(100vw - 16px); padding:0 14px; border-radius:16px; border:2px solid var(--accent); background:var(--panel); color:var(--ink); font:inherit; font-size:14px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; box-shadow:0 4px 14px rgba(0,0,0,.2); cursor:pointer}   /* v5.27 (round 4, N6) */
+#jvChip[hidden]{display:none !important} @media (max-width:699px){ #jvChip{left:auto; right:8px; transform:none; height:30px; top:3px} } html[data-viewas="easy"] #jvChip{display:none !important}
 #jvPop .jv-more>summary{list-style:none} #jvPop .jv-more>summary::-webkit-details-marker{display:none} #jvPop .jv-mk::before{content:"▸"; display:inline-block; width:1.2em} #jvPop .jv-more[open]>summary .jv-mk::before{content:"▾"}   /* v5.27 (round 3, N2) */
 #jvPop .jv-more{margin:6px 0} #jvPop .jv-more>summary{cursor:pointer; min-height:44px; display:flex; align-items:center; font-size:14px; font-weight:700; color:var(--soft)}   /* v5.27 (round 2, J9) */
 #jvPop .jv-pc{display:block; margin:8px 0 0; padding:0; border:0; background:none; box-shadow:none; min-height:0; width:auto; max-width:none}
@@ -14173,7 +14176,14 @@ function jvNearScan(J){ if(window._jvNearBusy || !aiOn() || wkPaused()) return; 
   jvNews(c).then(decide, ()=>decide(null)).finally(()=>{ window._jvNearBusy=false; }); }
 /* the pop-up: one at a time */
 function jvEl(){ let el=document.getElementById('jvPop'); if(!el){ el=document.createElement('div'); el.id='jvPop'; el.setAttribute('role','alertdialog'); el.setAttribute('aria-label','Jarvis'); el.hidden=true; document.body.insertBefore(el, document.body.firstChild); } return el; }   /* v5.27 (round 3, N4): the first thing on the page, in the flow: it pushes the page down and never covers a control */
-function jvKeep(f){ const el=document.getElementById('jvPop'), h0=(el && !el.hidden)?el.offsetHeight:0, y=window.scrollY||0; f(); const h1=(el && !el.hidden)?el.offsetHeight:0; if(y>0 && h1!==h0) window.scrollBy(0, h1-h0); }   /* scrolled down: what you are looking at does not move when it opens, changes or closes */
+/* v5.27 (round 4, N5): a steady page. Before every change of the pop-up's height (open, redraw, Not now, Skip today, close, a late news line, the fold) the top of the first
+   element after it (the page) is read; right after, the page is scrolled back by exactly the difference. The browser's own scroll anchoring is off while it happens
+   (html.jv-noanc), so it is not corrected twice. At the very top this scrolls the pop-up just above the screen: the chip (jvChipPaint) then says it is there. Hoisted. */
+function jvAnchor(){ const el=document.getElementById('jvPop'); let a=el && el.nextElementSibling; while(a){ const p=getComputedStyle(a).position; if(p!=='fixed' && p!=='absolute' && a.getClientRects().length) return a; a=a.nextElementSibling; } return null; }
+function jvKeepStart(){ const h=document.documentElement; h.classList.add('jv-noanc'); clearTimeout(jvKeepStart._t); const a=jvAnchor(); return {a, t:a?a.getBoundingClientRect().top:null}; }
+function jvKeepEnd(k){ if(k && k.a && k.a.isConnected && k.t!=null){ const d=k.a.getBoundingClientRect().top-k.t; if(Math.abs(d)>0.5) window.scrollBy(0, d); }
+  jvKeepStart._t=setTimeout(()=>document.documentElement.classList.remove('jv-noanc'), 500); try{ jvChipPaint(); }catch(e){} }
+function jvKeep(f){ const k=jvKeepStart(); try{ f(); } finally { jvKeepEnd(k); } }
 function jvPump(){ if(!jvActive()){ jvClose(true); return; } if(window._jvCur || !jvOpen()) return;
   if(!jvLeader()) return;   // v5.27 (round 2, J8): one tab pops at a time
   if(window._jvDigest && window._jvDigest.length){ jvShowDigest(); return; }
@@ -14182,7 +14192,7 @@ function jvPump(){ if(!jvActive()){ jvClose(true); return; } if(window._jvCur ||
   while(Q.length){ const it=Q.shift(), r=jvRowFor(it.k, it.near); if(!r || !jvFree(it.k, R, now) || (it.near && R.near>=2)) continue;
     delete R.snooze[it.k]; R.seen[it.k]=now; if(it.near) R.near++; jvRunSet(R);
     window._jvCur={k:it.k, near:!!it.near}; jvShow(r, !!it.near); jvAlarm(r, !!it.near);   // v5.27 (round 2, J2): no idx; the pick is its key, book and price
-    if(aiOn() && !wkPaused() && !it.near && !jvNewsOf(r) && !R.asked[aiNewsKey(r)]){ const cur=window._jvCur, put=x=>{ if(window._jvCur!==cur) return; const a=document.querySelector('#jvPop .jv-ai'); if(a) a.textContent=x?jvNewsLine(x):''; };
+    if(aiOn() && !wkPaused() && !it.near && !jvNewsOf(r) && !R.asked[aiNewsKey(r)]){ const cur=window._jvCur, put=x=>{ if(window._jvCur!==cur) return; const a=document.querySelector('#jvPop .jv-ai'); if(a) jvKeep(()=>{ a.textContent=x?jvNewsLine(x):''; }); };   /* v5.27 (round 4, N5): a late news line does not move the page */
       jvNews(r).then(put, ()=>put(null)); }   /* only the AI line changes: an open bet form is never redrawn */
     return; } }
 function jvKv(k, v){ return '<div class="jv-k"><span>'+k+'</span><b>'+v+'</b></div>'; }
@@ -14192,6 +14202,7 @@ function jvKv(k, v){ return '<div class="jv-k"><span>'+k+'</span><b>'+v+'</b></d
 function jvSig(r, near){ return [r.idx /* v5.27 (round 3, N1): a shifted row redraws, so the book button always points at the row shown */, r.book, r.offeredRaw, near?'':(+r.stake||0).toFixed(2), jvOkTxt(r, jvMax(r)), near?'':scTicket(r)].join('§'); }
 function jvCurRow(c){ if(!c || c.digest) return null; const r=jvRowFor(c.k, c.near); return (r && !r.prior && !r.waitOrder)?r:null; }
 function jvNote(t){ try{ kalshiToast(t); }catch(e){} }
+function jvSaid(cur, same){ const c=window._jvCur, m=document.querySelector('#jvPop .jv-msg'); if(!c || !m) return; m.textContent=(c.k===cur.k && !c.digest)?same:'The last pick changed; this is the next one.'; }   /* v5.27 (round 4, S3): a refused tap never leaves "press again" on another pick */
 function jvRecheck(){ const c=window._jvCur; if(!c || c.digest) return; if(!jvActive()){ jvClose(true); return; }
   const r=jvCurRow(c), ed=document.querySelector('#jvPop .editor');
   if(!r){ const bet=(lastRows||[]).some(x=>x && pxKey(x)===c.k && (x.prior || x.waitOrder)); if(bet){ const R=jvRun(); R.done[c.k]=1; jvRunSet(R); jvNote('🤖 Jarvis: '+(c.t||'that pick')+' is already in your Bet log.'); }
@@ -14219,7 +14230,8 @@ function jvShow0(r, near){ const el=jvEl(), mx=jvMax(r), st=+r.stake||0, bk=book
     '<div class="pcard jv-pc"><div class="jv-b">'+open+'<button type="button" class="act jv-bet">I bet this</button><button type="button" class="ghost jv-later">Not now</button><button type="button" class="ghost jv-skip">Skip today</button><button type="button" class="linkbtn jv-why">Why?</button></div></div>'+
     '<div class="meta jv-msg" role="status"></div>';
   el.hidden=false; }
-document.addEventListener('toggle', e=>{ const d=e.target; if(d && d.classList && d.classList.contains('jv-more') && d.closest('#jvPop') && window._jvCur) window._jvCur.moreOpen=d.open; }, true);   // v5.27 (round 3, N2)
+document.addEventListener('toggle', e=>{ const d=e.target; if(d && d.classList && d.classList.contains('jv-more') && d.closest('#jvPop') && window._jvCur){ window._jvCur.moreOpen=d.open; if(window._jvFoldK){ const k=window._jvFoldK; window._jvFoldK=null; jvKeepEnd(k); } } }, true);   // v5.27 (round 3, N2)
+document.addEventListener('click', e=>{ const sm=e.target && e.target.closest && e.target.closest('#jvPop details.jv-more>summary'); if(sm) window._jvFoldK=jvKeepStart(); }, true);   // v5.27 (round 4, N5): the fold opens or closes without moving the page
 function jvDigestItems(R){ return R.away.map(x=>{ const L=(lastRows||[]).filter(r=>r && pxKey(r)===x.k), r=L.find(scApproved)||L[0]||null; let st;
   if(!r) st='no longer on the board'; else if(!scAhead(r)) st='started'; else if(!scApproved(r)) st=r.prior?'already bet':'no longer approved';
   else if(x.p>0 && r.offeredProb>0 && Math.abs(r.offeredProb-x.p)>=0.005) st='price moved '+(r.offeredProb>x.p?'up':'down')+' '+(Math.abs(r.offeredProb-x.p)*100).toFixed(1)+' pts · still approved, it pops next';
@@ -14231,7 +14243,15 @@ function jvShowDigest0(){ const el=jvEl(), D=window._jvDigest||[]; window._jvCur
     '<ul class="jv-dl">'+D.slice(0,10).map(x=>'<li><b>'+esc(x.t)+'</b> <span class="meta">seen '+esc(scClock(x.at))+' · '+esc(x.st)+'</span></li>').join('')+(D.length>10?'<li class="meta">and '+(D.length-10)+' more</li>':'')+'</ul>'+
     '<div class="jv-b"><button type="button" class="act jv-dg-go">OK</button></div>';
   el.hidden=false; try{ if(jvGet().sound) perfBeep(); }catch(e){} }
-function jvClose(all){ const el=document.getElementById('jvPop'); if(el) jvKeep(()=>{ el.hidden=true; el.innerHTML=''; el.classList.remove('near','dg'); }); window._jvCur=null; if(all){ window._jvQ=[]; window._jvDigest=null; } }
+/* v5.27 (round 4, N6): when the pop-up is above the screen, a small pill at the top says so ("🤖 Jarvis: 2 picks ↑"); a tap scrolls up to it. Hidden while the pop-up
+   is in view or a bet form, El Compa or a dialog is open. Fixed, at most 32 px tall, centred; the tone and notification are unchanged. Hoisted. */
+function jvChipEl(){ let c=document.getElementById('jvChip'); if(!c){ c=document.createElement('button'); c.type='button'; c.id='jvChip'; c.hidden=true; c.addEventListener('click', ()=>{ const el=document.getElementById('jvPop'); if(el && !el.hidden){ document.documentElement.classList.add('jv-noanc'); el.scrollIntoView({block:'start'}); setTimeout(()=>document.documentElement.classList.remove('jv-noanc'), 500); } c.hidden=true; }); document.body.appendChild(c); } return c; }
+function jvChipPaint(){ const el=document.getElementById('jvPop'), cur=window._jvCur, c=document.getElementById('jvChip');
+  const off=!!(el && !el.hidden && cur && el.getBoundingClientRect().bottom<24), busy=!!document.querySelector('.editor, html.cp-open, dialog[open], .modal.on, .ab-host[open]');
+  if(!off || busy || !jvActive()){ if(c) c.hidden=true; return; }
+  const n=cur.digest?0:1+jvMoreN(), b=jvChipEl(); const sm=innerWidth<700; b.textContent=cur.digest?(sm?'🤖 Away list ↑':'🤖 Jarvis: while you were away ↑'):(sm?'🤖 ':'🤖 Jarvis: ')+n+' pick'+(n===1?'':'s')+' ↑';   /* on a phone, short and at the top right: clear of the header buttons */ b.setAttribute('aria-label', b.textContent.replace('↑','')+', go up to see'); b.hidden=false; }
+window.addEventListener('scroll', ()=>{ if(window._jvChipRaf) return; window._jvChipRaf=requestAnimationFrame(()=>{ window._jvChipRaf=0; try{ jvChipPaint(); }catch(e){} }); }, {passive:true});
+function jvClose(all){ const el=document.getElementById('jvPop'); if(el) jvKeep(()=>{ el.hidden=true; el.innerHTML=''; el.classList.remove('near','dg'); }); window._jvCur=null; if(all){ window._jvQ=[]; window._jvDigest=null; } try{ jvChipPaint(); }catch(e){} }
 function jvNext(){ jvClose(false); jvPump(); }
 function jvAlarm(r, near){ { const R=jvRun(), k=pxKey(r), t=(R.toned||{})[k]; if(t && Date.now()-t<25*60e3) return; R.toned=R.toned||{}; R.toned[k]=Date.now(); jvRunSet(R); }   // v5.27 (round 3, N3): one tone and notification a pick (another tab may have rung already); again after a Not now
   if(jvGet().sound){ try{ jvAudioWake(true); perfBeep(); }catch(e){} }
@@ -14302,10 +14322,10 @@ document.addEventListener('click', e=>{ const t=e.target; if(!t || !t.closest ||
   if(t.closest('.jv-later')){ const R=jvRun(); R.snooze[cur.k]=Date.now()+30*60e3; jvRunSet(R); jvNext(); return; }
   if(t.closest('.jv-skip')){ const R=jvRun(); R.skip[cur.k]=1; jvRunSet(R); jvNext(); return; }
   if(t.closest('.jv-why')){ jvWhy(cur.k); return; }
-  if(t.closest('.jv-bet')){ const r=jvCurRow(cur); if(!r || jvSig(r, cur.near)!==cur.sig){ jvRecheck(); if(window._jvCur===cur && r){ const m=document.querySelector('#jvPop .jv-msg'); if(m) m.textContent='The numbers changed: check them and press I bet this again.'; } return; }   // v5.27 (round 2, J1-J3): never an idx, never an already-bet or changed pick
+  if(t.closest('.jv-bet')){ const r=jvCurRow(cur); if(!r || jvSig(r, cur.near)!==cur.sig){ jvRecheck(); jvSaid(cur, 'The numbers changed: check them and press I bet this again.'); return; }   // v5.27 (round 2, J1-J3): never an idx, never an already-bet or changed pick
     const host=document.querySelector('#jvPop .jv-pc'); if(host) openBetEditor(host, r); return; } });
 document.addEventListener('click', e=>{ const o=e.target && e.target.closest && e.target.closest('#jvPop .jv-open'); if(!o || !window._jvCur) return; const cur=window._jvCur, r=jvCurRow(cur);   // v5.27 (round 3, N1): Open the book opens the row the pop-up shows, found by its key now, never an old data-idx
-  if(!r || jvSig(r, cur.near)!==cur.sig){ e.preventDefault(); e.stopImmediatePropagation(); jvRecheck(); const m=document.querySelector('#jvPop .jv-msg'); if(m && window._jvCur) m.textContent='The board changed: check the pick and press Open the book again.'; return; }
+  if(!r || jvSig(r, cur.near)!==cur.sig){ e.preventDefault(); e.stopImmediatePropagation(); jvRecheck(); jvSaid(cur, 'The board changed: check the pick and press Open the book again.'); return; }
   o.setAttribute('data-idx', String(r.idx)); }, true);
 document.addEventListener('click', e=>{ const b=e.target && e.target.closest && e.target.closest('#jvPop .eb-save'); if(!b || !window._jvCur) return; const cur=window._jvCur, ids0=new Set((logged||[]).map(x=>x && x.id));
   { const r=jvCurRow(cur); if(!r || jvSig(r, cur.near)!==cur.sig){ e.preventDefault(); e.stopImmediatePropagation(); if(!r) jvRecheck(); else { jvShow(r, cur.near); const m=document.querySelector('#jvPop .jv-msg'); if(m) m.textContent='Not saved: the numbers changed. Check them and press I bet this again.'; } return; } }   // v5.27 (round 2, J1): a pick already bet, or changed, is never saved from here

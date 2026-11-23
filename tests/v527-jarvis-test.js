@@ -369,5 +369,38 @@ const click=async(p,sel)=>{ await ev(p,s=>{ const b=document.querySelector(s); i
       localStorage.setItem('mbev.jarvis','{}'); jvTick(); return {off, on:{active:jvActive(), pop:!!window._jvCur}}; });
     check('N4: a test browser (navigator.webdriver) that never saved mbev.jarvis gets no Jarvis even inside a window; once mbev.jarvis is saved, it pops', t.off.wd && t.off.open && !t.off.active && !t.off.pop && t.on.active && t.on.pop, t);
     await X.ctx.close(); });
+
+  // ================= 9. round 4 (the review of 1b39290): each check fails on that commit =================
+  for(const W of [390,1280]) for(const sy of [0,400,5000]) await safe('round 4: N5 steady '+W+' from '+sy, async()=>{
+    X=await open(b,W,{ai:true, h:844}); await X.p.waitForTimeout(1500);
+    const r=await ev(X.p,async(sy)=>{ const sl=ms=>new Promise(z=>setTimeout(z,ms)); jvClose(true); await sl(50); window.scrollTo(0,sy); await sl(80);
+      const m=[...document.querySelectorAll('button, .tab, h2')].find(e=>{ if(e.closest('#jvPop') || e.closest('#jvChip')) return false; const st=getComputedStyle(e); if(e.closest('[style*="fixed"]')) return false; let x=e; while(x && x!==document.body){ const p=getComputedStyle(x).position; if(p==='fixed' || p==='sticky') return false; x=x.parentElement; } const q=e.getBoundingClientRect(); return q.height>0 && q.top>60 && q.bottom<innerHeight-60; });
+      if(!m) return {none:true}; const T=[]; const at=l=>T.push([l, +(m.getBoundingClientRect().top).toFixed(1)]); at('start');
+      localStorage.removeItem('mbev.ai.news'); const R=jvRun(); R.seen={}; R.snooze={}; R.skip={}; R.toned={}; R.asked={}; jvRunSet(R); window._jvWasOpen=true; jvTick(); await sl(30); at('open'); await sl(400); at('news line');
+      const sm=document.querySelector('#jvPop details.jv-more>summary'); if(sm){ sm.click(); await sl(80); at('fold'); }
+      document.querySelector('#jvPop .jv-later').click(); await sl(150); at('Not now'); document.querySelector('#jvPop .jv-skip').click(); await sl(150); at('Skip today');
+      jvClose(true); await sl(150); at('close'); const t0=T[0][1]; return {mark:(m.textContent||'').trim().slice(0,24), T, max:Math.max(...T.map(x=>Math.abs(x[1]-t0)))}; }, sy);
+    check('N5 '+W+' px from scrollY '+sy+': no control on screen moves more than 2 px when the pop-up opens, gets its news line, folds, goes to the next pick, skips or closes (moved '+(r&&r.max!=null?r.max.toFixed(1):'?')+' px)', r && !r.none && r.max<=2, r);
+    check('no page errors (N5 '+W+' '+sy+')', !X.errs.length, X.errs); await X.ctx.close(); });
+  for(const W of [390,1000,1280,1960]) await safe('round 4: N6 chip '+W, async()=>{
+    X=await open(b,W,{h:844}); await X.p.waitForTimeout(1500);
+    await ev(X.p,async()=>{ const sl=ms=>new Promise(z=>setTimeout(z,ms)); jvClose(true); window.scrollTo(0,0); await sl(50); const R=jvRun(); R.seen={}; R.toned={}; jvRunSet(R); window._jvWasOpen=true; jvTick(); await sl(150); });
+    const c=await ev(X.p,()=>{ const ch=document.getElementById('jvChip'), pp=document.getElementById('jvPop'); if(!ch || ch.hidden) return {chip:false, popBottom:pp.getBoundingClientRect().bottom}; const r=ch.getBoundingClientRect();
+      const hit=[...document.querySelectorAll('button, a, input, select, summary, [role="button"], .tab')].filter(e=>e!==ch && e.getClientRects().length && !e.closest('#jvPop')).filter(e=>{ const q=e.getBoundingClientRect(); return q.width>0 && q.right>r.left && q.left<r.right && q.bottom>r.top && q.top<r.bottom; }).map(e=>e.id||e.className||e.tagName);
+      return {chip:true, txt:ch.textContent, h:r.height, top:r.top, hit, popBottom:pp.getBoundingClientRect().bottom}; });
+    check('N6 '+W+' px: with the pop-up above the screen, a chip at the top says “🤖 Jarvis: N picks ↑” (“🤖 N picks ↑” at the top right on a phone), at most 40 px tall, over no button', c.chip && (W<700?/^🤖 \d+ picks? ↑$/:/^🤖 Jarvis: \d+ picks? ↑$/).test(c.txt) && c.h<=40 && c.top>=0 && c.top<=8 && c.popBottom<=24 && c.hit.length===0, c);
+    await click(X.p,'#jvChip'); await X.p.waitForTimeout(250);
+    const d=await ev(X.p,()=>{ const r=document.getElementById('jvPop').getBoundingClientRect(); return {top:r.top, bottom:r.bottom, chipHidden:document.getElementById('jvChip').hidden}; });
+    check('N6 '+W+' px: tapping it brings the pop-up into view, and the chip goes away', d.top>=-1 && d.top<200 && d.chipHidden, d);
+    const f=await ev(X.p,async()=>{ const sl=ms=>new Promise(z=>setTimeout(z,ms)); window.scrollTo(0,600); await sl(100); const a=!document.getElementById('jvChip').hidden;
+      const r=lastRows.find(x=>scApproved(x)), w=document.createElement('div'); w.className='pcard'; document.querySelector('.wrap').appendChild(w); openBetEditor(w, r); window.dispatchEvent(new Event('scroll')); await sl(100); const b2=document.getElementById('jvChip').hidden; w.remove(); return {shownScrolled:a, hiddenWithForm:b2}; });
+    check('N6 '+W+' px: hidden while a bet form is open', f.hiddenWithForm, f);
+    check('no page errors (N6 '+W+')', !X.errs.length, X.errs); await X.ctx.close(); });
+  await safe('round 4: S3 wording', async()=>{
+    X=await open(b,1280,{}); await X.p.waitForTimeout(1500); await fresh(X.p);
+    const r=await ev(X.p,()=>{ const k=window._jvCur.k; quoteFor=async()=>null; slipWindow=()=>({location:{}, close(){}, focus(){}}); lastRows=lastRows.filter(x=>pxKey(x)!==k); refresh(); document.querySelector('#jvPop .jv-open').click();
+      return {moved:window._jvCur.k!==k, msg:document.querySelector('#jvPop .jv-msg').textContent}; });
+    check('S3: a tap refused because its pick left the board shows the next pick with “The last pick changed; this is the next one.”', r.moved && r.msg==='The last pick changed; this is the next one.', r);
+    await X.ctx.close(); });
   console.log(`\n${pass} passed, ${fail} failed`); await b.close(); process.exit(fail?1:0);
 })();
