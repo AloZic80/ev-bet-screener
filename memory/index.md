@@ -21,6 +21,7 @@ Status words: **active** (the rule now), **unverified** (believed, not confirmed
 | `decisions/tiers-and-easy.md` | God / Easy / Plus levels, the Easy app (Today, My bets, Learn, Settings), the View-as switch, the safety and wording rules Easy must keep |
 | `decisions/jarvis-v1.md` | 🤖 Jarvis (v5.27): the weekly windows, what pops and why, the numbers it reads from the board, near-misses, the loop and what it never does |
 | `decisions/paper-money-v1.md` | 📝 Paper money (v5.30): approved cards under the plan minimum recorded at $1 in IndexedDB, near-start price, ESPN grading, Reports section, the written guess |
+| `decisions/prefill-watch-v1.md` | The 15-minute prefill watch loop, its CSV record, the $25 daily cap, the review on 2026-12-09 |
 
 ## Incidents (bugs that came back; the test that now stops each)
 | File | Covers |
