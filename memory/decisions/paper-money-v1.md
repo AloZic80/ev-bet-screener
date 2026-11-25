@@ -34,7 +34,10 @@ Owner, 11/15: "Shadow Bets!! Hell yeah!! ... like Paper Money". Spec: `agent-not
   or a record is due. Both locks as /sync (headers only). No calls without a sync password or while the Worker is paused; the panel says
   "Saved on this device only: add your sync password in Settings to grade on your Worker".
 - Merging: a newer server seq wins for the grade fields; the local first sighting stays; records first seen on another device are added.
-- The device grades (paperGrade) only when the Worker cannot: no sync password, paused, or the last call failed.
+- The device grades (paperGrade) what the Worker does not hold: with no sync password, while paused or while GETs fail, everything; otherwise
+  the records never sent, still waiting to be sent, or refused by the Worker (round 4, F1, F3). A change is marked `wkDirty` (saved) until a POST
+  confirms it, and is sent again after a reload (F1). GET and POST back off apart (1 to 30 minutes), every call gives up after 20 seconds, a
+  malformed answer is a failure, and the read position is saved only with its records (F4–F7).
 - Records saved before round 3 are sent once (backfill) when the sync password exists.
 - A real bet placed live or at a pick'em book never marks a paper bet "bet for real" (log match or the board's ALREADY BET).
 
@@ -48,7 +51,7 @@ Owner, 11/15: "Shadow Bets!! Hell yeah!! ... like Paper Money". Spec: `agent-not
   "CLV: exchange cards only" (first price against the near-start price at the same book: the last price seen, not a true close).
 
 ## Tests
-`tests/v530-paper-test.js` (34 checks, round 2 D1–D5 included); `tests/v530-paper-sync-test.js` (22 checks, a fake Worker on the v3.51 contract).
+`tests/v530-paper-test.js` (34 checks, round 2 D1–D5 included); `tests/v530-paper-sync-test.js` (32 checks, a fake Worker on the v3.51 contract, round 4 F1–F7 included).
 
 ## Open for the owner
 - Until the Worker v3.51 is deployed (and with no sync password), paper records are per device and a cleared browser loses them.

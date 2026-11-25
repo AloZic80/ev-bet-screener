@@ -49,7 +49,7 @@ async function open(W, opts){ opts=opts||{};
     [opts.board===undefined?board(opts.now||NOW):opts.board, opts.log||[], opts.sync!==false, KEY, PASS, !!opts.paused]);
   const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
   await p.route('**/*',r=>{ const u=r.request().url(), Hd={'access-control-allow-origin':'*'}; if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html});
-    if(/api\.0xbeta\.dev\/paper/.test(u)){ const a=W.handle(r.request()); return r.fulfill({status:a.status, contentType:'application/json', headers:Hd, body:a.body}); }
+    if(/api\.0xbeta\.dev\/paper/.test(u)){ if(W.hook){ const h=W.hook(r.request()); if(h){ const uu=new URL(u); W.calls.push(r.request().method()+' '+uu.pathname+uu.search); } if(h==='hang') return; if(h) return r.fulfill({status:h.status, contentType:'application/json', headers:Hd, body:h.body}); } const a=W.handle(r.request()); return r.fulfill({status:a.status, contentType:'application/json', headers:Hd, body:a.body}); }
     if(/0xbeta/.test(u)) return r.fulfill({status:503, contentType:'application/json', headers:Hd, body:'{"ok":false,"code":"no_key"}'});
     if(opts.espn && /hockey\/nhl\/scoreboard/.test(u)) return r.fulfill({contentType:'application/json',headers:Hd,body:JSON.stringify(/dates=20261105/.test(u)?FX.scoreboard:{events:[]})});
     if(opts.espn && /hockey\/nhl\/summary/.test(u)) return r.fulfill({contentType:'application/json',headers:Hd,body:JSON.stringify(FX.summary)});
@@ -105,11 +105,11 @@ const reports=async p=>{ await p.evaluate(()=>document.querySelector('.tab[data-
   const rec=()=>({k:'NHL|pavel dorofeyev|sog|O|2.5|e401892653', pk:'NHL|pavel dorofeyev|sog|O|2.5|2026-11-06T00:00:00.000Z', v:1, policy:'paper-v1', at:'2026-11-05T22:00:00.000Z', snap:{at:'2026-11-05T22:00:00.000Z'}, sport:'NHL', kind:'prop', name:'Pavel Dorofeyev', team:'PHI', market:'2.5 Shots On Goal', side:'O', line:null, betnow:'O 2.5 -108', game:'PHI @ NYR', matchup:'PHI @ NYR', ev:'401892653', start:'2026-11-06T00:00:00.000Z', date:'2026-11-05', dateSet:true, book:'Novig', planMin:50, group:'coin', result:null,
     first:{t:Date.parse('2026-11-05T22:00:00Z'), at:'2026-11-05T22:00:00.000Z', price:0.52, fee:0, act:0.477, actNet:0.03, kelly:2, stake:2, limitZero:false}, near:null, stale:null, nsMiss:{}, obs:[]});
   const run6=async down=>{ const W4=fakeWorker(); W4.down=down; const o=await open(W4, {browser, now:Date.parse('2026-11-06T05:03:00Z'), board:null, espn:true});
-    const r=await o.p.evaluate(async(x)=>{ const S=ppS(); S.A.push(x); S.by.set(x.k,x); S.by.set(x.pk,x); await autoGradeLog(); await paperGrade(); document.querySelector('.tab[data-view="v-reports"]').click(); await new Promise(z=>setTimeout(z,300)); return {r:x.result, by:x.gradedBy||null, line:(document.getElementById('ppWk')||{}).textContent||''}; }, rec());
+    const r=await o.p.evaluate(async([x,held])=>{ if(held) x.wkSent=1; const S=ppS(); S.A.push(x); S.by.set(x.k,x); S.by.set(x.pk,x); await autoGradeLog(); await paperGrade(); document.querySelector('.tab[data-view="v-reports"]').click(); await new Promise(z=>setTimeout(z,300)); return {r:x.result, by:x.gradedBy||null, line:(document.getElementById('ppWk')||{}).textContent||''}; }, [rec(), !down]);
     await o.ctx.close(); return r; };
   const dn=await run6(true), up=await run6(false);
   check('Worker down (500): graded on this device from ESPN (Won, espn) and the line says the Worker could not take them', dn.r==='win' && dn.by==='espn' && /could not take the paper bets/.test(dn.line), dn);
-  check('Worker up: the device does not grade it (the Worker does)', up.r===null, up);
+  check('Worker up: the device does not grade a record the Worker holds (the Worker does)', up.r===null, up);
   // ---- 7. p9: a live or pick’em real bet never marks the paper bet "bet for real"; a pregame single does
   const bet=(id,o)=>Object.assign({id,key:id,kind:'prop',sport:'NHL',book:'Novig',name:'Golf Coin',market:'1.5 Shots On Goal',side:'O',odds:'+133',stake:2,game:'Tg @ Hg',start:iso(TIP),date:DAY,placedAt:iso(NOW-H),snap:{at:iso(NOW-H)}},o||{});
   const C7={same:[bet('a')], live:[bet('d',{placedAt:iso(TIP+600e3),snap:{at:iso(TIP+600e3)}})], pickem:[bet('f',{book:'PrizePicks'})]}, want={same:true, live:false, pickem:false}, got={};
@@ -127,6 +127,52 @@ const reports=async p=>{ await p.evaluate(()=>document.querySelector('.tab[data-
     const r=await o.p.evaluate(()=>({err:ppS().err, fails:ppS().saveFails, next:ppS().saveNext-Date.now()}));
     check('p4 every save refused: one plain line, retried with a backoff, no page errors', /could not save on this device \(QuotaExceededError\)/.test(r.err) && r.fails===1 && r.next>20e3 && !o.errs.length, {r, errs:o.errs.slice(0,3)});
     await o.ctx.close(); }
+  // ---- 9. round 4 (review F1–F7)
+  const addCard=(p,name,ch)=>p.evaluate(([n,c])=>{ const r=JSON.parse(JSON.stringify(lastRows.find(x=>x.name==='Golf Coin'))); r.name=n; r.team='T'+c; r.apiKey=c; r.game=r.matchup='T'+c+' @ H'+c; r.gameInfo.eventId='7'+c; r.loadedAt=new Date().toISOString(); lastRows.push(r); refresh(); }, [name,ch]);
+  const minutes=async(o,n)=>{ for(let i=0;i<n;i++){ await o.ctx.clock.fastForward(60e3); await o.p.evaluate(()=>{ try{ refresh(); }catch(e){} }); await o.p.waitForTimeout(40); } };
+  { // F1: a card whose POST failed is sent after a reload (wkDirty saved), and nobody else grades it meanwhile
+    const W8=fakeWorker(); const o=await open(W8, {browser}); W8.down=true; await o.ctx.clock.setSystemTime(new Date(NOW+10*60e3)); await addCard(o.p,'Juliet Coin','j'); await o.p.waitForTimeout(500);
+    const j1=await o.p.evaluate(()=>{ const x=ppS().A.find(o=>o.name==='Juliet Coin'); return {sent:!!x.wkSent, dirty:!!x.wkDirty}; });
+    W8.down=false; await o.ctx.clock.setSystemTime(new Date(NOW+40*60e3)); await o.p.reload(); await o.p.waitForTimeout(1800);
+    check('F1: a card first seen while the Worker was down (unsent, wkDirty saved) reaches the Worker after a reload', !j1.sent && j1.dirty && [...W8.recs.values()].some(r=>r.name==='Juliet Coin') && (await o.p.evaluate(()=>!ppS().A.find(o=>o.name==='Juliet Coin').wkDirty)), {j1, worker:W8.recs.size});
+    check('no page errors (F1)', !o.errs.length, o.errs); await o.ctx.close(); }
+  { // F2: loaded while the Worker is paused: once the pause ends, a new card is sent
+    const W9=fakeWorker(); const o=await open(W9, {browser, paused:true}); const s0=await o.p.evaluate(()=>ppWk().started);
+    await o.p.evaluate(()=>{ const w=wkState(); w.pause=Date.now()+5*60e3; wkSave(); }); await o.ctx.clock.fastForward(6*60e3); await addCard(o.p,'Kilo Coin','k'); await minutes(o, 5);
+    check('F2: a page loaded while paused starts after the pause and sends its cards (Kilo Coin and the first 3)', s0===false && [...W9.recs.values()].some(r=>r.name==='Kilo Coin') && W9.recs.size===4, {s0, worker:[...W9.recs.values()].map(r=>r.name)});
+    await o.ctx.close(); }
+  { // F3: a record the Worker refuses is graded on this device, and the line counts it
+    const W10=fakeWorker(); W10.hook=r=>{ if(r.method()!=='POST') return null; const list=JSON.parse(r.postData()).records; return {status:200, body:JSON.stringify({ok:true, seq:W10.seq, added:0, updated:0, same:0, rejected:list.map(x=>({k:x.k.slice(0,120), why:'first sighting in the future'}))})}; };
+    const o=await open(W10, {browser, now:Date.parse('2026-11-06T05:03:00Z'), board:null, espn:true});
+    const r=await o.p.evaluate(async(x)=>{ const S=ppS(); S.A.push(x); S.by.set(x.k,x); S.by.set(x.pk,x); ppDirty(x); await ppPush(); await paperGrade(); return {rej:x.wkRej||null, r:x.result, by:x.gradedBy||null, line:ppWkLine()}; }, rec());
+    check('F3: refused by the Worker → graded on this device (Won, espn) and the line says "1 refused by the Worker"', r.rej && r.r==='win' && r.by==='espn' && /1 refused by the Worker/.test(r.line), r);
+    await o.ctx.close(); }
+  { // F4: the first GET never answers: it gives up after 20 seconds, and within 30 minutes the Worker has the paper bets
+    const W11=fakeWorker(); let n=0; W11.hook=r=>(r.method()==='GET' && n++===0)?'hang':null; const o=await open(W11, {browser}); await reports(o.p); await minutes(o, 30);
+    check('F4: a stalled GET times out (20 s) and the paper bets reach the Worker within 30 minutes', W11.recs.size===3 && !(await o.p.evaluate(()=>ppWk().busyG)), {calls:W11.paper().slice(0,4), n:W11.recs.size});
+    await o.ctx.close(); }
+  { // F5 + F6: POST failing (GET fine) backs off on its own; malformed answers are failures with a backoff, no page error, bounded paging
+    const W12=fakeWorker(); const o=await open(W12, {browser}); W12.hook=r=>r.method()==='POST'?{status:507, body:'{"ok":false,"error":"store","code":"store"}'}:null; await reports(o.p);
+    await o.ctx.clock.setSystemTime(new Date(NOW+10*60e3)); await addCard(o.p,'Lima Coin','l'); const c0=W12.paper().length; await minutes(o, 30);
+    const C=W12.paper().slice(c0), posts=C.filter(c=>c.startsWith('POST')).length;
+    check('F5: POST failing while GET works: POSTs back off on their own (≤ 6 in 30 minutes, Reports open)', posts>=3 && posts<=6, {posts, gets:C.length-posts});
+    await o.ctx.close();
+    const W13=fakeWorker(); W13.hook=r=>r.method()==='GET'?{status:200, body:'{"ok":true,"seq":3,"more":true,"records":{}}'}:null; const q=await open(W13, {browser}); await reports(q.p); await minutes(q, 30);
+    const g13=W13.paper().filter(c=>c.startsWith('GET')).length, l13=await q.p.evaluate(()=>ppWkLine());
+    check('F6: records:{} is a failed GET: no page error, backed off (≤ 6 GETs in 30 min), the line says it could not be read, the device grades', !q.errs.length && g13<=6 && /could not be read/.test(l13) && (await q.p.evaluate(()=>!ppWkGrades())), {g13, l13, errs:q.errs.slice(0,2)});
+    await q.ctx.close();
+    const W14=fakeWorker(); W14.hook=r=>r.method()==='GET'?{status:200, body:'{"ok":true,"more":true,"records":[]}'}:null; const q2=await open(W14, {browser}); await reports(q2.p); await minutes(q2, 10);
+    const g14=W14.paper().filter(c=>c.startsWith('GET')).length;
+    check('F6: more:true with no seq stops paging (one GET a check, ≤ 5 in 10 minutes)', g14<=5 && !q2.errs.length, {g14});
+    await q2.ctx.close(); }
+  { // F7: the read position is saved only with its records: a device whose first saves failed reads them all again
+    const W15=fakeWorker(); let o=await open(W15, {browser}); await o.ctx.close();
+    o=await open(W15, {browser, board:null, pre:()=>{ if(!sessionStorage.getItem('idbok')) IDBObjectStore.prototype.put=function(){ throw new DOMException('full','QuotaExceededError'); }; }});
+    const v1=await o.p.evaluate(()=>({n:ppS().A.length, seq:JSON.parse(localStorage.getItem('mbev.paperWk')||'{}').seq||0}));
+    await o.p.evaluate(()=>sessionStorage.setItem('idbok','1')); await o.p.reload(); await o.p.waitForTimeout(1800);
+    const v2=await o.p.evaluate(()=>({n:ppS().A.length, seq:JSON.parse(localStorage.getItem('mbev.paperWk')||'{}').seq||0}));
+    check('F7: saves refused on the first visit: the position stays 0; after the storage recovers a reload brings the 3 records back', v1.n===3 && v1.seq===0 && v2.n===3 && v2.seq===3, {v1, v2});
+    check('no page errors (F7)', !o.errs.length, o.errs); await o.ctx.close(); }
   await browser.close();
   console.log(`\n${pass} passed, ${fail} failed · ${Math.round((Date.now()-t0)/1000)} s`); process.exit(fail?1:0);
 })();

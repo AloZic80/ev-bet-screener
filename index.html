@@ -9694,7 +9694,7 @@ function ppLoad(){ const S=ppS(); if(!ppOn()) return Promise.resolve(0);
   return ppOpen().then(db=>new Promise(res=>{ if(!db){ ppReady(); return res(0); }
     if(S.hung){ S.hung=false; if(/did not open in 5 seconds/.test(S.err)) S.err=''; S.A.forEach(o=>S.dirty.add(o.k)); }   // v5.30 (round 3, p4): it opened late: what was kept in memory is saved now
     let rq; try{ rq=db.transaction('paper','readonly').objectStore('paper').getAll(); }catch(e){ S.err='Paper money could not read its storage ('+e.name+').'; console.error('paper read', e); ppReady(); return res(0); }
-    rq.onsuccess=()=>{ (rq.result||[]).forEach(o=>{ if(!o || !o.k || S.by.has(o.k)) return; if(!o.pk) o.pk=ppPkOf(o.k, o.start); if(S.by.has(o.pk)) return; S.A.push(o); S.by.set(o.k,o); S.by.set(o.pk,o); });   /* v5.30 (round 2, D1): both keys */ ppReady(); ppFlush(); res(S.A.length); };   /* v5.30 (round 3, p4): + ppFlush for a late open */
+    rq.onsuccess=()=>{ (rq.result||[]).forEach(o=>{ if(!o || !o.k || S.by.has(o.k)) return; if(!o.pk) o.pk=ppPkOf(o.k, o.start); if(S.by.has(o.pk)) return; S.A.push(o); S.by.set(o.k,o); S.by.set(o.pk,o); });   /* v5.30 (round 2, D1): both keys */ if(!(rq.result||[]).length){ const W=ppWk(); if(W.seq>0 || W.seqSaved>0){ W.seq=0; W.seqSaved=0; ppWkSave(); } }   /* v5.30 (round 4, F7): an empty storage reads the Worker from the start */ ppReady(); ppFlush(); res(S.A.length); };   /* v5.30 (round 3, p4): + ppFlush for a late open */
     rq.onerror=()=>{ S.err='Paper money could not read its storage ('+((rq.error&&rq.error.name)||'error')+').'; console.error('paper read', rq.error); ppReady(); res(0); }; })); }
 function ppReady(){ const S=ppS(); if(S.ready) return; S.ready=true; S.q.splice(0).forEach(L=>L.forEach(ppApply)); ppFlush();
   setTimeout(async()=>{ try{ await ppWkStart(); }catch(e){ console.error('paper worker', e && e.message); } paperGrade().then(n=>{ if(n) ppRenderOpen(); }).catch(e=>console.error('paper grade', e)); ppRenderOpen(); }, 0); }   // v5.30 (round 3): one GET from the Worker at load and the backfill first; paperGrade is the fallback
@@ -9704,8 +9704,8 @@ function ppFlush(){ const S=ppS(); if(!S.dirty.size || !S.db || Date.now()<S.sav
       const msg='Paper money could not save on this device ('+((e&&e.name)||'error')+'): '+S.dirty.size+' paper bet'+(S.dirty.size===1?' is':'s are')+' kept in memory and tried again in '+Math.round((S.saveNext-Date.now())/60e3*10)/10+' min'+(ppWkOk()?' (they are also sent to your Worker)':'')+'.';
       if(S.err!==msg){ if(!/could not save/.test(S.err)) console.warn('paper save', (e&&e.name)||e); S.err=msg; ppRenderOpen(); } res(0); };   // v5.30 (round 3, p4): said once, not a stream of errors
     try{ const tx=S.db.transaction('paper','readwrite'), st=tx.objectStore('paper'); L.forEach(o=>{ const g=st.get(o.k); g.onsuccess=()=>{ try{ ppKeepSaved(o, g.result); st.put(JSON.parse(JSON.stringify(o))); }catch(e){ fail(e); try{ tx.abort(); }catch(e2){} } }; });   /* v5.30 (round 3, p4): a refused put is caught */   /* v5.30 (round 2, D3): read the saved copy in the same transaction; its frozen first sighting and its result win */
-      tx.oncomplete=()=>{ if(done) return; done=true; S.saved=Date.now(); S.saveFails=0; S.saveNext=0; if(/could not save/.test(S.err)) S.err=''; res(L.length); };   /* v5.30 (round 3, p4) */ tx.onerror=()=>fail(tx.error); tx.onabort=()=>fail(tx.error); }catch(e){ fail(e); } }); }
-function ppDirty(o){ const S=ppS(); S.dirty.add(o.k); S.up.add(o.k); }   // v5.30 (round 3): a change is saved here and sent to the Worker
+      tx.oncomplete=()=>{ if(done) return; done=true; S.saved=Date.now(); S.saveFails=0; S.saveNext=0; if(/could not save/.test(S.err)) S.err=''; if(S.wk) ppWkSeqCommit(); res(L.length); };   /* v5.30 (round 4, F7): + the Worker position once its records are saved */   /* v5.30 (round 3, p4) */ tx.onerror=()=>fail(tx.error); tx.onabort=()=>fail(tx.error); }catch(e){ fail(e); } }); }
+function ppDirty(o){ const S=ppS(); S.dirty.add(o.k); S.up.add(o.k); o.wkDirty=true; }   // v5.30 (round 4, F1): wkDirty is saved with the record until the Worker confirms it   // v5.30 (round 3): a change is saved here and sent to the Worker
 function ppDirtyLocal(o){ ppS().dirty.add(o.k); }   // v5.30 (round 3): saved here only (what came from the Worker)
 function ppKeepSaved(o, sv){ if(!sv || !sv.first) return;   // v5.30 (round 2, D3): another tab saved this outcome first: keep its frozen sighting, its result and its real-bet mark
   ['first','at','ver','dev','devName','tz','snap','group','planMin','planSince','book','why','modelOnly'].forEach(f=>{ if(sv[f]!==undefined) o[f]=sv[f]; });
@@ -9764,8 +9764,9 @@ function ppApply(x){ const S=ppS(); let o=S.by.get(x.k)||(x.pk&&S.by.get(x.pk)),
   if(inWin){ const d=Math.abs(rt-tgt); if(!o.nb || d<o.nb.d){ o.nb={d, t:rt, why:x.why||''};   // v5.30 (round 2, D2)
       if(x.why){ o.near=null; o.nsWhy=x.why; } else { o.near=Object.assign({}, x.snap, {t:rt, age:Math.round(left/60e3)}); delete o.nsWhy; } ch=true; } }   // v5.30 (round 2, D2): t = when read
   if(ch) ppDirty(o); return ch; }
-async function paperGrade(){ const S=ppS(); if(!S.ready || !ppOn() || ppWkGrades()) return 0; const now=Date.now(); let n=0;   // v5.30 (round 3): only when the Worker cannot grade (no sync password, unreachable or paused)
+async function paperGrade(){ const S=ppS(); if(!S.ready || !ppOn()) return 0; const now=Date.now(), wk=ppWkGrades(); let n=0;   // v5.30 (round 4, F1, F3): the Worker grades what it holds; the device grades the rest   // v5.30 (round 3): only when the Worker cannot grade (no sync password, unreachable or paused)
   for(const o of S.A){ try{
+    if(wk && ppWkHeld(o)) continue;   // v5.30 (round 4, F1, F3)
     if(o.result || !o.start || now<Date.parse(o.start)+5*3600e3 || now>Date.parse(o.start)+30*86400e3 || !ESPN_MAP[o.sport]) continue;
     const ev=await findBetGame(o); if(!ev) continue; const gi=gameStatusOf(ev); if(!gi || gi.state!=='post' || !evPlayed(ev)) continue;
     const gl=GL_KINDS.test(o.kind||''), box=gl?null:await fetchBoxscore(o.sport, gi.eventId, true), g=gl?gradeGameLine(o,ev):gradeBet(o, box);
@@ -9870,25 +9871,35 @@ function ppCsv(btn){ const S=ppS(), A=S.A.filter(o=>o && o.first), msg=document.
    or a log. Calls: one POST per board with changes (at most 300 records, under 2 MB), one GET at load (paged while more), one GET every 4+ minutes only while
    Reports is open or a paper bet is due; none while the Worker is paused (wkPaused) or with no sync password. The Worker's result is the grade (void =
    neither a win nor a loss); paperGrade on this device runs only when the Worker cannot grade. Records from before this version are sent once (backfill). */
-function ppWk(){ const S=ppS(); if(!S.wk){ let m=null; try{ m=JSON.parse(localStorage.getItem('mbev.paperWk')||'null'); }catch(e){} S.wk=Object.assign({seq:0, bf:''}, m||{}, {down:false, err:'', fails:0, nextPost:0, lastGet:0, lastPost:0, busyP:false, busyG:false}); } return S.wk; }
-function ppWkSave(){ const W=ppWk(); try{ localStorage.setItem('mbev.paperWk', JSON.stringify({seq:+W.seq||0, bf:W.bf||''})); }catch(e){} }   /* a position and a flag only: no key */
+function ppWk(){ const S=ppS(); if(!S.wk){ let m=null; try{ m=JSON.parse(localStorage.getItem('mbev.paperWk')||'null'); }catch(e){} m=m||{};
+    S.wk={seq:+m.seq||0, seqSaved:+m.seq||0, seqPend:null, bf:m.bf||'', started:false, busyP:false, busyG:false, lastGet:0, lastPost:0,
+      pFails:0, pNext:0, pDown:false, pErr:'', gFails:0, gNext:0, gDown:false, gErr:''}; }   // v5.30 (round 4, F5): GET and POST have their own failures and backoffs
+  return S.wk; }
+function ppWkSave(){ const W=ppWk(); try{ localStorage.setItem('mbev.paperWk', JSON.stringify({seq:+W.seqSaved||0, bf:W.bf||''})); }catch(e){} }   /* a position and a flag only: no key */   /* v5.30 (round 4, F7): the position saved is the one whose records are saved */
+function ppWkSeqCommit(){ const S=ppS(), W=ppWk(); if(W.seqPend==null || S.dirty.size || !S.db) return; W.seqSaved=W.seqPend; W.seqPend=null; ppWkSave(); }   // v5.30 (round 4, F7): only once the records it covers are in IndexedDB
 function ppWkPw(){ return typeof SY!=='undefined' && !!SY && !!SY.on && !!SY.key; }
 function ppWkOk(){ let paused=false, base=''; try{ paused=wkPaused(); base=API_BASE; }catch(e){ return false; } return ppOn() && ppWkPw() && typeof base==='string' && !!base && !paused; }
-function ppWkGrades(){ return ppWkOk() && !ppWk().down; }
-function ppWkGood(){ const W=ppWk(); W.fails=0; W.down=false; W.err=''; W.nextPost=0; }
-function ppWkFail(status, j){ const W=ppWk(); W.fails++; W.nextPost=Date.now()+Math.min(30*60e3, 60e3*Math.pow(2, W.fails-1)); W.down=true;
-  let t=''; try{ t=syncErrText(status?{status, j}:{err:'can’t reach the Worker (offline?)'}); }catch(e){ t='the Worker answered '+status; } if(status===404) t='this Worker has no paper store yet (deploy v3.51)'; W.err=t; ppRenderOpen(); }
-function ppWkForm(o){ const x={}; Object.keys(o).forEach(f=>{ if(f!=='wkSeq' && f!=='wkSent' && f!=='wkRej' && f!=='fromWk' && o[f]!==undefined) x[f]=o[f]; }); return x; }
-async function ppPush(){ const S=ppS(), W=ppWk(); if(!S.ready || !W.started || !S.up.size || W.busyP || !ppWkOk() || Date.now()<W.nextPost) return 0;   /* after the load GET (started) */
+function ppWkGrades(){ return ppWkOk() && !ppWk().gDown; }   /* v5.30 (round 4, F1): the Worker grades what it holds while its answers come back */
+function ppWkHeld(o){ return !!(o && o.wkSent && !o.wkRej); }   // v5.30 (round 4, F1, F3): the Worker has this record (sent and not refused)
+function ppWkFail(kind, status, j){ const W=ppWk(), P=kind==='post'?'p':'g'; W[P+'Fails']++; W[P+'Next']=Date.now()+Math.min(30*60e3, 60e3*Math.pow(2, W[P+'Fails']-1)); W[P+'Down']=true;   // v5.30 (round 4, F5): 1, 2, 4 … 30 minutes, per kind
+  let t=''; try{ t=syncErrText(status?{status, j}:{err:'can’t reach the Worker (offline?)'}); }catch(e){ t='the Worker answered '+status; } if(status===404) t='this Worker has no paper store yet (deploy v3.51)'; if(status===-1) t='the Worker’s answer could not be read';
+  try{ [typeof SY!=='undefined'&&SY&&SY.key, localStorage.getItem('mbev.pass')].forEach(x=>{ if(x && String(x).length>=4) t=String(t).split(String(x)).join('•••'); }); }catch(e){}   // v5.30 (round 4): a Worker message never shows the passphrase or the key
+  W[P+'Err']=String(t).slice(0,160); ppRenderOpen(); }
+function ppWkGood(kind){ const W=ppWk(), P=kind==='post'?'p':'g'; W[P+'Fails']=0; W[P+'Down']=false; W[P+'Err']=''; W[P+'Next']=0; }
+function ppWkForm(o){ const x={}; Object.keys(o).forEach(f=>{ if(f!=='wkSeq' && f!=='wkSent' && f!=='wkRej' && f!=='wkDirty' && f!=='fromWk' && o[f]!==undefined) x[f]=o[f]; }); return x; }
+async function ppFetch(url, init){ const c=new AbortController(), t=setTimeout(()=>{ try{ c.abort(); }catch(e){} }, 20000);   // v5.30 (round 4, F4): no call waits more than 20 seconds
+  try{ return await fetch(url, Object.assign({}, init, {signal:c.signal})); } finally{ clearTimeout(t); } }
+async function ppPush(){ const S=ppS(), W=ppWk(); if(!S.ready || !W.started || !S.up.size || W.busyP || !ppWkOk() || Date.now()<W.pNext) return 0;   /* after the load GET (started) */
   const list=[]; let size=0;
   for(const k of [...S.up]){ const o=S.by.get(k); if(!o || !o.first){ S.up.delete(k); continue; } const t=JSON.stringify(ppWkForm(o));
-    if(t.length>32*1024){ S.up.delete(k); o.wkRej='record too big'; continue; } if(list.length>=300 || size+t.length>1900000) break; list.push([k,t]); size+=t.length+1; }
+    if(t.length>32*1024){ S.up.delete(k); o.wkRej='record too big'; delete o.wkDirty; ppDirtyLocal(o); continue; } if(list.length>=300 || size+t.length>1900000) break; list.push([k,t]); size+=t.length+1; }
   if(!list.length) return 0; W.busyP=true;
-  try{ let res; try{ res=await fetch(API_BASE+'/paper', {method:'POST', headers:syncHeaders({'Content-Type':'application/json'}), body:'{"records":['+list.map(x=>x[1]).join(',')+']}', cache:'no-store'}); }catch(e){ ppWkFail(0); return 0; }
-    let j=null; try{ j=await res.json(); }catch(e){} if(!res.ok || !j || !j.ok){ ppWkFail(res.status, j); return 0; }
-    ppWkGood(); const rej=new Map((j.rejected||[]).map(x=>[String(x.k||''), String(x.why||'refused')]));
-    list.forEach(([k,t])=>{ const o=S.by.get(k); if(!o) return; if(JSON.stringify(ppWkForm(o))===t) S.up.delete(k);   /* changed while it was on its way: sent again next time */
-      const why=rej.get(k.slice(0,120)); if(why){ o.wkRej=why; S.up.delete(k); } else { o.wkSent=+j.seq||1; delete o.wkRej; } ppDirtyLocal(o); });
+  try{ let res; try{ res=await ppFetch(API_BASE+'/paper', {method:'POST', headers:syncHeaders({'Content-Type':'application/json'}), body:'{"records":['+list.map(x=>x[1]).join(',')+']}', cache:'no-store'}); }catch(e){ ppWkFail('post', 0); return 0; }
+    let j=null; try{ j=await res.json(); }catch(e){}
+    if(!res.ok || !j || !j.ok || !Array.isArray(j.rejected)){ ppWkFail('post', res.ok?-1:res.status, j); return 0; }   // v5.30 (round 4, F6): a malformed answer is a failure
+    ppWkGood('post'); const rej=new Map(j.rejected.map(x=>[String((x&&x.k)||''), String((x&&x.why)||'refused')]));
+    list.forEach(([k,t])=>{ const o=S.by.get(k); if(!o) return; const same=JSON.stringify(ppWkForm(o))===t; if(same) S.up.delete(k);   /* changed while it was on its way: sent again next time */
+      const why=rej.get(k.slice(0,120)); if(why){ o.wkRej=why; S.up.delete(k); delete o.wkDirty; } else { o.wkSent=+j.seq||1; delete o.wkRej; if(same) delete o.wkDirty; } ppDirtyLocal(o); });   // v5.30 (round 4, F1): wkDirty cleared only when the Worker has this version
     W.lastPost=Date.now(); if(!S.up.size && W.bf==='queued'){ W.bf='done'; ppWkSave(); } ppFlush(); ppRenderOpen(); return list.length; }
   finally{ W.busyP=false; } }
 function ppMergeWk(r){ if(!r || typeof r!=='object' || !r.k || !r.first) return false; const S=ppS(), sq=+r.seq||0; let o=S.by.get(r.k)||(r.pk && S.by.get(r.pk));
@@ -9900,28 +9911,33 @@ function ppMergeWk(r){ if(!r || typeof r!=='object' || !r.k || !r.first) return 
   else { if(r.gradeWhy!==undefined) o.gradeWhy=r.gradeWhy; if(r.parked) o.parked=true; }
   if(!o.near && r.near) o.near=r.near; if(!o.stale && r.stale) o.stale=r.stale; if(!o.real && r.real) o.real=r.real; if(!o.realSeen && r.realSeen) o.realSeen=r.realSeen;
   ppDirtyLocal(o); return true; }
-async function ppPull(){ const S=ppS(), W=ppWk(); if(!S.ready || W.busyG || !ppWkOk()) return 0; W.busyG=true; let n=0;
-  try{ for(let page=0; page<40; page++){ let res; try{ res=await fetch(API_BASE+'/paper?since='+(+W.seq||0)+'&limit=500', {headers:syncHeaders(), cache:'no-store'}); }catch(e){ ppWkFail(0); break; }
-      let j=null; try{ j=await res.json(); }catch(e){} if(!res.ok || !j || !j.ok){ ppWkFail(res.status, j); break; }
-      ppWkGood(); (j.records||[]).forEach(r=>{ if(ppMergeWk(r)) n++; }); if(j.seq!=null) W.seq=+j.seq; ppWkSave(); W.lastGet=Date.now(); if(!j.more) break; } }
+async function ppPull(){ const S=ppS(), W=ppWk(); if(!S.ready || W.busyG || !ppWkOk() || Date.now()<W.gNext) return 0; W.busyG=true; let n=0, ok=false;
+  try{ for(let page=0; page<40; page++){ const since=+W.seq||0; let res; try{ res=await ppFetch(API_BASE+'/paper?since='+since+'&limit=500', {headers:syncHeaders(), cache:'no-store'}); }catch(e){ ppWkFail('get', 0); break; }
+      let j=null; try{ j=await res.json(); }catch(e){}
+      if(!res.ok || !j || !j.ok || !Array.isArray(j.records)){ ppWkFail('get', res.ok?-1:res.status, j); break; }   // v5.30 (round 4, F6): records must be a list
+      ppWkGood('get'); ok=true; j.records.forEach(r=>{ if(ppMergeWk(r)) n++; });
+      const sq=typeof j.seq==='number' && isFinite(j.seq) ? j.seq : null; if(sq!=null && sq>since){ W.seq=sq; W.seqPend=sq; }
+      W.lastGet=Date.now(); if(!j.more || sq==null || sq<=since) break; } }   // v5.30 (round 4, F6): page on only while the position moves forward
   finally{ W.busyG=false; }
-  if(n) ppFlush(); ppRenderOpen(); return n; }
-async function ppWkStart(){ const S=ppS(), W=ppWk(); if(!S.ready || !ppWkOk()) return 0; await ppPull(); W.started=true;
-  if(W.bf!=='done' && !W.down){ S.A.forEach(o=>{ if(o.first && !o.wkSent && !o.wkRej) S.up.add(o.k); }); W.bf=S.up.size?'queued':'done'; ppWkSave(); }
+  if(n) await ppFlush(); ppWkSeqCommit(); ppRenderOpen(); return ok?n:-1; }   /* v5.30 (round 4, F7): the position is saved after the records */
+async function ppWkStart(){ const S=ppS(), W=ppWk(); if(!S.ready || !ppWkOk() || W.busyG || W.busyP) return 0; const r=await ppPull(); if(r<0) return 0; W.started=true;   // v5.30 (round 4, F2, F5): started only after a GET that worked
+  S.A.forEach(o=>{ if(o.first && (!o.wkSent || o.wkDirty) && !o.wkRej) S.up.add(o.k); });   // v5.30 (round 4, F1): never sent, or changed since the Worker last took it (saved per record)
+  if(W.bf!=='done'){ W.bf=S.up.size?'queued':'done'; ppWkSave(); }
   return ppPush(); }
 function ppWkTick(){ const S=ppS(), W=ppWk(); if(!S.ready || !ppWkOk()) return; const now=Date.now();
-  if(W.bf!=='done'){ if(!W.busyP && !W.busyG && now>=W.nextPost) ppWkStart(); return; }
-  if(S.up.size && now>=W.nextPost) ppPush();
-  const open=!!(document.body && document.body.dataset.view==='v-reports'), due=S.A.some(o=>{ const t=Date.parse(o.start||''); return !o.result && !o.parked && now>t+5*3600e3 && now<t+30*86400e3; });
-  if((open || due) && now-(W.lastGet||0)>=4*60e3 && (!W.down || now>=W.nextPost)) ppPull(); }
+  if(!W.started){ if(!W.busyG && !W.busyP && now>=W.gNext) ppWkStart(); return; }   // v5.30 (round 4, F2): a load while paused or offline starts later
+  if(S.up.size && now>=W.pNext) ppPush();   // v5.30 (round 4, F5): the backfill and every retry go through ppPush and its own backoff
+  const open=!!(document.body && document.body.dataset.view==='v-reports'), due=S.A.some(o=>{ const t=Date.parse(o.start||''); return ppWkHeld(o) && !o.result && !o.parked && now>t+5*3600e3 && now<t+30*86400e3; });
+  if((open || due) && now-(W.lastGet||0)>=4*60e3 && now>=W.gNext) ppPull(); }
 function ppWkLine(){ const S=ppS(), W=ppWk(); let paused=false; try{ paused=wkPaused(); }catch(e){}
   if(!ppWkPw()) return 'Saved on this device only: add your sync password in Settings to grade on your Worker.';
   if(paused) return 'Your Worker is paused for a few minutes (too many calls): nothing is sent now, and paper bets are graded on this device meanwhile.';
-  if(W.down) return 'Your Worker could not take the paper bets ('+W.err+'): they are graded on this device for now and sent again later.';
-  const A=S.A.filter(o=>o && o.first), by=A.filter(o=>o.gradedBy==='worker-espn').length, wait=A.filter(o=>!o.result && !o.parked).length, pk=A.filter(o=>o.parked && !o.result), R={};
+  const A=S.A.filter(o=>o && o.first), rj=A.filter(o=>o.wkRej).length, rjT=rj?' · '+rj+' refused by the Worker (graded on this device)':'';   // v5.30 (round 4, F3)
+  if(W.gDown || W.pDown) return 'Your Worker could not take the paper bets ('+(W.gErr||W.pErr)+'): '+(W.gDown?'they are graded on this device for now':'the ones it does not have yet are graded on this device')+' and sent again later.'+rjT;
+  const by=A.filter(o=>o.gradedBy==='worker-espn').length, wait=A.filter(o=>!o.result && !o.parked).length, pk=A.filter(o=>o.parked && !o.result), R={};
   pk.forEach(o=>{ const w=String(o.gradeWhy||'no reason given'); R[w]=(R[w]||0)+1; });
   const t=W.lastGet?new Date(W.lastGet).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:'America/Chicago'}):'not yet';
-  return 'Graded by your Worker: '+by+' · waiting: '+wait+' · parked: '+pk.length+(pk.length?' ('+Object.keys(R).map(k=>k+' '+R[k]).join('; ')+')':'')+' · last check '+t+(S.up.size?' · '+S.up.size+' to send':''); }
+  return 'Graded by your Worker: '+by+' · waiting: '+wait+' · parked: '+pk.length+(pk.length?' ('+Object.keys(R).map(k=>k+' '+R[k]).join('; ')+')':'')+' · last check '+t+(S.up.size?' · '+S.up.size+' to send':'')+rjT; }
 setInterval(()=>{ try{ ppWkTick(); }catch(e){} }, 60e3);   // v5.30 (round 3): the Worker check, at most one GET every 4 minutes and only when it is needed
 setTimeout(()=>{ try{ ppLoad(); }catch(e){ console.error('paper load', e); } }, 0);   // v5.30: the paper record opens once the page has started (a board drawn before that waits in ppS().q)
 /* ============ calibration (v2.48) ============ */
