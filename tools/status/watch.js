@@ -9,6 +9,7 @@ function tick(){ let t=''; try{ t=fs.readFileSync(OUT,'utf8'); }catch(e){ return
   const j=JSON.parse(fs.readFileSync(F,'utf8')), it=(j.items||[]).find(x=>/El Juez/.test(x.name)); if(!it) return;
   it.done=done; it.total=TOTAL; it.state=pass?'done':(fail?'failed':'working'); it.note=pass?'All tests passed':(fail?fail+' failed: see the chat':'0 failed so far'); j.updated=ct(); j.headline=pass?'El Juez: all tests passed':(fail?'A test failed':'El Juez running');
   fs.writeFileSync(F,JSON.stringify(j,null,2)+'\n');
-  if(pass||fail!==lastFail||done-lastPushed>=15){ try{ sh('git add status/status.json && git commit -q -m "status: tests '+done+'/'+TOTAL+'" -- status/status.json && git push -q origin HEAD'); lastPushed=done; lastFail=fail; }catch(e){ /* a lock or a busy push: next tick tries again */ } }
+  if(pass||fail!==lastFail||done-lastPushed>=15){ try{ try{ cp.execSync('node tools/menubar/render.js',{cwd:ROOT,stdio:'pipe',timeout:90000}); }catch(e){}   /* the card picture and the menu-bar title, for the Mac plugin */
+      sh('git add status && git commit -q -m "status: tests '+done+'/'+TOTAL+'" -- status && git push -q origin HEAD'); lastPushed=done; lastFail=fail; }catch(e){ /* a lock or a busy push: next tick tries again */ } }
   if(pass) process.exit(0); }
 tick(); setInterval(tick,30000);
