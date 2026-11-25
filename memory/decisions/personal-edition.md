@@ -12,6 +12,7 @@ separate build that leaves them out (and gets its own legal review, CLAUDE.md "T
 | Scout now, Schedule, Auto Sentinels, Alerts | v5.18 | his feeds' quotas and his routine |
 | 🤝 El Compa, the AI companion chat (job compa; asks before any action that spends feed calls) | v5.19 (Worker v3.47) | talks with him about his own board, log, plan and schedule; runs his own scouts; his Anthropic key and credit |
 | 🤖 Jarvis: pop-ups of each new approved bet by his weekly plan (`mbev.jarvis`), near-misses after an AI news check, sound and notifications, the AI spend line | v5.27 | his routine (lunch, breaks, weekends), his feeds' quotas and his Anthropic credit; God view only, never in Easy or a customer build (`DEV_APP` false) |
+| 📝 Paper money: approved cards under his plan minimum recorded at $1 and graded (Reports, `mbev-paper` IndexedDB) | v5.30 | his own plan and his band study; recording only, God view only, never in Easy |
 
 ## The paid version (owner, 2026-11-16)
 "THe one we will charge, will be lighter. by then we will use/pay for 1 API only. Unless they get there own. But, we can figure that out later."
