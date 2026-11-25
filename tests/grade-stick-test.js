@@ -9,7 +9,7 @@ const SAQ={id:'sq1',key:'sq1',sport:'NFL',kind:'prop',book:'Novig',odds:'+120',s
 (async()=>{
   const b=await chromium.launch(); const ctx=await b.newContext({timezoneId:'America/Chicago', viewport:{width:1400,height:1000}});
   await ctx.addInitScript(L=>{ try{ if(sessionStorage.getItem('s')) return; sessionStorage.setItem('s','1'); localStorage.clear(); localStorage.setItem('mbev.log',JSON.stringify(L)); }catch(e){} }, [SAQ]);
-  const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
+  const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message)); p.on('dialog',d=>d.accept());   // v5.31: a delete now asks twice (two confirm boxes): the test answers OK to both
   await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1200); await p.click('.tab[data-view="v-log"]'); await p.waitForTimeout(300);
   const look=()=>p.evaluate(()=>({n:document.querySelectorAll('#lookOut .lo-row').length, r:logged.map(x=>x.id+':'+(x.result||'-')).join(' ')}));
