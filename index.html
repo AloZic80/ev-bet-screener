@@ -11382,6 +11382,7 @@ async function srcFetch(q){
   return {data:await res.json(), quota, cached, at};
 }
 function finishSrcLoad(srcKey, rows, skip, extra){
+  try{ apiSkipNote(srcKey, rows.length, skip); }catch(e){}   // v5.31: remember what each load paid for but did not use
   mergeRows(srcKey, rows); if(boardSrc!=='api') showBoardSrc('api');
   document.getElementById('savedNote').textContent='';
   const c=cfgRead(); render(audit(lastRows,c),c); save(); autoSaveBoard();
@@ -11421,6 +11422,7 @@ async function loadOddsSrc(id){
         all=all.concat(r.rows); games+=r.games; Object.entries(r.skip).forEach(([k,v])=>skip[k]=(skip[k]||0)+v); notice=r.notice||notice; cursor=r.next;
         if(!cursor) break;
       }
+      if(!cachedAll) sgoCount(games);   // v5.31: SportsGameOdds games used this month (the free plan counts games)
       finishSrcLoad('api:sgo:'+sp, all, skip, games+' games'+(cachedAll?' · saved answer, nothing counted':'')+(notice?' · their note: '+notice:''));
     }
   }catch(e){ if(msg) msg.textContent='✗ '+e.message; }
@@ -11785,6 +11787,21 @@ function crAgo(t){ if(!(t>0)) return ''; const m=Math.round((Date.now()-t)/60e3)
 function orderDiag(){ const O=((myOrders&&myOrders.orders)||[]).filter(o=>o && o.action!=='sell'), seen=new Set(); let mo=0;
   (lastRows||[]).forEach(r=>{ const o=r.waitOrder; if(o && O.indexOf(o)>=0 && !seen.has(o)){ seen.add(o); if(r.noMkt) mo++; } });
   return {open:O.length, matched:seen.size, modelOnly:mo, unmatched:O.length-seen.size}; }
+/* v5.31 (owner: "build all 3"): API use. Counts and reads only; it never calls a provider and never changes a decision. */
+const SGO_MONTH=2500;
+function sgoUse(){ const m=todayCT().slice(0,7); let n=0; try{ const q=JSON.parse(localStorage.getItem('mbev.sgoq')||'null'); if(q && q.month===m) n=+q.games||0; }catch(e){} return {n:n, left:Math.max(0,SGO_MONTH-n), month:m}; }
+function sgoCount(g){ const u=sgoUse(); try{ localStorage.setItem('mbev.sgoq', JSON.stringify({month:u.month, games:u.n+(+g||0)})); }catch(e){} }
+function apiSkipNote(srcKey, kept, skip){ const id=String(srcKey).split(':')[1]||String(srcKey); let o={}; try{ o=JSON.parse(localStorage.getItem('mbev.skipq')||'{}')||{}; }catch(e){} o[id]={at:Date.now(), kept:kept, skip:skip||{}}; try{ localStorage.setItem('mbev.skipq', JSON.stringify(o)); }catch(e){} }
+function apiUnused(){ let o={}; try{ o=JSON.parse(localStorage.getItem('mbev.skipq')||'{}')||{}; }catch(e){} const nm={sgo:'SportsGameOdds',oddsapi:'The Odds API',sbapi:'Sportsbook API'};
+  return Object.entries(o).map(([id,v])=>{ const top=Object.entries(v.skip||{}).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,n])=>n+' '+k).join(' · '); return (nm[id]||id)+', '+crAgo(v.at)+': '+v.kept+' kept'+(top?'; left out: '+top:''); }); }
+function apiSpare(){ const out=[], B=(typeof lastBudget!=='undefined'&&lastBudget)||null, bl=B?(B.limit||50)-(B.used||0):window._bpLeft;
+  if(bl>0) out.push('BettingPros: '+bl+' calls left; load another sport or league on the board bar.');
+  const g=sgoUse(), dm=new Date(); const dl=Math.max(1,new Date(dm.getFullYear(),dm.getMonth()+1,0).getDate()-+todayCT().slice(8,10)+1);
+  if(((srcInfo||[]).find(x=>x.id==='sgo')||{}).key && g.left>0) out.push('SportsGameOdds: '+g.left+' games left this month, about '+Math.floor(g.left/dl)+' a day; pick a league in Sources and press Load.');
+  const ou=window._opUsage; if(ou && ou.limit && ou.left>0) out.push('OddsPapi: '+ou.left+' calls left this month'+(ou.per_day?', about '+ou.per_day+' a day':'')+'; one call loads one NFL game.');
+  let oq=null; try{ oq=JSON.parse(localStorage.getItem('mbev.oaq')||'null'); }catch(e){} if(oq && oq.left>0) out.push('The Odds API: '+oq.left.toLocaleString()+' credits left; each market in each league costs credits (exchanges cost double).');
+  let sq=null; try{ sq=JSON.parse(localStorage.getItem('mbev.sbq')||'null'); }catch(e){} if(sq && sq.day===todayCT() && sq.left>0) out.push('Sportsbook API: '+sq.left+' loads left today; one call per load.');
+  return out; }
 function crPaint(){ const el=document.getElementById('crGrid'); if(!el) return; const J=k=>{ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } };
   const card=(name,big,sub,lines,lvl)=>'<div class="cr-card'+(lvl?' '+lvl:'')+'"><h3>'+esc(name)+'</h3><div class="cr-big">'+esc(big)+'</div><div class="meta">'+esc(sub)+'</div>'+(lines&&lines.length?'<ul class="cr-lines">'+lines.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+'</div>';
   const keyOf=id=>{ const x=(srcInfo||[]).find(s=>s.id===id); return x?(x.key?'key set':'no key yet'):'not checked'; };
@@ -11796,7 +11813,9 @@ function crPaint(){ const el=document.getElementById('crGrid'); if(!el) return; 
     card('Sportsbook API', sq&&sq.left!=null&&sq.day===todayCT()?sq.left+' left':'?', sq&&sq.day===todayCT()?'of '+(sq.limit||150)+' today':'shows after your first load today', [keyOf('sbapi')], '')+
     card('OddsPapi', ou&&ou.limit?ou.left+' left':'?', ou&&ou.limit?'of '+ou.limit+' this month':'press Refresh', ou&&ou.error?[String(ou.error)]:[], ou&&ou.limit&&ou.left<25?'low':'')+
     card('Pinnacle live (pinnapi)', (LE_PINN_DAY-lp.n)+' left', 'of '+LE_PINN_DAY+' Scan presses today on this device', ['trial: 100 requests a day in all'], LE_PINN_DAY-lp.n<=5?'low':'')+
-    card('SportsGameOdds', keyOf('sgo'), '2,500 games a month on the free plan', [], '')+
+    (()=>{ const g=sgoUse(); return card('SportsGameOdds', g.left+' left', 'of '+SGO_MONTH+' games this month, counted on this device ('+g.n+' used) · resets on the 1st', [keyOf('sgo')], g.left<=100?(g.left<=0?'out':'low'):''); })()+   /* v5.31 */
+    (()=>{ const L=apiSpare(); return card('Spare calls (not used yet)', L.length+' source'+(L.length===1?'':'s'), 'what is left to spend today or this month; nothing runs by itself', L.length?L:['nothing spare right now: press Refresh first'], ''); })()+   /* v5.31 */
+    (()=>{ const L=apiUnused(); return card('Paid for, not used', L.length?L.length+' source'+(L.length===1?'':'s'):'none yet', 'bets the last load of each source received but left out, with the reason', L.length?L:['load a source, then Refresh'], ''); })()+   /* v5.31 */
     (()=>{ const d=orderDiag(); return card('Open orders (measured only)', d.open+' open', d.matched+' matched to a board row, of them '+d.modelOnly+' model-only · '+d.unmatched+' unmatched', ['not counted against the model-only limit yet', 'unmatched: classification unknown'], ''); })()+   /* v4.56 */
     card('Your Worker (Cloudflare)', w.n.toLocaleString()+' calls', 'today from this device · the free plan allows 100,000 a day (about 2 per call with the passphrase header)', (w.pause>Date.now()?['background checks paused until '+new Date(w.pause).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})]:[]).concat(top), w.n>=50000?'out':w.n>=30000?'low':'');
 }
