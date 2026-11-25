@@ -90,6 +90,9 @@
   start time, or typed with a chosen date) and is graded against it even when saved after kickoff. Board bets and exchange
   fills can't name their game, so they keep the rule: a game that started more than 4 hours before the bet was saved is ignored.
 - No new external dependencies, CDNs or build tools.
+- **Briefs for helper agents** (owner, 2026-11-25, from the prompting framework he shared): four parts: the job (the goal, not the steps), the why (who it is for, with the real numbers),
+  the guardrails (the few limits that matter, each with its reason, in calm words), and done means (three to five checks it can run, pass or fail). Builders at medium effort,
+  reviewers and the final check at high. Start each task with a one-line model and effort tip for the owner.
 - **Save tokens** (owner, 2026-11-15: "save tokens with what we are doing"; "LETS CHOOSE SONNET instead of Haiku"): helper agents that read, list,
   measure or run tests use `model: 'sonnet'`; Opus only for the math, money, grading and the final review. Fewest agents that do the job (one skeptic
   where two add little); read files in parts (grep, offset/limit), never `index.html` whole; check with the tests before sending another reviewer.
@@ -114,7 +117,7 @@
 | Need | Read |
 |---|---|
 | The current rule for something (formula, version, tests) | `memory/index.md`, then the one file it points to |
-| How to change the math, the grading or matching, or how to release | the skill: `.claude/skills/betting-math`, `grading-and-matching`, `release-and-tests` |
+| How to change the math, the grading or matching, or how to release | the skill: `.claude/skills/betting-math`, `grading-and-matching`, `release-and-tests`; a Worker AI job or its answer form: `worker-ai-jobs` |
 | Why a function is the way it is, version by version | `memory/history.md` (search by function name; do not read it whole) |
 | The written math policy | `docs/EV-CALCULATOR.md` |
 | Bugs that came back and the test that stops each | `memory/incidents/recurring-bugs.md` |
