@@ -25,7 +25,7 @@ const L=require('./v527-jarvis-lib.js'); const {chromium,check,open,ev,safe,pop,
     // over the limit: no prefilled slip, data cleared, the reason shown
     quote.price=Math.min(0.99, lim+0.03);
     await ev(X.p,()=>{ document.querySelector('#jvPop .jv-open').click(); }); await X.p.waitForTimeout(500);
-    const T2=await ev(X.p,()=>({note:(document.querySelector('#jvPop .pp-open')||{}).textContent, has:document.getElementById('jvPop').hasAttribute('data-prefill')}));
+    const T2=await ev(X.p,()=>({note:(document.querySelector('#jvPop .jv-msg')||{}).textContent, has:document.getElementById('jvPop').hasAttribute('data-prefill')}));
     check('price above OK up to: "slip not opened" is shown and data-prefill is cleared', /slip not opened/.test(T2.note||'') && T2.has===false, T2);
   });
   await safe('clear on close and on failure', async()=>{

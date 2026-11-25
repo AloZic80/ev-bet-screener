@@ -14940,7 +14940,8 @@ document.addEventListener('click', async e=>{
     // v3.05: a book price far from the card's price means the book matched a different bet (a half, the other side of
     // the spread) — open the book's home page instead of a prefilled slip, and say why on the card
     const p0=obj.odds!=null?toProb(String(obj.odds).trim().replace(/^(\d)/,'+$1')):null;
-    if(over){ const note=host.querySelector('.pp-open'); if(note){ note.textContent='⚠ '+(BOOK_NAME[src]||'book')+' price is now '+(q.price*100).toFixed(1)+'%, above your limit '+(lim0*100).toFixed(1)+'%: slip not opened'; note.style.color='var(--out)'; }
+    if(over){ const ow='⚠ '+(BOOK_NAME[src]||'book')+' price is now '+(q.price*100).toFixed(1)+'%, above your limit '+(lim0*100).toFixed(1)+'%: slip not opened', jm=host.closest('#jvPop')?host.closest('#jvPop').querySelector('.jv-msg'):null;   /* v5.31: in the pop-up the words go in its own message line, never over the button */
+      if(jm){ jm.textContent=ow; jm.style.color='var(--out)'; } else { const note=host.querySelector('.pp-open'); if(note){ note.textContent=ow; note.style.color='var(--out)'; } }
       url=BOOK_HOME[src]; jvClearPrefill(); }
     else if(q && q.ok && p0!=null && Math.abs(q.price-p0)>SLIP_GUARD){
       const note=host.querySelector('.pp-open'); if(note){ note.textContent='⚠ '+(BOOK_NAME[src]||'book')+' slip is '+(q.price*100).toFixed(1)+'%, the card says '+(p0*100).toFixed(1)+'% — not prefilled, check the market'; note.style.color='var(--out)'; }
