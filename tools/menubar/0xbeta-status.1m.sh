@@ -17,19 +17,19 @@ def frac(i):
     t = float(i.get("total") or 0)
     if t > 0: return max(0.0, min(1.0, float(i.get("done") or 0) / t))
     return 1.0 if i.get("state") == "done" else 0.0
-def col(i): return {"done": "#2e9e5b", "failed": "#d64545", "working": "#6f7cf0"}.get(i.get("state"), "#999999")
+def col(i): return {"done": "#12663a,#5fd38d", "failed": "#b71c1c,#ff8a8a", "working": "#2330b8,#aab2ff"}.get(i.get("state"), "#444444,#c4c4c4")   # light-mode colour, dark-mode colour
 run = next((i for i in items if i.get("state") == "working" and float(i.get("total") or 0) > 0), None)
 bad = any(i.get("state") == "failed" for i in items); alldone = bool(items) and all(i.get("state") == "done" for i in items)
 print(("⚠️ " if bad else "✅ " if alldone else "🔨 ") + (f"{run.get('done', 0)}/{run.get('total')}" if run else ("done" if alldone else "working")))
 print("---")
-print((j.get("headline") or "Builds") + " | font=Menlo-Bold size=13")
+print((j.get("headline") or "Builds") + " | font=Menlo-Bold size=14 color=#111111,#ffffff")
 for i in items:
     n = round(frac(i) * W); bar = "█" * n + "░" * (W - n)
     tot = float(i.get("total") or 0)
-    print(f"{i.get('name','')} | font=Menlo size=12 color={col(i)}")
-    print(f"{bar}  " + (f"{i.get('done', 0)} / {int(tot)} · " if tot > 0 else "") + f"{i.get('note') or i.get('state','')} | font=Menlo size=11 color={col(i)}")
+    print(f"{i.get('name','')} | font=Menlo-Bold size=13 color={col(i)}")
+    print(f"{bar}  " + (f"{i.get('done', 0)} / {int(tot)} · " if tot > 0 else "") + f"{i.get('note') or i.get('state','')} | font=Menlo size=12 color={col(i)}")
 print("---")
-print(f"Updated {j.get('updated', 'unknown')} | size=11 color=#888888")
+print(f"Updated {j.get('updated', 'unknown')} | size=12 color=#444444,#c4c4c4")
 print(f"Open the branch | href=https://github.com/{repo}/tree/{ref}")
 print("Refresh | refresh=true")
 PY
