@@ -21,6 +21,9 @@ A note copied from the app's "Copy for Claude" button (Jarvis pop-up): book, pic
 5. Take a screenshot of the filled slip and describe it in one line: book, pick, price, stake.
 6. Say "Ready: press Place yourself." Close nothing, press nothing more.
 
+## Novig (the first test book)
+The app already builds a prefilled Novig slip: its "Open the book" link goes to `novig.com/events/<outcome>/novig/<stake>` (the Novig app on a phone). Prefer that: ask him to press "Open the book" in the Jarvis pop-up, or open that link, instead of searching Novig for the game. Then do steps 4 to 6: read the price and size on the slip, compare with "OK up to" and the stake in the note, screenshot, say ready. Novig is an exchange: an order may rest unfilled, so say which price and size you see. Never press the order button.
+
 ## Do not
 - Place, confirm or submit anything. Change the stake, the pick or the book. Open a second slip.
 - Touch deposit, withdraw, account or payment pages.
