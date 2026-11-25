@@ -38,3 +38,4 @@ God (⚡) is this personal edition and stays the default. Easy (🟢) is what a 
 
 ## v5.28 screenshot import (2026-11-23)
 Bet log › Import a screenshot (the Worker's `slips` job) and the improved + Add a bet › Read slip are AI features: personal edition only (God view, AI helper on). Easy and a paid build leave them out; a picture does nothing in Easy. The picture goes only to the Worker's AI job and is kept nowhere. El Compa's v5.28 tools (fill the bet form, find bets, edit a bet after Yes, screenshots in the chat) are personal edition too.
+- Prefill a bet (v5.31, owner 2026-11-25): personal edition only (Claude Code on his Mac drives his Chrome; it never presses Place). Not part of a paid build.
