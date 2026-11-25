@@ -5,7 +5,7 @@ description: Use when the owner asks to set up, prefill or get ready a bet at a 
 
 # Prefill a bet (the owner clicks Place)
 
-**Label, always: Guarded automation · experimental · unverified under book terms.** (Agreed with El Consultor 2026-11-25, Ref CC-2026-11-25-PREFILL-02; owner: BUILD.) Until the Novig dry run (E) and El Licenciado's terms review (F) are done, this is not for normal use.
+**Label, always: Guarded automation · experimental · unverified under book terms.** (Agreed with El Consultor 2026-11-25, Ref CC-2026-11-25-PREFILL-02; owner: BUILD.) The Novig dry run (E) is done for supervised use (owner, 2026-11-25: "Treat step E (the Novig dry run) as done for supervised use"); El Licenciado's terms review (F) is still open, so the label stays.
 
 Prefilling is **not evidence of a bet**. Never create a Bet-log entry, and never press "I bet this", before the owner says he placed it (see "After you place"). A bet counts only after he says "placed" and you have seen the order on the book.
 
