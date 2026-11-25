@@ -5505,6 +5505,7 @@ document.addEventListener('click',e=>{ const t=e.target; if(!t.closest) return;
     else { const d=document.createElement('div'); d.className='editor ln-ed'; d.dataset.pck=k; d.innerHTML=box; (host.querySelector('.sc-act')||host).after(d); }
     const ta=document.querySelector('.ln-ed .ln-txt'); if(ta) ta.focus(); return; }
   const ed=t.closest('.ln-ed'); if(!ed) return;
+  if(t.closest('.ln-del') && !sure2('Delete this note?', 'Really delete the note? It cannot be brought back.')) return;   // v5.31: asked twice
   if(t.closest('.ln-save')||t.closest('.ln-del')){ lnSet(ed.dataset.pck, t.closest('.ln-del')?'':ed.querySelector('.ln-txt').value); ed.remove(); rerenderWithFilters(); }
   else if(t.closest('.ln-cancel')){ ed.remove(); } });
 /* v4.35 (Alonzo: "Build", Augi's screens step 2 of 5: Live Games): Augi's Game Hub on our data. Sport buttons, Scheduled / Live / Final, a day,
@@ -6752,7 +6753,8 @@ function openBetEditor(tr, r, opt){
       B.result=btn.dataset.res; B.gradedBy='manual'; B.resultSrc='you'; delete B.why; gradeRemember(B); ed.remove();   // v3.86: close it first, so the log redraws now
       saveLog(); renderLog(); renderPerf(); renderTodayBar(); refresh(); }));
     const clr=ed.querySelector('button.eb-clear');
-    if(clr) clr.addEventListener('click',()=>{ delete B.result; delete B.gradedBy; delete B.resultSrc; gradeRemember(B); ed.remove();   // v3.86
+    if(clr) clr.addEventListener('click',()=>{ if(!sure2('Clear the result you set on this bet?', 'Really clear it? The bet goes back to open until it is graded or you set a result again.')) return; delete B.result;   // v5.31: asked twice
+      delete B.gradedBy; delete B.resultSrc; gradeRemember(B); ed.remove();   // v3.86
       saveLog(); renderLog(); renderPerf(); renderTodayBar(); refresh(); });
     const cp=ed.querySelector('button.eb-copy');
     if(cp) cp.addEventListener('click',async()=>{ try{ await navigator.clipboard.writeText(String(B.fillRef||'')); cp.textContent='copied'; }catch(e){ cp.textContent='select & copy'; } });
@@ -7825,6 +7827,8 @@ let removedBets=[];
 function loadRemoved(){ try{ removedBets=JSON.parse(localStorage.getItem('mbev.removed')||'[]'); }catch(e){ removedBets=[]; } }
 function saveRemoved(){ try{ localStorage.setItem('mbev.removed',JSON.stringify(removedBets)); }catch(e){} syncTouched(); }
 loadRemoved();
+/* v5.31 (owner 2026-11-25: "on the Delete ones, make sure to not just delete but ask confirmation 2 times"): two native confirms in a row; Cancel or Escape on either one stops it. */
+function sure2(first, second){ try{ return !!(confirm(first) && confirm(second)); }catch(e){ return false; } }
 function lineOnly(b){ return String(b.betnow||b.market||'').replace(/\s+[+-]\d+$/,''); }
 function removeBet(bet, lost){
   const i=logged.indexOf(bet); if(i<0) return;
@@ -7844,13 +7848,13 @@ function askRemove(anchorTr, bet, cols){
     '<button class="log sm rm-save">Remove with loss</button> <button class="log sm undo rm-cancel">Keep it</button>'+
     '<span class="meta rm-msg"></span></div></td>';
   anchorTr.after(tr);
-  tr.querySelector('.rm-never').addEventListener('click',()=>{ tr.remove(); removeBet(bet,0); });
+  tr.querySelector('.rm-never').addEventListener('click',()=>{ if(!confirm('Remove this bet from your log as never placed? It is kept in your removed list.')) return; tr.remove(); removeBet(bet,0); });   // v5.31: the inline ask above is the first question, this is the second
   tr.querySelector('.rm-cancel').addEventListener('click',()=>tr.remove());
   tr.querySelector('.rm-save').addEventListener('click',()=>{
     const v=parseFloat(tr.querySelector('.rm-lost').value);
     if(!(v>=0)){ tr.querySelector('.rm-msg').textContent='Enter what you lost (0 is fine)'; return; }
     if(v>(+bet.stake||0)+1e-9){ tr.querySelector('.rm-msg').textContent='That\'s more than the $'+(+bet.stake||0).toFixed(2)+' stake — for a partial cash-out use "Mark sold…" instead'; return; }
-    tr.remove(); removeBet(bet,v);
+    if(!confirm('Remove this bet from your log as cancelled, with $'+v.toFixed(2)+' lost? It is kept in your removed list.')) return; tr.remove(); removeBet(bet,v);   // v5.31: second question
   });
 }
 function coreKey(name,market,side){ return [name,market,side||''].join('|').toLowerCase(); }
@@ -11760,7 +11764,7 @@ document.getElementById('openBoardFile').addEventListener('change',async e=>{
   e.target.value='';
 });
 document.getElementById('clearBoard').addEventListener('click',()=>{
-  if(!lastRows.length || !confirm('Clear every bet from the board? (Your bet log is not touched.)')) return;
+  if(!lastRows.length || !sure2('Clear every bet from the board? (Your bet log is not touched.)', 'Really clear the board? You can load it again, but this board and its notes on screen go.')) return;   // v5.31: asked twice
   lastRows=[]; try{ localStorage.removeItem(BOARD_KEY); }catch(e){}
   document.getElementById('savedNote').textContent=''; render([],cfgRead());
 });
@@ -12672,7 +12676,7 @@ function rpCsvDl(){ const S=rpSet(); if(!S.L.length && !S.Rm.length){ alert('No 
 })();
 document.getElementById('wipe').addEventListener('click',()=>{
   if(!logged.length) return;
-  if(confirm('Delete all '+logged.length+' logged bets? This cannot be undone.'+(SY&&SY.on?' ☁ Sync is on: they are deleted on your other devices too.':''))){
+  if(sure2('Delete all '+logged.length+' logged bets? This cannot be undone.'+(SY&&SY.on?' ☁ Sync is on: they are deleted on your other devices too.':''), 'Really delete all '+logged.length+' logged bets? Last chance. If you have not yet, press Cancel and use "Back up bet log" first.')){   /* v5.31: asked twice */
     syncMarkGone('log', logged.map(b=>b&&b.id)); logged=[]; saveLog(); renderLog(); renderPerf(); refresh();   // v5.25 round 2 (HS-1)
   }
 });
