@@ -15,7 +15,7 @@ const px=(r,p)=>Object.assign(r,{offeredProb:p, offeredRaw:am(p)});
 function board(at, ch){ ch=ch||{}; const L=[row('c','Charlie Strong',0.62), row('e','Echo Slight',0.55), row('g','Golf Coin',0.47), row('h','Hotel Unlikely',0.40),
     px(row('f','Foxtrot Fail',0.47),0.48) /* no edge: fails the value rule */,
     px(row('g','Golf Coin',0.46,{market:'0.5 Points',mk:'pts'}),0.43) /* same player, same game, a lower EV: $0 from the one-per-player limit */];
-  L.forEach(r=>{ r.loadedAt=iso(at-60e3); if(ch[r.name+'|'+r.market]!=null) px(r, ch[r.name+'|'+r.market]); }); return {v:1,savedAt:iso(at),slate:DAY,rows:L}; }
+  L.forEach(r=>{ r.loadedAt=iso(at); if(ch[r.name+'|'+r.market]!=null) px(r, ch[r.name+'|'+r.market]); }); return {v:1,savedAt:iso(at),slate:DAY,rows:L}; }
 const LOG=[{id:'r1',key:'r1',kind:'prop',sport:'NBA',book:'Novig',name:'Real One',market:'1.5 Threes',side:'O',odds:'+100',stake:2,game:'AA @ BB',start:'2026-11-25T01:00:00Z',date:'2026-11-24',placedAt:'2026-11-24T20:00:00Z',snap:{at:'2026-11-24T20:00:00Z',act:0.47,actNet:0.04},result:'win',gradedBy:'manual',manual:true},
   {id:'r2',key:'r2',kind:'prop',sport:'NBA',book:'Novig',name:'Real Two',market:'2.5 Assists',side:'U',odds:'-110',stake:3,game:'CC @ DD',start:'2026-11-25T02:00:00Z',date:'2026-11-24',placedAt:'2026-11-24T21:00:00Z',snap:{at:'2026-11-24T21:00:00Z',act:0.58,actNet:0.03},result:'loss',gradedBy:'manual',manual:true}];
 async function open(opts){ opts=opts||{};
@@ -108,5 +108,49 @@ async function goReports(p){ await p.evaluate(()=>document.querySelector('.tab[d
   const E=await p.evaluate(()=>({easy:document.documentElement.getAttribute('data-viewas'), panel:(()=>{ const el=document.getElementById('ppPanel'); return el && el.offsetParent!==null; })(), words:/Paper money|paper bet/i.test(document.body.innerText)}));
   check('Easy shows nothing of Paper money', E.easy==='easy' && !E.panel && !E.words, E);
   check('no page errors (5)', !errs.length, errs); await b.close();
+  // ---- 6. round 2 (review D1–D5)
+  const one=(at,p,o)=>{ const r=row('g','Golf Coin',0.47,o); r.loadedAt=iso(at); if(p) px(r,p); return {v:1,savedAt:iso(at),slate:DAY,rows:[r]}; };
+  // D1: ESPN's event id arriving after the audit (attachGameInfo) is the same outcome, also after a reload
+  { const B0=one(NOW); B0.rows[0].gameInfo={state:'pre',startISO:iso(TIP)};
+    ({b,ctx,p,errs}=await open({board:B0}));
+    const d1=await p.evaluate(()=>{ const k0=ppS().A.map(o=>o.k); lastRows[0].gameInfo.eventId='401892653'; refresh(); refresh(); return {k0, after:ppS().A.map(o=>o.k)}; });
+    await p.evaluate(()=>{ const B=JSON.parse(localStorage.getItem('mbev.board')); B.rows[0].gameInfo.eventId='401892653'; localStorage.setItem('mbev.board',JSON.stringify(B)); }); await p.reload(); await p.waitForTimeout(1500);
+    const d1b=await p.evaluate(()=>ppS().A.length);
+    check('D1: the start-keyed card and the same card once ESPN adds its event id are one paper bet (and still one after a reload)', d1.k0.length===1 && d1.after.length===1 && d1b===1, {d1, d1b});
+    await b.close(); }
+  // D2: the window and the age go by when the price was read: a price read 35 minutes before is not a near-start price, even redrawn at 6 minutes
+  { const read=TIP-35*60e3; ({b,ctx,p,errs}=await open({now:TIP-34*60e3, board:one(read)}));
+    await ctx.clock.setSystemTime(new Date(TIP-6*60e3)); await p.evaluate(()=>refresh()); await p.waitForTimeout(300);
+    const o=(await recs(p))[0];
+    check('D2: a price read 35 minutes before the start, redrawn 6 minutes before, gives no near-start price; it is the stale step at 35 minutes', o && !o.near && o.stale && o.stale.age===35, o&&{near:o.near, stale:o.stale&&o.stale.age});
+    await b.close(); }
+  // D3: a second tab that sees the card later never overwrites the frozen first sighting
+  { b=await chromium.launch(); ctx=await b.newContext({timezoneId:'America/Chicago',viewport:{width:1280,height:900}}); await ctx.clock.install({time:new Date(NOW)});
+    await ctx.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{"events":[]}'}); if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); return r.abort(); });
+    await ctx.addInitScript(()=>{ if(!localStorage.getItem('mbev.cfg')) localStorage.setItem('mbev.cfg',JSON.stringify({books:'Novig, Kalshi',bank:'500',cfgVer:3.03})); });
+    const tB=await ctx.newPage(); await tB.goto('http://app.test/'); await tB.waitForTimeout(1500);
+    await tB.evaluate(B0=>localStorage.setItem('mbev.board',JSON.stringify(B0)), one(NOW));
+    const tA=await ctx.newPage(); await tA.goto('http://app.test/'); await tA.waitForTimeout(1500);
+    await ctx.clock.setSystemTime(new Date(NOW+2*H)); await tB.evaluate(B1=>{ lastRows=B1.rows; refresh(); }, one(NOW+2*H, 0.41)); await tB.waitForTimeout(500);
+    await tA.reload(); await tA.waitForTimeout(1500);
+    const a2=await tA.evaluate(()=>ppS().A.map(o=>o.first.price));
+    check('D3: tab A’s first sighting (0.43) stays frozen after tab B sees the card at 0.41 and saves', a2.length===1 && a2[0]===0.43, a2);
+    await b.close(); }
+  // D4: the ESPN refresh grades a finished paper bet with no open real bet in the log
+  { ({b,ctx,p,errs}=await open({now:Date.parse('2026-11-06T05:03:00Z'), board:null, log:[], espn:true}));
+    const r4=await p.evaluate(async()=>{ const s={t:Date.parse('2026-11-05T22:00:00Z'), at:'2026-11-05T22:00:00.000Z', ver:'v5.30', book:'Novig', price:0.52, fee:0, act:0.477, actNet:0.03, kelly:2, stake:2, limitZero:false};
+      const o={k:'NHL|pavel dorofeyev|sog|O|2.5|e401892653', pk:'NHL|pavel dorofeyev|sog|O|2.5|2026-11-06T00:00:00.000Z', v:1, policy:'paper-v1', at:s.at, snap:{at:s.at}, sport:'NHL', kind:'prop', name:'Pavel Dorofeyev', team:'PHI', market:'2.5 Shots On Goal', side:'O', line:null, betnow:'O 2.5 -108', game:'PHI @ NYR', matchup:'PHI @ NYR', ev:'401892653', start:'2026-11-06T00:00:00.000Z', date:'2026-11-05', dateSet:true, book:'Novig', planMin:50, group:'coin', result:null, first:s, near:null, stale:null, nsMiss:{}, obs:[]};
+      const S=ppS(); S.A.push(o); S.by.set(o.k,o); await autoGradeLog(); return o.result; });
+    check('D4: autoGradeLog grades the paper bet when the Bet log has no open bet (Won)', r4==='win', r4);
+    await b.close(); }
+  // D5: inside the last 30 minutes, redraws of cards that no longer qualify count the reason once and save nothing new
+  { const L=[]; for(let i=0;i<20;i++) L.push(row('q'+i,'Player '+i,0.40+(i%10)*0.01,{game:'G'+i+' @ H'+i})); L.forEach(r=>r.loadedAt=iso(NOW));
+    ({b,ctx,p,errs}=await open({board:{v:1,savedAt:iso(NOW),slate:DAY,rows:L}}));
+    await ctx.clock.setSystemTime(new Date(TIP-10*60e3));
+    const w=await p.evaluate(async()=>{ lastRows.forEach(r=>{ r.offeredProb=Math.min(0.97,r.fairProb+0.05); r.offeredRaw=String(Math.round(-100*r.offeredProb/(1-r.offeredProb))); r.loadedAt=new Date().toISOString(); });
+      refresh(); await new Promise(r=>setTimeout(r,200)); let puts=0; const P0=IDBObjectStore.prototype.put; IDBObjectStore.prototype.put=function(){ puts++; return P0.apply(this,arguments); };
+      for(let i=0;i<8;i++) refresh(); await new Promise(r=>setTimeout(r,200)); IDBObjectStore.prototype.put=P0; return {puts, n:ppS().A.length, miss:ppS().A.map(o=>Object.values(o.nsMiss||{}).reduce((t,x)=>t+x,0))}; });
+    check('D5: 8 more redraws of 20 cards that stopped qualifying save nothing and each reason is counted once', w.n===20 && w.puts===0 && w.miss.every(x=>x===1), w);
+    check('no page errors (6)', !errs.length, errs); await b.close(); }
   console.log(`\n${pass} passed, ${fail} failed · ${Math.round((Date.now()-t0)/1000)} s`); process.exit(fail?1:0);
 })();

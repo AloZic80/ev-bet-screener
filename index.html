@@ -9624,7 +9624,7 @@ async function autoGradeLog(){
       (b.edits=b.edits||[]).push({at:new Date().toISOString(), before:{game:'', wrongGame18:b.wrongGame18}, note:'v4.68: its game given back (placed '+b.placedAt+')'}); b.game=b.wrongGame18; delete b.wrongGame18; changed++; });
     logged.forEach(b=>{ if(b.result==='win' && b.fillBook==='poly'){ const S0=settlementFor(b); if(S0 && polyPaid(b,S0)) changed++; } });   /* v4.70: Polymarket wins already graded get the payout after its fee */
     const open=logged.filter(b=>(recent(b)||redo94(b)) && !settled(b));
-    if(!open.length && !undated.length){ if(changed){ saveLog(); renderLog(); renderPerf(); refresh(); } return; }
+    if(!open.length && !undated.length){ if(changed){ saveLog(); renderLog(); renderPerf(); refresh(); } try{ const pg=await paperGrade(); if(pg) ppRenderOpen(); }catch(e){ console.error(e); } /* v5.30 (round 2, D4): paper bets are graded with no open real bet too */ return; }
     for(const b of undated){
       const gi=gameStatusOf(await findBetGame(b));
       if(gi && gi.startISO){ b.start=gi.startISO; changed++;
@@ -9691,16 +9691,21 @@ function ppOpen(){ const S=ppS(); if(S.opening) return S.opening;
 function ppLoad(){ const S=ppS(); if(!ppOn()) return Promise.resolve(0);
   return ppOpen().then(db=>new Promise(res=>{ if(!db){ ppReady(); return res(0); }
     let rq; try{ rq=db.transaction('paper','readonly').objectStore('paper').getAll(); }catch(e){ S.err='Paper money could not read its storage ('+e.name+').'; console.error('paper read', e); ppReady(); return res(0); }
-    rq.onsuccess=()=>{ (rq.result||[]).forEach(o=>{ if(o && o.k && !S.by.has(o.k)){ S.A.push(o); S.by.set(o.k,o); } }); ppReady(); res(S.A.length); };
+    rq.onsuccess=()=>{ (rq.result||[]).forEach(o=>{ if(!o || !o.k || S.by.has(o.k)) return; if(!o.pk) o.pk=ppPkOf(o.k, o.start); if(S.by.has(o.pk)) return; S.A.push(o); S.by.set(o.k,o); S.by.set(o.pk,o); });   /* v5.30 (round 2, D1): both keys */ ppReady(); res(S.A.length); };
     rq.onerror=()=>{ S.err='Paper money could not read its storage ('+((rq.error&&rq.error.name)||'error')+').'; console.error('paper read', rq.error); ppReady(); res(0); }; })); }
 function ppReady(){ const S=ppS(); if(S.ready) return; S.ready=true; S.q.splice(0).forEach(L=>L.forEach(ppApply)); ppFlush();
   setTimeout(()=>{ paperGrade().then(n=>{ if(n) ppRenderOpen(); }).catch(e=>console.error('paper grade', e)); ppRenderOpen(); }, 0); }
 function ppFlush(){ const S=ppS(); if(!S.dirty.size || !S.db) return Promise.resolve(0);
   const L=[...S.dirty].map(k=>S.by.get(k)).filter(Boolean); S.dirty.clear();
   return new Promise(res=>{ const fail=e=>{ L.forEach(o=>S.dirty.add(o.k)); S.err='Paper money could not save on this device ('+((e&&e.name)||'error')+'): '+L.length+' paper bet'+(L.length===1?' is':'s are')+' kept in memory and saved again on the next board.'; console.error('paper save', e); ppRenderOpen(); res(0); };
-    try{ const tx=S.db.transaction('paper','readwrite'), st=tx.objectStore('paper'); L.forEach(o=>st.put(JSON.parse(JSON.stringify(o))));
+    try{ const tx=S.db.transaction('paper','readwrite'), st=tx.objectStore('paper'); L.forEach(o=>{ const g=st.get(o.k); g.onsuccess=()=>{ ppKeepSaved(o, g.result); st.put(JSON.parse(JSON.stringify(o))); }; });   /* v5.30 (round 2, D3): read the saved copy in the same transaction; its frozen first sighting and its result win */
       tx.oncomplete=()=>{ S.saved=Date.now(); if(/could not save/.test(S.err)) S.err=''; res(L.length); }; tx.onerror=()=>fail(tx.error); tx.onabort=()=>fail(tx.error); }catch(e){ fail(e); } }); }
 function ppDirty(o){ ppS().dirty.add(o.k); }
+function ppKeepSaved(o, sv){ if(!sv || !sv.first) return;   // v5.30 (round 2, D3): another tab saved this outcome first: keep its frozen sighting, its result and its real-bet mark
+  ['first','at','ver','dev','devName','tz','snap','group','planMin','planSince','book','why','modelOnly'].forEach(f=>{ if(sv[f]!==undefined) o[f]=sv[f]; });
+  if(sv.result && !o.result){ o.result=sv.result; o.gradedAt=sv.gradedAt; o.gradedBy=sv.gradedBy; delete o.obs; delete o.nb; }
+  if(sv.real && !o.real) o.real=sv.real; if(!o.stale && sv.stale) o.stale=sv.stale; }
+function ppPkOf(k, start){ const t=Date.parse(start||''); return String(k||'').split('|').slice(0,5).join('|')+'|'+(isNaN(t)?String(start||''):new Date(t).toISOString()); }   // v5.30 (round 2, D1): the same outcome keyed by its start, so a card keyed by the start and then by ESPN's event id (attachGameInfo runs after the audit) is one record, like Watch's pk
 function ppGroupOf(a){ return a<0.45-1e-9 ? 'unlikely' : a<0.50-1e-9 ? 'coin' : 'below'; }
 function ppGroupLab(g, pc){ const m=pc!=null?+(+pc).toFixed(1):null; return g==='unlikely' ? 'Paper · Unlikely (<45%)' : g==='coin' ? 'Paper · Coin Flip (45% to plan minimum'+(m!=null && m<50?' '+m+'%':'')+')' : 'Paper · Below plan minimum (50%–'+(m!=null?m:'')+'%)'; }
 /* why a board card is NOT a paper bet at this sighting ('' = it is one). The approval is La Contadora's own (listedOf, r.pass and the floor); r.ppPre is the
@@ -9734,22 +9739,23 @@ function paperNote(rows){ if(!ppOn()) return 0; const now=Date.now(); let P, cfg
   (rows||[]).forEach(r=>{ if(!r || !/^(api:|paste)/.test(String(r.src||'')) || r._fill || !(r.offeredProb>0 && r.offeredProb<1)) return;
     let k; try{ k=watchKeyOf(r); }catch(e){ return; } if(!k) return;
     let why; try{ why=ppWhy(r, P, cfg, now); }catch(e){ return; }
-    const t0=Date.parse((r.gameInfo||{}).startISO||''), x={k, why, t:now, t0, prior:!!r.prior};
-    if(!why){ x.snap=ppSnap(r, now); x.rec=ppRec(k, r, P, x.snap); }
+    const t0=Date.parse((r.gameInfo||{}).startISO||''), x={k, pk:ppPkOf(k, (r.gameInfo||{}).startISO), why, t:now, seen:rowSeenAt(r)||now, t0, prior:!!r.prior};   // v5.30 (round 2, D1, D2): the start key, and when the price was read
+    if(!why){ x.snap=ppSnap(r, now); x.rec=ppRec(k, r, P, x.snap); x.rec.pk=x.pk; }   // v5.30 (round 2, D1)
     L.push(x); });
   if(!L.length) return 0; const S=ppS(); if(!S.ready){ S.q.push(L); if(S.q.length>40) S.q.shift(); return 0; }
   let n=0; L.forEach(x=>{ if(ppApply(x)) n++; }); if(n){ ppFlush(); ppRenderOpen(); } return n; }
-function ppApply(x){ const S=ppS(); let o=S.by.get(x.k), ch=false; const t0=x.t0;
-  if(!o){ if(x.why || !x.rec || isNaN(t0) || x.t>=t0) return false; o=x.rec; S.A.push(o); S.by.set(o.k,o); ch=true; }
+function ppApply(x){ const S=ppS(); let o=S.by.get(x.k)||(x.pk&&S.by.get(x.pk)), ch=false; const t0=x.t0;   // v5.30 (round 2, D1): either key
+  if(!o){ if(x.why || !x.rec || isNaN(t0) || x.t>=t0) return false; o=x.rec; S.A.push(o); S.by.set(o.k,o); if(o.pk) S.by.set(o.pk,o); ch=true; }
+  else if(!S.by.has(x.k)) S.by.set(x.k,o);   // v5.30 (round 2, D1): the new key finds the same record next time
   if(o.result || isNaN(t0) || x.t>=t0) return ch && (ppDirty(o), true);   /* never after the start */
   if(x.prior && !o.realSeen){ o.realSeen=new Date(x.t).toISOString(); ch=true; }   /* the board marked it ALREADY BET: a real bet on it */
-  const left=t0-x.t, inWin=left<=30*60e3, inStale=left>30*60e3 && left<=120*60e3, tgt=t0-300e3;
-  if(x.why){ if(inWin){ o.nsMiss=o.nsMiss||{}; o.nsMiss[x.why]=(o.nsMiss[x.why]||0)+1; ch=true; } }
-  else { const s=x.snap, O=o.obs||(o.obs=[]), last=O[O.length-1];
-    if(!last || last.p!==s.price || last.a!==s.act || x.t-last.t>=10*60e3){ O.push({t:x.t, p:s.price, a:s.act, b:s.book}); if(O.length>48) O.splice(0, O.length-48); o.nObs=(+o.nObs||0)+1; ch=true; }
-    if(inStale && (!o.stale || x.t>o.stale.t)){ o.stale=Object.assign({}, s, {age:Math.round(left/60e3)}); ch=true; } }
-  if(inWin){ const d=Math.abs(x.t-tgt); if(!o.nb || d<o.nb.d){ o.nb={d, t:x.t, why:x.why||''};
-      if(x.why){ o.near=null; o.nsWhy=x.why; } else { o.near=Object.assign({}, x.snap, {age:Math.round(left/60e3)}); delete o.nsWhy; } ch=true; } }
+  const rt=Math.min(x.t, (x.snap&&x.snap.seenAt)||x.seen||x.t), left=t0-rt, inWin=left<=30*60e3, inStale=left>30*60e3 && left<=120*60e3, tgt=t0-300e3;   // v5.30 (round 2, D2): the window, the stale step and the age go by when the price was read, not the redraw
+  if(x.why){ if(inWin && o.nsLast!==x.why){ o.nsMiss=o.nsMiss||{}; o.nsMiss[x.why]=(o.nsMiss[x.why]||0)+1; o.nsLast=x.why; ch=true; } }   // v5.30 (round 2, D5): a reason is counted when it changes, not on every redraw
+  else { const s=x.snap, O=o.obs||(o.obs=[]), last=O[O.length-1]; if(o.nsLast){ delete o.nsLast; ch=true; }   // v5.30 (round 2, D5)
+    if(!last || last.p!==s.price || last.a!==s.act || rt-last.t>=10*60e3){ O.push({t:rt, p:s.price, a:s.act, b:s.book}); if(O.length>48) O.splice(0, O.length-48); o.nObs=(+o.nObs||0)+1; ch=true; }   // v5.30 (round 2, D2): rt
+    if(inStale && (!o.stale || rt>o.stale.t)){ o.stale=Object.assign({}, s, {t:rt, age:Math.round(left/60e3)}); ch=true; } }   // v5.30 (round 2, D2)
+  if(inWin){ const d=Math.abs(rt-tgt); if(!o.nb || d<o.nb.d){ o.nb={d, t:rt, why:x.why||''};   // v5.30 (round 2, D2)
+      if(x.why){ o.near=null; o.nsWhy=x.why; } else { o.near=Object.assign({}, x.snap, {t:rt, age:Math.round(left/60e3)}); delete o.nsWhy; } ch=true; } }   // v5.30 (round 2, D2): t = when read
   if(ch) ppDirty(o); return ch; }
 async function paperGrade(){ const S=ppS(); if(!S.ready || !ppOn()) return 0; const now=Date.now(); let n=0;
   for(const o of S.A){ try{
