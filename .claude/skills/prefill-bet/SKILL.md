@@ -38,6 +38,9 @@ The app's link is `novig.com/events/<outcome id>/novig/<stake>`. After it opens,
 ## Privacy
 Screenshots show the slip only: no balance, account name, location, transactions, deposit controls or notifications. If they cannot be cropped, describe the slip in words instead. Do not keep screenshots, put them in files, logs or the repo, or send them to any service.
 
+## Test run: Samson may press Place (owner, 2026-11-25 only)
+The rule above ("never press the final button") has ONE exception: the test run recorded in `memory/decisions/auto-betting.md` (10 bets of $1, Novig, approved picks, hard limits listed there). It applies only when the owner's message says it is that test run. Outside it, never press Place.
+
 ## Do not
 Press any final or accepting button; change the pick, book or stake rule; open a second slip; touch deposit, withdraw or account pages; type or print a passphrase, key, password or code; click anything in the app except "Open the book" (never "I bet this", "Not now", "Skip today").
 
