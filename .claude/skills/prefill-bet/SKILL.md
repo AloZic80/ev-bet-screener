@@ -45,9 +45,9 @@ Press any final or accepting button; change the pick, book or stake rule; open a
 The app already opens the prefilled slip (its own "Open the book"): use that, do not build another way. You never place. After the owner clicks Place himself he tells you **"placed"**. Only then:
 1. **Look at the book, read only.** On the Novig page (portfolio or orders) find the order. Note the real price, the size or stake, whether it is **filled, partly filled or resting**. If you cannot see it, stop and ask him.
 2. **Go back to the app tab** (the other Chrome tab, props.0xbeta.dev). Make sure it is the browser that holds his real log: if the Bet log looks nearly empty (a few entries) or the cloud chip says off, stop and tell him, because the log lives in each browser and his history may be in another one.
-3. Press **I bet this** on that pick's pop-up or card. The bet form opens. Fill it with what the book shows (the real fill price and stake, not the price intended). If the book shows a different price, size or market than the pick, stop and ask.
+3. **Look at the Bet log first.** The app logs Novig fills by itself (seen 2026-11-25: the log went 465 to 466 and the pick left the board). Refresh the app's "My books" or wait a minute, count the log, and look for the new entry. **If it is there, do not press I bet this** (it would log the bet twice); just confirm its book, pick, real price and stake against Novig and report. Only if no new entry appears after a refresh and a short wait, press **I bet this** on that pick's pop-up or card. The bet form opens. Fill it with what the book shows (the real fill price and stake, not the price intended). If the book shows a different price, size or market than the pick, stop and ask.
 4. **Resting or partly filled order:** log nothing until it is filled; tell him what you see.
-5. Press **Save** only if everything matches. Then read the Bet log to confirm one new entry (never a silent save error) and tell him: book, pick, real price, stake.
+5. (Only when you used the form.) Press **Save** only if everything matches. Then read the Bet log to confirm one new entry (never a silent save error) and tell him: book, pick, real price, stake.
 6. If anything is unclear, do not save. Ask.
 
 ## Done means
