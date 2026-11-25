@@ -23,8 +23,20 @@ Owner, 11/15: "Shadow Bets!! Hell yeah!! ... like Paper Money". Spec: `agent-not
 - **Real-bet overlap:** a single in the Bet log on the exact outcome (same game day, placed before the start), or the board's ALREADY BET: marked
   `real`, kept in the $1 totals and counted apart.
 - **Grading:** `paperGrade`, after `autoGradeLog`, with the Bet log's own ESPN code. A push is $1 staked, $0 back. Settled: `obs` dropped, the record kept.
-- **Storage:** IndexedDB `mbev-paper`, store `paper`, key `k`, on this device only (not synced). The CSV button is the copy. Each save reads the saved
+- **Storage:** IndexedDB `mbev-paper`, store `paper`, key `k`: the local copy and the fallback. The CSV button is a copy. Each save reads the saved
   copy first: another tab's first sighting, result and real-bet mark are kept (round 2, D3). Grading also runs when no real bet is open (D4).
+
+## Graded on the Worker (round 3, owner 11/25: "Paper grade could be on the app but be graded apart away from the repo")
+- The Worker (v3.51, `src/paper.js` in prop-bet-api; to be deployed by the owner) keeps one shared set and grades it from ESPN on its cron, with the app
+  closed. Its `result` is the grade (`gradedBy: 'worker-espn'`); `void` (postponed, not played in 72 hours) is $1 back and neither a win nor a loss;
+  `parked` = grade by hand, with the reason.
+- The app POSTs only the changed records (at most 300 a call), GETs `/paper?since=` once at load and then every 4+ minutes only while Reports is open
+  or a record is due. Both locks as /sync (headers only). No calls without a sync password or while the Worker is paused; the panel says
+  "Saved on this device only: add your sync password in Settings to grade on your Worker".
+- Merging: a newer server seq wins for the grade fields; the local first sighting stays; records first seen on another device are added.
+- The device grades (paperGrade) only when the Worker cannot: no sync password, paused, or the last call failed.
+- Records saved before round 3 are sent once (backfill) when the sync password exists.
+- A real bet placed live or at a pick'em book never marks a paper bet "bet for real" (log match or the board's ALREADY BET).
 
 ## Reports › 📝 Paper money (God view only)
 - The written guess (fixed in `ppGuess`, shown before any outcome): "48.5–50% beats 45–48.5% on flat-$1 ROI at the near-start price; judged after 100
@@ -36,8 +48,7 @@ Owner, 11/15: "Shadow Bets!! Hell yeah!! ... like Paper Money". Spec: `agent-not
   "CLV: exchange cards only" (first price against the near-start price at the same book: the last price seen, not a true close).
 
 ## Tests
-`tests/v530-paper-test.js` (34 checks, round 2 D1–D5 included).
+`tests/v530-paper-test.js` (34 checks, round 2 D1–D5 included); `tests/v530-paper-sync-test.js` (22 checks, a fake Worker on the v3.51 contract).
 
 ## Open for the owner
-- Paper records are per device (IndexedDB, not synced): a card seen on the phone and the computer is two separate records, one in each browser.
-- Clearing the browser's site data deletes them; the CSV is the only copy.
+- Until the Worker v3.51 is deployed (and with no sync password), paper records are per device and a cleared browser loses them.

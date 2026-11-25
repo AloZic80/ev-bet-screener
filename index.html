@@ -2283,6 +2283,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 #ppPanel .pp-head{margin:4px 0; overflow-wrap:anywhere}
 #ppPanel .pp-ul{margin:6px 0; padding-left:18px} #ppPanel .pp-ul li{margin:4px 0; overflow-wrap:anywhere}
 #ppPanel .pp-err{color:var(--loss); font-weight:600}
+#ppPanel .pp-wk{overflow-wrap:anywhere; margin:6px 0}   /* v5.30 (round 3): who grades the paper bets */
 #ppPanel details.pp-more>summary{cursor:pointer; min-height:32px; display:list-item}
 #ppPanel .pp-t td{vertical-align:top}
 @media (max-width:600px){ #ppPanel details.pp-more>summary{min-height:44px} }
@@ -9678,7 +9679,7 @@ async function autoGradeLog(){
    any real total. Nothing here changes a decision, a stake, a floor, the order or the board. No new Worker calls: it reads the board the app already loaded.
    The written guess (owner, 11/25) is fixed here and shown before the first outcome. Hoisted: the board build calls paperNote. */
 function ppGuess(){ return {text:'48.5–50% beats 45–48.5% on flat-$1 ROI at the near-start price; judged after 100 outcomes and 50 games each side', written:'2026-11-25', writtenAt:'2026-11-25T06:00:00Z', lo:[0.45,0.485], hi:[0.485,0.50], needN:100, needG:50, policy:'paper-guess-v1'}; }
-function ppS(){ return window._pp || (window._pp={A:[], by:new Map(), ready:false, q:[], db:null, err:'', dirty:new Set(), opening:null, saved:0}); }
+function ppS(){ return window._pp || (window._pp={A:[], by:new Map(), ready:false, q:[], db:null, err:'', dirty:new Set(), opening:null, saved:0, up:new Set(), saveFails:0, saveNext:0}); }   // v5.30 (round 3): up = records to send to the Worker; saveFails / saveNext = the save retry backoff
 function ppOn(){ return typeof DEV_APP!=='undefined' && !!DEV_APP; }
 function ppOpen(){ const S=ppS(); if(S.opening) return S.opening;
   S.opening=new Promise(res=>{ let rq; try{ rq=window.indexedDB && indexedDB.open('mbev-paper',1); }catch(e){ rq=null; }
@@ -9689,21 +9690,27 @@ function ppOpen(){ const S=ppS(); if(S.opening) return S.opening;
     rq.onblocked=()=>{ S.err='Paper money storage is busy in another tab; close the other tab and reload.'; }; });
   return S.opening; }
 function ppLoad(){ const S=ppS(); if(!ppOn()) return Promise.resolve(0);
+  setTimeout(()=>{ if(S.db || S.ready) return; S.err='Paper money storage on this device did not open in 5 seconds: paper bets are kept only while this page is open (and sent to your Worker when sync is on).'; S.hung=true; ppReady(); ppRenderOpen(); }, 5000);   // v5.30 (round 3, p4): a storage that never answers is said plainly
   return ppOpen().then(db=>new Promise(res=>{ if(!db){ ppReady(); return res(0); }
+    if(S.hung){ S.hung=false; if(/did not open in 5 seconds/.test(S.err)) S.err=''; S.A.forEach(o=>S.dirty.add(o.k)); }   // v5.30 (round 3, p4): it opened late: what was kept in memory is saved now
     let rq; try{ rq=db.transaction('paper','readonly').objectStore('paper').getAll(); }catch(e){ S.err='Paper money could not read its storage ('+e.name+').'; console.error('paper read', e); ppReady(); return res(0); }
-    rq.onsuccess=()=>{ (rq.result||[]).forEach(o=>{ if(!o || !o.k || S.by.has(o.k)) return; if(!o.pk) o.pk=ppPkOf(o.k, o.start); if(S.by.has(o.pk)) return; S.A.push(o); S.by.set(o.k,o); S.by.set(o.pk,o); });   /* v5.30 (round 2, D1): both keys */ ppReady(); res(S.A.length); };
+    rq.onsuccess=()=>{ (rq.result||[]).forEach(o=>{ if(!o || !o.k || S.by.has(o.k)) return; if(!o.pk) o.pk=ppPkOf(o.k, o.start); if(S.by.has(o.pk)) return; S.A.push(o); S.by.set(o.k,o); S.by.set(o.pk,o); });   /* v5.30 (round 2, D1): both keys */ ppReady(); ppFlush(); res(S.A.length); };   /* v5.30 (round 3, p4): + ppFlush for a late open */
     rq.onerror=()=>{ S.err='Paper money could not read its storage ('+((rq.error&&rq.error.name)||'error')+').'; console.error('paper read', rq.error); ppReady(); res(0); }; })); }
 function ppReady(){ const S=ppS(); if(S.ready) return; S.ready=true; S.q.splice(0).forEach(L=>L.forEach(ppApply)); ppFlush();
-  setTimeout(()=>{ paperGrade().then(n=>{ if(n) ppRenderOpen(); }).catch(e=>console.error('paper grade', e)); ppRenderOpen(); }, 0); }
-function ppFlush(){ const S=ppS(); if(!S.dirty.size || !S.db) return Promise.resolve(0);
+  setTimeout(async()=>{ try{ await ppWkStart(); }catch(e){ console.error('paper worker', e && e.message); } paperGrade().then(n=>{ if(n) ppRenderOpen(); }).catch(e=>console.error('paper grade', e)); ppRenderOpen(); }, 0); }   // v5.30 (round 3): one GET from the Worker at load and the backfill first; paperGrade is the fallback
+function ppFlush(){ const S=ppS(); if(!S.dirty.size || !S.db || Date.now()<S.saveNext) return Promise.resolve(0);   // v5.30 (round 3, p4): after a failed save, wait (backoff) before trying again
   const L=[...S.dirty].map(k=>S.by.get(k)).filter(Boolean); S.dirty.clear();
-  return new Promise(res=>{ const fail=e=>{ L.forEach(o=>S.dirty.add(o.k)); S.err='Paper money could not save on this device ('+((e&&e.name)||'error')+'): '+L.length+' paper bet'+(L.length===1?' is':'s are')+' kept in memory and saved again on the next board.'; console.error('paper save', e); ppRenderOpen(); res(0); };
-    try{ const tx=S.db.transaction('paper','readwrite'), st=tx.objectStore('paper'); L.forEach(o=>{ const g=st.get(o.k); g.onsuccess=()=>{ ppKeepSaved(o, g.result); st.put(JSON.parse(JSON.stringify(o))); }; });   /* v5.30 (round 2, D3): read the saved copy in the same transaction; its frozen first sighting and its result win */
-      tx.oncomplete=()=>{ S.saved=Date.now(); if(/could not save/.test(S.err)) S.err=''; res(L.length); }; tx.onerror=()=>fail(tx.error); tx.onabort=()=>fail(tx.error); }catch(e){ fail(e); } }); }
-function ppDirty(o){ ppS().dirty.add(o.k); }
+  return new Promise(res=>{ let done=false; const fail=e=>{ if(done) return; done=true; L.forEach(o=>S.dirty.add(o.k)); S.saveFails++; S.saveNext=Date.now()+Math.min(30*60e3, 30e3*Math.pow(2, S.saveFails-1));
+      const msg='Paper money could not save on this device ('+((e&&e.name)||'error')+'): '+S.dirty.size+' paper bet'+(S.dirty.size===1?' is':'s are')+' kept in memory and tried again in '+Math.round((S.saveNext-Date.now())/60e3*10)/10+' min'+(ppWkOk()?' (they are also sent to your Worker)':'')+'.';
+      if(S.err!==msg){ if(!/could not save/.test(S.err)) console.warn('paper save', (e&&e.name)||e); S.err=msg; ppRenderOpen(); } res(0); };   // v5.30 (round 3, p4): said once, not a stream of errors
+    try{ const tx=S.db.transaction('paper','readwrite'), st=tx.objectStore('paper'); L.forEach(o=>{ const g=st.get(o.k); g.onsuccess=()=>{ try{ ppKeepSaved(o, g.result); st.put(JSON.parse(JSON.stringify(o))); }catch(e){ fail(e); try{ tx.abort(); }catch(e2){} } }; });   /* v5.30 (round 3, p4): a refused put is caught */   /* v5.30 (round 2, D3): read the saved copy in the same transaction; its frozen first sighting and its result win */
+      tx.oncomplete=()=>{ if(done) return; done=true; S.saved=Date.now(); S.saveFails=0; S.saveNext=0; if(/could not save/.test(S.err)) S.err=''; res(L.length); };   /* v5.30 (round 3, p4) */ tx.onerror=()=>fail(tx.error); tx.onabort=()=>fail(tx.error); }catch(e){ fail(e); } }); }
+function ppDirty(o){ const S=ppS(); S.dirty.add(o.k); S.up.add(o.k); }   // v5.30 (round 3): a change is saved here and sent to the Worker
+function ppDirtyLocal(o){ ppS().dirty.add(o.k); }   // v5.30 (round 3): saved here only (what came from the Worker)
 function ppKeepSaved(o, sv){ if(!sv || !sv.first) return;   // v5.30 (round 2, D3): another tab saved this outcome first: keep its frozen sighting, its result and its real-bet mark
   ['first','at','ver','dev','devName','tz','snap','group','planMin','planSince','book','why','modelOnly'].forEach(f=>{ if(sv[f]!==undefined) o[f]=sv[f]; });
-  if(sv.result && !o.result){ o.result=sv.result; o.gradedAt=sv.gradedAt; o.gradedBy=sv.gradedBy; delete o.obs; delete o.nb; }
+  if(sv.result && (!o.result || (sv.gradedBy==='worker-espn' && o.gradedBy!=='worker-espn'))){ ['result','gradedAt','gradedBy','grade','gradeWhy','voidWhy','parked'].forEach(f=>{ if(sv[f]!==undefined) o[f]=sv[f]; }); delete o.obs; delete o.nb; }   // v5.30 (round 3): the Worker grade wins
+  if((+sv.wkSeq||0)>(+o.wkSeq||0)) o.wkSeq=sv.wkSeq; if(sv.wkSent && !o.wkSent) o.wkSent=sv.wkSent;   // v5.30 (round 3)
   if(sv.real && !o.real) o.real=sv.real; if(!o.stale && sv.stale) o.stale=sv.stale; }
 function ppPkOf(k, start){ const t=Date.parse(start||''); return String(k||'').split('|').slice(0,5).join('|')+'|'+(isNaN(t)?String(start||''):new Date(t).toISOString()); }   // v5.30 (round 2, D1): the same outcome keyed by its start, so a card keyed by the start and then by ESPN's event id (attachGameInfo runs after the audit) is one record, like Watch's pk
 function ppGroupOf(a){ return a<0.45-1e-9 ? 'unlikely' : a<0.50-1e-9 ? 'coin' : 'below'; }
@@ -9739,11 +9746,11 @@ function paperNote(rows){ if(!ppOn()) return 0; const now=Date.now(); let P, cfg
   (rows||[]).forEach(r=>{ if(!r || !/^(api:|paste)/.test(String(r.src||'')) || r._fill || !(r.offeredProb>0 && r.offeredProb<1)) return;
     let k; try{ k=watchKeyOf(r); }catch(e){ return; } if(!k) return;
     let why; try{ why=ppWhy(r, P, cfg, now); }catch(e){ return; }
-    const t0=Date.parse((r.gameInfo||{}).startISO||''), x={k, pk:ppPkOf(k, (r.gameInfo||{}).startISO), why, t:now, seen:rowSeenAt(r)||now, t0, prior:!!r.prior};   // v5.30 (round 2, D1, D2): the start key, and when the price was read
+    const t0=Date.parse((r.gameInfo||{}).startISO||''), x={k, pk:ppPkOf(k, (r.gameInfo||{}).startISO), why, t:now, seen:rowSeenAt(r)||now, t0, prior:!!r.prior && ppRealOk(r.prior, t0)};   /* v5.30 (round 3, p9): the board's ALREADY BET counts only for a single placed before the start, not a pick’em or live bet */   // v5.30 (round 2, D1, D2): the start key, and when the price was read
     if(!why){ x.snap=ppSnap(r, now); x.rec=ppRec(k, r, P, x.snap); x.rec.pk=x.pk; }   // v5.30 (round 2, D1)
     L.push(x); });
   if(!L.length) return 0; const S=ppS(); if(!S.ready){ S.q.push(L); if(S.q.length>40) S.q.shift(); return 0; }
-  let n=0; L.forEach(x=>{ if(ppApply(x)) n++; }); if(n){ ppFlush(); ppRenderOpen(); } return n; }
+  let n=0; L.forEach(x=>{ if(ppApply(x)) n++; }); if(n){ ppFlush(); ppRenderOpen(); } if(S.up.size) ppPush().catch(()=>{}); return n; }   // v5.30 (round 3): one POST per board with changes
 function ppApply(x){ const S=ppS(); let o=S.by.get(x.k)||(x.pk&&S.by.get(x.pk)), ch=false; const t0=x.t0;   // v5.30 (round 2, D1): either key
   if(!o){ if(x.why || !x.rec || isNaN(t0) || x.t>=t0) return false; o=x.rec; S.A.push(o); S.by.set(o.k,o); if(o.pk) S.by.set(o.pk,o); ch=true; }
   else if(!S.by.has(x.k)) S.by.set(x.k,o);   // v5.30 (round 2, D1): the new key finds the same record next time
@@ -9757,13 +9764,13 @@ function ppApply(x){ const S=ppS(); let o=S.by.get(x.k)||(x.pk&&S.by.get(x.pk)),
   if(inWin){ const d=Math.abs(rt-tgt); if(!o.nb || d<o.nb.d){ o.nb={d, t:rt, why:x.why||''};   // v5.30 (round 2, D2)
       if(x.why){ o.near=null; o.nsWhy=x.why; } else { o.near=Object.assign({}, x.snap, {t:rt, age:Math.round(left/60e3)}); delete o.nsWhy; } ch=true; } }   // v5.30 (round 2, D2): t = when read
   if(ch) ppDirty(o); return ch; }
-async function paperGrade(){ const S=ppS(); if(!S.ready || !ppOn()) return 0; const now=Date.now(); let n=0;
+async function paperGrade(){ const S=ppS(); if(!S.ready || !ppOn() || ppWkGrades()) return 0; const now=Date.now(); let n=0;   // v5.30 (round 3): only when the Worker cannot grade (no sync password, unreachable or paused)
   for(const o of S.A){ try{
     if(o.result || !o.start || now<Date.parse(o.start)+5*3600e3 || now>Date.parse(o.start)+30*86400e3 || !ESPN_MAP[o.sport]) continue;
     const ev=await findBetGame(o); if(!ev) continue; const gi=gameStatusOf(ev); if(!gi || gi.state!=='post' || !evPlayed(ev)) continue;
     const gl=GL_KINDS.test(o.kind||''), box=gl?null:await fetchBoxscore(o.sport, gi.eventId, true), g=gl?gradeGameLine(o,ev):gradeBet(o, box);
     if(!g){ if(o.gradeWhy!=='not graded yet'){ o.gradeWhy='not graded yet'; ppDirty(o); } continue; }
-    o.result=g.push?'push':(g.won?'win':'loss'); o.gradedAt=new Date().toISOString(); o.gradedBy='espn'; delete o.gradeWhy;
+    if(o.result) continue; o.result=g.push?'push':(g.won?'win':'loss'); o.gradedAt=new Date().toISOString(); o.gradedBy='espn'; delete o.gradeWhy;   // v5.30 (round 3): a Worker grade that came in meanwhile stays
     o.nObs=Math.max(+o.nObs||0, (o.obs||[]).length); delete o.obs; delete o.nb; ppDirty(o); n++;   /* settled: the sightings list goes (disposable); the record stays for good */
   }catch(e){ console.warn('paper grade', o&&o.name, e); } }
   if(n || S.dirty.size) await ppFlush(); return n; }
@@ -9772,10 +9779,11 @@ async function paperGrade(){ const S=ppS(); if(!S.ready || !ppOn()) return 0; co
 function ppKeyNoGame(x){ const gl=/^(moneyline|spread|total)$/.test(x.kind||''), mk=String(x.market||'').match(/^([+-]?[\d.]+)\s+(.*)$/), line=mk?String(parseFloat(mk[1])):(x.line!=null?String(x.line):'');
   let fam; if(gl) fam=String(x.kind); else { const t=mk?mk[2]:String(x.market||''); try{ fam=statFam(t); }catch(e){ fam=nrmT(t); } }
   return [String(x.sport||'').toUpperCase(), nrmT(x.name), fam, x.side||'', line].join('|'); }
+function ppRealOk(b, t0){ if(!b || typeof b!=='object' || b.kind==='parlay' || DFS.test(String(b.book||'')) || /pick ?6|sleeper/i.test(String(b.book||''))) return false;   // v5.30 (round 3, p9): the exclusions, shared with the board's ALREADY BET mark
+  const pl=Date.parse(b.placedAt||(b.snap&&b.snap.at)); return !(!isNaN(pl) && !isNaN(t0) && pl>=t0); }   /* a live bet is not the same outcome */
 function ppRealOf(o, log){ const k=ppKeyNoGame(o), t0=Date.parse(o.start), d=o.date;
-  return (log||[]).find(b=>{ if(!b || b.kind==='parlay' || DFS.test(String(b.book||'')) || /pick ?6|sleeper/i.test(String(b.book||''))) return false;
+  return (log||[]).find(b=>{ if(!ppRealOk(b, t0)) return false;   // v5.30 (round 3, p9)
     let bd=''; try{ bd=gameDayOf(b)||b.date||''; }catch(e){ bd=b.date||''; } if(bd!==d) return false;
-    const pl=Date.parse(b.placedAt||(b.snap&&b.snap.at)); if(!isNaN(pl) && !isNaN(t0) && pl>=t0) return false;   /* a live bet is not the same outcome */
     try{ return ppKeyNoGame(b)===k || (samePlayerAs(b,o) && ppKeyNoGame(Object.assign({}, b, {name:o.name}))===k); }catch(e){ return false; } }) || null; }
 function ppMarkReal(){ const S=ppS(); let n=0; const log=typeof logged!=='undefined'?logged:[];
   S.A.forEach(o=>{ if(o.real) return; const b=ppRealOf(o, log); if(b){ o.real={id:b.id||b.key||null, at:new Date().toISOString()}; ppDirty(o); n++; } else if(o.realSeen){ o.real={id:null, at:o.realSeen, board:true}; ppDirty(o); n++; } });
@@ -9810,11 +9818,12 @@ function ppGuessState(A){ const Q=ppGuess(), from=Date.parse(Q.writtenAt), inS=(
   return {Q, lo, hi, ready, verdict}; }
 function ppGroupHtml(g, L, pc){ const near=ppAgg(L, o=>o.near), first=ppAgg(L, o=>o.first), stl=ppAgg(L.filter(o=>!o.near && o.stale), o=>o.stale), early=ppAgg(L.filter(o=>!o.near), o=>o.first);
   const kel=ppAgg(L, o=>o.near, (o,s)=>s.limitZero?0:+s.stake||0), zero=L.filter(o=>o.near && o.near.limitZero).length;
-  const open=L.filter(o=>!o.result).length, real=L.filter(o=>o.real).length, realS=L.filter(o=>o.real && o.result).length, noNear=L.filter(o=>!o.near).length;
+  const vd=L.filter(o=>o.result==='void').length;   // v5.30 (round 3): void = neither a win nor a loss
+  const open=L.filter(o=>!o.result && !o.parked).length, real=L.filter(o=>o.real).length, realS=L.filter(o=>o.real && o.result).length, noNear=L.filter(o=>!o.near).length;
   const Y=L.filter(o=>o.result==='win'||o.result==='loss'), wins=Y.filter(o=>o.result==='win').length, exp=Y.reduce((t,o)=>t+(+o.first.act||0),0), brier=Y.length?Y.reduce((t,o)=>t+Math.pow((+o.first.act||0)-(o.result==='win'?1:0),2),0)/Y.length:null;
   const X=L.filter(o=>o.exchange && o.near && o.first && o.near.book===o.first.book && o.first.price>0), C=X.map(o=>o.near.price/o.first.price-1), ex=L.filter(o=>o.exchange).length;
   const R={}; L.forEach(o=>{ if(!o.near && o.nsWhy) R[o.nsWhy]=(R[o.nsWhy]||0)+1; }); const rs=Object.keys(R).map(k=>k+' '+R[k]).join(' · ');
-  return '<div class="pp-g" data-g="'+g+'"><h3 class="rp-h">'+esc(ppGroupLab(g,pc))+' <span class="meta">'+L.length+' paper bet'+(L.length===1?'':'s')+(open?' · '+open+' waiting for a result':'')+'</span></h3>'+
+  return '<div class="pp-g" data-g="'+g+'"><h3 class="rp-h">'+esc(ppGroupLab(g,pc))+' <span class="meta">'+L.length+' paper bet'+(L.length===1?'':'s')+(open?' · '+open+' waiting for a result':'')+(vd?' · '+vd+' void ($1 back, not counted)':'')+'</span></h3>'   /* v5.30 (round 3) */+
     '<p class="pp-head">'+ppLine(near, '$1 on each, near-start price')+'</p>'+
     (real?'<p class="meta">'+real+' of these '+(real===1?'was':'were')+' also bet for real ('+realS+' settled): kept in these $1 totals and marked, so nothing is picked after the fact. Your real money is only in the Bet log.</p>':'')+
     '<details class="pp-more"><summary>More</summary><ul class="pp-ul">'+
@@ -9831,19 +9840,19 @@ function ppListHtml(A){ const L=A.slice().sort((a,b)=>Date.parse(b.first.at)-Dat
     L.map(o=>{ const s=o.near, v=s&&o.result?(o.result==='push'?0:watchRoiOf(s.price,s.fee,o.result==='win')):null;
       return '<tr><td class="rp-bet"><b>'+esc(o.name)+'</b> '+esc(o.betnow||o.market)+'<br><span class="meta">'+esc(o.sport)+' · '+esc(o.game)+' · '+esc(o.date)+' · '+esc(bookLabel(o.first.book||o.book))+' · '+esc(ppGroupLab(o.group,o.planMin))+(o.modelOnly?' · model only':'')+(o.real?' · bet for real':'')+'</span></td>'+
         '<td data-l="First price">'+px(o.first)+'</td><td data-l="Near start">'+(s?px(s)+' <span class="meta">'+s.age+' min before</span>':'<span class="meta">'+esc(o.nsWhy||(Date.parse(o.start)>Date.now()?'not yet':'none'))+'</span>')+'</td>'+
-        '<td data-l="Result">'+(o.result?({win:'Won',loss:'Lost',push:'Push'})[o.result]:'<span class="meta">'+(o.gradeWhy||'waiting')+'</span>')+'</td><td class="num" data-l="$1 at near start">'+(v==null?'—':ppMoney(v))+'</td></tr>'; }).join('')+
+        '<td data-l="Result">'+(o.result?({win:'Won',loss:'Lost',push:'Push',void:'Void · not counted'})[o.result]   /* v5.30 (round 3): void */:'<span class="meta">'+(o.gradeWhy||'waiting')+'</span>')+'</td><td class="num" data-l="$1 at near start">'+(v==null?'—':ppMoney(v))+'</td></tr>'; }).join('')+
     '</tbody></table></div></details>'; }
 function ppHtml(){ const S=ppS(), P=planCfg(), A=S.A.filter(o=>o && o.first), gs=ppGuessState(A), Q=gs.Q, side=(x,lab)=>lab+': '+x.n+' outcome'+(x.n===1?'':'s')+' in '+x.games+' game'+(x.games===1?'':'s')+(x.n?' · ROI '+ppPct(x.roi):'');
   const guess='<div class="pp-guess"><b>The written guess</b> (fixed in the app on '+esc(planDayTxt(Q.written)||Q.written)+', before the first paper outcome): “'+esc(Q.text)+'.”<br><span class="meta">'+
     (gs.ready?esc(gs.verdict.word)+' 48.5–50% ROI '+ppPct(gs.hi.roi)+' vs 45–48.5% ROI '+ppPct(gs.lo.roi)+' · difference '+ppPct(gs.verdict.diff)+(gs.verdict.lo!=null?' (95% range by game '+ppPct(gs.verdict.lo)+' to '+ppPct(gs.verdict.hi)+')':''):
       'Not judged yet: it needs '+Q.needN+' outcomes and '+Q.needG+' games on each side. '+side(gs.lo,'45–48.5%')+' · '+side(gs.hi,'48.5–50%')+'.')+'</span></div>';
   const head='<p class="meta">Paper money: what these cards would have done. No money was bet. Each approved card under your plan minimum ('+(P.on?+P.pc.toFixed(1)+'%':'plan off: nothing new is recorded')+') is saved once at $1 and graded by ESPN like your bets. Nothing here changes a decision, a stake or the board, and none of it is in the Bet log, Today, the Scorecard or your real totals. Early sample: a running record, not proof (dev mode).</p>';
-  const err=S.err?'<p class="pp-err" role="alert">'+esc(S.err)+'</p>':'';
+  const err=(S.err?'<p class="pp-err" role="alert">'+esc(S.err)+'</p>':'')+'<p class="pp-wk" id="ppWk">'+esc(ppWkLine())+'</p>';   // v5.30 (round 3): who grades, in one line
   if(!S.ready) return head+guess+err+'<p class="meta">Loading the paper record…</p>';
   const G={unlikely:[], coin:[], below:[]}; A.forEach(o=>{ (G[o.group]||G.coin).push(o); });
   const body=A.length?['unlikely','coin','below'].filter(g=>G[g].length).map(g=>ppGroupHtml(g, G[g], G[g].length?G[g][G[g].length-1].planMin:P.pc)).join(''):'<p class="meta">No paper bets yet. The next board load records approved cards under your plan minimum.</p>';
   return head+guess+err+body+ppListHtml(A)+'<p class="pp-csv"><button type="button" class="btn-sm" id="ppCsv" onclick="ppCsv(this)">⬇ CSV of paper bets</button> <span class="meta" id="ppCsvMsg" role="status" aria-live="polite"></span></p>'+
-    '<p class="meta">'+A.length+' paper bet'+(A.length===1?'':'s')+' on this device'+(S.saved?' · last saved '+new Date(S.saved).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:'America/Chicago'}):'')+' · kept in this browser only (IndexedDB), never synced or mixed with your Bet log. A push counts as $1 staked and $0 back.</p>'; }
+    '<p class="meta">'+A.length+' paper bet'+(A.length===1?'':'s')+' on this device'+(S.saved?' · last saved '+new Date(S.saved).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:'America/Chicago'}):'')+' · kept in this browser (IndexedDB) and, with sync on, on your Worker, which grades them; never mixed with your Bet log. A push counts as $1 staked and $0 back.</p>'; }
 function ppRender(){ const el=document.getElementById('ppBody'); if(!el) return; if(typeof easyLevel==='function' && easyLevel()!=='god'){ el.innerHTML=''; return; }
   try{ ppMarkReal(); }catch(e){ console.error(e); } try{ el.innerHTML=ppHtml(); }catch(e){ console.error(e); el.innerHTML='<p class="pp-err" role="alert">Paper money could not be worked out: '+esc(e.message)+'</p>'; } }
 function ppRenderOpen(){ try{ if(document.body && document.body.dataset.view==='v-reports') ppRender(); }catch(e){} }
@@ -9854,6 +9863,66 @@ function ppCsv(btn){ const S=ppS(), A=S.A.filter(o=>o && o.first), msg=document.
   const rows=A.map(o=>{ const f=o.first, n=o.near; return [o.group, o.planMin, o.sport, o.game, o.start, o.name, o.betnow||o.market, bookLabel(f.book||o.book), f.at, f.price, f.act, f.actNet, n&&n.at, n&&n.price, n&&n.act, n&&n.age, !n?(o.nsWhy||''):'', n?n.stake:f.stake, n?n.limitZero:f.limitZero, o.modelOnly, !!o.real, o.result||'', o.gradedBy||'', o.ver].map(q).join(','); });
   try{ const blob=new Blob([H.join(',')+'\n'+rows.join('\n')+'\n'],{type:'text/csv'}), a=document.createElement('a'), nm='paper-money-'+ctDay(Date.now())+'.csv'; a.href=URL.createObjectURL(blob); a.download=nm; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
     if(msg) msg.textContent='Saved '+A.length+' paper bet'+(A.length===1?'':'s')+' to '+nm+'.'; }catch(e){ if(msg) msg.textContent='Could not make the file: '+e.message; } }
+/* v5.30 (round 3; owner 11/25: "Paper grade could be on the app but be graded apart away from the repo" … "Fucking build bro"): the paper records also live
+   on the owner's Worker (v3.51 src/paper.js: POST /paper, GET /paper?since=, GET /paper/head), which grades them from ESPN by itself, so results come in
+   with the app closed, the phone and the computer share one set, and a cleared browser loses nothing. IndexedDB stays the local copy and the fallback.
+   Locks: the same two headers as /sync (syncHeaders: the screener passphrase or its cookie, and x-sync-key, the hash of the sync password), never in a URL
+   or a log. Calls: one POST per board with changes (at most 300 records, under 2 MB), one GET at load (paged while more), one GET every 4+ minutes only while
+   Reports is open or a paper bet is due; none while the Worker is paused (wkPaused) or with no sync password. The Worker's result is the grade (void =
+   neither a win nor a loss); paperGrade on this device runs only when the Worker cannot grade. Records from before this version are sent once (backfill). */
+function ppWk(){ const S=ppS(); if(!S.wk){ let m=null; try{ m=JSON.parse(localStorage.getItem('mbev.paperWk')||'null'); }catch(e){} S.wk=Object.assign({seq:0, bf:''}, m||{}, {down:false, err:'', fails:0, nextPost:0, lastGet:0, lastPost:0, busyP:false, busyG:false}); } return S.wk; }
+function ppWkSave(){ const W=ppWk(); try{ localStorage.setItem('mbev.paperWk', JSON.stringify({seq:+W.seq||0, bf:W.bf||''})); }catch(e){} }   /* a position and a flag only: no key */
+function ppWkPw(){ return typeof SY!=='undefined' && !!SY && !!SY.on && !!SY.key; }
+function ppWkOk(){ let paused=false, base=''; try{ paused=wkPaused(); base=API_BASE; }catch(e){ return false; } return ppOn() && ppWkPw() && typeof base==='string' && !!base && !paused; }
+function ppWkGrades(){ return ppWkOk() && !ppWk().down; }
+function ppWkGood(){ const W=ppWk(); W.fails=0; W.down=false; W.err=''; W.nextPost=0; }
+function ppWkFail(status, j){ const W=ppWk(); W.fails++; W.nextPost=Date.now()+Math.min(30*60e3, 60e3*Math.pow(2, W.fails-1)); W.down=true;
+  let t=''; try{ t=syncErrText(status?{status, j}:{err:'can’t reach the Worker (offline?)'}); }catch(e){ t='the Worker answered '+status; } if(status===404) t='this Worker has no paper store yet (deploy v3.51)'; W.err=t; ppRenderOpen(); }
+function ppWkForm(o){ const x={}; Object.keys(o).forEach(f=>{ if(f!=='wkSeq' && f!=='wkSent' && f!=='wkRej' && f!=='fromWk' && o[f]!==undefined) x[f]=o[f]; }); return x; }
+async function ppPush(){ const S=ppS(), W=ppWk(); if(!S.ready || !W.started || !S.up.size || W.busyP || !ppWkOk() || Date.now()<W.nextPost) return 0;   /* after the load GET (started) */
+  const list=[]; let size=0;
+  for(const k of [...S.up]){ const o=S.by.get(k); if(!o || !o.first){ S.up.delete(k); continue; } const t=JSON.stringify(ppWkForm(o));
+    if(t.length>32*1024){ S.up.delete(k); o.wkRej='record too big'; continue; } if(list.length>=300 || size+t.length>1900000) break; list.push([k,t]); size+=t.length+1; }
+  if(!list.length) return 0; W.busyP=true;
+  try{ let res; try{ res=await fetch(API_BASE+'/paper', {method:'POST', headers:syncHeaders({'Content-Type':'application/json'}), body:'{"records":['+list.map(x=>x[1]).join(',')+']}', cache:'no-store'}); }catch(e){ ppWkFail(0); return 0; }
+    let j=null; try{ j=await res.json(); }catch(e){} if(!res.ok || !j || !j.ok){ ppWkFail(res.status, j); return 0; }
+    ppWkGood(); const rej=new Map((j.rejected||[]).map(x=>[String(x.k||''), String(x.why||'refused')]));
+    list.forEach(([k,t])=>{ const o=S.by.get(k); if(!o) return; if(JSON.stringify(ppWkForm(o))===t) S.up.delete(k);   /* changed while it was on its way: sent again next time */
+      const why=rej.get(k.slice(0,120)); if(why){ o.wkRej=why; S.up.delete(k); } else { o.wkSent=+j.seq||1; delete o.wkRej; } ppDirtyLocal(o); });
+    W.lastPost=Date.now(); if(!S.up.size && W.bf==='queued'){ W.bf='done'; ppWkSave(); } ppFlush(); ppRenderOpen(); return list.length; }
+  finally{ W.busyP=false; } }
+function ppMergeWk(r){ if(!r || typeof r!=='object' || !r.k || !r.first) return false; const S=ppS(), sq=+r.seq||0; let o=S.by.get(r.k)||(r.pk && S.by.get(r.pk));
+  const G=['result','gradedAt','gradedBy','grade','gradeWhy','voidWhy','parked'];
+  if(!o){ o={}; Object.keys(r).forEach(f=>{ if(!/^(id|srv|upd|seq|appResult|appGradedAt)$/.test(f)) o[f]=r[f]; }); o.wkSeq=sq; o.wkSent=sq || 1; o.fromWk=true;   /* seen on another device */
+    if(!o.pk) o.pk=ppPkOf(o.k, o.start); if(!o.nsMiss) o.nsMiss={}; S.A.push(o); S.by.set(o.k,o); S.by.set(o.pk,o); if(r.id && r.id!==o.k) S.by.set(r.id,o); ppDirtyLocal(o); return true; }
+  if(sq && sq<=(+o.wkSeq||0)) return false; o.wkSeq=sq; if(!o.wkSent) o.wkSent=sq || 1;   /* the local first sighting stays; a newer server seq wins for the grade */
+  if(r.result){ G.forEach(f=>{ if(r[f]!==undefined) o[f]=r[f]; else delete o[f]; }); o.nObs=Math.max(+o.nObs||0, (o.obs||[]).length); delete o.obs; delete o.nb; }
+  else { if(r.gradeWhy!==undefined) o.gradeWhy=r.gradeWhy; if(r.parked) o.parked=true; }
+  if(!o.near && r.near) o.near=r.near; if(!o.stale && r.stale) o.stale=r.stale; if(!o.real && r.real) o.real=r.real; if(!o.realSeen && r.realSeen) o.realSeen=r.realSeen;
+  ppDirtyLocal(o); return true; }
+async function ppPull(){ const S=ppS(), W=ppWk(); if(!S.ready || W.busyG || !ppWkOk()) return 0; W.busyG=true; let n=0;
+  try{ for(let page=0; page<40; page++){ let res; try{ res=await fetch(API_BASE+'/paper?since='+(+W.seq||0)+'&limit=500', {headers:syncHeaders(), cache:'no-store'}); }catch(e){ ppWkFail(0); break; }
+      let j=null; try{ j=await res.json(); }catch(e){} if(!res.ok || !j || !j.ok){ ppWkFail(res.status, j); break; }
+      ppWkGood(); (j.records||[]).forEach(r=>{ if(ppMergeWk(r)) n++; }); if(j.seq!=null) W.seq=+j.seq; ppWkSave(); W.lastGet=Date.now(); if(!j.more) break; } }
+  finally{ W.busyG=false; }
+  if(n) ppFlush(); ppRenderOpen(); return n; }
+async function ppWkStart(){ const S=ppS(), W=ppWk(); if(!S.ready || !ppWkOk()) return 0; await ppPull(); W.started=true;
+  if(W.bf!=='done' && !W.down){ S.A.forEach(o=>{ if(o.first && !o.wkSent && !o.wkRej) S.up.add(o.k); }); W.bf=S.up.size?'queued':'done'; ppWkSave(); }
+  return ppPush(); }
+function ppWkTick(){ const S=ppS(), W=ppWk(); if(!S.ready || !ppWkOk()) return; const now=Date.now();
+  if(W.bf!=='done'){ if(!W.busyP && !W.busyG && now>=W.nextPost) ppWkStart(); return; }
+  if(S.up.size && now>=W.nextPost) ppPush();
+  const open=!!(document.body && document.body.dataset.view==='v-reports'), due=S.A.some(o=>{ const t=Date.parse(o.start||''); return !o.result && !o.parked && now>t+5*3600e3 && now<t+30*86400e3; });
+  if((open || due) && now-(W.lastGet||0)>=4*60e3 && (!W.down || now>=W.nextPost)) ppPull(); }
+function ppWkLine(){ const S=ppS(), W=ppWk(); let paused=false; try{ paused=wkPaused(); }catch(e){}
+  if(!ppWkPw()) return 'Saved on this device only: add your sync password in Settings to grade on your Worker.';
+  if(paused) return 'Your Worker is paused for a few minutes (too many calls): nothing is sent now, and paper bets are graded on this device meanwhile.';
+  if(W.down) return 'Your Worker could not take the paper bets ('+W.err+'): they are graded on this device for now and sent again later.';
+  const A=S.A.filter(o=>o && o.first), by=A.filter(o=>o.gradedBy==='worker-espn').length, wait=A.filter(o=>!o.result && !o.parked).length, pk=A.filter(o=>o.parked && !o.result), R={};
+  pk.forEach(o=>{ const w=String(o.gradeWhy||'no reason given'); R[w]=(R[w]||0)+1; });
+  const t=W.lastGet?new Date(W.lastGet).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:'America/Chicago'}):'not yet';
+  return 'Graded by your Worker: '+by+' · waiting: '+wait+' · parked: '+pk.length+(pk.length?' ('+Object.keys(R).map(k=>k+' '+R[k]).join('; ')+')':'')+' · last check '+t+(S.up.size?' · '+S.up.size+' to send':''); }
+setInterval(()=>{ try{ ppWkTick(); }catch(e){} }, 60e3);   // v5.30 (round 3): the Worker check, at most one GET every 4 minutes and only when it is needed
 setTimeout(()=>{ try{ ppLoad(); }catch(e){ console.error('paper load', e); } }, 0);   // v5.30: the paper record opens once the page has started (a board drawn before that waits in ppS().q)
 /* ============ calibration (v2.48) ============ */
 function calibrationPoints(){
