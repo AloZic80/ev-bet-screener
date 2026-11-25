@@ -10,6 +10,7 @@ The Worker sends jobs to Anthropic with a strict answer form (`output_config.for
 ## Limits Anthropic enforces (per request, all strict schemas together)
 - At most 24 optional fields (a field not in `required`), 16 nullable or union fields (`anyOf`, type arrays), 20 strict tools.
 - Large forms can still fail as "Schema is too complex for compilation" even inside those numbers: optional fields inside arrays of objects multiply the cost.
+- House rule (tighter, tested in test/ai-test.mjs): at most 14 optional fields per job and at most 6 inside lists. v3.49's refused forms had 20 and 18; the test fails on that code.
 - Not allowed: `minimum`/`maximum`, `minLength`, `oneOf`, recursive schemas, `additionalProperties` other than false.
 
 ## How we write forms (since v3.50)
@@ -18,7 +19,7 @@ The Worker sends jobs to Anthropic with a strict answer form (`output_config.for
 - Keep nullable fields to the few where 0 is a real value (a leg line of 0).
 
 ## Before merging a Worker change
-1. `node --import ./test/cf-stub-loader.mjs test/ai-test.mjs` (and share-test, pinnapi-live-test) pass; the schema test counts optional and union fields for every job and every strict tool, and asserts the limits above.
+1. `node --import ./test/cf-stub-loader.mjs test/ai-test.mjs` (and share-test, pinnapi-live-test) pass; the "limits" tests count optional and union fields for every job and for El Compa's strict tools together, against Anthropic's limits and the house rule.
 2. Add a test that the job's blanks are removed and real values (including free:false and a 0 line) are kept.
 3. Say plainly to the owner that the real Anthropic check happens on the first real use after deploy, and that a refusal now shows Anthropic's own reason (`detail`), so the first picture or question after the merge is the live test.
 
