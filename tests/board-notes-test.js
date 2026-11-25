@@ -17,7 +17,7 @@ const LOG=[{id:'p1',key:'p1',name:'Anthony Edwards',sport:'NBA',kind:'prop',mark
   for(const W of [1280,390]){
     const ctx=await b.newContext({timezoneId:'America/Chicago',viewport:{width:W,height:900}}); await ctx.clock.install({time:new Date(NOW)});
     await ctx.addInitScript(([R,L,d])=>{ try{ if(sessionStorage.getItem('s')) return; sessionStorage.setItem('s','1'); localStorage.clear(); localStorage.setItem('mbev.cfg',JSON.stringify({books:'Novig',cfgVer:3.03})); localStorage.setItem('mbev.log',JSON.stringify(L)); localStorage.setItem('mbev.board',JSON.stringify({v:1,savedAt:new Date().toISOString(),slate:d,rows:R})); }catch(e){} }, [ROWS,LOG,DAY]);
-    const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
+    const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message)); p.on('dialog',d=>d.accept());   // v5.31: a delete now asks twice (two confirm boxes): the test answers OK to both
     await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html}); if(/api\.0xbeta\.dev/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'}); if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
     await p.goto('http://app.test/'); await p.waitForTimeout(1200);
     const seen=()=>p.evaluate(()=>({cards:[...document.querySelectorAll('#placeCards .sc-card .pc-nm')].map(e=>e.textContent.trim()), rows:[...document.querySelectorAll('#tbody tr:not(.group-row):not(.notes-row)')].map(t=>(t.querySelector('.pick')||{}).textContent||'').filter(Boolean).map(s=>s.trim())}));

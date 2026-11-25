@@ -40,6 +40,14 @@ const L=require('./v527-jarvis-lib.js'); const {chromium,check,open,ev,safe,pop,
     has=await ev(X.p,()=>document.getElementById('jvPop').hasAttribute('data-prefill')); check('a failed quote request clears data-prefill (fails closed)', has===false, has);
     quote.mode='ok';
   });
+  await safe('no stake, no gate', async()=>{   // a just-missed row (stake 0, priced above its limit) still opens its slip: the gate only refuses a pick that has a stake
+    await ev(X.p,()=>{ localStorage.removeItem('mbev.jarvisRun'); window._jvRunMem=null; jvClose(true); window._jvWasOpen=false; });
+    quote.mode='ok'; const r=await ev(X.p,()=>{ const n=lastRows.find(r=>jvNearOk(r)); return n?{k:n.apiKey,stake:+n.stake||0,p:n.offeredProb,max:jvMax(n)}:null; });
+    check('setup: a just-missed row has no stake and is priced above its limit', r && r.stake===0 && r.p>r.max, r);
+    quote.price=r.p; await ev(X.p,k=>{ const row=lastRows.find(x=>x.apiKey===k); const w=document.createElement('div'); w.id='nm'; w.innerHTML='<div class="pcard"><button type="button" class="pp-open" data-idx="'+row.idx+'">Open the book</button></div>'; document.body.appendChild(w); w.querySelector('.pp-open').click(); },r.k); await X.p.waitForTimeout(600);
+    const txt=await ev(X.p,()=>document.querySelector('#nm .pp-open').textContent);
+    check('Open the book on a no-stake row is not refused by the limit gate', !/slip not opened/.test(txt||''), txt);
+  });
   const logged=await ev(X.p,()=>JSON.parse(localStorage.getItem('mbev.log')||'[]').length);
   check('prefill never writes a Bet-log entry', logged===0, logged);
   check('no page errors', X.errs.length===0, X.errs.slice(0,3));

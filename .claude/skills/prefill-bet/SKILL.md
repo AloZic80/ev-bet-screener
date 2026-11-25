@@ -7,7 +7,7 @@ description: Use when the owner asks to set up, prefill or get ready a bet at a 
 
 **Label, always: Guarded automation · experimental · unverified under book terms.** (Agreed with El Consultor 2026-11-25, Ref CC-2026-11-25-PREFILL-02; owner: BUILD.) Until the Novig dry run (E) and El Licenciado's terms review (F) are done, this is not for normal use.
 
-Prefilling is **not evidence of a bet**. Never create a Bet-log entry. Never press "I bet this". A bet counts only through the owner's own "I bet this" or a verified book fill.
+Prefilling is **not evidence of a bet**. Never create a Bet-log entry, and never press "I bet this", before the owner says he placed it (see "After you place"). A bet counts only after he says "placed" and you have seen the order on the book.
 
 ## The one rule
 **Never press the final button** (Place, Confirm, Submit, Bet, Buy, Pay, Accept changes, Accept new price, Deposit, Withdraw). The browser tool cannot enforce this for you (its permission is per site, not per button), so it is your rule: **fail closed on any doubt**.
@@ -40,6 +40,15 @@ Screenshots show the slip only: no balance, account name, location, transactions
 
 ## Do not
 Press any final or accepting button; change the pick, book or stake rule; open a second slip; touch deposit, withdraw or account pages; type or print a passphrase, key, password or code; click anything in the app except "Open the book" (never "I bet this", "Not now", "Skip today").
+
+## After you place (owner, 2026-11-25: "I make the bet, then you go back to our Screener app and make a bet")
+The app already opens the prefilled slip (its own "Open the book"): use that, do not build another way. You never place. After the owner clicks Place himself he tells you **"placed"**. Only then:
+1. **Look at the book, read only.** On the Novig page (portfolio or orders) find the order. Note the real price, the size or stake, whether it is **filled, partly filled or resting**. If you cannot see it, stop and ask him.
+2. **Go back to the app tab** (the other Chrome tab, props.0xbeta.dev). Make sure it is the browser that holds his real log: if the Bet log looks nearly empty (a few entries) or the cloud chip says off, stop and tell him, because the log lives in each browser and his history may be in another one.
+3. Press **I bet this** on that pick's pop-up or card. The bet form opens. Fill it with what the book shows (the real fill price and stake, not the price intended). If the book shows a different price, size or market than the pick, stop and ask.
+4. **Resting or partly filled order:** log nothing until it is filled; tell him what you see.
+5. Press **Save** only if everything matches. Then read the Bet log to confirm one new entry (never a silent save error) and tell him: book, pick, real price, stake.
+6. If anything is unclear, do not save. Ask.
 
 ## Done means
 Identity passed on the real slip, price at or below `limitExact`, nothing pressed beyond the app's "Open the book", the hand-back words said, one audit line written, no Bet-log entry made.

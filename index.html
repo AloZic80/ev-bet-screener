@@ -14936,7 +14936,7 @@ document.addEventListener('click', async e=>{
   const w=isPhone()?null:slipWindow();   // open now (pop-up blockers), point it once we know where   // v4.04: not on a phone (see slipReady)
   let url=BOOK_HOME[src], miss=null, kq=null;   // v5.20: kq = the Kalshi quote, for the market name
   try{ if(src!=='dk' && src!=='pp'){ const q=await quoteFor(obj, obj.book, true); kq=q;   /* v5.31: fresh, never the saved quote */
-    const lim0=slipRow?jvMax(slipRow):null, over=!!(q && q.ok && lim0!=null && +q.price>lim0+1e-9);   /* v5.31: the price now is above OK up to (the unrounded limit): no prefilled slip */
+    const lim0=slipRow?jvMax(slipRow):null, over=!!(q && q.ok && lim0!=null && +slipRow.stake>0 && +q.price>lim0+1e-9);   /* v5.31 fix: only a pick with a stake is refused above its limit; a just-missed or skipped row (no stake) opens as before */   /* v5.31: the price now is above OK up to (the unrounded limit): no prefilled slip */
     // v3.05: a book price far from the card's price means the book matched a different bet (a half, the other side of
     // the spread) — open the book's home page instead of a prefilled slip, and say why on the card
     const p0=obj.odds!=null?toProb(String(obj.odds).trim().replace(/^(\d)/,'+$1')):null;
