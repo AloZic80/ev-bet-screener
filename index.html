@@ -2680,7 +2680,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 <div class="panel rg-panel" id="rulesGlance" data-lv="god">   <!-- v4.38: Augi's rules layout: everything La Contadora uses, in one place -->
   <h2>Your rules at a glance <span class="cn-chip">saved in this browser · no secrets</span></h2>
   <div class="rg-grid" id="rgGrid"></div>
-  <p class="hint storage-use" id="storageUse" role="status"></p><!-- v5.25 (ENG-2): how full this browser’s storage is -->
+  <p class="hint storage-use" id="storageUse" role="status"></p><div class="hint" id="storageTop"></div><button type="button" class="ghost sm" id="storageFree">Free space (rebuildable caches only)</button><!-- v5.25 (ENG-2): how full this browser’s storage is -->
   <p class="hint" style="margin:6px 0 0">Change any of them in Screens and Stake sizing below; this updates as you type. A mode does not change any of them. Each tab lists only its own bets, by La Contadora’s chance: 😴 Boring = High Cover + Heavy Favorite (75%+), 🛋️ Tranqui = Strong (70–75%), 💪 Machín = Solid (65–70%), ⚖️ Parejo = Lean (60–65%), 🪙 Volado = Slight Lean (55–60%), 🎲 Dado = On the Line (50–55%)<!-- v5.16 (owner: more tabs) -->, 🍀 Suertudo = Coin Flip (45–50%), 🔮 Brujo = Unlikely (under 45%). The ones that just missed and the Hail Marys are not offered as bets: they stay in 👀 Watch, and you can log one yourself with + Add a bet.<!-- v5.13 (owner: no daily Suertudo/Brujo bets) --></p>
 </div>
 <div class="panel plan-panel" id="planPanel" data-lv="god">   <!-- v5.10 (owner, Sun 11/15: "id say 11/11 ... BUILD IT ALL"): My plan, a reminder only (saved and synced with the settings) -->
@@ -8034,7 +8034,13 @@ function storageUseInfo(){ const used=lsSize(), q=lsQuota(), n=(logged||[]).leng
   try{ if(n>=5) per=Math.max(600, Math.round(JSON.stringify(logged).length/n)); }catch(e){}
   try{ if(SY && SY.on) per+=360; }catch(e){}
   const free=Math.max(0,q-used); return {used, q, pct:Math.min(100,Math.round(used/q*100)), more:Math.floor(free/per)}; }
-function storageUseRender(){ const I=storageUseInfo(), txt='Storage used: '+I.pct+'% of this browser’s space (about '+I.more.toLocaleString('en-US')+' more bets fit)';
+/* v5.34 (owner 2026-11-25: "THIS BETS SHOULD BE SAVING OUT OF HERE IN A CLOUD"): what is using this browser's space, biggest first, and a button that clears ONLY the caches the app rebuilds by itself (the same list the app already clears when a save would not fit). Bets, snapshots, notes and settings are never touched. */
+function storageBreakdown(){ const rows=[]; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k && k.indexOf('mbev.')===0) rows.push({k:k, n:k.length+(localStorage.getItem(k)||'').length, cache:LS_CACHES.indexOf(k)>=0}); } }catch(e){} return rows.sort((a,b)=>b.n-a.n); }
+function storageTopRender(){ const el=document.getElementById('storageTop'); if(!el) return; const R=storageBreakdown(), tot=R.reduce((a,x)=>a+x.n,0)||1;
+  el.innerHTML='<b>What uses the space</b> (biggest first; “cache” = the app rebuilds it)<ul class="meta" style="margin:4px 0 0 16px">'+R.slice(0,8).map(x=>'<li>'+esc(x.k.replace('mbev.',''))+' · '+esc((x.n/1024).toFixed(0))+' KB · '+Math.round(x.n/tot*100)+'%'+(x.cache?' · <b>cache</b>':'')+'</li>').join('')+'</ul>'; }
+document.addEventListener('click', e=>{ const b=e.target && e.target.closest && e.target.closest('#storageFree'); if(!b) return; if(!sure2('Clear the rebuildable caches (rosters, injuries, weather, league scan, API call counters, price history, team logos)? Your bets, notes and settings are NOT touched. The app downloads them again when needed.','Really clear only those caches?')) return;
+  const before=lsSize(); LS_CACHES.forEach(k=>{ try{ localStorage.removeItem(k); }catch(_){} }); const after=lsSize(); try{ storageUseRender(); }catch(_){} const m=document.getElementById('storageUse'); if(m) m.textContent+=' Freed about '+Math.max(0,Math.round((before-after)/1024))+' KB.'; });
+function storageUseRender(){ try{ storageTopRender(); }catch(e){} const I=storageUseInfo(), txt='Storage used: '+I.pct+'% of this browser’s space (about '+I.more.toLocaleString('en-US')+' more bets fit)';
   const a=document.getElementById('storageUse'); if(a) a.textContent=txt+'.';
   const w=document.getElementById('storageWarn'); if(w){ if(I.pct>80){ w.hidden=false; w.textContent=txt+'. When it is full, new bets cannot be saved on this device: back up the bet log (More › Back up) and tell El Capataz.'; } else { w.hidden=true; w.textContent=''; } }
   return I; }
