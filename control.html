@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>0xBeta Autopilot control</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/autopilot-180.png"><meta name="theme-color" content="#10201a"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="0xBeta"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">   <!-- v5.39: installable on a phone (Share > Add to Home Screen) -->
 <!-- v5.35 (owner 2026-11-25: "a GUI that i can ask for simple things", "SAME but Different"): the control page. A separate page on the same site as the screener: same project, same Worker, its own file.
      It READS and SHOWS what your Worker knows about the auto bet (mode, armed for today, the kill switch, the budget, today's orders) and has three buttons: Proceed for today, Stop everything, Resume.
      It uses the sign-in the screener already saved in this browser (it never shows it, never prints it and never sends it anywhere but your own Worker). It cannot place a bet. No dependencies, no build step. -->
@@ -35,6 +36,11 @@ th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase}
 <h1>Autopilot <span id="pill" class="pill">…</span></h1>
 <div class="sub">Your control page. The screener tab is the engine; this page is the dashboard. <a href="index.html">Open the screener</a> · <span id="when">not loaded yet</span></div>
 <div id="msg" class="hint" role="status" aria-live="polite"></div>
+<div class="card" id="siCard" hidden><h2>Sign in on this device</h2>
+<div class="hint">An installed page keeps its own saved sign-in, so type it once here. It stays on this device only, is sent only to your own Worker, and is never shown back. The sync password is turned into a one-way code before it is saved.</div>
+<div class="ask" style="margin-top:8px"><input id="siPass" type="password" autocomplete="off" placeholder="Screener passphrase" aria-label="Screener passphrase"></div>
+<div class="ask" style="margin-top:8px"><input id="siSync" type="password" autocomplete="off" placeholder="Sync password" aria-label="Sync password"><button id="siSave">Save</button></div>
+<div class="hint" id="siMsg"></div></div>
 
 <div class="card"><h2>Today</h2>
 <div class="row">
@@ -119,6 +125,15 @@ th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase}
   }
   document.getElementById('bAsk').onclick=function(){ document.getElementById('ans').textContent=answer(document.getElementById('q').value||'what did you bet today'); };
   document.getElementById('q').addEventListener('keydown',function(e){ if(e.key==='Enter') document.getElementById('bAsk').onclick(); });
+  /* v5.39: sign in on this device (an installed home-screen page does not share the browser's saved sign-in). The passphrase is saved as typed; the sync password only as the one-way SHA-256 code the screener uses. Nothing is shown back. */
+  function siShow(){ var need=!(ls('mbev.pass') && ls('mbev.syncKey')); document.getElementById('siCard').hidden=!need; }
+  async function sha256hex(t){ var d=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)); return Array.prototype.map.call(new Uint8Array(d),function(b){ return ('0'+b.toString(16)).slice(-2); }).join(''); }
+  document.getElementById('siSave').onclick=async function(){ var p=(document.getElementById('siPass').value||'').trim(), w=document.getElementById('siSync').value||'', m=document.getElementById('siMsg');
+    if(p.length<4 || !w){ m.textContent='Type both the passphrase and the sync password.'; m.className='hint err'; return; }
+    try{ localStorage.setItem('mbev.pass', p); localStorage.setItem('mbev.syncKey', await sha256hex('0xbeta-sync:'+w)); }catch(e){ m.textContent='This device would not save it.'; m.className='hint err'; return; }
+    document.getElementById('siPass').value=''; document.getElementById('siSync').value=''; m.textContent=''; siShow(); refresh(); };
+  siShow();
+  try{ if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){}); }catch(e){}   // v5.39: lets the phone install it
   refresh(); setInterval(function(){ if(!document.hidden) refresh(); }, 30000);
 })();
 </script>
