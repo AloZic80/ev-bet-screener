@@ -115,5 +115,27 @@ const L=require('./v527-jarvis-lib.js'); const {chromium,check,open,ev,safe,pop,
     await ev(X.p,()=>{ document.querySelector('.tab[data-view="v-settings"]').click(); document.getElementById('apPanel').open=true; }); await X.p.waitForTimeout(300);
     check('the Autopilot card shows the report when opened', /Report/.test(await ev(X.p,()=>document.getElementById('apReport').textContent)) && /look/.test(await ev(X.p,()=>document.getElementById('apReport').textContent)), await ev(X.p,()=>document.getElementById('apReport').textContent));
   });
+  await safe("Samson's log (v5.36): the card, the fills check, samsonLog()", async()=>{
+    const sPosts=[]; let notes=[]; await X.p.route(/api\.0xbeta\.dev\/samson\/log/,r=>{ const q=r.request(), cors={'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'GET,POST,OPTIONS'};
+      if(q.method()==='OPTIONS') return r.fulfill({status:204,headers:cors}); if(q.method()==='POST'){ sPosts.push({body:JSON.parse(q.postData()||'{}'), headers:q.headers()}); return r.fulfill({status:200,headers:cors,contentType:'application/json',body:JSON.stringify({ok:true})}); }
+      r.fulfill({status:200,headers:cors,contentType:'application/json',body:JSON.stringify({ok:true, entries:notes})}); });
+    await sync(); const now=Date.now();
+    status={ok:true, mode:'LIVE', day:'2026-11-26', budget:10, reserved:1, left:9, killed:false, requireArm:true, armed:true, orders:[{t:now-30*60e3, name:'Jalen Brunson Over 24.5 Points', result:'placed', price:'0.5', qty:200}]};
+    notes=[{t:now-50*60e3, kind:'prepared', what:'Prepared a $1 slip, did not place', pick:'Collin Gillespie Over 1.5 Threes', book:'Novig', stake:1},{t:now-20*60e3, kind:'load', what:'Loaded the board'}];
+    await ev(X.p,(n)=>{ myFillsSet([{id:'f1', book:'novig', bet:{kind:'prop', name:'Jalen Brunson'}, price:0.5, cost:1, ts:n-25*60e3},{id:'f2', book:'novig', bet:{kind:'prop', name:'Collin Gillespie'}, price:0.575, cost:1, ts:n-40*60e3},{id:'f3', book:'novig', bet:{kind:'prop', name:'Tony Pollard'}, price:0.47, cost:0.51, ts:n-5*60e3},{id:'f4', book:'kalshi', bet:{kind:'prop', name:'Somebody Else'}, price:0.4, cost:2, ts:n-5*60e3}]); document.querySelector('.tab[data-view="v-settings"]').click(); document.getElementById('apPanel').open=true; }, now);
+    await ev(X.p,()=>apRefresh()); await X.p.waitForTimeout(400);
+    const t=await ev(X.p,()=>document.getElementById('apSamson').textContent);
+    check("the card lists Samson's notes for today (what, which pick, the stake)", /Samson’s log \(today\)/.test(t) && /Prepared a \$1 slip, did not place/.test(t) && /Collin Gillespie Over 1\.5 Threes/.test(t) && /Loaded the board/.test(t), t.slice(0,300));
+    check('Novig fills of the last 24 hours: 3 (the Kalshi one is not counted); 1 from the Worker, 1 after Samson prepared, 1 neither', /fills, last 24 hours: 3/.test(t) && /from the Worker: 1/.test(t) && /after Samson prepared a slip: 1/.test(t) && /neither: 1/.test(t), t);
+    check('the fill with no match (Tony Pollard, $0.51) is named, with the plain words "no Worker order or Samson note matches it"', /Tony Pollard/.test(t) && /\$0\.51/.test(t) && /no Worker order or Samson note matches it/.test(t), t);
+    const P=await ev(X.p,(n)=>samsonProvenance([{bet:{name:'Tony Pollard'}, ts:n}], [{t:n-7*3600e3, name:'Tony Pollard Under 54.5', result:'placed'}], [{t:n-13*3600e3, kind:'prepared', pick:'Tony Pollard', what:'x'}]), now);
+    check('a Worker order more than 6 hours before the fill, or a Samson note more than 12 hours before it, does not count as the source', P.neither.length===1 && P.worker.length===0 && P.samson.length===0, P);
+    const P2=await ev(X.p,(n)=>samsonProvenance([{bet:{name:'Tony Pollard'}, ts:n}], [{t:n+30*60e3, name:'Tony Pollard Under 54.5', result:'placed'}], [{t:n+30*60e3, kind:'prepared', pick:'Tony Pollard', what:'x'}]), now);
+    check('an order or note made AFTER the fill never explains it', P2.neither.length===1, P2);
+    const p0=posts.length; const r=await ev(X.p,()=>samsonLog({kind:'checked', what:'Checked the Bet log: already bet', pick:'Tony Pollard Under 54.5', book:'Novig', stake:0.51}));
+    check('samsonLog() sends one note to /samson/log with the saved sync key and nothing else to the Worker', r.ok===true && sPosts.length===1 && sPosts[0].body.kind==='checked' && sPosts[0].body.stake===0.51 && sPosts[0].headers['x-sync-key']==='sk-test' && posts.length===p0, [r, sPosts.length]);
+    await ev(X.p,()=>{ SY.on=false; }); const r2=await ev(X.p,()=>samsonLog({kind:'note', what:'x'})); check('samsonLog() with sync off sends nothing and says why', r2.ok===false && /sync is off/.test(r2.error||'') && sPosts.length===1, r2); await sync();
+    notes=[]; await ev(X.p,()=>apRefresh()); await X.p.waitForTimeout(300); check('no notes today: says Samson has not reported anything today', /has not reported anything today/.test(await ev(X.p,()=>document.getElementById('apSamson').textContent)), null);
+  });
   check('no page errors', X.errs.length===0, X.errs.slice(0,3));
   await b.close(); const r=L.res(); console.log('\n'+r.pass+' passed, '+r.fail+' failed'); process.exit(r.fail?1:0); })();

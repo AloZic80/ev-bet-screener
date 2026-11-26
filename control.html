@@ -54,6 +54,9 @@ th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase}
 <div class="card"><h2>Orders today (from your Worker)</h2>
 <table id="orders"><tr><td>Not loaded yet.</td></tr></table></div>
 
+<div class="card"><h2>Samson&#8217;s log (today)</h2>
+<div id="samson" class="hint">Not loaded yet.</div></div>
+
 <div class="card"><h2>What the screener tab did (this browser only)</h2>
 <div id="looks" class="hint">Nothing yet.</div></div>
 
@@ -93,7 +96,9 @@ th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase}
     var la=null; try{ la=JSON.parse(ls('mbev.autoLast')||'null'); }catch(e){}
     document.getElementById('looks').innerHTML=(la?'<b>Last look:</b> '+esc(clock(la.t))+' · '+esc(la.w):'No look yet from the screener tab in this browser.')+lk;
   }
-  async function refresh(){ if(busy) return; busy=true; say('Asking the Worker…'); var r=await call('/autobet/status'); busy=false; if(r.ok){ S=r.j; say(''); } else { S=null; say(why(r),true); } paint(); return r; }
+  async function samsonLoad(){ var el=document.getElementById('samson'); var r=await call('/samson/log'); if(!r.ok){ el.textContent=r.noSync?'Sync is off in this browser.':'No answer for Samson\'s log (the Worker may not have this route yet).'; return; }
+    var E=(r.j&&r.j.entries)||[]; el.innerHTML=E.length?'<ul style="margin:4px 0 0 16px">'+E.slice(0,10).map(function(x){ return '<li>'+esc(clock(x.t))+' · '+esc(x.kind)+' · '+esc(x.what)+(x.pick?' · '+esc(x.pick):'')+(x.stake!=null?' · '+money(x.stake):'')+'</li>'; }).join('')+'</ul>':'Samson has not reported anything today.'; }
+  async function refresh(){ if(busy) return; busy=true; say('Asking the Worker…'); var r=await call('/autobet/status'); busy=false; if(r.ok){ S=r.j; say(''); } else { S=null; say(why(r),true); } paint(); samsonLoad(); return r; }
   async function act(label, path, body, confirmText){
     if(confirmText && !confirm(confirmText)) return; say(label+'…'); var r=await call(path,'POST',body); if(!r.ok){ say(why(r),true); return; }
     await refresh(); say(label+': done.');

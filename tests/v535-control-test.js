@@ -10,6 +10,7 @@ const path=require('path'); const L=require('./v527-jarvis-lib.js'); const {chro
       if(mode==='down') return r.abort();
       let out=status; if(pth==='/autobet/arm'){ status={...status, armed:body.on===true}; out={ok:true, armed:body.on===true}; } else if(pth==='/autobet/kill'){ status={...status, killed:body.on===true}; out={ok:true, killed:body.on===true}; }
       r.fulfill({status:200,headers:cors,contentType:'application/json',body:JSON.stringify(out)}); });
+    await p.route(/api\.0xbeta\.dev\/samson\/log/,r=>{ const cors={'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'GET,POST,OPTIONS'}; if(r.request().method()==='OPTIONS') return r.fulfill({status:204,headers:cors}); posts.push({path:'/samson/log', method:r.request().method(), headers:r.request().headers()}); r.fulfill({status:200,headers:cors,contentType:'application/json',body:JSON.stringify({ok:true, entries:[{t:Date.now()-120000, kind:'prepared', what:'Prepared a $1 slip, did not place', pick:'Collin Gillespie Over 1.5 Threes', stake:1}]})}); });
     await p.addInitScript((s)=>{ if(s){ localStorage.setItem('mbev.syncKey','SECRETSYNCKEY123'); localStorage.setItem('mbev.pass','SECRETPASS456'); localStorage.setItem('mbev.autoLast', JSON.stringify({t:Date.now()-60000, w:'nothing new'})); } }, withSync);
     return {ctx, p, errs, dialogs}; };
   status={ok:true, mode:'LIVE', day:'2026-11-26', budget:10, reserved:3, left:7, killed:false, requireArm:true, armed:true, orders:[{t:Date.now()-120000, name:'CLE to win', result:'placed', price:'0.595', qty:168},{t:Date.now()-60000, name:'Panarin over 0.5', result:'refused', reason:'live_price_above_limit'}]};
@@ -18,6 +19,8 @@ const path=require('path'); const L=require('./v527-jarvis-lib.js'); const {chro
   let t=await txt();
   check('shows LIVE, $3.00 used, $7.00 left, 2 orders and Armed', /LIVE/.test(t) && /\$3\.00/.test(t) && /\$7\.00/.test(t) && /Armed/.test(t) && /CLE to win/.test(t) && /live_price_above_limit/.test(t), t.slice(0,400));
   check('the status request carries the saved sign-in (sync key and passphrase) to the Worker', posts.some(x=>x.path==='/autobet/status' && x.headers['x-sync-key']==='SECRETSYNCKEY123' && x.headers['x-screener-pass']==='SECRETPASS456'), posts[0]&&Object.keys(posts[0].headers));
+  await A.p.waitForTimeout(500); const ts=await txt();
+  check("Samson's log card lists today's notes from the Worker", /Samson’s log/i.test(ts) && /Prepared a \$1 slip, did not place/.test(ts) && /Collin Gillespie/.test(ts), ts.slice(300,900));
   const html=await A.p.content(); check('the page never shows the sync key or the passphrase', !/SECRETSYNCKEY123|SECRETPASS456/.test(t) && !/SECRETSYNCKEY123|SECRETPASS456/.test(html), null);
   check('it shows the screener tab\'s last look (this browser)', /Last look/.test(t) && /nothing new/.test(t), t.slice(-300));
   posts.length=0; A.p.__answer=false; await A.p.click('#bProceed'); await A.p.waitForTimeout(300);

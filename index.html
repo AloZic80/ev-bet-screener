@@ -2773,6 +2773,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
   <label class="bar-check" style="margin-top:8px"><input type="checkbox" id="apAuto"> Send approved Novig picks to the Worker automatically while it is armed today (this tab must stay open)</label>
   <div class="meta" style="margin-top:8px"><a href="control.html" target="_blank" rel="noopener" id="apCtl">Open the control page</a> (the dashboard: status, today's orders, Proceed, Stop, simple questions)</div>
   <div id="apReport" class="meta" style="margin-top:8px"></div>
+  <div id="apSamson" class="meta" style="margin-top:8px"></div>
   <div id="apNow" class="meta" role="status" aria-live="polite" style="margin-top:6px"></div>
   <div id="apLook" class="meta"></div>
   <div class="meta" id="apMsg" role="status"></div>
@@ -14716,7 +14717,7 @@ function apPaint(st){ const el=document.getElementById('apBody'); if(!el) return
   if(!st){ el.textContent='No answer from the Worker: turn on sync (Settings, Your bets on every device) and check the screener passphrase.'; return; }
   const rows=(st.orders||[]).slice(0,8).map(o=>'<li>'+esc(new Date(o.t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}))+' · '+esc(o.name||o.key||'')+' · <b>'+esc(o.result||'')+'</b>'+(o.reason?' ('+esc(o.reason)+')':'')+(o.price?' · '+esc(o.qty)+' contracts at '+esc((+o.price*100).toFixed(1))+'%':'')+'</li>').join('');
   el.innerHTML='<b>'+(st.mode==='LIVE'?'REAL money':'Paper money')+'</b> · '+(st.killed?'<b class="no-t">STOPPED (kill switch is on)</b>':(st.requireArm?(st.armed?'<span class="ok-t">armed for today</span>':'not armed: press Proceed for today'):'no daily Proceed needed yet'))+'<br>Today: $'+(+st.reserved).toFixed(2)+' used of $'+(+st.budget).toFixed(2)+' · $'+(+st.left).toFixed(2)+' left'+(rows?'<ul class="meta" style="margin:6px 0 0 16px">'+rows+'</ul>':'<br>No orders yet today.'); }
-async function apRefresh(){ const m=document.getElementById('apMsg'); if(m) m.textContent='Asking the Worker…'; const st=await apStatusLoad(true); apPaint(st); if(m) m.textContent=st?'':'No answer.'; return st; }
+async function apRefresh(){ const m=document.getElementById('apMsg'); if(m) m.textContent='Asking the Worker…'; const st=await apStatusLoad(true); apPaint(st); try{ await apSamsonPaint(st); }catch(e){} if(m) m.textContent=st?'':'No answer.'; return st; }
 async function apSend(r){   /* one order request for one approved pick (the automatic path); the Auto bet button has its own copy with the words for the pop-up */
   const lim=jvMax(r); if(!(lim>0 && lim<1)) return {ok:false, j:{reason:'no_limit'}};
   const q=await quoteFor(rowAsBet(r), r.book, true); if(!(q && q.ok && q.ref && q.outcome)) return {ok:false, j:{reason:'no_fresh_live_price'}};
@@ -14747,6 +14748,24 @@ function apReportHtml(){ const B=apBoardCounts(), T=apTally();
    +'<br>Today: <b>'+T.looks+'</b> look'+(T.looks===1?'':'s')+' · <b>'+T.sent+'</b> sent · <b>'+T.placed+'</b> placed · <b>'+T.refused+'</b> refused'+(T.times.length?' · went out at '+esc(T.times.join(', ')):'')
    +(B.near.length?'<div style="margin-top:4px"><b>Almost made it</b> (not sent; the reason it missed)</div><ul style="margin:2px 0 0 16px">'+B.near.slice(0,8).map(x=>'<li>'+esc(x.name)+' · '+esc(x.why)+'</li>').join('')+'</ul>':'<br>Nothing almost made it right now.'); }
 function apReportPaint(){ try{ const el=document.getElementById('apReport'); if(el) el.innerHTML=apReportHtml(); }catch(e){} }
+/* v5.36 (owner 2026-11-25: "the app you making telling me what Samson does should tell me"; he asked who placed Pollard): Samson's log. Samson (his Claude Code on the Mac, driving Chrome) reports what he did through samsonLog() on this page, which sends one text note to the Worker (POST /samson/log, behind the same sign-in); the card lists today's notes and, for the Novig fills of the last 24 hours, says whether a Worker order or a Samson note matches it ("neither" = placed by hand or by something we did not record). Read only: it decides and places nothing. */
+async function samsonLog(o){ o=o||{}; if(!(SY && SY.on && SY.key)) return {ok:false, error:'sync is off in this browser'}; const r=await apFetch('/samson/log','POST',{kind:o.kind||'note', what:o.what||'', pick:o.pick||'', book:o.book||'', stake:o.stake==null?null:o.stake}); return {ok:!!(r.j&&r.j.ok), status:r.status, j:r.j}; }
+function samsonNames(s){ return nrmT(s).split(' ').filter(w=>w.length>2); }
+function samsonFillName(f){ return String((f&&f.bet&&(f.bet.name||f.bet.player||f.bet.team||f.bet.label))||''); }
+function samsonMatchText(fillName, text){ const a=samsonNames(fillName), t=' '+nrmT(text)+' '; return a.length>0 && a.every(w=>t.indexOf(' '+w+' ')>=0); }
+function samsonProvenance(fills, orders, notes){ const out={worker:[], samson:[], neither:[]};
+  (fills||[]).forEach(f=>{ const nm=samsonFillName(f), ts=+f.ts||0;
+    const w=(orders||[]).some(o=>o && /placed|filled|open/i.test(String(o.result||'')) && samsonMatchText(nm, o.name||o.key||'') && (!ts || (o.t<=ts+10*60e3 && ts-o.t<6*3600e3)));
+    const sm=(notes||[]).some(x=>x && x.kind==='prepared' && samsonMatchText(nm, (x.pick||'')+' '+(x.what||'')) && (!ts || (x.t<=ts+10*60e3 && ts-x.t<12*3600e3)));
+    (w?out.worker:sm?out.samson:out.neither).push(f); }); return out; }
+async function apSamsonPaint(st){ const el=document.getElementById('apSamson'); if(!el) return;
+  const notes=await (async()=>{ if(!(SY && SY.on && SY.key)) return null; try{ const r=await apFetch('/samson/log'); return (r.j&&r.j.ok)?(r.j.entries||[]):null; }catch(e){ return null; } })();
+  const cut=Date.now()-24*3600e3, fills=myFillsGet().filter(f=>f && f.book==='novig' && (!(f.ts>0) || f.ts>cut)), P=samsonProvenance(fills, (st&&st.orders)||[], notes||[]);
+  const clk=t=>new Date(t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  let h='<b>Samson’s log (today)</b>'+(notes===null?'<br>No answer from the Worker (turn on sync, or the Worker has not got this route yet).':(notes.length?'<ul style="margin:2px 0 0 16px">'+notes.slice(0,8).map(x=>'<li>'+esc(clk(x.t))+' · '+esc(x.kind)+' · '+esc(x.what)+(x.pick?' · '+esc(x.pick):'')+(x.stake!=null?' · $'+esc((+x.stake).toFixed(2)):'')+'</li>').join('')+'</ul>':'<br>Samson has not reported anything today.'));
+  h+='<div style="margin-top:6px"><b>Novig fills, last 24 hours:</b> '+fills.length+' · from the Worker: <b>'+P.worker.length+'</b> · after Samson prepared a slip: <b>'+P.samson.length+'</b> · neither: <b>'+P.neither.length+'</b></div>';
+  if(P.neither.length) h+='<ul style="margin:2px 0 0 16px">'+P.neither.slice(0,6).map(f=>'<li>'+esc(samsonFillName(f)||'a Novig fill')+' · $'+esc((+f.cost||0).toFixed(2))+(f.ts?' · '+esc(clk(f.ts)):'')+' · no Worker order or Samson note matches it (placed by hand, or by something we did not record)</li>').join('')+'</ul>';
+  el.innerHTML=h; }
 function apDoing(t){ if(!t) apReportPaint(); try{ const el=document.getElementById('apNow'); if(el) el.innerHTML=t?('<b>Working now:</b> '+esc(t)):apLastHtml(); }catch(e){} }
 function apLastHtml(){ let o=null; try{ o=JSON.parse(localStorage.getItem('mbev.autoLast')||'null'); }catch(e){} if(!o) return 'Last look: none yet in this tab.'; return '<b>Last look:</b> '+esc(new Date(o.t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'}))+' · '+esc(o.w)+' · the next one is within a minute'; }
 function apLookWords(o){ o=o||{}; if(o.error) return 'could not look: '+o.error; if(o.sent) return (o.ok?'sent 1 pick to the Worker':'sent 1 pick, the Worker said no ('+(o.reason||'?')+')');
