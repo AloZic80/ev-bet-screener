@@ -44,3 +44,6 @@ Today (Wed 2026-11-25) the owner may bet up to $7 more, as $1 bets, supervised (
 
 ## Correction: the real-money total is $27 (owner, 2026-11-25: "total $27")
 Real-money budget for the three days: **Wed 11/25 $7** (the $1 CLE bet is not counted), **Thu 11/26 $10**, **Fri 11/27 $10**: **$27 in all**. Supervised (the owner places by hand; Samson may prepare). This replaces the earlier line that said today's total is at most $8.
+
+## Order sizes for the Worker autopilot (owner, 2026-11-25: "for the paper, it can be any > for the real bets, only $1")
+**Paper:** any size (the app's own stake, up to the paper money and the budget). **Real (LIVE):** exactly **$1 an order**; a stake under $1 is refused; the $25 a day stays for both for now. In code: `PRESETS` in the Worker's `src/autobet_logic.js` (branch `claude/novig-sign`, not merged).
