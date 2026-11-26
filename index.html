@@ -5990,7 +5990,7 @@ function easySig(b){ b=b||{}; return JSON.stringify([b.name, b.market, b.side||n
 function easyMark(b, key){ const O=easyOwn(); O[b.id]={key, sig:easySig(b)}; easyOwnSave(); const S=easySeen(); if(S[key]) S[key].placed=true; }
 function easyForget(id){ const O=easyOwn(), o=O[id]; delete O[id]; easyOwnSave(); if(o){ const S=easySeen(); if(S[o.key]) S[o.key].placed=false; } return o||null; }
 function easyChanged(b, soft){ const o=easyOwn()[b.id], res=(soft && (b.result==='pending' || b.result==='?')) ? null : b.result; return !!(res || b.sold || b.fillRef || b.fillBook || (b.fills && b.fills.length) || b.autoFrom || (b.edits && b.edits.length) || !o || o.sig!==easySig(b)); }
-function easyStored(id){ try{ const a=JSON.parse(localStorage.getItem('mbev.log')||'[]'); return Array.isArray(a) && a.some(x=>x && x.id===id); }catch(e){ return false; } }
+function easyStored(id){ try{ const a=JSON.parse(lsPlain('mbev.log')||'[]'); return Array.isArray(a) && a.some(x=>x && x.id===id); }catch(e){ return false; } }
 /* the log did not reach storage (S2): take the bet out of memory again so Today keeps the pick and nothing says Saved; the person is told in plain words (never swallowed) */
 function easyUnsave(b){ const i=(logged||[]).indexOf(b); if(i>=0){ logged.splice(i,1); syncMarkGone('log',[b&&b.id]); }   /* v5.25 round 2 (HS-1) */ saveLog(); try{ const t=document.getElementById('savedToast'); if(t) t.classList.remove('on'); }catch(e){} try{ renderLog(); renderPerf(); }catch(e){} refresh(); }
 function easyAfterSave(nb, key){ if(!easyStored(nb.id)){ easyUnsave(nb); return {saved:false, reason:'storage'}; } easyMark(nb, key); return {saved:true, id:nb.id, key}; }
@@ -8007,13 +8007,28 @@ function marketStem(m){ return String(m||'').replace(/^[+-]?[\d.]+\s+/,'').toLow
 function propKey(r){ return [document.getElementById('slate').value,r.name,r.market].join('|').toLowerCase(); }
 function propKeyOf(b){ return [b.date,b.name,b.market].join('|').toLowerCase(); }
 function betKey(r){ return [document.getElementById('slate').value,r.name,r.market,r.book,r.offeredRaw].join('|'); }
-function loadLog(){ try{ logged=JSON.parse(localStorage.getItem('mbev.log')||'[]'); }catch(e){ logged=[]; } }
+function loadLog(){ try{ logged=JSON.parse(lsPlain('mbev.log')||'[]'); }catch(e){ try{ const raw=localStorage.getItem('mbev.log'); if(raw && raw.slice(0,3)==='z1:') localStorage.setItem('mbev.log.unreadable', raw); }catch(_){} logged=[]; } }   /* v5.34: a compressed log that cannot be read is kept under mbev.log.unreadable before anything can overwrite it */
 /* v3.82 (Alonzo: "I classified them manually but it did not record them"): saving the log failed in silence when the browser's
    storage was full, so a result looked set until the next reload. Now a failed save frees the app's own caches (they refill by
    themselves) and tries again; if it still cannot save, a red note says so instead of losing the change quietly. */
 const LS_CACHES=['mbev.rosters','mbev.inj','mbev.wx','mbev.wxGeo','mbev.lgScan','mbev.sbq','mbev.oaq','mbev.teamlogos','mbev.px'];   // v4.21: + price history
+/* LZ-BEGIN v5.34 (owner 2026-11-25: "fix then"; the browser's 5 MB was 99% full): the bet log is stored COMPRESSED once it is big (over 400,000 characters). A small LZW coder of our own (no dependency): the text is turned into UTF-8 bytes, each code is one character below U+D800 (so it is always valid text), the table is cleared at 0xD7F0 entries. A saved value starts with "z1:"; anything else is the old plain text, so both are read. The coder checks itself: lsPack decodes what it just made and uses it only if it equals the original, else the plain text is saved as before. */
+function lzEnc(str){ const b=new TextEncoder().encode(String(str)), out=[]; let dict=new Map(), next=256, w=-1;
+  for(let i=0;i<b.length;i++){ const c=b[i]; if(w<0){ w=c; continue; } const key=w*256+c, hit=dict.get(key);
+    if(hit!==undefined){ w=hit; } else { out.push(w); if(next<0xD7F0){ dict.set(key,next++); } else { out.push(0xD7FF); dict=new Map(); next=256; } w=c; } }
+  if(w>=0) out.push(w); let s=''; for(let i=0;i<out.length;i+=8192) s+=String.fromCharCode.apply(null,out.slice(i,i+8192)); return s; }
+function lzDec(z){ z=String(z); const pre=new Int32Array(0xD800), suf=new Uint8Array(0xD800), bytes=[]; let next=256, prev=-1;
+  const emit=(code)=>{ const st=[]; let c=code; while(c>=256){ st.push(suf[c]); c=pre[c]; } st.push(c); for(let i=st.length-1;i>=0;i--) bytes.push(st[i]); return c; };
+  for(let i=0;i<z.length;i++){ const code=z.charCodeAt(i); if(code===0xD7FF){ next=256; prev=-1; continue; } if(code>=0xD800) throw new Error('bad code');
+    if(prev<0){ if(code>=256) throw new Error('bad start'); bytes.push(code); prev=code; continue; }
+    let first; if(code<next){ first=emit(code); } else if(code===next){ let c=prev; while(c>=256) c=pre[c]; first=c; emit(prev); bytes.push(first); } else throw new Error('bad code');
+    if(next<0xD7F0){ pre[next]=prev; suf[next]=first; next++; } prev=code; }
+  return new TextDecoder('utf-8',{fatal:true}).decode(Uint8Array.from(bytes)); }
+function lsPack(v){ try{ v=String(v); if(v.length<400000) return v; const z=lzEnc(v); if(z.length+3<v.length*0.9 && lzDec(z)===v) return 'z1:'+z; }catch(e){} return v; }
+function lsPlain(k){ const v=localStorage.getItem(k); if(typeof v==='string' && v.slice(0,3)==='z1:') return lzDec(v.slice(3)); return v; }
+/* LZ-END */
 function lsSize(){ let t=0; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); t+=k.length+(localStorage.getItem(k)||'').length; } }catch(e){} return t; }
-function lsSafeSet(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){}
+function lsSafeSet(k,v){ if(k==='mbev.log') v=lsPack(v); try{ localStorage.setItem(k,v); return true; }catch(e){}
   for(const c of LS_CACHES){ if(c===k) continue; try{ localStorage.removeItem(c); }catch(e){} try{ localStorage.setItem(k,v); return true; }catch(e){} } return false; }
 function saveFailNote(bad){ let el=document.getElementById('saveFail'); if(!bad){ if(el) el.remove(); return; }
   if(!el){ el=document.createElement('div'); el.id='saveFail'; el.setAttribute('role','alert'); document.body.prepend(el); }
@@ -8025,7 +8040,7 @@ function cfgSaveFailNote(bad){ let el=document.getElementById('cfgSaveFail'); if
   el.textContent='⚠ A setting you changed could not be saved on this device: the browser storage is full. It is used until the page reloads, then the old value comes back.'; }
 /* v5.25 (ENG-2, Build A): when the bet log still does not fit after the caches, make room in this order and only as far as needed: Watch sightings,
    then the oldest pruned Watch records, then grade-history entries older than 30 days. Bets are never dropped. True when the log was saved. */
-function logMakeRoom(){ const v=JSON.stringify(logged), put=()=>{ try{ localStorage.setItem('mbev.log',v); return true; }catch(e){ return false; } }, wput=A=>{ try{ localStorage.setItem('mbev.watchObs',JSON.stringify(A)); }catch(e){} };
+function logMakeRoom(){ const v=JSON.stringify(logged), put=()=>{ try{ localStorage.setItem('mbev.log',lsPack(v)); return true; }catch(e){ return false; } }, wput=A=>{ try{ localStorage.setItem('mbev.watchObs',JSON.stringify(A)); }catch(e){} };
   try{ const A=watchAll(); let n=0; A.forEach(o=>{ if(o && o.sig){ o.nSig=Math.max(+o.nSig||0,o.sig.length); delete o.sig; n++; } }); if(n){ wput(A); if(put()) return true; }
     const P=A.filter(o=>o && o.pruned).sort((x,y)=>String(x.first||x.at||'')<String(y.first||y.at||'')?-1:1), step=Math.max(20,Math.ceil(P.length/10));
     for(let i=0;i<P.length;i+=step){ const drop=new Set(P.slice(i,i+step)); for(let j=A.length-1;j>=0;j--) if(drop.has(A[j])) A.splice(j,1); syncForgetLocal('watch',[...drop].map(o=>o.k)); wput(A); if(put()) return true; } }catch(e){}   // v5.25 round 2 (HS-5): dropped on this device only
@@ -12995,14 +13010,14 @@ function loadCfg(){
 })();
 SW_IDS.concat(SW_CHECKS).forEach(id=>document.getElementById(id).addEventListener('change',()=>{ saveSweet(); rerenderWithFilters(); }));
 loadSweet(); loadParlays();
-loadCfg(); loadLog(); manual(); render([],cfgRead()); renderLog(); renderPerf();
+loadCfg(); loadLog(); try{ const raw0=localStorage.getItem('mbev.log'); if(raw0 && raw0.slice(0,3)!=='z1:' && raw0.length>=400000 && Array.isArray(logged) && logged.length && JSON.stringify(logged)===raw0){ const pk0=lsPack(raw0); if(pk0!==raw0) localStorage.setItem('mbev.log', pk0); } }catch(e){}   /* v5.34: a big plain log is packed once when the page opens (only if what was read equals what is stored), so the space comes back now, not at the next bet */ manual(); render([],cfgRead()); renderLog(); renderPerf();
 try{ paintSportSelects(); pickStartSport(); setTimeout(()=>scanSportTimes(), 800); setInterval(()=>scanSportTimes(), 30*60e3); }catch(e){}   // v3.12
 /* v2.61: keep every open copy of the screener in sync — a stale tab must never write an old list back */
 let logBusy=0;   // v2.62: an async job (closing grab, result check) is editing the log — don't swap it out mid-way
 function syncFromStorage(){
   if(logBusy>0) return false;
   let changed=false;
-  const same=(key,val)=>{ try{ return (localStorage.getItem(key)||'') === JSON.stringify(val); }catch(e){ return true; } };
+  const same=(key,val)=>{ try{ return (lsPlain(key)||'') === JSON.stringify(val); }catch(e){ return true; } };   /* v5.34: lsPlain reads a compressed log too */
   try{
     if(localStorage.getItem('mbev.log')!==null && !same('mbev.log',logged)){ loadLog(); changed=true; }
     if(localStorage.getItem('mbev.parlay')!==null && !same('mbev.parlay',parlays)){ loadParlays(); changed=true; }
@@ -16442,7 +16457,7 @@ function syncSt(c){ const M=SY.meta, st=M.c[c]||(M.c[c]={S:{},T:{},B:{},H:{}}); 
 function betSig(b){ return [b.date, nrm(b.name), String(b.market||'').toLowerCase(), b.side||'', LIVE_BOOK(b.book)||String(b.book||'').toLowerCase(), b.odds, (+b.stake||0).toFixed(2)].concat(b.kind==='parlay' && b.key ? [b.key] : []).join('|'); }   // v5.11 (bug): a parlay with its own key (saved from v5.11 on) is never taken for a copy of another parlay with the same day, name, book, price and stake when a device joins the sync; others keep their sig
 function syncEnsureIds(){ let n=0;   // older bets saved without an id get one built from what they are — the same on every device
   logged.forEach(b=>{ if(b && !b.id){ b.id='h'+syncHashStr([b.date,b.name,b.market,b.side,b.book,b.odds,b.stake,b.snap&&b.snap.at].join('|')); n++; } });
-  if(n) syncLS('mbev.log', JSON.stringify(logged));
+  if(n) syncLS('mbev.log', lsPack(JSON.stringify(logged)));
   return n; }
 // per-device fields that change every minute (the live exchange price) never sync — they'd re-upload the log all day
 const SYNC_VOLATILE=new Set(['liveLast','closeLive']);
