@@ -18,7 +18,7 @@ const L=require('./v527-jarvis-lib.js'); const {chromium,check,open,ev,safe,pop,
   const topKeys=()=>ev(X.p,()=>lastRows.filter(r=>scApproved(r) && LIVE_BOOK(r.book)==='novig').sort((a,b)=>mathKey(b)-mathKey(a)).map(r=>pxKey(r)));
   await safe('card', async()=>{
     await sync(); await ev(X.p,()=>{ document.querySelector('.tab[data-view="v-settings"]').click(); document.getElementById('apPanel').open=true; }); await ev(X.p,()=>apRefresh()); const t=await ev(X.p,()=>document.getElementById('apBody').textContent);
-    check('the Autopilot card shows the mode (REAL money), armed for today, $1.00 used of $10.00, $9.00 left and the last order', /REAL money/.test(t) && /armed for today/.test(t) && /\$1\.00 used of \$10\.00/.test(t) && /\$9\.00 left/.test(t) && /CLE to win/.test(t) && /168 contracts at 59\.5%/.test(t), t);
+    check('the Autopilot card shows the mode (REAL money), armed for today, $1.00 used of $10.00, $9.00 left and the last order', /REAL money/.test(t) && /armed for today/.test(t) && /\$1\.00 used of \$10\.00/.test(t) && /\$9\.00 left/.test(t) && /CLE to win/.test(t) && /1\.68 contracts at up to 59\.5%/.test(t), t);
     status={...status, armed:false}; await ev(X.p,()=>apRefresh()); check('not armed: the card says to press Proceed for today', /not armed: press Proceed/.test(await ev(X.p,()=>document.getElementById('apBody').textContent)), null);
     await reset(); X.answerOk=false; await ev(X.p,()=>document.getElementById('apProceed').click()); await X.p.waitForTimeout(300);
     check('Proceed for today: the confirm box is cancelled, nothing is sent', X.dialogs.length===1 && /Proceed for today/.test(X.dialogs[0]) && !posts.some((x)=>x.path==='/autobet/arm'), [X.dialogs, posts.map((x)=>x.path)]);

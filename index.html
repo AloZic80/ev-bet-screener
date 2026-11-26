@@ -38,7 +38,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.35</title>
+<title>0xBeta Screener v5.36</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -2300,7 +2300,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.35</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.36</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -3274,7 +3274,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 
 </div>
 <script>
-const SCREENER_VERSION='v5.35';
+const SCREENER_VERSION='v5.36';
 /* v5.24 (step 5): DEV_APP is now defined once, in the head script at the top of this file (the first paint reads it too) */
 if(!DEV_APP) document.documentElement.setAttribute('data-viewas','easy');   // v5.24 (step 3b): a customer build is Easy whatever mbev.viewAs holds
 /* v5.24 (owner 11/20: "we need to differentiate already"; "for me in GOD mode, let me tell the difference of what they cant see and i can"): levels.
@@ -14702,7 +14702,7 @@ document.addEventListener('click', async e=>{ const b=e.target && e.target.close
     if(j && j.reason==='not_armed_today' && confirm('Proceed for today? Your Worker may then place real orders of about $1 each at Novig, inside your limits, until midnight (Central). It asks again tomorrow.')){ await apFetch('/autobet/arm','POST',{on:true}); apStatus=null; res=await post(); j=null; try{ j=await res.json(); }catch(_){} }   // v5.33
     const ok=!!(j && j.ok && j.placed);
     try{ const L=JSON.parse(localStorage.getItem('mbev.autobet')||'[]'); L.push({t:new Date().toISOString(), pick:body.name, ok, mode:(j&&j.mode)||null, reason:ok?null:((j&&(j.reason||j.error))||('HTTP '+res.status)), qty:(j&&j.qty)||null, price:(j&&j.price)||null, cost:(j&&j.cost)||null}); while(L.length>60) L.shift(); localStorage.setItem('mbev.autobet', JSON.stringify(L)); }catch(_){}
-    if(ok) jvSaid(cur, '✓ Order placed at Novig ('+(j.mode||'?')+'): '+j.qty+' contracts at '+(+j.price*100).toFixed(1)+'% for about $'+(+j.cost).toFixed(2)+'. Nothing else to press; the fill shows up in your Bet log by itself.');
+    if(ok) jvSaid(cur, '✓ Order placed at Novig ('+(j.mode||'?')+'): '+((+j.qty||0)/100).toFixed(2)+' contracts at up to '+(+j.price*100).toFixed(1)+'% for about $'+(+j.cost).toFixed(2)+'. Nothing else to press; the fill shows up in your Bet log by itself.');
     else jvSaid(cur, 'Not placed: '+jvAutoWords(j||{error:'HTTP '+res.status})+(j&&j.killed?' (the kill switch is now ON)':'')+'.');
   }catch(err){ jvSaid(cur, 'Not placed: '+String((err&&err.message)||err).slice(0,120)+'.'); }
   finally{ b.disabled=false; } });   // v5.32
@@ -14715,7 +14715,7 @@ async function apFetch(path, method, body){ const res=await fetch(API_BASE+path,
 async function apStatusLoad(force){ if(!force && apStatus && Date.now()-apAt<45000) return apStatus; if(!(typeof SY!=='undefined' && SY.on && SY.key)) return null; let r=null; try{ r=await apFetch('/autobet/status'); }catch(e){ return null; } if(r && r.j && r.j.ok){ apStatus=r.j; apAt=Date.now(); return r.j; } return null; }
 function apPaint(st){ const el=document.getElementById('apBody'); if(!el) return; const cb=document.getElementById('apAuto'); if(cb) cb.checked=autoOn();
   if(!st){ el.textContent='No answer from the Worker: turn on sync (Settings, Your bets on every device) and check the screener passphrase.'; return; }
-  const rows=(st.orders||[]).slice(0,8).map(o=>'<li>'+esc(new Date(o.t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}))+' · '+esc(o.name||o.key||'')+' · <b>'+esc(o.result||'')+'</b>'+(o.reason?' ('+esc(o.reason)+')':'')+(o.price?' · '+esc(o.qty)+' contracts at '+esc((+o.price*100).toFixed(1))+'%':'')+'</li>').join('');
+  const rows=(st.orders||[]).slice(0,8).map(o=>'<li>'+esc(new Date(o.t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}))+' · '+esc(o.name||o.key||'')+' · <b>'+esc(o.result||'')+'</b>'+(o.reason?' ('+esc(o.reason)+')':'')+(o.price?' · '+esc(((+o.qty||0)/100).toFixed(2))+' contracts at up to '+esc((+o.price*100).toFixed(1))+'%':'')   /* v5.36: the Worker counts hundredths of a contract (208 = 2.08 contracts, about $1) */+'</li>').join('');
   el.innerHTML='<b>'+(st.mode==='LIVE'?'REAL money':'Paper money')+'</b> · '+(st.killed?'<b class="no-t">STOPPED (kill switch is on)</b>':(st.requireArm?(st.armed?'<span class="ok-t">armed for today</span>':'not armed: press Proceed for today'):'no daily Proceed needed yet'))+'<br>Today: $'+(+st.reserved).toFixed(2)+' used of $'+(+st.budget).toFixed(2)+' · $'+(+st.left).toFixed(2)+' left'+(rows?'<ul class="meta" style="margin:6px 0 0 16px">'+rows+'</ul>':'<br>No orders yet today.'); }
 async function apRefresh(){ const m=document.getElementById('apMsg'); if(m) m.textContent='Asking the Worker…'; const st=await apStatusLoad(true); apPaint(st); try{ await apSamsonPaint(st); }catch(e){} if(m) m.textContent=st?'':'No answer.'; return st; }
 async function apSend(r){   /* one order request for one approved pick (the automatic path); the Auto bet button has its own copy with the words for the pop-up */
@@ -14983,10 +14983,12 @@ function makeTagHtml(r){
    game, and says plainly: not a bet until it fills; it moves into the log when it does; cancel it at the book to free the money. */
 function ordersErrText(){ const e=window._ordersErr; if(!e) return ''; if(typeof e==='string') return e;
   return Object.entries(e).map(([k,v])=>({kalshi:'Kalshi',poly:'Polymarket US',novig:'Novig'})[k]+': '+v).join(' · '); }
+/* v5.36 (owner 2026-11-26: "Our app keeps saying that it hasn't hooked, but it has"): a Make order that was partly taken. The taken part is already a bet (and in the Bet log); only the rest is waiting. Found by the book's fills for the same market and side. */
+function orderMatchedCost(o){ try{ if(!o || o.book!=='novig' && !o.ref) return 0; let c=0; (myFillsGet()||[]).forEach(f=>{ if(f && f.book===o.book && f.ref && f.ref===o.ref && (f.outcome==null || o.outcome==null || f.outcome===o.outcome) && f.action!=='sell') c+=(+f.cost||0); }); const g=(+o.filled||0)*(+o.price||0); return Math.max(c,g); }catch(e){ return 0; } }
 function renderOrdersTop(O,held){ const el=document.getElementById('ordersTop'); if(!el) return; const er=typeof window._ordersErr==='object'?ordersErrText():'';   // only a book's own error up here; a network blip shows in the Bet log only
   if(!O.length && !er){ el.hidden=true; el.innerHTML=''; return; } el.hidden=false;
   const by={}; O.forEach(o=>{ const n=({kalshi:'Kalshi',poly:'Polymarket US',novig:'Novig'})[o.book]||o.book; by[n]=(by[n]||0)+1; });
-  el.innerHTML=(O.length?'⏳ <b>'+O.length+' order'+(O.length===1?'':'s')+' waiting</b> at '+esc(Object.entries(by).map(([n,c])=>c+' '+n).join(', '))+(held>0?' · $'+held.toFixed(2)+' held':'')+' · not bets until they fill':'')+
+  el.innerHTML=(O.length?'⏳ <b>'+O.length+' order'+(O.length===1?'':'s')+' waiting</b> at '+esc(Object.entries(by).map(([n,c])=>c+' '+n).join(', '))+(held>0?' · $'+held.toFixed(2)+' held':'')+(O.some(o=>orderMatchedCost(o)>0)?' · part of it already matched (that part is a bet)':' · not bets until they fill'):'')+
     (er?'<span class="ot-err">'+(O.length?' · ':'')+'⚠ Could not read your orders: '+esc(er)+'</span>':'')+' <button type="button" class="linkbtn" id="ordersTopGo">See them ›</button>'; }
 document.addEventListener('click',e=>{ if(!e.target.closest('#ordersTopGo')) return; const t=document.querySelector('.tab[data-view="v-log"]'); if(t) t.click(); setTimeout(()=>{ const b=document.getElementById('logOrders'); if(b && !b.hidden) b.scrollIntoView({block:'start'}); },60); });
 function renderLogOrders(){ const el=document.getElementById('logOrders'); if(!el) return;
@@ -15011,7 +15013,7 @@ function renderMakes(){
   if(!O.length){ bar.style.display='none'; return; }
   const off=O.filter(o=>!lastRows.some(r=>makesFor(r).includes(o)));
   bar.style.display=''; bar.innerHTML='🪝 '+O.length+' Make'+(O.length===1?'':'s')+' waiting for a taker'+(onBoard?' — tap to see':'')+
-    (off.length?'<div class="mk-off">Not on this board: '+off.map(o=>esc(fillLabel({bet:o.bet||{}, title:o.title, book:o.book, ref:o.ref}).bet+' · '+(o.price*100).toFixed(1)+'% · $'+((+o.price||0)*(+o.qty||0)).toFixed(2)+' · '+(BOOK_NAME[o.book]||o.book))).join(' &nbsp;|&nbsp; ')+' — check the side and line on '+esc(off.map(o=>BOOK_NAME[o.book]||o.book).filter((v,i,a)=>a.indexOf(v)===i).join(' / '))+'</div>':'');
+    (off.length?'<div class="mk-off">Not on this board: '+off.map(o=>esc(fillLabel({bet:o.bet||{}, title:o.title, book:o.book, ref:o.ref}).bet+' · '+(o.price*100).toFixed(1)+'% · $'+((+o.price||0)*(+o.qty||0)).toFixed(2)+' · '+(BOOK_NAME[o.book]||o.book)+(orderMatchedCost(o)>0?' · matched so far: $'+orderMatchedCost(o).toFixed(2)+' (already a bet; this is the rest)':''))).join(' &nbsp;|&nbsp; ')+' — check the side and line on '+esc(off.map(o=>BOOK_NAME[o.book]||o.book).filter((v,i,a)=>a.indexOf(v)===i).join(' / '))+'</div>':'');
 }
 document.addEventListener('click', e=>{ if(!e.target.closest('#makesBar') || e.target.closest('.mk-ack')) return; const t=[...document.querySelectorAll('.mk-slot')].find(x=>x.textContent.trim() && x.offsetParent); if(t) t.scrollIntoView({behavior:'smooth', block:'center'}); });
 /* v4.56: a best-book claim (Send the Sentinels moved the bet to another book) holds 3 minutes, 90 seconds when the game starts within 5 minutes. After
