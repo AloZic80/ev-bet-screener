@@ -1,0 +1,43 @@
+// node tests/v535-control-test.js — v5.35 (owner 2026-11-25: "a GUI that i can ask for simple things", "SAME but Different"): control.html, the separate control page. It shows the Worker's autobet status (mode, kill switch, armed for today, budget, today's orders),
+// has Proceed / Stop / Resume (each asks first; Cancel does nothing), answers simple read-only questions, uses the screener's saved sign-in without ever showing it, says plainly when sync is off, the Worker is locked or silent. No page errors. A fake Worker (no network).
+const path=require('path'); const L=require('./v527-jarvis-lib.js'); const {chromium,check}=L; const FILE='file://'+path.join(__dirname,'..','control.html');
+(async()=>{ const b=await chromium.launch(); const posts=[]; let status, mode='ok';
+  const mk=async(withSync)=>{ const ctx=await b.newContext(); const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e))); const dialogs=[]; p.__dialogs=dialogs; p.__answer=true; p.on('dialog',d=>{ dialogs.push(d.message()); return p.__answer?d.accept():d.dismiss(); });
+    await p.route(/api\.0xbeta\.dev\/autobet/,r=>{ const q=r.request(), pth=new URL(q.url()).pathname, cors={'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'GET,POST,OPTIONS'};
+      if(q.method()==='OPTIONS') return r.fulfill({status:204,headers:cors});
+      const body=q.postData()?JSON.parse(q.postData()):null; posts.push({path:pth, method:q.method(), body, headers:q.headers()});
+      if(mode==='locked') return r.fulfill({status:401,headers:cors,contentType:'application/json',body:JSON.stringify({error:'locked'})});
+      if(mode==='down') return r.abort();
+      let out=status; if(pth==='/autobet/arm'){ status={...status, armed:body.on===true}; out={ok:true, armed:body.on===true}; } else if(pth==='/autobet/kill'){ status={...status, killed:body.on===true}; out={ok:true, killed:body.on===true}; }
+      r.fulfill({status:200,headers:cors,contentType:'application/json',body:JSON.stringify(out)}); });
+    await p.addInitScript((s)=>{ if(s){ localStorage.setItem('mbev.syncKey','SECRETSYNCKEY123'); localStorage.setItem('mbev.pass','SECRETPASS456'); localStorage.setItem('mbev.autoLast', JSON.stringify({t:Date.now()-60000, w:'nothing new'})); } }, withSync);
+    return {ctx, p, errs, dialogs}; };
+  status={ok:true, mode:'LIVE', day:'2026-11-26', budget:10, reserved:3, left:7, killed:false, requireArm:true, armed:true, orders:[{t:Date.now()-120000, name:'CLE to win', result:'placed', price:'0.595', qty:168},{t:Date.now()-60000, name:'Panarin over 0.5', result:'refused', reason:'live_price_above_limit'}]};
+  let A=await mk(true); await A.p.goto(FILE); await A.p.waitForTimeout(700);
+  const txt=async()=>A.p.evaluate(()=>document.body.innerText);
+  let t=await txt();
+  check('shows LIVE, $3.00 used, $7.00 left, 2 orders and Armed', /LIVE/.test(t) && /\$3\.00/.test(t) && /\$7\.00/.test(t) && /Armed/.test(t) && /CLE to win/.test(t) && /live_price_above_limit/.test(t), t.slice(0,400));
+  check('the status request carries the saved sign-in (sync key and passphrase) to the Worker', posts.some(x=>x.path==='/autobet/status' && x.headers['x-sync-key']==='SECRETSYNCKEY123' && x.headers['x-screener-pass']==='SECRETPASS456'), posts[0]&&Object.keys(posts[0].headers));
+  const html=await A.p.content(); check('the page never shows the sync key or the passphrase', !/SECRETSYNCKEY123|SECRETPASS456/.test(t) && !/SECRETSYNCKEY123|SECRETPASS456/.test(html), null);
+  check('it shows the screener tab\'s last look (this browser)', /Last look/.test(t) && /nothing new/.test(t), t.slice(-300));
+  posts.length=0; A.p.__answer=false; await A.p.click('#bProceed'); await A.p.waitForTimeout(300);
+  check('Proceed: Cancel does nothing (one question, no request)', A.dialogs.length===1 && /Proceed for today/.test(A.dialogs[0]) && !posts.some(x=>x.path==='/autobet/arm'), [A.dialogs, posts.map(x=>x.path)]);
+  status={...status, armed:false}; A.p.__answer=true; A.dialogs.length=0; await A.p.click('#bProceed'); await A.p.waitForTimeout(500);
+  check('Proceed: OK arms it (POST /autobet/arm {on:true}) and the page then says Armed', posts.some(x=>x.path==='/autobet/arm' && x.body.on===true) && /Armed/.test(await txt()) && /Proceed for today: done/.test(await txt()), [posts.map(x=>x.path)]);
+  posts.length=0; await A.p.click('#bStop'); await A.p.waitForTimeout(500); t=await txt();
+  check('Stop: asks, then POST /autobet/kill {on:true}, and the page says STOPPED', posts.some(x=>x.path==='/autobet/kill' && x.body.on===true) && /STOPPED/.test(t), posts.map(x=>x.path));
+  posts.length=0; await A.p.click('#bResume'); await A.p.waitForTimeout(500);
+  check('Resume: asks, then POST /autobet/kill {on:false}', posts.some(x=>x.path==='/autobet/kill' && x.body.on===false) && !/STOPPED/.test(await A.p.evaluate(()=>document.getElementById('pill').textContent)), posts.map(x=>x.path));
+  const ask=async(q)=>{ await A.p.fill('#q',q); await A.p.click('#bAsk'); return A.p.evaluate(()=>document.getElementById('ans').textContent); };
+  posts.length=0;
+  check('asking "what did you bet today" lists the orders', /2 orders/.test(await ask('What did you bet today?')) && /CLE to win/.test(await A.p.evaluate(()=>document.getElementById('ans').textContent)), null);
+  check('asking "how much is left" says $3.00 of $10.00, $7.00 left', /\$3\.00 of \$10\.00/.test(await ask('how much is left')) && /\$7\.00 left/.test(await A.p.evaluate(()=>document.getElementById('ans').textContent)), null);
+  check('asking "is it armed" and "is it real money" answers from the status', /armed/i.test(await ask('is it armed?')) && /LIVE mode: real money/.test(await ask('is it real money')), null);
+  check('an unknown question lists what it can answer, and asking sends nothing to the Worker', /I can answer/.test(await ask('tell me a joke')) && posts.length===0, posts.length);
+  mode='locked'; await A.p.click('#bRefresh'); await A.p.waitForTimeout(400); check('a locked Worker (401) says so in plain words', /locked/.test(await A.p.evaluate(()=>document.getElementById('msg').textContent)) && /no answer/.test(await A.p.evaluate(()=>document.getElementById('pill').textContent)), await A.p.evaluate(()=>document.getElementById('msg').textContent));
+  mode='down'; await A.p.click('#bRefresh'); await A.p.waitForTimeout(400); check('a silent Worker says no answer and to check the connection', /No answer from the Worker/.test(await A.p.evaluate(()=>document.getElementById('msg').textContent)), null);
+  check('no page errors (signed in)', A.errs.length===0, A.errs.slice(0,3)); await A.ctx.close(); mode='ok'; posts.length=0;
+  const B=await mk(false); await B.p.goto(FILE); await B.p.waitForTimeout(500); const tb=await B.p.evaluate(()=>document.body.innerText);
+  check('with sync off in this browser it says so, tells where to turn it on, and sends nothing', /Sync is not turned on/.test(tb) && /Settings/.test(tb) && posts.length===0, [tb.slice(0,200), posts.length]);
+  check('no page errors (no sync)', B.errs.length===0, B.errs.slice(0,3)); await B.ctx.close();
+  await b.close(); const r=L.res(); console.log('\n'+r.pass+' passed, '+r.fail+' failed'); process.exit(r.fail?1:0); })();
