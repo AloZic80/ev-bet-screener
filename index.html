@@ -2755,6 +2755,21 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
   <details class="help" data-help="sync"><summary>How sync works</summary><p class="hint">One copy of your bet log lives in your Cloudflare store. Any device with the screener passphrase <b>and</b> this password sees the same bets, baits and settings. Changes upload a few seconds after you make them; other devices pick them up when they open or come back to the page, and once a minute while it's open — Wi-Fi or cellular.</p><p class="hint" style="margin-top:8px"><b>Synced:</b> bet log, removed bets, parlay marks, Parole baits, which book fills are matched, your settings (bankroll, La Contadora's rules, fees) and the last board you loaded with its grading history. <b>Stays on each device:</b> the screener passphrase, this password, theme, team logos.</p><p class="hint" style="margin-top:4px"><b>First time:</b> on the Mac run <code>cd ~/prop-bet-api</code>, then <code>npx wrangler secret put SYNC_KEY</code> (type the password you picked — it never goes in chat or code), then <code>npx wrangler deploy</code>. Turn it on here on the PC first (its log becomes the cloud copy), then on the phone. Lost a device? Run the secret command again with a new password.</p></details>   <!-- v4.25: a drop-down (the three notes were always open) -->
   <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px"><button class="ghost sm" id="syncBak">Cloud backups…</button><span class="meta" id="syncBakList"></span></div>
 </details>
+<details class="panel fold" id="apPanel" data-lv="god">   <!-- v5.33 (owner 2026-11-25: "make it AUTOMATIC"; "after each day, it needs to ask me... Proceed?"): what your Worker knows about auto bets, the daily Proceed, the kill switch, and the switch for automatic sending -->
+  <summary><h2>🚀 Autopilot <span class="sub">your Worker places Novig limit orders inside hard limits · you say Proceed each day</span></h2></summary>
+  <div id="apBody" class="meta" style="margin-top:8px">Open this panel, then press Refresh.</div>
+  <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px">
+    <button type="button" class="act" id="apCheck">Check now</button>
+    <button type="button" class="ghost" id="apRefresh">⟳ Refresh</button>
+    <button type="button" class="act" id="apProceed">Proceed for today</button>
+    <button type="button" class="ghost" id="apStop">Stop (kill switch)</button>
+    <button type="button" class="ghost" id="apResume">Resume</button>
+  </div>
+  <label class="bar-check" style="margin-top:8px"><input type="checkbox" id="apAuto"> Send approved Novig picks to the Worker automatically while it is armed today (this tab must stay open)</label>
+  <div id="apNow" class="meta" role="status" aria-live="polite" style="margin-top:6px"></div>
+  <div id="apLook" class="meta"></div>
+  <div class="meta" id="apMsg" role="status"></div>
+</details>
 <details class="panel fold" id="aiPanel" data-lv="god">   <!-- v5.15 (AI helper; owner 11/15: "its only for me now." · "LETS CHOOSE SONNET"): off until the Worker says it is set up; closed until tapped -->
   <summary><h2>✨ AI helper <span class="sub">reads slips, screenshots, news and results for you to check · it never decides a bet or a stake</span></h2></summary>
   <div class="row" style="gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px">
@@ -14643,7 +14658,7 @@ function jvStampQuote(q, lim){ try{ const el=document.getElementById('jvPop'); i
   if(!el.hasAttribute('data-prefill')) return; d.freshQuote={priceProb:+q.price, title:q.title||null, outcome:q.outcome||null, at:q.at||null, withinLimit:(lim==null?null:+q.price<=lim+1e-9)}; el.setAttribute('data-prefill', JSON.stringify(d)); }catch(e){} }
 window.addEventListener('pagehide', jvClearPrefill);
 /* v5.32 (owner 2026-11-25: "do REAL MONEY first"; $1 an order, $25 a day): "Auto bet $1". One tap and one confirm box; the Worker (POST /autobet) reads Novig itself, checks every limit (kill switch, duplicate, the price at or below your exact OK up to, the day's total, $1 an order in LIVE) and places ONE limit order. The app logs the fill by itself afterwards (Novig fills sync); nothing is added to the Bet log here. */
-function jvAutoWords(j){ const m={duplicate:'this pick was already sent today', over_daily_budget:'the limit for today is reached', live_price_above_limit:'the price moved above your limit', kill_switch:'the kill switch is on', no_trading_key:'the Worker has no trading key set', game_started_or_too_close:'the game has started or is too close', no_fresh_live_price:'Novig gave no fresh price', below_minimum_order:'the order would be under the minimum', blocked:'Novig blocked it (open the Novig app, then try again)', unknown:'Novig did not answer, so nothing more is sent'}; return (j&&(m[j.reason]||j.reason||j.error))||'unknown reason'; }
+function jvAutoWords(j){ const m={duplicate:'this pick was already sent today', over_daily_budget:'the limit for today is reached', live_price_above_limit:'the price moved above your limit', kill_switch:'the kill switch is on', no_trading_key:'the Worker has no trading key set', not_armed_today:'it is not armed for today (say Proceed)', game_started_or_too_close:'the game has started or is too close', no_fresh_live_price:'Novig gave no fresh price', below_minimum_order:'the order would be under the minimum', blocked:'Novig blocked it (open the Novig app, then try again)', unknown:'Novig did not answer, so nothing more is sent'}; return (j&&(m[j.reason]||j.reason||j.error))||'unknown reason'; }
 document.addEventListener('click', async e=>{ const b=e.target && e.target.closest && e.target.closest('#jvPop .jv-auto'); if(!b || !window._jvCur) return; const cur=window._jvCur, r=jvCurRow(cur);
   if(!r || jvSig(r, cur.near)!==cur.sig){ jvRecheck(); jvSaid(cur, 'The board changed: check the pick and press Auto bet again.'); return; }
   if(!(typeof SY!=='undefined' && SY.on && SY.key)){ jvSaid(cur, 'Turn on sync first (Settings, Your bets on every device): the Worker needs your sync password for this.'); return; }
@@ -14653,13 +14668,68 @@ document.addEventListener('click', async e=>{ const b=e.target && e.target.close
   try{
     const q=await quoteFor(rowAsBet(r), r.book, true); if(!(q && q.ok && q.ref && q.outcome)) throw new Error('Novig did not answer for this pick');
     const body={key:String(cur.k), marketId:q.ref, outcomeId:q.outcome, limit:lim, stake:+r.stake||0, startMs:Date.parse((r.gameInfo&&r.gameInfo.startISO)||'')||0, book:'Novig', name:jvPickTxt(r)};
-    const res=await fetch(API_BASE+'/autobet', {method:'POST', headers:syncHeaders({'Content-Type':'application/json'}), body:JSON.stringify(body), cache:'no-store'}); let j=null; try{ j=await res.json(); }catch(_){}
+    const post=()=>fetch(API_BASE+'/autobet', {method:'POST', headers:syncHeaders({'Content-Type':'application/json'}), body:JSON.stringify(body), cache:'no-store'});
+    let res=await post(), j=null; try{ j=await res.json(); }catch(_){}
+    if(j && j.reason==='not_armed_today' && confirm('Proceed for today? Your Worker may then place real orders of about $1 each at Novig, inside your limits, until midnight (Central). It asks again tomorrow.')){ await apFetch('/autobet/arm','POST',{on:true}); apStatus=null; res=await post(); j=null; try{ j=await res.json(); }catch(_){} }   // v5.33
     const ok=!!(j && j.ok && j.placed);
     try{ const L=JSON.parse(localStorage.getItem('mbev.autobet')||'[]'); L.push({t:new Date().toISOString(), pick:body.name, ok, mode:(j&&j.mode)||null, reason:ok?null:((j&&(j.reason||j.error))||('HTTP '+res.status)), qty:(j&&j.qty)||null, price:(j&&j.price)||null, cost:(j&&j.cost)||null}); while(L.length>60) L.shift(); localStorage.setItem('mbev.autobet', JSON.stringify(L)); }catch(_){}
     if(ok) jvSaid(cur, '✓ Order placed at Novig ('+(j.mode||'?')+'): '+j.qty+' contracts at '+(+j.price*100).toFixed(1)+'% for about $'+(+j.cost).toFixed(2)+'. Nothing else to press; the fill shows up in your Bet log by itself.');
     else jvSaid(cur, 'Not placed: '+jvAutoWords(j||{error:'HTTP '+res.status})+(j&&j.killed?' (the kill switch is now ON)':'')+'.');
   }catch(err){ jvSaid(cur, 'Not placed: '+String((err&&err.message)||err).slice(0,120)+'.'); }
   finally{ b.disabled=false; } });   // v5.32
+/* v5.33 (owner 2026-11-25: "make it AUTOMATIC"; "after each day, it needs to ask me... Proceed?"): the Autopilot card, the daily Proceed, the kill switch, and AUTOMATIC sending: while the Worker is armed for today and the switch is on, each approved Novig pick the app is showing
+   is sent to the Worker (POST /autobet) once, one pick a minute, by the same code the Auto bet button uses. The Worker still enforces $1 an order, the day's total, the exact limit and the kill switch. This tab must stay open. The app logs the fills by itself; nothing is added to the Bet log here. */
+var apStatus=null, apAt=0;
+function autoOn(){ try{ return localStorage.getItem('mbev.autoSend')==='1'; }catch(e){ return false; } }
+function autoSentGet(){ const d=todayCT(); let o={}; try{ o=JSON.parse(localStorage.getItem('mbev.autoSent')||'{}')||{}; }catch(e){} if(o.day!==d) o={day:d, keys:{}}; if(!o.keys) o.keys={}; return o; }
+async function apFetch(path, method, body){ const res=await fetch(API_BASE+path, {method:method||'GET', headers:syncHeaders(body?{'Content-Type':'application/json'}:{}), body:body?JSON.stringify(body):undefined, cache:'no-store'}); let j=null; try{ j=await res.json(); }catch(e){} return {status:res.status, j:j}; }
+async function apStatusLoad(force){ if(!force && apStatus && Date.now()-apAt<45000) return apStatus; if(!(typeof SY!=='undefined' && SY.on && SY.key)) return null; let r=null; try{ r=await apFetch('/autobet/status'); }catch(e){ return null; } if(r && r.j && r.j.ok){ apStatus=r.j; apAt=Date.now(); return r.j; } return null; }
+function apPaint(st){ const el=document.getElementById('apBody'); if(!el) return; const cb=document.getElementById('apAuto'); if(cb) cb.checked=autoOn();
+  if(!st){ el.textContent='No answer from the Worker: turn on sync (Settings, Your bets on every device) and check the screener passphrase.'; return; }
+  const rows=(st.orders||[]).slice(0,8).map(o=>'<li>'+esc(new Date(o.t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}))+' · '+esc(o.name||o.key||'')+' · <b>'+esc(o.result||'')+'</b>'+(o.reason?' ('+esc(o.reason)+')':'')+(o.price?' · '+esc(o.qty)+' contracts at '+esc((+o.price*100).toFixed(1))+'%':'')+'</li>').join('');
+  el.innerHTML='<b>'+(st.mode==='LIVE'?'REAL money':'Paper money')+'</b> · '+(st.killed?'<b class="no-t">STOPPED (kill switch is on)</b>':(st.requireArm?(st.armed?'<span class="ok-t">armed for today</span>':'not armed: press Proceed for today'):'no daily Proceed needed yet'))+'<br>Today: $'+(+st.reserved).toFixed(2)+' used of $'+(+st.budget).toFixed(2)+' · $'+(+st.left).toFixed(2)+' left'+(rows?'<ul class="meta" style="margin:6px 0 0 16px">'+rows+'</ul>':'<br>No orders yet today.'); }
+async function apRefresh(){ const m=document.getElementById('apMsg'); if(m) m.textContent='Asking the Worker…'; const st=await apStatusLoad(true); apPaint(st); if(m) m.textContent=st?'':'No answer.'; return st; }
+async function apSend(r){   /* one order request for one approved pick (the automatic path); the Auto bet button has its own copy with the words for the pop-up */
+  const lim=jvMax(r); if(!(lim>0 && lim<1)) return {ok:false, j:{reason:'no_limit'}};
+  const q=await quoteFor(rowAsBet(r), r.book, true); if(!(q && q.ok && q.ref && q.outcome)) return {ok:false, j:{reason:'no_fresh_live_price'}};
+  const body={key:pxKey(r), marketId:q.ref, outcomeId:q.outcome, limit:lim, stake:+r.stake||0, startMs:Date.parse((r.gameInfo&&r.gameInfo.startISO)||'')||0, book:'Novig', name:jvPickTxt(r)};
+  const out=await apFetch('/autobet','POST',body), j=out.j, ok=!!(j && j.ok && j.placed);
+  try{ const L=JSON.parse(localStorage.getItem('mbev.autobet')||'[]'); L.push({t:new Date().toISOString(), pick:body.name, ok, auto:true, mode:(j&&j.mode)||null, reason:ok?null:((j&&(j.reason||j.error))||('HTTP '+out.status)), qty:(j&&j.qty)||null, price:(j&&j.price)||null, cost:(j&&j.cost)||null}); while(L.length>60) L.shift(); localStorage.setItem('mbev.autobet', JSON.stringify(L)); }catch(_){}
+  return {ok:ok, j:j||{reason:'HTTP '+out.status}};
+}
+function apDoing(t){ try{ const el=document.getElementById('apNow'); if(el) el.innerHTML=t?('<b>Working now:</b> '+esc(t)):apLastHtml(); }catch(e){} }
+function apLastHtml(){ let o=null; try{ o=JSON.parse(localStorage.getItem('mbev.autoLast')||'null'); }catch(e){} if(!o) return 'Last look: none yet in this tab.'; return '<b>Last look:</b> '+esc(new Date(o.t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'}))+' · '+esc(o.w)+' · the next one is within a minute'; }
+function apLookWords(o){ o=o||{}; if(o.error) return 'could not look: '+o.error; if(o.sent) return (o.ok?'sent 1 pick to the Worker':'sent 1 pick, the Worker said no ('+(o.reason||'?')+')');
+  const m={off:'automatic sending is off (the box is not ticked)', paused:'paused', busy:'already looking', 'no status':'no answer from the Worker (check sync)', killed:'stopped: the kill switch is on', 'not armed':'needs your Proceed for today (or the Worker does not ask for one yet, so nothing is sent)', budget:'today\'s budget is used up', 'nothing new':'nothing new: no approved Novig pick that was not already sent'}; return m[o.skip]||String(o.skip||'?'); }
+function apLookLog(o, manual){ if(!o || o.skip==='busy') return; const d=todayCT(); let L={}; try{ L=JSON.parse(localStorage.getItem('mbev.autoLook')||'{}')||{}; }catch(e){} if(L.day!==d) L={day:d, rows:[]}; const w=apLookWords(o), last=L.rows[L.rows.length-1], t=Date.now();
+  if(last && last.w===w && !manual && !last.m){ last.t=t; last.n=(last.n||1)+1; } else L.rows.push({t:t, w:w, m:!!manual, n:1}); if(L.rows.length>40) L.rows=L.rows.slice(-40); try{ localStorage.setItem('mbev.autoLook', JSON.stringify(L)); }catch(e){} }
+function apLookHtml(){ const d=todayCT(); let L={}; try{ L=JSON.parse(localStorage.getItem('mbev.autoLook')||'{}')||{}; }catch(e){} if(L.day!==d || !(L.rows||[]).length) return '<br>No looks yet today.'; return '<div class="meta" style="margin-top:6px"><b>Looks today</b> (newest first; this tab only)</div><ul class="meta" style="margin:4px 0 0 16px">'+L.rows.slice(-8).reverse().map(x=>'<li>'+esc(new Date(x.t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}))+(x.m?' · you pressed Check now':'')+' · '+esc(x.w)+(x.n>1?' (×'+x.n+')':'')+'</li>').join('')+'</ul>'; }
+async function autoTick(manual){ const o=await autoTick0(); apLookLog(o, manual===true); if(o && o.skip!=='busy' && !(o.skip==='off' && manual!==true)){ try{ localStorage.setItem('mbev.autoLast', JSON.stringify({t:Date.now(), w:apLookWords(o)})); }catch(e){} } apDoing(''); try{ const el=document.getElementById('apLook'); if(el) el.innerHTML=apLookHtml(); }catch(e){} return o; }
+async function autoTick0(){
+  try{
+    if(!autoOn()) return {skip:'off'}; apDoing('starting a look'); if(typeof wkPaused==='function' && wkPaused()) return {skip:'paused'};
+    if(window._apBusy) return {skip:'busy'}; window._apBusy=true;
+    try{
+      apDoing('asking the Worker if it is on, armed today and how much budget is left'); const st=await apStatusLoad(true); if(!st) return {skip:'no status'};
+      if(st.killed) return {skip:'killed'}; if(!(st.requireArm===true && st.armed===true)) return {skip:'not armed'};   /* v5.33: fails closed: automatic sending needs the Worker to require the daily Proceed AND you to have pressed it today */ if(!(+st.left>=0.99)) return {skip:'budget'};
+      apDoing('searching the board for approved Novig picks not sent yet'); const sent=autoSentGet(), now=Date.now();
+      const rows=(lastRows||[]).filter(r=>r && scApproved(r) && LIVE_BOOK(r.book)==='novig' && !sent.keys[pxKey(r)] && r.gameInfo && Date.parse(r.gameInfo.startISO)-now>3*60e3).sort((a,b)=>mathKey(b)-mathKey(a));
+      const r=rows[0]; if(!r) return {skip:'nothing new'};
+      sent.keys[pxKey(r)]=now; try{ localStorage.setItem('mbev.autoSent', JSON.stringify(sent)); }catch(e){}   /* marked BEFORE sending: never sent twice, even if the page reloads; the Worker also refuses a repeat */
+      apDoing('found one: '+jvPickTxt(r)+'. Getting a fresh Novig price and sending it to the Worker'); const out=await apSend(r); apStatus=null; try{ if(document.getElementById('apPanel') && document.getElementById('apPanel').open) apRefresh(); }catch(e){}
+      return {sent:pxKey(r), ok:out.ok, reason:out.j&&out.j.reason};
+    } finally { window._apBusy=false; }
+  }catch(e){ window._apBusy=false; return {error:String((e&&e.message)||e).slice(0,100)}; }
+}
+document.addEventListener('click', async e=>{ const t=e.target && e.target.closest && e.target.closest('#apPanel button'); if(!t) return; const m=document.getElementById('apMsg'), say=x=>{ if(m) m.textContent=x; };
+  if(t.id==='apRefresh'){ await apRefresh(); return; }
+  if(t.id==='apCheck'){ say('Looking…'); const o=await autoTick(true); await apRefresh(); say('Checked: '+apLookWords(o)+'. The timer keeps its own schedule.'); return; }
+  if(t.id==='apProceed'){ if(!confirm('Proceed for today? Your Worker may then place real orders of about $1 each at Novig, inside your limits, until midnight (Central). It asks again tomorrow.')) return; const r=await apFetch('/autobet/arm','POST',{on:true}); apStatus=null; await apRefresh(); say(r.j&&r.j.ok?'Armed for today.':'Could not arm: '+((r.j&&(r.j.error||r.j.reason))||('HTTP '+r.status))); return; }
+  if(t.id==='apStop'){ if(!confirm('Stop all auto bets now? Nothing new is placed until you press Resume.')) return; const r=await apFetch('/autobet/kill','POST',{on:true}); apStatus=null; await apRefresh(); say(r.j&&r.j.ok?'Stopped: the kill switch is on.':'Could not stop it: '+((r.j&&(r.j.error||r.j.reason))||('HTTP '+r.status))); return; }
+  if(t.id==='apResume'){ if(!confirm('Turn the kill switch off? Orders can be placed again (only if it is armed for today).')) return; const r=await apFetch('/autobet/kill','POST',{on:false}); apStatus=null; await apRefresh(); say(r.j&&r.j.ok?'The kill switch is off.':'Could not turn it off.'); return; } });
+document.addEventListener('change', e=>{ if(e.target && e.target.id==='apAuto'){ try{ localStorage.setItem('mbev.autoSend', e.target.checked?'1':'0'); }catch(_){} const m=document.getElementById('apMsg'); if(m) m.textContent=e.target.checked?'Automatic sending is ON: it only sends while the Worker is armed for today.':'Automatic sending is OFF.'; } });
+document.addEventListener('toggle', e=>{ if(e.target && e.target.id==='apPanel' && e.target.open){ apRefresh(); try{ document.getElementById('apLook').innerHTML=apLookHtml(); apDoing(''); }catch(_){} } }, true);
+setInterval(()=>{ autoTick(false); }, 60000);   // v5.33: one look a minute (a hidden tab may run it less often)
 function jvDigestItems(R){ return R.away.map(x=>{ const L=(lastRows||[]).filter(r=>r && pxKey(r)===x.k), r=L.find(scApproved)||L[0]||null; let st;
   if(!r) st='no longer on the board'; else if(!scAhead(r)) st='started'; else if(!scApproved(r)) st=r.prior?'already bet':'no longer approved';
   else if(x.p>0 && r.offeredProb>0 && Math.abs(r.offeredProb-x.p)>=0.005) st='price moved '+(r.offeredProb>x.p?'up':'down')+' '+(Math.abs(r.offeredProb-x.p)*100).toFixed(1)+' pts · still approved, it pops next';
