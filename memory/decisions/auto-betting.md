@@ -55,3 +55,6 @@ Order of work changed: the Worker places **real $1 orders first**, before the tw
 1. Real money: Wed 11/25 $7 (supervised: Samson prepares, the owner presses), Thu 11/26 $10 and Fri 11/27 $10 (through the Worker if it is ready, with $1 orders and the subaccount as the hard cap; otherwise supervised the same way). Total $27.
 2. Then two weeks of Paper (Novig's paper environment), starting after Friday.
 This replaces the earlier lines about paper first. Everything else in this file stands (the Worker never exceeds the funded subaccount; no promo credits; the kill switch; the owner's go on each merge).
+
+## Later: Kalshi and Polymarket (owner, 2026-11-25: "it would be able to do same for Kalshi and Polymarket... i dont mean right now, but eventually")
+Eventually the same auto bet pattern (decision rules, daily Proceed, audit log, kill switch, Autopilot card) for Kalshi and Polymarket US, after Novig has worked for real for a few days. Each exchange needs its own adapter (signing, limit orders, price and cost rules, a cap on money, location and account checks) and the owner's own written words lifting the "exchange integrations are read-only" rule for it. Docs and terms of each are not read yet. Suggested order: Kalshi, then Polymarket.
