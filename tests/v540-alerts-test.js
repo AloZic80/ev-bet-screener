@@ -23,8 +23,8 @@ const b64u=(buf)=>Buffer.from(buf).toString('base64').replace(/\+/g,'-').replace
       if(!o.push){ try{ delete window.PushManager; }catch(e){} }   /* a browser with no push (Chromium has it built in) */
       if(o.push){ window.__subs=[]; window.PushManager=function(){}; window.Notification={permission:'default', requestPermission:async()=>o.perm};
         const sub={endpoint:'https://web.push.apple.com/wp/SECRETENDPOINT', toJSON(){ return {endpoint:this.endpoint, keys:{p256dh:'SECRETP256DH', auth:'SECRETAUTH'}}; }, async unsubscribe(){ window.__unsub=true; return true; }};
-        const reg={pushManager:{ subscribe:async(x)=>{ window.__subOpts={userVisibleOnly:x.userVisibleOnly, keyLen:x.applicationServerKey.length, key0:x.applicationServerKey[0]}; window.__has=true; return sub; }, getSubscription:async()=>window.__has?sub:null }};
-        Object.defineProperty(navigator,'serviceWorker',{value:{ready:Promise.resolve(reg), register:async()=>reg},configurable:true}); } }, opts);
+        const reg={showNotification:async(t,o)=>{ window.__shown=(window.__shown||[]).concat([{t,o}]); }, pushManager:{ subscribe:async(x)=>{ window.__subOpts={userVisibleOnly:x.userVisibleOnly, keyLen:x.applicationServerKey.length, key0:x.applicationServerKey[0]}; window.__has=true; return sub; }, getSubscription:async()=>window.__has?sub:null }};
+        Object.defineProperty(navigator,'serviceWorker',{value:{ready:Promise.resolve(reg), register:async()=>reg, addEventListener:(n,f)=>{ if(n==='message') window.__swl=f; }},configurable:true}); } }, opts);
     await p.goto(FILE); await p.waitForTimeout(700); p.__errs=errs; return p; };
   const last=(p)=>calls.filter((c)=>c.path===p).slice(-1)[0];
   { calls.length=0; const p=await mk({push:true,perm:'granted'});
@@ -36,6 +36,11 @@ const b64u=(buf)=>Buffer.from(buf).toString('base64').replace(/\+/g,'-').replace
     check('afterwards it says alerts are on for 1 device', /on for 1 device/.test(await p.textContent('#alState')), await p.textContent('#alState'));
     const page=await p.evaluate(()=>document.body.innerText); check('no push address or key appears anywhere on the page', !/SECRETENDPOINT|SECRETP256DH|SECRETAUTH/.test(page) && !page.includes(PUB), null);
     await p.click('#alTest'); await p.waitForTimeout(400); check('Send a test calls /push/test and says how many devices it went to', !!last('/push/test') && /Sent to 1 device/.test(await p.textContent('#alMsg')), await p.textContent('#alMsg'));
+    check('v5.42: the status line names the push service ("(Apple)") so you can tell which browser signed up', /\(Apple\)/.test(await p.textContent('#alState')), await p.textContent('#alState'));
+    await p.click('#alLocal'); await p.waitForTimeout(400); const shown=await p.evaluate(()=>window.__shown||[]); check('v5.42: "Show a popup here" shows a popup straight from the page (no Worker call) and says what a "nothing" would mean', shown.length===1 && shown[0].t==='0xBeta local test' && /Asked this device/.test(await p.textContent('#alMsg')) && !calls.some((c)=>c.path==='/push/test' && calls.indexOf(c)>calls.length-1), [shown, await p.textContent('#alMsg')]);
+    check('v5.42: before any push arrives the page says so', /No push received by this device yet/.test(await p.textContent('#alLast')), await p.textContent('#alLast'));
+    await p.evaluate(()=>window.__swl({data:{type:'push', at:Date.now()}})); check('v5.42: when the service worker reports a push, the page shows the time it arrived', /Last push received by this device: /.test(await p.textContent('#alLast')), await p.textContent('#alLast'));
+    testSent=0; await p.click('#alTest'); await p.waitForTimeout(400); check('v5.42: a test with no device signed up says so in plain words (not "The Worker said no")', /No device is signed up for alerts yet/.test(await p.textContent('#alMsg')), await p.textContent('#alMsg')); testSent=1;
     await p.fill('#alTime','12:05'); await p.fill('#alText','Fanatics window ends soon'); await p.click('#alAdd'); await p.waitForTimeout(400);
     const rm=last('/push/reminders'); check('Add saves the reminder (hour, minute, text, an id) and lists it', rm && rm.body.list.length===1 && rm.body.list[0].h===12 && rm.body.list[0].m===5 && rm.body.list[0].text==='Fanatics window ends soon' && !!rm.body.list[0].id && /12:05 · Fanatics window ends soon/.test(await p.textContent('#alList')), rm);
     await p.click('#alAdd'); check('Add with nothing typed says so and saves nothing more', /Pick a time/.test(await p.textContent('#alMsg')), await p.textContent('#alMsg'));
