@@ -33,3 +33,8 @@ Samson may CREATE (prepare) a Parole bait order on Novig: it fills in the market
 
 ## Worker autopilot, paper first (owner, 2026-11-25: "A, paper first")
 The owner chose option A: the app triggers, **the owner's Worker places the orders through Novig's API**, with the $25 a day in code. Paper first (Novig's paper environment, play money). Plan: `agent-notes/worker-autopilot-plan_2026-11-25_v1.md`; docs findings: `agent-notes/novig-api-findings_2026-11-25_v1.md`. **Samson does not place bets**: the Worker will. Live needs the gates listed in the plan (paper clean, terms read, the owner's written rule, a funded $25 subaccount and key set by him, a security review, the 3-day Novig app check, his go on each merge). Never use promo credits. Nothing is built yet.
+
+## Paper for two weeks, real money for Thanksgiving (owner, 2026-11-25: "2 weeks of Paper, but $10 daily for 2 days of actual. For my Thanksgiving pressing")
+- **Paper:** the Worker autopilot runs on Novig's paper environment for about two weeks (plan: `agent-notes/worker-autopilot-plan_2026-11-25_v1.md`).
+- **Real money, 2 days:** a budget of **$10 a day** for **Thursday 2026-11-26 and Friday 2026-11-27** (Thanksgiving). **By tomorrow the Worker autopilot cannot be built, tested and reviewed**, so these two days run the **supervised** way: Samson prepares, the owner presses Place (or Post for a bait order). Open orders count against the $10. This replaces the $25 a day for those two days only; the $25 a day (for now) applies after, still supervised until the Worker is live. Needs the owner's confirmation that "actual" means supervised.
+- The 10 x $1 test run from 2026-11-25 stays separate; it has 0 of 10 done.
