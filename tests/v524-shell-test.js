@@ -140,7 +140,7 @@ const SNAP=()=>{ const vis=e=>{ const r=e.getBoundingClientRect(); return r.widt
     const sub=await p.evaluate(()=>[...document.querySelectorAll('#subTabs>.tab')].filter(t=>t.getBoundingClientRect().width>0).map(t=>t.dataset.lv+'|'+/⚡/.test(getComputedStyle(t,'::after').content)));
     check('Labels '+W+' '+theme+': the Bet log row (+ Add a bet, Performance, Reports) is labelled', sub.length===3 && sub.every(x=>x==='god|true'), sub);
     const secs=await p.evaluate(()=>{ const items=[...document.querySelectorAll('#v-settings>.panel, #v-settings>details')].filter(e=>e.id!=='easySwitchBox'); return {n:items.length, labelled:items.filter(e=>e.dataset.lv==='god').length}; });
-    check('Labels '+W+' '+theme+': all 17 Settings sections are labelled (v5.27: + 🤖 Jarvis)', secs.n===17 && secs.labelled===17, secs);
+    check('Labels '+W+' '+theme+': all 18 Settings sections are labelled (v5.27: + 🤖 Jarvis; v5.33: + 🚀 Autopilot)', secs.n===18 && secs.labelled===18, secs);
     // contrast of the new coloured things
     const cr=await p.evaluate(()=>{ const rgb=s=>(s.match(/[\d.]+/g)||[]).map(Number); const L=c=>{ const a=c.slice(0,3).map(v=>{ v/=255; return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4); }); return .2126*a[0]+.7152*a[1]+.0722*a[2]; };
       const ratio=(f,g)=>{ const a=L(f), c=L(g); return (Math.max(a,c)+.05)/(Math.min(a,c)+.05); };
