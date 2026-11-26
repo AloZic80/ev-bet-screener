@@ -38,7 +38,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.37</title>
+<title>0xBeta Screener v5.38</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -2300,7 +2300,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.37</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.38</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -3274,7 +3274,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 
 </div>
 <script>
-const SCREENER_VERSION='v5.37';
+const SCREENER_VERSION='v5.38';
 /* v5.24 (step 5): DEV_APP is now defined once, in the head script at the top of this file (the first paint reads it too) */
 if(!DEV_APP) document.documentElement.setAttribute('data-viewas','easy');   // v5.24 (step 3b): a customer build is Easy whatever mbev.viewAs holds
 /* v5.24 (owner 11/20: "we need to differentiate already"; "for me in GOD mode, let me tell the difference of what they cant see and i can"): levels.
@@ -8064,9 +8064,14 @@ function storageTopRender(){ const el=document.getElementById('storageTop'); if(
   el.innerHTML='<b>What uses the space</b> (biggest first; “cache” = the app rebuilds it)<ul class="meta" style="margin:4px 0 0 16px">'+R.slice(0,8).map(x=>'<li>'+esc(x.k.replace('mbev.',''))+' · '+esc((x.n/1024).toFixed(0))+' KB · '+Math.round(x.n/tot*100)+'%'+(x.cache?' · <b>cache</b>':'')+'</li>').join('')+'</ul>'; }
 document.addEventListener('click', e=>{ const b=e.target && e.target.closest && e.target.closest('#storageFree'); if(!b) return; if(!sure2('Clear the rebuildable caches (rosters, injuries, weather, league scan, API call counters, price history, team logos)? Your bets, notes and settings are NOT touched. The app downloads them again when needed.','Really clear only those caches?')) return;
   const before=lsSize(); LS_CACHES.forEach(k=>{ try{ localStorage.removeItem(k); }catch(_){} }); const after=lsSize(); try{ storageUseRender(); }catch(_){} const m=document.getElementById('storageUse'); if(m) m.textContent+=' Freed about '+Math.max(0,Math.round((before-after)/1024))+' KB.'; });
-function storageUseRender(){ try{ storageTopRender(); }catch(e){} const I=storageUseInfo(), txt='Storage used: '+I.pct+'% of this browser’s space (about '+I.more.toLocaleString('en-US')+' more bets fit)';
-  const a=document.getElementById('storageUse'); if(a) a.textContent=txt+'.';
-  const w=document.getElementById('storageWarn'); if(w){ if(I.pct>80){ w.hidden=false; w.textContent=txt+'. When it is full, new bets cannot be saved on this device: back up the bet log (More › Back up) and tell El Capataz.'; } else { w.hidden=true; w.textContent=''; } }
+/* v5.38 (owner 2026-11-26: "i need the storage issue to be fixed on its own. i dont want to do anything"): when this browser's space is 75% full or more, the app clears ONLY the caches it rebuilds by itself (LS_CACHES, the same list as the Free space button) without asking. Bets, notes, settings, the watch record and the fills are never touched. It runs when the page opens, when Settings or the Bet log opens, and every 10 minutes. If that is not enough, the warning names the biggest items so the cause can be fixed for good. */
+function storageAutoFree(){ try{ const I=storageUseInfo(); if(I.pct<75) return 0; const before=lsSize(); LS_CACHES.forEach(k=>{ try{ localStorage.removeItem(k); }catch(_){} }); const freed=Math.max(0,before-lsSize()); if(freed>0){ window._storageAuto={at:Date.now(), kb:Math.round(freed/1024), from:I.pct}; try{ localStorage.setItem('mbev.storageAuto', JSON.stringify(window._storageAuto)); }catch(e){} } return freed; }catch(e){ return 0; } }
+setInterval(()=>{ try{ storageAutoFree(); storageUseRender(); }catch(e){} }, 600000);
+function storageUseRender(){ try{ storageAutoFree(); }catch(e){} try{ storageTopRender(); }catch(e){} const I=storageUseInfo(), txt='Storage used: '+I.pct+'% of this browser’s space (about '+I.more.toLocaleString('en-US')+' more bets fit)';
+  let auto=''; try{ const A=window._storageAuto||JSON.parse(localStorage.getItem('mbev.storageAuto')||'null'); if(A && A.at) auto=' Cleared the rebuildable caches by itself at '+new Date(A.at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+' (freed about '+A.kb+' KB).'; }catch(e){}
+  const a=document.getElementById('storageUse'); if(a) a.textContent=txt+'.'+auto;
+  const w=document.getElementById('storageWarn'); if(w){ if(I.pct>80){ w.hidden=false; let big=''; try{ const R=storageBreakdown(), tot=R.reduce((x,y)=>x+y.n,0)||1; big=' Biggest: '+R.slice(0,4).map(x=>x.k.replace('mbev.','')+' '+Math.round(x.n/tot*100)+'%').join(', ')+'.'; }catch(e){}
+      w.textContent=txt+'. The app already clears its own caches by itself; this is something else.'+big+' When it is full, new bets cannot be saved on this device: back up the bet log (More › Back up) and tell El Capataz.'; } else { w.hidden=true; w.textContent=''; } }
   return I; }
 document.addEventListener('click', e=>{ if(e.target.closest && e.target.closest('.tab[data-view="v-settings"], .tab[data-view="v-log"]')) setTimeout(()=>{ try{ storageUseRender(); }catch(err){} try{ cloudLineRender(); }catch(err){} },0); });   // v5.25
 setTimeout(()=>{ try{ storageUseRender(); }catch(e){} try{ cloudLineRender(); }catch(e){} }, 1200);   // v5.25
