@@ -38,3 +38,6 @@ The owner chose option A: the app triggers, **the owner's Worker places the orde
 - **Paper:** the Worker autopilot runs on Novig's paper environment for about two weeks (plan: `agent-notes/worker-autopilot-plan_2026-11-25_v1.md`).
 - **Real money, 2 days:** a budget of **$10 a day** for **Thursday 2026-11-26 and Friday 2026-11-27** (Thanksgiving). **By tomorrow the Worker autopilot cannot be built, tested and reviewed**, so these two days run the **supervised** way: Samson prepares, the owner presses Place (or Post for a bait order). Open orders count against the $10. This replaces the $25 a day for those two days only; the $25 a day (for now) applies after, still supervised until the Worker is live. Needs the owner's confirmation that "actual" means supervised.
 - The 10 x $1 test run from 2026-11-25 stays separate; it has 0 of 10 done.
+
+## Today's budget (owner, 2026-11-25: "can we do $7 today?")
+Today (Wed 2026-11-25) the owner may bet up to $7 more, as $1 bets, supervised (Samson prepares, the owner presses Place), only on approved Novig picks. With the $1 CLE bet, today's total is at most $8. No picks are forced: if none is approved, nothing is bet.
