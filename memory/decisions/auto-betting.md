@@ -63,3 +63,8 @@ Timing for Kalshi and Polymarket (owner, 2026-11-25: "after 1000 bets or so, or 
 ## Do not rush me (owner, 2026-11-25)
 - Owner: "i guess im just desperate. but i shouldnt because we cant rush 'almost Perfect'. jajaja" and "THANK YOU for not giving in to me easily. I believe i asked you to write it somewhere like that."
 - So: when he pushes to go faster on anything that touches real money, keep the gates (full suite passes before merge, Worker merges only on his go, daily Proceed, kill switch) and say plainly why the wait protects him. Speed never outranks the tests. He asked for this to be written down.
+
+## Paper starts Sunday, fishing waits for it (owner, 2026-11-25)
+- Owner: "we dont want paper till Sat", then corrected: "NO, no Paper till SUN". So the two weeks of Paper start Sunday 2026-11-29, not before. Thu 11/26 and Fri 11/27 stay live ($10 each).
+- Fishing (resting limit orders on picks that missed on price alone, at the exact OK-up-to limit; its own $3 a day; own switch, default off; owner: "BUILD", "we can go fishing!!") is built to be tested on Novig Paper first, so it stays off until Paper starts on Sunday. It never fishes for stale, outlier, not-Novig or under-$1 picks.
+- Worker daily Proceed change merged 2026-11-25 (owner: "GO", "APPROVE" after "Publish the Worker's daily Proceed change ... now? Reply yes or no."): prop-bet-api PR 18; inactive until AUTOBET_REQUIRE_ARM=1 is set.
