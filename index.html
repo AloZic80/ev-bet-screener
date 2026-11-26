@@ -2287,6 +2287,11 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 #ppPanel details.pp-more>summary{cursor:pointer; min-height:32px; display:list-item}
 #ppPanel .pp-t td{vertical-align:top}
 @media (max-width:600px){ #ppPanel details.pp-more>summary{min-height:44px} }
+/* v5.34 cloud line on the Bet log */
+.cloud-line{margin:0 0 12px; padding:8px 12px; border:1px solid var(--line); border-radius:8px; font-size:14px}
+.cloud-line.cloud-ok{border-color:var(--ok); color:var(--ok)}
+.cloud-line.cloud-wait{border-color:var(--warn); color:var(--warn)}
+.cloud-line.cloud-bad{border-color:var(--bad,#ff6b6b); color:var(--bad,#ff6b6b)}
 </style>
 </head>
 <body>
@@ -2680,7 +2685,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 <div class="panel rg-panel" id="rulesGlance" data-lv="god">   <!-- v4.38: Augi's rules layout: everything La Contadora uses, in one place -->
   <h2>Your rules at a glance <span class="cn-chip">saved in this browser · no secrets</span></h2>
   <div class="rg-grid" id="rgGrid"></div>
-  <p class="hint storage-use" id="storageUse" role="status"></p><!-- v5.25 (ENG-2): how full this browser’s storage is -->
+  <p class="hint storage-use" id="storageUse" role="status"></p><div class="hint" id="storageTop"></div><button type="button" class="ghost sm" id="storageFree">Free space (rebuildable caches only)</button><!-- v5.25 (ENG-2): how full this browser’s storage is -->
   <p class="hint" style="margin:6px 0 0">Change any of them in Screens and Stake sizing below; this updates as you type. A mode does not change any of them. Each tab lists only its own bets, by La Contadora’s chance: 😴 Boring = High Cover + Heavy Favorite (75%+), 🛋️ Tranqui = Strong (70–75%), 💪 Machín = Solid (65–70%), ⚖️ Parejo = Lean (60–65%), 🪙 Volado = Slight Lean (55–60%), 🎲 Dado = On the Line (50–55%)<!-- v5.16 (owner: more tabs) -->, 🍀 Suertudo = Coin Flip (45–50%), 🔮 Brujo = Unlikely (under 45%). The ones that just missed and the Hail Marys are not offered as bets: they stay in 👀 Watch, and you can log one yourself with + Add a bet.<!-- v5.13 (owner: no daily Suertudo/Brujo bets) --></p>
 </div>
 <div class="panel plan-panel" id="planPanel" data-lv="god">   <!-- v5.10 (owner, Sun 11/15: "id say 11/11 ... BUILD IT ALL"): My plan, a reminder only (saved and synced with the settings) -->
@@ -2754,6 +2759,24 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
   <div class="sync-status" id="syncStatus">Off on this device.</div>
   <details class="help" data-help="sync"><summary>How sync works</summary><p class="hint">One copy of your bet log lives in your Cloudflare store. Any device with the screener passphrase <b>and</b> this password sees the same bets, baits and settings. Changes upload a few seconds after you make them; other devices pick them up when they open or come back to the page, and once a minute while it's open — Wi-Fi or cellular.</p><p class="hint" style="margin-top:8px"><b>Synced:</b> bet log, removed bets, parlay marks, Parole baits, which book fills are matched, your settings (bankroll, La Contadora's rules, fees) and the last board you loaded with its grading history. <b>Stays on each device:</b> the screener passphrase, this password, theme, team logos.</p><p class="hint" style="margin-top:4px"><b>First time:</b> on the Mac run <code>cd ~/prop-bet-api</code>, then <code>npx wrangler secret put SYNC_KEY</code> (type the password you picked — it never goes in chat or code), then <code>npx wrangler deploy</code>. Turn it on here on the PC first (its log becomes the cloud copy), then on the phone. Lost a device? Run the secret command again with a new password.</p></details>   <!-- v4.25: a drop-down (the three notes were always open) -->
   <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px"><button class="ghost sm" id="syncBak">Cloud backups…</button><span class="meta" id="syncBakList"></span></div>
+</details>
+<details class="panel fold" id="apPanel" data-lv="god">   <!-- v5.33 (owner 2026-11-25: "make it AUTOMATIC"; "after each day, it needs to ask me... Proceed?"): what your Worker knows about auto bets, the daily Proceed, the kill switch, and the switch for automatic sending -->
+  <summary><h2>🚀 Autopilot <span class="sub">your Worker places Novig limit orders inside hard limits · you say Proceed each day</span></h2></summary>
+  <div id="apBody" class="meta" style="margin-top:8px">Open this panel, then press Refresh.</div>
+  <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px">
+    <button type="button" class="act" id="apCheck">Check now</button>
+    <button type="button" class="ghost" id="apRefresh">⟳ Refresh</button>
+    <button type="button" class="act" id="apProceed">Proceed for today</button>
+    <button type="button" class="ghost" id="apStop">Stop (kill switch)</button>
+    <button type="button" class="ghost" id="apResume">Resume</button>
+  </div>
+  <label class="bar-check" style="margin-top:8px"><input type="checkbox" id="apAuto"> Send approved Novig picks to the Worker automatically while it is armed today (this tab must stay open)</label>
+  <div class="meta" style="margin-top:8px"><a href="control.html" target="_blank" rel="noopener" id="apCtl">Open the control page</a> (the dashboard: status, today's orders, Proceed, Stop, simple questions)</div>
+  <div id="apReport" class="meta" style="margin-top:8px"></div>
+  <div id="apSamson" class="meta" style="margin-top:8px"></div>
+  <div id="apNow" class="meta" role="status" aria-live="polite" style="margin-top:6px"></div>
+  <div id="apLook" class="meta"></div>
+  <div class="meta" id="apMsg" role="status"></div>
 </details>
 <details class="panel fold" id="aiPanel" data-lv="god">   <!-- v5.15 (AI helper; owner 11/15: "its only for me now." · "LETS CHOOSE SONNET"): off until the Worker says it is set up; closed until tapped -->
   <summary><h2>✨ AI helper <span class="sub">reads slips, screenshots, news and results for you to check · it never decides a bet or a stake</span></h2></summary>
@@ -2994,7 +3017,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 
 <!-- ======================= LOG ======================= -->
 <div class="view" id="v-log">
-<div class="storage-warn" id="storageWarn" role="status" hidden></div><!-- v5.25 (ENG-2): a calm note over 80% -->
+<div class="storage-warn" id="storageWarn" role="status" hidden></div><div class="meta cloud-line" id="cloudLine" role="status"></div><!-- v5.25 (ENG-2): a calm note over 80% -->
 <div class="panel look-out" id="lookOut" hidden></div>   <!-- v3.57: bets not graded yet, automatically or by you -->
 <div class="panel log-orders" id="logOrders" hidden></div>   <!-- v4.17: orders waiting at your books (not bets until they fill) -->
 <div class="panel" id="lcPanel">   <!-- v4.36: Augi's Bet log, step 3: his bet calendar, the day, cover bands, track by, import, on our log and math -->
@@ -5969,7 +5992,7 @@ function easySig(b){ b=b||{}; return JSON.stringify([b.name, b.market, b.side||n
 function easyMark(b, key){ const O=easyOwn(); O[b.id]={key, sig:easySig(b)}; easyOwnSave(); const S=easySeen(); if(S[key]) S[key].placed=true; }
 function easyForget(id){ const O=easyOwn(), o=O[id]; delete O[id]; easyOwnSave(); if(o){ const S=easySeen(); if(S[o.key]) S[o.key].placed=false; } return o||null; }
 function easyChanged(b, soft){ const o=easyOwn()[b.id], res=(soft && (b.result==='pending' || b.result==='?')) ? null : b.result; return !!(res || b.sold || b.fillRef || b.fillBook || (b.fills && b.fills.length) || b.autoFrom || (b.edits && b.edits.length) || !o || o.sig!==easySig(b)); }
-function easyStored(id){ try{ const a=JSON.parse(localStorage.getItem('mbev.log')||'[]'); return Array.isArray(a) && a.some(x=>x && x.id===id); }catch(e){ return false; } }
+function easyStored(id){ try{ const a=JSON.parse(lsPlain('mbev.log')||'[]'); return Array.isArray(a) && a.some(x=>x && x.id===id); }catch(e){ return false; } }
 /* the log did not reach storage (S2): take the bet out of memory again so Today keeps the pick and nothing says Saved; the person is told in plain words (never swallowed) */
 function easyUnsave(b){ const i=(logged||[]).indexOf(b); if(i>=0){ logged.splice(i,1); syncMarkGone('log',[b&&b.id]); }   /* v5.25 round 2 (HS-1) */ saveLog(); try{ const t=document.getElementById('savedToast'); if(t) t.classList.remove('on'); }catch(e){} try{ renderLog(); renderPerf(); }catch(e){} refresh(); }
 function easyAfterSave(nb, key){ if(!easyStored(nb.id)){ easyUnsave(nb); return {saved:false, reason:'storage'}; } easyMark(nb, key); return {saved:true, id:nb.id, key}; }
@@ -7986,13 +8009,28 @@ function marketStem(m){ return String(m||'').replace(/^[+-]?[\d.]+\s+/,'').toLow
 function propKey(r){ return [document.getElementById('slate').value,r.name,r.market].join('|').toLowerCase(); }
 function propKeyOf(b){ return [b.date,b.name,b.market].join('|').toLowerCase(); }
 function betKey(r){ return [document.getElementById('slate').value,r.name,r.market,r.book,r.offeredRaw].join('|'); }
-function loadLog(){ try{ logged=JSON.parse(localStorage.getItem('mbev.log')||'[]'); }catch(e){ logged=[]; } }
+function loadLog(){ try{ logged=JSON.parse(lsPlain('mbev.log')||'[]'); }catch(e){ try{ const raw=localStorage.getItem('mbev.log'); if(raw && raw.slice(0,3)==='z1:') localStorage.setItem('mbev.log.unreadable', raw); }catch(_){} logged=[]; } }   /* v5.34: a compressed log that cannot be read is kept under mbev.log.unreadable before anything can overwrite it */
 /* v3.82 (Alonzo: "I classified them manually but it did not record them"): saving the log failed in silence when the browser's
    storage was full, so a result looked set until the next reload. Now a failed save frees the app's own caches (they refill by
    themselves) and tries again; if it still cannot save, a red note says so instead of losing the change quietly. */
 const LS_CACHES=['mbev.rosters','mbev.inj','mbev.wx','mbev.wxGeo','mbev.lgScan','mbev.sbq','mbev.oaq','mbev.teamlogos','mbev.px'];   // v4.21: + price history
+/* LZ-BEGIN v5.34 (owner 2026-11-25: "fix then"; the browser's 5 MB was 99% full): the bet log is stored COMPRESSED once it is big (over 400,000 characters). A small LZW coder of our own (no dependency): the text is turned into UTF-8 bytes, each code is one character below U+D800 (so it is always valid text), the table is cleared at 0xD7F0 entries. A saved value starts with "z1:"; anything else is the old plain text, so both are read. The coder checks itself: lsPack decodes what it just made and uses it only if it equals the original, else the plain text is saved as before. */
+function lzEnc(str){ const b=new TextEncoder().encode(String(str)), out=[]; let dict=new Map(), next=256, w=-1;
+  for(let i=0;i<b.length;i++){ const c=b[i]; if(w<0){ w=c; continue; } const key=w*256+c, hit=dict.get(key);
+    if(hit!==undefined){ w=hit; } else { out.push(w); if(next<0xD7F0){ dict.set(key,next++); } else { out.push(0xD7FF); dict=new Map(); next=256; } w=c; } }
+  if(w>=0) out.push(w); let s=''; for(let i=0;i<out.length;i+=8192) s+=String.fromCharCode.apply(null,out.slice(i,i+8192)); return s; }
+function lzDec(z){ z=String(z); const pre=new Int32Array(0xD800), suf=new Uint8Array(0xD800), bytes=[]; let next=256, prev=-1;
+  const emit=(code)=>{ const st=[]; let c=code; while(c>=256){ st.push(suf[c]); c=pre[c]; } st.push(c); for(let i=st.length-1;i>=0;i--) bytes.push(st[i]); return c; };
+  for(let i=0;i<z.length;i++){ const code=z.charCodeAt(i); if(code===0xD7FF){ next=256; prev=-1; continue; } if(code>=0xD800) throw new Error('bad code');
+    if(prev<0){ if(code>=256) throw new Error('bad start'); bytes.push(code); prev=code; continue; }
+    let first; if(code<next){ first=emit(code); } else if(code===next){ let c=prev; while(c>=256) c=pre[c]; first=c; emit(prev); bytes.push(first); } else throw new Error('bad code');
+    if(next<0xD7F0){ pre[next]=prev; suf[next]=first; next++; } prev=code; }
+  return new TextDecoder('utf-8',{fatal:true}).decode(Uint8Array.from(bytes)); }
+function lsPack(v){ try{ v=String(v); if(v.length<400000) return v; const z=lzEnc(v); if(z.length+3<v.length*0.9 && lzDec(z)===v) return 'z1:'+z; }catch(e){} return v; }
+function lsPlain(k){ const v=localStorage.getItem(k); if(typeof v==='string' && v.slice(0,3)==='z1:') return lzDec(v.slice(3)); return v; }
+/* LZ-END */
 function lsSize(){ let t=0; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); t+=k.length+(localStorage.getItem(k)||'').length; } }catch(e){} return t; }
-function lsSafeSet(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){}
+function lsSafeSet(k,v){ if(k==='mbev.log') v=lsPack(v); try{ localStorage.setItem(k,v); return true; }catch(e){}
   for(const c of LS_CACHES){ if(c===k) continue; try{ localStorage.removeItem(c); }catch(e){} try{ localStorage.setItem(k,v); return true; }catch(e){} } return false; }
 function saveFailNote(bad){ let el=document.getElementById('saveFail'); if(!bad){ if(el) el.remove(); return; }
   if(!el){ el=document.createElement('div'); el.id='saveFail'; el.setAttribute('role','alert'); document.body.prepend(el); }
@@ -8004,7 +8042,7 @@ function cfgSaveFailNote(bad){ let el=document.getElementById('cfgSaveFail'); if
   el.textContent='⚠ A setting you changed could not be saved on this device: the browser storage is full. It is used until the page reloads, then the old value comes back.'; }
 /* v5.25 (ENG-2, Build A): when the bet log still does not fit after the caches, make room in this order and only as far as needed: Watch sightings,
    then the oldest pruned Watch records, then grade-history entries older than 30 days. Bets are never dropped. True when the log was saved. */
-function logMakeRoom(){ const v=JSON.stringify(logged), put=()=>{ try{ localStorage.setItem('mbev.log',v); return true; }catch(e){ return false; } }, wput=A=>{ try{ localStorage.setItem('mbev.watchObs',JSON.stringify(A)); }catch(e){} };
+function logMakeRoom(){ const v=JSON.stringify(logged), put=()=>{ try{ localStorage.setItem('mbev.log',lsPack(v)); return true; }catch(e){ return false; } }, wput=A=>{ try{ localStorage.setItem('mbev.watchObs',JSON.stringify(A)); }catch(e){} };
   try{ const A=watchAll(); let n=0; A.forEach(o=>{ if(o && o.sig){ o.nSig=Math.max(+o.nSig||0,o.sig.length); delete o.sig; n++; } }); if(n){ wput(A); if(put()) return true; }
     const P=A.filter(o=>o && o.pruned).sort((x,y)=>String(x.first||x.at||'')<String(y.first||y.at||'')?-1:1), step=Math.max(20,Math.ceil(P.length/10));
     for(let i=0;i<P.length;i+=step){ const drop=new Set(P.slice(i,i+step)); for(let j=A.length-1;j>=0;j--) if(drop.has(A[j])) A.splice(j,1); syncForgetLocal('watch',[...drop].map(o=>o.k)); wput(A); if(put()) return true; } }catch(e){}   // v5.25 round 2 (HS-5): dropped on this device only
@@ -8019,12 +8057,18 @@ function storageUseInfo(){ const used=lsSize(), q=lsQuota(), n=(logged||[]).leng
   try{ if(n>=5) per=Math.max(600, Math.round(JSON.stringify(logged).length/n)); }catch(e){}
   try{ if(SY && SY.on) per+=360; }catch(e){}
   const free=Math.max(0,q-used); return {used, q, pct:Math.min(100,Math.round(used/q*100)), more:Math.floor(free/per)}; }
-function storageUseRender(){ const I=storageUseInfo(), txt='Storage used: '+I.pct+'% of this browser’s space (about '+I.more.toLocaleString('en-US')+' more bets fit)';
+/* v5.34 (owner 2026-11-25: "THIS BETS SHOULD BE SAVING OUT OF HERE IN A CLOUD"): what is using this browser's space, biggest first, and a button that clears ONLY the caches the app rebuilds by itself (the same list the app already clears when a save would not fit). Bets, snapshots, notes and settings are never touched. */
+function storageBreakdown(){ const rows=[]; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k && k.indexOf('mbev.')===0) rows.push({k:k, n:k.length+(localStorage.getItem(k)||'').length, cache:LS_CACHES.indexOf(k)>=0}); } }catch(e){} return rows.sort((a,b)=>b.n-a.n); }
+function storageTopRender(){ const el=document.getElementById('storageTop'); if(!el) return; const R=storageBreakdown(), tot=R.reduce((a,x)=>a+x.n,0)||1;
+  el.innerHTML='<b>What uses the space</b> (biggest first; “cache” = the app rebuilds it)<ul class="meta" style="margin:4px 0 0 16px">'+R.slice(0,8).map(x=>'<li>'+esc(x.k.replace('mbev.',''))+' · '+esc((x.n/1024).toFixed(0))+' KB · '+Math.round(x.n/tot*100)+'%'+(x.cache?' · <b>cache</b>':'')+'</li>').join('')+'</ul>'; }
+document.addEventListener('click', e=>{ const b=e.target && e.target.closest && e.target.closest('#storageFree'); if(!b) return; if(!sure2('Clear the rebuildable caches (rosters, injuries, weather, league scan, API call counters, price history, team logos)? Your bets, notes and settings are NOT touched. The app downloads them again when needed.','Really clear only those caches?')) return;
+  const before=lsSize(); LS_CACHES.forEach(k=>{ try{ localStorage.removeItem(k); }catch(_){} }); const after=lsSize(); try{ storageUseRender(); }catch(_){} const m=document.getElementById('storageUse'); if(m) m.textContent+=' Freed about '+Math.max(0,Math.round((before-after)/1024))+' KB.'; });
+function storageUseRender(){ try{ storageTopRender(); }catch(e){} const I=storageUseInfo(), txt='Storage used: '+I.pct+'% of this browser’s space (about '+I.more.toLocaleString('en-US')+' more bets fit)';
   const a=document.getElementById('storageUse'); if(a) a.textContent=txt+'.';
   const w=document.getElementById('storageWarn'); if(w){ if(I.pct>80){ w.hidden=false; w.textContent=txt+'. When it is full, new bets cannot be saved on this device: back up the bet log (More › Back up) and tell El Capataz.'; } else { w.hidden=true; w.textContent=''; } }
   return I; }
-document.addEventListener('click', e=>{ if(e.target.closest && e.target.closest('.tab[data-view="v-settings"], .tab[data-view="v-log"]')) setTimeout(()=>{ try{ storageUseRender(); }catch(err){} },0); });   // v5.25
-setTimeout(()=>{ try{ storageUseRender(); }catch(e){} }, 1200);   // v5.25
+document.addEventListener('click', e=>{ if(e.target.closest && e.target.closest('.tab[data-view="v-settings"], .tab[data-view="v-log"]')) setTimeout(()=>{ try{ storageUseRender(); }catch(err){} try{ cloudLineRender(); }catch(err){} },0); });   // v5.25
+setTimeout(()=>{ try{ storageUseRender(); }catch(e){} try{ cloudLineRender(); }catch(e){} }, 1200);   // v5.25
 /* v2.63: what the screener said about a row, in one word — saved with every bet you log.
    "On the list" = the screener had a stake on it (BET / RISK / OUTLIER / LIMITED) and the game hadn't started. */
 function saidOf(r){
@@ -12968,14 +13012,14 @@ function loadCfg(){
 })();
 SW_IDS.concat(SW_CHECKS).forEach(id=>document.getElementById(id).addEventListener('change',()=>{ saveSweet(); rerenderWithFilters(); }));
 loadSweet(); loadParlays();
-loadCfg(); loadLog(); manual(); render([],cfgRead()); renderLog(); renderPerf();
+loadCfg(); loadLog(); try{ const raw0=localStorage.getItem('mbev.log'); if(raw0 && raw0.slice(0,3)!=='z1:' && raw0.length>=400000 && Array.isArray(logged) && logged.length && JSON.stringify(logged)===raw0){ const pk0=lsPack(raw0); if(pk0!==raw0) localStorage.setItem('mbev.log', pk0); } }catch(e){}   /* v5.34: a big plain log is packed once when the page opens (only if what was read equals what is stored), so the space comes back now, not at the next bet */ manual(); render([],cfgRead()); renderLog(); renderPerf();
 try{ paintSportSelects(); pickStartSport(); setTimeout(()=>scanSportTimes(), 800); setInterval(()=>scanSportTimes(), 30*60e3); }catch(e){}   // v3.12
 /* v2.61: keep every open copy of the screener in sync — a stale tab must never write an old list back */
 let logBusy=0;   // v2.62: an async job (closing grab, result check) is editing the log — don't swap it out mid-way
 function syncFromStorage(){
   if(logBusy>0) return false;
   let changed=false;
-  const same=(key,val)=>{ try{ return (localStorage.getItem(key)||'') === JSON.stringify(val); }catch(e){ return true; } };
+  const same=(key,val)=>{ try{ return (lsPlain(key)||'') === JSON.stringify(val); }catch(e){ return true; } };   /* v5.34: lsPlain reads a compressed log too */
   try{
     if(localStorage.getItem('mbev.log')!==null && !same('mbev.log',logged)){ loadLog(); changed=true; }
     if(localStorage.getItem('mbev.parlay')!==null && !same('mbev.parlay',parlays)){ loadParlays(); changed=true; }
@@ -14643,7 +14687,7 @@ function jvStampQuote(q, lim){ try{ const el=document.getElementById('jvPop'); i
   if(!el.hasAttribute('data-prefill')) return; d.freshQuote={priceProb:+q.price, title:q.title||null, outcome:q.outcome||null, at:q.at||null, withinLimit:(lim==null?null:+q.price<=lim+1e-9)}; el.setAttribute('data-prefill', JSON.stringify(d)); }catch(e){} }
 window.addEventListener('pagehide', jvClearPrefill);
 /* v5.32 (owner 2026-11-25: "do REAL MONEY first"; $1 an order, $25 a day): "Auto bet $1". One tap and one confirm box; the Worker (POST /autobet) reads Novig itself, checks every limit (kill switch, duplicate, the price at or below your exact OK up to, the day's total, $1 an order in LIVE) and places ONE limit order. The app logs the fill by itself afterwards (Novig fills sync); nothing is added to the Bet log here. */
-function jvAutoWords(j){ const m={duplicate:'this pick was already sent today', over_daily_budget:'the limit for today is reached', live_price_above_limit:'the price moved above your limit', kill_switch:'the kill switch is on', no_trading_key:'the Worker has no trading key set', game_started_or_too_close:'the game has started or is too close', no_fresh_live_price:'Novig gave no fresh price', below_minimum_order:'the order would be under the minimum', blocked:'Novig blocked it (open the Novig app, then try again)', unknown:'Novig did not answer, so nothing more is sent'}; return (j&&(m[j.reason]||j.reason||j.error))||'unknown reason'; }
+function jvAutoWords(j){ const m={duplicate:'this pick was already sent today', over_daily_budget:'the limit for today is reached', live_price_above_limit:'the price moved above your limit', kill_switch:'the kill switch is on', no_trading_key:'the Worker has no trading key set', not_armed_today:'it is not armed for today (say Proceed)', game_started_or_too_close:'the game has started or is too close', no_fresh_live_price:'Novig gave no fresh price', below_minimum_order:'the order would be under the minimum', blocked:'Novig blocked it (open the Novig app, then try again)', unknown:'Novig did not answer, so nothing more is sent'}; return (j&&(m[j.reason]||j.reason||j.error))||'unknown reason'; }
 document.addEventListener('click', async e=>{ const b=e.target && e.target.closest && e.target.closest('#jvPop .jv-auto'); if(!b || !window._jvCur) return; const cur=window._jvCur, r=jvCurRow(cur);
   if(!r || jvSig(r, cur.near)!==cur.sig){ jvRecheck(); jvSaid(cur, 'The board changed: check the pick and press Auto bet again.'); return; }
   if(!(typeof SY!=='undefined' && SY.on && SY.key)){ jvSaid(cur, 'Turn on sync first (Settings, Your bets on every device): the Worker needs your sync password for this.'); return; }
@@ -14653,13 +14697,108 @@ document.addEventListener('click', async e=>{ const b=e.target && e.target.close
   try{
     const q=await quoteFor(rowAsBet(r), r.book, true); if(!(q && q.ok && q.ref && q.outcome)) throw new Error('Novig did not answer for this pick');
     const body={key:String(cur.k), marketId:q.ref, outcomeId:q.outcome, limit:lim, stake:+r.stake||0, startMs:Date.parse((r.gameInfo&&r.gameInfo.startISO)||'')||0, book:'Novig', name:jvPickTxt(r)};
-    const res=await fetch(API_BASE+'/autobet', {method:'POST', headers:syncHeaders({'Content-Type':'application/json'}), body:JSON.stringify(body), cache:'no-store'}); let j=null; try{ j=await res.json(); }catch(_){}
+    const post=()=>fetch(API_BASE+'/autobet', {method:'POST', headers:syncHeaders({'Content-Type':'application/json'}), body:JSON.stringify(body), cache:'no-store'});
+    let res=await post(), j=null; try{ j=await res.json(); }catch(_){}
+    if(j && j.reason==='not_armed_today' && confirm('Proceed for today? Your Worker may then place real orders of about $1 each at Novig, inside your limits, until midnight (Central). It asks again tomorrow.')){ await apFetch('/autobet/arm','POST',{on:true}); apStatus=null; res=await post(); j=null; try{ j=await res.json(); }catch(_){} }   // v5.33
     const ok=!!(j && j.ok && j.placed);
     try{ const L=JSON.parse(localStorage.getItem('mbev.autobet')||'[]'); L.push({t:new Date().toISOString(), pick:body.name, ok, mode:(j&&j.mode)||null, reason:ok?null:((j&&(j.reason||j.error))||('HTTP '+res.status)), qty:(j&&j.qty)||null, price:(j&&j.price)||null, cost:(j&&j.cost)||null}); while(L.length>60) L.shift(); localStorage.setItem('mbev.autobet', JSON.stringify(L)); }catch(_){}
     if(ok) jvSaid(cur, '✓ Order placed at Novig ('+(j.mode||'?')+'): '+j.qty+' contracts at '+(+j.price*100).toFixed(1)+'% for about $'+(+j.cost).toFixed(2)+'. Nothing else to press; the fill shows up in your Bet log by itself.');
     else jvSaid(cur, 'Not placed: '+jvAutoWords(j||{error:'HTTP '+res.status})+(j&&j.killed?' (the kill switch is now ON)':'')+'.');
   }catch(err){ jvSaid(cur, 'Not placed: '+String((err&&err.message)||err).slice(0,120)+'.'); }
   finally{ b.disabled=false; } });   // v5.32
+/* v5.33 (owner 2026-11-25: "make it AUTOMATIC"; "after each day, it needs to ask me... Proceed?"): the Autopilot card, the daily Proceed, the kill switch, and AUTOMATIC sending: while the Worker is armed for today and the switch is on, each approved Novig pick the app is showing
+   is sent to the Worker (POST /autobet) once, one pick a minute, by the same code the Auto bet button uses. The Worker still enforces $1 an order, the day's total, the exact limit and the kill switch. This tab must stay open. The app logs the fills by itself; nothing is added to the Bet log here. */
+var apStatus=null, apAt=0;
+function autoOn(){ try{ return localStorage.getItem('mbev.autoSend')==='1'; }catch(e){ return false; } }
+function autoSentGet(){ const d=todayCT(); let o={}; try{ o=JSON.parse(localStorage.getItem('mbev.autoSent')||'{}')||{}; }catch(e){} if(o.day!==d) o={day:d, keys:{}}; if(!o.keys) o.keys={}; return o; }
+async function apFetch(path, method, body){ const res=await fetch(API_BASE+path, {method:method||'GET', headers:syncHeaders(body?{'Content-Type':'application/json'}:{}), body:body?JSON.stringify(body):undefined, cache:'no-store'}); let j=null; try{ j=await res.json(); }catch(e){} return {status:res.status, j:j}; }
+async function apStatusLoad(force){ if(!force && apStatus && Date.now()-apAt<45000) return apStatus; if(!(typeof SY!=='undefined' && SY.on && SY.key)) return null; let r=null; try{ r=await apFetch('/autobet/status'); }catch(e){ return null; } if(r && r.j && r.j.ok){ apStatus=r.j; apAt=Date.now(); return r.j; } return null; }
+function apPaint(st){ const el=document.getElementById('apBody'); if(!el) return; const cb=document.getElementById('apAuto'); if(cb) cb.checked=autoOn();
+  if(!st){ el.textContent='No answer from the Worker: turn on sync (Settings, Your bets on every device) and check the screener passphrase.'; return; }
+  const rows=(st.orders||[]).slice(0,8).map(o=>'<li>'+esc(new Date(o.t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}))+' · '+esc(o.name||o.key||'')+' · <b>'+esc(o.result||'')+'</b>'+(o.reason?' ('+esc(o.reason)+')':'')+(o.price?' · '+esc(o.qty)+' contracts at '+esc((+o.price*100).toFixed(1))+'%':'')+'</li>').join('');
+  el.innerHTML='<b>'+(st.mode==='LIVE'?'REAL money':'Paper money')+'</b> · '+(st.killed?'<b class="no-t">STOPPED (kill switch is on)</b>':(st.requireArm?(st.armed?'<span class="ok-t">armed for today</span>':'not armed: press Proceed for today'):'no daily Proceed needed yet'))+'<br>Today: $'+(+st.reserved).toFixed(2)+' used of $'+(+st.budget).toFixed(2)+' · $'+(+st.left).toFixed(2)+' left'+(rows?'<ul class="meta" style="margin:6px 0 0 16px">'+rows+'</ul>':'<br>No orders yet today.'); }
+async function apRefresh(){ const m=document.getElementById('apMsg'); if(m) m.textContent='Asking the Worker…'; const st=await apStatusLoad(true); apPaint(st); try{ await apSamsonPaint(st); }catch(e){} if(m) m.textContent=st?'':'No answer.'; return st; }
+async function apSend(r){   /* one order request for one approved pick (the automatic path); the Auto bet button has its own copy with the words for the pop-up */
+  const lim=jvMax(r); if(!(lim>0 && lim<1)) return {ok:false, j:{reason:'no_limit'}};
+  const q=await quoteFor(rowAsBet(r), r.book, true); if(!(q && q.ok && q.ref && q.outcome)) return {ok:false, j:{reason:'no_fresh_live_price'}};
+  const body={key:pxKey(r), marketId:q.ref, outcomeId:q.outcome, limit:lim, stake:+r.stake||0, startMs:Date.parse((r.gameInfo&&r.gameInfo.startISO)||'')||0, book:'Novig', name:jvPickTxt(r)};
+  const out=await apFetch('/autobet','POST',body), j=out.j, ok=!!(j && j.ok && j.placed);
+  try{ const L=JSON.parse(localStorage.getItem('mbev.autobet')||'[]'); L.push({t:new Date().toISOString(), pick:body.name, ok, auto:true, mode:(j&&j.mode)||null, reason:ok?null:((j&&(j.reason||j.error))||('HTTP '+out.status)), qty:(j&&j.qty)||null, price:(j&&j.price)||null, cost:(j&&j.cost)||null}); while(L.length>60) L.shift(); localStorage.setItem('mbev.autobet', JSON.stringify(L)); }catch(_){}
+  return {ok:ok, j:j||{reason:'HTTP '+out.status}};
+}
+/* v5.34 (owner 2026-11-25: "report when it went out and how many bets it got and how many actual bets that passed, and even some ALMOST MADE IT"): the report. The board now (Novig picks seen, approved, almost made it, each with the reason it missed) and today's tally (looks, sent, placed, refused, times). Read only: it decides and sends nothing. */
+function apWhyNot(r){ try{
+  if(!scAhead(r)) return 'the game has started or is too close';
+  if(r.prior) return 'you already bet it';
+  if(rowAwol(r) || r.qGone) return 'the price is gone from the book';
+  if(r.outlier) return 'the model edge is past your 15% trust limit (outlier)';
+  if(evDisplayState(r)!=='actionable') return 'the price is old (last seen)';
+  if(!r.pass) return 'under your floor';
+  if(!(r.stake>0)) return 'no stake left after your limits';
+  if(r.waitOrder) return 'waiting for a better price (parole)';
+  if(r.removed||r.moved||r.glConflict||r.hiddenDup) return 'held back by a safety check';
+  return 'not approved'; }catch(e){ return 'not approved'; } }
+function apBoardCounts(){ const R=(typeof lastRows!=='undefined'?lastRows:[])||[], N=R.filter(r=>r && LIVE_BOOK(r.book)==='novig'), ok=N.filter(r=>scApproved(r)), seen=N.filter(r=>!scApproved(r)); 
+  const near=seen.filter(r=>r.actNet!=null && r.actNet>=0 && scAhead(r) && !r.prior).map(r=>({name:jvPickTxt(r), why:apWhyNot(r), k:mathKey(r)})).sort((a,b)=>b.k-a.k); return {novig:N.length, approved:ok.length, near:near}; }
+function apTally(){ const d=todayCT(); let L=[]; try{ L=JSON.parse(localStorage.getItem('mbev.autobet')||'[]')||[]; }catch(e){} L=L.filter(x=>x && x.auto && String(x.t||'').length>=10 && new Date(x.t).toLocaleDateString('en-CA',{timeZone:'America/Chicago'})===d);
+  let looks=0; try{ const o=JSON.parse(localStorage.getItem('mbev.autoLook')||'{}'); if(o.day===d) looks=(o.rows||[]).reduce((a,x)=>a+(x.n||1),0); }catch(e){}
+  return {looks:looks, sent:L.length, placed:L.filter(x=>x.ok).length, refused:L.filter(x=>!x.ok).length, times:L.map(x=>new Date(x.t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}))}; }
+function apReportHtml(){ const B=apBoardCounts(), T=apTally();
+  return '<b>Report</b><br>On the board now: <b>'+B.novig+'</b> Novig pick'+(B.novig===1?'':'s')+' · <b>'+B.approved+'</b> approved (these can be sent) · <b>'+B.near.length+'</b> almost made it'
+   +'<br>Today: <b>'+T.looks+'</b> look'+(T.looks===1?'':'s')+' · <b>'+T.sent+'</b> sent · <b>'+T.placed+'</b> placed · <b>'+T.refused+'</b> refused'+(T.times.length?' · went out at '+esc(T.times.join(', ')):'')
+   +(B.near.length?'<div style="margin-top:4px"><b>Almost made it</b> (not sent; the reason it missed)</div><ul style="margin:2px 0 0 16px">'+B.near.slice(0,8).map(x=>'<li>'+esc(x.name)+' · '+esc(x.why)+'</li>').join('')+'</ul>':'<br>Nothing almost made it right now.'); }
+function apReportPaint(){ try{ const el=document.getElementById('apReport'); if(el) el.innerHTML=apReportHtml(); }catch(e){} }
+/* v5.36 (owner 2026-11-25: "the app you making telling me what Samson does should tell me"; he asked who placed Pollard): Samson's log. Samson (his Claude Code on the Mac, driving Chrome) reports what he did through samsonLog() on this page, which sends one text note to the Worker (POST /samson/log, behind the same sign-in); the card lists today's notes and, for the Novig fills of the last 24 hours, says whether a Worker order or a Samson note matches it ("neither" = placed by hand or by something we did not record). Read only: it decides and places nothing. */
+async function samsonLog(o){ o=o||{}; if(!(SY && SY.on && SY.key)) return {ok:false, error:'sync is off in this browser'}; const r=await apFetch('/samson/log','POST',{kind:o.kind||'note', what:o.what||'', pick:o.pick||'', book:o.book||'', stake:o.stake==null?null:o.stake}); return {ok:!!(r.j&&r.j.ok), status:r.status, j:r.j}; }
+function samsonNames(s){ return nrmT(s).split(' ').filter(w=>w.length>2); }
+function samsonFillName(f){ return String((f&&f.bet&&(f.bet.name||f.bet.player||f.bet.team||f.bet.label))||''); }
+function samsonMatchText(fillName, text){ const a=samsonNames(fillName), t=' '+nrmT(text)+' '; return a.length>0 && a.every(w=>t.indexOf(' '+w+' ')>=0); }
+function samsonProvenance(fills, orders, notes){ const out={worker:[], samson:[], neither:[]};
+  (fills||[]).forEach(f=>{ const nm=samsonFillName(f), ts=+f.ts||0;
+    const w=(orders||[]).some(o=>o && /placed|filled|open/i.test(String(o.result||'')) && samsonMatchText(nm, o.name||o.key||'') && (!ts || (o.t<=ts+10*60e3 && ts-o.t<6*3600e3)));
+    const sm=(notes||[]).some(x=>x && x.kind==='prepared' && samsonMatchText(nm, (x.pick||'')+' '+(x.what||'')) && (!ts || (x.t<=ts+10*60e3 && ts-x.t<12*3600e3)));
+    (w?out.worker:sm?out.samson:out.neither).push(f); }); return out; }
+async function apSamsonPaint(st){ const el=document.getElementById('apSamson'); if(!el) return;
+  const notes=await (async()=>{ if(!(SY && SY.on && SY.key)) return null; try{ const r=await apFetch('/samson/log'); return (r.j&&r.j.ok)?(r.j.entries||[]):null; }catch(e){ return null; } })();
+  const cut=Date.now()-24*3600e3, fills=myFillsGet().filter(f=>f && f.book==='novig' && (!(f.ts>0) || f.ts>cut)), P=samsonProvenance(fills, (st&&st.orders)||[], notes||[]);
+  const clk=t=>new Date(t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  let h='<b>Samson’s log (today)</b>'+(notes===null?'<br>No answer from the Worker (turn on sync, or the Worker has not got this route yet).':(notes.length?'<ul style="margin:2px 0 0 16px">'+notes.slice(0,8).map(x=>'<li>'+esc(clk(x.t))+' · '+esc(x.kind)+' · '+esc(x.what)+(x.pick?' · '+esc(x.pick):'')+(x.stake!=null?' · $'+esc((+x.stake).toFixed(2)):'')+'</li>').join('')+'</ul>':'<br>Samson has not reported anything today.'));
+  h+='<div style="margin-top:6px"><b>Novig fills, last 24 hours:</b> '+fills.length+' · from the Worker: <b>'+P.worker.length+'</b> · after Samson prepared a slip: <b>'+P.samson.length+'</b> · neither: <b>'+P.neither.length+'</b></div>';
+  if(P.neither.length) h+='<ul style="margin:2px 0 0 16px">'+P.neither.slice(0,6).map(f=>'<li>'+esc(samsonFillName(f)||'a Novig fill')+' · $'+esc((+f.cost||0).toFixed(2))+(f.ts?' · '+esc(clk(f.ts)):'')+' · no Worker order or Samson note matches it (placed by hand, or by something we did not record)</li>').join('')+'</ul>';
+  el.innerHTML=h; }
+function apDoing(t){ if(!t) apReportPaint(); try{ const el=document.getElementById('apNow'); if(el) el.innerHTML=t?('<b>Working now:</b> '+esc(t)):apLastHtml(); }catch(e){} }
+function apLastHtml(){ let o=null; try{ o=JSON.parse(localStorage.getItem('mbev.autoLast')||'null'); }catch(e){} if(!o) return 'Last look: none yet in this tab.'; return '<b>Last look:</b> '+esc(new Date(o.t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'}))+' · '+esc(o.w)+' · the next one is within a minute'; }
+function apLookWords(o){ o=o||{}; if(o.error) return 'could not look: '+o.error; if(o.sent) return (o.ok?'sent 1 pick to the Worker':'sent 1 pick, the Worker said no ('+(o.reason||'?')+')');
+  const m={off:'automatic sending is off (the box is not ticked)', paused:'paused', busy:'already looking', 'no status':'no answer from the Worker (check sync)', killed:'stopped: the kill switch is on', 'not armed':'needs your Proceed for today (or the Worker does not ask for one yet, so nothing is sent)', budget:'today\'s budget is used up', 'nothing new':'nothing new: no approved Novig pick that was not already sent'}; return m[o.skip]||String(o.skip||'?'); }
+function apLookLog(o, manual){ if(!o || o.skip==='busy') return; const d=todayCT(); let L={}; try{ L=JSON.parse(localStorage.getItem('mbev.autoLook')||'{}')||{}; }catch(e){} if(L.day!==d) L={day:d, rows:[]}; const w=apLookWords(o), last=L.rows[L.rows.length-1], t=Date.now();
+  if(last && last.w===w && !manual && !last.m){ last.t=t; last.n=(last.n||1)+1; } else L.rows.push({t:t, w:w, m:!!manual, n:1}); if(L.rows.length>40) L.rows=L.rows.slice(-40); try{ localStorage.setItem('mbev.autoLook', JSON.stringify(L)); }catch(e){} }
+function apLookHtml(){ const d=todayCT(); let L={}; try{ L=JSON.parse(localStorage.getItem('mbev.autoLook')||'{}')||{}; }catch(e){} if(L.day!==d || !(L.rows||[]).length) return '<br>No looks yet today.'; return '<div class="meta" style="margin-top:6px"><b>Looks today</b> (newest first; this tab only)</div><ul class="meta" style="margin:4px 0 0 16px">'+L.rows.slice(-8).reverse().map(x=>'<li>'+esc(new Date(x.t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}))+(x.m?' · you pressed Check now':'')+' · '+esc(x.w)+(x.n>1?' (×'+x.n+')':'')+'</li>').join('')+'</ul>'; }
+async function autoTick(manual){ const o=await autoTick0(); apLookLog(o, manual===true); if(o && o.skip!=='busy' && !(o.skip==='off' && manual!==true)){ try{ localStorage.setItem('mbev.autoLast', JSON.stringify({t:Date.now(), w:apLookWords(o)})); }catch(e){} } apDoing(''); try{ const el=document.getElementById('apLook'); if(el) el.innerHTML=apLookHtml(); }catch(e){} return o; }
+async function autoTick0(){
+  try{
+    if(!autoOn()) return {skip:'off'}; apDoing('starting a look'); if(typeof wkPaused==='function' && wkPaused()) return {skip:'paused'};
+    if(window._apBusy) return {skip:'busy'}; window._apBusy=true;
+    try{
+      apDoing('asking the Worker if it is on, armed today and how much budget is left'); const st=await apStatusLoad(true); if(!st) return {skip:'no status'};
+      if(st.killed) return {skip:'killed'}; if(!(st.requireArm===true && st.armed===true)) return {skip:'not armed'};   /* v5.33: fails closed: automatic sending needs the Worker to require the daily Proceed AND you to have pressed it today */ if(!(+st.left>=0.99)) return {skip:'budget'};
+      apDoing('searching the board for approved Novig picks not sent yet'); const sent=autoSentGet(), now=Date.now();
+      const rows=(lastRows||[]).filter(r=>r && scApproved(r) && LIVE_BOOK(r.book)==='novig' && !sent.keys[pxKey(r)] && r.gameInfo && Date.parse(r.gameInfo.startISO)-now>3*60e3).sort((a,b)=>mathKey(b)-mathKey(a));
+      const r=rows[0]; if(!r) return {skip:'nothing new'};
+      sent.keys[pxKey(r)]=now; try{ localStorage.setItem('mbev.autoSent', JSON.stringify(sent)); }catch(e){}   /* marked BEFORE sending: never sent twice, even if the page reloads; the Worker also refuses a repeat */
+      apDoing('found one: '+jvPickTxt(r)+'. Getting a fresh Novig price and sending it to the Worker'); const out=await apSend(r); apStatus=null; try{ if(document.getElementById('apPanel') && document.getElementById('apPanel').open) apRefresh(); }catch(e){}
+      return {sent:pxKey(r), ok:out.ok, reason:out.j&&out.j.reason};
+    } finally { window._apBusy=false; }
+  }catch(e){ window._apBusy=false; return {error:String((e&&e.message)||e).slice(0,100)}; }
+}
+document.addEventListener('click', async e=>{ const t=e.target && e.target.closest && e.target.closest('#apPanel button'); if(!t) return; const m=document.getElementById('apMsg'), say=x=>{ if(m) m.textContent=x; };
+  if(t.id==='apRefresh'){ await apRefresh(); return; }
+  if(t.id==='apCheck'){ say('Looking…'); const o=await autoTick(true); await apRefresh(); say('Checked: '+apLookWords(o)+'. The timer keeps its own schedule.'); return; }
+  if(t.id==='apProceed'){ if(!confirm('Proceed for today? Your Worker may then place real orders of about $1 each at Novig, inside your limits, until midnight (Central). It asks again tomorrow.')) return; const r=await apFetch('/autobet/arm','POST',{on:true}); apStatus=null; await apRefresh(); say(r.j&&r.j.ok?'Armed for today.':'Could not arm: '+((r.j&&(r.j.error||r.j.reason))||('HTTP '+r.status))); return; }
+  if(t.id==='apStop'){ if(!confirm('Stop all auto bets now? Nothing new is placed until you press Resume.')) return; const r=await apFetch('/autobet/kill','POST',{on:true}); apStatus=null; await apRefresh(); say(r.j&&r.j.ok?'Stopped: the kill switch is on.':'Could not stop it: '+((r.j&&(r.j.error||r.j.reason))||('HTTP '+r.status))); return; }
+  if(t.id==='apResume'){ if(!confirm('Turn the kill switch off? Orders can be placed again (only if it is armed for today).')) return; const r=await apFetch('/autobet/kill','POST',{on:false}); apStatus=null; await apRefresh(); say(r.j&&r.j.ok?'The kill switch is off.':'Could not turn it off.'); return; } });
+document.addEventListener('change', e=>{ if(e.target && e.target.id==='apAuto'){ try{ localStorage.setItem('mbev.autoSend', e.target.checked?'1':'0'); }catch(_){} const m=document.getElementById('apMsg'); if(m) m.textContent=e.target.checked?'Automatic sending is ON: it only sends while the Worker is armed for today.':'Automatic sending is OFF.'; } });
+document.addEventListener('toggle', e=>{ if(e.target && e.target.id==='apPanel' && e.target.open){ apReportPaint(); apRefresh(); try{ document.getElementById('apLook').innerHTML=apLookHtml(); apDoing(''); }catch(_){} } }, true);
+setInterval(()=>{ autoTick(false); }, 60000);   // v5.33: one look a minute (a hidden tab may run it less often)
 function jvDigestItems(R){ return R.away.map(x=>{ const L=(lastRows||[]).filter(r=>r && pxKey(r)===x.k), r=L.find(scApproved)||L[0]||null; let st;
   if(!r) st='no longer on the board'; else if(!scAhead(r)) st='started'; else if(!scApproved(r)) st=r.prior?'already bet':'no longer approved';
   else if(x.p>0 && r.offeredProb>0 && Math.abs(r.offeredProb-x.p)>=0.005) st='price moved '+(r.offeredProb>x.p?'up':'down')+' '+(Math.abs(r.offeredProb-x.p)*100).toFixed(1)+' pts · still approved, it pops next';
@@ -16338,7 +16477,7 @@ function syncSt(c){ const M=SY.meta, st=M.c[c]||(M.c[c]={S:{},T:{},B:{},H:{}}); 
 function betSig(b){ return [b.date, nrm(b.name), String(b.market||'').toLowerCase(), b.side||'', LIVE_BOOK(b.book)||String(b.book||'').toLowerCase(), b.odds, (+b.stake||0).toFixed(2)].concat(b.kind==='parlay' && b.key ? [b.key] : []).join('|'); }   // v5.11 (bug): a parlay with its own key (saved from v5.11 on) is never taken for a copy of another parlay with the same day, name, book, price and stake when a device joins the sync; others keep their sig
 function syncEnsureIds(){ let n=0;   // older bets saved without an id get one built from what they are — the same on every device
   logged.forEach(b=>{ if(b && !b.id){ b.id='h'+syncHashStr([b.date,b.name,b.market,b.side,b.book,b.odds,b.stake,b.snap&&b.snap.at].join('|')); n++; } });
-  if(n) syncLS('mbev.log', JSON.stringify(logged));
+  if(n) syncLS('mbev.log', lsPack(JSON.stringify(logged)));
   return n; }
 // per-device fields that change every minute (the live exchange price) never sync — they'd re-upload the log all day
 const SYNC_VOLATILE=new Set(['liveLast','closeLive']);
@@ -16557,7 +16696,18 @@ async function syncBoard(){
   if(r.ok){ M.brev=+r.j.head.rev||M.brev; M.bsig=sig; }
   else if(r.status===409) M.brev=-1;   // someone saved a board first — the next round looks at it
 }
+/* v5.34 (owner 2026-11-25: "i want this on a cloud"): one plain line on the Bet log: are the bets in the cloud copy right now, or only on this device. It never says "safe" unless sync is on, has no error and has nothing waiting to be sent. */
+function cloudLineRender(){ const el=document.getElementById('cloudLine'); if(!el || !SY) return; const M=SY.meta||{}, n=(logged||[]).length, t=M.at?new Date(M.at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'';
+  let cls='meta cloud-line', txt;
+  if(!SY.on){ cls+=' cloud-bad'; txt='☁ NOT in the cloud: sync is off, so your '+n+' bet'+(n===1?'':'s')+' live only on this device. Turn on sync in Settings (Your bets on every device).'; }
+  else if(SY.err){ cls+=' cloud-bad'; txt='☁ Cloud copy NOT up to date: '+SY.err+'. Your '+n+' bets are on this device; the next successful sync saves them.'; }
+  else if(SY.busy){ txt='☁ Saving to the cloud…'; }
+  else if(M.dirty){ cls+=' cloud-wait'; txt='☁ Saving soon: some changes have not reached the cloud yet. '+n+' bets here.'; }
+  else if(M.joined===false || !t){ txt='☁ Sync is on; waiting for its first save to the cloud.'; }
+  else { cls+=' cloud-ok'; txt='☁ In the cloud: '+n+' bet'+(n===1?'':'s')+', last saved '+t+'. This browser only keeps a working copy.'; }
+  el.className=cls; el.textContent=txt; }
 function syncShow(){
+  try{ cloudLineRender(); }catch(e){}
   const chip=document.getElementById('syncChip'), st=document.getElementById('syncStatus'); if(!SY) return;
   const M=SY.meta||{}, t=M.at?new Date(M.at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'';
   if(chip){ chip.className='sync-chip'+(!SY.on?'':SY.err?' err':' ok');

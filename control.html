@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>0xBeta Autopilot control</title>
+<!-- v5.35 (owner 2026-11-25: "a GUI that i can ask for simple things", "SAME but Different"): the control page. A separate page on the same site as the screener: same project, same Worker, its own file.
+     It READS and SHOWS what your Worker knows about the auto bet (mode, armed for today, the kill switch, the budget, today's orders) and has three buttons: Proceed for today, Stop everything, Resume.
+     It uses the sign-in the screener already saved in this browser (it never shows it, never prints it and never sends it anywhere but your own Worker). It cannot place a bet. No dependencies, no build step. -->
+<style>
+:root{--bg:#10201a;--card:#16291f;--line:#24402f;--tx:#e6f2ea;--mut:#8fae9d;--ok:#3ddc84;--warn:#f0b840;--bad:#ff6b6b;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 -apple-system,Segoe UI,Roboto,Poppins,sans-serif;padding:18px}
+.wrap{max-width:860px;margin:0 auto}
+h1{font-size:22px;margin:0 0 4px}.sub{color:var(--mut);font-size:14px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.card h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:0 0 10px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.stat{flex:1 1 130px;background:#112018;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.stat b{display:block;font-size:22px}.stat span{color:var(--mut);font-size:12px}
+.pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:13px;border:1px solid var(--ok);color:var(--ok)}
+.pill.paper{border-color:var(--warn);color:var(--warn)}.pill.bad{border-color:var(--bad);color:var(--bad)}
+button{font:inherit;border-radius:10px;border:1px solid var(--line);background:#1d3629;color:var(--tx);padding:10px 16px;cursor:pointer}
+button.go{background:#17633d;border-color:var(--ok)}button.stop{background:#5a1f1f;border-color:var(--bad)}
+button:disabled{opacity:.5;cursor:default}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase}
+.tag{font-size:12px;padding:2px 8px;border-radius:6px}.t-ok{background:#12482c;color:var(--ok)}.t-no{background:#4a1f1f;color:var(--bad)}.t-skip{background:#2a2f26;color:var(--mut)}
+.ask{display:flex;gap:8px}.ask input{flex:1;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--line);background:#0f1b15;color:var(--tx)}
+.hint{color:var(--mut);font-size:13px;margin-top:8px}.ans{margin-top:10px;white-space:pre-wrap}
+.err{color:var(--bad)}a{color:var(--ok)}
+</style>
+</head>
+<body><div class="wrap">
+<h1>Autopilot <span id="pill" class="pill">…</span></h1>
+<div class="sub">Your control page. The screener tab is the engine; this page is the dashboard. <a href="index.html">Open the screener</a> · <span id="when">not loaded yet</span></div>
+<div id="msg" class="hint" role="status" aria-live="polite"></div>
+
+<div class="card"><h2>Today</h2>
+<div class="row">
+<div class="stat"><b id="sUsed">–</b><span>used of today's budget</span></div>
+<div class="stat"><b id="sLeft">–</b><span>left today</span></div>
+<div class="stat"><b id="sN">–</b><span>orders today</span></div>
+<div class="stat"><b id="sArm">–</b><span id="sArmNote">daily Proceed</span></div>
+</div>
+<div class="row" style="margin-top:12px">
+<button id="bRefresh" class="go">Refresh now</button>
+<button id="bProceed" class="go">Proceed for today</button>
+<button id="bStop" class="stop">Stop everything</button>
+<button id="bResume">Resume</button>
+</div>
+<div class="hint" id="note"></div></div>
+
+<div class="card"><h2>Orders today (from your Worker)</h2>
+<table id="orders"><tr><td>Not loaded yet.</td></tr></table></div>
+
+<div class="card"><h2>Samson&#8217;s log (today)</h2>
+<div id="samson" class="hint">Not loaded yet.</div></div>
+
+<div class="card"><h2>What the screener tab did (this browser only)</h2>
+<div id="looks" class="hint">Nothing yet.</div></div>
+
+<div class="card"><h2>Ask it something simple</h2>
+<div class="ask"><input id="q" placeholder="What did you bet today?" aria-label="Ask a simple question"><button id="bAsk">Ask</button></div>
+<div class="hint">It answers from the status above, and it can only read. Try: what did you bet today, how much is left, is it armed, is it stopped, is it real money.</div>
+<div id="ans" class="ans" role="status"></div></div>
+</div>
+<script>
+(function(){
+  var API='https://api.0xbeta.dev', S=null, busy=false;
+  function ls(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function hdr(json){ var h={}, pass=ls('mbev.pass'), key=ls('mbev.syncKey'); if(pass) h['x-screener-pass']=pass; if(key){ h['x-sync-key']=key; h['x-sync-device']='Control page'; } if(json) h['Content-Type']='application/json'; return h; }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function money(n){ n=+n; return isFinite(n)?'$'+n.toFixed(2):'–'; }
+  function clock(ms){ return new Date(ms).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}); }
+  function say(t,bad){ var m=document.getElementById('msg'); m.textContent=t||''; m.className='hint'+(bad?' err':''); }
+  async function call(path, method, body){
+    if(!ls('mbev.syncKey')) return {ok:false, noSync:true};
+    try{ var r=await fetch(API+path, {method:method||'GET', headers:hdr(!!body), body:body?JSON.stringify(body):undefined, cache:'no-store'}), j=null; try{ j=await r.json(); }catch(e){} return {ok:r.ok&&j&&j.ok!==false, status:r.status, j:j}; }
+    catch(e){ return {ok:false, status:0, j:null}; }
+  }
+  function why(r){ if(r.noSync) return 'Sync is not turned on in this browser. Open the screener, go to Settings and turn on "Your bets on every device", then come back.'; if(r.status===401||r.status===403) return 'The Worker says it is locked (HTTP '+r.status+'). Check the screener passphrase in the screener Settings.'; if(r.status===0) return 'No answer from the Worker. Check your connection and try again.'; return 'The Worker said no'+(r.j&&(r.j.reason||r.j.error)?': '+esc(r.j.reason||r.j.error):' (HTTP '+r.status+')')+'.'; }
+  function paint(){
+    var st=S, pill=document.getElementById('pill');
+    if(!st){ pill.textContent='no answer'; pill.className='pill bad'; return; }
+    pill.textContent=st.killed?'STOPPED':(st.mode==='LIVE'?'LIVE':'PAPER'); pill.className='pill'+(st.killed?' bad':(st.mode==='LIVE'?'':' paper'));
+    document.getElementById('sUsed').textContent=money(st.reserved); document.getElementById('sLeft').textContent=money(st.left);
+    var os=st.orders||[]; document.getElementById('sN').textContent=os.length;
+    var arm=st.killed?'Stopped':(st.requireArm?(st.armed?'Armed':'Not armed'):'Not required yet'); document.getElementById('sArm').textContent=arm;
+    document.getElementById('sArmNote').textContent=st.requireArm?'daily Proceed (asks again each day)':'the Worker does not ask for a daily Proceed yet';
+    document.getElementById('note').textContent=(st.mode==='LIVE'?'REAL money. ':'Paper money. ')+'Budget today '+money(st.budget)+'. '+(st.killed?'The kill switch is ON: nothing is placed until you press Resume.':'Orders are only placed while it is armed for today and the kill switch is off.');
+    var t=document.getElementById('orders');
+    t.innerHTML=os.length?'<tr><th>Time</th><th>Pick</th><th>Result</th><th>Detail</th></tr>'+os.slice().reverse().map(function(o){ var res=String(o.result||''), cls=/placed|filled|open/i.test(res)?'t-ok':(/refus|reject|cancel|fail/i.test(res)?'t-no':'t-skip'); return '<tr><td>'+esc(o.t?clock(o.t):'')+'</td><td>'+esc(o.name||o.key||'')+'</td><td><span class="tag '+cls+'">'+esc(res)+'</span></td><td>'+esc((o.reason?o.reason+' · ':'')+(o.price?(+o.qty||0)+' contracts at '+((+o.price)*100).toFixed(1)+'%':''))+'</td></tr>'; }).join(''):'<tr><td>No orders yet today.</td></tr>';
+    document.getElementById('when').textContent='updated '+clock(Date.now());
+    var lk=''; try{ var L=JSON.parse(ls('mbev.autoLook')||'{}'); if(L&&L.rows&&L.rows.length) lk='<ul style="margin:4px 0 0 16px">'+L.rows.slice(-8).reverse().map(function(x){ return '<li>'+esc(clock(x.t))+' · '+esc(x.w)+(x.n>1?' (×'+x.n+')':'')+'</li>'; }).join('')+'</ul>'; }catch(e){}
+    var la=null; try{ la=JSON.parse(ls('mbev.autoLast')||'null'); }catch(e){}
+    document.getElementById('looks').innerHTML=(la?'<b>Last look:</b> '+esc(clock(la.t))+' · '+esc(la.w):'No look yet from the screener tab in this browser.')+lk;
+  }
+  async function samsonLoad(){ var el=document.getElementById('samson'); var r=await call('/samson/log'); if(!r.ok){ el.textContent=r.noSync?'Sync is off in this browser.':'No answer for Samson\'s log (the Worker may not have this route yet).'; return; }
+    var E=(r.j&&r.j.entries)||[]; el.innerHTML=E.length?'<ul style="margin:4px 0 0 16px">'+E.slice(0,10).map(function(x){ return '<li>'+esc(clock(x.t))+' · '+esc(x.kind)+' · '+esc(x.what)+(x.pick?' · '+esc(x.pick):'')+(x.stake!=null?' · '+money(x.stake):'')+'</li>'; }).join('')+'</ul>':'Samson has not reported anything today.'; }
+  async function refresh(){ if(busy) return; busy=true; say('Asking the Worker…'); var r=await call('/autobet/status'); busy=false; if(r.ok){ S=r.j; say(''); } else { S=null; say(why(r),true); } paint(); samsonLoad(); return r; }
+  async function act(label, path, body, confirmText){
+    if(confirmText && !confirm(confirmText)) return; say(label+'…'); var r=await call(path,'POST',body); if(!r.ok){ say(why(r),true); return; }
+    await refresh(); say(label+': done.');
+  }
+  document.getElementById('bRefresh').onclick=function(){ refresh(); };
+  document.getElementById('bProceed').onclick=function(){ act('Proceed for today','/autobet/arm',{on:true},'Proceed for today? Your Worker may then place real orders of about $1 each at Novig, inside your limits, until midnight (Central). It asks again tomorrow.'); };
+  document.getElementById('bStop').onclick=function(){ act('Stop everything','/autobet/kill',{on:true},'Stop all auto bets now? Nothing new is placed until you press Resume.'); };
+  document.getElementById('bResume').onclick=function(){ act('Resume','/autobet/kill',{on:false},'Turn the kill switch off? Orders can be placed again (only if it is armed for today).'); };
+  function answer(q){
+    q=String(q||'').toLowerCase(); if(!S) return 'I have no status from the Worker yet. Press Refresh now.';
+    var os=S.orders||[], lines=function(){ return os.map(function(o){ return clock(o.t)+' · '+(o.name||o.key||'')+' · '+(o.result||'')+(o.reason?' ('+o.reason+')':''); }).join('\n'); };
+    if(/bet|order|place|sent|today/.test(q) && !/left|budget|much/.test(q)) return os.length?('Today the Worker has '+os.length+' order'+(os.length===1?'':'s')+':\n'+lines()):'Nothing has been ordered today.';
+    if(/left|budget|much|spent|used|money/.test(q) && !/real|paper/.test(q)) return 'Used '+money(S.reserved)+' of '+money(S.budget)+' today. '+money(S.left)+' left.';
+    if(/arm|proceed/.test(q)) return S.requireArm?(S.armed?'Yes: it is armed for today.':'No: it is not armed. Press Proceed for today when you are ready.'):'The Worker does not ask for a daily Proceed yet.';
+    if(/stop|kill|paus|off/.test(q)) return S.killed?'Yes, the kill switch is ON. Nothing is placed until you press Resume.':'No, the kill switch is off.';
+    if(/real|paper|live|mode/.test(q)) return S.mode==='LIVE'?'It is in LIVE mode: real money.':'It is in PAPER mode: fake money.';
+    return 'I can answer: what did you bet today, how much is left, is it armed, is it stopped, is it real money.';
+  }
+  document.getElementById('bAsk').onclick=function(){ document.getElementById('ans').textContent=answer(document.getElementById('q').value||'what did you bet today'); };
+  document.getElementById('q').addEventListener('keydown',function(e){ if(e.key==='Enter') document.getElementById('bAsk').onclick(); });
+  refresh(); setInterval(function(){ if(!document.hidden) refresh(); }, 30000);
+})();
+</script>
+</body></html>

@@ -73,5 +73,69 @@ const L=require('./v527-jarvis-lib.js'); const {chromium,check,open,ev,safe,pop,
     await reset(); orderAnswer=()=>({ok:false, reason:'live_price_above_limit'}); const tr=await ev(X.p,()=>autoTick()), tr2=await ev(X.p,()=>autoTick()), tr3=await ev(X.p,()=>autoTick());
     check('a refused order is recorded and that pick is not tried again; the other pick is tried once; then nothing', tr.ok===false && tr.reason==='live_price_above_limit' && tr2.sent && tr2.sent!==tr.sent && tr3.skip==='nothing new' && posts.filter((x)=>x.path==='/autobet').length===2, [tr, tr2, tr3]);
   });
+  await safe('check now, working now, last look, looks today', async()=>{
+    await sync(); await ev(X.p,()=>{ localStorage.setItem('mbev.autoSend','1'); localStorage.removeItem('mbev.autoLook'); localStorage.removeItem('mbev.autoLast'); }); orderAnswer=()=>({ok:true, placed:true, mode:'LIVE', price:'0.595', qty:168, cost:1}); await reset();
+    status={ok:true, mode:'LIVE', day:'2026-11-10', budget:10, reserved:0, left:10, killed:false, requireArm:true, armed:true, orders:[]};
+    await ev(X.p,()=>{ document.querySelector('.tab[data-view="v-settings"]').click(); document.getElementById('apPanel').open=true; window._doing=[]; const o=apDoing; apDoing=function(t){ window._doing.push(t); return o(t); }; });
+    check('the card has a Check now button', (await ev(X.p,()=>!!document.getElementById('apCheck')))===true, null);
+    const p0=posts.filter((x)=>x.path==='/autobet').length; await ev(X.p,()=>document.getElementById('apCheck').click()); await X.p.waitForTimeout(900);
+    const sentNow=posts.filter((x)=>x.path==='/autobet').length-p0;
+    check('Check now runs one look right away: one order request, and the card says what it found', sentNow===1 && /Checked: sent 1 pick to the Worker/.test(await ev(X.p,()=>document.getElementById('apMsg').textContent)), [sentNow, await ev(X.p,()=>document.getElementById('apMsg').textContent)]);
+    const d=await ev(X.p,()=>window._doing);
+    check('while it works the card says what it is doing: asking the Worker, searching the board, found one and sending (and clears at the end)', d.some((x)=>/asking the Worker/.test(x)) && d.some((x)=>/searching the board/.test(x)) && d.some((x)=>/found one/.test(x)) && d[d.length-1]==='', d);
+    const last=await ev(X.p,()=>document.getElementById('apNow').textContent);
+    check('after a look the card says when the last look was and what it found', /Last look: .*sent 1 pick/.test(last), last);
+    check('Looks today lists it, marked as pressed by you', /Looks today/.test(await ev(X.p,()=>document.getElementById('apLook').textContent)) && /you pressed Check now/.test(await ev(X.p,()=>document.getElementById('apLook').textContent)), await ev(X.p,()=>document.getElementById('apLook').textContent));
+    await ev(X.p,()=>autoTick(false)); await ev(X.p,()=>autoTick(false)); await ev(X.p,()=>autoTick(false)); await ev(X.p,()=>autoTick(false));
+    const rows=await ev(X.p,()=>JSON.parse(localStorage.getItem('mbev.autoLook')).rows);
+    check('the same "nothing new" many times is one line with a count, not many lines', rows.filter((x)=>/nothing new/.test(x.w)).length===1 && rows.some((x)=>x.n>=2), rows);
+    await reset(); status={...status, requireArm:undefined, armed:true}; const tw=await ev(X.p,()=>autoTick()); check('fails closed: if the Worker does not require the daily Proceed yet, nothing is sent automatically', tw.skip==='not armed' && posts.filter((x)=>x.path==='/autobet').length===0, [tw, posts.length]);
+    status={...status, requireArm:true, armed:true}; await ev(X.p,()=>{ localStorage.setItem('mbev.autoSend','0'); }); await ev(X.p,()=>document.getElementById('apCheck').click()); await X.p.waitForTimeout(500);
+    check('Check now with the switch off sends nothing and says the switch is off', /switch is off|box is not ticked/.test(await ev(X.p,()=>document.getElementById('apMsg').textContent)) && posts.filter((x)=>x.path==='/autobet').length===0, await ev(X.p,()=>document.getElementById('apMsg').textContent));
+    // the WIU case (owner, 2026-11-25): a model-EV outlier or a stale last-seen price is never approved, so it is never sent
+    await reset(); await ev(X.p,()=>{ localStorage.setItem('mbev.autoSend','1'); }); status={...status, requireArm:true, armed:true, killed:false, left:10};
+    const both=await ev(X.p,()=>{ const A=lastRows.filter((r)=>scApproved(r)&&LIVE_BOOK(r.book)==='novig'); A.forEach((r)=>{ r.outlier=true; }); return [A.length, A.every((r)=>!scApproved(r))]; });
+    const to=await ev(X.p,()=>autoTick()); check('an outlier pick (like the WIU one) is not approved, so the automatic look sends nothing', both[0]>=1 && both[1]===true && to.skip==='nothing new' && posts.filter((x)=>x.path==='/autobet').length===0, [both, to]);
+  });
+  await safe('the report (v5.34: when it went out, how many, how many passed, almost made it)', async()=>{
+    await ev(X.p,()=>{ lastRows.forEach((r)=>{ r.outlier=false; }); });   /* the earlier outlier block marked the approved rows */
+    await sync(); await reset(); await ev(X.p,()=>{ localStorage.setItem('mbev.autoSend','1'); localStorage.removeItem('mbev.autoLook'); }); orderAnswer=()=>({ok:true, placed:true, mode:'LIVE', price:'0.595', qty:168, cost:1});
+    status={ok:true, mode:'LIVE', day:'2026-11-10', budget:10, reserved:0, left:10, killed:false, requireArm:true, armed:true, orders:[]};
+    await ev(X.p,()=>{ lastRows.forEach((r)=>{ if(r.gameInfo && r.gameInfo.startISO) r.gameInfo=Object.assign({},r.gameInfo,{startISO:new Date(Date.now()+3*3600e3).toISOString()}); }); });
+    const c0=await ev(X.p,()=>apBoardCounts());
+    const want=await ev(X.p,()=>({novig:lastRows.filter((r)=>LIVE_BOOK(r.book)==='novig').length, approved:lastRows.filter((r)=>LIVE_BOOK(r.book)==='novig'&&scApproved(r)).length}));
+    check('the board counts match the board: Novig picks seen and approved', c0.novig===want.novig && c0.approved===want.approved && c0.approved>=2, [c0.novig, c0.approved, want]);
+    const p0=posts.length; const html0=await ev(X.p,()=>apReportHtml()); check('the report is read-only: it sends nothing', posts.length===p0 && /Report/.test(html0) && /approved \(these can be sent\)/.test(html0), html0.slice(0,200));
+    await ev(X.p,()=>autoTick()); const h1=await ev(X.p,()=>apReportHtml()); check('after one automatic send the report says 1 sent, 1 placed, 0 refused and the time it went out', /<b>1<\/b> sent · <b>1<\/b> placed · <b>0<\/b> refused · went out at \d{1,2}:\d{2}/.test(h1), h1.slice(0,400));
+    await ev(X.p,()=>{ const A=lastRows.filter((r)=>scApproved(r)&&LIVE_BOOK(r.book)==='novig'); A.forEach((r)=>{ r.outlier=true; r.actNet=0.05; }); });
+    const c1=await ev(X.p,()=>apBoardCounts()); const h2=await ev(X.p,()=>apReportHtml());
+    check('a pick that was approved but is now an outlier is "almost made it", with the plain reason', c1.near.filter((x)=>/trust limit \(outlier\)/.test(x.why)).length===2 && /Almost made it/.test(h2) && /15% trust limit/.test(h2), [c1.near, h2.slice(0,300)]);
+    await ev(X.p,()=>{ lastRows.filter((r)=>LIVE_BOOK(r.book)==='novig').forEach((r)=>{ r.outlier=false; r.prior=true; }); });
+    const c2=await ev(X.p,()=>apBoardCounts()); check('a pick you already bet is not listed as almost made it', c2.near.length===0, c2.near);
+    await ev(X.p,()=>{ document.querySelector('.tab[data-view="v-settings"]').click(); document.getElementById('apPanel').open=true; }); await X.p.waitForTimeout(300);
+    check('the Autopilot card shows the report when opened', /Report/.test(await ev(X.p,()=>document.getElementById('apReport').textContent)) && /look/.test(await ev(X.p,()=>document.getElementById('apReport').textContent)), await ev(X.p,()=>document.getElementById('apReport').textContent));
+  });
+  await safe("Samson's log (v5.36): the card, the fills check, samsonLog()", async()=>{
+    const sPosts=[]; let notes=[]; await X.p.route(/api\.0xbeta\.dev\/samson\/log/,r=>{ const q=r.request(), cors={'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'GET,POST,OPTIONS'};
+      if(q.method()==='OPTIONS') return r.fulfill({status:204,headers:cors}); if(q.method()==='POST'){ sPosts.push({body:JSON.parse(q.postData()||'{}'), headers:q.headers()}); return r.fulfill({status:200,headers:cors,contentType:'application/json',body:JSON.stringify({ok:true})}); }
+      r.fulfill({status:200,headers:cors,contentType:'application/json',body:JSON.stringify({ok:true, entries:notes})}); });
+    await sync(); const now=Date.now();
+    status={ok:true, mode:'LIVE', day:'2026-11-26', budget:10, reserved:1, left:9, killed:false, requireArm:true, armed:true, orders:[{t:now-30*60e3, name:'Jalen Brunson Over 24.5 Points', result:'placed', price:'0.5', qty:200}]};
+    notes=[{t:now-50*60e3, kind:'prepared', what:'Prepared a $1 slip, did not place', pick:'Collin Gillespie Over 1.5 Threes', book:'Novig', stake:1},{t:now-20*60e3, kind:'load', what:'Loaded the board'}];
+    await ev(X.p,(n)=>{ myFillsSet([{id:'f1', book:'novig', bet:{kind:'prop', name:'Jalen Brunson'}, price:0.5, cost:1, ts:n-25*60e3},{id:'f2', book:'novig', bet:{kind:'prop', name:'Collin Gillespie'}, price:0.575, cost:1, ts:n-40*60e3},{id:'f3', book:'novig', bet:{kind:'prop', name:'Tony Pollard'}, price:0.47, cost:0.51, ts:n-5*60e3},{id:'f4', book:'kalshi', bet:{kind:'prop', name:'Somebody Else'}, price:0.4, cost:2, ts:n-5*60e3}]); document.querySelector('.tab[data-view="v-settings"]').click(); document.getElementById('apPanel').open=true; }, now);
+    await ev(X.p,()=>apRefresh()); await X.p.waitForTimeout(400);
+    const t=await ev(X.p,()=>document.getElementById('apSamson').textContent);
+    check("the card lists Samson's notes for today (what, which pick, the stake)", /Samson’s log \(today\)/.test(t) && /Prepared a \$1 slip, did not place/.test(t) && /Collin Gillespie Over 1\.5 Threes/.test(t) && /Loaded the board/.test(t), t.slice(0,300));
+    check('Novig fills of the last 24 hours: 3 (the Kalshi one is not counted); 1 from the Worker, 1 after Samson prepared, 1 neither', /fills, last 24 hours: 3/.test(t) && /from the Worker: 1/.test(t) && /after Samson prepared a slip: 1/.test(t) && /neither: 1/.test(t), t);
+    check('the fill with no match (Tony Pollard, $0.51) is named, with the plain words "no Worker order or Samson note matches it"', /Tony Pollard/.test(t) && /\$0\.51/.test(t) && /no Worker order or Samson note matches it/.test(t), t);
+    const P=await ev(X.p,(n)=>samsonProvenance([{bet:{name:'Tony Pollard'}, ts:n}], [{t:n-7*3600e3, name:'Tony Pollard Under 54.5', result:'placed'}], [{t:n-13*3600e3, kind:'prepared', pick:'Tony Pollard', what:'x'}]), now);
+    check('a Worker order more than 6 hours before the fill, or a Samson note more than 12 hours before it, does not count as the source', P.neither.length===1 && P.worker.length===0 && P.samson.length===0, P);
+    const P2=await ev(X.p,(n)=>samsonProvenance([{bet:{name:'Tony Pollard'}, ts:n}], [{t:n+30*60e3, name:'Tony Pollard Under 54.5', result:'placed'}], [{t:n+30*60e3, kind:'prepared', pick:'Tony Pollard', what:'x'}]), now);
+    check('an order or note made AFTER the fill never explains it', P2.neither.length===1, P2);
+    const p0=posts.length; const r=await ev(X.p,()=>samsonLog({kind:'checked', what:'Checked the Bet log: already bet', pick:'Tony Pollard Under 54.5', book:'Novig', stake:0.51}));
+    check('samsonLog() sends one note to /samson/log with the saved sync key and nothing else to the Worker', r.ok===true && sPosts.length===1 && sPosts[0].body.kind==='checked' && sPosts[0].body.stake===0.51 && sPosts[0].headers['x-sync-key']==='sk-test' && posts.length===p0, [r, sPosts.length]);
+    await ev(X.p,()=>{ SY.on=false; }); const r2=await ev(X.p,()=>samsonLog({kind:'note', what:'x'})); check('samsonLog() with sync off sends nothing and says why', r2.ok===false && /sync is off/.test(r2.error||'') && sPosts.length===1, r2); await sync();
+    notes=[]; await ev(X.p,()=>apRefresh()); await X.p.waitForTimeout(300); check('no notes today: says Samson has not reported anything today', /has not reported anything today/.test(await ev(X.p,()=>document.getElementById('apSamson').textContent)), null);
+  });
   check('no page errors', X.errs.length===0, X.errs.slice(0,3));
   await b.close(); const r=L.res(); console.log('\n'+r.pass+' passed, '+r.fail+' failed'); process.exit(r.fail?1:0); })();
