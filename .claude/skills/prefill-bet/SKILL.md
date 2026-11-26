@@ -53,5 +53,14 @@ The app already opens the prefilled slip (its own "Open the book"): use that, do
 5. (Only when you used the form.) Press **Save** only if everything matches. Then read the Bet log to confirm one new entry (never a silent save error) and tell him: book, pick, real price, stake.
 6. If anything is unclear, do not save. Ask.
 
+## Report every action to the app (owner, 2026-11-25: "the app you making telling me what Samson does should tell me")
+After EACH thing you do, send one short note to the app's Samson's log by running this in the screener page (the page already has the sign-in; never type, read or print a key or password):
+`samsonLog({kind:'prepared', what:'Prepared a $1 slip, did not place', pick:'<player and line>', book:'Novig', stake:1})`
+- `kind` is one of: load, talk, prepared, checked, stop, note, placed_by_owner, other. `what` is one plain sentence (under 200 characters). `pick` is the player and line when there is one.
+- Write one note when you: press Talk now (talk), press Load (load), prepare a slip and stop before Place (prepared), check the Bet log or the board and change nothing (checked), see a bet the owner placed (placed_by_owner), stop the loop (stop).
+- Never put a key, a password, a token or the passphrase in a note. The Worker refuses text that looks like one.
+- If `samsonLog` says sync is off, tell the owner in one line and carry on; do not retry in a loop.
+- The app compares the owner's Novig fills with these notes and the Worker's orders. A fill that matches neither is shown as "no Worker order or Samson note matches it", so an honest log is what lets the owner tell his own bets from yours.
+
 ## Done means
 Identity passed on the real slip, price at or below `limitExact`, nothing pressed beyond the app's "Open the book", the hand-back words said, one audit line written, no Bet-log entry made.
