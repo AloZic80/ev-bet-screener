@@ -97,5 +97,23 @@ const L=require('./v527-jarvis-lib.js'); const {chromium,check,open,ev,safe,pop,
     const both=await ev(X.p,()=>{ const A=lastRows.filter((r)=>scApproved(r)&&LIVE_BOOK(r.book)==='novig'); A.forEach((r)=>{ r.outlier=true; }); return [A.length, A.every((r)=>!scApproved(r))]; });
     const to=await ev(X.p,()=>autoTick()); check('an outlier pick (like the WIU one) is not approved, so the automatic look sends nothing', both[0]>=1 && both[1]===true && to.skip==='nothing new' && posts.filter((x)=>x.path==='/autobet').length===0, [both, to]);
   });
+  await safe('the report (v5.34: when it went out, how many, how many passed, almost made it)', async()=>{
+    await ev(X.p,()=>{ lastRows.forEach((r)=>{ r.outlier=false; }); });   /* the earlier outlier block marked the approved rows */
+    await sync(); await reset(); await ev(X.p,()=>{ localStorage.setItem('mbev.autoSend','1'); localStorage.removeItem('mbev.autoLook'); }); orderAnswer=()=>({ok:true, placed:true, mode:'LIVE', price:'0.595', qty:168, cost:1});
+    status={ok:true, mode:'LIVE', day:'2026-11-10', budget:10, reserved:0, left:10, killed:false, requireArm:true, armed:true, orders:[]};
+    await ev(X.p,()=>{ lastRows.forEach((r)=>{ if(r.gameInfo && r.gameInfo.startISO) r.gameInfo=Object.assign({},r.gameInfo,{startISO:new Date(Date.now()+3*3600e3).toISOString()}); }); });
+    const c0=await ev(X.p,()=>apBoardCounts());
+    const want=await ev(X.p,()=>({novig:lastRows.filter((r)=>LIVE_BOOK(r.book)==='novig').length, approved:lastRows.filter((r)=>LIVE_BOOK(r.book)==='novig'&&scApproved(r)).length}));
+    check('the board counts match the board: Novig picks seen and approved', c0.novig===want.novig && c0.approved===want.approved && c0.approved>=2, [c0.novig, c0.approved, want]);
+    const p0=posts.length; const html0=await ev(X.p,()=>apReportHtml()); check('the report is read-only: it sends nothing', posts.length===p0 && /Report/.test(html0) && /approved \(these can be sent\)/.test(html0), html0.slice(0,200));
+    await ev(X.p,()=>autoTick()); const h1=await ev(X.p,()=>apReportHtml()); check('after one automatic send the report says 1 sent, 1 placed, 0 refused and the time it went out', /<b>1<\/b> sent · <b>1<\/b> placed · <b>0<\/b> refused · went out at \d{1,2}:\d{2}/.test(h1), h1.slice(0,400));
+    await ev(X.p,()=>{ const A=lastRows.filter((r)=>scApproved(r)&&LIVE_BOOK(r.book)==='novig'); A.forEach((r)=>{ r.outlier=true; r.actNet=0.05; }); });
+    const c1=await ev(X.p,()=>apBoardCounts()); const h2=await ev(X.p,()=>apReportHtml());
+    check('a pick that was approved but is now an outlier is "almost made it", with the plain reason', c1.near.filter((x)=>/trust limit \(outlier\)/.test(x.why)).length===2 && /Almost made it/.test(h2) && /15% trust limit/.test(h2), [c1.near, h2.slice(0,300)]);
+    await ev(X.p,()=>{ lastRows.filter((r)=>LIVE_BOOK(r.book)==='novig').forEach((r)=>{ r.outlier=false; r.prior=true; }); });
+    const c2=await ev(X.p,()=>apBoardCounts()); check('a pick you already bet is not listed as almost made it', c2.near.length===0, c2.near);
+    await ev(X.p,()=>{ document.querySelector('.tab[data-view="v-settings"]').click(); document.getElementById('apPanel').open=true; }); await X.p.waitForTimeout(300);
+    check('the Autopilot card shows the report when opened', /Report/.test(await ev(X.p,()=>document.getElementById('apReport').textContent)) && /look/.test(await ev(X.p,()=>document.getElementById('apReport').textContent)), await ev(X.p,()=>document.getElementById('apReport').textContent));
+  });
   check('no page errors', X.errs.length===0, X.errs.slice(0,3));
   await b.close(); const r=L.res(); console.log('\n'+r.pass+' passed, '+r.fail+' failed'); process.exit(r.fail?1:0); })();

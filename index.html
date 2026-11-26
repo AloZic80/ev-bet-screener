@@ -2771,6 +2771,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
     <button type="button" class="ghost" id="apResume">Resume</button>
   </div>
   <label class="bar-check" style="margin-top:8px"><input type="checkbox" id="apAuto"> Send approved Novig picks to the Worker automatically while it is armed today (this tab must stay open)</label>
+  <div id="apReport" class="meta" style="margin-top:8px"></div>
   <div id="apNow" class="meta" role="status" aria-live="polite" style="margin-top:6px"></div>
   <div id="apLook" class="meta"></div>
   <div class="meta" id="apMsg" role="status"></div>
@@ -14708,7 +14709,29 @@ async function apSend(r){   /* one order request for one approved pick (the auto
   try{ const L=JSON.parse(localStorage.getItem('mbev.autobet')||'[]'); L.push({t:new Date().toISOString(), pick:body.name, ok, auto:true, mode:(j&&j.mode)||null, reason:ok?null:((j&&(j.reason||j.error))||('HTTP '+out.status)), qty:(j&&j.qty)||null, price:(j&&j.price)||null, cost:(j&&j.cost)||null}); while(L.length>60) L.shift(); localStorage.setItem('mbev.autobet', JSON.stringify(L)); }catch(_){}
   return {ok:ok, j:j||{reason:'HTTP '+out.status}};
 }
-function apDoing(t){ try{ const el=document.getElementById('apNow'); if(el) el.innerHTML=t?('<b>Working now:</b> '+esc(t)):apLastHtml(); }catch(e){} }
+/* v5.34 (owner 2026-11-25: "report when it went out and how many bets it got and how many actual bets that passed, and even some ALMOST MADE IT"): the report. The board now (Novig picks seen, approved, almost made it, each with the reason it missed) and today's tally (looks, sent, placed, refused, times). Read only: it decides and sends nothing. */
+function apWhyNot(r){ try{
+  if(!scAhead(r)) return 'the game has started or is too close';
+  if(r.prior) return 'you already bet it';
+  if(rowAwol(r) || r.qGone) return 'the price is gone from the book';
+  if(r.outlier) return 'the model edge is past your 15% trust limit (outlier)';
+  if(evDisplayState(r)!=='actionable') return 'the price is old (last seen)';
+  if(!r.pass) return 'under your floor';
+  if(!(r.stake>0)) return 'no stake left after your limits';
+  if(r.waitOrder) return 'waiting for a better price (parole)';
+  if(r.removed||r.moved||r.glConflict||r.hiddenDup) return 'held back by a safety check';
+  return 'not approved'; }catch(e){ return 'not approved'; } }
+function apBoardCounts(){ const R=(typeof lastRows!=='undefined'?lastRows:[])||[], N=R.filter(r=>r && LIVE_BOOK(r.book)==='novig'), ok=N.filter(r=>scApproved(r)), seen=N.filter(r=>!scApproved(r)); 
+  const near=seen.filter(r=>r.actNet!=null && r.actNet>=0 && scAhead(r) && !r.prior).map(r=>({name:jvPickTxt(r), why:apWhyNot(r), k:mathKey(r)})).sort((a,b)=>b.k-a.k); return {novig:N.length, approved:ok.length, near:near}; }
+function apTally(){ const d=todayCT(); let L=[]; try{ L=JSON.parse(localStorage.getItem('mbev.autobet')||'[]')||[]; }catch(e){} L=L.filter(x=>x && x.auto && String(x.t||'').length>=10 && new Date(x.t).toLocaleDateString('en-CA',{timeZone:'America/Chicago'})===d);
+  let looks=0; try{ const o=JSON.parse(localStorage.getItem('mbev.autoLook')||'{}'); if(o.day===d) looks=(o.rows||[]).reduce((a,x)=>a+(x.n||1),0); }catch(e){}
+  return {looks:looks, sent:L.length, placed:L.filter(x=>x.ok).length, refused:L.filter(x=>!x.ok).length, times:L.map(x=>new Date(x.t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}))}; }
+function apReportHtml(){ const B=apBoardCounts(), T=apTally();
+  return '<b>Report</b><br>On the board now: <b>'+B.novig+'</b> Novig pick'+(B.novig===1?'':'s')+' · <b>'+B.approved+'</b> approved (these can be sent) · <b>'+B.near.length+'</b> almost made it'
+   +'<br>Today: <b>'+T.looks+'</b> look'+(T.looks===1?'':'s')+' · <b>'+T.sent+'</b> sent · <b>'+T.placed+'</b> placed · <b>'+T.refused+'</b> refused'+(T.times.length?' · went out at '+esc(T.times.join(', ')):'')
+   +(B.near.length?'<div style="margin-top:4px"><b>Almost made it</b> (not sent; the reason it missed)</div><ul style="margin:2px 0 0 16px">'+B.near.slice(0,8).map(x=>'<li>'+esc(x.name)+' · '+esc(x.why)+'</li>').join('')+'</ul>':'<br>Nothing almost made it right now.'); }
+function apReportPaint(){ try{ const el=document.getElementById('apReport'); if(el) el.innerHTML=apReportHtml(); }catch(e){} }
+function apDoing(t){ if(!t) apReportPaint(); try{ const el=document.getElementById('apNow'); if(el) el.innerHTML=t?('<b>Working now:</b> '+esc(t)):apLastHtml(); }catch(e){} }
 function apLastHtml(){ let o=null; try{ o=JSON.parse(localStorage.getItem('mbev.autoLast')||'null'); }catch(e){} if(!o) return 'Last look: none yet in this tab.'; return '<b>Last look:</b> '+esc(new Date(o.t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'}))+' · '+esc(o.w)+' · the next one is within a minute'; }
 function apLookWords(o){ o=o||{}; if(o.error) return 'could not look: '+o.error; if(o.sent) return (o.ok?'sent 1 pick to the Worker':'sent 1 pick, the Worker said no ('+(o.reason||'?')+')');
   const m={off:'automatic sending is off (the box is not ticked)', paused:'paused', busy:'already looking', 'no status':'no answer from the Worker (check sync)', killed:'stopped: the kill switch is on', 'not armed':'needs your Proceed for today (or the Worker does not ask for one yet, so nothing is sent)', budget:'today\'s budget is used up', 'nothing new':'nothing new: no approved Novig pick that was not already sent'}; return m[o.skip]||String(o.skip||'?'); }
@@ -14739,7 +14762,7 @@ document.addEventListener('click', async e=>{ const t=e.target && e.target.close
   if(t.id==='apStop'){ if(!confirm('Stop all auto bets now? Nothing new is placed until you press Resume.')) return; const r=await apFetch('/autobet/kill','POST',{on:true}); apStatus=null; await apRefresh(); say(r.j&&r.j.ok?'Stopped: the kill switch is on.':'Could not stop it: '+((r.j&&(r.j.error||r.j.reason))||('HTTP '+r.status))); return; }
   if(t.id==='apResume'){ if(!confirm('Turn the kill switch off? Orders can be placed again (only if it is armed for today).')) return; const r=await apFetch('/autobet/kill','POST',{on:false}); apStatus=null; await apRefresh(); say(r.j&&r.j.ok?'The kill switch is off.':'Could not turn it off.'); return; } });
 document.addEventListener('change', e=>{ if(e.target && e.target.id==='apAuto'){ try{ localStorage.setItem('mbev.autoSend', e.target.checked?'1':'0'); }catch(_){} const m=document.getElementById('apMsg'); if(m) m.textContent=e.target.checked?'Automatic sending is ON: it only sends while the Worker is armed for today.':'Automatic sending is OFF.'; } });
-document.addEventListener('toggle', e=>{ if(e.target && e.target.id==='apPanel' && e.target.open){ apRefresh(); try{ document.getElementById('apLook').innerHTML=apLookHtml(); apDoing(''); }catch(_){} } }, true);
+document.addEventListener('toggle', e=>{ if(e.target && e.target.id==='apPanel' && e.target.open){ apReportPaint(); apRefresh(); try{ document.getElementById('apLook').innerHTML=apLookHtml(); apDoing(''); }catch(_){} } }, true);
 setInterval(()=>{ autoTick(false); }, 60000);   // v5.33: one look a minute (a hidden tab may run it less often)
 function jvDigestItems(R){ return R.away.map(x=>{ const L=(lastRows||[]).filter(r=>r && pxKey(r)===x.k), r=L.find(scApproved)||L[0]||null; let st;
   if(!r) st='no longer on the board'; else if(!scAhead(r)) st='started'; else if(!scApproved(r)) st=r.prior?'already bet':'no longer approved';
