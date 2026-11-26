@@ -38,6 +38,9 @@ The app's link is `novig.com/events/<outcome id>/novig/<stake>`. After it opens,
 ## Privacy
 Screenshots show the slip only: no balance, account name, location, transactions, deposit controls or notifications. If they cannot be cropped, describe the slip in words instead. Do not keep screenshots, put them in files, logs or the repo, or send them to any service.
 
+## Test run: SUPERVISED (the owner presses Place). Update 2026-11-25 5:58 PM: Samson declined to press Place, so the exception below is NOT in effect
+The rule above ("never press the final button") has ONE exception: the test run recorded in `memory/decisions/auto-betting.md` (10 bets of $1, Novig, approved picks, hard limits listed there). It applies only when the owner's message says it is that test run. Outside it, never press Place.
+
 ## Do not
 Press any final or accepting button; change the pick, book or stake rule; open a second slip; touch deposit, withdraw or account pages; type or print a passphrase, key, password or code; click anything in the app except "Open the book" (never "I bet this", "Not now", "Skip today").
 
@@ -45,9 +48,9 @@ Press any final or accepting button; change the pick, book or stake rule; open a
 The app already opens the prefilled slip (its own "Open the book"): use that, do not build another way. You never place. After the owner clicks Place himself he tells you **"placed"**. Only then:
 1. **Look at the book, read only.** On the Novig page (portfolio or orders) find the order. Note the real price, the size or stake, whether it is **filled, partly filled or resting**. If you cannot see it, stop and ask him.
 2. **Go back to the app tab** (the other Chrome tab, props.0xbeta.dev). Make sure it is the browser that holds his real log: if the Bet log looks nearly empty (a few entries) or the cloud chip says off, stop and tell him, because the log lives in each browser and his history may be in another one.
-3. Press **I bet this** on that pick's pop-up or card. The bet form opens. Fill it with what the book shows (the real fill price and stake, not the price intended). If the book shows a different price, size or market than the pick, stop and ask.
+3. **Look at the Bet log first.** The app logs Novig fills by itself (seen 2026-11-25: the log went 465 to 466 and the pick left the board). Refresh the app's "My books" or wait a minute, count the log, and look for the new entry. **If it is there, do not press I bet this** (it would log the bet twice); just confirm its book, pick, real price and stake against Novig and report. Only if no new entry appears after a refresh and a short wait, press **I bet this** on that pick's pop-up or card. The bet form opens. Fill it with what the book shows (the real fill price and stake, not the price intended). If the book shows a different price, size or market than the pick, stop and ask.
 4. **Resting or partly filled order:** log nothing until it is filled; tell him what you see.
-5. Press **Save** only if everything matches. Then read the Bet log to confirm one new entry (never a silent save error) and tell him: book, pick, real price, stake.
+5. (Only when you used the form.) Press **Save** only if everything matches. Then read the Bet log to confirm one new entry (never a silent save error) and tell him: book, pick, real price, stake.
 6. If anything is unclear, do not save. Ask.
 
 ## Done means
