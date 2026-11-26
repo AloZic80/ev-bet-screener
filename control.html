@@ -57,6 +57,17 @@ th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase}
 </div>
 <div class="hint" id="note"></div></div>
 
+<div class="card" id="alCard"><h2>Phone alerts</h2>
+<div class="hint" id="alState">Checking…</div>
+<div class="row" style="margin-top:8px"><button id="alOn" class="go">Enable alerts on this device</button><button id="alTest">Send a test</button><button id="alOff">Turn off on this device</button></div>
+<div class="hint">A popup only tells you what already happened (an order placed, not placed, or stopped, and your reminders). It can never place or stop anything. On an iPhone, first add this page to the Home Screen (Share, then Add to Home Screen) and open it from there.</div>
+<label class="hint" style="display:block;margin-top:10px"><input type="checkbox" id="alProceed"> Remind me to tap Proceed at 8:30 AM when it is not armed</label>
+<label class="hint" style="display:block"><input type="checkbox" id="alSummary"> Evening summary at 9:00 PM</label>
+<div class="hint" style="margin-top:10px"><b>My reminders</b> (Chicago time, once a day)</div>
+<div id="alList" class="hint">None yet.</div>
+<div class="ask" style="margin-top:6px"><input id="alTime" type="time" aria-label="Reminder time" style="flex:0 0 120px"><input id="alText" placeholder="Fanatics: today’s window ends soon" aria-label="Reminder text"><button id="alAdd">Add</button></div>
+<div class="hint" id="alMsg" role="status"></div></div>
+
 <div class="card"><h2>Orders today (from your Worker)</h2>
 <table id="orders"><tr><td>Not loaded yet.</td></tr></table></div>
 
@@ -134,6 +145,43 @@ th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase}
     document.getElementById('siPass').value=''; document.getElementById('siSync').value=''; m.textContent=''; siShow(); refresh(); };
   siShow();
   try{ if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){}); }catch(e){}   // v5.39: lets the phone install it
+  /* v5.40: phone alerts. Needs the alerts keys on the Worker (added once by you). Nothing here shows a key; the phone's push address goes only to your own Worker. */
+  var AL={list:[],set:false};
+  function alSay(t,bad){ var m=document.getElementById('alMsg'); m.textContent=t||''; m.className='hint'+(bad?' err':''); }
+  function unb64u(s){ s=String(s||'').replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='='; var b=atob(s), o=new Uint8Array(b.length); for(var i=0;i<b.length;i++) o[i]=b.charCodeAt(i); return o; }
+  function alSupported(){ return ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window); }
+  function alPaint(){
+    var l=document.getElementById('alList'); l.textContent='';
+    if(!AL.list.length){ l.textContent='None yet.'; }
+    AL.list.forEach(function(r,i){ var d=document.createElement('div'); d.style.margin='3px 0'; var t=('0'+r.h).slice(-2)+':'+('0'+r.m).slice(-2); d.appendChild(document.createTextNode(t+' · '+r.text+' ')); var b=document.createElement('button'); b.textContent='Remove'; b.onclick=function(){ AL.list.splice(i,1); alSaveList(); }; d.appendChild(b); l.appendChild(d); });
+  }
+  async function alStatus(){
+    var st=document.getElementById('alState'); var r=await call('/push/status');
+    if(!r.ok){ st.textContent=r.noSync?'Sign in on this device first (the card above).':why(r); return; }
+    AL.set=!!r.j.set; AL.list=(r.j.reminders||[]).slice(); document.getElementById('alProceed').checked=!(r.j.settings&&r.j.settings.proceed===false); document.getElementById('alSummary').checked=!(r.j.settings&&r.j.settings.summary===false);
+    var n=(r.j.devices||[]).length;
+    st.textContent=!AL.set?'The Worker has no alert keys yet. They are added once, by you; until then nothing can be sent.':(n?('Alerts are on for '+n+' device'+(n===1?'':'s')+'.'):'Alerts are not on for any device yet.');
+    alPaint();
+  }
+  async function alSaveList(){ var r=await call('/push/reminders','POST',{list:AL.list}); if(r.ok){ AL.list=r.j.reminders||AL.list; alSay('Saved.'); } else alSay(why(r),true); alPaint(); }
+  document.getElementById('alAdd').onclick=function(){ var tv=document.getElementById('alTime').value, tx=(document.getElementById('alText').value||'').trim(); if(!/^\d\d:\d\d$/.test(tv)||!tx){ alSay('Pick a time and type the reminder.',true); return; }
+    var id='r'+Date.now().toString(36).slice(-6); AL.list.push({id:id,h:+tv.slice(0,2),m:+tv.slice(3,5),text:tx}); document.getElementById('alText').value=''; alSaveList(); };
+  async function alSettings(){ var r=await call('/push/settings','POST',{proceed:document.getElementById('alProceed').checked, summary:document.getElementById('alSummary').checked}); alSay(r.ok?'Saved.':why(r), !r.ok); }
+  document.getElementById('alProceed').onchange=alSettings; document.getElementById('alSummary').onchange=alSettings;
+  document.getElementById('alOn').onclick=async function(){
+    if(!alSupported()){ alSay('This browser cannot show popup alerts. On an iPhone, add this page to the Home Screen (Share, then Add to Home Screen), open it from there, and try again.',true); return; }
+    try{
+      var perm=await Notification.requestPermission(); if(perm!=='granted'){ alSay('Popups are blocked for this page. Allow notifications for it in your phone or browser settings, then try again.',true); return; }
+      var k=await call('/push/key'); if(!k.ok){ alSay(k.noSync?'Sign in on this device first.':why(k),true); return; }
+      if(!k.j.set||!k.j.key){ alSay('The Worker has no alert keys yet, so nothing can be turned on. They are added once, by you.',true); return; }
+      var reg=await navigator.serviceWorker.ready, sub=await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:unb64u(k.j.key)});
+      var j=sub.toJSON?sub.toJSON():sub, dev=/iPhone/.test(navigator.userAgent)?'iPhone':/Android/.test(navigator.userAgent)?'Android':/Mac/.test(navigator.userAgent)?'Mac':'device';
+      var r=await call('/push/subscribe','POST',{subscription:{endpoint:j.endpoint, keys:j.keys}, device:dev}); alSay(r.ok?'Alerts are on for this device. Tap Send a test.':why(r),!r.ok); alStatus();
+    }catch(e){ alSay('Could not turn alerts on: '+String(e&&e.message||e).slice(0,120),true); }
+  };
+  document.getElementById('alTest').onclick=async function(){ var r=await call('/push/test','POST',{}); if(r.ok&&r.j&&r.j.sent>0) alSay('Sent to '+r.j.sent+' device'+(r.j.sent===1?'':'s')+'. It should pop up in a few seconds.'); else alSay(r.j&&r.j.code==='not_set_up'?'The Worker has no alert keys yet.':(r.j&&r.j.failed?'The push service did not accept it.':why(r)),true); };
+  document.getElementById('alOff').onclick=async function(){ try{ var reg=await navigator.serviceWorker.ready, sub=await reg.pushManager.getSubscription(); if(sub){ var ep=sub.endpoint; await sub.unsubscribe(); await call('/push/unsubscribe','POST',{endpoint:ep}); } alSay('Alerts are off for this device.'); alStatus(); }catch(e){ alSay('Could not turn them off here.',true); } };
+  alStatus();
   refresh(); setInterval(function(){ if(!document.hidden) refresh(); }, 30000);
 })();
 </script>

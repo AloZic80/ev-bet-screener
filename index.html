@@ -38,7 +38,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.39</title>
+<title>0xBeta Screener v5.40</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -2300,7 +2300,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.39</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.40</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -3274,7 +3274,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 
 </div>
 <script>
-const SCREENER_VERSION='v5.39';
+const SCREENER_VERSION='v5.40';
 /* v5.24 (step 5): DEV_APP is now defined once, in the head script at the top of this file (the first paint reads it too) */
 if(!DEV_APP) document.documentElement.setAttribute('data-viewas','easy');   // v5.24 (step 3b): a customer build is Easy whatever mbev.viewAs holds
 /* v5.24 (owner 11/20: "we need to differentiate already"; "for me in GOD mode, let me tell the difference of what they cant see and i can"): levels.
@@ -14999,7 +14999,7 @@ function renderOrdersTop(O,held){ const el=document.getElementById('ordersTop');
 document.addEventListener('click',e=>{ if(!e.target.closest('#ordersTopGo')) return; const t=document.querySelector('.tab[data-view="v-log"]'); if(t) t.click(); setTimeout(()=>{ const b=document.getElementById('logOrders'); if(b && !b.hidden) b.scrollIntoView({block:'start'}); },60); });
 function renderLogOrders(){ const el=document.getElementById('logOrders'); if(!el) return;
   const O=((myOrders&&myOrders.orders)||[]).filter(o=>o && o.action!=='sell'), er=ordersErrText();
-  const cost0=o=>o.price!=null&&o.qty!=null?Math.ceil((+o.price)*(+o.qty)*100-1e-6)/100:0; renderOrdersTop(O, O.reduce((t,o)=>t+cost0(o),0));
+  const cost0=o=>o.price!=null&&o.qty!=null?Math.ceil((+o.price)*(+o.qty)*100-1e-6)/100:0; const OT=O.filter(o=>!(orderMatchedCost(o)>0)); renderOrdersTop(OT, OT.reduce((t,o)=>t+cost0(o),0));   /* v5.40 (owner: "so its 2 that say"): an order that already has a taker is not in the top waiting line either; it stays in the Bet log's waiting list and the pull-it alerts */
   if(!O.length && er){ el.hidden=false; el.innerHTML='<h3>⏳ Waiting at your books</h3><div class="meta ot-err">⚠ Could not read your orders from the books: '+esc(er)+'. Orders you placed there do not show until this works.</div>'; return; }
   if(!O.length){ el.hidden=true; el.innerHTML=''; return; }
   const cost=o=>o.price!=null&&o.qty!=null?Math.ceil((+o.price)*(+o.qty)*100-1e-6)/100:0, held=O.reduce((t,o)=>t+cost(o),0);
@@ -15010,17 +15010,22 @@ function renderLogOrders(){ const el=document.getElementById('logOrders'); if(!e
         '<span class="lo-what">'+esc(o.side?(o.side==='no'?'NO · ':'YES · '):'')+esc(L.bet)+'</span>'+(o.title&&o.title!==L.bet?'<span class="lo-m">'+esc(o.title)+'</span>':'')+
         '<span class="lo-m">'+(o.qty!=null?(+o.qty)+' shares':'')+(o.price!=null?' at '+Math.round(o.price*100)+'¢':'')+(o.price!=null&&o.qty!=null?' = $'+cost(o).toFixed(2):'')+(filled>0?' · '+filled+' filled':' · 0 filled')+'</span>'+
         (L.when?'<span class="lo-m">game '+esc(L.when)+'</span>':'')+'</div>'; }).join(''); }
+/* v5.40 (owner 2026-11-26: "i need for the Tony Pollard Hook/Taker to be removed. its taken already on Novig"): a Hide button on each order in the orange "Make waiting for a taker" bar, kept on this device (mbev.mkHide), undone by "Show hidden". It hides ONLY that bar: the Bet log's "Waiting at your books" list, the "pull it" game-start alerts and the Already-bet marks still use the order, so a real resting order can never slip past. */
+function mkHideKey(o){ return String(o.book||'')+':'+String(o.id||o.ref||''); }
+function mkHideGet(){ try{ return JSON.parse(localStorage.getItem('mbev.mkHide')||'{}')||{}; }catch(e){ return {}; } }
+function mkHideSet(k,on){ try{ const H=mkHideGet(); if(on) H[k]=Date.now(); else delete H[k]; localStorage.setItem('mbev.mkHide', JSON.stringify(H)); }catch(e){} }
 function renderMakes(){
   try{ renderPullBar(); }catch(e){}
   try{ renderLogOrders(); }catch(e){}   // v4.17
   document.querySelectorAll('.mk-slot').forEach(el=>{ const r=lastRows.find(x=>x.idx===+el.dataset.idx); const h=r?makeTagHtml(r):''; if(el.innerHTML!==h) el.innerHTML=h; });
   const bar=document.getElementById('makesBar'); if(!bar) return;
-  const O=((myOrders&&myOrders.orders)||[]).filter(o=>o.action!=='sell'), onBoard=O.filter(o=>lastRows.some(r=>makesFor(r).includes(o))).length;
-  if(!O.length){ bar.style.display='none'; return; }
+  const ALL=((myOrders&&myOrders.orders)||[]).filter(o=>o.action!=='sell'), HID=mkHideGet(), TAKEN=ALL.filter(o=>orderMatchedCost(o)>0), O=ALL.filter(o=>!HID[mkHideKey(o)] && !TAKEN.includes(o)), nHid=ALL.filter(o=>HID[mkHideKey(o)] && !TAKEN.includes(o)).length,   /* v5.40 (owner: "I dont want to see it if it has a taker because its taken real estate"): an order that already has a taker is not shown in this bar at all; the top waiting line, the Bet log list and the pull-it alerts still count it */ onBoard=O.filter(o=>lastRows.some(r=>makesFor(r).includes(o))).length;   // v5.40: hidden ones are left out of this bar only
+  if(!O.length){ if(nHid){ bar.style.display=''; bar.innerHTML='🪝 '+nHid+' hidden Make'+(nHid===1?'':'s')+' <button type="button" class="linkbtn mk-unhide">Show hidden</button>'; } else bar.style.display='none'; return; }
   const off=O.filter(o=>!lastRows.some(r=>makesFor(r).includes(o)));
   bar.style.display=''; bar.innerHTML='🪝 '+O.length+' Make'+(O.length===1?'':'s')+' waiting for a taker'+(onBoard?' — tap to see':'')+
-    (off.length?'<div class="mk-off">Not on this board: '+off.map(o=>esc(fillLabel({bet:o.bet||{}, title:o.title, book:o.book, ref:o.ref}).bet+' · '+(o.price*100).toFixed(1)+'% · $'+((+o.price||0)*(+o.qty||0)).toFixed(2)+' · '+(BOOK_NAME[o.book]||o.book)+(orderMatchedCost(o)>0?' · matched so far on this market: $'+orderMatchedCost(o).toFixed(2)+' (already a bet; this is the rest)':''))).join(' &nbsp;|&nbsp; ')+' — check the side and line on '+esc(off.map(o=>BOOK_NAME[o.book]||o.book).filter((v,i,a)=>a.indexOf(v)===i).join(' / '))+'</div>':'');
+    (off.length?'<div class="mk-off">Not on this board: '+off.map(o=>esc(fillLabel({bet:o.bet||{}, title:o.title, book:o.book, ref:o.ref}).bet+' · '+(o.price*100).toFixed(1)+'% · $'+((+o.price||0)*(+o.qty||0)).toFixed(2)+' · '+(BOOK_NAME[o.book]||o.book)+'')+' <button type="button" class="linkbtn mk-hide" data-k="'+esc(mkHideKey(o))+'" title="Hide this one here. It stays in the Bet log list and the pull-it alerts.">Hide</button>').join(' &nbsp;|&nbsp; ')+' — check the side and line on '+esc(off.map(o=>BOOK_NAME[o.book]||o.book).filter((v,i,a)=>a.indexOf(v)===i).join(' / '))+'</div>':'')+(nHid?' <button type="button" class="linkbtn mk-unhide">Show hidden ('+nHid+')</button>':'');
 }
+document.addEventListener('click', e=>{ const h=e.target.closest && e.target.closest('.mk-hide'), u=e.target.closest && e.target.closest('.mk-unhide'); if(h){ e.preventDefault(); e.stopPropagation(); mkHideSet(h.dataset.k,true); renderMakes(); } else if(u){ e.preventDefault(); e.stopPropagation(); try{ localStorage.removeItem('mbev.mkHide'); }catch(_){} renderMakes(); } }, true);   // v5.40
 document.addEventListener('click', e=>{ if(!e.target.closest('#makesBar') || e.target.closest('.mk-ack')) return; const t=[...document.querySelectorAll('.mk-slot')].find(x=>x.textContent.trim() && x.offsetParent); if(t) t.scrollIntoView({behavior:'smooth', block:'center'}); });
 /* v4.56: a best-book claim (Send the Sentinels moved the bet to another book) holds 3 minutes, 90 seconds when the game starts within 5 minutes. After
    that it says so; no price is read again by itself (no new Worker calls). Hoisted: the card and the timer call it. */
