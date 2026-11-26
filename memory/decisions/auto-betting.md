@@ -50,3 +50,8 @@ Real-money budget for the three days: **Wed 11/25 $7** (the $1 CLE bet is not co
 
 ## Real money first (owner, 2026-11-25: "NO NO, do REAL MONEY first")
 Order of work changed: the Worker places **real $1 orders first**, before the two-week paper run. Safeguards kept: a separate Novig subaccount funded with only $25 (its trading key cannot move money), $1 an order and $25 a day enforced in the Worker's code, a kill switch, an audit log, a short paper smoke test before real money, a human tap first (an "Auto bet $1" button in the Jarvis pop-up) before any automatic trigger, a fresh production management key (the one shown on screen on 2026-11-25 is not used for this), the owner opening the Novig app at least every 3 days (location check), and his go on each merge (the Worker deploys on merge). **Gate F (Novig's full terms) is not closed: the owner's "real money first" is treated as accepting that, unless he says he wants El Licenciado first.** The two-week paper run moves behind this.
+
+## The order, final (owner, 2026-11-25: "we are doing a $7, $10 and $10 and then we go to Paper")
+1. Real money: Wed 11/25 $7 (supervised: Samson prepares, the owner presses), Thu 11/26 $10 and Fri 11/27 $10 (through the Worker if it is ready, with $1 orders and the subaccount as the hard cap; otherwise supervised the same way). Total $27.
+2. Then two weeks of Paper (Novig's paper environment), starting after Friday.
+This replaces the earlier lines about paper first. Everything else in this file stands (the Worker never exceeds the funded subaccount; no promo credits; the kill switch; the owner's go on each merge).
