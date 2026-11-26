@@ -9,3 +9,12 @@ Loop text: `agent-notes/prefill-watch-loop_2026-11-25_v1.md`. Record: `agent-not
 - Samson never presses Place; the owner does. Every step gets a Samson-log line, pushed with `git push origin HEAD:claude/mac-samson`.
 - Novig fills are logged by the app itself (seen 2026-11-25: the CLE fill was auto-logged within ~12 min). After "placed", check the log first; press I bet this only if no entry exists.
 - **Review due 2026-12-09**: read the CSV, show picks by hour and weekday; the owner picks the new schedule. Timing only: never a stake, limit, floor or decision.
+
+## Schedule and buttons (owner, 2026-11-25, about 6:15 PM CT)
+- The "updated" time next to My games is the live-scores strip, not the props board: never time anything from it.
+- 6:00 AM CT each day: press Settings → Jarvis → **Talk now** (lasts until midnight), only if it is not already on.
+- Press **Load** only at 8:00 AM, 12:00 PM, 4:00 PM and 7:00 PM CT, and only with at least 10 BettingPros calls left; then wait 2 minutes for the Sentinels and check.
+- Every other check: no Load; read the board and log the Price read age (newest row price) and the BettingPros calls left.
+- Same rows and prices as the last check: write "no change" and do nothing else.
+- These two buttons (Talk now, Load) are the only app buttons besides Open the book that the loop may press. Never Place.
+- How it runs: recurring jobs can start up to 30 min late, so a 12:05 AM job creates each day's on-time one-shot jobs (6:00 Talk now; 8/12/4/7 Load).
