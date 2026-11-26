@@ -41,3 +41,6 @@ The owner chose option A: the app triggers, **the owner's Worker places the orde
 
 ## Today's budget (owner, 2026-11-25: "can we do $7 today?")
 Today (Wed 2026-11-25) the owner may bet up to $7 more, as $1 bets, supervised (Samson prepares, the owner presses Place), only on approved Novig picks. With the $1 CLE bet, today's total is at most $8. No picks are forced: if none is approved, nothing is bet.
+
+## Correction: the real-money total is $27 (owner, 2026-11-25: "total $27")
+Real-money budget for the three days: **Wed 11/25 $7** (the $1 CLE bet is not counted), **Thu 11/26 $10**, **Fri 11/27 $10**: **$27 in all**. Supervised (the owner places by hand; Samson may prepare). This replaces the earlier line that said today's total is at most $8.
