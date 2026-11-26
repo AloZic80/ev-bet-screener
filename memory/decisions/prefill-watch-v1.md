@@ -18,3 +18,4 @@ Loop text: `agent-notes/prefill-watch-loop_2026-11-25_v1.md`. Record: `agent-not
 - Same rows and prices as the last check: write "no change" and do nothing else.
 - These two buttons (Talk now, Load) are the only app buttons besides Open the book that the loop may press. Never Place.
 - How it runs: recurring jobs can start up to 30 min late, so a 12:05 AM job creates each day's on-time one-shot jobs (6:00 Talk now; 8/12/4/7 Load).
+- Owner, 2026-11-25 ~11:15 PM: "that you recommend according to the standard and you hand off": when a check finds an approved Novig pick within the limits, Samson prepares the slip right away (no OK asked), then notifies the owner and hands off. The owner still presses Place.
