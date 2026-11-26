@@ -1,0 +1,22 @@
+// node tests/v539-install-test.js — v5.39 (owner 2026-11-26: "a standalone app where i can see everything"; "a phone app ... I want POPUP alerts"): the control page is installable on a phone (manifest, icons, a service worker that does nothing else) and has its own sign-in for an installed copy.
+// The sign-in card shows only when this device has no saved sign-in; Save keeps the passphrase and the ONE-WAY code of the sync password (never the password itself), clears the boxes, and hides the card; nothing is shown back; a missing field says so. No page errors.
+const path=require('path'), fs=require('fs'), crypto=require('crypto'); const L=require('./v527-jarvis-lib.js'); const {chromium,check}=L; const ROOT=path.join(__dirname,'..'); const FILE='file://'+path.join(ROOT,'control.html');
+(async()=>{ const html=fs.readFileSync(path.join(ROOT,'control.html'),'utf8'), man=JSON.parse(fs.readFileSync(path.join(ROOT,'manifest.webmanifest'),'utf8'));
+  check('the page links the manifest, an Apple touch icon, and the standalone-app meta tags', /rel="manifest" href="manifest\.webmanifest"/.test(html) && /rel="apple-touch-icon" href="icons\/autopilot-180\.png"/.test(html) && /apple-mobile-web-app-capable/.test(html), null);
+  check('the manifest opens the control page full screen with a name, colours and 192 and 512 icons that exist', man.start_url==='control.html' && man.display==='standalone' && man.short_name && man.theme_color && man.icons.some(i=>i.sizes==='192x192') && man.icons.some(i=>i.sizes==='512x512') && man.icons.every(i=>fs.existsSync(path.join(ROOT,i.src))) && fs.existsSync(path.join(ROOT,'icons','autopilot-180.png')), man.icons);
+  const sw=fs.readFileSync(path.join(ROOT,'sw.js'),'utf8'); check('the service worker only installs and claims: it caches nothing, fetches nothing and never reads a sign-in', !/caches\./.test(sw) && !/fetch\(/.test(sw) && !/localStorage|indexedDB/.test(sw), null);
+  const b=await chromium.launch(); const ctx=await b.newContext(); const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e)));
+  await p.route(/api\.0xbeta\.dev/,r=>r.fulfill({status:200,headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*'},contentType:'application/json',body:JSON.stringify({ok:true,mode:'LIVE',killed:false,requireArm:true,armed:true,budget:10,reserved:1,left:9,orders:[]})}));
+  await p.goto(FILE); await p.waitForTimeout(600);
+  check('on a device with no saved sign-in the sign-in card shows', await p.evaluate(()=>!document.getElementById('siCard').hidden), null);
+  await p.click('#siSave'); check('Save with both boxes empty says to type both (and saves nothing)', /both/i.test(await p.textContent('#siMsg')) && (await p.evaluate(()=>localStorage.getItem('mbev.pass')))===null, null);
+  await p.fill('#siPass','hunter22'); await p.fill('#siSync','my sync pw'); await p.click('#siSave'); await p.waitForTimeout(500);
+  const saved=await p.evaluate(()=>({pass:localStorage.getItem('mbev.pass'), key:localStorage.getItem('mbev.syncKey'), boxes:[document.getElementById('siPass').value, document.getElementById('siSync').value], hidden:document.getElementById('siCard').hidden, page:document.body.innerText}));
+  const want=crypto.createHash('sha256').update('0xbeta-sync:my sync pw').digest('hex');
+  check('Save keeps the passphrase and the one-way SHA-256 code of the sync password (the screener\'s own format), never the password', saved.pass==='hunter22' && saved.key===want && !/my sync pw/.test(JSON.stringify(saved.key)), [saved.key===want]);
+  check('the boxes are cleared and the card is hidden afterwards, and neither the passphrase nor the password is shown on the page', saved.boxes.join('')==='' && saved.hidden===true && !/hunter22|my sync pw/.test(saved.page), null);
+  check('the page then reads the Worker with it (Today shows $1.00 used)', /\$1\.00/.test(await p.textContent('#sUsed')), await p.textContent('#sUsed'));
+  const p2=await (await b.newContext()).newPage(); await p2.addInitScript(()=>{ localStorage.setItem('mbev.pass','abcd1234'); localStorage.setItem('mbev.syncKey','abc'); }); await p2.goto(FILE); await p2.waitForTimeout(300);
+  check('with a saved sign-in the card stays hidden', await p2.evaluate(()=>document.getElementById('siCard').hidden), null);
+  check('no page errors', errs.length===0, errs.slice(0,3));
+  await b.close(); const r=L.res(); console.log('\n'+r.pass+' passed, '+r.fail+' failed'); process.exit(r.fail?1:0); })();
