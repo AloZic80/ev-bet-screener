@@ -37,7 +37,7 @@ const addBet=(p,id)=>p.evaluate(id=>{ addToLog({name:'New Guy', sport:'NBA', mar
     await p.evaluate(()=>{ const gh={}; for(let i=0;i<17000;i++) gh['2026-11-0'+(i%9+1)+'|NBA|Player '+i+'|24.5 Points|-110']={sport:'NBA',gross:0.05,won:i%2==0,cover:0.55,net:0.05,stars:3,mkt:0.52,lg:0.1}; Object.assign(gradeHistory,gh); saveGradeHistory(); });
     await fill(p,0); await addBet(p,'NEWBET'); await p.waitForTimeout(7000);
     await p.reload(); await p.waitForTimeout(7000);
-    const st=await p.evaluate(()=>({mem:logged.some(x=>x.id==='NEWBET'), ls:JSON.parse(localStorage.getItem('mbev.log')||'[]').some(x=>x.id==='NEWBET'), tomb:(()=>{ try{ return !!JSON.parse(localStorage.getItem('mbev.syncMeta')).c.log.T.NEWBET; }catch(e){ return 'none'; } })()}));
+    const st=await p.evaluate(()=>({mem:logged.some(x=>x.id==='NEWBET'), ls:JSON.parse(lsPlain('mbev.log')||'[]').some(x=>x.id==='NEWBET'), tomb:(()=>{ try{ return !!JSON.parse(localStorage.getItem('mbev.syncMeta')).c.log.T.NEWBET; }catch(e){ return 'none'; } })()}));
     const sv={has:!!(srv.doc&&srv.doc.coll.log.NEWBET), del:!!(srv.doc&&srv.doc.del&&srv.doc.del.log&&srv.doc.del.log.NEWBET)};
     check('(a) sync on, storage full: after a reload the new bet is still here (saved with the room the sync meta freed, or put back from the Worker)', st.mem, st);
     check('(a) no tombstone for it, here or on the Worker, and the Worker still has it', st.tomb!==true && sv.has && !sv.del, {st, sv});
@@ -57,7 +57,7 @@ const addBet=(p,id)=>p.evaluate(id=>{ addToLog({name:'New Guy', sport:'NBA', mar
     await p.waitForTimeout(1000); await fill(p,0);
     const before=await p.evaluate(()=>({w:JSON.parse(localStorage.getItem('mbev.watchObs')).length, gh:Object.keys(JSON.parse(localStorage.getItem('mbev.gradehistory')||'{}')).length}));
     await addBet(p,'WALL1');
-    const after=await p.evaluate(()=>{ const W=JSON.parse(localStorage.getItem('mbev.watchObs')), L=JSON.parse(localStorage.getItem('mbev.log'));
+    const after=await p.evaluate(()=>{ const W=JSON.parse(localStorage.getItem('mbev.watchObs')), L=JSON.parse(lsPlain('mbev.log'));
       return {saved:L.some(x=>x.id==='WALL1'), n:L.length, banner:!!document.getElementById('saveFail'), sig:W.filter(o=>o.sig).length, live:W.filter(o=>!o.pruned).length, pruned:W.filter(o=>o.pruned).length,
         oldestLeft:W.filter(o=>o.pruned).map(o=>o.first).sort()[0], gh:Object.keys(JSON.parse(localStorage.getItem('mbev.gradehistory')||'{}')).length}; });
     check('(b) at the wall the new bet is saved (no red banner), every bet kept', after.saved && after.n===21 && !after.banner, after);
@@ -66,10 +66,10 @@ const addBet=(p,id)=>p.evaluate(id=>{ addToLog({name:'New Guy', sport:'NBA', mar
     // now no Watch room is left to give: old grade history goes next
     await p.evaluate(()=>{ window._watch=[]; localStorage.setItem('mbev.watchObs','[]'); }); await fill(p,0);
     await p.evaluate(()=>{ for(let i=0;i<8;i++){ addToLog({name:'Big '+i, sport:'NBA', market:'20.5 Points', book:'Novig', offeredRaw:'-105', stake:5, kind:'prop', side:'O', src:'api:x'}); logged[logged.length-1].id='WALL2-'+i; } saveLog(); });
-    const a2=await p.evaluate(()=>({saved:JSON.parse(localStorage.getItem('mbev.log')).filter(x=>/^WALL2/.test(x.id)).length, gh:Object.keys(JSON.parse(localStorage.getItem('mbev.gradehistory')||'{}')).length, banner:!!document.getElementById('saveFail')}));
+    const a2=await p.evaluate(()=>({saved:JSON.parse(lsPlain('mbev.log')).filter(x=>/^WALL2/.test(x.id)).length, gh:Object.keys(JSON.parse(localStorage.getItem('mbev.gradehistory')||'{}')).length, banner:!!document.getElementById('saveFail')}));
     check('(b) with no Watch room left, grade history older than 30 days makes the room', a2.saved===8 && a2.gh<before.gh && !a2.banner, a2);
     // and when nothing is left to give, the red banner says so (bets in memory are kept)
-    await fill(p,0); await p.evaluate(()=>{ addToLog({name:'Huge', sport:'NBA', market:'20.5 Points', book:'Novig', offeredRaw:'-105', stake:5, kind:'prop', side:'O', src:'api:x', notes:'n'.repeat(400000)}); logged[logged.length-1].id='HUGE'; logged[logged.length-1].notes='n'.repeat(400000); saveLog(); });
+    await fill(p,0); await p.evaluate(()=>{ addToLog({name:'Huge', sport:'NBA', market:'20.5 Points', book:'Novig', offeredRaw:'-105', stake:5, kind:'prop', side:'O', src:'api:x', notes:'x'}); logged[logged.length-1].id='HUGE'; logged[logged.length-1].notes=Array.from({length:400000},()=>Math.floor(Math.random()*36).toString(36)).join(''); saveLog(); });   /* v5.34: random text, because repeated text now compresses and would fit */
     const a3=await p.evaluate(()=>({banner:!!document.getElementById('saveFail'), mem:logged.length}));
     check('(b) nothing left to drop: the red banner shows, no bet is dropped from memory', a3.banner && a3.mem===30, a3);
     allErrs.push(...errs); await ctx.close(); }
@@ -123,7 +123,7 @@ const addBet=(p,id)=>p.evaluate(id=>{ addToLog({name:'New Guy', sport:'NBA', mar
     const {ctx,p,errs}=await boot(b,{'mbev.log':JSON.stringify(Array.from({length:20},(_,i)=>small(i))), 'mbev.watchObs':JSON.stringify(WR), 'mbev.syncOn':'1', 'mbev.syncKey':'k'.repeat(64)}, W.route);
     await p.waitForTimeout(5000); const cloud0=W.srv.doc?Object.keys(W.srv.doc.coll.watch||{}).length:0;
     await fill(p,0); await addBet(p,'WALLW'); await p.waitForTimeout(6000); await p.evaluate(()=>syncNow({force:true})); await p.waitForTimeout(3000);
-    const r=await p.evaluate(()=>{ const m=JSON.parse(localStorage.getItem('mbev.syncMeta')), st=m.c.watch||{}; return {saved:JSON.parse(localStorage.getItem('mbev.log')).some(x=>x.id==='WALLW'), here:watchAll().length, T:Object.keys(st.T||{}).length, X:Object.keys(st.X||{}).length}; });
+    const r=await p.evaluate(()=>{ const m=JSON.parse(localStorage.getItem('mbev.syncMeta')), st=m.c.watch||{}; return {saved:JSON.parse(lsPlain('mbev.log')).some(x=>x.id==='WALLW'), here:watchAll().length, T:Object.keys(st.T||{}).length, X:Object.keys(st.X||{}).length}; });
     const del=W.srv.doc&&W.srv.doc.del&&W.srv.doc.del.watch?Object.keys(W.srv.doc.del.watch).length:0;
     check('HS-5: Watch records dropped for room leave no deletion mark (here or on the Worker) and are not put back on this device', cloud0===60 && r.saved && r.here<60 && r.T===0 && r.X===60-r.here && del===0, {cloud0, r, del});
     const m=await p.evaluate(()=>{ const st={S:{},T:{},B:{},H:{},X:{w1:1}}; const o=syncMergeColl([], {w1:{v:{k:'w1'},m:5}, w2:{v:{k:'w2'},m:5}}, {}, st, false); return o.out.map(x=>x[0]).join(','); });
