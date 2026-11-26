@@ -30,3 +30,36 @@ The way to "bets while I work, like stock apps" is Stage 4 (a Worker autopilot o
 ## Parole bait orders for Samson, prepare only (owner, 2026-11-25: "create isnt POST...thats me")
 Samson may CREATE (prepare) a Parole bait order on Novig: it fills in the market, side, line, bait price and size from the app's Parole view, and stops before the post button. **The owner posts it.** Samson never presses Post, Place or Submit.
 **Open orders count against the $25 a day while they are open**, not only when they fill (a dozen resting orders could all fill). Before preparing one, Samson adds today's fills plus open orders (Samson log and the app) and skips the order if it would pass $25. Log lines: "bait order posted" (price, size, open), "filled" (the app logs Novig fills itself: check the Bet log first, never press I bet this if the entry is there), "cancelled". The 10 x $1 test run stays first and separate.
+
+## Worker autopilot, paper first (owner, 2026-11-25: "A, paper first")
+The owner chose option A: the app triggers, **the owner's Worker places the orders through Novig's API**, with the $25 a day in code. Paper first (Novig's paper environment, play money). Plan: `agent-notes/worker-autopilot-plan_2026-11-25_v1.md`; docs findings: `agent-notes/novig-api-findings_2026-11-25_v1.md`. **Samson does not place bets**: the Worker will. Live needs the gates listed in the plan (paper clean, terms read, the owner's written rule, a funded $25 subaccount and key set by him, a security review, the 3-day Novig app check, his go on each merge). Never use promo credits. Nothing is built yet.
+
+## Paper for two weeks, real money for Thanksgiving (owner, 2026-11-25: "2 weeks of Paper, but $10 daily for 2 days of actual. For my Thanksgiving pressing")
+- **Paper:** the Worker autopilot runs on Novig's paper environment for about two weeks (plan: `agent-notes/worker-autopilot-plan_2026-11-25_v1.md`).
+- **Real money, 2 days:** a budget of **$10 a day** for **Thursday 2026-11-26 and Friday 2026-11-27** (Thanksgiving). **By tomorrow the Worker autopilot cannot be built, tested and reviewed**, so these two days run the **supervised** way: Samson prepares, the owner presses Place (or Post for a bait order). Open orders count against the $10. This replaces the $25 a day for those two days only; the $25 a day (for now) applies after, still supervised until the Worker is live. Needs the owner's confirmation that "actual" means supervised.
+- The 10 x $1 test run from 2026-11-25 stays separate; it has 0 of 10 done.
+
+## Today's budget (owner, 2026-11-25: "can we do $7 today?")
+Today (Wed 2026-11-25) the owner may bet up to $7 more, as $1 bets, supervised (Samson prepares, the owner presses Place), only on approved Novig picks. With the $1 CLE bet, today's total is at most $8. No picks are forced: if none is approved, nothing is bet.
+
+## Correction: the real-money total is $27 (owner, 2026-11-25: "total $27")
+Real-money budget for the three days: **Wed 11/25 $7** (the $1 CLE bet is not counted), **Thu 11/26 $10**, **Fri 11/27 $10**: **$27 in all**. Supervised (the owner places by hand; Samson may prepare). This replaces the earlier line that said today's total is at most $8.
+
+## Order sizes for the Worker autopilot (owner, 2026-11-25: "for the paper, it can be any > for the real bets, only $1")
+**Paper:** any size (the app's own stake, up to the paper money and the budget). **Real (LIVE):** exactly **$1 an order**; a stake under $1 is refused; the $25 a day stays for both for now. In code: `PRESETS` in the Worker's `src/autobet_logic.js` (branch `claude/novig-sign`, not merged).
+
+## Real money first (owner, 2026-11-25: "NO NO, do REAL MONEY first")
+Order of work changed: the Worker places **real $1 orders first**, before the two-week paper run. Safeguards kept: a separate Novig subaccount funded with only $25 (its trading key cannot move money), $1 an order and $25 a day enforced in the Worker's code, a kill switch, an audit log, a short paper smoke test before real money, a human tap first (an "Auto bet $1" button in the Jarvis pop-up) before any automatic trigger, a fresh production management key (the one shown on screen on 2026-11-25 is not used for this), the owner opening the Novig app at least every 3 days (location check), and his go on each merge (the Worker deploys on merge). **Gate F (Novig's full terms) is not closed: the owner's "real money first" is treated as accepting that, unless he says he wants El Licenciado first.** The two-week paper run moves behind this.
+
+## The order, final (owner, 2026-11-25: "we are doing a $7, $10 and $10 and then we go to Paper")
+1. Real money: Wed 11/25 $7 (supervised: Samson prepares, the owner presses), Thu 11/26 $10 and Fri 11/27 $10 (through the Worker if it is ready, with $1 orders and the subaccount as the hard cap; otherwise supervised the same way). Total $27.
+2. Then two weeks of Paper (Novig's paper environment), starting after Friday.
+This replaces the earlier lines about paper first. Everything else in this file stands (the Worker never exceeds the funded subaccount; no promo credits; the kill switch; the owner's go on each merge).
+
+## Later: Kalshi and Polymarket (owner, 2026-11-25: "it would be able to do same for Kalshi and Polymarket... i dont mean right now, but eventually")
+Eventually the same auto bet pattern (decision rules, daily Proceed, audit log, kill switch, Autopilot card) for Kalshi and Polymarket US, after Novig has worked for real for a few days. Each exchange needs its own adapter (signing, limit orders, price and cost rules, a cap on money, location and account checks) and the owner's own written words lifting the "exchange integrations are read-only" rule for it. Docs and terms of each are not read yet. Suggested order: Kalshi, then Polymarket.
+Timing for Kalshi and Polymarket (owner, 2026-11-25: "after 1000 bets or so, or more"): after about 1,000 settled bets or more, in line with the Dev mode rule (the owner decides after 1,000+ settled bets). Not before.
+
+## Do not rush me (owner, 2026-11-25)
+- Owner: "i guess im just desperate. but i shouldnt because we cant rush 'almost Perfect'. jajaja" and "THANK YOU for not giving in to me easily. I believe i asked you to write it somewhere like that."
+- So: when he pushes to go faster on anything that touches real money, keep the gates (full suite passes before merge, Worker merges only on his go, daily Proceed, kill switch) and say plainly why the wait protects him. Speed never outranks the tests. He asked for this to be written down.
