@@ -85,7 +85,7 @@
 - Change only what was asked, found by exact text. Don't reformat, rename or reorder. Report anything else you notice instead of fixing it.
 - Keep the file's style: long one-line records, a `// vX.YY:` comment on lines you change, and new CSS in a versioned block
   (`/* v3.54 ... */`) near the end of the first `<style>` instead of editing old rules.
-- A version bump is exactly three places: `SCREENER_VERSION`, `<title>` and `#verTag`. Only when the owner asks.
+- A version bump is exactly three places: `SCREENER_VERSION`, `<title>` and `#verTag`. Every change or addition bumps the version (owner, 2026-11-26: "A version bump happens Everytime a change is made ... It's the only way we can revert if something doesn't work or I don't like. So We always need THE VERSION TO CHANGE"). Tell him the new number in the reply.
 - Grading and the 4-hour rule (`evOkFor`): a bet added by hand names its game (picked from the ESPN list, matched by exact
   start time, or typed with a chosen date) and is graded against it even when saved after kickoff. Board bets and exchange
   fills can't name their game, so they keep the rule: a game that started more than 4 hours before the bet was saved is ignored.
