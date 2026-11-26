@@ -58,3 +58,4 @@ This replaces the earlier lines about paper first. Everything else in this file 
 
 ## Later: Kalshi and Polymarket (owner, 2026-11-25: "it would be able to do same for Kalshi and Polymarket... i dont mean right now, but eventually")
 Eventually the same auto bet pattern (decision rules, daily Proceed, audit log, kill switch, Autopilot card) for Kalshi and Polymarket US, after Novig has worked for real for a few days. Each exchange needs its own adapter (signing, limit orders, price and cost rules, a cap on money, location and account checks) and the owner's own written words lifting the "exchange integrations are read-only" rule for it. Docs and terms of each are not read yet. Suggested order: Kalshi, then Polymarket.
+Timing for Kalshi and Polymarket (owner, 2026-11-25: "after 1000 bets or so, or more"): after about 1,000 settled bets or more, in line with the Dev mode rule (the owner decides after 1,000+ settled bets). Not before.
