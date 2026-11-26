@@ -2287,6 +2287,11 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 #ppPanel details.pp-more>summary{cursor:pointer; min-height:32px; display:list-item}
 #ppPanel .pp-t td{vertical-align:top}
 @media (max-width:600px){ #ppPanel details.pp-more>summary{min-height:44px} }
+/* v5.34 cloud line on the Bet log */
+.cloud-line{margin:0 0 12px; padding:8px 12px; border:1px solid var(--line); border-radius:8px; font-size:14px}
+.cloud-line.cloud-ok{border-color:var(--ok); color:var(--ok)}
+.cloud-line.cloud-wait{border-color:var(--warn); color:var(--warn)}
+.cloud-line.cloud-bad{border-color:var(--bad,#ff6b6b); color:var(--bad,#ff6b6b)}
 </style>
 </head>
 <body>
@@ -3009,7 +3014,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 
 <!-- ======================= LOG ======================= -->
 <div class="view" id="v-log">
-<div class="storage-warn" id="storageWarn" role="status" hidden></div><!-- v5.25 (ENG-2): a calm note over 80% -->
+<div class="storage-warn" id="storageWarn" role="status" hidden></div><div class="meta cloud-line" id="cloudLine" role="status"></div><!-- v5.25 (ENG-2): a calm note over 80% -->
 <div class="panel look-out" id="lookOut" hidden></div>   <!-- v3.57: bets not graded yet, automatically or by you -->
 <div class="panel log-orders" id="logOrders" hidden></div>   <!-- v4.17: orders waiting at your books (not bets until they fill) -->
 <div class="panel" id="lcPanel">   <!-- v4.36: Augi's Bet log, step 3: his bet calendar, the day, cover bands, track by, import, on our log and math -->
@@ -8044,8 +8049,8 @@ function storageUseRender(){ try{ storageTopRender(); }catch(e){} const I=storag
   const a=document.getElementById('storageUse'); if(a) a.textContent=txt+'.';
   const w=document.getElementById('storageWarn'); if(w){ if(I.pct>80){ w.hidden=false; w.textContent=txt+'. When it is full, new bets cannot be saved on this device: back up the bet log (More › Back up) and tell El Capataz.'; } else { w.hidden=true; w.textContent=''; } }
   return I; }
-document.addEventListener('click', e=>{ if(e.target.closest && e.target.closest('.tab[data-view="v-settings"], .tab[data-view="v-log"]')) setTimeout(()=>{ try{ storageUseRender(); }catch(err){} },0); });   // v5.25
-setTimeout(()=>{ try{ storageUseRender(); }catch(e){} }, 1200);   // v5.25
+document.addEventListener('click', e=>{ if(e.target.closest && e.target.closest('.tab[data-view="v-settings"], .tab[data-view="v-log"]')) setTimeout(()=>{ try{ storageUseRender(); }catch(err){} try{ cloudLineRender(); }catch(err){} },0); });   // v5.25
+setTimeout(()=>{ try{ storageUseRender(); }catch(e){} try{ cloudLineRender(); }catch(e){} }, 1200);   // v5.25
 /* v2.63: what the screener said about a row, in one word — saved with every bet you log.
    "On the list" = the screener had a stake on it (BET / RISK / OUTLIER / LIMITED) and the game hadn't started. */
 function saidOf(r){
@@ -16633,7 +16638,18 @@ async function syncBoard(){
   if(r.ok){ M.brev=+r.j.head.rev||M.brev; M.bsig=sig; }
   else if(r.status===409) M.brev=-1;   // someone saved a board first — the next round looks at it
 }
+/* v5.34 (owner 2026-11-25: "i want this on a cloud"): one plain line on the Bet log: are the bets in the cloud copy right now, or only on this device. It never says "safe" unless sync is on, has no error and has nothing waiting to be sent. */
+function cloudLineRender(){ const el=document.getElementById('cloudLine'); if(!el || !SY) return; const M=SY.meta||{}, n=(logged||[]).length, t=M.at?new Date(M.at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'';
+  let cls='meta cloud-line', txt;
+  if(!SY.on){ cls+=' cloud-bad'; txt='☁ NOT in the cloud: sync is off, so your '+n+' bet'+(n===1?'':'s')+' live only on this device. Turn on sync in Settings (Your bets on every device).'; }
+  else if(SY.err){ cls+=' cloud-bad'; txt='☁ Cloud copy NOT up to date: '+SY.err+'. Your '+n+' bets are on this device; the next successful sync saves them.'; }
+  else if(SY.busy){ txt='☁ Saving to the cloud…'; }
+  else if(M.dirty){ cls+=' cloud-wait'; txt='☁ Saving soon: some changes have not reached the cloud yet. '+n+' bets here.'; }
+  else if(M.joined===false || !t){ txt='☁ Sync is on; waiting for its first save to the cloud.'; }
+  else { cls+=' cloud-ok'; txt='☁ In the cloud: '+n+' bet'+(n===1?'':'s')+', last saved '+t+'. This browser only keeps a working copy.'; }
+  el.className=cls; el.textContent=txt; }
 function syncShow(){
+  try{ cloudLineRender(); }catch(e){}
   const chip=document.getElementById('syncChip'), st=document.getElementById('syncStatus'); if(!SY) return;
   const M=SY.meta||{}, t=M.at?new Date(M.at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'';
   if(chip){ chip.className='sync-chip'+(!SY.on?'':SY.err?' err':' ok');
