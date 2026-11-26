@@ -38,7 +38,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.39</title>
+<title>0xBeta Screener v5.41</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -2300,7 +2300,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.39</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.41</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2774,6 +2774,8 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
   <div class="meta" style="margin-top:8px"><a href="control.html" target="_blank" rel="noopener" id="apCtl">Open the control page</a> (the dashboard: status, today's orders, Proceed, Stop, simple questions)</div>
   <div id="apReport" class="meta" style="margin-top:8px"></div>
   <div id="apSamson" class="meta" style="margin-top:8px"></div>
+  <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px"><button type="button" class="ghost" id="apMathBtn">Check the Worker’s math</button><span class="meta">Hands-Free Stage 1: the Worker scores this board with La Contadora’s formulas and the page checks it gets the same numbers.</span></div>
+  <div id="apMath" class="meta" role="status" aria-live="polite" style="margin-top:4px"></div>
   <div id="apNow" class="meta" role="status" aria-live="polite" style="margin-top:6px"></div>
   <div id="apLook" class="meta"></div>
   <div class="meta" id="apMsg" role="status"></div>
@@ -3274,7 +3276,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 
 </div>
 <script>
-const SCREENER_VERSION='v5.39';
+const SCREENER_VERSION='v5.41';
 /* v5.24 (step 5): DEV_APP is now defined once, in the head script at the top of this file (the first paint reads it too) */
 if(!DEV_APP) document.documentElement.setAttribute('data-viewas','easy');   // v5.24 (step 3b): a customer build is Easy whatever mbev.viewAs holds
 /* v5.24 (owner 11/20: "we need to differentiate already"; "for me in GOD mode, let me tell the difference of what they cant see and i can"): levels.
@@ -14764,6 +14766,22 @@ function samsonProvenance(fills, orders, notes){ const out={worker:[], samson:[]
     const w=(orders||[]).some(o=>o && /placed|filled|open/i.test(String(o.result||'')) && samsonMatchText(nm, o.name||o.key||'') && (!ts || (o.t<=ts+10*60e3 && ts-o.t<6*3600e3)));
     const sm=(notes||[]).some(x=>x && x.kind==='prepared' && samsonMatchText(nm, (x.pick||'')+' '+(x.what||'')) && (!ts || (x.t<=ts+10*60e3 && ts-x.t<12*3600e3)));
     (w?out.worker:sm?out.samson:out.neither).push(f); }); return out; }
+/* v5.41 (owner 2026-11-26: "start building all the way till you get the Hands Free Stage 1. i want to test it already"): Hands-Free Stage 1. The Worker has La Contadora's math (POST /contadora/score: the chance, the fee, the EV, OK up to, the Kelly stake). This sends the rows on the board to it, with this page's own settings, and checks every number against the page's own functions (okProb, feeRate, actNetOf, maxPriceFor, kellyFor). Read-only: it places and stores nothing. */
+async function apMathCheck(){ const m=document.getElementById('apMath'); if(!m) return; const say=x=>{ m.innerHTML=x; };
+  const rows=(lastRows||[]).filter(r=>r && r.fairProb>0 && r.fairProb<1 && r.offeredProb>0 && r.offeredProb<1).slice(0,500);
+  if(!rows.length){ say('There are no priced rows on the board to check yet. Press Load first.'); return; }
+  if(!(typeof SY!=='undefined' && SY && SY.on && SY.key)){ say('Sync is off here: turn on sync (Settings, Your bets on every device) so this page can sign in to the Worker.'); return; }
+  const cfg=cfgRead(), body={cfg:{mWeight:cfg.mWeight, eMin:cfg.eMin, bank:cfg.bank, kelly:cfg.kelly, shrink:cfg.shrink, sMax:cfg.sMax, fees:cfg.fees}, rows:rows.map((r,i)=>({id:i, model:r.fairProb, market:r.mktProb==null?null:r.mktProb, price:r.offeredProb, book:r.book||'', live:false}))};
+  say('Asking the Worker to score '+rows.length+' rows…'); let res=null; try{ res=await apFetch('/contadora/score','POST',body); }catch(e){ say('No answer from the Worker.'); return; }
+  if(!res || res.status===404){ say('The Worker does not have the math route yet (it answered 404).'); return; }
+  if(res.status===401||res.status===403){ say('The Worker says it is locked: check the screener passphrase and the sync password.'); return; }
+  if(!res.j || !res.j.ok || !Array.isArray(res.j.results)){ say('The Worker said no'+(res.j&&res.j.error?': '+esc(res.j.error):'')+'.'); return; }
+  const near=(a,b)=>(a==null&&b==null)||(a!=null&&b!=null&&Math.abs(a-b)<=1e-12), bad=[]; let ok=0;
+  rows.forEach((r,i)=>{ const w=res.j.results[i]||{}, p=okProb(r.fairProb, r.mktProb), fee=feeRate(r.book||'', r.offeredProb, cfg.fees, false), net=actNetOf(r.fairProb, r.mktProb, r.offeredProb, fee), mx=p==null?null:maxPriceFor(p, r.book||'', cfg.eMin), k=net==null?null:kellyFor(cfg, net, r.offeredProb), diff=[];
+    if(!near(w.actProb,p)) diff.push('chance '+w.actProb+' vs '+p); if(!near(w.fee,fee)) diff.push('fee '+w.fee+' vs '+fee); if(!near(w.net,net)) diff.push('EV '+w.net+' vs '+net); if(!near(w.okUpTo,mx)) diff.push('OK up to '+w.okUpTo+' vs '+mx); if(!near(w.kelly,k)) diff.push('stake '+w.kelly+' vs '+k);
+    if(diff.length) bad.push((r.name||r.player||('row '+i))+': '+diff.join('; ')); else ok++; });
+  say(bad.length?'<b class="no-t">The Worker and this page disagree on '+bad.length+' of '+rows.length+' rows.</b> First ones: '+esc(bad.slice(0,3).join(' | ')):'<b class="ok-t">The Worker agrees with this page on '+ok+' of '+rows.length+' board rows</b> (chance, fee, EV, OK up to and Kelly stake, every one the same number). Nothing was placed or saved.'); }
+document.addEventListener('click', e=>{ if(e.target && e.target.id==='apMathBtn'){ e.preventDefault(); apMathCheck().catch(()=>{ const m=document.getElementById('apMath'); if(m) m.textContent='Could not run the check.'; }); } });   // v5.41
 async function apSamsonPaint(st){ const el=document.getElementById('apSamson'); if(!el) return;
   const notes=await (async()=>{ if(!(SY && SY.on && SY.key)) return null; try{ const r=await apFetch('/samson/log'); return (r.j&&r.j.ok)?(r.j.entries||[]):null; }catch(e){ return null; } })();
   const cut=Date.now()-24*3600e3, fills=myFillsGet().filter(f=>f && f.book==='novig' && (!(f.ts>0) || f.ts>cut)), P=samsonProvenance(fills, (st&&st.orders)||[], notes||[]);
@@ -14999,7 +15017,7 @@ function renderOrdersTop(O,held){ const el=document.getElementById('ordersTop');
 document.addEventListener('click',e=>{ if(!e.target.closest('#ordersTopGo')) return; const t=document.querySelector('.tab[data-view="v-log"]'); if(t) t.click(); setTimeout(()=>{ const b=document.getElementById('logOrders'); if(b && !b.hidden) b.scrollIntoView({block:'start'}); },60); });
 function renderLogOrders(){ const el=document.getElementById('logOrders'); if(!el) return;
   const O=((myOrders&&myOrders.orders)||[]).filter(o=>o && o.action!=='sell'), er=ordersErrText();
-  const cost0=o=>o.price!=null&&o.qty!=null?Math.ceil((+o.price)*(+o.qty)*100-1e-6)/100:0; renderOrdersTop(O, O.reduce((t,o)=>t+cost0(o),0));
+  const cost0=o=>o.price!=null&&o.qty!=null?Math.ceil((+o.price)*(+o.qty)*100-1e-6)/100:0; const OT=O.filter(o=>!(orderMatchedCost(o)>0)); renderOrdersTop(OT, OT.reduce((t,o)=>t+cost0(o),0));   /* v5.40 (owner: "so its 2 that say"): an order that already has a taker is not in the top waiting line either; it stays in the Bet log's waiting list and the pull-it alerts */
   if(!O.length && er){ el.hidden=false; el.innerHTML='<h3>⏳ Waiting at your books</h3><div class="meta ot-err">⚠ Could not read your orders from the books: '+esc(er)+'. Orders you placed there do not show until this works.</div>'; return; }
   if(!O.length){ el.hidden=true; el.innerHTML=''; return; }
   const cost=o=>o.price!=null&&o.qty!=null?Math.ceil((+o.price)*(+o.qty)*100-1e-6)/100:0, held=O.reduce((t,o)=>t+cost(o),0);
@@ -15010,17 +15028,22 @@ function renderLogOrders(){ const el=document.getElementById('logOrders'); if(!e
         '<span class="lo-what">'+esc(o.side?(o.side==='no'?'NO · ':'YES · '):'')+esc(L.bet)+'</span>'+(o.title&&o.title!==L.bet?'<span class="lo-m">'+esc(o.title)+'</span>':'')+
         '<span class="lo-m">'+(o.qty!=null?(+o.qty)+' shares':'')+(o.price!=null?' at '+Math.round(o.price*100)+'¢':'')+(o.price!=null&&o.qty!=null?' = $'+cost(o).toFixed(2):'')+(filled>0?' · '+filled+' filled':' · 0 filled')+'</span>'+
         (L.when?'<span class="lo-m">game '+esc(L.when)+'</span>':'')+'</div>'; }).join(''); }
+/* v5.40 (owner 2026-11-26: "i need for the Tony Pollard Hook/Taker to be removed. its taken already on Novig"): a Hide button on each order in the orange "Make waiting for a taker" bar, kept on this device (mbev.mkHide), undone by "Show hidden". It hides ONLY that bar: the Bet log's "Waiting at your books" list, the "pull it" game-start alerts and the Already-bet marks still use the order, so a real resting order can never slip past. */
+function mkHideKey(o){ return String(o.book||'')+':'+String(o.id||o.ref||''); }
+function mkHideGet(){ try{ return JSON.parse(localStorage.getItem('mbev.mkHide')||'{}')||{}; }catch(e){ return {}; } }
+function mkHideSet(k,on){ try{ const H=mkHideGet(); if(on) H[k]=Date.now(); else delete H[k]; localStorage.setItem('mbev.mkHide', JSON.stringify(H)); }catch(e){} }
 function renderMakes(){
   try{ renderPullBar(); }catch(e){}
   try{ renderLogOrders(); }catch(e){}   // v4.17
   document.querySelectorAll('.mk-slot').forEach(el=>{ const r=lastRows.find(x=>x.idx===+el.dataset.idx); const h=r?makeTagHtml(r):''; if(el.innerHTML!==h) el.innerHTML=h; });
   const bar=document.getElementById('makesBar'); if(!bar) return;
-  const O=((myOrders&&myOrders.orders)||[]).filter(o=>o.action!=='sell'), onBoard=O.filter(o=>lastRows.some(r=>makesFor(r).includes(o))).length;
-  if(!O.length){ bar.style.display='none'; return; }
+  const ALL=((myOrders&&myOrders.orders)||[]).filter(o=>o.action!=='sell'), HID=mkHideGet(), TAKEN=ALL.filter(o=>orderMatchedCost(o)>0), O=ALL.filter(o=>!HID[mkHideKey(o)] && !TAKEN.includes(o)), nHid=ALL.filter(o=>HID[mkHideKey(o)] && !TAKEN.includes(o)).length,   /* v5.40 (owner: "I dont want to see it if it has a taker because its taken real estate"): an order that already has a taker is not shown in this bar at all; the top waiting line, the Bet log list and the pull-it alerts still count it */ onBoard=O.filter(o=>lastRows.some(r=>makesFor(r).includes(o))).length;   // v5.40: hidden ones are left out of this bar only
+  if(!O.length){ if(nHid){ bar.style.display=''; bar.innerHTML='🪝 '+nHid+' hidden Make'+(nHid===1?'':'s')+' <button type="button" class="linkbtn mk-unhide">Show hidden</button>'; } else bar.style.display='none'; return; }
   const off=O.filter(o=>!lastRows.some(r=>makesFor(r).includes(o)));
   bar.style.display=''; bar.innerHTML='🪝 '+O.length+' Make'+(O.length===1?'':'s')+' waiting for a taker'+(onBoard?' — tap to see':'')+
-    (off.length?'<div class="mk-off">Not on this board: '+off.map(o=>esc(fillLabel({bet:o.bet||{}, title:o.title, book:o.book, ref:o.ref}).bet+' · '+(o.price*100).toFixed(1)+'% · $'+((+o.price||0)*(+o.qty||0)).toFixed(2)+' · '+(BOOK_NAME[o.book]||o.book)+(orderMatchedCost(o)>0?' · matched so far on this market: $'+orderMatchedCost(o).toFixed(2)+' (already a bet; this is the rest)':''))).join(' &nbsp;|&nbsp; ')+' — check the side and line on '+esc(off.map(o=>BOOK_NAME[o.book]||o.book).filter((v,i,a)=>a.indexOf(v)===i).join(' / '))+'</div>':'');
+    (off.length?'<div class="mk-off">Not on this board: '+off.map(o=>esc(fillLabel({bet:o.bet||{}, title:o.title, book:o.book, ref:o.ref}).bet+' · '+(o.price*100).toFixed(1)+'% · $'+((+o.price||0)*(+o.qty||0)).toFixed(2)+' · '+(BOOK_NAME[o.book]||o.book)+'')+' <button type="button" class="linkbtn mk-hide" data-k="'+esc(mkHideKey(o))+'" title="Hide this one here. It stays in the Bet log list and the pull-it alerts.">Hide</button>').join(' &nbsp;|&nbsp; ')+' — check the side and line on '+esc(off.map(o=>BOOK_NAME[o.book]||o.book).filter((v,i,a)=>a.indexOf(v)===i).join(' / '))+'</div>':'')+(nHid?' <button type="button" class="linkbtn mk-unhide">Show hidden ('+nHid+')</button>':'');
 }
+document.addEventListener('click', e=>{ const h=e.target.closest && e.target.closest('.mk-hide'), u=e.target.closest && e.target.closest('.mk-unhide'); if(h){ e.preventDefault(); e.stopPropagation(); mkHideSet(h.dataset.k,true); renderMakes(); } else if(u){ e.preventDefault(); e.stopPropagation(); try{ localStorage.removeItem('mbev.mkHide'); }catch(_){} renderMakes(); } }, true);   // v5.40
 document.addEventListener('click', e=>{ if(!e.target.closest('#makesBar') || e.target.closest('.mk-ack')) return; const t=[...document.querySelectorAll('.mk-slot')].find(x=>x.textContent.trim() && x.offsetParent); if(t) t.scrollIntoView({behavior:'smooth', block:'center'}); });
 /* v4.56: a best-book claim (Send the Sentinels moved the bet to another book) holds 3 minutes, 90 seconds when the game starts within 5 minutes. After
    that it says so; no price is read again by itself (no new Worker calls). Hoisted: the card and the timer call it. */
