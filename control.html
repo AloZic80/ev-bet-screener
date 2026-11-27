@@ -201,6 +201,7 @@ body{padding:12px}.sub{font-size:12px;margin-bottom:8px}.stat{flex:1 1 44%;min-w
 <details class="hf-d" id="auBox"><summary id="auSum">Auto loads · checking…</summary>
 <div id="auBody" class="hint">Checking…</div>
 <div class="ask"><button id="auWatch">Check the data now</button><button id="auPause">Pause auto loads</button></div>
+<div id="auReq" class="hint">Requests to the Worker today: checking…</div>
 <div id="auMsg" class="hint"></div>
 <div class="hint">The Worker loads The Odds API and OddsPapi by itself inside each limit, spread across the day, so you do not have to press Load. Once a day after 8 AM it also reads how every source is doing and tells you in plain words if something is broken (a phone alert only when something needs you). Pausing stops only these loads.</div></details></div>
 <div class="card" id="alCard"><h2>Phone alerts</h2>
@@ -461,6 +462,8 @@ body{padding:12px}.sub{font-size:12px;margin-bottom:8px}.stat{flex:1 1 44%;min-w
       var t=' \u00b7 '+(x.key?(auLeft(x)+' left (resets '+x.resets+')'+(x.shareToday!=null?' \u00b7 today '+x.usedToday+' of about '+x.shareToday:'')):'no key on the Worker'); if(x.held){ t+=' \u00b7 paused until '+new Date(x.held).toLocaleString(); bad=true; } if(x.error){ t+=' \u00b7 '+x.error; bad=bad||!x.held; }
       row.appendChild(document.createTextNode(t)); if(x.lastAt){ var l=document.createElement('div'); l.className='hint'; l.textContent='Last load '+new Date(x.lastAt).toLocaleString()+((x.loads&&x.loads[0])?' \u00b7 '+x.loads[0].what+(x.loads[0].note?' ('+x.loads[0].note+')':''):''); row.appendChild(l); } body.appendChild(row);
       bits.push((/odds api/i.test(x.name)?'Odds API':x.name)+' '+auLeft(x)); });
+    var rq=document.getElementById('auReq'); (async function(){ var q=await call('/autoload/requests'); if(!q.ok||!q.j||!q.j.requests){ if(rq) rq.textContent='Requests to the Worker today: not on the Worker yet.'; return; } var R=q.j.requests, pct=Math.round(R.total/R.limit*100), parts=(R.byDevice||[]).slice(0,4).map(function(x){ return x.k+' '+x.n; }).join(' \u00b7 ');
+      if(rq) rq.textContent='Requests to the Worker today (about): '+R.total.toLocaleString()+' of '+R.limit.toLocaleString()+' ('+pct+'%) \u00b7 '+(R.preflights||0).toLocaleString()+' preflights'+(parts?' \u00b7 by sender: '+parts:'')+' \u00b7 resets 6 PM Chicago (00:00 UTC)'; if(rq) rq.style.color=pct>=70?'var(--warn,#e8a317)':''; var sm=document.getElementById('auSum'); if(sm && pct>=70){ sm.className='full'; if(!/requests/.test(sm.textContent)) sm.textContent+=' \u00b7 requests '+pct+'%'; } })();
     var w=AU.watch, issues=(w&&w.issues||[]).filter(function(i){ return i.severity==='broken'||i.severity==='degraded'; });
     var wb=document.createElement('div'); wb.style.margin='8px 0'; var wh=document.createElement('b'); wh.textContent='Data check'; wb.appendChild(wh);
     wb.appendChild(document.createTextNode(w?(' \u00b7 '+new Date(w.at).toLocaleString()+' \u00b7 '+(w.summary||'')):' \u00b7 not run yet (it runs once a day after 8 AM, or press Check the data now)')); body.appendChild(wb);
@@ -490,7 +493,13 @@ body{padding:12px}.sub{font-size:12px;margin-bottom:8px}.stat{flex:1 1 44%;min-w
   function tabShow(name){ var ok=['hf','games','settings','other','all'].indexOf(name)>=0?name:'hf'; ['hf','games','settings','other'].forEach(function(n){ var t=document.getElementById('tab-'+n), p=document.getElementById('pane-'+n); if(t) t.setAttribute('aria-selected',n===ok?'true':'false'); if(t) t.tabIndex=(n===ok||(ok==='all'&&n==='hf'))?0:-1; if(p) p.hidden=!(n===ok||ok==='all'); });   /* the saved value all shows every section at once (used by the tests and for printing) */ try{ localStorage.setItem('mbev.ctl.tab',ok); }catch(e){} }
   (function(){ var order=['hf','games','settings','other']; order.forEach(function(n,i){ var t=document.getElementById('tab-'+n); t.onclick=function(){ tabShow(n); }; t.onkeydown=function(ev){ var k=ev.key==='ArrowRight'?1:ev.key==='ArrowLeft'?-1:0; if(!k) return; var m=order[(i+k+order.length)%order.length]; tabShow(m); document.getElementById('tab-'+m).focus(); ev.preventDefault(); }; }); tabShow(ls('mbev.ctl.tab')||'hf'); })();
   hfLoad(false); auLoad();
-  refresh(); setInterval(function(){ if(!document.hidden) refresh(); }, 30000);
+  /* v5.70 (owner 2026-11-27: 86,052 of the free plan's 100,000 requests used by 3 PM; "Build calm polling"): the page asks the Worker every 60 seconds while you use it, every 2 minutes after 2 minutes without a tap, every 5 minutes after 10, and not at all while the tab is hidden. Coming back or touching it after a pause asks once at once. */
+  var lastTouch=Date.now(), lastPoll=0;
+  function pollGap(){ var idle=Date.now()-lastTouch; return idle>600000?300000:(idle>120000?120000:60000); }
+  function pollNow(){ lastPoll=Date.now(); refresh(); }
+  ['pointerdown','keydown','touchstart','wheel'].forEach(function(e){ document.addEventListener(e,function(){ lastTouch=Date.now(); if(!document.hidden && Date.now()-lastPoll>60000) pollNow(); },{passive:true}); });
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden && Date.now()-lastPoll>60000) pollNow(); });
+  pollNow(); setInterval(function(){ if(!document.hidden && Date.now()-lastPoll>=pollGap()) pollNow(); }, 10000);
 })();
 </script>
 </body></html>
