@@ -197,6 +197,12 @@ body{padding:12px}.sub{font-size:12px;margin-bottom:8px}.stat{flex:1 1 44%;min-w
 <details class="hf-d" id="srcBox"><summary id="srcSum">Price sources · checking…</summary>
 <div id="hfSrc" class="hint">Checking…</div>
 <div class="hint">Hands-free asks Pinnacle first. If Pinnacle cannot answer (its day is used up, or it says slow down), it asks The Odds API for Pinnacle's prices instead. Each source has its own daily budget.</div></details></div>
+<div class="card" id="auCard"><h2>Auto loads and data check</h2>
+<details class="hf-d" id="auBox"><summary id="auSum">Auto loads · checking…</summary>
+<div id="auBody" class="hint">Checking…</div>
+<div class="ask"><button id="auWatch">Check the data now</button><button id="auPause">Pause auto loads</button></div>
+<div id="auMsg" class="hint"></div>
+<div class="hint">The Worker loads The Odds API and OddsPapi by itself inside each limit, spread across the day, so you do not have to press Load. Once a day after 8 AM it also reads how every source is doing and tells you in plain words if something is broken (a phone alert only when something needs you). Pausing stops only these loads.</div></details></div>
 <div class="card" id="alCard"><h2>Phone alerts</h2>
 <div class="hint" id="alState">Checking…</div>
 <details class="hf-d" id="alBox"><summary>Set up or change phone alerts (you only do this once)</summary>
@@ -439,6 +445,25 @@ body{padding:12px}.sub{font-size:12px;margin-bottom:8px}.stat{flex:1 1 44%;min-w
   /* v5.62: the closed Price sources dropdown always shows the day's counts, and turns orange when a source is used up */
   var SRCFULL=false;
   function srcSummary(list){ var e=document.getElementById('srcSum'), bits=[], full=false; list.forEach(function(x){ if(x.budget==null) return; var nm=/pinnapi/i.test(x.name)?'pinnapi':/pinnodds/i.test(x.name)?'Pinnodds':/odds api/i.test(x.name)?'Odds API':x.name; bits.push(nm+' '+x.used+'/'+x.budget); if(+x.used>=+x.budget||x.held) full=true; }); SRCFULL=full; if(e){ e.textContent='Price sources \u00b7 '+(bits.join(' \u00b7 ')||'no budgets'); e.className=full?'full':''; } tabDots(); }
+  /* v5.67: the Auto loads card: what the Worker loaded by itself, what is left of each allowance, and the daily data check (all read from the Worker) */
+  var AU=null;
+  function auLeft(x){ return x.left==null?'?':x.left; }
+  async function auLoad(){ var sum=document.getElementById('auSum'), body=document.getElementById('auBody'); if(!sum||!body) return; var r=await call('/autoload/status'); body.textContent='';
+    if(!r.ok){ sum.textContent='Auto loads \u00b7 '+(r.noSync?'sign in first':(r.status===404?'not on the Worker yet':'no answer')); sum.className=''; body.textContent=r.noSync?'Sign in on this device first.':(r.status===404?'The Worker does not have auto loads yet.':why(r)); return; }
+    AU=r.j; var bad=false, bits=[];
+    (AU.sources||[]).forEach(function(x){ var row=document.createElement('div'); row.style.margin='6px 0'; var b=document.createElement('b'); b.textContent=x.name; row.appendChild(b);
+      var t=' \u00b7 '+(x.key?(auLeft(x)+' left this month'+(x.shareToday!=null?' \u00b7 today '+x.usedToday+' of about '+x.shareToday:'')):'no key on the Worker'); if(x.held){ t+=' \u00b7 paused until '+new Date(x.held).toLocaleString(); bad=true; } if(x.error){ t+=' \u00b7 '+x.error; bad=bad||!x.held; }
+      row.appendChild(document.createTextNode(t)); if(x.lastAt){ var l=document.createElement('div'); l.className='hint'; l.textContent='Last load '+new Date(x.lastAt).toLocaleString()+((x.loads&&x.loads[0])?' \u00b7 '+x.loads[0].what+(x.loads[0].note?' ('+x.loads[0].note+')':''):''); row.appendChild(l); } body.appendChild(row);
+      bits.push((/odds api/i.test(x.name)?'Odds API':x.name)+' '+auLeft(x)); });
+    var w=AU.watch, issues=(w&&w.issues||[]).filter(function(i){ return i.severity==='broken'||i.severity==='degraded'; });
+    var wb=document.createElement('div'); wb.style.margin='8px 0'; var wh=document.createElement('b'); wh.textContent='Data check'; wb.appendChild(wh);
+    wb.appendChild(document.createTextNode(w?(' \u00b7 '+new Date(w.at).toLocaleString()+' \u00b7 '+(w.summary||'')):' \u00b7 not run yet (it runs once a day after 8 AM, or press Check the data now)')); body.appendChild(wb);
+    (w&&w.issues||[]).forEach(function(i){ var d=document.createElement('div'); d.className='hint'; d.textContent=(i.severity==='broken'?'Broken: ':i.severity==='degraded'?'Slowed: ':'Note: ')+i.source+' \u2014 '+i.plain+(i.fix&&i.fix!=='none'?' To check: '+i.fix:''); body.appendChild(d); });
+    if(issues.length) bad=true;
+    sum.textContent='Auto loads \u00b7 '+(AU.on?'on':'paused')+' \u00b7 '+bits.join(' \u00b7 ')+(w?(' \u00b7 data check: '+(issues.length?issues.length+' to look at':'ok')):''); sum.className=bad||!AU.on?'full':'';
+    var p=document.getElementById('auPause'); if(p) p.textContent=AU.on?'Pause auto loads':'Resume auto loads'; tabDots(); }
+  document.getElementById('auWatch').onclick=async function(){ var m=document.getElementById('auMsg'); m.textContent='Checking every source (one short AI read, a few cents)\u2026'; var r=await call('/autoload/watch','POST',{}); m.textContent=r.ok?'Done.':why(r); await auLoad(); };
+  document.getElementById('auPause').onclick=async function(){ var m=document.getElementById('auMsg'); var on=!(AU&&AU.on); if(!on&&!confirm('Pause auto loads? The Worker stops loading The Odds API and OddsPapi by itself until you resume. Your own presses of Load still work.')) return; var r=await call('/autoload/mode','POST',{on:on}); m.textContent=r.ok?(on?'Auto loads are on.':'Auto loads are paused.'):why(r); await auLoad(); };
   async function hfLoad(scanNow){ var r=await call('/handsfree/scan'+(scanNow?'?now=1':'')); if(!r.ok){ document.getElementById('hfBadgeTx').textContent='NO ANSWER'; document.getElementById('hfBadge').className='hf-badge off'; document.getElementById('hfSay').textContent=''; document.getElementById('hfMode').textContent=r.noSync?'Sign in on this device first (the card above).':(r.status===404?'The Worker does not have hands-free yet.':why(r)); return false; } HF=r.j; hfPaint(); hfSrcLoad(); limLoad(); return true; }
   async function hfSet(mode,label){ var r=await call('/handsfree/mode','POST',{mode:mode}); if(r.ok){ hfSay('Mode is now '+label+'.'); await hfLoad(false); } else hfSay(why(r),true); }
   document.getElementById('hfOff').onclick=function(){ hfSet('off','OFF'); };
@@ -458,7 +483,7 @@ body{padding:12px}.sub{font-size:12px;margin-bottom:8px}.stat{flex:1 1 44%;min-w
   function tabDots(){ var a=document.getElementById('dot-hf'), b=document.getElementById('dot-settings'); if(!a||!b) return; var st=(typeof S!=='undefined')?S:null, hf=(typeof HF!=='undefined')?HF:null; var red=!!(st&&st.killed), warn=!red&&!!(hf&&hf.mode==='live'&&st&&st.requireArm&&!st.armed); a.hidden=!(red||warn); a.className='tdot'+(red?' red':''); a.title=red?'Stopped':'Live but not armed today'; b.hidden=!SRCFULL; b.title='A price source is used up for today'; }
   function tabShow(name){ var ok=['hf','games','settings','other','all'].indexOf(name)>=0?name:'hf'; ['hf','games','settings','other'].forEach(function(n){ var t=document.getElementById('tab-'+n), p=document.getElementById('pane-'+n); if(t) t.setAttribute('aria-selected',n===ok?'true':'false'); if(t) t.tabIndex=(n===ok||(ok==='all'&&n==='hf'))?0:-1; if(p) p.hidden=!(n===ok||ok==='all'); });   /* the saved value all shows every section at once (used by the tests and for printing) */ try{ localStorage.setItem('mbev.ctl.tab',ok); }catch(e){} }
   (function(){ var order=['hf','games','settings','other']; order.forEach(function(n,i){ var t=document.getElementById('tab-'+n); t.onclick=function(){ tabShow(n); }; t.onkeydown=function(ev){ var k=ev.key==='ArrowRight'?1:ev.key==='ArrowLeft'?-1:0; if(!k) return; var m=order[(i+k+order.length)%order.length]; tabShow(m); document.getElementById('tab-'+m).focus(); ev.preventDefault(); }; }); tabShow(ls('mbev.ctl.tab')||'hf'); })();
-  hfLoad(false);
+  hfLoad(false); auLoad();
   refresh(); setInterval(function(){ if(!document.hidden) refresh(); }, 30000);
 })();
 </script>
