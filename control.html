@@ -59,7 +59,8 @@ th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase}
 
 <div class="card" id="alCard"><h2>Phone alerts</h2>
 <div class="hint" id="alState">Checking…</div>
-<div class="row" style="margin-top:8px"><button id="alOn" class="go">Enable alerts on this device</button><button id="alTest">Send a test</button><button id="alOff">Turn off on this device</button></div>
+<div class="row" style="margin-top:8px"><button id="alOn" class="go">Enable alerts on this device</button><button id="alTest">Send a test</button><button id="alOff">Turn off on this device</button><button id="alLocal" title="Shows a popup on this device without the Worker">Show a popup here (no Worker)</button></div>
+<div class="hint" id="alLast"></div>
 <div class="hint">A popup only tells you what already happened (an order placed, not placed, or stopped, and your reminders). It can never place or stop anything. On an iPhone, first add this page to the Home Screen (Share, then Add to Home Screen) and open it from there.</div>
 <label class="hint" style="display:block;margin-top:10px"><input type="checkbox" id="alProceed"> Remind me to tap Proceed at 8:30 AM when it is not armed</label>
 <label class="hint" style="display:block"><input type="checkbox" id="alSummary"> Evening summary at 9:00 PM</label>
@@ -160,7 +161,7 @@ th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase}
     if(!r.ok){ st.textContent=r.noSync?'Sign in on this device first (the card above).':why(r); return; }
     AL.set=!!r.j.set; AL.list=(r.j.reminders||[]).slice(); document.getElementById('alProceed').checked=!(r.j.settings&&r.j.settings.proceed===false); document.getElementById('alSummary').checked=!(r.j.settings&&r.j.settings.summary===false);
     var n=(r.j.devices||[]).length;
-    st.textContent=!AL.set?'The Worker has no alert keys yet. They are added once, by you; until then nothing can be sent.':(n?('Alerts are on for '+n+' device'+(n===1?'':'s')+'.'):'Alerts are not on for any device yet.');
+    var hosts=(r.j.devices||[]).map(function(d){ return /apple/.test(d.host||'')?'Apple':/googleapis/.test(d.host||'')?'Chrome':/mozilla/.test(d.host||'')?'Firefox':(d.host||'device'); }); st.textContent=!AL.set?'The Worker has no alert keys yet. They are added once, by you; until then nothing can be sent.':(n?('Alerts are on for '+n+' device'+(n===1?'':'s')+' ('+hosts.join(', ')+').'):'Alerts are not on for any device yet.');
     alPaint();
   }
   async function alSaveList(){ var r=await call('/push/reminders','POST',{list:AL.list}); if(r.ok){ AL.list=r.j.reminders||AL.list; alSay('Saved.'); } else alSay(why(r),true); alPaint(); }
@@ -179,7 +180,12 @@ th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase}
       var r=await call('/push/subscribe','POST',{subscription:{endpoint:j.endpoint, keys:j.keys}, device:dev}); alSay(r.ok?'Alerts are on for this device. Tap Send a test.':why(r),!r.ok); alStatus();
     }catch(e){ alSay('Could not turn alerts on: '+String(e&&e.message||e).slice(0,120),true); }
   };
-  document.getElementById('alTest').onclick=async function(){ var r=await call('/push/test','POST',{}); if(r.ok&&r.j&&r.j.sent>0) alSay('Sent to '+r.j.sent+' device'+(r.j.sent===1?'':'s')+'. It should pop up in a few seconds.'); else alSay(r.j&&r.j.code==='not_set_up'?'The Worker has no alert keys yet.':(r.j&&r.j.failed?'The push service did not accept it.':why(r)),true); };
+  document.getElementById('alTest').onclick=async function(){ var r=await call('/push/test','POST',{}); if(r.ok&&r.j&&r.j.sent>0) alSay('Sent to '+r.j.sent+' device'+(r.j.sent===1?'':'s')+'. The push service accepted it. It should pop up in a few seconds; if it does not, press "Show a popup here" to see whether this device can show popups at all.'); else alSay(r.j&&r.j.code==='not_set_up'?'The Worker has no alert keys yet.':(r.j&&r.j.failed?'The push service did not accept it.':(r.j&&r.j.removed?'That device was gone and has been forgotten. Press Enable alerts again.':(r.j&&r.j.ok===false&&r.status===200?'No device is signed up for alerts yet. Press Enable alerts on this device first.':why(r)))),true); };
+  /* v5.42: two checks that split the problem. "Show a popup here" shows a popup straight from this page (no Worker, no push service): if it appears, this device can show popups. "Last push" says when the service worker last received a push, so you can tell delivery from display. */
+  document.getElementById('alLocal').onclick=async function(){ try{ if(!('serviceWorker' in navigator)||!('Notification' in window)){ alSay('This browser cannot show popups.',true); return; } if(Notification.permission!=='granted'){ var p=await Notification.requestPermission(); if(p!=='granted'){ alSay('Popups are blocked for this page. Allow notifications for it, then try again.',true); return; } } var reg=await navigator.serviceWorker.ready; await reg.showNotification('0xBeta local test',{body:'If you can read this, this device can show popups.',tag:'local-test',icon:'icons/autopilot-192.png'}); alSay('Asked this device to show a popup. If nothing appeared, the block is on this device (browser or system settings), not the Worker.'); }catch(e){ alSay('Could not show one: '+String(e&&e.message||e).slice(0,120),true); } };
+  function alLastPaint(){ var t=ls('mbev.pushLast'), el=document.getElementById('alLast'); el.textContent=t?('Last push received by this device: '+new Date(+t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'})):'No push received by this device yet.'; }
+  try{ if('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message',function(e){ if(e.data&&e.data.type==='push'){ try{ localStorage.setItem('mbev.pushLast',String(e.data.at||Date.now())); }catch(_){} alLastPaint(); } }); }catch(_){}
+  alLastPaint();
   document.getElementById('alOff').onclick=async function(){ try{ var reg=await navigator.serviceWorker.ready, sub=await reg.pushManager.getSubscription(); if(sub){ var ep=sub.endpoint; await sub.unsubscribe(); await call('/push/unsubscribe','POST',{endpoint:ep}); } alSay('Alerts are off for this device.'); alStatus(); }catch(e){ alSay('Could not turn them off here.',true); } };
   alStatus();
   refresh(); setInterval(function(){ if(!document.hidden) refresh(); }, 30000);

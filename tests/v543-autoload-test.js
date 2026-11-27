@@ -1,0 +1,40 @@
+// node tests/v543-autoload-test.js — v5.43, Hands-Free Stage 0 (owner 2026-11-26: Autopilot went quiet because the board's prices went old; "keep building"): the tab presses Load by itself, OFF until ticked, with hard limits.
+// alDue (the one decision) is checked case by case: off, no Worker answer, kill switch, not armed, outside the hours, the day's loads used, less than 60 minutes since the last, calls left at or under the floor, busy; a load happens only when every condition holds;
+// the counters reset on a new Chicago day; the settings are saved and clamped; the line says what it is doing and why not; the page presses Load exactly once per due time. No page errors.
+const L=require('./v527-jarvis-lib.js'); const {chromium,check,open,ev,safe}=L;
+(async()=>{ const b=await chromium.launch(); const X=await open(b,1280);
+  await safe('auto-load', async()=>{
+    const R=await ev(X.p,()=>{ const noon=Date.parse('2026-11-26T18:00:00Z') /* 12:00 PM Chicago */, c0={on:true,max:3,res:10,from:9,to:22,gap:60,day:'2026-11-26',n:0,last:0}, st={armed:true,killed:false,requireArm:true}, why=(o)=>o.why, go=(o)=>o.go;
+      const t={};
+      t.off=alDue({...c0,on:false},st,noon,50,false); t.noSt=alDue(c0,null,noon,50,false); t.kill=alDue(c0,{...st,killed:true},noon,50,false); t.arm=alDue(c0,{...st,armed:false},noon,50,false); t.noArmNeeded=alDue(c0,{armed:false,killed:false,requireArm:false},noon,50,false);
+      t.early=alDue(c0,st,Date.parse('2026-11-26T13:30:00Z')/* 7:30 AM */,50,false); t.late=alDue(c0,st,Date.parse('2026-11-27T04:30:00Z')/* 10:30 PM */,50,false); t.edge9=alDue(c0,st,Date.parse('2026-11-26T15:00:00Z')/* 9:00 AM */,50,false); t.edge22=alDue(c0,st,Date.parse('2026-11-27T04:00:00Z')/* 10:00 PM */,50,false);
+      t.used=alDue({...c0,n:3},st,noon,50,false); t.newDay=alDue({...c0,n:3,day:'2026-11-25'},st,noon,50,false); t.gap=alDue({...c0,last:noon-30*60e3},st,noon,50,false); t.gapOk=alDue({...c0,last:noon-61*60e3},st,noon,50,false);
+      t.low=alDue(c0,st,noon,10,false); t.lowOk=alDue(c0,st,noon,11,false); t.unknown=alDue(c0,st,noon,null,false); t.busy=alDue(c0,st,noon,50,true); t.go=alDue(c0,st,noon,50,false);
+      return t; });
+    check('off, no Worker answer and the kill switch each say no, with their own words', R.off.go===false && R.off.why==='off' && R.noSt.go===false && /no answer/.test(R.noSt.why) && R.kill.go===false && /kill switch/.test(R.kill.why), [R.off,R.noSt,R.kill]);
+    check('not armed today says no (press Proceed), but when the Worker needs no daily Proceed it goes', R.arm.go===false && /not armed/.test(R.arm.why) && R.noArmNeeded.go===true, [R.arm,R.noArmNeeded]);
+    check('only inside the hours: 7:30 AM and 10:30 PM no; 9:00 AM yes; 10:00 PM (the end) no', R.early.go===false && R.late.go===false && R.edge9.go===true && R.edge22.go===false && /outside your hours/.test(R.early.why), [R.early,R.late,R.edge9,R.edge22]);
+    check('the day\'s loads: 3 of 3 used says no; a new Chicago day starts the count again', R.used.go===false && /loads are used/.test(R.used.why) && R.newDay.go===true, [R.used,R.newDay]);
+    check('at least 60 minutes apart: 30 minutes since the last says no, 61 says yes', R.gap.go===false && /waiting/.test(R.gap.why) && R.gapOk.go===true, [R.gap,R.gapOk]);
+    check('calls left at or under the floor says no (10 of floor 10), 11 is fine, and an unknown count does not block', R.low.go===false && /only 10 BettingPros calls left/.test(R.low.why) && R.lowOk.go===true && R.unknown.go===true, [R.low,R.lowOk,R.unknown]);
+    check('busy (an editor open) says no; with every condition true it says go', R.busy.go===false && R.go.go===true, [R.busy,R.go]);
+    const T=await ev(X.p,async()=>{ localStorage.removeItem('mbev.autoLoad'); window.__loads=0; window._bpLeft=30; loadApi=async()=>{ window.__loads++; return 'test pull'; }; apStatusLoad=async()=>({armed:true,killed:false,requireArm:true}); boardEditorOpen=()=>false;
+      const out={}; const c=alCfg(); out.def=c;
+      await alTick(); out.offLoads=window.__loads;
+      localStorage.setItem('mbev.autoLoad', JSON.stringify({on:true,max:2,res:10,from:0,to:24})); await alTick(); out.first=window.__loads; await alTick(); out.second=window.__loads;
+      const c1=alCfg(); out.afterFirst={n:c1.n, last:!!c1.last, words:c1.lastWords};
+      const j=JSON.parse(localStorage.getItem('mbev.autoLoad')); j.last=Date.now()-2*3600e3; localStorage.setItem('mbev.autoLoad', JSON.stringify(j)); await alTick(); out.third=window.__loads;
+      const j2=JSON.parse(localStorage.getItem('mbev.autoLoad')); j2.last=Date.now()-2*3600e3; localStorage.setItem('mbev.autoLoad', JSON.stringify(j2)); await alTick(); out.fourth=window.__loads;
+      return out; });
+    check('the setting starts OFF with the limits 6 loads, floor 10, 9 to 22 o\'clock, and an off setting loads nothing', T.def.on===false && T.def.max===6 && T.def.res===10 && T.def.from===9 && T.def.to===22 && T.offLoads===0, [T.def,T.offLoads]);
+    check('when on and due the page presses Load once; asking again right away does nothing (60 minutes apart)', T.first===1 && T.second===1, [T.first,T.second]);
+    check('it records the count, the time and what the load said', T.afterFirst.n===1 && T.afterFirst.last===true && /test pull/.test(T.afterFirst.words), T.afterFirst);
+    check('two hours later it loads again (2 of 2), and then the daily max of 2 stops it', T.third===2 && T.fourth===2, [T.third,T.fourth]);
+    const U=await ev(X.p,()=>{ document.querySelector('.tab[data-view="v-settings"]').click(); const d=document.getElementById('apPanel'); if(d) d.open=true; localStorage.removeItem('mbev.autoLoad'); alPaint();
+      const cb=document.getElementById('alAuto'), mx=document.getElementById('alMax'); const off=document.getElementById('alLine').textContent;
+      cb.checked=true; cb.dispatchEvent(new Event('change',{bubbles:true})); mx.value='99'; mx.dispatchEvent(new Event('change',{bubbles:true}));
+      const c=alCfg(); return {off, on:c.on, max:c.max, line:document.getElementById('alLine').textContent}; });
+    check('the card says off plainly; ticking the box turns it on; a max of 99 is held to 20; the line shows the count and the calls left', /Auto-load is off/.test(U.off) && U.on===true && U.max===20 && /Auto-load is ON: 0 of 20 loads today/.test(U.line), U);
+  });
+  check('no page errors', X.errs.length===0, X.errs.slice(0,3));
+  await b.close(); const r=L.res(); console.log('\n'+r.pass+' passed, '+r.fail+' failed'); process.exit(r.fail?1:0); })();

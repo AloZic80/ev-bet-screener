@@ -38,7 +38,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.41</title>
+<title>0xBeta Screener v5.43</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -2300,7 +2300,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.41</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.43</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2776,6 +2776,10 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
   <div id="apSamson" class="meta" style="margin-top:8px"></div>
   <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px"><button type="button" class="ghost" id="apMathBtn">Check the Worker’s math</button><span class="meta">Hands-Free Stage 1: the Worker scores this board with La Contadora’s formulas and the page checks it gets the same numbers.</span></div>
   <div id="apMath" class="meta" role="status" aria-live="polite" style="margin-top:4px"></div>
+  <div class="meta" style="margin-top:10px"><b>Load the board by itself</b> (Hands-Free Stage 0). Off until you turn it on. It uses your daily BettingPros calls, so it has hard limits.</div>
+  <label class="bar-check"><input type="checkbox" id="alAuto"> Press Load for me while Autopilot is armed today (this tab must stay open)</label>
+  <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px"><label class="meta">At most <input type="number" id="alMax" min="1" max="20" step="1" style="width:56px"> loads a day</label><label class="meta">Never go below <input type="number" id="alRes" min="0" max="49" step="1" style="width:56px"> calls left</label><label class="meta">Between <input type="number" id="alFrom" min="0" max="23" step="1" style="width:52px"> and <input type="number" id="alTo" min="1" max="24" step="1" style="width:52px"> o'clock (Chicago)</label></div>
+  <div id="alLine" class="meta" role="status" style="margin-top:4px"></div>
   <div id="apNow" class="meta" role="status" aria-live="polite" style="margin-top:6px"></div>
   <div id="apLook" class="meta"></div>
   <div class="meta" id="apMsg" role="status"></div>
@@ -3276,7 +3280,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 
 </div>
 <script>
-const SCREENER_VERSION='v5.41';
+const SCREENER_VERSION='v5.43';
 /* v5.24 (step 5): DEV_APP is now defined once, in the head script at the top of this file (the first paint reads it too) */
 if(!DEV_APP) document.documentElement.setAttribute('data-viewas','easy');   // v5.24 (step 3b): a customer build is Easy whatever mbev.viewAs holds
 /* v5.24 (owner 11/20: "we need to differentiate already"; "for me in GOD mode, let me tell the difference of what they cant see and i can"): levels.
@@ -14782,6 +14786,36 @@ async function apMathCheck(){ const m=document.getElementById('apMath'); if(!m) 
     if(diff.length) bad.push((r.name||r.player||('row '+i))+': '+diff.join('; ')); else ok++; });
   say(bad.length?'<b class="no-t">The Worker and this page disagree on '+bad.length+' of '+rows.length+' rows.</b> First ones: '+esc(bad.slice(0,3).join(' | ')):'<b class="ok-t">The Worker agrees with this page on '+ok+' of '+rows.length+' board rows</b> (chance, fee, EV, OK up to and Kelly stake, every one the same number). Nothing was placed or saved.'); }
 document.addEventListener('click', e=>{ if(e.target && e.target.id==='apMathBtn'){ e.preventDefault(); apMathCheck().catch(()=>{ const m=document.getElementById('apMath'); if(m) m.textContent='Could not run the check.'; }); } });   // v5.41
+/* v5.43 (owner 2026-11-26: Autopilot went quiet after 11:16 AM because the board's prices went old; "keep building"): Hands-Free Stage 0. The tab presses Load by itself, ONLY while Autopilot is armed for today, within the hours you set (Chicago), at most N loads a day, at least 60 minutes apart, never when BettingPros calls left are at or under your floor, and never while you are editing a bet. Load reuses a pull under 30 minutes old at no cost, so a load that finds one costs nothing. OFF until you tick it. It changes no decision: after a load, the same approved picks go out the same way. */
+const AL_DEF={on:false, max:6, res:10, from:9, to:22, gap:60};
+function alCfg(){ let c={}; try{ c=JSON.parse(localStorage.getItem('mbev.autoLoad')||'{}')||{}; }catch(e){} const n=(x,d,lo,hi)=>{ x=+x; return isFinite(x)?Math.max(lo,Math.min(hi,Math.round(x))):d; }; return {on:c.on===true, max:n(c.max,AL_DEF.max,1,20), res:n(c.res,AL_DEF.res,0,49), from:n(c.from,AL_DEF.from,0,23), to:n(c.to,AL_DEF.to,1,24), gap:AL_DEF.gap, day:c.day||'', n:n(c.n,0,0,999), last:+c.last||0, lastWords:c.lastWords||''}; }
+function alSave(c){ try{ localStorage.setItem('mbev.autoLoad', JSON.stringify(c)); }catch(e){} }
+function alCtHour(ms){ const f=new Intl.DateTimeFormat('en-US',{timeZone:'America/Chicago',hour12:false,hour:'2-digit'}).formatToParts(new Date(ms)); return (+f.find(x=>x.type==='hour').value)%24; }
+/* the decision, as a plain function: st = the Worker's status (armed, killed), left = BettingPros calls left (null = unknown), busy = an editor is open or a load is running */
+function alDue(c, st, now, left, busy){
+  if(!c.on) return {go:false, why:'off'};
+  if(!st) return {go:false, why:'no answer from the Worker yet'};
+  if(st.killed) return {go:false, why:'the kill switch is on'};
+  if(st.requireArm && !st.armed) return {go:false, why:'not armed today (press Proceed for today)'};
+  const h=alCtHour(now); if(!(h>=c.from && h<c.to)) return {go:false, why:'outside your hours ('+c.from+' to '+c.to+')'};
+  const used=(c.day===ctDay(now))?c.n:0; if(used>=c.max) return {go:false, why:'today\'s '+c.max+' loads are used'};
+  if(c.last && now-c.last<c.gap*60e3) return {go:false, why:'waiting: the last load was '+Math.round((now-c.last)/60e3)+' min ago (at least '+c.gap+' apart)'};
+  if(left!=null && left<=c.res) return {go:false, why:'only '+left+' BettingPros calls left (you keep '+c.res+')'};
+  if(busy) return {go:false, why:'busy (a load or an editor is open)'};
+  return {go:true, why:'due'}; }
+function alPaint(){ const el=document.getElementById('alLine'); if(!el) return; const c=alCfg(), cb=document.getElementById('alAuto'); if(cb && document.activeElement!==cb) cb.checked=c.on;
+  [['alMax',c.max],['alRes',c.res],['alFrom',c.from],['alTo',c.to]].forEach(([id,v])=>{ const i=document.getElementById(id); if(i && document.activeElement!==i) i.value=v; });
+  const used=(c.day===ctDay(Date.now()))?c.n:0, left=window._bpLeft, d=alDue(c, apStatus, Date.now(), left, false);
+  el.textContent=c.on?('Auto-load is ON: '+used+' of '+c.max+' loads today'+(c.last?' · last at '+new Date(c.last).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+(c.lastWords?' ('+c.lastWords+')':''):'')+' · BettingPros calls left: '+(left!=null?left:'unknown')+' (keeping '+c.res+')'+(d.go?' · next load is due now':' · now: '+d.why)):'Auto-load is off. Nothing is loaded for you.'; }
+let _alBusy=false;
+async function alTick(){ try{ const c=alCfg(); if(!c.on || _alBusy) { if(!c.on) alPaint(); return; }
+    const st=await apStatusLoad(false), now=Date.now(), d=alDue(c, st, now, window._bpLeft, boardEditorOpen()||logEditorOpen()); if(!d.go){ alPaint(); return; }
+    _alBusy=true; const n=(c.day===ctDay(now)?c.n:0)+1; c.day=ctDay(now); c.n=n; c.last=now; c.lastWords='loading'; alSave(c); try{ apDoing('Auto-load #'+n+': pressing Load for the board'); }catch(e){}
+    let said=''; try{ said=String(await loadApi(false)||''); }catch(e){ said='the load failed'; }
+    const c2=alCfg(); c2.lastWords=(said||'done').slice(0,60); alSave(c2); try{ apDoing(''); }catch(e){} alPaint();   /* loadApi already refreshes the calls-left count */
+  }catch(e){ console.error(e); } finally{ _alBusy=false; } }
+document.addEventListener('change', e=>{ const t=e.target; if(!t || !t.id) return; if(!['alAuto','alMax','alRes','alFrom','alTo'].includes(t.id)) return; const c=alCfg(); if(t.id==='alAuto') c.on=t.checked; else if(t.id==='alMax') c.max=+t.value; else if(t.id==='alRes') c.res=+t.value; else if(t.id==='alFrom') c.from=+t.value; else c.to=+t.value; const d=alCfg(); alSave(Object.assign({},c,{day:d.day,n:d.n,last:d.last,lastWords:d.lastWords})); alPaint(); });
+setInterval(()=>{ alTick(); }, 60000);   // v5.43: once a minute it asks alDue; it loads only when every condition holds
 async function apSamsonPaint(st){ const el=document.getElementById('apSamson'); if(!el) return;
   const notes=await (async()=>{ if(!(SY && SY.on && SY.key)) return null; try{ const r=await apFetch('/samson/log'); return (r.j&&r.j.ok)?(r.j.entries||[]):null; }catch(e){ return null; } })();
   const cut=Date.now()-24*3600e3, fills=myFillsGet().filter(f=>f && f.book==='novig' && (!(f.ts>0) || f.ts>cut)), P=samsonProvenance(fills, (st&&st.orders)||[], notes||[]);
@@ -14821,7 +14855,7 @@ document.addEventListener('click', async e=>{ const t=e.target && e.target.close
   if(t.id==='apStop'){ if(!confirm('Stop all auto bets now? Nothing new is placed until you press Resume.')) return; const r=await apFetch('/autobet/kill','POST',{on:true}); apStatus=null; await apRefresh(); say(r.j&&r.j.ok?'Stopped: the kill switch is on.':'Could not stop it: '+((r.j&&(r.j.error||r.j.reason))||('HTTP '+r.status))); return; }
   if(t.id==='apResume'){ if(!confirm('Turn the kill switch off? Orders can be placed again (only if it is armed for today).')) return; const r=await apFetch('/autobet/kill','POST',{on:false}); apStatus=null; await apRefresh(); say(r.j&&r.j.ok?'The kill switch is off.':'Could not turn it off.'); return; } });
 document.addEventListener('change', e=>{ if(e.target && e.target.id==='apAuto'){ try{ localStorage.setItem('mbev.autoSend', e.target.checked?'1':'0'); }catch(_){} const m=document.getElementById('apMsg'); if(m) m.textContent=e.target.checked?'Automatic sending is ON: it only sends while the Worker is armed for today.':'Automatic sending is OFF.'; } });
-document.addEventListener('toggle', e=>{ if(e.target && e.target.id==='apPanel' && e.target.open){ apReportPaint(); apRefresh(); try{ document.getElementById('apLook').innerHTML=apLookHtml(); apDoing(''); }catch(_){} } }, true);
+document.addEventListener('toggle', e=>{ if(e.target && e.target.id==='apPanel' && e.target.open){ apReportPaint(); alPaint(); apRefresh(); try{ document.getElementById('apLook').innerHTML=apLookHtml(); apDoing(''); }catch(_){} } }, true);
 setInterval(()=>{ autoTick(false); }, 60000);   // v5.33: one look a minute (a hidden tab may run it less often)
 function jvDigestItems(R){ return R.away.map(x=>{ const L=(lastRows||[]).filter(r=>r && pxKey(r)===x.k), r=L.find(scApproved)||L[0]||null; let st;
   if(!r) st='no longer on the board'; else if(!scAhead(r)) st='started'; else if(!scApproved(r)) st=r.prior?'already bet':'no longer approved';
