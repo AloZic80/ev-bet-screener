@@ -12,7 +12,7 @@ const path=require('path'); const L=require('./v527-jarvis-lib.js'); const {chro
   const ctx=await b.newContext({viewport:{width:1000,height:900}}); const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e)));
   await p.route(/api\.0xbeta\.dev\//,r=>{ const q=r.request(), pth=new URL(q.url()).pathname, cors={'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'GET,POST,OPTIONS'};
     if(q.method()==='OPTIONS') return r.fulfill({status:204,headers:cors}); let out={ok:true};
-    if(/^\/handsfree\/scan/.test(pth)) out={ok:true,mode,sports:{basketball:'shadow',hockey:'live'},burst:false,config:{eMin:0.03,eMax:0.12,pMin:0.12,pMax:0.88,leadMin:20,stake:1},games:GAMES(),log:[]};
+    if(/^\/handsfree\/scan/.test(pth)) out={ok:true,mode,sports:{basketball:'shadow',hockey:'live',tennis:'shadow'},burst:false,config:{eMin:0.03,eMax:0.12,pMin:0.12,pMax:0.88,leadMin:20,stake:1},games:GAMES(),log:[]};
     else if(/^\/autobet\/status/.test(pth)) out={ok:true,mode:'LIVE',killed,requireArm:true,armed,budget:10,reserved:0,left:10,orders:[]}; else if(/samson/.test(pth)) out={ok:true,entries:[]}; else if(/^\/push\/status/.test(pth)) out={ok:true,set:true,devices:[],reminders:[],settings:{}};
     r.fulfill({status:200,headers:cors,contentType:'application/json',body:JSON.stringify(out)}); });
   await p.addInitScript(()=>{ localStorage.setItem('mbev.pass','pass1234'); localStorage.setItem('mbev.syncKey','abcdef'); });
