@@ -38,7 +38,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.46</title>
+<title>0xBeta Screener v5.47</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -2300,7 +2300,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.46</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.47</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -3280,7 +3280,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 
 </div>
 <script>
-const SCREENER_VERSION='v5.46';
+const SCREENER_VERSION='v5.47';
 /* v5.24 (step 5): DEV_APP is now defined once, in the head script at the top of this file (the first paint reads it too) */
 if(!DEV_APP) document.documentElement.setAttribute('data-viewas','easy');   // v5.24 (step 3b): a customer build is Easy whatever mbev.viewAs holds
 /* v5.24 (owner 11/20: "we need to differentiate already"; "for me in GOD mode, let me tell the difference of what they cant see and i can"): levels.
@@ -4108,7 +4108,7 @@ function auditCore(rows,cfg){
     rows.forEach(r=>{
       if(!GL.test(r.kind||'') || r.prior || !r.game) return;
       const ax=axis(r.kind);
-      const held=logged.find(L=>!L.sold && !L.tier && onBoard(L) && gameKey(L.game)===gameKey(r.game) && GL.test(L.kind||'') && axis(L.kind)===ax);   // v4.50: not a 🍀 / 🔮 extra you hold
+      const held=logged.find(L=>!L.sold && !L.tier && onBoard(L) && gameKey(L.game)===gameKey(r.game) && GL.test(L.kind||'') && axis(L.kind)===ax) || sentHeldFor(r, ax);   /* v5.47: or an order Autopilot just sent */   // v4.50: not a 🍀 / 🔮 extra you hold
       if(held){
         r.glConflict={held:true, label:held.name+' '+(held.betnow||held.market||'')};
         if(r.stake>0){ r.stake=0; delete r.contracts; }
@@ -14713,7 +14713,7 @@ document.addEventListener('click', async e=>{ const b=e.target && e.target.close
     let res=await post(), j=null; try{ j=await res.json(); }catch(_){}
     if(j && j.reason==='not_armed_today' && confirm('Proceed for today? Your Worker may then place real orders of about $1 each at Novig, inside your limits, until midnight (Central). It asks again tomorrow.')){ await apFetch('/autobet/arm','POST',{on:true}); apStatus=null; res=await post(); j=null; try{ j=await res.json(); }catch(_){} }   // v5.33
     const ok=!!(j && j.ok && j.placed);
-    try{ const L=JSON.parse(localStorage.getItem('mbev.autobet')||'[]'); L.push({t:new Date().toISOString(), pick:body.name, ok, mode:(j&&j.mode)||null, reason:ok?null:((j&&(j.reason||j.error))||('HTTP '+res.status)), qty:(j&&j.qty)||null, price:(j&&j.price)||null, cost:(j&&j.cost)||null}); while(L.length>60) L.shift(); localStorage.setItem('mbev.autobet', JSON.stringify(L)); }catch(_){}
+    try{ const L=JSON.parse(localStorage.getItem('mbev.autobet')||'[]'); L.push({t:new Date().toISOString(), pick:body.name, game:r.game||null, kind:r.kind||null, ok, mode:(j&&j.mode)||null, reason:ok?null:((j&&(j.reason||j.error))||('HTTP '+res.status)), qty:(j&&j.qty)||null, price:(j&&j.price)||null, cost:(j&&j.cost)||null}); while(L.length>60) L.shift(); localStorage.setItem('mbev.autobet', JSON.stringify(L)); }catch(_){}
     if(ok) jvSaid(cur, '✓ Order placed at Novig ('+(j.mode||'?')+'): '+((+j.qty||0)/100).toFixed(2)+' contracts at up to '+(+j.price*100).toFixed(1)+'% for about $'+(+j.cost).toFixed(2)+'. Nothing else to press; the fill shows up in your Bet log by itself.');
     else jvSaid(cur, 'Not placed: '+jvAutoWords(j||{error:'HTTP '+res.status})+(j&&j.killed?' (the kill switch is now ON)':'')+'.');
   }catch(err){ jvSaid(cur, 'Not placed: '+String((err&&err.message)||err).slice(0,120)+'.'); }
@@ -14730,12 +14730,14 @@ function apPaint(st){ const el=document.getElementById('apBody'); if(!el) return
   const rows=(st.orders||[]).slice(0,8).map(o=>'<li>'+esc(new Date(o.t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}))+' · '+esc(o.name||o.key||'')+' · <b>'+esc(o.result||'')+'</b>'+(o.reason?' ('+esc(o.reason)+')':'')+(o.price?' · '+esc(((+o.qty||0)/100).toFixed(2))+' contracts at up to '+esc((+o.price*100).toFixed(1))+'%':'')   /* v5.36: the Worker counts hundredths of a contract (208 = 2.08 contracts, about $1) */+'</li>').join('');
   el.innerHTML='<b>'+(st.mode==='LIVE'?'REAL money':'Paper money')+'</b> · '+(st.killed?'<b class="no-t">STOPPED (kill switch is on)</b>':(st.requireArm?(st.armed?'<span class="ok-t">armed for today</span>':'not armed: press Proceed for today'):'no daily Proceed needed yet'))+'<br>Today: $'+(+st.reserved).toFixed(2)+' used of $'+(+st.budget).toFixed(2)+' · $'+(+st.left).toFixed(2)+' left'+(rows?'<ul class="meta" style="margin:6px 0 0 16px">'+rows+'</ul>':'<br>No orders yet today.'); }
 async function apRefresh(){ const m=document.getElementById('apMsg'); if(m) m.textContent='Asking the Worker…'; const st=await apStatusLoad(true); apPaint(st); try{ await apSamsonPaint(st); }catch(e){} if(m) m.textContent=st?'':'No answer.'; return st; }
+/* v5.47 (owner 2026-11-26: Autopilot bet LSU -7.5 and, 29 minutes later, SMU +6.5 on the same game): an order Autopilot just sent counts as already bet for that game and axis (a side or a total) at once, without waiting for the fill to reach the Bet log. Read by the one-bet-per-game rule in the audit. */
+function sentHeldFor(r, ax){ try{ const L=JSON.parse(localStorage.getItem('mbev.autobet')||'[]')||[], now=Date.now(), gk=gameKey(r.game); const e=L.find(x=>x && x.ok && x.game && /^(moneyline|spread|total)$/.test(x.kind||'') && (x.kind==='total'?'total':'side')===ax && now-Date.parse(x.t)<40*3600e3 && gameKey(x.game)===gk); return e?{name:e.pick||'a bet Autopilot sent', betnow:'', market:''}:null; }catch(e){ return null; } }
 async function apSend(r){   /* one order request for one approved pick (the automatic path); the Auto bet button has its own copy with the words for the pop-up */
   const lim=jvMax(r); if(!(lim>0 && lim<1)) return {ok:false, j:{reason:'no_limit'}};
   const q=await quoteFor(rowAsBet(r), r.book, true); if(!(q && q.ok && q.ref && q.outcome)) return {ok:false, j:{reason:'no_fresh_live_price'}};
   const body={key:pxKey(r), marketId:q.ref, outcomeId:q.outcome, limit:lim, stake:+r.stake||0, startMs:Date.parse((r.gameInfo&&r.gameInfo.startISO)||'')||0, book:'Novig', name:jvPickTxt(r)};
   const out=await apFetch('/autobet','POST',body), j=out.j, ok=!!(j && j.ok && j.placed);
-  try{ const L=JSON.parse(localStorage.getItem('mbev.autobet')||'[]'); L.push({t:new Date().toISOString(), pick:body.name, ok, auto:true, mode:(j&&j.mode)||null, reason:ok?null:((j&&(j.reason||j.error))||('HTTP '+out.status)), qty:(j&&j.qty)||null, price:(j&&j.price)||null, cost:(j&&j.cost)||null}); while(L.length>60) L.shift(); localStorage.setItem('mbev.autobet', JSON.stringify(L)); }catch(_){}
+  try{ const L=JSON.parse(localStorage.getItem('mbev.autobet')||'[]'); L.push({t:new Date().toISOString(), pick:body.name, game:r.game||null, kind:r.kind||null, ok, auto:true, mode:(j&&j.mode)||null, reason:ok?null:((j&&(j.reason||j.error))||('HTTP '+out.status)), qty:(j&&j.qty)||null, price:(j&&j.price)||null, cost:(j&&j.cost)||null}); while(L.length>60) L.shift(); localStorage.setItem('mbev.autobet', JSON.stringify(L)); }catch(_){}
   return {ok:ok, j:j||{reason:'HTTP '+out.status}};
 }
 /* v5.34 (owner 2026-11-25: "report when it went out and how many bets it got and how many actual bets that passed, and even some ALMOST MADE IT"): the report. The board now (Novig picks seen, approved, almost made it, each with the reason it missed) and today's tally (looks, sent, placed, refused, times). Read only: it decides and sends nothing. */
