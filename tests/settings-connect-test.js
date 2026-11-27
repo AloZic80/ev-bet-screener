@@ -15,7 +15,7 @@ async function run(width){
     localStorage.setItem('mbev.lePinn',JSON.stringify({day:d,n:3})); localStorage.setItem('mbev.wk',JSON.stringify({d,n:1234,p:{'/live':900,'/mine/fills':200,'/budget':134},pause:0,why:''})); }catch(e){} }, [DAY,NOW]);
   const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message)); const calls=[];
   await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html});
-    if(/api\.0xbeta\.dev/.test(u)){ const pth=new URL(u).pathname, h=r.request().headers(); if(r.request().method()!=='OPTIONS') calls.push(pth);
+    if(/api\.0xbeta\.dev/.test(u)){ const pth=new URL(u).pathname, h=r.request().headers(); if(r.request().method()!=='OPTIONS' && !/[?&]cache_only=1/.test(u)) calls.push(pth);   /* v5.68: opening the Board asks the Worker for its saved loads only (cache_only: no provider call), so it is not a call that costs anything */
       if(h['x-screener-pass']!=='right') return r.fulfill({status:401,contentType:'application/json',body:'{"error":"locked"}'});
       if(pth==='/src/status') return r.fulfill({contentType:'application/json',body:JSON.stringify({sources:SOURCES})});
       if(pth==='/budget') return r.fulfill({contentType:'application/json',body:JSON.stringify({limit:50,used:12,window:'24h'})});
