@@ -1,7 +1,7 @@
 // node tests/v546-sports-test.js — v5.46 (owner 2026-11-26: "i need NBA already" / "And NHL"): the control page's hands-free card shows NBA and NHL games tagged by sport and has an NBA switch and an NHL switch (Shadow to Live) against a FAKE Worker.
 // Shadow is the start; going Live asks first (Cancel does nothing); going back to Shadow needs no question; only {sport, mode} is sent; a Worker without NBA says so. No page errors.
 const path=require('path'); const L=require('./v527-jarvis-lib.js'); const {chromium,check}=L; const FILE='file://'+path.join(__dirname,'..','control.html');
-(async()=>{ const b=await chromium.launch(); const calls=[]; const sports={basketball:'shadow',hockey:'shadow'}; let code=200;
+(async()=>{ const b=await chromium.launch(); const calls=[]; const sports={basketball:'shadow',hockey:'shadow',tennis:'shadow'}; let code=200;
   const NOW=Date.now(); const ctx=await b.newContext(); const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e))); const asked=[]; let ans=[true]; p.on('dialog',d=>{ asked.push(d.message()); return (ans.length?ans.shift():true)?d.accept():d.dismiss(); });
   await p.route(/api\.0xbeta\.dev\//,r=>{ const q=r.request(), pth=new URL(q.url()).pathname+(new URL(q.url()).search||''), cors={'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'GET,POST,OPTIONS'};
     if(q.method()==='OPTIONS') return r.fulfill({status:204,headers:cors}); const body=q.postData()?JSON.parse(q.postData()):null; calls.push({path:pth,method:q.method(),body}); let out={ok:true}, st=200;
@@ -12,8 +12,8 @@ const path=require('path'); const L=require('./v527-jarvis-lib.js'); const {chro
     r.fulfill({status:st,headers:cors,contentType:'application/json',body:JSON.stringify(out)}); });
   await p.addInitScript(()=>{ localStorage.setItem('mbev.pass','pass1234'); localStorage.setItem('mbev.syncKey','abcdef'); }); await p.goto(FILE); await p.waitForTimeout(800); await p.evaluate(()=>{ var d=document.getElementById('hfTools'); if(d) d.open=true; });
   const last=(re)=>calls.filter((c)=>re.test(c.path)).slice(-1)[0]; const t=await p.textContent('#hfCard');
-  check('the card names football, NBA and NHL', /football, NBA and NHL/.test(t), t.slice(0,120));
-  check('NBA and NHL games are tagged with their sport; football games are not', /NBA · Celtics @ Lakers/.test(t) && /NHL · Rangers @ Bruins/.test(t) && !/NFL · |football · /.test(t), t.slice(0,600));
+  check('the card names football, NBA, NHL and tennis', /football, NBA, NHL and tennis/.test(t), t.slice(0,120));
+  const rowsT=await p.evaluate(()=>[...document.querySelectorAll('#hfGames table.tape tr')].map(tr=>[...tr.children].map(c=>c.textContent).join(' · ')).join('\n')); check('NBA and NHL games are tagged with their league in their own column (the fake Worker says NBA and NHL)', /Celtics @ LakersNBA · Moneyline/.test(rowsT) && /Rangers @ BruinsNHL · Moneyline/.test(rowsT), rowsT.slice(0,600));
   check('an unmatched game lists the market with Novig\'s outcome names', /RNG @ BOS \[Q1X \/ Q2X\]/.test(t), null);
   check('both switches start on Shadow', /NBA: Shadow \(switch to Live\)/.test(await p.textContent('#hfNba')) && /NHL: Shadow \(switch to Live\)/.test(await p.textContent('#hfNhl')), await p.textContent('#hfNba'));
   ans=[false]; calls.length=0; await p.click('#hfNba'); await p.waitForTimeout(400); check('going Live asks first; Cancel changes nothing and sends nothing', asked.length===1 && /NBA/.test(asked[0]) && !last(/handsfree\/sport/), asked);
@@ -23,6 +23,7 @@ const path=require('path'); const L=require('./v527-jarvis-lib.js'); const {chro
   code=404; ans=[true]; await p.click('#hfNhl'); await p.waitForTimeout(400); check('a Worker without NHL says so', /does not have NHL yet/.test(await p.textContent('#hfMsg')), await p.textContent('#hfMsg'));
   calls.length=0; await p.click('#hfNovig'); await p.waitForTimeout(500); const nv=await p.textContent('#hfNovigOut'); check('"Show what Novig has" asks the Worker (GET /handsfree/novig) and lists the open leagues with their counts and a sample', !!last(/handsfree\/novig/) && /open in the next 36 hours in: NFL, NBA/.test(nv) && /NFL: 40\+ markets, 14 full-game moneylines/.test(nv) && /Lakers \/ Celtics/.test(nv) && !/NHL:/.test(nv), nv);
   check('a code Novig did not accept is named, not hidden', /did not accept[^.]*XYZ/.test(nv), nv);
+  const tn0=await p.textContent('#hfTn'); ans=[true]; calls.length=0; await p.click('#hfTn'); await p.waitForTimeout(400); check('the Tennis chip starts on Shadow, asks before Live, and sends only {sport:"tennis", mode:"live"}', /Tennis: Shadow/.test(tn0) && /tennis/i.test(asked[asked.length-1]||'') && last(/handsfree\/sport/) && JSON.stringify(last(/handsfree\/sport/).body)==='{"sport":"tennis","mode":"live"}', [tn0,calls]);
   const page=await p.evaluate(()=>document.body.innerText); check('no key, passphrase or sync password appears', !/pass1234|abcdef/.test(page), null);
   check('no page errors (sports switches)', errs.length===0, errs.slice(0,3));
   await b.close(); const r=L.res(); console.log('\n'+r.pass+' passed, '+r.fail+' failed'); process.exit(r.fail?1:0); })();

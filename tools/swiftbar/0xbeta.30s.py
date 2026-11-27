@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # <xbar.title>0xBeta Autopilot</xbar.title>
 # <xbar.version>v5.39</xbar.version>
-# <xbar.desc>Your auto-bet readout in the Mac menu bar: mode, armed for today, money used and left, today's orders. Read-only.</xbar.desc>
+# <xbar.desc>Your auto-bet readout in the Mac menu bar: mode, armed for today, money used and left, today's orders placed (refused ones counted apart). Read-only.</xbar.desc>
 # <swiftbar.hideAbout>true</swiftbar.hideAbout>
 # <swiftbar.hideRunInTerminal>true</swiftbar.hideRunInTerminal>
 # <swiftbar.hideLastUpdated>false</swiftbar.hideLastUpdated>
@@ -53,7 +53,7 @@ def fetch():
         return None, 'offline'
 
 DEMO = {'ok': True, 'mode': 'LIVE', 'killed': False, 'requireArm': True, 'armed': True, 'budget': 10, 'reserved': 1.0, 'left': 9.0,
-        'orders': [{'t': int(time.time() * 1000) - 3600000, 'name': 'UTSA -12.5', 'result': 'placed', 'price': 0.48, 'qty': 208}]}
+        'orders': [{'t': int(time.time() * 1000) - 3600000, 'name': 'UTSA -12.5', 'result': 'placed', 'price': 0.48, 'qty': 208}, {'t': int(time.time() * 1000) - 1800000, 'name': 'Tulane +6.5', 'result': 'refused', 'reason': 'same_game_axis'}]}
 
 def main():
     demo = '--demo' in sys.argv
@@ -66,13 +66,16 @@ def main():
         print(words + ' | color=#f0b840')
         print('Open the control page | href=' + PAGE)
         return
-    os_ = st.get('orders') or []
+    # v5.53 (owner 2026-11-27: "it's still using the REFUSED as an order"): only TODAY's lines (the Worker's Chicago day), and the orders PLACED are counted apart from the ones not placed
+    os_ = [o for o in (st.get('orders') or []) if (not o.get('day')) or o.get('day') == st.get('day')]
+    placed = [o for o in os_ if str(o.get('result') or '') == 'placed']
+    notp = [o for o in os_ if str(o.get('result') or '') != 'placed']
     used, left = st.get('reserved') or 0, st.get('left') or 0
     killed = bool(st.get('killed'))
     needs = (not killed) and st.get('requireArm') and not st.get('armed')
     dot = '🔴' if killed else ('🟠' if needs else '🟢')
     label = 'STOPPED' if killed else ('Proceed?' if needs else money(left) + ' left')
-    print('0xβ %s %d · %s' % (dot, len(os_), label))
+    print('0xβ %s %d · %s' % (dot, len(placed), label))
     print('---')
     mode = 'REAL money' if st.get('mode') == 'LIVE' else 'Paper money'
     print('%s · %s | color=%s' % ('Autopilot', mode, '#3ddc84' if st.get('mode') == 'LIVE' else '#f0b840'))
@@ -83,10 +86,10 @@ def main():
     else:
         print('Armed for today')
     print('Today: %s used of %s · %s left' % (money(used), money(st.get('budget')), money(left)))
-    print('Orders today: %d' % len(os_))
+    print('Placed today: %d%s' % (len(placed), (' · %d not placed' % len(notp)) if notp else ''))
     print('---')
-    if os_:
-        for o in list(reversed(os_))[:8]:
+    if placed:
+        for o in list(reversed(placed))[:8]:
             qty = ''
             if o.get('price'):
                 try:
@@ -95,7 +98,12 @@ def main():
                     qty = ''
             print('%s · %s · %s%s%s' % (clock(o.get('t')), o.get('name') or o.get('key') or '', o.get('result') or '', qty, (' (' + o['reason'] + ')') if o.get('reason') else ''))
     else:
-        print('No orders yet today')
+        print('No orders placed yet today')
+    if notp:
+        print('---')
+        print('Not placed today | color=#8b8b92')
+        for o in list(reversed(notp))[:4]:
+            print('%s · %s · %s%s | color=#8b8b92' % (clock(o.get('t')), o.get('name') or o.get('key') or '', o.get('result') or '', (' (' + o['reason'] + ')') if o.get('reason') else ''))
     print('---')
     print('Open the control page (Proceed, Stop) | href=' + PAGE)
     print('Open the screener | href=' + SCREENER)
