@@ -50,6 +50,16 @@ th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase}
 details.hf-d{margin-top:8px;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#112018}details.hf-d>summary{cursor:pointer;color:var(--tx);font-size:14px}
 .hf-rules{color:var(--mut);font-size:13px;margin-top:8px}
 @media(max-width:560px){.seg button{padding:10px 12px}.hf-badge{font-size:13px}.ask{flex-wrap:wrap}.ask input{min-width:0;flex:1 1 100%}.ask button{flex:1 1 auto}}   /* v5.48: the reminder row (time, text, Add) ran off a phone screen */
+/* v5.51 the match table: terminal style */
+.tape-w{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:#0d1812;margin-top:6px}
+table.tape{width:100%;border-collapse:collapse;font:12.5px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;min-width:640px}
+table.tape th{position:sticky;top:0;background:#10201a;color:var(--mut);font-weight:500;font-size:11px;letter-spacing:.06em;text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.tape td{padding:6px 10px;border-bottom:1px solid #16291f;vertical-align:top}
+table.tape tr:last-child td{border-bottom:0}table.tape tr:nth-child(even) td{background:#0f1c15}
+table.tape td.c-t,table.tape td.c-l,table.tape td.c-s{white-space:nowrap;color:var(--mut)}table.tape td.c-m{color:var(--tx)}
+table.tape tr.st-pick td.c-s{color:#7dffb0;font-weight:700}table.tape tr.st-unmatched td.c-s{color:var(--warn)}table.tape tr.st-no_edge td.c-s{color:var(--mut)}
+table.tape .go{color:#7dffb0}table.tape .pos{color:#cfe8d8}table.tape .neg{color:#9fb5a8}table.tape .why{color:var(--mut)}.why.mono{font:12.5px/1.45 ui-monospace,Menlo,Consolas,monospace;margin:4px 0}
+.tape-w.hf-pickcard{border-left:3px solid var(--ok);background:#0f2a1b;padding:0;margin:6px 0}
 </style>
 </head>
 <body><div class="wrap">
@@ -269,16 +279,23 @@ details.hf-d{margin-top:8px;border:1px solid var(--line);border-radius:10px;padd
     var cut=Date.now()-2*3600e3, games=(d.games||[]).filter(function(x){ var t=x.starts?Date.parse(x.starts):NaN; return isNaN(t)||t>cut; });
     if(!games.length){ g.textContent='No game scanned yet. Press Scan 3 games now (under Tools), or wait for the 5-minute look.'; }
     function tagOf(x){ return (x.league&&x.league.length<24?x.league:(x.sport==='basketball'?'Basketball':x.sport==='hockey'?'Hockey':'Football')); }
-    function gameRow(x){ var row=document.createElement('div'); row.style.margin='6px 0'; var t=x.starts?new Date(x.starts).toLocaleString('en-US',{weekday:'short',hour:'numeric',minute:'2-digit'}):'';
-      var head=document.createElement('b'); head.textContent=(x.sport==='basketball'||x.sport==='hockey'?tagOf(x)+' · ':'')+(x.game||'')+' · '+t+' · '+(x.status==='pick'?'PICK':x.status==='no_edge'?'no edge':x.status==='unmatched'?'not found on Novig':'skipped'); row.appendChild(head);
-      var body=document.createElement('div'); body.style.marginLeft='12px';
-      if(x.status==='pick'||x.status==='no_edge'){ (x.sides||[]).forEach(function(s2){ var li=document.createElement('div'); li.textContent=(s2.go?'✓ ':'· ')+s2.team+': fair '+hfPct(s2.fair)+', Novig '+hfPct(s2.price)+', edge '+hfPct(s2.net)+(s2.go?' · limit '+hfPct(s2.limit):' · '+(s2.why||[]).join('; ')); body.appendChild(li); }); }
-      else { var li=document.createElement('div'); li.textContent=(x.why||'')+(x.sample&&x.sample.length?' (Novig lists: '+x.sample.join(' | ')+')':''); body.appendChild(li); }
-      row.appendChild(body); return row; }
+    /* v5.51 (owner 2026-11-27: "BUILD, and make it real nice ... more as in code"): the games as a terminal-style match table (monospace: START, LEAGUE, MATCH, STATUS, the sides with fair and Novig prices) */
+    function statusOf(x){ return x.status==='pick'?'PICK':x.status==='no_edge'?'no edge':x.status==='unmatched'?'not found on Novig':'skipped'; }
+    function tape(arr){ var wrap=document.createElement('div'); wrap.className='tape-w'; var tb=document.createElement('table'); tb.className='tape'; var hd=document.createElement('tr'); ['START','LEAGUE','MATCH','STATUS','PRICES: PINNACLE FAIR vs NOVIG'].forEach(function(h){ var th=document.createElement('th'); th.textContent=h; hd.appendChild(th); }); tb.appendChild(hd);
+      arr.forEach(function(x){ var tr=document.createElement('tr'); tr.className='st-'+(x.status||'skipped'); var t=x.starts?new Date(x.starts).toLocaleString('en-US',{weekday:'short',hour:'numeric',minute:'2-digit'}):'';
+        function td(txt,cls){ var c=document.createElement('td'); if(cls) c.className=cls; c.textContent=txt; tr.appendChild(c); return c; }
+        td(t,'c-t'); td(tagOf(x),'c-l'); td(x.game||'','c-m'); td(statusOf(x),'c-s');
+        var dc=document.createElement('td'); dc.className='c-d';
+        if(x.status==='pick'||x.status==='no_edge'){ (x.sides||[]).forEach(function(s2){ var li=document.createElement('div'); li.className=s2.go?'go':(s2.net!=null&&s2.net>0?'pos':'neg'); li.textContent=(s2.go?'✓ ':'· ')+s2.team+': fair '+hfPct(s2.fair)+', Novig '+hfPct(s2.price)+', edge '+hfPct(s2.net)+(s2.go?' · limit '+hfPct(s2.limit):' · '+(s2.why||[]).join('; ')); dc.appendChild(li); }); }
+        else { var li=document.createElement('div'); li.className='why'; li.textContent=(x.why||'')+(x.sample&&x.sample.length?' (Novig lists: '+x.sample.join(' | ')+')':''); dc.appendChild(li); }
+        tr.appendChild(dc); tb.appendChild(tr); });
+      wrap.appendChild(tb); return wrap; }
     var G={pick:[],no_edge:[],unmatched:[],skipped:[]}; games.forEach(function(x){ (G[x.status]||G.skipped).push(x); });
-    [['Looked at',games.length+' upcoming games'],['Picks',G.pick.length],['No edge',G.no_edge.length],['Not on Novig',G.unmatched.length],['Skipped',G.skipped.length]].forEach(function(a){ var sp2=document.createElement('span'); var bq=document.createElement('b'); bq.textContent=a[1]; sp2.appendChild(document.createTextNode(a[0]+': ')); sp2.appendChild(bq); sum.appendChild(sp2); });
-    G.pick.forEach(function(x){ var w=document.createElement('div'); w.className='hf-pickcard'; w.appendChild(gameRow(x)); g.appendChild(w); });
-    [['no_edge','No edge (the price is fair or worse)'],['unmatched','Not found on Novig (Novig does not list this game, or spells the teams differently)'],['skipped','Skipped']].forEach(function(a){ var arr=G[a[0]]; if(!arr.length) return; var dt=document.createElement('details'); dt.className='hf-d'; var sm=document.createElement('summary'); sm.textContent=a[1]+': '+arr.length; dt.appendChild(sm); arr.forEach(function(x){ dt.appendChild(gameRow(x)); }); g.appendChild(dt); });
+    var sk=d.skippedLeagues||[];
+    [['Looked at',games.length+' upcoming games'],['Picks',G.pick.length],['No edge',G.no_edge.length],['Not on Novig',G.unmatched.length],['Skipped',G.skipped.length]].concat(sk.length?[['Skipped leagues',sk.length]]:[]).forEach(function(a){ var sp2=document.createElement('span'); var bq=document.createElement('b'); bq.textContent=a[1]; sp2.appendChild(document.createTextNode(a[0]+': ')); sp2.appendChild(bq); sum.appendChild(sp2); });
+    if(G.pick.length){ var pw=tape(G.pick); pw.classList.add('hf-pickcard'); g.appendChild(pw); }
+    [['no_edge','No edge (the price is fair or worse)'],['unmatched','Not found on Novig (Novig does not list this game, or spells the teams differently)'],['skipped','Skipped']].forEach(function(a){ var arr=G[a[0]]; if(!arr.length) return; var dt=document.createElement('details'); dt.className='hf-d'; var sm=document.createElement('summary'); sm.textContent=a[1]+': '+arr.length; dt.appendChild(sm); dt.appendChild(tape(arr)); g.appendChild(dt); });
+    if(sk.length){ var dl=document.createElement('details'); dl.className='hf-d'; var sl=document.createElement('summary'); sl.textContent='Skipped leagues (Novig had no matching game, tried again every 24 hours): '+sk.length; dl.appendChild(sl); sk.forEach(function(k){ var li=document.createElement('div'); li.className='why mono'; li.textContent=k.league+' · '+(k.sport||'')+' · '+k.games+' game'+(k.games===1?'':'s')+' hidden · '+k.misses+' not found'; dl.appendChild(li); }); g.appendChild(dl); }
     var log=d.log||[]; if(log.length){ var h=document.createElement('b'); h.textContent='What it decided'; l.appendChild(h); log.slice(0,12).forEach(function(r){ var li=document.createElement('div'); li.textContent=new Date(r.t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+' · '+r.team+' at '+hfPct(r.price)+' (fair '+hfPct(r.fair)+', edge '+hfPct(r.net)+') · '+r.result+(r.reason?' ('+r.reason+')':''); l.appendChild(li); }); }
   }
   async function hfSrcLoad(){ var el=document.getElementById('hfSrc'); if(!el) return; var r=await call('/handsfree/sources'); el.textContent=''; if(!r.ok){ el.textContent=r.noSync?'Sign in on this device first.':(r.status===404?'The Worker does not have the sources panel yet.':why(r)); return; }
