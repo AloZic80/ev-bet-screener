@@ -30,6 +30,26 @@ th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase}
 .ask{display:flex;gap:8px}.ask input{flex:1;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--line);background:#0f1b15;color:var(--tx)}
 .hint{color:var(--mut);font-size:13px;margin-top:8px}.ans{margin-top:10px;white-space:pre-wrap}
 .err{color:var(--bad)}a{color:var(--ok)}
+/* v5.48 hands-free card: one clear status, grouped controls, a short list */
+.hf-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:2px 0 6px}
+.hf-badge{display:inline-flex;align-items:center;gap:9px;padding:7px 16px;border-radius:99px;font-weight:700;letter-spacing:.05em;font-size:14px;border:1.5px solid var(--line);color:var(--mut);background:#14231b}
+.hf-badge i{width:10px;height:10px;border-radius:50%;background:currentColor;display:inline-block}
+.hf-badge.live{color:#ff9a9a;border-color:var(--bad);background:#3a1717}.hf-badge.armed{color:#7dffb0;border-color:var(--ok);background:#123a24}
+.hf-badge.shadow{color:var(--warn);border-color:var(--warn);background:#33290f}.hf-badge.off{color:var(--mut)}
+.hf-say{font-size:15px;margin:4px 0 2px}
+.hf-sec{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.hf-sec h3{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:0 0 8px;font-weight:600}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:#14231b;padding:10px 20px;border-right:1px solid var(--line)}.seg button:last-child{border-right:0}
+.seg button[aria-pressed=true]{background:#17633d;color:#fff;font-weight:600}.seg button.stop[aria-pressed=true]{background:#7a2323}
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:9px;border-radius:99px;padding:8px 14px;font-size:14px;border:1px solid var(--line);background:#14231b;color:var(--tx)}
+.chip::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--warn)}.chip[data-s=live]::before{background:var(--bad)}.chip[data-s=off]::before{background:var(--mut)}.chip.fixed::before{background:var(--ok)}
+.hf-sum{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 8px}.hf-sum span{background:#112018;border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:13px;color:var(--mut)}.hf-sum b{color:var(--tx)}
+.hf-pickcard{border-left:3px solid var(--ok);background:#12301f;padding:8px 12px;border-radius:8px;margin:6px 0}
+details.hf-d{margin-top:8px;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#112018}details.hf-d>summary{cursor:pointer;color:var(--tx);font-size:14px}
+.hf-rules{color:var(--mut);font-size:13px;margin-top:8px}
+@media(max-width:560px){.seg button{padding:10px 12px}.hf-badge{font-size:13px}}
 </style>
 </head>
 <body><div class="wrap">
@@ -71,18 +91,33 @@ th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase}
 <div class="hint" id="alMsg" role="status"></div></div>
 
 <div class="card" id="hfCard"><h2>Hands-free: the Worker picks (football, NBA and NHL moneylines)</h2>
-<div class="hint" id="hfMode">Checking…</div>
-<div class="row" style="margin-top:8px"><button id="hfOff">Off</button><button id="hfShadow">Shadow (look and log only)</button><button id="hfLive" class="stop">Live ($1 bets)</button><button id="hfScan" class="go">Scan 3 games now</button><button id="hfBurst" class="go">Go play for 15 min</button></div>
-<div class="row" style="margin-top:8px"><button id="hfNba">NBA: Shadow</button><button id="hfNhl">NHL: Shadow</button></div>
-<div class="hint">NBA and NHL start in Shadow (look and log only). Each one has its own switch to Live, and it only places while hands-free above is also Live.</div>
-<div class="hint">With the tab closed, your Worker compares Pinnacle's fair price with Novig's price for each football, NBA and NHL game and picks by La Contadora's math. <b>Shadow</b> places nothing. <b>Live</b> places $1 orders through the same rules as Autopilot: the daily Proceed, the $10 budget, the kill switch, no duplicates, a fresh price. A scan you start by hand never places.</div>
-<div class="ask" style="margin-top:8px"><button id="hfNovig">Show what Novig has</button></div>
+<div class="hf-head"><span class="hf-badge off" id="hfBadge" role="status"><i></i><span id="hfBadgeTx">Checking…</span></span></div>
+<div class="hf-say" id="hfSay"></div>
+<div class="hf-rules" id="hfMode">Checking…</div>
+
+<div class="hf-sec"><h3>Mode</h3>
+<div class="seg" role="group" aria-label="Hands-free mode"><button id="hfOff" aria-pressed="false">Off</button><button id="hfShadow" aria-pressed="false">Shadow: watch only</button><button id="hfLive" class="stop" aria-pressed="false">Live: $1 bets</button></div>
+<div class="hint">Off looks at nothing. Shadow looks and records what it would bet, and places nothing. Live places $1 orders, only while armed for today (the Proceed box at the top), inside the $10 budget, the kill switch and the other limits.</div></div>
+
+<div class="hf-sec"><h3>Sports</h3>
+<div class="chips"><span class="chip fixed" id="hfFb">Football: follows the mode above</span><button class="chip" id="hfNba">NBA: Shadow</button><button class="chip" id="hfNhl">NHL: Shadow</button></div>
+<div class="hint">NBA and NHL start in Shadow. Each has its own switch to Live, and it only places while the mode above is also Live.</div></div>
+
+<div class="hf-sec"><h3>Pace</h3>
+<div class="row" style="align-items:center"><button id="hfBurst" class="go">Go play for 15 min</button><span class="hint" style="margin:0">Normally it looks every 5 minutes. A burst looks every minute for 15 minutes, then goes back by itself.</span></div></div>
+
+<div class="hf-sec"><h3>What it found</h3>
+<div id="hfSum" class="hf-sum"></div>
+<div id="hfGames"></div>
+<div id="hfLog" class="hint" style="margin-top:10px"></div></div>
+
+<div class="hf-sec"><details class="hf-d" id="hfTools"><summary>Tools: look at things (these never place a bet)</summary>
+<div class="row" style="margin-top:10px"><button id="hfScan" class="go">Scan 3 games now</button><button id="hfNovig">Show what Novig has</button></div>
 <div id="hfNovigOut" class="hint"></div>
-<div class="ask" style="margin-top:8px"><input id="hfSports" value="1,2,3,4,5,6" aria-label="Pinnacle sport ids" style="max-width:160px"><button id="hfProbe">Check what Pinnacle has</button></div>
-<div class="hint">Reads (never places) what your Pinnacle feed holds for those sport ids, so hands-free can be widened to more sports, spreads and totals. Up to 6 ids at a time.</div>
-<div id="hfProbeOut" class="hint"></div>
-<div id="hfGames" class="hint" style="margin-top:8px"></div>
-<div id="hfLog" class="hint" style="margin-top:8px"></div>
+<div class="ask" style="margin-top:10px"><input id="hfSports" value="1,2,3,4,5,6" aria-label="Pinnacle sport ids" style="max-width:160px"><button id="hfProbe">Check what Pinnacle has</button></div>
+<div class="hint">Reads what your Pinnacle feed holds for those sport ids (up to 6). Use it sparingly: Pinnacle limits how often it can be asked.</div>
+<div id="hfProbeOut" class="hint"></div></details>
+<details class="hf-d"><summary>How it works</summary><div class="hint">With the tab closed, your Worker compares Pinnacle's fair price with Novig's price for each game and picks by La Contadora's math. A scan you start by hand never places a bet.</div></details></div>
 <div class="hint" id="hfMsg" role="status"></div></div>
 
 <div class="card"><h2>Orders today (from your Worker)</h2>
@@ -133,7 +168,7 @@ th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase}
   }
   async function samsonLoad(){ var el=document.getElementById('samson'); var r=await call('/samson/log'); if(!r.ok){ el.textContent=r.noSync?'Sync is off in this browser.':'No answer for Samson\'s log (the Worker may not have this route yet).'; return; }
     var E=(r.j&&r.j.entries)||[]; el.innerHTML=E.length?'<ul style="margin:4px 0 0 16px">'+E.slice(0,10).map(function(x){ return '<li>'+esc(clock(x.t))+' · '+esc(x.kind)+' · '+esc(x.what)+(x.pick?' · '+esc(x.pick):'')+(x.stake!=null?' · '+money(x.stake):'')+'</li>'; }).join('')+'</ul>':'Samson has not reported anything today.'; }
-  async function refresh(){ if(busy) return; busy=true; say('Asking the Worker…'); var r=await call('/autobet/status'); busy=false; if(r.ok){ S=r.j; say(''); } else { S=null; say(why(r),true); } paint(); samsonLoad(); return r; }
+  async function refresh(){ if(busy) return; busy=true; say('Asking the Worker…'); var r=await call('/autobet/status'); busy=false; if(r.ok){ S=r.j; say(''); } else { S=null; say(why(r),true); } try{ if(HF && HF.mode) hfPaint(); }catch(e){}   /* v5.48: the hands-free badge shows whether it is armed today */ paint(); samsonLoad(); return r; }
   async function act(label, path, body, confirmText){
     if(confirmText && !confirm(confirmText)) return; say(label+'…'); var r=await call(path,'POST',body); if(!r.ok){ say(why(r),true); return; }
     await refresh(); say(label+': done.');
@@ -212,20 +247,34 @@ th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase}
   function hfSay(t,bad){ var m=document.getElementById('hfMsg'); m.textContent=t||''; m.className='hint'+(bad?' err':''); }
   function hfPct(x){ return x==null?'–':(x*100).toFixed(1)+'%'; }
   function hfPaint(){
-    var d=HF, mode=document.getElementById('hfMode'), g=document.getElementById('hfGames'), l=document.getElementById('hfLog'); g.textContent=''; l.textContent='';
-    var c=d.config||{}; mode.textContent='Mode: '+(d.mode==='live'?'LIVE (places $1 orders)':d.mode==='off'?'OFF':'SHADOW (looks and logs, places nothing)')+(d.burst&&d.burstUntil?' · BURST: looking every minute, 6 games at a time, until '+new Date(d.burstUntil).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+', then back to every 5 minutes':'')+(c.eMin!=null?' · floor '+(c.eMin*100).toFixed(0)+'% edge, ceiling '+(c.eMax*100).toFixed(0)+'%, price '+(c.pMin*100).toFixed(0)+'-'+(c.pMax*100).toFixed(0)+'%, starts 20+ min away':'');
-    var sp=d.sports||{}; [['hfNba','basketball','NBA'],['hfNhl','hockey','NHL']].forEach(function(a){ var e=document.getElementById(a[0]); if(e) e.textContent=a[2]+': '+(sp[a[1]]==='live'?'LIVE (switch to Shadow)':sp[a[1]]==='off'?'OFF':'Shadow (switch to Live)'); });   /* v5.46 */
+    var d=HF, mode=document.getElementById('hfMode'), g=document.getElementById('hfGames'), l=document.getElementById('hfLog'), sum=document.getElementById('hfSum'); g.textContent=''; l.textContent=''; sum.textContent='';
+    var c=d.config||{}, m=d.mode||'shadow', st=(typeof S!=='undefined'&&S)?S:null, armed=st&&st.requireArm?!!st.armed:true, killed=!!(st&&st.killed);
+    /* v5.48: one clear status at the top (OFF, SHADOW, or LIVE with whether it is armed today) */
+    var badge=document.getElementById('hfBadge'), btx=document.getElementById('hfBadgeTx'), say=document.getElementById('hfSay'), bcls='off', btxt='OFF', words='Off. The Worker is not looking at any games.';
+    if(m==='shadow'){ bcls='shadow'; btxt='SHADOW'; words='Watching only. It records what it would bet and places nothing.'; }
+    else if(m==='live'){ if(killed){ bcls='live'; btxt='LIVE · STOPPED'; words='The kill switch is on, so nothing is placed until you press Resume at the top.'; } else if(!armed){ bcls='live'; btxt='LIVE · NOT ARMED'; words='Live, but not armed today, so nothing is placed. Press Proceed for today in the box at the top.'; } else { bcls='armed'; btxt='LIVE · ARMED'; words='Live and armed for today. It may place $1 orders on picks that pass your rules.'; } }
+    badge.className='hf-badge '+bcls; btx.textContent=btxt; say.textContent=words;
+    [['hfOff','off'],['hfShadow','shadow'],['hfLive','live']].forEach(function(a){ var e=document.getElementById(a[0]); if(e) e.setAttribute('aria-pressed',m===a[1]?'true':'false'); });
+    mode.textContent='Mode: '+(m==='live'?'LIVE (places $1 orders)':m==='off'?'OFF':'SHADOW (looks and logs, places nothing)')+(d.burst&&d.burstUntil?' · BURST: looking every minute, 6 games at a time, until '+new Date(d.burstUntil).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+', then back to every 5 minutes':'')+(c.eMin!=null?' · floor '+(c.eMin*100).toFixed(0)+'% edge, ceiling '+(c.eMax*100).toFixed(0)+'%, price '+(c.pMin*100).toFixed(0)+'-'+(c.pMax*100).toFixed(0)+'%, starts 20+ min away':'');
+    var sp=d.sports||{}; [['hfNba','basketball','NBA'],['hfNhl','hockey','NHL']].forEach(function(a){ var e=document.getElementById(a[0]); if(e){ var v=sp[a[1]]||'shadow'; e.textContent=a[2]+': '+(v==='live'?'LIVE (switch to Shadow)':v==='off'?'OFF':'Shadow (switch to Live)'); e.setAttribute('data-s',v); } });   /* v5.46 */
     var bb=document.getElementById('hfBurst'); if(bb) bb.textContent=d.burst?'Stop the burst':'Go play for 15 min';   /* v5.45 */
-    var games=d.games||[]; if(!games.length){ g.textContent='No game scanned yet. Press "Scan 3 games now", or wait for the 5-minute look.'; }
-    games.forEach(function(x){ var row=document.createElement('div'); row.style.margin='6px 0'; var t=x.starts?new Date(x.starts).toLocaleString('en-US',{weekday:'short',hour:'numeric',minute:'2-digit'}):'';
-      var head=document.createElement('b'); head.textContent=(x.sport==='basketball'?'NBA · ':x.sport==='hockey'?'NHL · ':'')+(x.game||'')+' · '+t+' · '+(x.status==='pick'?'PICK':x.status==='no_edge'?'no edge':x.status==='unmatched'?'not found on Novig':'skipped'); row.appendChild(head);
+    /* v5.48: only upcoming games (one entry per game, none that started more than 2 hours ago), grouped, with the picks first */
+    var cut=Date.now()-2*3600e3, games=(d.games||[]).filter(function(x){ var t=x.starts?Date.parse(x.starts):NaN; return isNaN(t)||t>cut; });
+    if(!games.length){ g.textContent='No game scanned yet. Press Scan 3 games now (under Tools), or wait for the 5-minute look.'; }
+    function tagOf(x){ return (x.league&&x.league.length<24?x.league:(x.sport==='basketball'?'Basketball':x.sport==='hockey'?'Hockey':'Football')); }
+    function gameRow(x){ var row=document.createElement('div'); row.style.margin='6px 0'; var t=x.starts?new Date(x.starts).toLocaleString('en-US',{weekday:'short',hour:'numeric',minute:'2-digit'}):'';
+      var head=document.createElement('b'); head.textContent=(x.sport==='basketball'||x.sport==='hockey'?tagOf(x)+' · ':'')+(x.game||'')+' · '+t+' · '+(x.status==='pick'?'PICK':x.status==='no_edge'?'no edge':x.status==='unmatched'?'not found on Novig':'skipped'); row.appendChild(head);
       var body=document.createElement('div'); body.style.marginLeft='12px';
-      if(x.status==='pick'||x.status==='no_edge'){ (x.sides||[]).forEach(function(s){ var li=document.createElement('div'); li.textContent=(s.go?'✓ ':'· ')+s.team+': fair '+hfPct(s.fair)+', Novig '+hfPct(s.price)+', edge '+hfPct(s.net)+(s.go?' · limit '+hfPct(s.limit):' · '+(s.why||[]).join('; ')); body.appendChild(li); }); }
+      if(x.status==='pick'||x.status==='no_edge'){ (x.sides||[]).forEach(function(s2){ var li=document.createElement('div'); li.textContent=(s2.go?'✓ ':'· ')+s2.team+': fair '+hfPct(s2.fair)+', Novig '+hfPct(s2.price)+', edge '+hfPct(s2.net)+(s2.go?' · limit '+hfPct(s2.limit):' · '+(s2.why||[]).join('; ')); body.appendChild(li); }); }
       else { var li=document.createElement('div'); li.textContent=(x.why||'')+(x.sample&&x.sample.length?' (Novig lists: '+x.sample.join(' | ')+')':''); body.appendChild(li); }
-      row.appendChild(body); g.appendChild(row); });
+      row.appendChild(body); return row; }
+    var G={pick:[],no_edge:[],unmatched:[],skipped:[]}; games.forEach(function(x){ (G[x.status]||G.skipped).push(x); });
+    [['Looked at',games.length+' upcoming games'],['Picks',G.pick.length],['No edge',G.no_edge.length],['Not on Novig',G.unmatched.length],['Skipped',G.skipped.length]].forEach(function(a){ var sp2=document.createElement('span'); var bq=document.createElement('b'); bq.textContent=a[1]; sp2.appendChild(document.createTextNode(a[0]+': ')); sp2.appendChild(bq); sum.appendChild(sp2); });
+    G.pick.forEach(function(x){ var w=document.createElement('div'); w.className='hf-pickcard'; w.appendChild(gameRow(x)); g.appendChild(w); });
+    [['no_edge','No edge (the price is fair or worse)'],['unmatched','Not found on Novig (Novig does not list this game, or spells the teams differently)'],['skipped','Skipped']].forEach(function(a){ var arr=G[a[0]]; if(!arr.length) return; var dt=document.createElement('details'); dt.className='hf-d'; var sm=document.createElement('summary'); sm.textContent=a[1]+': '+arr.length; dt.appendChild(sm); arr.forEach(function(x){ dt.appendChild(gameRow(x)); }); g.appendChild(dt); });
     var log=d.log||[]; if(log.length){ var h=document.createElement('b'); h.textContent='What it decided'; l.appendChild(h); log.slice(0,12).forEach(function(r){ var li=document.createElement('div'); li.textContent=new Date(r.t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+' · '+r.team+' at '+hfPct(r.price)+' (fair '+hfPct(r.fair)+', edge '+hfPct(r.net)+') · '+r.result+(r.reason?' ('+r.reason+')':''); l.appendChild(li); }); }
   }
-  async function hfLoad(scanNow){ var r=await call('/handsfree/scan'+(scanNow?'?now=1':'')); if(!r.ok){ document.getElementById('hfMode').textContent=r.noSync?'Sign in on this device first (the card above).':(r.status===404?'The Worker does not have hands-free yet.':why(r)); return false; } HF=r.j; hfPaint(); return true; }
+  async function hfLoad(scanNow){ var r=await call('/handsfree/scan'+(scanNow?'?now=1':'')); if(!r.ok){ document.getElementById('hfBadgeTx').textContent='NO ANSWER'; document.getElementById('hfBadge').className='hf-badge off'; document.getElementById('hfSay').textContent=''; document.getElementById('hfMode').textContent=r.noSync?'Sign in on this device first (the card above).':(r.status===404?'The Worker does not have hands-free yet.':why(r)); return false; } HF=r.j; hfPaint(); return true; }
   async function hfSet(mode,label){ var r=await call('/handsfree/mode','POST',{mode:mode}); if(r.ok){ hfSay('Mode is now '+label+'.'); await hfLoad(false); } else hfSay(why(r),true); }
   document.getElementById('hfOff').onclick=function(){ hfSet('off','OFF'); };
   document.getElementById('hfShadow').onclick=function(){ hfSet('shadow','SHADOW (places nothing)'); };

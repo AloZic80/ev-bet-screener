@@ -9,7 +9,7 @@ const path=require('path'); const L=require('./v527-jarvis-lib.js'); const {chro
     else if(/^\/handsfree\/scan/.test(pth)) out={ok:true,mode,burst:burstUntil>Date.now(),burstUntil:burstUntil||null,config:{eMin:0.03,eMax:0.12,pMin:0.12,pMax:0.88,leadMin:20,stake:1},games:[],log:[]};
     else if(/^\/autobet\/status/.test(pth)) out={ok:true,mode:'LIVE',killed:false,requireArm:true,armed:true,budget:10,reserved:0,left:10,orders:[]}; else if(/samson/.test(pth)) out={ok:true,entries:[]}; else if(/^\/push\/status/.test(pth)) out={ok:true,set:true,devices:[],reminders:[],settings:{}};
     r.fulfill({status:st,headers:cors,contentType:'application/json',body:JSON.stringify(out)}); });
-  await p.addInitScript(()=>{ localStorage.setItem('mbev.pass','pass1234'); localStorage.setItem('mbev.syncKey','abcdef'); }); await p.goto(FILE); await p.waitForTimeout(800);
+  await p.addInitScript(()=>{ localStorage.setItem('mbev.pass','pass1234'); localStorage.setItem('mbev.syncKey','abcdef'); }); await p.goto(FILE); await p.waitForTimeout(800); await p.evaluate(()=>{ var d=document.getElementById('hfTools'); if(d) d.open=true; });
   const last=(re)=>calls.filter((c)=>re.test(c.path)).slice(-1)[0];
   check('the card has a "Go play for 15 min" button and nothing is running at first', /Go play for 15 min/.test(await p.textContent('#hfBurst')) && !/BURST/.test(await p.textContent('#hfMode')), await p.textContent('#hfMode'));
   calls.length=0; await p.click('#hfBurst'); await p.waitForTimeout(500);
