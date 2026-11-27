@@ -38,8 +38,9 @@ th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase}
 <div id="msg" class="hint" role="status" aria-live="polite"></div>
 <div class="card" id="siCard" hidden><h2>Sign in on this device</h2>
 <div class="hint">An installed page keeps its own saved sign-in, so type it once here. It stays on this device only, is sent only to your own Worker, and is never shown back. The sync password is turned into a one-way code before it is saved.</div>
-<div class="ask" style="margin-top:8px"><input id="siPass" type="password" autocomplete="off" placeholder="Screener passphrase" aria-label="Screener passphrase"></div>
-<div class="ask" style="margin-top:8px"><input id="siSync" type="password" autocomplete="off" placeholder="Sync password" aria-label="Sync password"><button id="siSave">Save</button></div>
+<div class="ask" style="margin-top:8px"><input id="siPass" type="password" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Screener passphrase" aria-label="Screener passphrase"></div>
+<div class="ask" style="margin-top:8px"><input id="siSync" type="password" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Sync password" aria-label="Sync password"><button id="siSave">Save</button></div>
+<label class="hint" style="display:block;margin-top:6px"><input type="checkbox" id="siShow"> Show what I type (so you can check it)</label>
 <div class="hint" id="siMsg"></div></div>
 
 <div class="card"><h2>Today</h2>
@@ -69,6 +70,17 @@ th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase}
 <div class="ask" style="margin-top:6px"><input id="alTime" type="time" aria-label="Reminder time" style="flex:0 0 120px"><input id="alText" placeholder="Fanatics: today’s window ends soon" aria-label="Reminder text"><button id="alAdd">Add</button></div>
 <div class="hint" id="alMsg" role="status"></div></div>
 
+<div class="card" id="hfCard"><h2>Hands-free: the Worker picks (football moneylines)</h2>
+<div class="hint" id="hfMode">Checking…</div>
+<div class="row" style="margin-top:8px"><button id="hfOff">Off</button><button id="hfShadow">Shadow (look and log only)</button><button id="hfLive" class="stop">Live ($1 bets)</button><button id="hfScan" class="go">Scan 3 games now</button></div>
+<div class="hint">With the tab closed, your Worker compares Pinnacle's fair price with Novig's price for each football game and picks by La Contadora's math. <b>Shadow</b> places nothing. <b>Live</b> places $1 orders through the same rules as Autopilot: the daily Proceed, the $10 budget, the kill switch, no duplicates, a fresh price. A scan you start by hand never places.</div>
+<div class="ask" style="margin-top:8px"><input id="hfSports" value="1,2,3,4,5,6" aria-label="Pinnacle sport ids" style="max-width:160px"><button id="hfProbe">Check what Pinnacle has</button></div>
+<div class="hint">Reads (never places) what your Pinnacle feed holds for those sport ids, so hands-free can be widened to more sports, spreads and totals. Up to 6 ids at a time.</div>
+<div id="hfProbeOut" class="hint"></div>
+<div id="hfGames" class="hint" style="margin-top:8px"></div>
+<div id="hfLog" class="hint" style="margin-top:8px"></div>
+<div class="hint" id="hfMsg" role="status"></div></div>
+
 <div class="card"><h2>Orders today (from your Worker)</h2>
 <table id="orders"><tr><td>Not loaded yet.</td></tr></table></div>
 
@@ -82,6 +94,7 @@ th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase}
 <div class="ask"><input id="q" placeholder="What did you bet today?" aria-label="Ask a simple question"><button id="bAsk">Ask</button></div>
 <div class="hint">It answers from the status above, and it can only read. Try: what did you bet today, how much is left, is it armed, is it stopped, is it real money.</div>
 <div id="ans" class="ans" role="status"></div></div>
+<div class="hint" style="margin:10px 0 24px"><button id="siOut">Sign out of this device</button> Removes the saved passphrase and sync code from this device only. Your bets and the Worker are not touched.</div>
 </div>
 <script>
 (function(){
@@ -97,7 +110,7 @@ th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase}
     try{ var r=await fetch(API+path, {method:method||'GET', headers:hdr(!!body), body:body?JSON.stringify(body):undefined, cache:'no-store'}), j=null; try{ j=await r.json(); }catch(e){} return {ok:r.ok&&j&&j.ok!==false, status:r.status, j:j}; }
     catch(e){ return {ok:false, status:0, j:null}; }
   }
-  function why(r){ if(r.noSync) return 'Sync is not turned on in this browser. Open the screener, go to Settings and turn on "Your bets on every device", then come back.'; if(r.status===401||r.status===403) return 'The Worker says it is locked (HTTP '+r.status+'). Check the screener passphrase in the screener Settings.'; if(r.status===0) return 'No answer from the Worker. Check your connection and try again.'; return 'The Worker said no'+(r.j&&(r.j.reason||r.j.error)?': '+esc(r.j.reason||r.j.error):' (HTTP '+r.status+')')+'.'; }
+  function why(r){ if(r.noSync) return 'Sync is not turned on in this browser. Open the screener, go to Settings and turn on "Your bets on every device", then come back.'; if(r.status===401||r.status===403){ if(r.j&&r.j.code==='bad_key') return 'The Worker says the SYNC PASSWORD does not match. Use Sign out of this device (at the bottom of this page) and type it again.'; if(r.j&&/passphrase/i.test(String(r.j.error||''))) return 'The Worker says the SCREENER PASSPHRASE does not match. Use Sign out of this device (at the bottom of this page) and type it again.'; return 'The Worker says it is locked (HTTP '+r.status+'). One of the two sign-in entries does not match: use Sign out of this device (at the bottom of this page) and type both again.'; } if(r.status===0) return 'No answer from the Worker. Check your connection and try again.'; return 'The Worker said no'+(r.j&&(r.j.reason||r.j.error)?': '+esc(r.j.reason||r.j.error):' (HTTP '+r.status+')')+'.'; }
   function paint(){
     var st=S, pill=document.getElementById('pill');
     if(!st){ pill.textContent='no answer'; pill.className='pill bad'; return; }
@@ -144,6 +157,8 @@ th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase}
     if(p.length<4 || !w){ m.textContent='Type both the passphrase and the sync password.'; m.className='hint err'; return; }
     try{ localStorage.setItem('mbev.pass', p); localStorage.setItem('mbev.syncKey', await sha256hex('0xbeta-sync:'+w)); }catch(e){ m.textContent='This device would not save it.'; m.className='hint err'; return; }
     document.getElementById('siPass').value=''; document.getElementById('siSync').value=''; m.textContent=''; siShow(); refresh(); };
+  document.getElementById('siShow').onchange=function(){ var t=this.checked?'text':'password'; document.getElementById('siPass').type=t; document.getElementById('siSync').type=t; };   /* v5.44: see what you typed */
+  document.getElementById('siOut').onclick=function(){ if(!confirm('Sign out of this device? This page will need the passphrase and the sync password again. Your bets and the Worker are not touched.')) return; if(!confirm('Really sign out here?')) return; try{ localStorage.removeItem('mbev.pass'); localStorage.removeItem('mbev.syncKey'); }catch(e){} siShow(); document.getElementById('siMsg').textContent='Signed out. Type both again above.'; document.getElementById('siMsg').className='hint'; try{ window.scrollTo(0,0); }catch(e){} };
   siShow();
   try{ if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){}); }catch(e){}   // v5.39: lets the phone install it
   /* v5.40: phone alerts. Needs the alerts keys on the Worker (added once by you). Nothing here shows a key; the phone's push address goes only to your own Worker. */
@@ -188,6 +203,32 @@ th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase}
   alLastPaint();
   document.getElementById('alOff').onclick=async function(){ try{ var reg=await navigator.serviceWorker.ready, sub=await reg.pushManager.getSubscription(); if(sub){ var ep=sub.endpoint; await sub.unsubscribe(); await call('/push/unsubscribe','POST',{endpoint:ep}); } alSay('Alerts are off for this device.'); alStatus(); }catch(e){ alSay('Could not turn them off here.',true); } };
   alStatus();
+  /* v5.44: Hands-Free Path A. Shows what the Worker saw and decided, and sets its mode. Nothing here places a bet: a manual scan never places, and Live is a mode the Worker acts on through the Autopilot rules. */
+  var HF={};
+  function hfSay(t,bad){ var m=document.getElementById('hfMsg'); m.textContent=t||''; m.className='hint'+(bad?' err':''); }
+  function hfPct(x){ return x==null?'–':(x*100).toFixed(1)+'%'; }
+  function hfPaint(){
+    var d=HF, mode=document.getElementById('hfMode'), g=document.getElementById('hfGames'), l=document.getElementById('hfLog'); g.textContent=''; l.textContent='';
+    var c=d.config||{}; mode.textContent='Mode: '+(d.mode==='live'?'LIVE (places $1 orders)':d.mode==='off'?'OFF':'SHADOW (looks and logs, places nothing)')+(c.eMin!=null?' · floor '+(c.eMin*100).toFixed(0)+'% edge, ceiling '+(c.eMax*100).toFixed(0)+'%, price '+(c.pMin*100).toFixed(0)+'-'+(c.pMax*100).toFixed(0)+'%, starts 20+ min away':'');
+    var games=d.games||[]; if(!games.length){ g.textContent='No game scanned yet. Press "Scan 3 games now", or wait for the 5-minute look.'; }
+    games.forEach(function(x){ var row=document.createElement('div'); row.style.margin='6px 0'; var t=x.starts?new Date(x.starts).toLocaleString('en-US',{weekday:'short',hour:'numeric',minute:'2-digit'}):'';
+      var head=document.createElement('b'); head.textContent=(x.game||'')+' · '+t+' · '+(x.status==='pick'?'PICK':x.status==='no_edge'?'no edge':x.status==='unmatched'?'not found on Novig':'skipped'); row.appendChild(head);
+      var body=document.createElement('div'); body.style.marginLeft='12px';
+      if(x.status==='pick'||x.status==='no_edge'){ (x.sides||[]).forEach(function(s){ var li=document.createElement('div'); li.textContent=(s.go?'✓ ':'· ')+s.team+': fair '+hfPct(s.fair)+', Novig '+hfPct(s.price)+', edge '+hfPct(s.net)+(s.go?' · limit '+hfPct(s.limit):' · '+(s.why||[]).join('; ')); body.appendChild(li); }); }
+      else { var li=document.createElement('div'); li.textContent=(x.why||'')+(x.sample&&x.sample.length?' (Novig lists: '+x.sample.join(' | ')+')':''); body.appendChild(li); }
+      row.appendChild(body); g.appendChild(row); });
+    var log=d.log||[]; if(log.length){ var h=document.createElement('b'); h.textContent='What it decided'; l.appendChild(h); log.slice(0,12).forEach(function(r){ var li=document.createElement('div'); li.textContent=new Date(r.t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+' · '+r.team+' at '+hfPct(r.price)+' (fair '+hfPct(r.fair)+', edge '+hfPct(r.net)+') · '+r.result+(r.reason?' ('+r.reason+')':''); l.appendChild(li); }); }
+  }
+  async function hfLoad(scanNow){ var r=await call('/handsfree/scan'+(scanNow?'?now=1':'')); if(!r.ok){ document.getElementById('hfMode').textContent=r.noSync?'Sign in on this device first (the card above).':(r.status===404?'The Worker does not have hands-free yet.':why(r)); return false; } HF=r.j; hfPaint(); return true; }
+  async function hfSet(mode,label){ var r=await call('/handsfree/mode','POST',{mode:mode}); if(r.ok){ hfSay('Mode is now '+label+'.'); await hfLoad(false); } else hfSay(why(r),true); }
+  document.getElementById('hfOff').onclick=function(){ hfSet('off','OFF'); };
+  document.getElementById('hfShadow').onclick=function(){ hfSet('shadow','SHADOW (places nothing)'); };
+  document.getElementById('hfLive').onclick=function(){ if(!confirm('Let your Worker place $1 orders by itself, with the tab closed? It follows the Autopilot rules: only while armed today, $10 a day, the kill switch, no duplicates.')) return; if(!confirm('Really switch hands-free to LIVE? You can switch it back to Shadow or Off here at any time.')) return; hfSet('live','LIVE'); };
+  document.getElementById('hfScan').onclick=async function(){ hfSay('Scanning 3 games…'); var ok=await hfLoad(true); hfSay(ok?'Scanned. A manual scan never places a bet.':'',!ok); };
+  document.getElementById('hfProbe').onclick=async function(){ var out=document.getElementById('hfProbeOut'); out.textContent='Asking Pinnacle through your Worker…'; var ids=String(document.getElementById('hfSports').value||'').replace(/[^0-9,]/g,''); var r=await call('/handsfree/probe?sport='+encodeURIComponent(ids));
+    out.textContent=''; if(!r.ok){ out.textContent=r.noSync?'Sign in on this device first.':(r.status===404?'The Worker does not have the probe yet.':(r.status===503?'The Worker has no Pinnacle key.':why(r))); return; }
+    (r.j.sports||[]).forEach(function(x){ var d=document.createElement('details'); d.style.margin='6px 0'; var sm=document.createElement('summary'); sm.textContent='Sport '+x.sport_id+': '+(x.status==='ok'?(x.events+' games · '+(x.leagues||[]).slice(0,4).join(', ')):x.status); d.appendChild(sm); if(x.sample){ var pre=document.createElement('pre'); pre.style.whiteSpace='pre-wrap'; pre.style.fontSize='11px'; pre.textContent=JSON.stringify(x.sample,null,1).slice(0,2500); d.appendChild(pre); } out.appendChild(d); }); };
+  hfLoad(false);
   refresh(); setInterval(function(){ if(!document.hidden) refresh(); }, 30000);
 })();
 </script>
