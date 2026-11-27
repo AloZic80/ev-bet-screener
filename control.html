@@ -154,7 +154,7 @@ table.tape.clean tr:last-child td{border-bottom:0}table.tape.clean tr:nth-child(
 
 <div class="hf-sec"><h3>What it found</h3>
 <div id="hfSum" class="hf-sum"></div>
-<div class="hint">Every game here is a <b>moneyline</b>: a bet that a team wins the game outright (tennis: wins the match). <b>Fair</b> is Pinnacle's price with the bookmaker's margin removed; <b>Novig</b> is what Novig sells it for; <b>edge</b> is how much better Novig's price is than fair. A pick is a $1 order up to the limit shown.</div>
+<div class="hint">Every bet here is a <b>moneyline</b>: a bet that a team wins the game outright (tennis: wins the match). MONEYLINE, SPREAD and TOTAL are Pinnacle's own prices (decimal odds), shown so you can see the whole board; hands-free bets only the moneyline. <b>Fair</b> is Pinnacle's price with the bookmaker's margin removed; <b>Novig</b> is what Novig sells it for; <b>edge</b> is how much better Novig's price is than fair. A pick is a $1 order up to the limit shown.</div>
 <div id="hfGames"></div>
 <div id="hfLog" class="hint" style="margin-top:10px"></div></div>
 
@@ -341,14 +341,21 @@ table.tape.clean tr:last-child td{border-bottom:0}table.tape.clean tr:nth-child(
     function statusOf(x){ return x.status==='pick'?'PICK':x.status==='no_edge'?'no edge':x.status==='unmatched'?'not found on Novig':'skipped'; }
     /* v5.60 (owner 2026-11-27, about the pinnodds.com table: "see how clean it is"): a clean match table. The match and its league on two lines, the start, the two sides' fair and Novig prices as plain numbers, the edge, one status. The detail of each side (what the bet is, the $1 order, the limit, why not) sits under the match in small grey type. */
     function short(n){ var w=String(n||'').trim().split(/\s+/); return w[w.length-1]||''; }
-    function tape(arr){ var wrap=document.createElement('div'); wrap.className='tape-w'; var tb=document.createElement('table'); tb.className='tape clean'; var hd=document.createElement('tr'); ['MATCH','START','FAIR %','NOVIG %','EDGE','STATUS'].forEach(function(h,k){ var th=document.createElement('th'); th.textContent=h; if(k>=2&&k<=4) th.className='num'; hd.appendChild(th); }); tb.appendChild(hd);
+    function tape(arr){ var wrap=document.createElement('div'); wrap.className='tape-w'; var tb=document.createElement('table'); tb.className='tape clean'; var hd=document.createElement('tr'); ['MATCH','START','MONEYLINE','SPREAD','TOTAL','FAIR %','NOVIG %','EDGE','STATUS'].forEach(function(h,k){ var th=document.createElement('th'); th.textContent=h; if(k>=2&&k<=7) th.className='num'; hd.appendChild(th); }); tb.appendChild(hd);
       arr.forEach(function(x){ var tr=document.createElement('tr'); tr.className='st-'+(x.status||'skipped'); var t=x.starts?new Date(x.starts).toLocaleString('en-US',{weekday:'short',hour:'numeric',minute:'2-digit'}):'';
         function cell(cls){ var c=document.createElement('td'); if(cls) c.className=cls; tr.appendChild(c); return c; }
         var mc=cell('c-m'), m1=document.createElement('div'); m1.className='m1'; m1.textContent=x.game||''; mc.appendChild(m1); var m2=document.createElement('div'); m2.className='m2'; m2.textContent=tagOf(x)+' · Moneyline'; mc.appendChild(m2);
         var sides=(x.status==='pick'||x.status==='no_edge')?(x.sides||[]):[];
+        if(x.status==='no_edge'&&sides.length){ var bs0=sides.slice().sort(function(a,b){ return (b.net==null?-9:b.net)-(a.net==null?-9:a.net); })[0], li0=document.createElement('div'); li0.className='m3 dim'; li0.textContent='Best side: '+bs0.team+(x.sport==='tennis'?' to win the match':' to win')+', edge '+hfPct(bs0.net)+' · '+((bs0.why||[])[0]||'under the floor'); mc.appendChild(li0); } else
         sides.forEach(function(s2){ var li=document.createElement('div'); li.className='m3 '+(s2.go?'go':'dim'); li.textContent=(s2.go?'✓ ':'· ')+s2.team+(x.sport==='tennis'?' to win the match':' to win')+': fair '+hfPct(s2.fair)+', Novig '+hfPct(s2.price)+', edge '+hfPct(s2.net)+(s2.go?' · $1 order, up to '+hfPct(s2.limit):' · '+(s2.why||[]).join('; ')); mc.appendChild(li); });
         if(!sides.length){ var li=document.createElement('div'); li.className='m3 dim'; li.textContent=(x.why||'')+(x.sample&&x.sample.length?' (Novig lists: '+x.sample.join(' | ')+')':''); mc.appendChild(li); }
         var tc=cell('c-t'); tc.textContent=t;
+        var gm=String(x.game||'').split(' @ '), nmA=short(gm[0]), nmH=short(gm[1]||'');
+        function fmtS(n){ n=+n; return (n>0?'+':n<0?'\u2212':'')+Math.abs(n); }
+        function boardCell(lines){ var c=cell('num'); if(!lines){ c.textContent='\u2013'; c.className+=' dim'; return; } lines.forEach(function(t2){ var d2=document.createElement('div'); d2.textContent=t2; c.appendChild(d2); }); }
+        boardCell(x.ml?[nmH+' '+(+x.ml.home).toFixed(2), nmA+' '+(+x.ml.away).toFixed(2)]:null);
+        boardCell(x.board&&x.board.spread?[nmH+' '+fmtS(x.board.spread.hdp)+' '+(+x.board.spread.home).toFixed(2), nmA+' '+fmtS(-x.board.spread.hdp)+' '+(+x.board.spread.away).toFixed(2)]:null);
+        boardCell(x.board&&x.board.total?['over '+x.board.total.points+' '+(+x.board.total.over).toFixed(2),'under '+x.board.total.points+' '+(+x.board.total.under).toFixed(2)]:null);
         function numCell(f){ var c=cell('num'); if(!sides.length){ c.textContent='–'; c.className+=' dim'; return; } sides.forEach(function(s2){ var d=document.createElement('div'); d.className=s2.go?'go':''; d.textContent=short(s2.team)+' '+(f(s2)==null?'–':(f(s2)*100).toFixed(1)); c.appendChild(d); }); }
         numCell(function(s2){ return s2.fair; }); numCell(function(s2){ return s2.price; });
         var ec=cell('num'); if(sides.length){ var bs=sides.slice().sort(function(a,b){ return (b.net==null?-9:b.net)-(a.net==null?-9:a.net); })[0]; ec.textContent=bs.net==null?'–':((bs.net>=0?'+':'')+(bs.net*100).toFixed(1)+'%'); ec.className+=bs.go?' go':(bs.net>0?'':' dim'); } else { ec.textContent='–'; ec.className+=' dim'; }
