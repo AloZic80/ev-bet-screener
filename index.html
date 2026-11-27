@@ -38,7 +38,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.67</title>
+<title>0xBeta Screener v5.68</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -2302,7 +2302,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.67</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.68</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2779,6 +2779,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
   <div id="apSamson" class="meta" style="margin-top:8px"></div>
   <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px"><button type="button" class="ghost" id="apMathBtn">Check the Worker’s math</button><span class="meta">Hands-Free Stage 1: the Worker scores this board with La Contadora’s formulas and the page checks it gets the same numbers.</span></div>
   <div id="apMath" class="meta" role="status" aria-live="polite" style="margin-top:4px"></div>
+  <label class="bar-check"><input type="checkbox" id="olOn"> Fill the Board from the Worker’s saved loads when I open the page (free: no BettingPros calls)</label><div class="meta" id="olLine" role="status"></div>   <!-- v5.68 -->
   <div class="meta" style="margin-top:10px"><b>Load the board by itself</b> (Hands-Free Stage 0). Off until you turn it on. It uses your daily BettingPros calls, so it has hard limits.</div>
   <label class="bar-check"><input type="checkbox" id="alAuto"> Press Load for me while Autopilot is armed today (this tab must stay open)</label>
   <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px"><label class="meta">At most <input type="number" id="alMax" min="1" max="20" step="1" style="width:56px"> loads a day</label><label class="meta">Never go below <input type="number" id="alRes" min="0" max="49" step="1" style="width:56px"> calls left</label><label class="meta">Between <input type="number" id="alFrom" min="0" max="23" step="1" style="width:52px"> and <input type="number" id="alTo" min="1" max="24" step="1" style="width:52px"> o'clock (Chicago)</label></div>
@@ -3283,7 +3284,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 
 </div>
 <script>
-const SCREENER_VERSION='v5.67';
+const SCREENER_VERSION='v5.68';
 /* v5.24 (step 5): DEV_APP is now defined once, in the head script at the top of this file (the first paint reads it too) */
 if(!DEV_APP) document.documentElement.setAttribute('data-viewas','easy');   // v5.24 (step 3b): a customer build is Easy whatever mbev.viewAs holds
 /* v5.24 (owner 11/20: "we need to differentiate already"; "for me in GOD mode, let me tell the difference of what they cant see and i can"): levels.
@@ -11027,7 +11028,7 @@ document.addEventListener('change', e=>{ if(e.target && (e.target.id==='defSport
 async function fetchApiSport(sport, date, booksParam, weekParam, evOnly, fresh){
   const dateOrWeek=(WEEK_BASED_SPORTS.includes(sport)&&weekParam)?weekParam:'&date='+encodeURIComponent(date);
   const evParam = evOnly===false ? '&ev_only=0' : '&ev_only=1';
-  return apiGet('/props?sport='+encodeURIComponent(sport)+dateOrWeek+evParam+booksParam+'&pages='+apiPages()+(fresh?'&fresh=1':''));
+  return apiGet('/props?sport='+encodeURIComponent(sport)+dateOrWeek+evParam+booksParam+'&pages='+apiPages()+(fresh?'&fresh=1':'')+(window._cacheOnly?'&cache_only=1':''));   // v5.68: cache_only = the Worker's saved loads only, never a BettingPros call
 }
 let lastBudget=null;
 function fmtCT(iso){ const d=new Date(iso); return isNaN(d)?'':d.toLocaleString('en-US',{timeZone:'America/Chicago',weekday:'short',hour:'numeric',minute:'2-digit'}); }
@@ -11685,7 +11686,7 @@ async function loadApi(fresh, spOver){   // v4.11: spOver = one of the sports ti
   const sport=spOver||document.getElementById('apiSport').value, type=document.getElementById('apiType').value;
   // v3.12: 24/7 — no game in the next 24 hours → don't spend calls (ESPN knows; sports ESPN doesn't cover always load)
   { const nx=sportNext[sport], anyway=window._loadAnyway===sport; window._loadAnyway=null;
-    if(!anyway && (nx===null || (nx && nx-Date.now()>24*3600e3))){
+    if(!anyway && !window._cacheOnly && (nx===null || (nx && nx-Date.now()>24*3600e3))){   // v5.68: the free cache-only open has nothing to save by skipping
       if(spOver) return sport+': no game in the next 24 hours, skipped (no calls)';   // v4.11
       status.innerHTML='No '+esc(sportLabel(sport))+' game in the next 24 hours'+(nx?' (next: '+esc(whenCT(new Date(nx).toISOString()))+')':'')+' — not spending BettingPros calls. <button type="button" class="ghost sm" id="loadAnyway" data-s="'+esc(sport)+'">Load anyway</button>';
       return; } }
@@ -11720,7 +11721,7 @@ async function loadApi(fresh, spOver){   // v4.11: spOver = one of the sports ti
       const typeName={moneyline:'moneylines',spread:'spreads',total:'totals'}[type];
       // v2.67: every sport with game-line IDs (soccer on hold: 3-way moneyline, many leagues)
       if(!GAMELINE_SPORTS.has(sport)) throw new Error(sport==='SOCCER' ? 'Soccer game lines from BettingPros come next (one 3-call look at their soccer markets first). For soccer lines now: Sources → Sportsbook API or The Odds API' : typeName[0].toUpperCase()+typeName.slice(1)+' aren\'t set up for '+sport+' yet');
-      data=await apiGet('/'+type+'?sport='+encodeURIComponent(sport)+booksParam+(fresh?'&fresh=1':''));
+      data=await apiGet('/'+type+'?sport='+encodeURIComponent(sport)+booksParam+(fresh?'&fresh=1':'')+(window._cacheOnly?'&cache_only=1':''));   // v5.68
       rows=gameRowsToInternal(data, type, sport);
       msg = rows.length ? 'Loaded '+rows.length+' '+sport+' '+typeName+' (best price per side across your books)'
                         : (data.note || '0 '+sport+' '+type+' lines right now');
@@ -11728,6 +11729,7 @@ async function loadApi(fresh, spOver){   // v4.11: spOver = one of the sports ti
     }
 
     const meta=data._meta||{};
+    if(window._cacheOnly && meta.cache_only_empty){ status.textContent='The Worker has nothing saved for '+sport+' '+type+' yet. Press Load once and it will keep it fresh by itself.'; return status.textContent; }   // v5.68: an empty answer never replaces what is on the Board
     if(meta.stale) msg+=' · ⚠ Saved copy from '+fmtSaved(meta.fetched_at)+' — '+(meta.stale_reason||'API unavailable');
     else if(meta.from_cache) msg+=' · from cache ('+Math.max(0,Math.round((Date.now()-new Date(meta.fetched_at))/60000))+' min old, no API calls used)';
     if(unmatchedBooks.length) msg+=' (Not recognized for the API filter: '+unmatchedBooks.join(', ')+')';
@@ -16461,6 +16463,25 @@ paintModes();
 (function(){ const cb=document.getElementById('notesAll'); cb.checked=notesAll;
   cb.addEventListener('change',()=>{ notesAll=cb.checked; openNotes.clear(); saveNotesAll(); refresh(); }); })();
 restoreBoard(); refreshBudget();
+/* v5.68 (owner 2026-11-27: "Build Stage A2"; "i won't have to press"): the Board fills itself when the page opens, and again when you come back to it and every 10 minutes while it is on screen,
+   from what the Worker has already saved (cache_only: the Worker never calls BettingPros for this). Nothing saved yet: it says so and leaves the Board as it is. Turn it off with the box in Settings. */
+function olOn(){ try{ return localStorage.getItem('mbev.openLoad')!=='off'; }catch(e){ return true; } }
+let _olLast=0;
+async function bpOpenLoad(){
+  try{
+    if(!olOn() || document.visibilityState!=='visible') return;
+    let pass=''; try{ pass=localStorage.getItem('mbev.pass')||''; }catch(e){} if(!pass) return;   // no passphrase yet: nothing to ask the Worker with
+    const btn=document.getElementById('loadApi'); if(!btn || btn.disabled || boardEditorOpen()) return;
+    if(Date.now()-_olLast<10*60e3) return; _olLast=Date.now();
+    window._cacheOnly=true; try{ await loadApi(false); } finally{ window._cacheOnly=false; }
+    const l=document.getElementById('olLine'); if(l) l.textContent='Last filled from the Worker at '+new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  }catch(e){ window._cacheOnly=false; }
+}
+(function(){ const cb=document.getElementById('olOn'); if(cb){ cb.checked=olOn(); cb.addEventListener('change',()=>{ try{ localStorage.setItem('mbev.openLoad',cb.checked?'on':'off'); }catch(e){} if(cb.checked){ _olLast=0; bpOpenLoad(); } }); }
+  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') bpOpenLoad(); });
+  setInterval(()=>{ bpOpenLoad(); }, 60000);   // it asks once a minute whether 10 minutes have passed
+  setTimeout(()=>{ bpOpenLoad(); }, 3000); })();
+
 try{ easyTodayInit(); easyScreensInit(); easyBuildDevUi(); easyApplyLevel(easyLevel()==='easy'); }catch(e){ console.error(e); }   // v5.24: the Easy start-up tab (God keeps the Board) and the dev pieces, after the board is restored
 /*SYNC-CORE-START*/
 /* v3.03 sync core — pure functions (tested on their own). Records are merged three ways: what this device has, what the

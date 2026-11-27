@@ -19,8 +19,8 @@ let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?
   check('the line is orange (class full) because a source is paused and the check found something', cls==='full', cls);
   await p.evaluate(()=>{ document.getElementById('auBox').open=true; });
   const body=await p.evaluate(()=>document.getElementById('auBody').innerText);
-  check('each source shows what is left, today\'s share and its last load', /The Odds API · 412 left this month · today 8 of about 85/.test(body) && /americanfootball_nfl \(12 games\)/.test(body), body);
-  check('a paused source shows until when and why', /OddsPapi · 0 left this month/.test(body) && /paused until/.test(body) && /totals answered 403/.test(body), body);
+  check('each source shows what is left, today\'s share and its last load', body.includes('The Odds API · 412 left (resets the 1st at 12 AM UTC) · today 8 of about 85') && /americanfootball_nfl \(12 games\)/.test(body), body);
+  check('a paused source shows until when and why', body.includes('OddsPapi · 0 left (resets the 1st at 12 AM UTC)') && /paused until/.test(body) && /totals answered 403/.test(body), body);
   check('the data check shows its time, its summary and each problem in plain words (broken first wording, note last)', /Data check · .* · OddsPapi is failing\./.test(body) && /Broken: OddsPapi — Every game call answers 403\. To check: Check the book names\./.test(body) && /Note: The Odds API — Resets on the 1st\./.test(body), body);
   await p.click('#auWatch'); await p.waitForTimeout(500); check('Check the data now asks the Worker once', posts.filter(x=>x==='watch').length===1, posts);
   await p.click('#auPause'); await p.waitForTimeout(600); check('Pause sends on:false, the card says paused and the button offers Resume', posts.some(x=>/"on":false/.test(x)) && /Auto loads · paused/.test(await p.evaluate(()=>document.getElementById('auSum').textContent)) && /Resume/.test(await p.evaluate(()=>document.getElementById('auPause').textContent)), posts);

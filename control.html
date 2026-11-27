@@ -452,7 +452,7 @@ body{padding:12px}.sub{font-size:12px;margin-bottom:8px}.stat{flex:1 1 44%;min-w
     if(!r.ok){ sum.textContent='Auto loads \u00b7 '+(r.noSync?'sign in first':(r.status===404?'not on the Worker yet':'no answer')); sum.className=''; body.textContent=r.noSync?'Sign in on this device first.':(r.status===404?'The Worker does not have auto loads yet.':why(r)); return; }
     AU=r.j; var bad=false, bits=[];
     (AU.sources||[]).forEach(function(x){ var row=document.createElement('div'); row.style.margin='6px 0'; var b=document.createElement('b'); b.textContent=x.name; row.appendChild(b);
-      var t=' \u00b7 '+(x.key?(auLeft(x)+' left this month'+(x.shareToday!=null?' \u00b7 today '+x.usedToday+' of about '+x.shareToday:'')):'no key on the Worker'); if(x.held){ t+=' \u00b7 paused until '+new Date(x.held).toLocaleString(); bad=true; } if(x.error){ t+=' \u00b7 '+x.error; bad=bad||!x.held; }
+      var t=' \u00b7 '+(x.key?(auLeft(x)+' left (resets '+x.resets+')'+(x.shareToday!=null?' \u00b7 today '+x.usedToday+' of about '+x.shareToday:'')):'no key on the Worker'); if(x.held){ t+=' \u00b7 paused until '+new Date(x.held).toLocaleString(); bad=true; } if(x.error){ t+=' \u00b7 '+x.error; bad=bad||!x.held; }
       row.appendChild(document.createTextNode(t)); if(x.lastAt){ var l=document.createElement('div'); l.className='hint'; l.textContent='Last load '+new Date(x.lastAt).toLocaleString()+((x.loads&&x.loads[0])?' \u00b7 '+x.loads[0].what+(x.loads[0].note?' ('+x.loads[0].note+')':''):''); row.appendChild(l); } body.appendChild(row);
       bits.push((/odds api/i.test(x.name)?'Odds API':x.name)+' '+auLeft(x)); });
     var w=AU.watch, issues=(w&&w.issues||[]).filter(function(i){ return i.severity==='broken'||i.severity==='degraded'; });
