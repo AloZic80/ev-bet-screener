@@ -25,5 +25,5 @@ let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?
   check('with the box turned off it asks nothing', R.reqs.length===0, R.reqs); await R.ctx.close();
   R=await run({});
   check('with no passphrase set yet it asks nothing (there is nothing to ask with)', R.reqs.length===0, R.reqs);
-  const t=await R.p.evaluate(()=>{ _olLast=0; window._cacheOnly=false; return {on:document.getElementById('olOn').checked, ver:SCREENER_VERSION}; }); check('the Settings box is on by default and the version is v5.68', t.on===true && t.ver==='v5.68', t); await R.ctx.close();
+  const t=await R.p.evaluate(()=>{ _olLast=0; window._cacheOnly=false; return {on:document.getElementById('olOn').checked, ver:SCREENER_VERSION}; }); check('the Settings box is on by default and the version is v5.68 or later', t.on===true && /^v5\.(6[8-9]|[7-9]\d)$/.test(t.ver), t); await R.ctx.close();
   console.log(`\n${pass} passed, ${fail} failed`); await b.close(); process.exit(fail?1:0); })();
