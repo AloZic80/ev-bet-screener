@@ -90,6 +90,16 @@ th{letter-spacing:.06em}td,th{border-bottom-color:#1c1c20}
 /* v5.57 hands-free limits */
 .lim-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0}.lim-lab{flex:0 0 330px;max-width:100%;color:var(--tx)}.lim-row input[type=number]{width:110px;padding:8px 10px;background:#0f0f12;border:1px solid var(--line);color:var(--tx);font-family:inherit;border-radius:8px}.lim-u{color:var(--mut);font-size:12.5px}
 @media(max-width:560px){.lim-lab{flex:1 1 100%}}
+/* v5.60 the clean match table */
+table.tape.clean{min-width:720px;font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+table.tape.clean th{font-size:10.5px;letter-spacing:.1em;padding:10px 14px;border-bottom:1px solid var(--line)}table.tape.clean th.num,table.tape.clean td.num{text-align:right}
+table.tape.clean td{padding:14px 14px;border-bottom:1px solid #1c1c20;vertical-align:top}
+table.tape.clean td.c-m{width:46%}table.tape.clean .m1{font:600 15px/1.35 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--tx)}table.tape.clean .m2{color:var(--mut);font-size:11.5px;letter-spacing:.04em;margin-top:2px}
+table.tape.clean .m3{color:var(--mut);font-size:11.5px;margin-top:4px;line-height:1.4}table.tape.clean .m3.go{color:var(--ok)}
+table.tape.clean td.c-t{color:var(--mut);white-space:nowrap}table.tape.clean td.num{white-space:nowrap;color:var(--tx);font-variant-numeric:tabular-nums}table.tape.clean td.num.dim,table.tape.clean td.num .dim{color:var(--mut)}table.tape.clean td.num .go,table.tape.clean td.num.go{color:var(--ok);font-weight:600}
+table.tape.clean td.c-s{white-space:nowrap}.pillx{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;letter-spacing:.05em;border:1px solid var(--line);color:var(--mut)}.pillx.pick{color:var(--ok);border-color:var(--ok);background:#0e1a13;font-weight:700}.pillx.unmatched{color:var(--acc);border-color:#5a3410}
+table.tape.clean tr:last-child td{border-bottom:0}table.tape.clean tr:nth-child(even) td{background:#0d0d10}
+@media(max-width:560px){table.tape.clean{min-width:640px}}
 </style>
 </head>
 <body><div class="wrap">
@@ -329,14 +339,21 @@ th{letter-spacing:.06em}td,th{border-bottom-color:#1c1c20}
     function tagOf(x){ return (x.league&&x.league.length<24?x.league:(x.sport==='basketball'?'Basketball':x.sport==='hockey'?'Hockey':x.sport==='tennis'?'Tennis':'Football')); }
     /* v5.51 (owner 2026-11-27: "BUILD, and make it real nice ... more as in code"): the games as a terminal-style match table (monospace: START, LEAGUE, MATCH, STATUS, the sides with fair and Novig prices) */
     function statusOf(x){ return x.status==='pick'?'PICK':x.status==='no_edge'?'no edge':x.status==='unmatched'?'not found on Novig':'skipped'; }
-    function tape(arr){ var wrap=document.createElement('div'); wrap.className='tape-w'; var tb=document.createElement('table'); tb.className='tape'; var hd=document.createElement('tr'); ['START','LEAGUE','MATCH','MARKET','STATUS','PRICES: PINNACLE FAIR vs NOVIG'].forEach(function(h){ var th=document.createElement('th'); th.textContent=h; hd.appendChild(th); }); tb.appendChild(hd);
+    /* v5.60 (owner 2026-11-27, about the pinnodds.com table: "see how clean it is"): a clean match table. The match and its league on two lines, the start, the two sides' fair and Novig prices as plain numbers, the edge, one status. The detail of each side (what the bet is, the $1 order, the limit, why not) sits under the match in small grey type. */
+    function short(n){ var w=String(n||'').trim().split(/\s+/); return w[w.length-1]||''; }
+    function tape(arr){ var wrap=document.createElement('div'); wrap.className='tape-w'; var tb=document.createElement('table'); tb.className='tape clean'; var hd=document.createElement('tr'); ['MATCH','START','FAIR %','NOVIG %','EDGE','STATUS'].forEach(function(h,k){ var th=document.createElement('th'); th.textContent=h; if(k>=2&&k<=4) th.className='num'; hd.appendChild(th); }); tb.appendChild(hd);
       arr.forEach(function(x){ var tr=document.createElement('tr'); tr.className='st-'+(x.status||'skipped'); var t=x.starts?new Date(x.starts).toLocaleString('en-US',{weekday:'short',hour:'numeric',minute:'2-digit'}):'';
-        function td(txt,cls){ var c=document.createElement('td'); if(cls) c.className=cls; c.textContent=txt; tr.appendChild(c); return c; }
-        td(t,'c-t'); td(tagOf(x),'c-l'); td(x.game||'','c-m'); td('Moneyline','c-k'); td(statusOf(x),'c-s');
-        var dc=document.createElement('td'); dc.className='c-d';
-        if(x.status==='pick'||x.status==='no_edge'){ (x.sides||[]).forEach(function(s2){ var li=document.createElement('div'); li.className=s2.go?'go':(s2.net!=null&&s2.net>0?'pos':'neg'); li.textContent=(s2.go?'✓ ':'· ')+s2.team+(x.sport==='tennis'?' to win the match':' to win')+': fair '+hfPct(s2.fair)+', Novig '+hfPct(s2.price)+', edge '+hfPct(s2.net)+(s2.go?' · $1 order, up to '+hfPct(s2.limit):' · '+(s2.why||[]).join('; ')); dc.appendChild(li); }); }
-        else { var li=document.createElement('div'); li.className='why'; li.textContent=(x.why||'')+(x.sample&&x.sample.length?' (Novig lists: '+x.sample.join(' | ')+')':''); dc.appendChild(li); }
-        tr.appendChild(dc); tb.appendChild(tr); });
+        function cell(cls){ var c=document.createElement('td'); if(cls) c.className=cls; tr.appendChild(c); return c; }
+        var mc=cell('c-m'), m1=document.createElement('div'); m1.className='m1'; m1.textContent=x.game||''; mc.appendChild(m1); var m2=document.createElement('div'); m2.className='m2'; m2.textContent=tagOf(x)+' · Moneyline'; mc.appendChild(m2);
+        var sides=(x.status==='pick'||x.status==='no_edge')?(x.sides||[]):[];
+        sides.forEach(function(s2){ var li=document.createElement('div'); li.className='m3 '+(s2.go?'go':'dim'); li.textContent=(s2.go?'✓ ':'· ')+s2.team+(x.sport==='tennis'?' to win the match':' to win')+': fair '+hfPct(s2.fair)+', Novig '+hfPct(s2.price)+', edge '+hfPct(s2.net)+(s2.go?' · $1 order, up to '+hfPct(s2.limit):' · '+(s2.why||[]).join('; ')); mc.appendChild(li); });
+        if(!sides.length){ var li=document.createElement('div'); li.className='m3 dim'; li.textContent=(x.why||'')+(x.sample&&x.sample.length?' (Novig lists: '+x.sample.join(' | ')+')':''); mc.appendChild(li); }
+        var tc=cell('c-t'); tc.textContent=t;
+        function numCell(f){ var c=cell('num'); if(!sides.length){ c.textContent='–'; c.className+=' dim'; return; } sides.forEach(function(s2){ var d=document.createElement('div'); d.className=s2.go?'go':''; d.textContent=short(s2.team)+' '+(f(s2)==null?'–':(f(s2)*100).toFixed(1)); c.appendChild(d); }); }
+        numCell(function(s2){ return s2.fair; }); numCell(function(s2){ return s2.price; });
+        var ec=cell('num'); if(sides.length){ var bs=sides.slice().sort(function(a,b){ return (b.net==null?-9:b.net)-(a.net==null?-9:a.net); })[0]; ec.textContent=bs.net==null?'–':((bs.net>=0?'+':'')+(bs.net*100).toFixed(1)+'%'); ec.className+=bs.go?' go':(bs.net>0?'':' dim'); } else { ec.textContent='–'; ec.className+=' dim'; }
+        var sc=cell('c-s'), pill=document.createElement('span'); pill.className='pillx '+(x.status||'skipped'); pill.textContent=statusOf(x); sc.appendChild(pill);
+        tb.appendChild(tr); });
       wrap.appendChild(tb); return wrap; }
     var G={pick:[],no_edge:[],unmatched:[],skipped:[]}; games.forEach(function(x){ (G[x.status]||G.skipped).push(x); });
     var sk=d.skippedLeagues||[];
