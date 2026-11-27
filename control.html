@@ -106,6 +106,10 @@ details.hf-d{margin-top:8px;border:1px solid var(--line);border-radius:10px;padd
 <div class="hf-sec"><h3>Pace</h3>
 <div class="row" style="align-items:center"><button id="hfBurst" class="go">Go play for 15 min</button><span class="hint" style="margin:0">Normally it looks every 5 minutes. A burst looks every minute for 15 minutes, then goes back by itself.</span></div></div>
 
+<div class="hf-sec"><h3>Price sources</h3>
+<div id="hfSrc" class="hint">Checking…</div>
+<div class="hint">Hands-free asks Pinnacle first. If Pinnacle cannot answer (its day is used up, or it says slow down), it asks The Odds API for Pinnacle's prices instead. Each source has its own daily budget.</div></div>
+
 <div class="hf-sec"><h3>What it found</h3>
 <div id="hfSum" class="hf-sum"></div>
 <div id="hfGames"></div>
@@ -277,7 +281,9 @@ details.hf-d{margin-top:8px;border:1px solid var(--line);border-radius:10px;padd
     [['no_edge','No edge (the price is fair or worse)'],['unmatched','Not found on Novig (Novig does not list this game, or spells the teams differently)'],['skipped','Skipped']].forEach(function(a){ var arr=G[a[0]]; if(!arr.length) return; var dt=document.createElement('details'); dt.className='hf-d'; var sm=document.createElement('summary'); sm.textContent=a[1]+': '+arr.length; dt.appendChild(sm); arr.forEach(function(x){ dt.appendChild(gameRow(x)); }); g.appendChild(dt); });
     var log=d.log||[]; if(log.length){ var h=document.createElement('b'); h.textContent='What it decided'; l.appendChild(h); log.slice(0,12).forEach(function(r){ var li=document.createElement('div'); li.textContent=new Date(r.t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+' · '+r.team+' at '+hfPct(r.price)+' (fair '+hfPct(r.fair)+', edge '+hfPct(r.net)+') · '+r.result+(r.reason?' ('+r.reason+')':''); l.appendChild(li); }); }
   }
-  async function hfLoad(scanNow){ var r=await call('/handsfree/scan'+(scanNow?'?now=1':'')); if(!r.ok){ document.getElementById('hfBadgeTx').textContent='NO ANSWER'; document.getElementById('hfBadge').className='hf-badge off'; document.getElementById('hfSay').textContent=''; document.getElementById('hfMode').textContent=r.noSync?'Sign in on this device first (the card above).':(r.status===404?'The Worker does not have hands-free yet.':why(r)); return false; } HF=r.j; hfPaint(); return true; }
+  async function hfSrcLoad(){ var el=document.getElementById('hfSrc'); if(!el) return; var r=await call('/handsfree/sources'); el.textContent=''; if(!r.ok){ el.textContent=r.noSync?'Sign in on this device first.':(r.status===404?'The Worker does not have the sources panel yet.':why(r)); return; }
+    (r.j&&r.j.sources||[]).forEach(function(x){ var row=document.createElement('div'); row.style.margin='6px 0'; var b2=document.createElement('b'); b2.textContent=x.name; row.appendChild(b2); var st=[]; if(x.budget!=null){ st.push('used '+x.used+' of '+x.budget+' today'); if(x.held) st.push('asked to slow down, waiting'); if(x.creditsLeft!=null) st.push(x.creditsLeft+' credits left this month'); } st.push(x.key?'key set':'no key'); var d1=document.createElement('div'); d1.style.marginLeft='12px'; d1.textContent=x.role+' · '+st.join(' · ')+' · '+x.plan; row.appendChild(d1); el.appendChild(row); }); }   /* v5.50 */
+  async function hfLoad(scanNow){ var r=await call('/handsfree/scan'+(scanNow?'?now=1':'')); if(!r.ok){ document.getElementById('hfBadgeTx').textContent='NO ANSWER'; document.getElementById('hfBadge').className='hf-badge off'; document.getElementById('hfSay').textContent=''; document.getElementById('hfMode').textContent=r.noSync?'Sign in on this device first (the card above).':(r.status===404?'The Worker does not have hands-free yet.':why(r)); return false; } HF=r.j; hfPaint(); hfSrcLoad(); return true; }
   async function hfSet(mode,label){ var r=await call('/handsfree/mode','POST',{mode:mode}); if(r.ok){ hfSay('Mode is now '+label+'.'); await hfLoad(false); } else hfSay(why(r),true); }
   document.getElementById('hfOff').onclick=function(){ hfSet('off','OFF'); };
   document.getElementById('hfShadow').onclick=function(){ hfSet('shadow','SHADOW (places nothing)'); };
