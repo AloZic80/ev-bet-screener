@@ -43,6 +43,7 @@ async function open(b, W, opt){ opt=opt||{};
       const st=typeof S.news==='function'?S.news(body):S.news;
       return r.fulfill({contentType:'application/json',body:JSON.stringify({ok:true, job:body.job, out:{status:st, summary:st==='ok'?'Expected to play.':'Listed questionable.', sources:[]}, usd:0.04, spentToday:0.24, spentMonth:3.14})}); }
     if(/api\.0xbeta\.dev\/budget/.test(u)) return r.fulfill({contentType:'application/json',body:JSON.stringify({limit:50,used:10,left:40})});
+    if(/api\.0xbeta\.dev\/props/.test(u) && new URL(u).searchParams.get('cache_only')==='1') return r.fulfill({contentType:'application/json',body:JSON.stringify({props:[],_meta:{cache_only_empty:true}})});   /* v5.68: the Board opening asks for saved loads only (cache_only): not a provider call */ 
     if(/api\.0xbeta\.dev\/props/.test(u)){ S.props++; return r.fulfill({contentType:'application/json',body:JSON.stringify({props:[],source_count:0,debug:{}})}); }
     if(/api\.0xbeta\.dev\/live/.test(u)){ S.live++; return r.fulfill({contentType:'application/json',body:JSON.stringify({at:new Date().toISOString(),results:{}})}); }
     if(/0xbeta/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'});
