@@ -32,6 +32,7 @@ async function worker(route){ const req=route.request(), u=new URL(req.url());
     if(body.job!=='compa') return route.fulfill({status:200, contentType:'application/json', body:JSON.stringify({ok:true, job:body.job, out:{}, usd:0})});
     return route.fulfill({status:200, contentType:'application/json', body:JSON.stringify(answer(body.input||{}))}); }
   if(u.pathname==='/budget') return route.fulfill({contentType:'application/json', body:JSON.stringify({limit:50, used:50-S.left, left:S.left})});
+  if(u.pathname==='/props' && u.searchParams.get('cache_only')==='1') return route.fulfill({contentType:'application/json', body:JSON.stringify({props:[],_meta:{cache_only_empty:true}})});   /* v5.68: the Board opening asks for saved loads only: not a BettingPros call */
   if(u.pathname==='/props'){ S.props.push(u.searchParams.get('sport')+':'+u.searchParams.get('pages')); return route.fulfill({contentType:'application/json', body:JSON.stringify({props:[],source_count:0,debug:{}})}); }
   if(u.pathname==='/live') return route.fulfill({contentType:'application/json', body:JSON.stringify({at:new Date().toISOString(), results:{}})});
   return route.fulfill({status:200, contentType:'application/json', body:'{}'}); }

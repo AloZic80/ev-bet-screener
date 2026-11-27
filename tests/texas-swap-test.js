@@ -25,6 +25,7 @@ const NOVIG={'Jaylen Brown':0.55,'Jayson Tatum':0.60};
     if(/\/live\?bets=/.test(u)){ const ds=JSON.parse(decodeURIComponent(u.split('bets=')[1])), R={};
       ds.forEach(d=>{ const nm=Object.keys(NOVIG).find(n=>JSON.stringify(d).includes(n)); if(nm && /novig/i.test(d.id)) R[d.id]={ok:true,src:'novig',price:NOVIG[nm],outcome:'o',ref:'m',at:new Date().toISOString()}; });
       return r.fulfill({contentType:'application/json',headers:H,body:JSON.stringify({results:R})}); }
+    if(/\/props\?/.test(u) && /cache_only=1/.test(u)) return r.fulfill({contentType:'application/json',headers:H,body:JSON.stringify({props:[],_meta:{cache_only_empty:true}})});   /* v5.68: the Board opening asks for saved loads only (cache_only): not a provider call */ 
     if(/\/props\?/.test(u)){ bp=u; return r.fulfill({contentType:'application/json',headers:H,body:JSON.stringify({props:[]})}); }
     if(/espn/.test(u)) return r.fulfill({contentType:'application/json',headers:H,body:'{"events":[]}'}); return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1200);

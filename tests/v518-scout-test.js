@@ -35,6 +35,7 @@ async function open(b, W, opt){ opt=opt||{};
   await p.route('**/*',r=>{ const u=r.request().url();
     if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html});
     if(/api\.0xbeta\.dev\/budget/.test(u)) return r.fulfill({contentType:'application/json',body:JSON.stringify({limit:50,used:50-S.left,left:S.left})});
+    if(/api\.0xbeta\.dev\/props/.test(u) && new URL(u).searchParams.get('cache_only')==='1') return r.fulfill({contentType:'application/json',body:JSON.stringify({props:[],_meta:{cache_only_empty:true}})});   /* v5.68: the Board opening asks for saved loads only (cache_only): not a provider call */ 
     if(/api\.0xbeta\.dev\/props/.test(u)){ const q=new URL(u).searchParams, pg=+q.get('pages'); S.props.push(q.get('sport')+':'+pg); S.left-=pg; return r.fulfill({contentType:'application/json',body:JSON.stringify({props:[],source_count:0,debug:{}})}); }
     if(/api\.0xbeta\.dev\/live/.test(u)){ S.live++; return r.fulfill({contentType:'application/json',body:JSON.stringify({at:new Date().toISOString(),results:{}})}); }
     if(/api\.0xbeta\.dev\/src\/odds/.test(u)){ S.src.push(new URL(u).search); return r.fulfill({contentType:'application/json',body:JSON.stringify({data:[]})}); }

@@ -197,6 +197,13 @@ body{padding:12px}.sub{font-size:12px;margin-bottom:8px}.stat{flex:1 1 44%;min-w
 <details class="hf-d" id="srcBox"><summary id="srcSum">Price sources · checking…</summary>
 <div id="hfSrc" class="hint">Checking…</div>
 <div class="hint">Hands-free asks Pinnacle first. If Pinnacle cannot answer (its day is used up, or it says slow down), it asks The Odds API for Pinnacle's prices instead. Each source has its own daily budget.</div></details></div>
+<div class="card" id="auCard"><h2>Auto loads and data check</h2>
+<details class="hf-d" id="auBox"><summary id="auSum">Auto loads · checking…</summary>
+<div id="auBody" class="hint">Checking…</div>
+<div class="ask"><button id="auWatch">Check the data now</button><button id="auPause">Pause auto loads</button></div>
+<div id="auReq" class="hint">Requests to the Worker today: checking…</div>
+<div id="auMsg" class="hint"></div>
+<div class="hint">The Worker loads The Odds API and OddsPapi by itself inside each limit, spread across the day, so you do not have to press Load. Once a day after 8 AM it also reads how every source is doing and tells you in plain words if something is broken (a phone alert only when something needs you). Pausing stops only these loads.</div></details></div>
 <div class="card" id="alCard"><h2>Phone alerts</h2>
 <div class="hint" id="alState">Checking…</div>
 <details class="hf-d" id="alBox"><summary>Set up or change phone alerts (you only do this once)</summary>
@@ -261,7 +268,13 @@ body{padding:12px}.sub{font-size:12px;margin-bottom:8px}.stat{flex:1 1 44%;min-w
     document.getElementById('sArmNote').textContent=st.requireArm?'daily Proceed (asks again each day)':'the Worker does not ask for a daily Proceed yet';
     document.getElementById('note').textContent=(st.mode==='LIVE'?'REAL money. ':'Paper money. ')+'Budget today '+money(st.budget)+'. '+(st.killed?'The kill switch is ON: nothing is placed until you press Resume.':'Orders are only placed while it is armed for today and the kill switch is off.');
     /* v5.53: the orders PLACED and the ones NOT placed are two lists (a refused order moved no money) */
-    function ordRows(list,empty){ return list.length?'<tr><th>Time</th><th>Pick</th><th>Result</th><th>Detail</th></tr>'+list.slice().reverse().map(function(o){ var res=String(o.result||''), cls=/placed|filled|open/i.test(res)?'t-ok':(/refus|reject|cancel|fail/i.test(res)?'t-no':'t-skip'); return '<tr><td>'+esc(o.t?clock(o.t):'')+'</td><td>'+esc(o.name||o.key||'')+(o.game?'<div class="dim">'+esc(o.game)+'</div>':'')+'</td><td><span class="tag '+cls+'">'+esc(res)+'</span></td><td>'+esc((o.reason?o.reason+' · ':'')+(o.price?((+o.qty||0)/100).toFixed(2)+' contracts at up to '+((+o.price)*100).toFixed(1)+'%'+(o.cost?' · $'+(+o.cost).toFixed(2)+' to pay '+((+o.qty||0)/100).toFixed(2)+' back':''):''))+'</td></tr>'; }).join(''):'<tr><td>'+empty+'</td></tr>'; }
+    /* v5.69 (owner 2026-11-27: "record what Pinnacle had, against our bet we placed ... under the Orders Placed in small letters, across"): one small line under each placed order, so you can see it working */
+    function pcent(x){ return (+x*100).toFixed(1)+'%'; }
+    function pinLine(o){ var p=o&&o.pin; if(!p||!p.ml||p.fair==null) return ''; var t='Pinnacle at '+clock(p.at)+': home '+p.ml.home+' / away '+p.ml.away+' \u2192 fair chance '+pcent(p.fair)+(o.price?' \u00b7 ordered at '+pcent(o.price)+' on Novig':'')+(p.net!=null?' \u00b7 edge '+(p.net>=0?'+':'')+(p.net*100).toFixed(1)+'% after fees':'')+' \u00b7 from '+(p.provider||'?'), c=o.close;
+      if(c){ if(c.unread) t+=' \u00b7 closing look: '+c.unread; else { var d=(c.fair-p.fair)*100; t+=' \u00b7 Pinnacle '+c.minToStart+' min before kickoff: home '+c.ml.home+' / away '+c.ml.away+' \u2192 fair '+pcent(c.fair)+' ('+(d>=0?'+':'')+d.toFixed(1)+' points since we ordered'+(o.price?'; '+((c.fair-(+o.price))>=0?'beat':'missed')+' our price by '+Math.abs((c.fair-(+o.price))*100).toFixed(1)+' points':'')+')'; } }
+      else if(o.startMs&&Date.now()<o.startMs) t+=' \u00b7 closing look comes just before kickoff'; return t; }
+    function pinRow(o){ var t=pinLine(o); return t?'<tr class="pinrow"><td colspan="4" style="font-size:12px;color:var(--mut)">'+esc(t)+'</td></tr>':''; }
+    function ordRows(list,empty){ return list.length?'<tr><th>Time</th><th>Pick</th><th>Result</th><th>Detail</th></tr>'+list.slice().reverse().map(function(o){ var res=String(o.result||''), cls=/placed|filled|open/i.test(res)?'t-ok':(/refus|reject|cancel|fail/i.test(res)?'t-no':'t-skip'); return '<tr><td>'+esc(o.t?clock(o.t):'')+'</td><td>'+esc(o.name||o.key||'')+(o.game?'<div class="dim">'+esc(o.game)+'</div>':'')+'</td><td><span class="tag '+cls+'">'+esc(res)+'</span></td><td>'+esc((o.reason?o.reason+' · ':'')+(o.price?((+o.qty||0)/100).toFixed(2)+' contracts at up to '+((+o.price)*100).toFixed(1)+'%'+(o.cost?' · $'+(+o.cost).toFixed(2)+' to pay '+((+o.qty||0)/100).toFixed(2)+' back':''):''))+'</td></tr>'+pinRow(o); }).join(''):'<tr><td>'+empty+'</td></tr>'; }
     document.getElementById('orders').innerHTML=ordRows(os.filter(function(o){ return String(o.result||'')==='placed'; }),'No orders placed yet today.');
     document.getElementById('ordersNo').innerHTML=ordRows(os.filter(function(o){ return String(o.result||'')!=='placed'; }),'Nothing was refused or stopped today.');
     document.getElementById('when').textContent='updated '+clock(Date.now());
@@ -439,6 +452,27 @@ body{padding:12px}.sub{font-size:12px;margin-bottom:8px}.stat{flex:1 1 44%;min-w
   /* v5.62: the closed Price sources dropdown always shows the day's counts, and turns orange when a source is used up */
   var SRCFULL=false;
   function srcSummary(list){ var e=document.getElementById('srcSum'), bits=[], full=false; list.forEach(function(x){ if(x.budget==null) return; var nm=/pinnapi/i.test(x.name)?'pinnapi':/pinnodds/i.test(x.name)?'Pinnodds':/odds api/i.test(x.name)?'Odds API':x.name; bits.push(nm+' '+x.used+'/'+x.budget); if(+x.used>=+x.budget||x.held) full=true; }); SRCFULL=full; if(e){ e.textContent='Price sources \u00b7 '+(bits.join(' \u00b7 ')||'no budgets'); e.className=full?'full':''; } tabDots(); }
+  /* v5.67: the Auto loads card: what the Worker loaded by itself, what is left of each allowance, and the daily data check (all read from the Worker) */
+  var AU=null;
+  function auLeft(x){ return x.left==null?'?':x.left; }
+  async function auLoad(){ var sum=document.getElementById('auSum'), body=document.getElementById('auBody'); if(!sum||!body) return; var r=await call('/autoload/status'); body.textContent='';
+    if(!r.ok){ sum.textContent='Auto loads \u00b7 '+(r.noSync?'sign in first':(r.status===404?'not on the Worker yet':'no answer')); sum.className=''; body.textContent=r.noSync?'Sign in on this device first.':(r.status===404?'The Worker does not have auto loads yet.':why(r)); return; }
+    AU=r.j; var bad=false, bits=[];
+    (AU.sources||[]).forEach(function(x){ var row=document.createElement('div'); row.style.margin='6px 0'; var b=document.createElement('b'); b.textContent=x.name; row.appendChild(b);
+      var t=' \u00b7 '+(x.key?(auLeft(x)+' left (resets '+x.resets+')'+(x.shareToday!=null?' \u00b7 today '+x.usedToday+' of about '+x.shareToday:'')):'no key on the Worker'); if(x.held){ t+=' \u00b7 paused until '+new Date(x.held).toLocaleString(); bad=true; } if(x.error){ t+=' \u00b7 '+x.error; bad=bad||!x.held; }
+      row.appendChild(document.createTextNode(t)); if(x.lastAt){ var l=document.createElement('div'); l.className='hint'; l.textContent='Last load '+new Date(x.lastAt).toLocaleString()+((x.loads&&x.loads[0])?' \u00b7 '+x.loads[0].what+(x.loads[0].note?' ('+x.loads[0].note+')':''):''); row.appendChild(l); } body.appendChild(row);
+      bits.push((/odds api/i.test(x.name)?'Odds API':x.name)+' '+auLeft(x)); });
+    var rq=document.getElementById('auReq'); (async function(){ var q=await call('/autoload/requests'); if(!q.ok||!q.j||!q.j.requests){ if(rq) rq.textContent='Requests to the Worker today: not on the Worker yet.'; return; } var R=q.j.requests, pct=Math.round(R.total/R.limit*100), parts=(R.byDevice||[]).slice(0,4).map(function(x){ return x.k+' '+x.n; }).join(' \u00b7 ');
+      if(rq) rq.textContent='Requests to the Worker today (about): '+R.total.toLocaleString()+' of '+R.limit.toLocaleString()+' ('+pct+'%) \u00b7 '+(R.preflights||0).toLocaleString()+' preflights'+(parts?' \u00b7 by sender: '+parts:'')+' \u00b7 resets 6 PM Chicago (00:00 UTC)'; if(rq) rq.style.color=pct>=70?'var(--warn,#e8a317)':''; var sm=document.getElementById('auSum'); if(sm && pct>=70){ sm.className='full'; if(!/requests/.test(sm.textContent)) sm.textContent+=' \u00b7 requests '+pct+'%'; } })();
+    var w=AU.watch, issues=(w&&w.issues||[]).filter(function(i){ return i.severity==='broken'||i.severity==='degraded'; });
+    var wb=document.createElement('div'); wb.style.margin='8px 0'; var wh=document.createElement('b'); wh.textContent='Data check'; wb.appendChild(wh);
+    wb.appendChild(document.createTextNode(w?(' \u00b7 '+new Date(w.at).toLocaleString()+' \u00b7 '+(w.summary||'')):' \u00b7 not run yet (it runs once a day after 8 AM, or press Check the data now)')); body.appendChild(wb);
+    (w&&w.issues||[]).forEach(function(i){ var d=document.createElement('div'); d.className='hint'; d.textContent=(i.severity==='broken'?'Broken: ':i.severity==='degraded'?'Slowed: ':'Note: ')+i.source+' \u2014 '+i.plain+(i.fix&&i.fix!=='none'?' To check: '+i.fix:''); body.appendChild(d); });
+    if(issues.length) bad=true;
+    sum.textContent='Auto loads \u00b7 '+(AU.on?'on':'paused')+' \u00b7 '+bits.join(' \u00b7 ')+(w?(' \u00b7 data check: '+(issues.length?issues.length+' to look at':'ok')):''); sum.className=bad||!AU.on?'full':'';
+    var p=document.getElementById('auPause'); if(p) p.textContent=AU.on?'Pause auto loads':'Resume auto loads'; tabDots(); }
+  document.getElementById('auWatch').onclick=async function(){ var m=document.getElementById('auMsg'); m.textContent='Checking every source (one short AI read, a few cents)\u2026'; var r=await call('/autoload/watch','POST',{}); m.textContent=r.ok?'Done.':why(r); await auLoad(); };
+  document.getElementById('auPause').onclick=async function(){ var m=document.getElementById('auMsg'); var on=!(AU&&AU.on); if(!on&&!confirm('Pause auto loads? The Worker stops loading The Odds API and OddsPapi by itself until you resume. Your own presses of Load still work.')) return; var r=await call('/autoload/mode','POST',{on:on}); m.textContent=r.ok?(on?'Auto loads are on.':'Auto loads are paused.'):why(r); await auLoad(); };
   async function hfLoad(scanNow){ var r=await call('/handsfree/scan'+(scanNow?'?now=1':'')); if(!r.ok){ document.getElementById('hfBadgeTx').textContent='NO ANSWER'; document.getElementById('hfBadge').className='hf-badge off'; document.getElementById('hfSay').textContent=''; document.getElementById('hfMode').textContent=r.noSync?'Sign in on this device first (the card above).':(r.status===404?'The Worker does not have hands-free yet.':why(r)); return false; } HF=r.j; hfPaint(); hfSrcLoad(); limLoad(); return true; }
   async function hfSet(mode,label){ var r=await call('/handsfree/mode','POST',{mode:mode}); if(r.ok){ hfSay('Mode is now '+label+'.'); await hfLoad(false); } else hfSay(why(r),true); }
   document.getElementById('hfOff').onclick=function(){ hfSet('off','OFF'); };
@@ -458,8 +492,14 @@ body{padding:12px}.sub{font-size:12px;margin-bottom:8px}.stat{flex:1 1 44%;min-w
   function tabDots(){ var a=document.getElementById('dot-hf'), b=document.getElementById('dot-settings'); if(!a||!b) return; var st=(typeof S!=='undefined')?S:null, hf=(typeof HF!=='undefined')?HF:null; var red=!!(st&&st.killed), warn=!red&&!!(hf&&hf.mode==='live'&&st&&st.requireArm&&!st.armed); a.hidden=!(red||warn); a.className='tdot'+(red?' red':''); a.title=red?'Stopped':'Live but not armed today'; b.hidden=!SRCFULL; b.title='A price source is used up for today'; }
   function tabShow(name){ var ok=['hf','games','settings','other','all'].indexOf(name)>=0?name:'hf'; ['hf','games','settings','other'].forEach(function(n){ var t=document.getElementById('tab-'+n), p=document.getElementById('pane-'+n); if(t) t.setAttribute('aria-selected',n===ok?'true':'false'); if(t) t.tabIndex=(n===ok||(ok==='all'&&n==='hf'))?0:-1; if(p) p.hidden=!(n===ok||ok==='all'); });   /* the saved value all shows every section at once (used by the tests and for printing) */ try{ localStorage.setItem('mbev.ctl.tab',ok); }catch(e){} }
   (function(){ var order=['hf','games','settings','other']; order.forEach(function(n,i){ var t=document.getElementById('tab-'+n); t.onclick=function(){ tabShow(n); }; t.onkeydown=function(ev){ var k=ev.key==='ArrowRight'?1:ev.key==='ArrowLeft'?-1:0; if(!k) return; var m=order[(i+k+order.length)%order.length]; tabShow(m); document.getElementById('tab-'+m).focus(); ev.preventDefault(); }; }); tabShow(ls('mbev.ctl.tab')||'hf'); })();
-  hfLoad(false);
-  refresh(); setInterval(function(){ if(!document.hidden) refresh(); }, 30000);
+  hfLoad(false); auLoad();
+  /* v5.70 (owner 2026-11-27: 86,052 of the free plan's 100,000 requests used by 3 PM; "Build calm polling"): the page asks the Worker every 60 seconds while you use it, every 2 minutes after 2 minutes without a tap, every 5 minutes after 10, and not at all while the tab is hidden. Coming back or touching it after a pause asks once at once. */
+  var lastTouch=Date.now(), lastPoll=0;
+  function pollGap(){ var idle=Date.now()-lastTouch; return idle>600000?300000:(idle>120000?120000:60000); }
+  function pollNow(){ lastPoll=Date.now(); refresh(); }
+  ['pointerdown','keydown','touchstart','wheel'].forEach(function(e){ document.addEventListener(e,function(){ lastTouch=Date.now(); if(!document.hidden && Date.now()-lastPoll>60000) pollNow(); },{passive:true}); });
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden && Date.now()-lastPoll>60000) pollNow(); });
+  pollNow(); setInterval(function(){ if(!document.hidden && Date.now()-lastPoll>=pollGap()) pollNow(); }, 10000);
 })();
 </script>
 </body></html>
