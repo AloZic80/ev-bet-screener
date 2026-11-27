@@ -67,7 +67,7 @@ details.hf-d{margin-top:8px;border:1px solid var(--line);border-radius:10px;padd
 <div class="row">
 <div class="stat"><b id="sUsed">–</b><span>used of today's budget</span></div>
 <div class="stat"><b id="sLeft">–</b><span>left today</span></div>
-<div class="stat"><b id="sN">–</b><span>orders today</span></div>
+<div class="stat"><b id="sN">–</b><span id="sNn">placed today</span></div>
 <div class="stat"><b id="sArm">–</b><span id="sArmNote">daily Proceed</span></div>
 </div>
 <div class="row" style="margin-top:12px">
@@ -150,12 +150,15 @@ details.hf-d{margin-top:8px;border:1px solid var(--line);border-radius:10px;padd
     catch(e){ return {ok:false, status:0, j:null}; }
   }
   function why(r){ if(r.noSync) return 'Sync is not turned on in this browser. Open the screener, go to Settings and turn on "Your bets on every device", then come back.'; if(r.status===401||r.status===403){ if(r.j&&r.j.code==='bad_key') return 'The Worker says the SYNC PASSWORD does not match. Use Sign out of this device (at the bottom of this page) and type it again.'; if(r.j&&/passphrase/i.test(String(r.j.error||''))) return 'The Worker says the SCREENER PASSPHRASE does not match. Use Sign out of this device (at the bottom of this page) and type it again.'; return 'The Worker says it is locked (HTTP '+r.status+'). One of the two sign-in entries does not match: use Sign out of this device (at the bottom of this page) and type both again.'; } if(r.status===0) return 'No answer from the Worker. Check your connection and try again.'; return 'The Worker said no'+(r.j&&(r.j.reason||r.j.error)?': '+esc(r.j.reason||r.j.error):' (HTTP '+r.status+')')+'.'; }
+  /* v5.48 (owner 2026-11-27: Orders today said 7, but they were from earlier, and 1 was refused, so it was 6): only TODAY's orders (the Worker's Chicago day), and placed and not placed counted apart */
+  function ordersToday(st){ return ((st&&st.orders)||[]).filter(function(o){ return !o.day || o.day===st.day; }); }
+  function placedCount(list){ return list.filter(function(o){ return String(o.result||'')==='placed'; }).length; }
   function paint(){
     var st=S, pill=document.getElementById('pill');
     if(!st){ pill.textContent='no answer'; pill.className='pill bad'; return; }
     pill.textContent=st.killed?'STOPPED':(st.mode==='LIVE'?'LIVE':'PAPER'); pill.className='pill'+(st.killed?' bad':(st.mode==='LIVE'?'':' paper'));
     document.getElementById('sUsed').textContent=money(st.reserved); document.getElementById('sLeft').textContent=money(st.left);
-    var os=st.orders||[]; document.getElementById('sN').textContent=os.length;
+    var os=ordersToday(st), nPl=placedCount(os), nNo=os.length-nPl; document.getElementById('sN').textContent=nPl; document.getElementById('sNn').textContent='placed today'+(nNo?' ('+nNo+' not placed)':'');
     var arm=st.killed?'Stopped':(st.requireArm?(st.armed?'Armed':'Not armed'):'Not required yet'); document.getElementById('sArm').textContent=arm;
     document.getElementById('sArmNote').textContent=st.requireArm?'daily Proceed (asks again each day)':'the Worker does not ask for a daily Proceed yet';
     document.getElementById('note').textContent=(st.mode==='LIVE'?'REAL money. ':'Paper money. ')+'Budget today '+money(st.budget)+'. '+(st.killed?'The kill switch is ON: nothing is placed until you press Resume.':'Orders are only placed while it is armed for today and the kill switch is off.');
@@ -179,8 +182,8 @@ details.hf-d{margin-top:8px;border:1px solid var(--line);border-radius:10px;padd
   document.getElementById('bResume').onclick=function(){ act('Resume','/autobet/kill',{on:false},'Turn the kill switch off? Orders can be placed again (only if it is armed for today).'); };
   function answer(q){
     q=String(q||'').toLowerCase(); if(!S) return 'I have no status from the Worker yet. Press Refresh now.';
-    var os=S.orders||[], lines=function(){ return os.map(function(o){ return clock(o.t)+' · '+(o.name||o.key||'')+' · '+(o.result||'')+(o.reason?' ('+o.reason+')':''); }).join('\n'); };
-    if(/bet|order|place|sent|today/.test(q) && !/left|budget|much/.test(q)) return os.length?('Today the Worker has '+os.length+' order'+(os.length===1?'':'s')+':\n'+lines()):'Nothing has been ordered today.';
+    var os=ordersToday(S), nPl=placedCount(os), nNo=os.length-nPl, lines=function(){ return os.map(function(o){ return clock(o.t)+' · '+(o.name||o.key||'')+' · '+(o.result||'')+(o.reason?' ('+o.reason+')':''); }).join('\n'); };
+    if(/bet|order|place|sent|today/.test(q) && !/left|budget|much/.test(q)) return os.length?('Today the Worker placed '+nPl+' order'+(nPl===1?'':'s')+(nNo?' and '+nNo+' '+(nNo===1?'was':'were')+' not placed':'')+':\n'+lines()):'Nothing has been ordered today.';
     if(/left|budget|much|spent|used|money/.test(q) && !/real|paper/.test(q)) return 'Used '+money(S.reserved)+' of '+money(S.budget)+' today. '+money(S.left)+' left.';
     if(/arm|proceed/.test(q)) return S.requireArm?(S.armed?'Yes: it is armed for today.':'No: it is not armed. Press Proceed for today when you are ready.'):'The Worker does not ask for a daily Proceed yet.';
     if(/stop|kill|paus|off/.test(q)) return S.killed?'Yes, the kill switch is ON. Nothing is placed until you press Resume.':'No, the kill switch is off.';
