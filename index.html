@@ -38,7 +38,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.62</title>
+<title>0xBeta Screener v5.63</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -2292,6 +2292,8 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 .cloud-line.cloud-ok{border-color:var(--ok); color:var(--ok)}
 .cloud-line.cloud-wait{border-color:var(--warn); color:var(--warn)}
 .cloud-line.cloud-bad{border-color:var(--bad,#ff6b6b); color:var(--bad,#ff6b6b)}
+/* v5.63: the Board redraw log (Settings) */
+.rdlog{margin:8px 0 0}.rdlog summary{cursor:pointer;font-size:13px}.rdlog pre{max-height:220px;overflow:auto;font-size:11px;white-space:pre-wrap;margin:6px 0;padding:6px;border-radius:6px;background:rgba(0,0,0,.25)}
 </style>
 </head>
 <body>
@@ -2300,7 +2302,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.62</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.63</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -2686,6 +2688,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
   <h2>Your rules at a glance <span class="cn-chip">saved in this browser · no secrets</span></h2>
   <div class="rg-grid" id="rgGrid"></div>
   <p class="hint storage-use" id="storageUse" role="status"></p><div class="hint" id="storageTop"></div><button type="button" class="ghost sm" id="storageFree">Free space (rebuildable caches only)</button><!-- v5.25 (ENG-2): how full this browser’s storage is -->
+  <details class="rdlog" id="rdLog"><summary>Board redraw log (to find what makes a row shift)</summary><p class="hint">Each line is one redraw of the Board and what asked for it. If a row keeps shifting, open this, tap Copy and send it to El Capataz.</p><button type="button" class="ghost sm" id="rdCopy">Copy</button> <button type="button" class="ghost sm" id="rdClear">Clear</button><pre id="rdLogBox"></pre></details><!-- v5.63 -->
   <p class="hint" style="margin:6px 0 0">Change any of them in Screens and Stake sizing below; this updates as you type. A mode does not change any of them. Each tab lists only its own bets, by La Contadora’s chance: 😴 Boring = High Cover + Heavy Favorite (75%+), 🛋️ Tranqui = Strong (70–75%), 💪 Machín = Solid (65–70%), ⚖️ Parejo = Lean (60–65%), 🪙 Volado = Slight Lean (55–60%), 🎲 Dado = On the Line (50–55%)<!-- v5.16 (owner: more tabs) -->, 🍀 Suertudo = Coin Flip (45–50%), 🔮 Brujo = Unlikely (under 45%). The ones that just missed and the Hail Marys are not offered as bets: they stay in 👀 Watch, and you can log one yourself with + Add a bet.<!-- v5.13 (owner: no daily Suertudo/Brujo bets) --></p>
 </div>
 <div class="panel plan-panel" id="planPanel" data-lv="god">   <!-- v5.10 (owner, Sun 11/15: "id say 11/11 ... BUILD IT ALL"): My plan, a reminder only (saved and synced with the settings) -->
@@ -3280,7 +3283,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 
 </div>
 <script>
-const SCREENER_VERSION='v5.62';
+const SCREENER_VERSION='v5.63';
 /* v5.24 (step 5): DEV_APP is now defined once, in the head script at the top of this file (the first paint reads it too) */
 if(!DEV_APP) document.documentElement.setAttribute('data-viewas','easy');   // v5.24 (step 3b): a customer build is Easy whatever mbev.viewAs holds
 /* v5.24 (owner 11/20: "we need to differentiate already"; "for me in GOD mode, let me tell the difference of what they cant see and i can"): levels.
@@ -4635,10 +4638,19 @@ function passWhereHtml(W){ if(!W || !W.n) return '';
   return '<details class="cut-sum pass-where"><summary class="cut"><b>'+more+'</b> elsewhere ▸</summary><div class="cut-list"><div class="meta">'+W.now+' to bet now'+(fm?': '+fm:'')+'. The other '+more+' approved by La Contadora:</div>'+L.join('')+
     (W.jail?'<div class="meta">🔒 '+W.jail+' in Skipping Jail: passed at the Pull price, fail at the live price (counted in the skipped).</div>':'')+
     (x?'<div class="meta">The tab buttons also count '+x+' offered to you: not approved by La Contadora.</div>':'')+'</div></details>'; }
+// v5.63: a small log of every Board redraw and what asked for it (the owner saw a row shift every few seconds; this finds who asks)
+var _rdLog=[], _rdLast=0;
+function rdLogNote(held){ try{ const t=Date.now(), st=String(new Error().stack||'').split('\n').slice(2,9).map(x=>{ const m=/at\s+(?:async\s+)?([^\s(]+)?\s*\(?.*?:(\d+):\d+\)?\s*$/.exec(x.trim()); return m?((m[1]||'anon')+'@'+m[2]):''; }).filter(Boolean).join(' < ');
+  _rdLog.push({t, gap:_rdLast?t-_rdLast:0, held:!!held, via:st}); _rdLast=t; if(_rdLog.length>60) _rdLog.shift(); }catch(e){} }
+function rdLogText(){ return _rdLog.map(x=>new Date(x.t).toLocaleTimeString('en-US',{hour12:false})+' +'+(x.gap/1000).toFixed(1)+'s '+(x.held?'HELD ':'')+x.via).join('\n')||'No redraws yet.'; }
+function rdLogPaint(){ const b=document.getElementById('rdLogBox'); if(b) b.textContent=rdLogText(); }
+document.addEventListener('DOMContentLoaded',()=>{ try{ const d=document.getElementById('rdLog'); if(!d) return; d.addEventListener('toggle',rdLogPaint);
+  document.getElementById('rdCopy').addEventListener('click',()=>{ rdLogPaint(); const x=rdLogText(); try{ navigator.clipboard.writeText(x); }catch(e){} });
+  document.getElementById('rdClear').addEventListener('click',()=>{ _rdLog=[]; _rdLast=0; rdLogPaint(); }); }catch(e){} });
 function render(rows,cfg){
   setTimeout(()=>{ try{ jvRecheck(); }catch(e){} },0);   // v5.27 (round 2, J1-J3): after every board render (sync and fill imports redraw the board too), the Jarvis pop-up checks its pick again
-  if(boardEditorOpen() && !_boardForce){ _boardPending=[rows,cfg]; return; }   // v4.12: wait while you are placing a bet
-  _boardPending=null;
+  if(boardEditorOpen() && !_boardForce){ rdLogNote(true); _boardPending=[rows,cfg]; return; }   // v4.12: wait while you are placing a bet; v5.63: logged
+  rdLogNote(false); _boardPending=null;
   const A=boardAnchor(); try{ return renderCore(rows,cfg); } finally { boardAnchorBack(A); if(A) window._bAnchor={A, t:Date.now()}; }   // v4.23: the board stays where you are
 }
 /* v4.23: after a redraw the photos, injury and weather tags fill in a moment later, so the cards above you grow again. Safari (iPhone, Mac)
