@@ -512,6 +512,7 @@ body{padding:12px}.sub{font-size:12px;margin-bottom:8px}.stat{flex:1 1 44%;min-w
   /* v5.72 (owner 2026-11-27: "i want to be able to change myself manually"): your own Autopilot limits, saved on the Worker with rails (a ceiling, raises from midnight, a change log) */
   var APL=null;
   async function apLLoad(){ var sum=document.getElementById('apLSum'), now=document.getElementById('apLNow'); if(!sum||!now) return; var r=await call('/autopilot/limits'); now.textContent='';
+    if(r.ok && !(r.j && r.j.now)) r={ok:false,status:404};
     if(!r.ok){ sum.textContent='Limits \u00b7 '+(r.noSync?'sign in first':(r.status===404?'not on the Worker yet':'no answer')); sum.className=''; now.textContent=r.noSync?'Sign in on this device first.':(r.status===404?'The Worker does not have your own limits yet. The daily budget is still the Cloudflare variable and an order is $1.':why(r)); return; }
     APL=r.j; var pend=(APL.pending||[]).map(function(p){ return (p.field==='daily'?'daily budget':'one order')+' \u2192 $'+p.to+' from '+new Date(p.from).toLocaleString(); });
     sum.textContent='Limits \u00b7 $'+APL.now.daily+' a day \u00b7 $'+APL.now.order+' an order'+(pend.length?' \u00b7 a raise is waiting for midnight':''); sum.className=pend.length?'full':'';
