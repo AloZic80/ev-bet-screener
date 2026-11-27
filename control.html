@@ -60,11 +60,35 @@ table.tape td.c-t,table.tape td.c-l,table.tape td.c-s{white-space:nowrap;color:v
 table.tape tr.st-pick td.c-s{color:#7dffb0;font-weight:700}table.tape tr.st-unmatched td.c-s{color:var(--warn)}table.tape tr.st-no_edge td.c-s{color:var(--mut)}
 table.tape .go{color:#7dffb0}table.tape .pos{color:#cfe8d8}table.tape .neg{color:#9fb5a8}table.tape .why{color:var(--mut)}.why.mono{font:12.5px/1.45 ui-monospace,Menlo,Consolas,monospace;margin:4px 0}
 .tape-w.hf-pickcard{border-left:3px solid var(--ok);background:#0f2a1b;padding:0;margin:6px 0}
+/* v5.52 (owner 2026-11-27: the control page can look like pinnodds.com; "i can do the terminal"): a dark terminal theme for THIS page only (personal edition). Colours, monospace data, panels with an orange dot, a decisions ticker. The screener app keeps its own friendly design. */
+:root{--bg:#0b0b0d;--card:#131316;--line:#26262b;--tx:#ecece8;--mut:#8b8b92;--ok:#6ee7a0;--warn:#f0b840;--bad:#ff6b6b;--acc:#ff7a1a}
+body{background:var(--bg);font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+h1{font-size:20px;letter-spacing:.02em}.sub{font-size:12.5px}
+.card{background:var(--card);border-color:var(--line);border-radius:12px}
+.card h2{font-size:11px;letter-spacing:.1em;display:flex;align-items:center;gap:9px}.card h2::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--acc);flex:0 0 auto}
+.stat{background:#0f0f12;border-color:var(--line)}.stat b{font-size:26px;font-weight:700;letter-spacing:.01em}.stat span{font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+button{background:#18181c;border-color:var(--line);border-radius:8px;font-family:inherit;font-size:13px;letter-spacing:.03em}button:hover:not(:disabled){border-color:#3a3a42}
+button.go{background:#2a1608;border-color:var(--acc);color:#ffb27a}button.stop{background:#2a1010;border-color:var(--bad);color:#ffb0b0}
+.ask input{background:#0f0f12;border-color:var(--line);font-family:inherit;border-radius:8px}
+.pill{border-color:var(--ok);color:var(--ok);font-size:12px;letter-spacing:.06em}.pill.paper{border-color:var(--acc);color:var(--acc)}
+th{letter-spacing:.06em}td,th{border-bottom-color:#1c1c20}
+.hf-sec{border-top-color:var(--line)}.hf-sec h3{letter-spacing:.1em}
+.hf-badge{background:#18181c;border-color:var(--line);color:var(--mut);font-family:inherit}.hf-badge.armed{background:#0f2a1b;border-color:var(--ok);color:var(--ok)}.hf-badge.live{background:#2a1608;border-color:var(--acc);color:var(--acc)}.hf-badge.shadow{background:#241d0a;border-color:var(--warn);color:var(--warn)}
+.seg{border-color:var(--line)}.seg button{background:#131316;border-right-color:var(--line)}.seg button[aria-pressed=true]{background:#2a1608;color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}.seg button.stop[aria-pressed=true]{background:#2a1010;color:var(--bad);box-shadow:inset 0 0 0 1px var(--bad)}
+.chip{background:#18181c;border-color:var(--line);font-family:inherit;font-size:13px}.chip.fixed::before{background:var(--ok)}
+.hf-sum span{background:#0f0f12;border-color:var(--line)}details.hf-d{background:#0f0f12;border-color:var(--line)}
+.tape-w{background:#0c0c0e;border-color:var(--line)}table.tape th{background:#0f0f12}table.tape td{border-bottom-color:#18181c}table.tape tr:nth-child(even) td{background:#0f0f12}
+.tape-w.hf-pickcard{background:#0e1a13;border-left-color:var(--ok)}table.tape tr.st-pick td.c-s,table.tape .go{color:var(--ok)}table.tape tr.st-unmatched td.c-s{color:var(--acc)}
+.ticker{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:10px;background:#0f0f12;padding:7px 12px;margin:0 0 14px;overflow:hidden;white-space:nowrap}
+.ticker .tk-l{color:var(--acc);font-size:11px;letter-spacing:.1em;flex:0 0 auto}.ticker .tk-b{overflow:hidden;flex:1 1 auto;color:var(--mut);font-size:12.5px}
+.ticker .tk-t{display:inline-block;padding-left:100%;animation:tk 60s linear infinite}@keyframes tk{to{transform:translateX(-100%)}}
+@media(prefers-reduced-motion:reduce){.ticker .tk-t{animation:none;padding-left:0}}
 </style>
 </head>
 <body><div class="wrap">
 <h1>Autopilot <span id="pill" class="pill">…</span></h1>
 <div class="sub">Your control page. The screener tab is the engine; this page is the dashboard. <a href="index.html">Open the screener</a> · <span id="when">not loaded yet</span></div>
+<div class="ticker" id="ticker" role="status" aria-label="Recent hands-free decisions"><span class="tk-l">DECISIONS</span><span class="tk-b"><span class="tk-t" id="tkText">No decisions yet</span></span></div>
 <div id="msg" class="hint" role="status" aria-live="polite"></div>
 <div class="card" id="siCard" hidden><h2>Sign in on this device</h2>
 <div class="hint">An installed page keeps its own saved sign-in, so type it once here. It stays on this device only, is sent only to your own Worker, and is never shown back. The sync password is turned into a one-way code before it is saved.</div>
@@ -296,6 +320,7 @@ table.tape .go{color:#7dffb0}table.tape .pos{color:#cfe8d8}table.tape .neg{color
     if(G.pick.length){ var pw=tape(G.pick); pw.classList.add('hf-pickcard'); g.appendChild(pw); }
     [['no_edge','No edge (the price is fair or worse)'],['unmatched','Not found on Novig (Novig does not list this game, or spells the teams differently)'],['skipped','Skipped']].forEach(function(a){ var arr=G[a[0]]; if(!arr.length) return; var dt=document.createElement('details'); dt.className='hf-d'; var sm=document.createElement('summary'); sm.textContent=a[1]+': '+arr.length; dt.appendChild(sm); dt.appendChild(tape(arr)); g.appendChild(dt); });
     if(sk.length){ var dl=document.createElement('details'); dl.className='hf-d'; var sl=document.createElement('summary'); sl.textContent='Skipped leagues (Novig had no matching game, tried again every 24 hours): '+sk.length; dl.appendChild(sl); sk.forEach(function(k){ var li=document.createElement('div'); li.className='why mono'; li.textContent=k.league+' · '+(k.sport||'')+' · '+k.games+' game'+(k.games===1?'':'s')+' hidden · '+k.misses+' not found'; dl.appendChild(li); }); g.appendChild(dl); }
+    var tk=document.getElementById('tkText'); if(tk){ var lg2=(d.log||[]).slice(0,10); tk.textContent=lg2.length?lg2.map(function(r){ return (r.sport&&r.sport!=='football'?r.sport.toUpperCase()+' ':'')+r.team+' '+hfPct(r.price)+' · '+r.result+(r.reason?' ('+r.reason+')':''); }).join('   ·   '):'No decisions yet'; }   /* v5.52 */
     var log=d.log||[]; if(log.length){ var h=document.createElement('b'); h.textContent='What it decided'; l.appendChild(h); log.slice(0,12).forEach(function(r){ var li=document.createElement('div'); li.textContent=new Date(r.t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+' · '+r.team+' at '+hfPct(r.price)+' (fair '+hfPct(r.fair)+', edge '+hfPct(r.net)+') · '+r.result+(r.reason?' ('+r.reason+')':''); l.appendChild(li); }); }
   }
   async function hfSrcLoad(){ var el=document.getElementById('hfSrc'); if(!el) return; var r=await call('/handsfree/sources'); el.textContent=''; if(!r.ok){ el.textContent=r.noSync?'Sign in on this device first.':(r.status===404?'The Worker does not have the sources panel yet.':why(r)); return; }
