@@ -25,7 +25,7 @@ const b64u=(buf)=>Buffer.from(buf).toString('base64').replace(/\+/g,'-').replace
         const sub={endpoint:'https://web.push.apple.com/wp/SECRETENDPOINT', toJSON(){ return {endpoint:this.endpoint, keys:{p256dh:'SECRETP256DH', auth:'SECRETAUTH'}}; }, async unsubscribe(){ window.__unsub=true; return true; }};
         const reg={showNotification:async(t,o)=>{ window.__shown=(window.__shown||[]).concat([{t,o}]); }, pushManager:{ subscribe:async(x)=>{ window.__subOpts={userVisibleOnly:x.userVisibleOnly, keyLen:x.applicationServerKey.length, key0:x.applicationServerKey[0]}; window.__has=true; return sub; }, getSubscription:async()=>window.__has?sub:null }};
         Object.defineProperty(navigator,'serviceWorker',{value:{ready:Promise.resolve(reg), register:async()=>reg, addEventListener:(n,f)=>{ if(n==='message') window.__swl=f; }},configurable:true}); } }, opts);
-    await p.goto(FILE); await p.waitForTimeout(700); p.__errs=errs; return p; };
+    await p.goto(FILE); await p.waitForTimeout(700); await p.evaluate(()=>{ var d=document.getElementById('alBox'); if(d) d.open=true; }); p.__errs=errs; return p; };   /* v5.58: the alerts box is a closed dropdown */
   const last=(p)=>calls.filter((c)=>c.path===p).slice(-1)[0];
   { calls.length=0; const p=await mk({push:true,perm:'granted'});
     check('the Phone alerts card shows, says no phone is on yet, and shows the saved settings', /Alerts are not on for any device yet/.test(await p.textContent('#alState')) && (await p.isChecked('#alProceed')) && (await p.isChecked('#alSummary')), await p.textContent('#alState'));
