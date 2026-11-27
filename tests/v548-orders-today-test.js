@@ -1,0 +1,16 @@
+// node tests/v548-orders-today-test.js — v5.48 (owner 2026-11-27: "fix the orders Today. it has 7, and they already passed, and 1 was REFUSED, so it was 6"): the control page counts only TODAY's orders (the Worker's Chicago day), counts the placed ones, says how many were not placed, and the table and the page's own answer agree. No page errors.
+const path=require('path'); const L=require('./v527-jarvis-lib.js'); const {chromium,check}=L; const FILE='file://'+path.join(__dirname,'..','control.html');
+(async()=>{ const b=await chromium.launch(); const TODAY='2026-11-27', YEST='2026-11-26', t0=Date.parse('2026-11-27T08:00:00Z');
+  const O=[ {t:t0-86400e3,day:YEST,name:'Steelers to win',result:'placed',price:'0.32',qty:300}, {t:t0-86400e3+1,day:YEST,name:'LSU -7.5',result:'placed',price:'0.49',qty:200}, {t:t0-86400e3+2,day:YEST,name:'SMU +6.5',result:'refused',reason:'same_game_axis'},
+    ...[1,2,3,4,5,6].map(n=>({t:t0+n*1000,day:TODAY,name:'Today pick '+n,result:'placed',price:'0.5',qty:200})), {t:t0+9000,day:TODAY,name:'Today refused',result:'refused',reason:'not_armed_today'} ];
+  const ctx=await b.newContext(); const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(String(e)));
+  await p.route(/api\.0xbeta\.dev\//,r=>{ const pth=new URL(r.request().url()).pathname; let out={ok:true}; if(/autobet\/status/.test(pth)) out={ok:true,mode:'LIVE',day:TODAY,killed:false,requireArm:true,armed:true,budget:10,reserved:6,left:4,orders:O}; else if(/samson/.test(pth)) out={ok:true,entries:[]}; else if(/push\/status/.test(pth)) out={ok:true,set:true,devices:[],reminders:[],settings:{}};
+    r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*'},body:JSON.stringify(out)}); });
+  await p.addInitScript(()=>{ localStorage.setItem('mbev.pass','pass1234'); localStorage.setItem('mbev.syncKey','abcdef'); }); await p.goto(FILE); await p.waitForTimeout(900);
+  check('the big number is the orders PLACED today: 6 (not 7, and not the earlier days)', (await p.textContent('#sN')).trim()==='6', await p.textContent('#sN'));
+  check('the label says "placed today" and that 1 was not placed', /placed today \(1 not placed\)/.test(await p.textContent('#sNn')), await p.textContent('#sNn'));
+  const tab=await p.textContent('#orders'); check('the table lists only today\'s 7 orders (6 placed, 1 refused) and none from yesterday', /Today pick 1/.test(tab) && /Today refused/.test(tab) && !/Steelers to win|LSU -7\.5|SMU \+6\.5/.test(tab) && (await p.evaluate(()=>document.querySelectorAll('#orders tr').length))===8, tab.slice(0,200));
+  await p.fill('#q','what did you bet today'); await p.click('#bAsk'); await p.waitForTimeout(300); const a=await p.textContent('#ans');
+  check('the page\'s own answer agrees: placed 6 orders and 1 was not placed, only today\'s listed', /placed 6 orders and 1 was not placed/.test(a) && /Today pick 3/.test(a) && !/Steelers to win/.test(a), a.slice(0,200));
+  check('no page errors (orders today)', errs.length===0, errs.slice(0,3));
+  await b.close(); const r=L.res(); console.log('\n'+r.pass+' passed, '+r.fail+' failed'); process.exit(r.fail?1:0); })();

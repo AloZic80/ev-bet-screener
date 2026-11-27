@@ -33,7 +33,7 @@ const path=require('path'); const L=require('./v527-jarvis-lib.js'); const {chro
   check('Resume: asks, then POST /autobet/kill {on:false}', posts.some(x=>x.path==='/autobet/kill' && x.body.on===false) && !/STOPPED/.test(await A.p.evaluate(()=>document.getElementById('pill').textContent)), posts.map(x=>x.path));
   const ask=async(q)=>{ await A.p.fill('#q',q); await A.p.click('#bAsk'); return A.p.evaluate(()=>document.getElementById('ans').textContent); };
   posts.length=0;
-  check('asking "what did you bet today" lists the orders', /2 orders/.test(await ask('What did you bet today?')) && /CLE to win/.test(await A.p.evaluate(()=>document.getElementById('ans').textContent)), null);
+  check('asking "what did you bet today" lists the orders (v5.49: says 1 placed and 1 not placed, not "2 orders")', /placed 1 order and 1 was not placed/.test(await ask('What did you bet today?')) && /CLE to win/.test(await A.p.evaluate(()=>document.getElementById('ans').textContent)), null);
   check('asking "how much is left" says $3.00 of $10.00, $7.00 left', /\$3\.00 of \$10\.00/.test(await ask('how much is left')) && /\$7\.00 left/.test(await A.p.evaluate(()=>document.getElementById('ans').textContent)), null);
   check('asking "is it armed" and "is it real money" answers from the status', /armed/i.test(await ask('is it armed?')) && /LIVE mode: real money/.test(await ask('is it real money')), null);
   check('an unknown question lists what it can answer, and asking sends nothing to the Worker', /I can answer/.test(await ask('tell me a joke')) && posts.length===0, posts.length);
