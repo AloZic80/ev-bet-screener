@@ -56,7 +56,7 @@ table.tape{width:100%;border-collapse:collapse;font:12.5px/1.45 ui-monospace,SFM
 table.tape th{position:sticky;top:0;background:#10201a;color:var(--mut);font-weight:500;font-size:11px;letter-spacing:.06em;text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
 table.tape td{padding:6px 10px;border-bottom:1px solid #16291f;vertical-align:top}
 table.tape tr:last-child td{border-bottom:0}table.tape tr:nth-child(even) td{background:#0f1c15}
-table.tape td.c-t,table.tape td.c-l,table.tape td.c-s{white-space:nowrap;color:var(--mut)}table.tape td.c-m{color:var(--tx)}
+table.tape td.c-t,table.tape td.c-l,table.tape td.c-s,table.tape td.c-k{white-space:nowrap;color:var(--mut)}table.tape td.c-m{color:var(--tx)}
 table.tape tr.st-pick td.c-s{color:#7dffb0;font-weight:700}table.tape tr.st-unmatched td.c-s{color:var(--warn)}table.tape tr.st-no_edge td.c-s{color:var(--mut)}
 table.tape .go{color:#7dffb0}table.tape .pos{color:#cfe8d8}table.tape .neg{color:#9fb5a8}table.tape .why{color:var(--mut)}.why.mono{font:12.5px/1.45 ui-monospace,Menlo,Consolas,monospace;margin:4px 0}
 .tape-w.hf-pickcard{border-left:3px solid var(--ok);background:#0f2a1b;padding:0;margin:6px 0}
@@ -144,6 +144,7 @@ th{letter-spacing:.06em}td,th{border-bottom-color:#1c1c20}
 
 <div class="hf-sec"><h3>What it found</h3>
 <div id="hfSum" class="hf-sum"></div>
+<div class="hint">Every game here is a <b>moneyline</b>: a bet that a team wins the game outright (tennis: wins the match). <b>Fair</b> is Pinnacle's price with the bookmaker's margin removed; <b>Novig</b> is what Novig sells it for; <b>edge</b> is how much better Novig's price is than fair. A pick is a $1 order up to the limit shown.</div>
 <div id="hfGames"></div>
 <div id="hfLog" class="hint" style="margin-top:10px"></div></div>
 
@@ -322,16 +323,18 @@ th{letter-spacing:.06em}td,th{border-bottom-color:#1c1c20}
     var bb=document.getElementById('hfBurst'); if(bb) bb.textContent=d.burst?'Stop the burst':'Go play for 15 min';   /* v5.45 */
     /* v5.48: only upcoming games (one entry per game, none that started more than 2 hours ago), grouped, with the picks first */
     var cut=Date.now()-2*3600e3, games=(d.games||[]).filter(function(x){ var t=x.starts?Date.parse(x.starts):NaN; return isNaN(t)||t>cut; });
+    /* v5.59: the same game seen through two price providers is one game (the newest look wins) */
+    (function(){ var best={}; games.forEach(function(x){ var k=String(x.game||x.id)+'|'+Math.round((Date.parse(x.starts)||0)/1800e3); if(!best[k]||(+x.at||0)>(+best[k].at||0)) best[k]=x; }); games=games.filter(function(x){ var k=String(x.game||x.id)+'|'+Math.round((Date.parse(x.starts)||0)/1800e3); return best[k]===x; }); })();
     if(!games.length){ g.textContent='No game scanned yet. Press Scan 3 games now (under Tools), or wait for the 5-minute look.'; }
     function tagOf(x){ return (x.league&&x.league.length<24?x.league:(x.sport==='basketball'?'Basketball':x.sport==='hockey'?'Hockey':x.sport==='tennis'?'Tennis':'Football')); }
     /* v5.51 (owner 2026-11-27: "BUILD, and make it real nice ... more as in code"): the games as a terminal-style match table (monospace: START, LEAGUE, MATCH, STATUS, the sides with fair and Novig prices) */
     function statusOf(x){ return x.status==='pick'?'PICK':x.status==='no_edge'?'no edge':x.status==='unmatched'?'not found on Novig':'skipped'; }
-    function tape(arr){ var wrap=document.createElement('div'); wrap.className='tape-w'; var tb=document.createElement('table'); tb.className='tape'; var hd=document.createElement('tr'); ['START','LEAGUE','MATCH','STATUS','PRICES: PINNACLE FAIR vs NOVIG'].forEach(function(h){ var th=document.createElement('th'); th.textContent=h; hd.appendChild(th); }); tb.appendChild(hd);
+    function tape(arr){ var wrap=document.createElement('div'); wrap.className='tape-w'; var tb=document.createElement('table'); tb.className='tape'; var hd=document.createElement('tr'); ['START','LEAGUE','MATCH','MARKET','STATUS','PRICES: PINNACLE FAIR vs NOVIG'].forEach(function(h){ var th=document.createElement('th'); th.textContent=h; hd.appendChild(th); }); tb.appendChild(hd);
       arr.forEach(function(x){ var tr=document.createElement('tr'); tr.className='st-'+(x.status||'skipped'); var t=x.starts?new Date(x.starts).toLocaleString('en-US',{weekday:'short',hour:'numeric',minute:'2-digit'}):'';
         function td(txt,cls){ var c=document.createElement('td'); if(cls) c.className=cls; c.textContent=txt; tr.appendChild(c); return c; }
-        td(t,'c-t'); td(tagOf(x),'c-l'); td(x.game||'','c-m'); td(statusOf(x),'c-s');
+        td(t,'c-t'); td(tagOf(x),'c-l'); td(x.game||'','c-m'); td('Moneyline','c-k'); td(statusOf(x),'c-s');
         var dc=document.createElement('td'); dc.className='c-d';
-        if(x.status==='pick'||x.status==='no_edge'){ (x.sides||[]).forEach(function(s2){ var li=document.createElement('div'); li.className=s2.go?'go':(s2.net!=null&&s2.net>0?'pos':'neg'); li.textContent=(s2.go?'✓ ':'· ')+s2.team+': fair '+hfPct(s2.fair)+', Novig '+hfPct(s2.price)+', edge '+hfPct(s2.net)+(s2.go?' · limit '+hfPct(s2.limit):' · '+(s2.why||[]).join('; ')); dc.appendChild(li); }); }
+        if(x.status==='pick'||x.status==='no_edge'){ (x.sides||[]).forEach(function(s2){ var li=document.createElement('div'); li.className=s2.go?'go':(s2.net!=null&&s2.net>0?'pos':'neg'); li.textContent=(s2.go?'✓ ':'· ')+s2.team+(x.sport==='tennis'?' to win the match':' to win')+': fair '+hfPct(s2.fair)+', Novig '+hfPct(s2.price)+', edge '+hfPct(s2.net)+(s2.go?' · $1 order, up to '+hfPct(s2.limit):' · '+(s2.why||[]).join('; ')); dc.appendChild(li); }); }
         else { var li=document.createElement('div'); li.className='why'; li.textContent=(x.why||'')+(x.sample&&x.sample.length?' (Novig lists: '+x.sample.join(' | ')+')':''); dc.appendChild(li); }
         tr.appendChild(dc); tb.appendChild(tr); });
       wrap.appendChild(tb); return wrap; }
