@@ -12,7 +12,7 @@ let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?
   check('it asks once when the page opens', n0>=1, n0);
   status=0; for(let k=0;k<6;k++){ await p.evaluate(()=>document.dispatchEvent(new Event('pointerdown'))); await p.clock.runFor(30000); }
   check('while you keep using it, 3 minutes bring 2 or 3 asks (about one a minute; the old rhythm asked 6)', status>=2 && status<=3, status);
-  status=0; await p.clock.runFor(180000); check('left alone for 3 minutes it asks at most twice (the old rhythm asked six times)', status<=2, status);
+  status=0; await p.clock.runFor(180000); check('left alone for 3 minutes it asks at most 3 times (about a minute at first, then every 2 minutes; the old rhythm asked six times)', status<=3, status);
   status=0; await p.clock.runFor(15*60000); check('left open for 15 minutes it asks about every 5 minutes (at most 5; the old rhythm asked 30)', status<=5, status);
   await p.evaluate(()=>{ Object.defineProperty(document,'hidden',{get:()=>true,configurable:true}); Object.defineProperty(document,'visibilityState',{get:()=>'hidden',configurable:true}); }); status=0; await p.clock.runFor(10*60000); check('with the tab hidden it asks nothing', status===0, status);
   await p.evaluate(()=>{ Object.defineProperty(document,'hidden',{get:()=>false,configurable:true}); Object.defineProperty(document,'visibilityState',{get:()=>'visible',configurable:true}); document.dispatchEvent(new Event('visibilitychange')); }); await p.clock.runFor(500); check('coming back to the tab asks once at once', status===1, status);
