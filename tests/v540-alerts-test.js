@@ -19,7 +19,7 @@ const b64u=(buf)=>Buffer.from(buf).toString('base64').replace(/\+/g,'-').replace
       else if(pth==='/push/reminders'){ reminders=body.list; out={ok:true,reminders}; }
       else if(pth==='/push/settings'){ settings=body; out={ok:true,settings}; }
       r.fulfill({status:200,headers:cors,contentType:'application/json',body:JSON.stringify(out)}); });
-    await p.addInitScript((o)=>{ localStorage.setItem('mbev.pass','pass1234'); localStorage.setItem('mbev.syncKey','abcdef');
+    await p.addInitScript((o)=>{ localStorage.setItem('mbev.pass','pass1234'); localStorage.setItem('mbev.ctl.tab','all'); localStorage.setItem('mbev.syncKey','abcdef');
       if(!o.push){ try{ delete window.PushManager; }catch(e){} }   /* a browser with no push (Chromium has it built in) */
       if(o.push){ window.__subs=[]; window.PushManager=function(){}; window.Notification={permission:'default', requestPermission:async()=>o.perm};
         const sub={endpoint:'https://web.push.apple.com/wp/SECRETENDPOINT', toJSON(){ return {endpoint:this.endpoint, keys:{p256dh:'SECRETP256DH', auth:'SECRETAUTH'}}; }, async unsubscribe(){ window.__unsub=true; return true; }};

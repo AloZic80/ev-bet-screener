@@ -100,6 +100,27 @@ table.tape.clean td.c-t{color:var(--mut);white-space:nowrap}table.tape.clean td.
 table.tape.clean td.c-s{white-space:nowrap}.pillx{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;letter-spacing:.05em;border:1px solid var(--line);color:var(--mut)}.pillx.pick{color:var(--ok);border-color:var(--ok);background:#0e1a13;font-weight:700}.pillx.unmatched{color:var(--acc);border-color:#5a3410}
 table.tape.clean tr:last-child td{border-bottom:0}table.tape.clean tr:nth-child(even) td{background:#0d0d10}
 @media(max-width:560px){table.tape.clean{min-width:640px}}
+/* v5.62 (owner 2026-11-27: tabs everywhere, the long page cut down, the games readable on a phone): four tabs (bottom bar on a phone, top bar on a computer), closed dropdowns with a one-line summary, and one card per game on a narrow screen */
+.tabs{display:flex;gap:6px;margin:0 0 14px;position:sticky;top:0;z-index:5;background:var(--bg);padding:6px 0}
+.tabs button{flex:1 1 0;position:relative;background:transparent;border:1px solid var(--line);color:var(--mut);border-radius:10px;padding:10px 8px;font:inherit;font-size:13px;letter-spacing:.04em;cursor:pointer}
+.tabs button[aria-selected="true"]{color:var(--acc);border-color:var(--acc);background:#1a1410}
+.tdot{position:absolute;top:6px;right:8px;width:8px;height:8px;border-radius:50%;background:var(--acc)}.tdot.red{background:var(--bad)}
+.tabpane[hidden]{display:none}
+details.hf-d>summary.full{color:var(--acc)}
+.mcards{display:none}
+.mc{border:1px solid var(--line);border-left:3px solid var(--line);border-radius:10px;background:#0d0d10;padding:10px 12px;margin:8px 0}.mc.st-pick{border-left-color:var(--ok);background:#0e1a13}
+.mc-h{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.mc-m{font-weight:700;font-size:16px;line-height:1.25}.mc-t{white-space:nowrap;color:var(--mut);font-size:13px}
+.mc-sub{color:var(--mut);font-size:12px;margin:4px 0 6px}.mc-sub .pillx{margin-left:6px;padding:1px 8px}
+.mc-side{display:grid;grid-template-columns:repeat(3,1fr);gap:2px 8px;padding:6px 0;border-top:1px solid var(--line)}.mc-side.go{color:var(--ok)}.mc-side.dim{color:var(--mut)}
+.mc-tm{grid-column:1/4;font-size:14px}.mc-c .k{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;opacity:.75}.mc-c b{font-size:15px;font-weight:600}
+.mc-n{grid-column:1/4;font-size:12px;opacity:.85}
+.mc-ch{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.mc-chip{border:1px solid var(--line);border-radius:99px;padding:2px 10px;font-size:11px;color:var(--mut)}
+@media(max-width:700px){
+.tabs{position:fixed;left:0;right:0;bottom:0;top:auto;margin:0;padding:8px 10px calc(8px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:#0b0b0d;z-index:20}
+.tabs button{padding:14px 2px;font-size:12.5px;letter-spacing:0;white-space:nowrap}.wrap{padding-bottom:92px}
+body{padding:12px}.sub{font-size:12px;margin-bottom:8px}.stat{flex:1 1 44%;min-width:0;padding:6px 10px}.stat b{font-size:18px}.stat span{font-size:10px;line-height:1.25;letter-spacing:.02em}
+.tape-w table.tape.clean{display:none}.tape-w{border:0;background:transparent;overflow:visible}.tape-w.hf-pickcard{border:0;background:transparent;margin:0}.mcards{display:block}
+}
 </style>
 </head>
 <body><div class="wrap">
@@ -108,6 +129,7 @@ table.tape.clean tr:last-child td{border-bottom:0}table.tape.clean tr:nth-child(
 <div class="sub">Your control page. The screener tab is the engine; this page is the dashboard. <a href="index.html">Open the screener</a> · <span id="when">not loaded yet</span></div>
 <div class="ticker" id="ticker" role="status" aria-label="Recent hands-free decisions"><span class="tk-l">DECISIONS</span><span class="tk-b"><span class="tk-t" id="tkText">No decisions yet</span></span></div>
 <div id="msg" class="hint" role="status" aria-live="polite"></div>
+<div class="hint" id="hfMsg" role="status"></div>
 <div class="card" id="siCard" hidden><h2>Sign in on this device</h2>
 <div class="hint">An installed page keeps its own saved sign-in, so type it once here. It stays on this device only, is sent only to your own Worker, and is never shown back. The sync password is turned into a one-way code before it is saved.</div>
 <div class="ask" style="margin-top:8px"><input id="siPass" type="password" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Screener passphrase" aria-label="Screener passphrase"></div>
@@ -132,62 +154,49 @@ table.tape.clean tr:last-child td{border-bottom:0}table.tape.clean tr:nth-child(
 
 
 
+<!-- v5.62 (owner 2026-11-27: "Tabs are in the app website or phone. Everywhere. Dynamically"): the control page is four tabs (Hands-free, Games, Settings, Other); the Today card above stays on every tab so Stop is never hidden -->
+<nav class="tabs" id="tabs" role="tablist" aria-label="Control page sections"><button type="button" role="tab" id="tab-hf" data-tab="hf" aria-controls="pane-hf" aria-selected="true">Hands-free<i class="tdot" id="dot-hf" hidden></i></button><button type="button" role="tab" id="tab-games" data-tab="games" aria-controls="pane-games" aria-selected="false">Games</button><button type="button" role="tab" id="tab-settings" data-tab="settings" aria-controls="pane-settings" aria-selected="false">Settings<i class="tdot" id="dot-settings" hidden></i></button><button type="button" role="tab" id="tab-other" data-tab="other" aria-controls="pane-other" aria-selected="false">Other</button></nav>
+<div class="tabpane" id="pane-hf" role="tabpanel" aria-labelledby="tab-hf">
 <div class="card" id="hfCard"><h2>Hands-free: the Worker picks (football, NBA, NHL and tennis moneylines)</h2>
 <div class="hf-head"><span class="hf-badge off" id="hfBadge" role="status"><i></i><span id="hfBadgeTx">Checking…</span></span></div>
 <div class="hf-say" id="hfSay"></div>
-<div class="hf-rules" id="hfMode">Checking…</div>
 
 <div class="hf-sec"><h3>Mode</h3>
 <div class="seg" role="group" aria-label="Hands-free mode"><button id="hfOff" aria-pressed="false">Off</button><button id="hfShadow" aria-pressed="false">Shadow: watch only</button><button id="hfLive" class="stop" aria-pressed="false">Live: $1 bets</button></div>
-<div class="hint">Off looks at nothing. Shadow looks and records what it would bet, and places nothing. Live places $1 orders, only while armed for today (the Proceed box at the top), inside the $10 budget, the kill switch and the other limits.</div></div>
-
-<div class="hf-sec"><h3>Sports</h3>
-<div class="chips"><span class="chip fixed" id="hfFb">Football: follows the mode above</span><button class="chip" id="hfNba">NBA: Shadow</button><button class="chip" id="hfNhl">NHL: Shadow</button><button class="chip" id="hfTn">Tennis: Shadow</button></div>
-<div class="hint">NBA, NHL and tennis start in Shadow. Each has its own switch to Live, and it only places while the mode above is also Live.</div></div>
+<details class="hf-d" id="modeHelp"><summary>What the modes mean</summary><div class="hint">Off looks at nothing. Shadow looks and records what it would bet, and places nothing. Live places $1 orders, only while armed for today (the Proceed box at the top), inside the $10 budget, the kill switch and the other limits.</div><div class="hf-rules" id="hfMode">Checking…</div></details></div>
 
 <div class="hf-sec"><h3>Pace</h3>
 <div class="row" style="align-items:center"><button id="hfBurst" class="go">Go play for 15 min</button><span class="hint" style="margin:0">Normally it looks every 5 minutes. A burst looks every minute for 15 minutes, then goes back by itself.</span></div></div>
 
-<div class="hf-sec"><h3>Price sources</h3>
-<div id="hfSrc" class="hint">Checking…</div>
-<div class="hint">Hands-free asks Pinnacle first. If Pinnacle cannot answer (its day is used up, or it says slow down), it asks The Odds API for Pinnacle's prices instead. Each source has its own daily budget.</div></div>
-
-<div class="hf-sec"><h3>What it found</h3>
-<div id="hfSum" class="hf-sum"></div>
-<div class="hint">Every bet here is a <b>moneyline</b>: a bet that a team wins the game outright (tennis: wins the match). MONEYLINE, SPREAD and TOTAL are Pinnacle's own prices (decimal odds), shown so you can see the whole board; hands-free bets only the moneyline. <b>Fair</b> is Pinnacle's price with the bookmaker's margin removed; <b>Novig</b> is what Novig sells it for; <b>edge</b> is how much better Novig's price is than fair. A pick is a $1 order up to the limit shown.</div>
-<div id="hfGames"></div>
-<div id="hfLog" class="hint" style="margin-top:10px"></div></div>
-
-<div class="hf-sec"><details class="hf-d" id="hfTools"><summary>Tools: look at things (these never place a bet)</summary>
-<div class="row" style="margin-top:10px"><button id="hfScan" class="go">Scan 3 games now</button><button id="hfNovig">Show what Novig has</button></div>
-<div id="hfNovigOut" class="hint"></div>
-<div class="ask" style="margin-top:10px"><input id="hfSports" value="1,2,3,4,5,6" aria-label="Pinnacle sport ids" style="max-width:160px"><button id="hfProbe">Check what Pinnacle has</button></div>
-<div class="hint">Reads what your Pinnacle feed holds for those sport ids (up to 6). Use it sparingly: Pinnacle limits how often it can be asked.</div>
-<div id="hfProbeOut" class="hint"></div></details>
-<details class="hf-d"><summary>How it works</summary><div class="hint">With the tab closed, your Worker compares Pinnacle's fair price with Novig's price for each game and picks by La Contadora's math. A scan you start by hand never places a bet.</div></details></div>
-<div class="hint" id="hfMsg" role="status"></div></div>
-
-<div class="card" id="limCard"><h2>Hands-free limits (you set these)</h2>
-<div class="hint" id="limHard">Checking…</div>
-<div id="limBody"></div>
-<div class="row" style="margin-top:12px"><button id="limSave" class="go">Save limits</button><button id="limReset">Back to the saved values</button></div>
-<div class="hint" id="limMsg" role="status"></div></div>
+</div>
 
 <div class="card"><h2>Orders placed today (from your Worker)</h2>
 <table id="orders"><tr><td>Not loaded yet.</td></tr></table></div>
 <div class="card"><h2>Not placed today (refused or stopped: no money moved)</h2>
 <table id="ordersNo"><tr><td>Not loaded yet.</td></tr></table></div>
 
-<div class="card"><h2>Samson&#8217;s log (today)</h2>
-<div id="samson" class="hint">Not loaded yet.</div></div>
-
-<div class="card"><h2>What the screener tab did (this browser only)</h2>
-<div id="looks" class="hint">Nothing yet.</div></div>
-
-<div class="card"><h2>Ask it something simple</h2>
-<div class="ask"><input id="q" placeholder="What did you bet today?" aria-label="Ask a simple question"><button id="bAsk">Ask</button></div>
-<div class="hint">It answers from the status above, and it can only read. Try: what did you bet today, how much is left, is it armed, is it stopped, is it real money.</div>
-<div id="ans" class="ans" role="status"></div></div>
+</div>
+<div class="tabpane" id="pane-games" role="tabpanel" aria-labelledby="tab-games" hidden>
+<div class="card" id="hfFound"><h2>What it found</h2>
+<div id="hfSum" class="hf-sum"></div>
+<details class="hf-d" id="wordsHelp"><summary>What these words mean</summary><div class="hint">Every bet here is a <b>moneyline</b>: a bet that a team wins the game outright (tennis: wins the match). MONEYLINE, SPREAD and TOTAL are Pinnacle's own prices (decimal odds), shown so you can see the whole board; hands-free bets only the moneyline. <b>Fair</b> is Pinnacle's price with the bookmaker's margin removed; <b>Novig</b> is what Novig sells it for; <b>edge</b> is how much better Novig's price is than fair. A pick is a $1 order up to the limit shown.</div></details>
+<div id="hfGames"></div>
+<div id="hfLog" class="hint" style="margin-top:10px"></div></div>
+</div>
+<div class="tabpane" id="pane-settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
+<div class="card" id="hfSportsCard"><h2>Sports</h2>
+<div class="chips"><span class="chip fixed" id="hfFb">Football: follows the mode</span><button class="chip" id="hfNba">NBA: Shadow</button><button class="chip" id="hfNhl">NHL: Shadow</button><button class="chip" id="hfTn">Tennis: Shadow</button></div>
+<div class="hint">NBA, NHL and tennis start in Shadow. Each has its own switch to Live, and it only places while the mode on the Hands-free tab is also Live.</div></div>
+<div class="card" id="limCard"><h2>Hands-free limits (you set these)</h2>
+<details class="hf-d" id="limBox"><summary id="limSum">Limits · checking…</summary>
+<div class="hint" id="limHard">Checking…</div>
+<div id="limBody"></div>
+<div class="row" style="margin-top:12px"><button id="limSave" class="go">Save limits</button><button id="limReset">Back to the saved values</button></div>
+<div class="hint" id="limMsg" role="status"></div></details></div>
+<div class="card" id="srcCard"><h2>Price sources</h2>
+<details class="hf-d" id="srcBox"><summary id="srcSum">Price sources · checking…</summary>
+<div id="hfSrc" class="hint">Checking…</div>
+<div class="hint">Hands-free asks Pinnacle first. If Pinnacle cannot answer (its day is used up, or it says slow down), it asks The Odds API for Pinnacle's prices instead. Each source has its own daily budget.</div></details></div>
 <div class="card" id="alCard"><h2>Phone alerts</h2>
 <div class="hint" id="alState">Checking…</div>
 <details class="hf-d" id="alBox"><summary>Set up or change phone alerts (you only do this once)</summary>
@@ -201,6 +210,27 @@ table.tape.clean tr:last-child td{border-bottom:0}table.tape.clean tr:nth-child(
 <div class="ask" style="margin-top:6px"><input id="alTime" type="time" aria-label="Reminder time" style="flex:0 0 120px"><input id="alText" placeholder="Fanatics: today’s window ends soon" aria-label="Reminder text"><button id="alAdd">Add</button></div>
 <div class="hint" id="alMsg" role="status"></div></details></div>
 
+</div>
+<div class="tabpane" id="pane-other" role="tabpanel" aria-labelledby="tab-other" hidden>
+<div class="card"><h2>Samson&#8217;s log (today)</h2>
+<div id="samson" class="hint">Not loaded yet.</div></div>
+
+<div class="card"><h2>What the screener tab did (this browser only)</h2>
+<div id="looks" class="hint">Nothing yet.</div></div>
+
+<div class="card"><h2>Ask it something simple</h2>
+<div class="ask"><input id="q" placeholder="What did you bet today?" aria-label="Ask a simple question"><button id="bAsk">Ask</button></div>
+<div class="hint">It answers from the status above, and it can only read. Try: what did you bet today, how much is left, is it armed, is it stopped, is it real money.</div>
+<div id="ans" class="ans" role="status"></div></div>
+
+<div class="card"><h2>Tools</h2><details class="hf-d" id="hfTools"><summary>Tools: look at things (these never place a bet)</summary>
+<div class="row" style="margin-top:10px"><button id="hfScan" class="go">Scan 3 games now</button><button id="hfNovig">Show what Novig has</button></div>
+<div id="hfNovigOut" class="hint"></div>
+<div class="ask" style="margin-top:10px"><input id="hfSports" value="1,2,3,4,5,6" aria-label="Pinnacle sport ids" style="max-width:160px"><button id="hfProbe">Check what Pinnacle has</button></div>
+<div class="hint">Reads what your Pinnacle feed holds for those sport ids (up to 6). Use it sparingly: Pinnacle limits how often it can be asked.</div>
+<div id="hfProbeOut" class="hint"></div></details>
+<details class="hf-d"><summary>How it works</summary><div class="hint">With the tab closed, your Worker compares Pinnacle's fair price with Novig's price for each game and picks by La Contadora's math. A scan you start by hand never places a bet.</div></details></div>
+</div>
 <div class="hint" style="margin:10px 0 24px"><button id="siOut">Sign out of this device</button> Removes the saved passphrase and sync code from this device only. Your bets and the Worker are not touched.</div>
 </div>
 <script>
@@ -238,6 +268,7 @@ table.tape.clean tr:last-child td{border-bottom:0}table.tape.clean tr:nth-child(
     var lk=''; try{ var L=JSON.parse(ls('mbev.autoLook')||'{}'); if(L&&L.rows&&L.rows.length) lk='<ul style="margin:4px 0 0 16px">'+L.rows.slice(-8).reverse().map(function(x){ return '<li>'+esc(clock(x.t))+' · '+esc(x.w)+(x.n>1?' (×'+x.n+')':'')+'</li>'; }).join('')+'</ul>'; }catch(e){}
     var la=null; try{ la=JSON.parse(ls('mbev.autoLast')||'null'); }catch(e){}
     document.getElementById('looks').innerHTML=(la?'<b>Last look:</b> '+esc(clock(la.t))+' · '+esc(la.w):'No look yet from the screener tab in this browser.')+lk;
+    try{ tabDots(); }catch(e){}   /* v5.62 */
   }
   async function samsonLoad(){ var el=document.getElementById('samson'); var r=await call('/samson/log'); if(!r.ok){ el.textContent=r.noSync?'Sync is off in this browser.':'No answer for Samson\'s log (the Worker may not have this route yet).'; return; }
     var E=(r.j&&r.j.entries)||[]; el.innerHTML=E.length?'<ul style="margin:4px 0 0 16px">'+E.slice(0,10).map(function(x){ return '<li>'+esc(clock(x.t))+' · '+esc(x.kind)+' · '+esc(x.what)+(x.pick?' · '+esc(x.pick):'')+(x.stake!=null?' · '+money(x.stake):'')+'</li>'; }).join('')+'</ul>':'Samson has not reported anything today.'; }
@@ -361,7 +392,23 @@ table.tape.clean tr:last-child td{border-bottom:0}table.tape.clean tr:nth-child(
         var ec=cell('num'); if(sides.length){ var bs=sides.slice().sort(function(a,b){ return (b.net==null?-9:b.net)-(a.net==null?-9:a.net); })[0]; ec.textContent=bs.net==null?'–':((bs.net>=0?'+':'')+(bs.net*100).toFixed(1)+'%'); ec.className+=bs.go?' go':(bs.net>0?'':' dim'); } else { ec.textContent='–'; ec.className+=' dim'; }
         var sc=cell('c-s'), pill=document.createElement('span'); pill.className='pillx '+(x.status||'skipped'); pill.textContent=statusOf(x); sc.appendChild(pill);
         tb.appendChild(tr); });
-      wrap.appendChild(tb); return wrap; }
+      /* v5.62: the same games as one card each, shown instead of the table on a narrow screen (CSS picks) */
+      function cardOf(x){ function el(tag,cls,tx){ var e=document.createElement(tag); if(cls) e.className=cls; if(tx!=null) e.textContent=tx; return e; }
+        function fS(n){ n=+n; return (n>0?'+':n<0?'−':'')+Math.abs(n); }
+        var c=el('div','mc st-'+(x.status||'skipped')), h=el('div','mc-h'); h.appendChild(el('div','mc-m',x.game||'')); h.appendChild(el('div','mc-t',x.starts?new Date(x.starts).toLocaleString('en-US',{weekday:'short',hour:'numeric',minute:'2-digit'}):'')); c.appendChild(h);
+        var sub=el('div','mc-sub',tagOf(x)+' · Moneyline'); sub.appendChild(el('span','pillx '+(x.status||'skipped'),statusOf(x))); c.appendChild(sub);
+        var sides=(x.status==='pick'||x.status==='no_edge')?(x.sides||[]):[];
+        sides.forEach(function(s2){ var r=el('div','mc-side '+(s2.go?'go':'dim')); r.appendChild(el('div','mc-tm',(s2.go?'✓ ':'')+s2.team+(x.sport==='tennis'?' to win the match':' to win')));
+          [['Fair',s2.fair],['Novig',s2.price],['Edge',s2.net]].forEach(function(a){ var cc=el('div','mc-c'); cc.appendChild(el('span','k',a[0])); cc.appendChild(el('b',null,hfPct(a[1]))); r.appendChild(cc); });
+          r.appendChild(el('div','mc-n',s2.go?'$1 order, up to '+hfPct(s2.limit):((s2.why||[])[0]||''))); c.appendChild(r); });
+        if(!sides.length) c.appendChild(el('div','mc-n',(x.why||'')));
+        var gm=String(x.game||'').split(' @ '), nmA=short(gm[0]), nmH=short(gm[1]||''), ch=el('div','mc-ch');
+        if(x.ml) ch.appendChild(el('span','mc-chip','Moneyline '+nmH+' '+(+x.ml.home).toFixed(2)+' · '+nmA+' '+(+x.ml.away).toFixed(2)));
+        if(x.board&&x.board.spread) ch.appendChild(el('span','mc-chip','Spread '+nmH+' '+fS(x.board.spread.hdp)+' '+(+x.board.spread.home).toFixed(2)+' · '+nmA+' '+fS(-x.board.spread.hdp)+' '+(+x.board.spread.away).toFixed(2)));
+        if(x.board&&x.board.total) ch.appendChild(el('span','mc-chip','Total '+x.board.total.points+' · over '+(+x.board.total.over).toFixed(2)+' · under '+(+x.board.total.under).toFixed(2)));
+        if(ch.childNodes.length) c.appendChild(ch); return c; }
+      var cards=document.createElement('div'); cards.className='mcards'; arr.forEach(function(x){ cards.appendChild(cardOf(x)); });
+      wrap.appendChild(tb); wrap.appendChild(cards); return wrap; }
     var G={pick:[],no_edge:[],unmatched:[],skipped:[]}; games.forEach(function(x){ (G[x.status]||G.skipped).push(x); });
     var sk=d.skippedLeagues||[];
     [['Looked at',games.length+' upcoming games'],['Picks',G.pick.length],['No edge',G.no_edge.length],['Not on Novig',G.unmatched.length],['Skipped',G.skipped.length]].concat(sk.length?[['Skipped leagues',sk.length]]:[]).forEach(function(a){ var sp2=document.createElement('span'); var bq=document.createElement('b'); bq.textContent=a[1]; sp2.appendChild(document.createTextNode(a[0]+': ')); sp2.appendChild(bq); sum.appendChild(sp2); });
@@ -370,6 +417,7 @@ table.tape.clean tr:last-child td{border-bottom:0}table.tape.clean tr:nth-child(
     if(sk.length){ var dl=document.createElement('details'); dl.className='hf-d'; var sl=document.createElement('summary'); sl.textContent='Skipped leagues (Novig had no matching game, tried again every 24 hours): '+sk.length; dl.appendChild(sl); sk.forEach(function(k){ var li=document.createElement('div'); li.className='why mono'; li.textContent=k.league+' · '+(k.sport||'')+' · '+k.games+' game'+(k.games===1?'':'s')+' hidden · '+k.misses+' not found'; dl.appendChild(li); }); g.appendChild(dl); }
     var tk=document.getElementById('tkText'); if(tk){ var lg2=(d.log||[]).slice(0,10); tk.textContent=lg2.length?lg2.map(function(r){ return (r.sport&&r.sport!=='football'?r.sport.toUpperCase()+' ':'')+r.team+' '+hfPct(r.price)+' · '+r.result+(r.reason?' ('+r.reason+')':''); }).join('   ·   '):'No decisions yet'; }   /* v5.52 */
     var log=d.log||[]; if(log.length){ var h=document.createElement('b'); h.textContent='What it decided'; l.appendChild(h); log.slice(0,12).forEach(function(r){ var li=document.createElement('div'); li.textContent=new Date(r.t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+' · '+r.team+' at '+hfPct(r.price)+' (fair '+hfPct(r.fair)+', edge '+hfPct(r.net)+') · '+r.result+(r.reason?' ('+r.reason+')':''); l.appendChild(li); }); }
+    try{ tabDots(); }catch(e){}   /* v5.62 */
   }
   /* v5.57 (owner 2026-11-27: "the betting limit will change later, but it will have a setting i change manually"): the hands-free safeguards as boxes you change yourself. They can only make hands-free hold back MORE than the Worker's own hard limits; nothing here raises $1 an order, the daily budget, the account cap, the daily Proceed or the kill switch. */
   var LIM=null, LIMDEF=[['perSport','Bets per sport, per day',true,[['max','bets',1,50]]],['perGame','Bets per game',true,[['max','bets',1,5]]],['perHour','Bets per hour',true,[['max','bets',1,30]]],['refusals','Stop after failed orders in a row',true,[['n','orders',2,20]]],['bank','Day budget from my bankroll',true,[['bank','bankroll $',0,1000000],['pct','% a day',0.1,25]]],['pin','Pinnacle (pinnapi) requests a day',false,[['budget','of 100',10,100]]],['pnd','Pinnacle (Pinnodds) requests a day',false,[['budget','of 100',10,100]]],['oad','The Odds API credits a day (0 = never)',false,[['budget','credits',0,50]]]];
@@ -379,13 +427,18 @@ table.tape.clean tr:last-child td{border-bottom:0}table.tape.clean tr:nth-child(
       if(d[2]){ var cb=document.createElement('input'); cb.type='checkbox'; cb.id='lim-'+d[0]+'-on'; cb.checked=!!cur.on; lab.appendChild(cb); }
       lab.appendChild(document.createTextNode(' '+d[1])); row.appendChild(lab);
       d[3].forEach(function(f){ var inp=document.createElement('input'); inp.type='number'; inp.id='lim-'+d[0]+'-'+f[0]; inp.min=f[2]; inp.max=f[3]; inp.step=f[0]==='pct'?'0.1':'1'; inp.value=cur[f[0]]!=null?cur[f[0]]:''; inp.setAttribute('aria-label',d[1]+' ('+f[1]+')'); row.appendChild(inp); var u=document.createElement('span'); u.className='lim-u'; u.textContent=f[1]; row.appendChild(u); });
-      body.appendChild(row); }); }
+      body.appendChild(row); }); try{ limSummary(L); }catch(e){} }
+  /* v5.62: the closed Limits dropdown shows the numbers in force */
+  function limSummary(L){ var e=document.getElementById('limSum'); if(!e) return; function on(k,f,u){ var c=L[k]||{}; return c.on&&c[f]!=null?c[f]+u:'off'; } var b=L.bank||{}, bank=b.on&&+b.bank>0?'bankroll budget $'+(+b.bank*(+b.pct||0)/100).toFixed(2)+' a day':'bankroll budget off'; e.textContent='Limits \u00b7 per sport '+on('perSport','max','')+' \u00b7 per game '+on('perGame','max','')+' \u00b7 per hour '+on('perHour','max','')+' \u00b7 stop after '+on('refusals','n',' failed')+' \u00b7 '+bank; }
   async function limLoad(){ var r=await call('/handsfree/limits'); if(!r.ok){ document.getElementById('limHard').textContent=r.noSync?'Sign in on this device first (the card above).':(r.status===404?'The Worker does not have the limits yet.':why(r)); return; } limPaint(r.j); }
   function limRead(){ var o={}; LIMDEF.forEach(function(d){ var x={}; if(d[2]) x.on=document.getElementById('lim-'+d[0]+'-on').checked; d[3].forEach(function(f){ var v=document.getElementById('lim-'+d[0]+'-'+f[0]).value; if(v!=='') x[f[0]]=+v; }); o[d[0]]=x; }); return o; }
   document.getElementById('limSave').onclick=async function(){ var m=document.getElementById('limMsg'); if(!LIM){ m.textContent='Nothing loaded yet.'; return; } if(!confirm('Save these hands-free limits? They only make hands-free hold back more than the Worker hard limits; nothing here raises a hard limit.')) return; m.textContent='Saving…'; var r=await call('/handsfree/limits','POST',limRead()); if(r.ok){ limPaint(r.j); m.textContent='Saved. A number outside its range keeps its last good value, so check the boxes above.'; m.className='hint'; } else { m.textContent=why(r); m.className='hint err'; } };
   document.getElementById('limReset').onclick=function(){ if(LIM) limPaint(LIM); document.getElementById('limMsg').textContent='Back to the saved values.'; };
   async function hfSrcLoad(){ var el=document.getElementById('hfSrc'); if(!el) return; var r=await call('/handsfree/sources'); el.textContent=''; if(!r.ok){ el.textContent=r.noSync?'Sign in on this device first.':(r.status===404?'The Worker does not have the sources panel yet.':why(r)); return; }
-    (r.j&&r.j.sources||[]).forEach(function(x){ var row=document.createElement('div'); row.style.margin='6px 0'; var b2=document.createElement('b'); b2.textContent=x.name; row.appendChild(b2); var st=[]; if(x.budget!=null){ st.push('used '+x.used+' of '+x.budget+' today'); if(x.held) st.push('asked to slow down, waiting'); if(x.creditsLeft!=null) st.push(x.creditsLeft+' credits left this month'); } st.push(x.key?'key set':'no key'); var d1=document.createElement('div'); d1.style.marginLeft='12px'; d1.textContent=x.role+' · '+st.join(' · ')+' · '+x.plan; row.appendChild(d1); el.appendChild(row); }); }   /* v5.50 */
+    (r.j&&r.j.sources||[]).forEach(function(x){ var row=document.createElement('div'); row.style.margin='6px 0'; var b2=document.createElement('b'); b2.textContent=x.name; row.appendChild(b2); var st=[]; if(x.budget!=null){ st.push('used '+x.used+' of '+x.budget+' today'); if(x.held) st.push('asked to slow down, waiting'); if(x.creditsLeft!=null) st.push(x.creditsLeft+' credits left this month'); } st.push(x.key?'key set':'no key'); var d1=document.createElement('div'); d1.style.marginLeft='12px'; d1.textContent=x.role+' · '+st.join(' · ')+' · '+x.plan; row.appendChild(d1); el.appendChild(row); }); try{ srcSummary(r.j&&r.j.sources||[]); }catch(e){} }   /* v5.50 */
+  /* v5.62: the closed Price sources dropdown always shows the day's counts, and turns orange when a source is used up */
+  var SRCFULL=false;
+  function srcSummary(list){ var e=document.getElementById('srcSum'), bits=[], full=false; list.forEach(function(x){ if(x.budget==null) return; var nm=/pinnapi/i.test(x.name)?'pinnapi':/pinnodds/i.test(x.name)?'Pinnodds':/odds api/i.test(x.name)?'Odds API':x.name; bits.push(nm+' '+x.used+'/'+x.budget); if(+x.used>=+x.budget||x.held) full=true; }); SRCFULL=full; if(e){ e.textContent='Price sources \u00b7 '+(bits.join(' \u00b7 ')||'no budgets'); e.className=full?'full':''; } tabDots(); }
   async function hfLoad(scanNow){ var r=await call('/handsfree/scan'+(scanNow?'?now=1':'')); if(!r.ok){ document.getElementById('hfBadgeTx').textContent='NO ANSWER'; document.getElementById('hfBadge').className='hf-badge off'; document.getElementById('hfSay').textContent=''; document.getElementById('hfMode').textContent=r.noSync?'Sign in on this device first (the card above).':(r.status===404?'The Worker does not have hands-free yet.':why(r)); return false; } HF=r.j; hfPaint(); hfSrcLoad(); limLoad(); return true; }
   async function hfSet(mode,label){ var r=await call('/handsfree/mode','POST',{mode:mode}); if(r.ok){ hfSay('Mode is now '+label+'.'); await hfLoad(false); } else hfSay(why(r),true); }
   document.getElementById('hfOff').onclick=function(){ hfSet('off','OFF'); };
@@ -401,6 +454,10 @@ table.tape.clean tr:last-child td{border-bottom:0}table.tape.clean tr:nth-child(
   document.getElementById('hfProbe').onclick=async function(){ var out=document.getElementById('hfProbeOut'); out.textContent='Asking Pinnacle through your Worker…'; var ids=String(document.getElementById('hfSports').value||'').replace(/[^0-9,]/g,''); var r=await call('/handsfree/probe?sport='+encodeURIComponent(ids));
     out.textContent=''; if(!r.ok){ out.textContent=r.noSync?'Sign in on this device first.':(r.status===404?'The Worker does not have the probe yet.':(r.status===503?'The Worker has no Pinnacle key.':why(r))); return; }
     (r.j.sports||[]).forEach(function(x){ var d=document.createElement('details'); d.style.margin='6px 0'; var sm=document.createElement('summary'); sm.textContent='Sport '+x.sport_id+': '+(x.status==='ok'?(x.events+' games · '+(x.leagues||[]).slice(0,4).join(', ')):x.status); d.appendChild(sm); if(x.sample){ var pre=document.createElement('pre'); pre.style.whiteSpace='pre-wrap'; pre.style.fontSize='11px'; pre.textContent=JSON.stringify(x.sample,null,1).slice(0,2500); d.appendChild(pre); } out.appendChild(d); }); };
+  /* v5.62: tabs. The tab you were on is remembered; a dot shows when something needs you (red: stopped, orange: not armed or a source used up) */
+  function tabDots(){ var a=document.getElementById('dot-hf'), b=document.getElementById('dot-settings'); if(!a||!b) return; var st=(typeof S!=='undefined')?S:null, hf=(typeof HF!=='undefined')?HF:null; var red=!!(st&&st.killed), warn=!red&&!!(hf&&hf.mode==='live'&&st&&st.requireArm&&!st.armed); a.hidden=!(red||warn); a.className='tdot'+(red?' red':''); a.title=red?'Stopped':'Live but not armed today'; b.hidden=!SRCFULL; b.title='A price source is used up for today'; }
+  function tabShow(name){ var ok=['hf','games','settings','other','all'].indexOf(name)>=0?name:'hf'; ['hf','games','settings','other'].forEach(function(n){ var t=document.getElementById('tab-'+n), p=document.getElementById('pane-'+n); if(t) t.setAttribute('aria-selected',n===ok?'true':'false'); if(t) t.tabIndex=(n===ok||(ok==='all'&&n==='hf'))?0:-1; if(p) p.hidden=!(n===ok||ok==='all'); });   /* the saved value all shows every section at once (used by the tests and for printing) */ try{ localStorage.setItem('mbev.ctl.tab',ok); }catch(e){} }
+  (function(){ var order=['hf','games','settings','other']; order.forEach(function(n,i){ var t=document.getElementById('tab-'+n); t.onclick=function(){ tabShow(n); }; t.onkeydown=function(ev){ var k=ev.key==='ArrowRight'?1:ev.key==='ArrowLeft'?-1:0; if(!k) return; var m=order[(i+k+order.length)%order.length]; tabShow(m); document.getElementById('tab-'+m).focus(); ev.preventDefault(); }; }); tabShow(ls('mbev.ctl.tab')||'hf'); })();
   hfLoad(false);
   refresh(); setInterval(function(){ if(!document.hidden) refresh(); }, 30000);
 })();
