@@ -6,11 +6,11 @@ const path=require('path'); const L=require('./v527-jarvis-lib.js'); const {chro
   await p.addInitScript(()=>{ localStorage.setItem('mbev.pass','pass1234'); localStorage.setItem('mbev.syncKey','abcdef'); }); await p.goto(FILE); await p.waitForTimeout(900);
   const S=await p.evaluate(()=>{ const card=document.getElementById('alCard'), box=document.getElementById('alBox'), hf=document.getElementById('hfCard'), orders=document.getElementById('orders'); const y=e=>e.getBoundingClientRect().top+scrollY; return {open:box.open, stateVisible:(()=>{ const r=document.getElementById('alState').getBoundingClientRect(); return r.height>0 && getComputedStyle(document.getElementById('alState')).display!=='none'; })(), state:document.getElementById('alState').textContent, btnVisible:(()=>{ const r=document.getElementById('alOn').getBoundingClientRect(); return r.width>0 && r.height>0; })(), below:y(card)>y(hf) && y(card)>y(orders), summary:box.querySelector('summary').textContent}; });
   check('the Phone alerts card is lower on the page than the Hands-free card and the orders (not at the top any more)', S.below, S);
-  check('it is a dropdown, closed to start with: the buttons are not showing', S.open===false && S.btnVisible===false, S);
+  const closedVis=await p.isVisible('#alOn'); check('it is a dropdown, closed to start with: the buttons are not showing', S.open===false && closedVis===false, [S.open,closedVis]);
   check('the one-line state stays visible with the dropdown closed ("Alerts are on for 2 devices")', S.stateVisible && /on for 2 devices/.test(S.state), S.state);
   check('the dropdown says what it is for (set up or change, once)', /you only do this once/.test(S.summary), S.summary);
   await p.click('#alBox summary'); await p.waitForTimeout(200);
-  const vis=(i)=>{ const r=document.getElementById(i).getBoundingClientRect(); return r.width>0 && r.height>0; }; const O=await p.evaluate(()=>0).then(()=>p.evaluate((ids)=>ids.map(i=>{ const r=document.getElementById(i).getBoundingClientRect(); return r.width>0 && r.height>0; }),['alOn','alTest','alProceed','alSummary','alTime','alAdd'])).then(a=>({btn:a[0], test:a[1], boxes:a.slice(2).every(Boolean)}));
+  const O={btn:await p.isVisible('#alOn'), test:await p.isVisible('#alTest'), boxes:(await Promise.all(['#alProceed','#alSummary','#alTime','#alAdd'].map(i=>p.isVisible(i)))).every(Boolean)};
   check('opening it shows the buttons, the two tick boxes and the reminder row', O.btn && O.test && O.boxes, O);
   check('no page errors (alerts dropdown)', errs.length===0, errs.slice(0,3));
   await b.close(); const r=L.res(); console.log('\n'+r.pass+' passed, '+r.fail+' failed'); process.exit(r.fail?1:0); })();
