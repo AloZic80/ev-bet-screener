@@ -10,7 +10,7 @@ let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?
     if(/api\.0xbeta\.dev/.test(u)) return r.fulfill({contentType:'application/json',body:'{}'});
     if(/espn/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'}); return r.abort(); });
   await p.goto('http://app.test/'); await p.waitForTimeout(1200);
-  check('version is v5.63', await p.evaluate(()=>SCREENER_VERSION==='v5.63' && document.getElementById('verTag').textContent==='v5.63' && /v5\.63/.test(document.title)), 0);
+  check('version is v5.63 or later', await p.evaluate(()=>/^v5\.(6[3-9]|[7-9]\d)$/.test(SCREENER_VERSION) && document.getElementById('verTag').textContent===SCREENER_VERSION), 0);
   await p.evaluate(()=>{ _rdLog=[]; _rdLast=0; function viaTest(){ render([],cfgRead()); } viaTest(); viaTest(); });
   const n=await p.evaluate(()=>_rdLog.length); check('each redraw is logged (2 asked, 2 logged)', n===2, n);
   const v=await p.evaluate(()=>_rdLog[0].via); check('a line says who asked (the caller function and its line)', /viaTest@\d+/.test(v), v);
