@@ -158,8 +158,10 @@ th{letter-spacing:.06em}td,th{border-bottom-color:#1c1c20}
 <details class="hf-d"><summary>How it works</summary><div class="hint">With the tab closed, your Worker compares Pinnacle's fair price with Novig's price for each game and picks by La Contadora's math. A scan you start by hand never places a bet.</div></details></div>
 <div class="hint" id="hfMsg" role="status"></div></div>
 
-<div class="card"><h2>Orders today (from your Worker)</h2>
+<div class="card"><h2>Orders placed today (from your Worker)</h2>
 <table id="orders"><tr><td>Not loaded yet.</td></tr></table></div>
+<div class="card"><h2>Not placed today (refused or stopped: no money moved)</h2>
+<table id="ordersNo"><tr><td>Not loaded yet.</td></tr></table></div>
 
 <div class="card"><h2>Samson&#8217;s log (today)</h2>
 <div id="samson" class="hint">Not loaded yet.</div></div>
@@ -200,8 +202,10 @@ th{letter-spacing:.06em}td,th{border-bottom-color:#1c1c20}
     var arm=st.killed?'Stopped':(st.requireArm?(st.armed?'Armed':'Not armed'):'Not required yet'); document.getElementById('sArm').textContent=arm;
     document.getElementById('sArmNote').textContent=st.requireArm?'daily Proceed (asks again each day)':'the Worker does not ask for a daily Proceed yet';
     document.getElementById('note').textContent=(st.mode==='LIVE'?'REAL money. ':'Paper money. ')+'Budget today '+money(st.budget)+'. '+(st.killed?'The kill switch is ON: nothing is placed until you press Resume.':'Orders are only placed while it is armed for today and the kill switch is off.');
-    var t=document.getElementById('orders');
-    t.innerHTML=os.length?'<tr><th>Time</th><th>Pick</th><th>Result</th><th>Detail</th></tr>'+os.slice().reverse().map(function(o){ var res=String(o.result||''), cls=/placed|filled|open/i.test(res)?'t-ok':(/refus|reject|cancel|fail/i.test(res)?'t-no':'t-skip'); return '<tr><td>'+esc(o.t?clock(o.t):'')+'</td><td>'+esc(o.name||o.key||'')+'</td><td><span class="tag '+cls+'">'+esc(res)+'</span></td><td>'+esc((o.reason?o.reason+' · ':'')+(o.price?((+o.qty||0)/100).toFixed(2)+' contracts at up to '+((+o.price)*100).toFixed(1)+'%':''))+'</td></tr>'; }).join(''):'<tr><td>No orders yet today.</td></tr>';
+    /* v5.53: the orders PLACED and the ones NOT placed are two lists (a refused order moved no money) */
+    function ordRows(list,empty){ return list.length?'<tr><th>Time</th><th>Pick</th><th>Result</th><th>Detail</th></tr>'+list.slice().reverse().map(function(o){ var res=String(o.result||''), cls=/placed|filled|open/i.test(res)?'t-ok':(/refus|reject|cancel|fail/i.test(res)?'t-no':'t-skip'); return '<tr><td>'+esc(o.t?clock(o.t):'')+'</td><td>'+esc(o.name||o.key||'')+'</td><td><span class="tag '+cls+'">'+esc(res)+'</span></td><td>'+esc((o.reason?o.reason+' · ':'')+(o.price?((+o.qty||0)/100).toFixed(2)+' contracts at up to '+((+o.price)*100).toFixed(1)+'%':''))+'</td></tr>'; }).join(''):'<tr><td>'+empty+'</td></tr>'; }
+    document.getElementById('orders').innerHTML=ordRows(os.filter(function(o){ return String(o.result||'')==='placed'; }),'No orders placed yet today.');
+    document.getElementById('ordersNo').innerHTML=ordRows(os.filter(function(o){ return String(o.result||'')!=='placed'; }),'Nothing was refused or stopped today.');
     document.getElementById('when').textContent='updated '+clock(Date.now());
     var lk=''; try{ var L=JSON.parse(ls('mbev.autoLook')||'{}'); if(L&&L.rows&&L.rows.length) lk='<ul style="margin:4px 0 0 16px">'+L.rows.slice(-8).reverse().map(function(x){ return '<li>'+esc(clock(x.t))+' · '+esc(x.w)+(x.n>1?' (×'+x.n+')':'')+'</li>'; }).join('')+'</ul>'; }catch(e){}
     var la=null; try{ la=JSON.parse(ls('mbev.autoLast')||'null'); }catch(e){}
