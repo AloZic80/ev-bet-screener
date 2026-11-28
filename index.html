@@ -38,7 +38,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.76</title>
+<title>0xBeta Screener v5.77</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -2294,6 +2294,8 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 .cloud-line.cloud-bad{border-color:var(--bad,#ff6b6b); color:var(--bad,#ff6b6b)}
 /* v5.63: the Board redraw log (Settings) */
 .rdlog{margin:8px 0 0}.rdlog summary{cursor:pointer;font-size:13px}.rdlog pre{max-height:220px;overflow:auto;font-size:12px;white-space:pre-wrap;margin:6px 0;padding:6px;border-radius:6px;background:rgba(0,0,0,.25)}
+/* v5.77: bets that do not match the book bet they are tied to (top of the Bet log) */
+#logFix .fx-row{margin:8px 0 0;line-height:1.6;font-size:13px}#logFix .fx-row button{margin:2px 4px 2px 0}
 </style>
 </head>
 <body>
@@ -2302,7 +2304,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.76</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.77</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -3029,6 +3031,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 <div class="view" id="v-log">
 <div class="storage-warn" id="storageWarn" role="status" hidden></div><div class="meta cloud-line" id="cloudLine" role="status"></div><!-- v5.25 (ENG-2): a calm note over 80% -->
 <div class="panel look-out" id="lookOut" hidden></div>   <!-- v3.57: bets not graded yet, automatically or by you -->
+<div class="panel" id="logFix" hidden></div>   <!-- v5.77: bets that do not match the book bet they are tied to -->
 <div class="panel" id="logLost" hidden></div>   <!-- v5.76: bets that were in your log and are gone -->
 <div class="panel log-orders" id="logOrders" hidden></div>   <!-- v4.17: orders waiting at your books (not bets until they fill) -->
 <div class="panel" id="lcPanel">   <!-- v4.36: Augi's Bet log, step 3: his bet calendar, the day, cover bands, track by, import, on our log and math -->
@@ -3285,7 +3288,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 
 </div>
 <script>
-const SCREENER_VERSION='v5.76';
+const SCREENER_VERSION='v5.77';
 /* v5.24 (step 5): DEV_APP is now defined once, in the head script at the top of this file (the first paint reads it too) */
 if(!DEV_APP) document.documentElement.setAttribute('data-viewas','easy');   // v5.24 (step 3b): a customer build is Easy whatever mbev.viewAs holds
 /* v5.24 (owner 11/20: "we need to differentiate already"; "for me in GOD mode, let me tell the difference of what they cant see and i can"): levels.
@@ -6014,7 +6017,7 @@ function easyForget(id){ const O=easyOwn(), o=O[id]; delete O[id]; easyOwnSave()
 function easyChanged(b, soft){ const o=easyOwn()[b.id], res=(soft && (b.result==='pending' || b.result==='?')) ? null : b.result; return !!(res || b.sold || b.fillRef || b.fillBook || (b.fills && b.fills.length) || b.autoFrom || (b.edits && b.edits.length) || !o || o.sig!==easySig(b)); }
 function easyStored(id){ try{ const a=JSON.parse(lsPlain('mbev.log')||'[]'); return Array.isArray(a) && a.some(x=>x && x.id===id); }catch(e){ return false; } }
 /* the log did not reach storage (S2): take the bet out of memory again so Today keeps the pick and nothing says Saved; the person is told in plain words (never swallowed) */
-function easyUnsave(b){ const i=(logged||[]).indexOf(b); if(i>=0){ logged.splice(i,1); syncMarkGone('log',[b&&b.id]); }   /* v5.25 round 2 (HS-1) */ saveLog(); try{ const t=document.getElementById('savedToast'); if(t) t.classList.remove('on'); }catch(e){} try{ renderLog(); renderPerf(); }catch(e){} refresh(); }
+function easyUnsave(b){ const i=(logged||[]).indexOf(b); if(i>=0){ logged.splice(i,1); syncMarkGone('log',[b&&b.id]); jrForget([b&&b.id]); }   /* v5.25 round 2 (HS-1) */   /* v5.77: taken out on purpose, not lost */ saveLog(); try{ const t=document.getElementById('savedToast'); if(t) t.classList.remove('on'); }catch(e){} try{ renderLog(); renderPerf(); }catch(e){} refresh(); }
 function easyAfterSave(nb, key){ if(!easyStored(nb.id)){ easyUnsave(nb); return {saved:false, reason:'storage'}; } easyMark(nb, key); return {saved:true, id:nb.id, key}; }
 /* I placed it: the app’s own bet form on a hidden host, then its own Save, so the saved bet is the same as a real "I bet this" tap with no edits (never addToLog directly). opt.host (a visible .pcard) = where the full form opens when the pick needs a look. Only one save at a time; the row is read again after the live-price wait */
 async function easyPlacedSave(r0, opt){ opt=opt||{}; const key=typeof r0==='string'?r0:pxKey(r0), pk=opt.pick || (typeof r0==='string'?null:{r:r0, rowBook:r0.book, rowRaw:r0.offeredRaw}), r=easyRowFor(key, pk);   /* v5.24 (step 5, review saves S1-2): the row this pick showed (its book and price), never another row of the same key */
@@ -6053,7 +6056,7 @@ function easyStorageMsg(){ return 'This bet could not be saved on this device be
 function easyUndo(id){ const O=easyOwn()[id], bet=(logged||[]).find(b=>b && b.id===id); if(!O) return {removed:false, reason:'not from Easy'};
   if(!bet) return {removed:false, reason:'gone'};
   if(easyChanged(bet, true)) return {removed:false, reason:'changed'};   /* v5.24 (step 6, review N4): the same soft rule as Remove: a result the grader has not found yet (pending or ?) is not a grade */
-  const key=O.key, idx0=logged.indexOf(bet); removeBet(bet, 0); const i=removedBets.map(x=>x.id).lastIndexOf(id); if(i>=0 && !(removedBets[i].lost>0)){ removedBets.splice(i,1); saveRemoved(); }
+  const key=O.key, idx0=logged.indexOf(bet); removeBet(bet, 0); const i=removedBets.map(x=>x.id).lastIndexOf(id); if(i>=0 && !(removedBets[i].lost>0)){ removedBets.splice(i,1); saveRemoved(); jrForget([id]); /* v5.77: taken out on purpose, not lost */ }
   if(easyStored(id)){ if(!logged.some(b=>b && b.id===id)) logged.splice(Math.min(Math.max(idx0,0), logged.length), 0, bet); try{ renderLog(); renderPerf(); }catch(e){} refresh(); return {removed:false, reason:'storage'}; }   /* v5.24 (step 5, review saves S2-2): the log did not reach storage, so the bet is still stored: it stays here too, and nothing says it was removed */
   easyForget(id); refresh(); return {removed:true, key}; }
 function easyUndoMsg(r){ if(r && r.removed){ const L=easyList(), back=L.picks.concat(L.waiting).some(p=>p.key===r.key) && !ezSkipped()[r.key]; return back ? 'Removed from My bets. The pick is back on Today.' : 'Removed from My bets. The pick is not on Today any more, because its game has started or its price changed.'; }
@@ -6418,7 +6421,7 @@ function easyRemoveBet(id){ const bet=(logged||[]).find(b=>b && b.id===id); if(!
   if(!easyOwn()[id]) return {removed:false, reason:'not here'};   /* v5.24 (step 4, review saves S1-1): only a bet Easy saved itself in this tab */
   if(easyChanged(bet, true)) return {removed:false, reason:'changed'};   /* v5.24 (step 5, review saves S2-1): the Undo rule (a result the grader has not found yet, pending or ?, is still an open bet, so it does not count): a bet a book fill linked to, that was graded, sold or edited stays (its removal would let the next fills read bring it back as a bet Easy cannot remove) */
   const idx=logged.indexOf(bet), text=easyBetLabel(bet).text, own=easyOwn()[id]; removeBet(bet, 0);
-  const i=removedBets.map(x=>x.id).lastIndexOf(id); if(i>=0 && !(removedBets[i].lost>0)){ removedBets.splice(i,1); saveRemoved(); }
+  const i=removedBets.map(x=>x.id).lastIndexOf(id); if(i>=0 && !(removedBets[i].lost>0)){ removedBets.splice(i,1); saveRemoved(); jrForget([id]); /* v5.77: taken out on purpose, not lost */ }
   if(easyStored(id)){ if(!logged.some(b=>b && b.id===id)) logged.splice(Math.min(Math.max(idx,0), logged.length), 0, bet); try{ renderLog(); renderPerf(); }catch(e){} refresh(); return {removed:false, reason:'storage'}; }   /* v5.24 (step 5, review saves S2-2) */
   easyForget(id);
   window._exGone={id, bet, idx, text, own}; refresh(); return {removed:true, id, text}; }
@@ -7113,6 +7116,9 @@ function openBetEditor(tr, r, opt){
       ebSay((r.tier==='hail' && !opt.edit ? '🔮 Hail Mary: the math says no ('+v.msg+'). Your call: press Save bet anyway to log it.' : v.msg+' — press Save bet anyway to log it.'), true);   // v4.50
       return;
     }
+    if(!opt.edit && !(tr && tr.classList && tr.classList.contains('ab-host')) && saveBtn.dataset.dup!=='1'){   /* v5.77 (owner 2026-11-27: Isaiah Joe Under 3.5 Threes was in the log twice, once from the Polymarket fill and once from the card, "It put the bet 2 times. WHY?"): a card's Save checks the log the way the + Add a bet form does (abDupOf, v5.29), whatever the card showed */
+      const mk=lineChanged() ? (()=>{ const nl=newLine(); return (signed&&nl>0?'+':'')+nl+' '+lineM[2]; })() : r.market, D=saveDupOf(Object.assign({}, r, {market:mk}), stake, book);
+      if(D){ saveBtn.dataset.dup='1'; saveBtn.textContent='Save bet anyway'; ebSay('Not saved: this bet is already in your Bet log ('+abDayWord(gameDayOf(D)||D.date)+', '+abSrcWord(D)+', $'+(+D.stake||0).toFixed(2)+' on '+bookLabel(D.book||'?')+'). Press Save bet anyway only if this is a second bet.', true); return; } }
     saveBtn.disabled=true;
     const fairUse = lineChanged() ? (v?v.fairAt:null) : r.fairProb;
     const gross=fairUse!=null ? fairUse/prob-1 : null;
@@ -8100,19 +8106,27 @@ function logMakeRoom(){ const v=JSON.stringify(logged), put=()=>{ try{ localStor
   return false; }
 /* v5.76 (owner 2026-11-28: a bet he added vanished from the Bet log; "we need to save all bets and everything that shows up"): a backup journal. Every bet that was ever in the log is also
    kept here, apart from the log, and only ever added to. A bet that is in the journal, not in the log, and that you did not remove is shown at the top of the Bet log with Restore. */
-function jrAll(){ if(!window._jr){ try{ window._jr=JSON.parse(localStorage.getItem('mbev.logJournal')||'{}')||{}; }catch(e){ window._jr={}; } } return window._jr; }
-function jrWrite(){ window._jrT=0; const J=jrAll(); let txt=JSON.stringify(J);
-  try{ localStorage.setItem('mbev.logJournal',txt); return; }catch(e){}
-  Object.values(J).forEach(e=>{ if(e&&e.b&&e.b.snap) delete e.b.snap; }); txt=JSON.stringify(J);   /* room first from the oldest detail, never from the list of bets */
-  try{ localStorage.setItem('mbev.logJournal',txt); return; }catch(e){}
-  window._jrFull=true; }
+/* v5.77 (the audit of v5.76): the journal never crowds out the log (it is packed like the log, it leaves 600,000 characters free, and it steps aside when there is no room: this
+   browser was at 99% two days before it arrived); a bet taken out on purpose by a path other than Remove (Easy's Undo, Clear the log, a sync merge) is not called "gone" (jrForget);
+   an edit that keeps the bet's length is copied too (a hash, it compared lengths); another tab's entries are kept; the snap is left out of the stored copy only when room is short. */
+function jrHash(t){ let h=5381; for(let i=0;i<t.length;i++) h=((h<<5)+h+t.charCodeAt(i))|0; return h; }
+function jrAll(){ if(!window._jr){ try{ window._jr=JSON.parse(lsPlain('mbev.logJournal')||'{}')||{}; }catch(e){ window._jr={}; } } return window._jr; }
+function jrForget(ids){ try{ const J=jrAll(); let ch=false; (ids||[]).forEach(id=>{ const e=id!=null ? J[id] : null; if(e && !e.ack){ e.ack=true; ch=true; } }); if(ch && !window._jrT) window._jrT=setTimeout(jrWrite,1500); }catch(e){} }
+function jrWrite(){ window._jrT=0; const J=jrAll(), KEEP=600000;
+  try{ const S=JSON.parse(lsPlain('mbev.logJournal')||'{}')||{}; Object.keys(S).forEach(k=>{ if(!J[k]) J[k]=S[k]; }); }catch(e){}
+  const room=()=>{ try{ return lsQuota()-(lsSize()-(localStorage.getItem('mbev.logJournal')||'').length); }catch(e){ return 0; } };
+  let txt=lsPack(JSON.stringify(J));
+  if(txt.length>room()-KEEP){ const slim={}; Object.keys(J).forEach(k=>{ const e=J[k]; slim[k]=(e&&e.b&&e.b.snap) ? Object.assign({}, e, {b:Object.assign({}, e.b, {snap:undefined})}) : e; }); txt=lsPack(JSON.stringify(slim)); }
+  if(txt.length>room()-KEEP){ try{ localStorage.removeItem('mbev.logJournal'); }catch(e){} window._jrFull=true; return; }
+  try{ localStorage.setItem('mbev.logJournal',txt); window._jrFull=false; }catch(e){ try{ localStorage.removeItem('mbev.logJournal'); }catch(_){} window._jrFull=true; } }
 function jrNote(){ try{ const J=jrAll(); let ch=false;
-  (logged||[]).forEach(b=>{ if(!b||!b.id) return; const n=JSON.stringify(b).length, e=J[b.id]; if(!e){ J[b.id]={b:JSON.parse(JSON.stringify(b)),at:Date.now(),n:n}; ch=true; } else if(e.n!==n){ e.b=JSON.parse(JSON.stringify(b)); e.n=n; ch=true; } });
+  (logged||[]).forEach(b=>{ if(!b||!b.id) return; const t=JSON.stringify(b), n=jrHash(t), e=J[b.id]; if(!e){ J[b.id]={b:JSON.parse(t),at:Date.now(),n:n}; ch=true; } else { if(e.n!==n){ e.b=JSON.parse(t); e.n=n; ch=true; } if(e.ack){ delete e.ack; ch=true; } } });
   if(ch && !window._jrT) window._jrT=setTimeout(jrWrite,1500); }catch(e){ console.warn('journal',e); } }
 function jrMissing(){ try{ const J=jrAll(), have=new Set((logged||[]).map(b=>b&&b.id)), gone=new Set((removedBets||[]).filter(Boolean).map(b=>b.id));
   return Object.values(J).filter(e=>e&&e.b&&e.b.id&&!e.ack&&!have.has(e.b.id)&&!gone.has(e.b.id)); }catch(e){ return []; } }
 function jrRender(){ const el=document.getElementById('logLost'); if(!el) return; const M=jrMissing();
-  if(!M.length){ el.hidden=true; el.textContent=''; return; }
+  if(!M.length){ if(window._jrFull){ el.hidden=false; el.textContent='The backup copy of your Bet log is paused: this browser\u2019s storage is nearly full, and the log itself comes first. Settings shows how full it is.'; return; }   /* v5.77: said, not silent */
+    el.hidden=true; el.textContent=''; return; }
   el.hidden=false; el.textContent=''; const t=document.createElement('div'); t.className='meta';
   t.textContent='\u26a0 '+M.length+' bet'+(M.length===1?' was':'s were')+' in your log earlier and '+(M.length===1?'is':'are')+' gone, and you did not remove '+(M.length===1?'it':'them')+': '+M.slice(0,4).map(e=>(e.b.name||e.b.player||'a bet')+(e.b.stake?' ($'+(+e.b.stake).toFixed(2)+')':'')).join('; ')+(M.length>4?' and '+(M.length-4)+' more':'')+'.';
   const r=document.createElement('button'); r.type='button'; r.textContent='Restore '+(M.length===1?'it':'them'); r.onclick=function(){ M.forEach(e=>{ if(!logged.some(b=>b&&b.id===e.b.id)) logged.push(JSON.parse(JSON.stringify(e.b))); }); saveLog(); renderLog(); renderPerf(); refresh(); };
@@ -8229,7 +8243,7 @@ function resultBadge(b){
 let logRenderLater=false;
 function logEditorOpen(){ return !!document.querySelector('#logBody tr.pl-ed, #logBody tr.editor'); }
 setInterval(()=>{ if(logRenderLater && !logEditorOpen()){ logRenderLater=false; try{ renderLog(); }catch(e){} } }, 1000);
-function renderLog(){ setTimeout(()=>{ try{ jrRender(); }catch(e){} try{ csvDays(); }catch(e){} try{ lcRender(); }catch(e){ console.error(e); } try{ storageUseRender(); }catch(e){} },0);   /* v5.25: + storage used */   // v4.16: the CSV day list follows the log   // v4.36: and the bet calendar
+function renderLog(){ setTimeout(()=>{ try{ jrRender(); }catch(e){} try{ fixRender(); }catch(e){} try{ csvDays(); }catch(e){} try{ lcRender(); }catch(e){ console.error(e); } try{ storageUseRender(); }catch(e){} },0);   /* v5.25: + storage used */   // v4.16: the CSV day list follows the log   // v4.36: and the bet calendar
   if(logEditorOpen()){ logRenderLater=true; return; }   // v3.86
   const tb=document.getElementById('logBody'), empty=document.getElementById('logEmpty');
   tb.innerHTML='';
@@ -8560,6 +8574,7 @@ function renderRemoved(){
     '<td class="num">'+(b.lost>0?'<span style="color:var(--out)">−$'+b.lost.toFixed(2)+'</span>':'never placed')+'</td>'+
     '<td><button class="kill rm-forget" data-i="'+i+'" title="Delete this record">forget</button></td></tr>').join('');
   tb.querySelectorAll('button.rm-forget').forEach(btn=>btn.addEventListener('click',()=>{
+    { const R=removedBets[+btn.dataset.i]; if(R) jrForget([R.id]); }   /* v5.77: forgotten on purpose: the backup journal does not call it gone */
     removedBets.splice(+btn.dataset.i,1); saveRemoved(); renderRemoved(); refresh(); }));
 }
 
@@ -9701,7 +9716,7 @@ function playedHtml(b){   // v2.84: "plays" before kickoff, "in progress" until 
 }
 /* v3.36: when ESPN can't grade a bet that came from a book fill, use the book's own settlement (Kalshi, Polymarket, Novig) */
 function settlementFor(b){ if(!b||!b.fillBook||!b.fillRef) return null;
-  return (window._settlements||[]).find(x=>x.book===b.fillBook && x.ref===b.fillRef && x.outcome && (!x.side||!b.fillSide||x.side===b.fillSide))||null; }
+  return (window._settlements||[]).find(x=>x.book===b.fillBook && x.ref===b.fillRef && x.outcome && (!x.side||!b.fillSide||x.side===b.fillSide) && (!x.oid || x.oid===b.fillOutcome))||null; }   /* v5.77: a Novig result names its outcome (oid): never the other side of that market */
 function setFromSettlement(b,S){ b.result = S.outcome==='void' ? 'push' : (S.outcome==='win' ? 'win' : 'loss'); b.gradedBy='book'; delete b.why; polyPaid(b,S); }
 /* v4.70 (Alonzo's Polymarket screenshots: Pacers, McCain, Packers-Patriots and Browns-Saints wins were $0.84 too high in all): Polymarket US takes
    its fee when a market settles, so the price alone overstates a win. A win settled by Polymarket keeps the profit Polymarket reports (pnl, after
@@ -12798,7 +12813,7 @@ function rpCsvDl(){ const S=rpSet(); if(!S.L.length && !S.Rm.length){ alert('No 
 document.getElementById('wipe').addEventListener('click',()=>{
   if(!logged.length) return;
   if(sure2('Delete all '+logged.length+' logged bets? This cannot be undone.'+(SY&&SY.on?' ☁ Sync is on: they are deleted on your other devices too.':''), 'Really delete all '+logged.length+' logged bets? Last chance. If you have not yet, press Cancel and use "Back up bet log" first.')){   /* v5.31: asked twice */
-    syncMarkGone('log', logged.map(b=>b&&b.id)); logged=[]; saveLog(); renderLog(); renderPerf(); refresh();   // v5.25 round 2 (HS-1)
+    syncMarkGone('log', logged.map(b=>b&&b.id)); jrForget(logged.map(b=>b&&b.id)); logged=[]; saveLog(); renderLog(); renderPerf(); refresh();   // v5.25 round 2 (HS-1)   // v5.77: cleared on purpose, not lost
   }
 });
 /* ============ closing-line grab (v2.50) ============
@@ -13691,6 +13706,7 @@ async function abLoadGames(){
     .sort((a,b)=>Date.parse(a.date)-Date.parse(b.date));
   sel.innerHTML = abEvents.length ? abEvents.map(abGameOptHtml).join('')   // v5.28: abGameOptHtml
     : '<option value="">no '+esc(sp)+' games on ESPN from 3 days back to 3 ahead</option>';
+  if(abFromFill && abEvents.length){ sel.insertAdjacentHTML('afterbegin','<option value="">pick the game</option>'); sel.value=''; }   /* v5.77: adding a book's bet: no game is chosen for you (the first game in the list was, and Save bet logged the bet on it) */
   abFields();
 }
 function abFields(){
@@ -13705,6 +13721,8 @@ function abFields(){
   const tt=t||(()=>{ const g=teamsOf($ab('abGameFree').value.toUpperCase()); return g?{away:g[0],home:g[1]}:null; })();   // v3.54: a typed game fills the Team list too
   ts.innerHTML=tt?['away','home'].map(k=>'<option value="'+tt[k]+'">'+tt[k]+(k==='home'?' (home)':'')+'</option>').join(''):'';
   if(keep && tt && (keep===tt.away||keep===tt.home)) ts.value=keep;
+  else if(tt && abFromFill && (ty==='spread'||ty==='moneyline')){ const w=abFillTeam(abFromFill, ev, tt);   /* v5.77: adding a book's bet: its own team, or none (the away team was chosen for you) */
+    if(w) ts.value=w; else if(w===''){ ts.insertAdjacentHTML('afterbegin','<option value="">pick the team</option>'); ts.value=''; } }
   ts.style.display=tt?'':'none'; tf.style.display=tt?'none':'';   // v3.54: no teams to list → type the team
   $ab('abLine').placeholder = ty==='spread'?'-3.5':ty==='total'?'47.5':'249.5';
   abUpdate();
@@ -13756,6 +13774,10 @@ function abNeedMark(what){ document.querySelectorAll('#addBetPanel .ab-need').fo
   const ts=$ab('abTeam'), id={game:'abGame', player:'abPlayer', stat:'abStat', line:'abLine', team:(ts && ts.style.display!=='none')?'abTeam':'abTeamFree'}[what], el=id&&$ab(id); if(!el) return; el.classList.add('ab-need'); try{ el.focus({preventScroll:true}); }catch(e){} }
 document.addEventListener('change', e=>{ const t=e.target; if(t && t.classList && t.classList.contains('ab-need')) t.classList.remove('ab-need'); if(t && t.id==='abGameFree' && $ab('abGame')) $ab('abGame').classList.remove('ab-need'); });
 document.addEventListener('input', e=>{ const t=e.target; if(t && t.classList && t.classList.contains('ab-need')) t.classList.remove('ab-need'); if(t && t.id==='abGameFree' && $ab('abGame')) $ab('abGame').classList.remove('ab-need'); });
+/* v5.77: the same bet already in the log, for a card's Save: the same day, kind, name, line and side, at the same book, the stake within 4% (lcShotSameK, as abDupOf). Hoisted. */
+function saveDupOf(r, stake, book){ try{ const st=r.gameInfo&&r.gameInfo.startISO?Date.parse(r.gameInfo.startISO):NaN, day=r.gameDay||(!isNaN(st)?ctDay(st):'')||((document.getElementById('slate')||{}).value||''); if(!day) return null;
+  const k=lcShotKeyB({kind:r.kind, name:r.name, side:r.side, market:r.market, date:day, dateSet:true, book, stake});
+  return logged.find(b=>b && b.kind!=='parlay' && !b.voided && lcShotSameK(lcShotKeyB(b), k) && !(book && b.book && nrmT(bookLabel(book))!==nrmT(bookLabel(b.book))))||null; }catch(e){ return null; } }
 function abDupOf(f, ed){ try{ const q=c=>ed.querySelector(c), pr=abPrice(), st=pr&&pr.stake>0?pr.stake:(parseFloat((q('.eb-stake')||{}).value)||0), book=(q('.eb-book')||{}).value||'', pl=placedRead($ab('abPlaced'));
   const k=lcShotKeyB({kind:f.kind, name:f.name, side:f.side, market:f.market, date:f.gameDay||'', dateSet:true, manual:true, book, stake:st, placedAt:pl&&!pl.err?pl.iso:undefined});
   if(!k.day) return null;
@@ -13783,6 +13805,9 @@ function abOpenEditor(){
   save.addEventListener('click',e=>{   // runs before the editor's own save
     const f=abRowFields(); Object.assign(abR,f);
     if(f._missing){ e.stopImmediatePropagation(); abSay(ed, 'Not saved: add the '+f._missing+' first'+(f._missing==='game'?' (pick it in the Game list above, or type it)':'')+' — ESPN needs it to grade the bet.'); abNeedMark(f._missing); return; }   // v5.29: in red next to Save, scrolled into view (was a quiet grey line)
+    if(abFromFill){ const why=abFillMisfit(abFromFill, f);   /* v5.77: the boxes must say what the book bet says before the two are tied (a tennis bet was saved as an NFL team and tied to it) */
+      if(why){ if(save.dataset.fl!=='1'){ e.stopImmediatePropagation(); save.dataset.fl='1'; save.textContent='Save bet anyway'; abSay(ed, 'Not saved: '+why+' Change the boxes above to match it. Or press Save bet anyway to save what the boxes say as a bet of its own: the '+(FILL_NAME[abFromFill.book]||'book')+' bet then stays in From your books.'); return; }
+        abFromFill=null; } }
     // v3.48: a bet already placed logs from Save bet in either mode (Make mode no longer blocks it)
     try{ localStorage.setItem('mbev.abBook', ed.querySelector('.eb-book').value); }catch(_){}
     abR._result=$ab('abResult').value||'';   // v3.54: already over — save it graded, and skip the "worth it?" second press
@@ -15445,15 +15470,30 @@ function fillWhyNot(f){ const b=f&&f.bet||{}, seen=fillSeen[f.book+':'+f.id], mi
   else if(b.kind==='total'){ if(b.line==null) miss.push('line'); if(b.side!=='O'&&b.side!=='U') miss.push('over/under'); }
   else miss.push('kind '+(b.kind||'?'));
   return (miss.length?'missing '+miss.join(', '):'checked: '+(seen?seen.s:'not yet'))+' · '+[b.kind,b.player||b.team||b.teamName,b.statText,b.line,b.side].map(x=>x==null?'-':x).join('/'); }
-function fillDescOk(f){ const b=f&&f.bet||{}; if(!f || f.action==='sell' || !(f.price>0) || b.part) return false;
+/* v5.77 (owner 2026-11-27: a Novig tennis bet, "V. Lepchenko to win", has no team code, so the app could not log it; Add then saved it through the + Add a bet form
+   as an NFL team. "use the NOVIG API to come back and add the bets made today correctly"): a side the book names in words (a tennis player, a full team name)
+   is logged under those words, with the game, league and start the book gives (Worker v3.92). Hoisted. */
+function fillSideName(b){ const t=String((b&&b.teamName)||'').trim(); return (!b || b.team || !/[A-Za-z]{2}/.test(t)) ? '' : t; }
+function fillGameWords(b){ const s=fillSideName(b), e=String((b&&b.eventDesc)||'').trim(), d=String((b&&b.desc)||'').trim(); return e || (b&&b.opp&&s ? s+' vs '+b.opp : (d && nrmT(d)!==nrmT(s) ? d : '')); }
+function fillLeague(b){ const lg=String((b&&b.league)||'').toUpperCase(); return /^(NFL|NCAAF|NBA|WNBA|NCAAB|MLB|NHL)$/.test(lg) ? lg : ''; }   /* the book's league when it is one the app grades from ESPN */
+function fillEnrich(L, f){ const b=f&&f.bet; if(!b || !L || L.autoFrom!==f.book) return false; let ch=false;   /* a bet logged from the book before it sent its league, game or start: the empty ones are filled, nothing is replaced */
+  const s=fillSideName(b), named=!!s && !L.team && (L.kind==='moneyline'||L.kind==='spread') && nrmT(L.name)===nrmT(s);
+  const sp=String(b.sport||(named?(b.league||b.sportName):fillLeague(b))||'').toUpperCase(); if(sp && !L.sport){ L.sport=sp; ch=true; }
+  if(!named) return ch;
+  const g=fillGameWords(b); if(g && !L.game){ L.game=g; ch=true; }
+  const st=Date.parse(b.start); if(!isNaN(st) && !L.start){ L.start=new Date(st).toISOString(); L.date=ctDay(st); L.dateSet=true; ch=true; }
+  return ch; }
+function fillDescOk(f){ return fillDescOk0(f) && !fillTwinMaybe(f); }   /* v5.77: described well enough to log by itself, and not a possible second copy of a bet already in the log */
+function fillDescOk0(f){ const b=f&&f.bet||{}; if(!f || f.action==='sell' || !(f.price>0) || b.part) return false;
   if(b.kind==='prop') return !!(b.player && b.statText && b.line!=null && (b.side==='O'||b.side==='U'));
-  if(b.kind==='moneyline') return !!b.team; if(b.kind==='spread') return !!(b.team && b.line!=null); if(b.kind==='total') return b.line!=null && (b.side==='O'||b.side==='U'); return false; }
+  if(b.kind==='moneyline') return !!(b.team || fillSideName(b)); if(b.kind==='spread') return !!((b.team || fillSideName(b)) && b.line!=null); if(b.kind==='total') return b.line!=null && (b.side==='O'||b.side==='U'); return false; }   /* v5.77: + a side named in words */
 function autoAddFromDesc(f){ const b=f.bet, book=FILL_NAME[f.book], prob=+f.price, stake=Math.round(((+f.cost||0)+(+f.fee||0))*100)/100;
   const fee=f.fee!=null&&f.cost?(+f.fee)/(+f.cost):feeRate(book,prob,cfgRead().fees), st=Date.parse(b.start);
-  const game=b.away&&b.home?normAbbr(b.away)+' @ '+normAbbr(b.home):(b.teamsCode||'');
+  const side1=(b.kind==='moneyline'||b.kind==='spread')?fillSideName(b):'';   /* v5.77: the side in the book's own words when it has no team code */
+  const game=b.away&&b.home?normAbbr(b.away)+' @ '+normAbbr(b.home):(b.teamsCode||(side1?fillGameWords(b):''));
   const market=b.kind==='prop'?b.line+' '+prettyStat(b.statText):b.kind==='total'?b.line+' Total':b.kind==='spread'?(b.line>0?'+':'')+b.line+' Spread':'Moneyline';
-  const name=b.kind==='prop'?b.player:b.kind==='total'?(game||'Total'):normAbbr(b.team);
-  addToLog({name, sport:String(b.sport||'').toUpperCase(), kind:b.kind, market, side:b.side||'', team:b.team?normAbbr(b.team):null, game, matchup:game, book,
+  const name=b.kind==='prop'?b.player:b.kind==='total'?(game||'Total'):(side1||normAbbr(b.team));
+  addToLog({name, sport:String(b.sport||(side1?(b.league||b.sportName):fillLeague(b))||'').toUpperCase(), kind:b.kind, market, side:b.side||'', team:b.team?normAbbr(b.team):null, game, matchup:game, book,   /* v5.77: + the book's league (a Novig bet was logged with no sport, so nothing could grade it) */
     offeredRaw:fmtOdds(Math.round(americanOf(prob))), offeredProb:prob, stake, fee, gameDay:isNaN(st)?undefined:ctDay(st), dateSet:!isNaN(st)||undefined,
     gameInfo:isNaN(st)?null:{state:'pre', startISO:new Date(st).toISOString(), teams:[]}});
   const L=logged[logged.length-1]; L.autoFrom=f.book; L.fills=[f.id]; L.fillQty=+f.qty||0; L.fillCost=stake; L.fillFee=+(+f.fee||0).toFixed(4) /* v5.12 (bug): the fee in fillCost, so a later order adds to it (linkFill) */; L.fillBy={[f.id]:{q:L.fillQty, cost:stake, fee:L.fillFee}} /* v5.26 round 2 (B2) */; noteFillRef(L,f);
@@ -15477,6 +15517,9 @@ document.addEventListener('click',e=>{
     delete b.fillDiff; saveLog(); renderLog(); renderPerf(); refresh(); return; }
   if(ig){ const f=fillPending[+ig.dataset.i]; if(f){ fillSeen[f.book+':'+f.id]={s:'ignored',q:+f.qty||0}; fillIgnored[f.book+':'+f.id]=Date.now(); if(f.ref) fillIgnored['fp:'+fillPrint(f)]=Date.now(); lsSafeSet('mbev.fillIgnored',JSON.stringify(fillIgnored)); }   // v3.89
     fillPending=fillPending.filter(x=>!fillIsIgnored(x)); saveFills(); renderFromBooks(); return; }
+  { const tie=e.target.closest('.fb-tie'); if(tie){ const f=fillPending[+tie.dataset.i], T=f?fillTwinMaybe(f):null; if(!f) return;   /* v5.77: tie a book bet named in words to the logged bet it may be */
+      if(T){ linkFill(T, f); fillSeen[f.book+':'+f.id]={s:'linked',q:+f.qty||0}; fillPending=fillPending.filter(x=>!(x.book===f.book && x.id===f.id)); saveFills(); saveLog(); try{ renderLog(); renderPerf(); refresh(); }catch(_){} }
+      renderFromBooks(); try{ renderMyBooks(); }catch(_){} return; } }
   if(ad){ const f=fillPending[+ad.dataset.i]; if(!f) return; addFillNow(f); return; }   // v3.91: one tap when the book described it   // v3.87: it stays listed until the bet is saved (it was dropped here, then lost)
   const cp=e.target.closest('.fb-copy'); if(cp){ copyText(fromBooksText(), cp); return; }
 });
@@ -15539,11 +15582,98 @@ function betMatches(fb, x, strictSport){
   if(kind==='total') return fb.line!=null && ln!=null && Math.abs(fb.line-ln)<0.01 && (!fb.side||fb.side===sd) && teamsOk();
   let tm=glTeam(x)||normAbbr(x.team||x.name);
   if(tm && !/^[A-Z0-9]{2,5}$/.test(tm)){ const g=giTeamFor(x, x.team||x.name); if(g) tm=normAbbr(g.abbr); }   // v4.15: a full name (The Odds API) → ESPN's code
-  const teamOk = fb.team ? normAbbr(fb.team)===tm : fb.teamName ? nrm(fb.teamName).includes(nrm(x.team||x.name)) || nrm(x.name).includes(nrm(fb.teamName)) : false;
+  const teamOk = fb.team ? normAbbr(fb.team)===tm : fb.teamName ? sideNameOk(fb.teamName, x, tm) : false;   /* v5.77: whole words (it took any piece of a word: the code NE inside "Sinner", ARI inside "Sakkari") */
   if(!teamOk || !teamsOk()) return false;
   if(kind==='spread') return fb.line!=null && ln!=null && Math.abs(fb.line-ln)<0.01;
   return true;
 }
+/* v5.77: does a side the book names in words (no team code) mean this bet's team? 1 yes, 0 no, -1 cannot tell. Through the game's own team names when the row has
+   them (one team must fit better than the other: "Los Angeles Chargers" is not the Rams); else the same words, or one inside the other as whole words (a 2 to 4 letter
+   team code never matches a piece of a name: NE inside "Sinner"); else the league's own team list (NFL, MLB: DEN is "Denver Broncos", KC is "Chiefs"); else a short code
+   that could be short for those words is "cannot tell": such a bet is never tied on a guess and never added as a second row, it waits in From your books. Hoisted. */
+function sideScore(t, n){ const full=nrmT(t.loc&&t.nick?t.loc+' '+t.nick:''), nm=nrmT(t.name), nick=nrmT(t.nick), loc=nrmT(t.loc), ab=nrmT(t.abbr), W=' '+n+' ';
+  if((full && n===full) || (nm && n===nm) || (loc && n===loc) || (ab && n===ab)) return 4;   /* exactly one of its own names: "Florida State" is Florida State, never Florida */
+  if(full && W.includes(' '+full+' ')) return 3;
+  let part=0; [nick, nm].forEach(v=>{ if(v && v.length>2 && v!==loc && W.includes(' '+v+' ')) part=Math.max(part, 2+Math.min(0.9, v.length/100)); });   /* its nickname or short name inside the words (the longer one wins); its city alone inside the words is no sign ("Los Angeles Chargers") */
+  return part; }
+function teamNamesFor(sport){ let T=null; try{ T=ODDS_TEAM_NAMES; }catch(e){ T=null; } return (T && T[String(sport||'').toUpperCase()]) || null; }
+function teamWordsFit(n, code, T){ const full=nrmT((T&&T[code])||''); if(!full || !n) return null;   /* null: that code is not in this league's list */
+  const W=' '+n+' ', F=' '+full+' ', twin=fn=>Object.keys(T).some(k=>k!==code && fn(' '+nrmT(T[k])+' '));
+  if(n===full || W.includes(F)) return 1;
+  if(F.endsWith(W)) return twin(G=>G.endsWith(W)) ? -1 : 1;   /* its nickname ("Broncos"), unless two teams share it ("Sox") */
+  if(F.startsWith(W)) return twin(G=>G.startsWith(W)) ? -1 : 1;   /* its city ("Denver"), unless two teams share it ("New York", "Los Angeles") */
+  return 0; }
+function codeMayBe(code, n){ const c=String(code||'').toLowerCase().replace(/[^a-z0-9]/g,''), w=String(n||'').split(' ').filter(Boolean); if(c.length<2 || !w.length) return false;
+  for(let i=0;i<w.length;i++){ if(w[i][0]!==c[0]) continue; const str=w.slice(i).join(' '); let k=1, at=1; while(k<c.length){ const j=str.indexOf(c[k], at); if(j<0) break; at=j+1; k++; } if(k===c.length) return true; }
+  return false; }
+function sideNameFit(teamName, x, tm){ const n=nrmT(teamName); if(!n || !x) return 0;
+  const AH=giTeamsOf(x);
+  if(AH){ const a=sideScore(AH[0], n), h=sideScore(AH[1], n); if(a!==h) return normAbbr(AH[a>h?0:1].abbr)===tm ? 1 : 0; if(a>0) return -1; }
+  const W=' '+n+' ', hit=v=>{ const y=nrmT(v); return !!y && (y===n || (' '+y+' ').includes(W) || (y.length>4 && W.includes(' '+y+' '))); };
+  if(hit(x.name) || hit(x.team)) return 1;
+  if(AH) return 0;   /* the two teams of its game are known and those words name neither */
+  const code=/^[A-Z0-9]{2,5}$/.test(tm||'') ? tm : ''; if(!code) return 0;
+  const T=teamNamesFor(x.sport); if(T){ const r=teamWordsFit(n, code, T); if(r!=null) return r; }
+  if(!String(x.sport||'').trim()){ let any=null; try{ any=ODDS_TEAM_NAMES; }catch(e){ any=null; }   /* no sport on the row: yes only when every league list that has this code says yes (DEN); a code two leagues share is "cannot tell" (CLE is the Browns and the Guardians); a no from a list never counts here */
+    if(any){ const rs=Object.keys(any).map(k=>teamWordsFit(n, code, any[k])).filter(r=>r!=null); if(rs.length && rs.every(r=>r===1)) return 1; if(rs.some(r=>r===1)) return -1; } }
+  return codeMayBe(code, n) ? -1 : 0; }
+function sideNameOk(teamName, x, tm){ return sideNameFit(teamName, x, tm)===1; }
+function codesAlike(a, b){ a=String(a||''); b=String(b||''); return !!a && !!b && (a===b || (a.length>=2 && b.length>=2 && (a.startsWith(b) || b.startsWith(a)))); }   /* TB and TBL, GS and GSW: one book's code for the same team */
+/* v5.77: a bet the book names in words that MAY be a bet already in the log under a team code (the words could be that team, and nothing here can tell). It is not
+   tied on a guess and not added as a second row: it waits in From your books with that row named; "It is that bet" ties them, "Add" adds it as another bet. Hoisted. */
+function fillTwinMaybe(f){ const b=f&&f.bet; if(!b || b.team || !(b.kind==='moneyline'||b.kind==='spread')) return null; const side1=fillSideName(b); if(!side1) return null;
+  const fa=sportFam(b.sportName)||sportFam(b.league)||sportFam(b.sport), a=Date.parse(b.start), ft=!isNaN(a)?a:(+f.ts||NaN);
+  return (logged||[]).find(L=>{ if(!L || L.sold || L.kind!==b.kind || (L.fills&&L.fills.length) || LIVE_BOOK(L.book)!==f.book) return false;
+    const la=sportFam(L.sport); if(fa && la && fa!==la) return false;
+    const z=Date.parse(startOf(L)), lt=!isNaN(z)?z:Date.parse(String(L.date||'')+'T12:00:00'); if(!isNaN(ft) && !isNaN(lt) && Math.abs(ft-lt)>48*3600e3) return false;
+    if(b.kind==='spread'){ const ln=lineOfMarket(L.market); if(b.line==null || ln==null || Math.abs(b.line-ln)>0.01) return false; }
+    return sideNameFit(side1, L, glTeam(L)||normAbbr(L.team||L.name||''))===-1; })||null; }
+/* v5.77 (owner 2026-11-27: "the bet that contradict themselves ... there were bets that said Steelers would win"; "use the NOVIG API to come back and add the bets made
+   today correctly"): a bet saved by hand from From your books › Add and tied to a book bet that plainly says something else: another sport (a tennis bet saved as an
+   NFL team) or the other team of the game. Listed at the top of the Bet log with what the book says; Fix it rewrites the bet from the book's own words (the old values
+   are kept in the bet's edits, its snap is never touched), Leave it stops asking. Hoisted. */
+function sportFam(v){ const k=String(v||'').toUpperCase().replace(/[^A-Z]/g,''); if(!k) return '';
+  if(/^(NFL|NCAAF|NCAAFB|CFB|CFL|UFL|FOOTBALL|AMERICANFOOTBALL)$/.test(k)) return 'FOOTBALL'; if(/^(NBA|WNBA|NCAAB|NCAAMB|NCAAWB|CBB|BASKETBALL)$/.test(k)) return 'BASKETBALL';
+  if(/^(MLB|BASEBALL)$/.test(k)) return 'BASEBALL'; if(/^(NHL|HOCKEY|ICEHOCKEY)$/.test(k)) return 'HOCKEY'; if(/^(ATP|WTA|ITF|TENNIS)/.test(k)) return 'TENNIS';
+  if(/^(MLS|EPL|SOCCER|UCL|UEL|LALIGA|SERIEA|BUNDESLIGA|LIGUE|LIGAMX)/.test(k)) return 'SOCCER'; if(/^(MMA|UFC|BOXING)/.test(k)) return 'FIGHT'; if(/^(GOLF|PGA|LPGA)/.test(k)) return 'GOLF'; return ''; }
+function fillMisfitBet(f, L){ const b=f&&f.bet; if(!b || !L || L.fitOk || L.autoFrom || L.sold || !(b.kind==='moneyline'||b.kind==='spread') || !(L.manual || L.srcType==='manual')) return '';
+  const t=glTeam(L)||normAbbr(L.team||L.name||''), fa=sportFam(b.sportName)||sportFam(b.league)||sportFam(b.sport), la=sportFam(L.sport);
+  if(b.team){ const c=normAbbr(b.team), TL=teamNamesFor(L.sport); if(c===t || (codesAlike(c, t) && !(TL && TL[c] && TL[t]))) return '';   /* the same side: it is that bet (LA and LAC are two teams: the league's own list says so) */
+    if(fa && la && fa!==la) return 'sport'; return t ? 'team' : ''; }
+  if(!b.teamName) return '';
+  const fit=sideNameFit(b.teamName, L, t); if(fit===1) return '';   /* the same side in words (a tennis bet typed by hand keeps the form's sport) */
+  if(fa && la && fa!==la) return 'sport';
+  if(fit!==0) return '';   /* cannot tell: left alone */
+  if(giTeamsOf(L)) return 'team';
+  { const G=teamsOf(L.game||''), T=teamNamesFor(L.sport), n=nrmT(b.teamName);   /* the league's own team list: the words name the other team of this game, or neither of its two teams */
+    if(G && T && T[G[0]] && T[G[1]]){ const o=G[0]===t?G[1]:(G[1]===t?G[0]:''); if(o && teamWordsFit(n, o, T)===1) return 'team'; if(teamWordsFit(n, G[0], T)===0 && teamWordsFit(n, G[1], T)===0) return 'game'; } }
+  return ''; }
+function fillFixWhat(f){ const b=f.bet, side1=fillSideName(b), st=Date.parse(b.start);
+  return {name:side1||normAbbr(b.team), market:b.kind==='spread'?(b.line>0?'+':'')+b.line+' Spread':'Moneyline', kind:b.kind, side:b.side||'', team:b.team?normAbbr(b.team):null,
+    game:b.away&&b.home?normAbbr(b.away)+' @ '+normAbbr(b.home):(b.teamsCode||(side1?fillGameWords(b):'')), sport:String(b.sport||b.league||b.sportName||'').toUpperCase(), start:isNaN(st)?null:new Date(st).toISOString(), day:isNaN(st)?null:ctDay(st)}; }
+function fixList(){ const out=[]; (window._fills||[]).forEach(f=>{ if(!f || !f.bet || f.action==='sell') return; const L=linkedTo(f); if(!L) return; const why=fillMisfitBet(f, L); if(why) out.push({f, L, why}); }); return out; }
+function fixFromFill(L, f){ const w=fillFixWhat(f), idsOf=g=>[g.id].concat(g.ids||[]), mine=L.fills||[];
+  const other=logged.find(x=>x && x!==L && !x.sold && !(x.fills&&x.fills.length) && LIVE_BOOK(x.book)===f.book && betMatches(f.bet,x));
+  /* every book bet on the wrong row that is this same market and side moves in the one press; when the row also holds one that is not in this read, the row is rewritten instead (nothing is split, nothing is counted twice) */
+  const same=[f].concat((window._fills||[]).filter(g=>g && g!==f && g.action!=='sell' && g.book===f.book && g.id!==f.id && g.ref===f.ref && (g.outcome||null)===(f.outcome||null) && idsOf(g).some(id=>mine.includes(id))));
+  if(other && mine.every(id=>same.some(g=>idsOf(g).includes(id)))){   /* the real bet is already in the log, typed by hand: the book bet is tied to that row and the wrong row is removed (kept in Removed, never placed) */
+    L.fills=[]; ['fillRef','fillBook','fillOutcome','fillSide','fillQty','fillCost','fillFee','fillBy','nvOrders','nvEvent'].forEach(k=>{ delete L[k]; }); removeBet(L, 0);
+    same.forEach(g=>{ linkFill(other, g); fillSeen[g.book+':'+g.id]={s:'linked',q:+g.qty||0}; }); saveFills(); saveLog(); return 'moved'; }
+  (L.edits=L.edits||[]).push({at:new Date().toISOString(), before:{name:L.name, market:L.market, kind:L.kind, side:L.side, sport:L.sport, game:L.game, team:L.team, date:L.date, start:L.start, result:L.result, resultSrc:L.resultSrc, gradedBy:L.gradedBy}, why:'fixed from the '+(FILL_NAME[f.book]||'book')+' bet it is tied to'});
+  L.name=w.name; L.market=w.market; L.kind=w.kind; L.side=w.side; L.team=w.team; L.game=w.game; L.sport=w.sport; if(w.start){ L.start=w.start; L.date=w.day; L.dateSet=true; }
+  L.key=[L.date||'', L.name, L.market, L.book, L.odds].join('|'); L.betnow=betNowOf({market:L.market, side:L.side||'', offeredRaw:L.odds}); ['apiKey','pid','lsml','lsmlCls'].forEach(k=>{ delete L[k]; });
+  { const S=(window._settlements||[]).find(x=>x && x.book===f.book && x.ref===f.ref && x.oid && x.oid===f.outcome && x.outcome), mineRes=L.gradedBy==='manual';
+    if(L.resultSrc!==(BOOK_NAME[f.book]||'') && !(mineRes && !S)) ['result','why','resultSrc','gradedBy'].forEach(k=>{ delete L[k]; }); }   /* a result ESPN gave was another game's (kept in edits): the book's own result is applied on the next read. A result you typed yourself stays, unless the book's own result for this bet is already in hand (Fix takes the book's) */
+  noteFillRef(L, f); L.fixedFrom=f.book; saveLog(); return 'fixed'; }
+function fixRender(){ const el=document.getElementById('logFix'); if(!el) return; let M=[]; try{ M=fixList(); }catch(e){ console.warn('fix list', e); M=[]; }
+  if(!M.length){ el.hidden=true; el.textContent=''; return; }
+  el.hidden=false; el.textContent=''; const h=document.createElement('div'); h.className='meta';
+  h.textContent='\u26a0 '+M.length+' bet'+(M.length===1?' in your log does':'s in your log do')+' not match the book bet '+(M.length===1?'it is':'they are')+' tied to. '+(M.length===1?'It was':'They were')+' saved by hand from From your books. Fix it rewrites the row from the book\u2019s own words (what it was is kept in the bet\u2019s history) and takes its result from the book.'; el.appendChild(h);
+  M.forEach(x=>{ const row=document.createElement('div'), w=fillFixWhat(x.f), bk=FILL_NAME[x.f.book]||'the book', t=document.createElement('span'); row.className='fx-row';
+    t.textContent='Your log: '+(x.L.name||'?')+' '+(x.L.market||'')+' \u00b7 $'+(+x.L.stake||0).toFixed(2)+' \u00b7 '+abDayWord(gameDayOf(x.L)||x.L.date)+(x.L.result?' \u00b7 '+String(x.L.result).toUpperCase():'')+'  \u2190  '+bk+' says: '+fillLabel(x.f).bet+(w.game?' ('+w.game+')':'')+(w.start?' \u00b7 '+whenCT(w.start):'')+'. ';
+    const fx=document.createElement('button'); fx.type='button'; fx.className='log sm fx-fix'; fx.textContent='Fix it from '+bk; fx.onclick=function(){ fixFromFill(x.L, x.f); renderLog(); renderPerf(); refresh(); fixRender(); try{ syncFills(true); }catch(e){} };
+    const kp=document.createElement('button'); kp.type='button'; kp.className='ghost sm fx-keep'; kp.textContent='Leave it'; kp.title='Keep this row as it is and stop asking'; kp.onclick=function(){ x.L.fitOk=true; saveLog(); fixRender(); };
+    row.appendChild(t); row.appendChild(fx); row.appendChild(document.createTextNode(' ')); row.appendChild(kp); el.appendChild(row); }); }
 function fillLabel(f){
   const b=f.bet||{}; let t='';
   if(b.kind==='prop') t = b.player ? b.player+' · '+(b.side?(b.side==='O'?'Over ':'Under '):'')+(b.line!=null?b.line+' ':'')+prettyStat(b.statText||'') : us_(b.desc||b.statText||'')+' · '+(b.side?(b.side==='O'?'Over ':'Under '):'')+(b.line!=null?b.line:'');
@@ -15656,7 +15786,7 @@ function addFillNow(f){ if(!f) return false; const key=f.book+':'+f.id;
   delete fillIgnored[key]; if(f.ref) delete fillIgnored['fp:'+fillPrint(f)]; lsSafeSet('mbev.fillIgnored',JSON.stringify(fillIgnored));
   if(!linkedTo(f)){ const b=betForFill(f);
     if(b){ linkFill(b,f); fillSeen[key]={s:'linked',q:+f.qty||0}; }
-    else if(fillDescOk(f)){ autoAddFromDesc(f); fillSeen[key]={s:'added',q:+f.qty||0}; }
+    else if(fillDescOk0(f)){ autoAddFromDesc(f); fillSeen[key]={s:'added',q:+f.qty||0}; }   /* v5.77: your own press adds it, also when it might be a bet already in the log (that is what "It is that bet" is for) */
     else { addFromFill(f); return false; } }   // the book did not say what it is: the form, filled in as far as it can be
   fillPending=fillPending.filter(x=>!(x.book===f.book && x.id===f.id)); saveFills(); saveLog();
   try{ renderLog(); renderPerf(); refresh(); }catch(e){} renderFromBooks(); renderMyBooks(); return true; }
@@ -15686,14 +15816,14 @@ async function syncFills(force){
     let days=3; try{ if(localStorage.getItem('mbev.fillWide')==='1'){ days=14; localStorage.removeItem('mbev.fillWide'); } }catch(e){}
     try{ if(localStorage.getItem('mbev.fillV')!=='95'){ fillPending=[]; fillSeen={}; lsSafeSet('mbev.fillV','95'); } }catch(e){}   // v3.89: a failed write here wiped what you ignored on every read
     fillAt=Date.now();   // v4.24: a failed read waits its turn too (before, a failing Worker was asked again every 20 s)
-    const res=await fetch(API_BASE+'/mine/fills?since='+(Date.now()-days*86400e3), {headers:apiHeaders()});
+    const res=await fetch(API_BASE+'/mine/fills?since='+(Date.now()-days*86400e3)+'&nv=1', {headers:apiHeaders()});
     if(!res.ok){ window._fillReadCode=res.status; window._fillReadErr=res.status===401?'the Worker did not accept the screener passphrase':res.status===429?'the Worker is over its daily limit':res.status>=500?'the Worker had a problem (error '+res.status+')':'the Worker answered with error '+res.status; return; }   // v4.46: said now   // v5.13 (owner: Karens review): plain words, no raw HTTP text or JSON; the code is kept so a missing passphrase reads calmlyhere before
     const j=await res.json(); fillAt=Date.now(); window._fillReadErr=''; window._fillReadCode=0; window._fillOkAt=Date.now(); try{ if(wkPaused()){ const w=wkState(); w.pause=0; wkSave(); wkChipPaint(); } }catch(_){}   // v4.46: the Worker answered, so background checks go again
     // v5.76: the Worker's receipt book (v3.91): every fill it ever saw, so a bet the log lost, or one older than the 3-day window, comes back through the same steps as a fresh fill
-    try{ if(force || !window._rcptAt || Date.now()-window._rcptAt>600000){ const rr=await fetch(API_BASE+'/mine/receipts?months=3', {headers:apiHeaders()}); if(rr.ok){ const rj=await rr.json(); window._rcpt={fills:rj.fills||[], settlements:rj.settlements||[]}; window._rcptAt=Date.now(); } }
-      if(window._rcpt){ j.fills=j.fills||[]; j.settlements=j.settlements||[]; const hf=new Set(j.fills.map(f=>f.book+':'+f.id)), hs=new Set(j.settlements.map(x=>x.book+':'+x.ref+':'+(x.side||'')));
+    try{ if(force || !window._rcptAt || Date.now()-window._rcptAt>600000){ const rr=await fetch(API_BASE+'/mine/receipts?months=3&nv=1', {headers:apiHeaders()}); if(rr.ok){ const rj=await rr.json(); window._rcpt={fills:rj.fills||[], settlements:rj.settlements||[]}; window._rcptAt=Date.now(); } }
+      if(window._rcpt){ j.fills=j.fills||[]; j.settlements=j.settlements||[]; const hf=new Set(j.fills.map(f=>f.book+':'+f.id)), hs=new Set(j.settlements.map(x=>x.book+':'+x.ref+':'+(x.side||x.oid||'')+(x.pid?':'+x.pid:'')));
         window._rcpt.fills.forEach(f=>{ if(!hf.has(f.book+':'+f.id)){ j.fills.push(JSON.parse(JSON.stringify(f))); hf.add(f.book+':'+f.id); } });
-        window._rcpt.settlements.forEach(x=>{ const k=x.book+':'+x.ref+':'+(x.side||''); if(!hs.has(k)){ j.settlements.push(x); hs.add(k); } }); } }catch(e){ console.warn('receipts', e); }
+        window._rcpt.settlements.forEach(x=>{ const k=x.book+':'+x.ref+':'+(x.side||x.oid||'')+(x.pid?':'+x.pid:''); if(!hs.has(k)){ j.settlements.push(x); hs.add(k); } }); } }catch(e){ console.warn('receipts', e); }   /* v5.77: + oid (a Novig result is per outcome) */
     (j.fills||[]).forEach(normFillBet);   // v3.01
     let changed=false;
     window._fillErrors=j.errors||{};
@@ -15711,7 +15841,7 @@ async function syncFills(force){
     try{ const sig0=myFillsGet().map(x=>x.id+(x.sold?'s':'')).join(','); myFillsSet(myFillsKeep(j.fills));   /* v5.37: the kept fill also names its market, side and order (the v5.36 part-match message needs them) */ if(myFillsGet().map(x=>x.id+(x.sold?'s':'')).join(',')!==sig0) changed=true; }catch(e){}   // v4.40: a new fill redraws the board
     (j.fills||[]).slice().reverse().forEach(f=>{ try{   // oldest first; v3.90: one fill that fails cannot stop the others
       const key=f.book+':'+f.id, seen=fillSeen[key];
-      { const LB=linkedTo(f); if(LB && notePlaced(LB,f)) changed=true; }   // v3.96: when it was placed
+      { const LB=linkedTo(f); if(LB && notePlaced(LB,f)) changed=true; if(LB && fillEnrich(LB,f)) changed=true; }   // v3.96: when it was placed   // v5.77: + the game, league and start of a bet logged by name
       if(seen && seen.s==='ignored') return;
       if(f.isSale){ fillSeen[key]={s:'sale',q:+f.qty||0}; return; }   // handled with the bet it closes
       if(seen && seen.s!=='pending' && Math.abs((seen.q||0)-(+f.qty||0))<1e-6 && !fillLost(f,seen)) return;   // nothing new on this order   // v3.91: unless its bet went missing
@@ -15743,7 +15873,7 @@ async function syncFills(force){
       let bets=logged.filter(b=>b.fillBook===st.book && b.fillRef && b.fillRef===st.ref && !b.sold);
       if(!bets.length && st.bet){   // a bet saved before its fill was read: match it by what it is (player · stat · line · side · game)
         const c=logged.filter(b=>!b.sold && !b.fillRef && LIVE_BOOK(b.book)===st.book && b.result!=='win' && b.result!=='loss' && betMatches(st.bet,b));
-        if(c.length===1){ bets=c; noteFillRef(c[0],{book:st.book, ref:st.ref, side:st.side||null}); changed=true; } }
+        if(c.length===1){ bets=c; noteFillRef(c[0],{book:st.book, ref:st.ref, side:st.side||null, outcome:st.oid||null}); changed=true; } }   /* v5.77: + Novig's outcome id */
       bets.forEach(b=>{
         if(b.gradedBy==='manual' || b.gradedBy==='import' || b.voided) return;   // v3.38: your own result wins   /* v4.72: and an imported one */   /* v5.25 (GRADING-6): and a void */
         let res=null;
@@ -15753,8 +15883,11 @@ async function syncFills(force){
           if(st.side && b.fillSide && st.side!==b.fillSide) return;   // another position in that market
           const o=st.outcome||(st.amount!=null?(st.amount>0?'win':'loss'):null);
           res = o==='win'?'win' : o==='loss'?'loss' : o==='void'?'push' : null; }
-        if(res && (b.result!==res || b.resultSrc!==BOOK_NAME[st.book])){ b.result=res; b.resultSrc=BOOK_NAME[st.book]; if(st.payout!=null) b.bookPaid=+(+st.payout).toFixed(2); changed=true; } }); });
-    window._settlements=j.settlements||[]; window._fills=j.fills||[];
+        else if(st.book==='novig'){   /* v5.77: Novig's own grade of the side you hold (Worker v3.92: GET /v3/history/positions). A tennis bet has no ESPN game to grade it */
+          if(!st.oid || !b.fillOutcome || st.oid!==b.fillOutcome) return;   // the other side of that market, or a bet whose side is not known: left to ESPN or to you
+          res = st.outcome==='win'?'win' : st.outcome==='loss'?'loss' : st.outcome==='void'?'push' : null; }
+        if(res && (b.result!==res || b.resultSrc!==BOOK_NAME[st.book])){ b.result=res; b.resultSrc=BOOK_NAME[st.book]; if(st.payout!=null && (st.book!=='novig' || (Math.abs((+st.qty||0)-(+b.fillQty||0))<0.011 && !((+b.soldFills||0)>0)))) b.bookPaid=+(+st.payout).toFixed(2); if(st.book==='novig') delete b.why; changed=true; } }); });   /* v5.77: Novig's payout is kept only when the position is exactly this bet's contracts */
+    window._settlements=j.settlements||[]; window._fills=j.fills||[]; try{ fixRender(); }catch(e){}   /* v5.77: bets that do not match the book bet they are tied to */
     const waiting=fillPending.filter(f=>f.action!=='sell' && !f.bet);
     if(waiting.length && await huntForFills(waiting)){
       fillPending=fillPending.filter(f=>{ if(f.action==='sell') return true;
@@ -15813,13 +15946,13 @@ function renderFromBooks(){
   el.style.display='block';
   el.innerHTML=(fw.msg?'<div class="fb-warn">'+(fw.calm?'<span class="meta">'+esc(fw.msg)+'.</span>':'<span class="ot-err">⚠ '+esc(fw.msg)+'</span> <button type="button" class="linkbtn fw-go">Check now</button>')+'</div>':'')   /* v5.13: a missing passphrase is a calm note */+'<b>From your books</b> — '+(fillPending.length?fillPending.length+' bet'+(fillPending.length===1?'':'s')+' not matched to your log or board.':(fw.msg?'nothing new could be read.':'all matched.'))+
     (errTxt && !fw.msg?' <span class="meta">('+errTxt+')</span>':'')+   // v4.49: said once, above
-    (fillPending.length?'<div class="copy-bar"><button type="button" class="copy-big" data-copy-fn="fromBooksText">📋 Copy this list</button></div><div class="fb-wrap"><table>'+fillPending.map((f,i)=>{ const L=fillLabel(f);
+    (fillPending.length?'<div class="copy-bar"><button type="button" class="copy-big" data-copy-fn="fromBooksText">📋 Copy this list</button></div><div class="fb-wrap"><table>'+fillPending.map((f,i)=>{ const L=fillLabel(f); let tw=null; try{ tw=f.action==='sell'?null:fillTwinMaybe(f); }catch(_){ tw=null; }   /* v5.77 */
       return '<tr><td>'+(bookLogo(FILL_NAME[f.book])?logoTag(FILL_NAME[f.book],'sm'):esc(FILL_NAME[f.book]))+'</td>'+
-      '<td><b>'+esc(L.bet)+'</b>'+(f._why?' <span class="meta tb-down">could not log it: '+esc(f._why)+'</span>':'')+(f.action==='sell'?' <b>(sold)</b>':'')+(f.soldFor!=null?' <span class="tag t-sold">SOLD $'+r2(f.soldFor).toFixed(2)+' ('+(r2(f.soldFor)-r2((+f.cost||0)+(+f.fee||0))>=0?'+':'−')+'$'+Math.abs(r2(f.soldFor)-r2((+f.cost||0)+(+f.fee||0))).toFixed(2)+')</span>':'')+'<div class="meta">'+esc([L.game,L.when].filter(Boolean).join(' · '))+'</div></td>'+
+      '<td><b>'+esc(L.bet)+'</b>'+(f._why?' <span class="meta tb-down">could not log it: '+esc(f._why)+'</span>':'')+(tw?' <span class="meta tb-down fb-twin">This may be the bet already in your log: '+esc((tw.name||'?')+' '+(tw.market||''))+', $'+(+tw.stake||0).toFixed(2)+'. Press It is that bet to tie them, or Add if it is another bet.</span>':'')+(f.action==='sell'?' <b>(sold)</b>':'')+(f.soldFor!=null?' <span class="tag t-sold">SOLD $'+r2(f.soldFor).toFixed(2)+' ('+(r2(f.soldFor)-r2((+f.cost||0)+(+f.fee||0))>=0?'+':'−')+'$'+Math.abs(r2(f.soldFor)-r2((+f.cost||0)+(+f.fee||0))).toFixed(2)+')</span>':'')+'<div class="meta">'+esc([L.game,L.when].filter(Boolean).join(' · '))+'</div></td>'+
       '<td class="num">'+(f.price!=null?(f.price*100).toFixed(1)+'%<div class="meta">'+esc(fmtOdds(Math.round(americanOf(f.price))))+'</div>':'—')+'</td>'+
       '<td class="num">$'+(+(f.cost||0)+(+f.fee||0)).toFixed(2)+(f.qty!=null?'<div class="meta">'+f.qty+' ct</div>':'')+'</td>'+
       '<td class="meta fb-ts">bet '+(f.ts?new Date(f.ts).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}):'')+'</td>'+
-      '<td class="fb-act" style="white-space:nowrap">'+(f.action==='sell'?'':'<button class="log sm fb-add" data-i="'+i+'">Add</button> ')+'<button class="ghost sm fb-ign" data-i="'+i+'">Ignore</button>'+aiMatchBtnHtml(f) /* v5.15: Suggest the match (AI helper) */+'</td></tr>'+aiMatchRowHtml(f); }).join('')+'</table></div>'+(fillPending.length>=6?'<div class="copy-bar"><button type="button" class="copy-big" data-copy-fn="fromBooksText">📋 Copy this list</button></div>':''):'');
+      '<td class="fb-act" style="white-space:nowrap">'+(tw?'<button class="log sm fb-tie" data-i="'+i+'">It is that bet</button> ':'')+(f.action==='sell'?'':'<button class="'+(tw?'ghost':'log')+' sm fb-add" data-i="'+i+'">Add</button> ')+'<button class="ghost sm fb-ign" data-i="'+i+'">Ignore</button>'+aiMatchBtnHtml(f) /* v5.15: Suggest the match (AI helper) */+'</td></tr>'+aiMatchRowHtml(f); }).join('')+'</table></div>'+(fillPending.length>=6?'<div class="copy-bar"><button type="button" class="copy-big" data-copy-fn="fromBooksText">📋 Copy this list</button></div>':''):'');
 }
 function fromBooksText(){ return 'From your books — '+fillPending.length+' not matched\n'+fillPending.map(f=>{ const L=fillLabel(f); return [FILL_NAME[f.book], L.bet, L.game, L.when, f.price!=null?(f.price*100).toFixed(1)+'%':'', '$'+(+(f.cost||0)+(+f.fee||0)).toFixed(2), f.ts?new Date(f.ts).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}):'', f.book+':'+f.id].filter(Boolean).join(' · '); }).join('\n'); }
 // v3.03: the big highlighted Copy — top and bottom of long outputs (data-copy-from = an element id, data-copy-fn = a text builder)
@@ -15879,24 +16012,45 @@ async function copyText(t, btn){
    since v3.07, so the filled-in form was never seen, and the fill had already left the list. Now it opens the + Add a bet tab,
    and the fill stays in From your books until Save bet, which links it to the new bet (abFromFill). */
 var abFromFill=null;
+/* v5.77: the team of a book bet among a game's two teams: its code, or its name as ESPN writes it. '' = it names a side that is not one of these two; undefined = it names no side. Hoisted. */
+function abFillTeam(f, ev, tt){ const b=(f&&f.bet)||{}; if(!(b.team||b.teamName)) return undefined;
+  if(b.team){ const c=normAbbr(b.team); return c===tt.away?tt.away : c===tt.home?tt.home : ''; }
+  const n=nrmT(b.teamName), c=ev?compsOf(ev).find(x=>{ const T=x.team||{}; return [T.displayName,T.shortDisplayName,T.name,T.location,T.abbreviation].some(v=>v && nrmT(v)===n); }):null;
+  if(!c) return ''; const a=normAbbr(c.team&&c.team.abbreviation); return a===tt.away?tt.away : a===tt.home?tt.home : ''; }
+/* v5.77: do the boxes of the + Add a bet form say what the book bet says? A reason in words when they plainly do not (another kind of bet, another player, another team). Hoisted. */
+function abFillMisfit(fill, f){ const b=fill&&fill.bet; if(!b || !b.kind || b.kind==='other' || !f) return '';
+  const say=w=>'the '+(FILL_NAME[fill.book]||'book')+' bet is "'+fillLabel(fill).bet+'", and the boxes say '+w+'.';
+  if(f.kind!==b.kind) return say('a '+(f.kind==='prop'?'player prop':f.kind)+' bet');
+  if(b.kind==='prop') return (b.player && f.name && !sameName(b.player, f.name)) ? say('"'+f.name+'"') : '';
+  if(b.kind!=='moneyline' && b.kind!=='spread') return '';
+  const t=normAbbr(f.team||f.name||''), shown='"'+(f.team||f.name||'no team')+'"';
+  if(b.team) return normAbbr(b.team)===t ? '' : say(shown);
+  if(!b.teamName) return '';
+  const n=nrmT(b.teamName), ev=abGameSel(), c=ev?compsOf(ev).find(x=>{ const T=x.team||{}; return [T.displayName,T.shortDisplayName,T.name,T.location,T.abbreviation].some(v=>v && nrmT(v)===n); }):null;
+  if(c) return normAbbr(c.team&&c.team.abbreviation)===t ? '' : say(shown);
+  const y=nrmT(f.team||f.name||''); return (y && (y===n || (' '+y+' ').includes(' '+n+' ') || (y.length>4 && (' '+n+' ').includes(' '+y+' ')))) ? '' : say(shown); }
+document.addEventListener('click', e=>{ const t=e.target && e.target.closest && e.target.closest('.tab'); if(t && e.isTrusted && t.dataset.view!=='v-add' && abFromFill){ abFromFill=null; const m=$ab('abMsg'); if(m && /^From your /.test(m.textContent||'')) m.textContent=''; } });   /* v5.77: leaving the form lets go of the book bet (it was tied to whatever was saved next) */
 async function addFromFill(f){
   const b=f.bet||{}, P=$ab('addBetPanel'); if(!P) return; abFromFill=f;
+  { const t0=$ab('abTeam'), t1=$ab('abTeamFree'), g1=$ab('abGameFree'); if(t0) t0.innerHTML=''; if(t1) t1.value=''; if(g1) g1.value=''; }   /* v5.77: nothing left over from the last bet typed here */
   const t=document.querySelector('.tab[data-view="v-add"]'); if(t) t.click();   // v3.87: was the Board tab
   P.open=true; P.dispatchEvent(new Event('toggle'));
   const sp=String(b.sport||'').toUpperCase(); if(sp && [...$ab('abSport').options].some(o=>o.value===sp||o.text===sp)){ $ab('abSport').value=sp; }
   try{ await abLoadGames(); }catch(e){}
   const ty=b.kind==='prop'||b.kind==='total'||b.kind==='spread'||b.kind==='moneyline'?b.kind:'prop'; $ab('abType').value=ty; try{ abFields(); }catch(e){}
   const want=b.away&&b.home?[normAbbr(b.away),normAbbr(b.home)]:null, code=String(b.teamsCode||'').toUpperCase(), st=Date.parse(b.start);
+  const spOk=!!sp && $ab('abSport').value===sp;   /* v5.77: the form is on the book bet's own sport */
+  const nearT=(!want && !code && spOk && !isNaN(st)) ? (abEvents||[]).filter(e=>abTeams(e) && Math.abs(Date.parse(e.date)-st)<3600e3) : [];
   const ev=(abEvents||[]).find(e=>{ const tt=abTeams(e); if(!tt) return false; const a=normAbbr(tt.away), h=normAbbr(tt.home);
     if(want) return want.includes(a)&&want.includes(h);
     if(code) return code.includes(a.slice(0,2))&&code.includes(h.slice(0,2));
-    return !isNaN(st) && Math.abs(Date.parse(e.date)-st)<3600e3; });
+    return nearT.length===1 && nearT[0]===e; });   /* v5.77: by start time only when the sport is known and exactly one game starts then (it took any game within the hour, of any sport) */
   if(ev){ $ab('abGame').value=String(ev.id); try{ abFields(); }catch(e){} }
   const gameMiss=!ev;
   if(ty==='prop'){ $ab('abPlayer').value=b.player||''; $ab('abStat').value=b.statText?prettyStat(b.statText):''; }
   if(b.side) $ab('abPick').value=b.side;
   if(b.line!=null) $ab('abLine').value=b.line;
-  if(b.team){ const tsel=$ab('abTeam'); const o=[...tsel.options].find(x=>normAbbr(x.value)===normAbbr(b.team)); if(o) tsel.value=o.value; }
+  /* v5.77: the team is set by abFields (abFillTeam): the book's own team when it is one of the two, else "pick the team" */
   P.scrollIntoView({behavior:'smooth',block:'start'});
   setTimeout(()=>{ const h=$ab('abHost'); if(!h) return; const bs=h.querySelector('.eb-book'); if(bs){ bs.value=FILL_NAME[f.book]; bs.dispatchEvent(new Event('change')); }
     const ms=h.querySelector('.eb-mode'); if(ms){ ms.value='pct'; ms.dispatchEvent(new Event('change')); }
@@ -16317,7 +16471,7 @@ function renderMyBooks(){
   const rows=F.slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).map(f=>{
     const b=linkedTo(f), L=fillLabel(f), cost=r2((+f.cost||0)+(+f.fee||0));
     let st='open', paid=null;
-    const S=(window._settlements||[]).find(s=>s.book===f.book && s.ref===f.ref && s.outcome && (!s.side || !f.side || s.side===f.side));   // v3.03: what the book itself settled
+    const S=(window._settlements||[]).find(s=>s.book===f.book && s.ref===f.ref && s.outcome && (!s.side || !f.side || s.side===f.side) && (!s.oid || s.oid===f.outcome));   // v3.03: what the book itself settled
     if(f.soldFor!=null || (b&&b.sold)){ st='SOLD'; paid=r2(f.soldFor!=null?f.soldFor:b.sold.price); }
     else if(S){ st=S.outcome==='void'?'PUSH':S.outcome.toUpperCase(); paid = S.outcome==='win' ? r2(+f.qty||0) : S.outcome==='loss' ? 0 : cost; }
     else if(b && (b.result==='win'||b.result==='loss'||b.result==='push')){ st=b.result.toUpperCase(); paid = b.result==='win' ? r2(+f.qty||0) : b.result==='push' ? cost : 0; }
@@ -16683,7 +16837,7 @@ function syncDedupe(){
   logged.forEach(b=>(b.fills||[]).forEach(f=>{ const o=by.get(f); if(!o){ by.set(f,b); return; } if(o===b || drop.has(o.id) || drop.has(b.id)) return;
     const keep=(!!o.autoFrom===!!b.autoFrom) ? (String(o.id)<String(b.id)?o:b) : (o.autoFrom?b:o), lose=keep===o?b:o;
     keep.fills=[...new Set((keep.fills||[]).concat(lose.fills||[]))]; drop.add(lose.id); by.set(f,keep); }));
-  if(drop.size) logged=logged.filter(b=>!drop.has(b.id));
+  if(drop.size){ jrForget([...drop]); logged=logged.filter(b=>!drop.has(b.id)); }   /* v5.77: a copy merged into its twin is not lost */
   return drop.size; }
 function syncMergeAll(R, join){
   const M=SY.meta, C=syncColls(), RC=R.coll||{}, RD=R.del||{}, stat={fromCloud:0, onlyHere:0, dupes:0, deleted:0, merged:0, same:0, settings:''};
@@ -16694,7 +16848,7 @@ function syncMergeAll(R, join){
     Object.values(M.s).forEach(x=>{ x.m=0; });
     const rl=Object.values(RC.log||{}).map(x=>x&&x.v).filter(Boolean), rf=new Set(rl.flatMap(b=>b.fills||[])), rs=new Set(rl.map(betSig));
     const gone=new Set(Object.values(RC.removed||{}).map(x=>x&&x.v&&x.v.id).filter(Boolean)), before=logged.length;
-    logged=logged.filter(b=>!b || (RC.log||{})[b.id] || !((b.fills||[]).some(f=>rf.has(f)) || rs.has(betSig(b)) || gone.has(b.id)));
+    { const keep=logged.filter(b=>!b || (RC.log||{})[b.id] || !((b.fills||[]).some(f=>rf.has(f)) || rs.has(betSig(b)) || gone.has(b.id))); jrForget(logged.filter(b=>b && !keep.includes(b)).map(b=>b.id)); logged=keep; }   /* v5.77: a copy of a cloud bet left out at the join is not lost */
     stat.dupes=before-logged.length;
     if(stat.dupes){ const keep=new Set(logged.map(b=>b.id)), st=syncSt('log'); Object.keys(st.H).forEach(id=>{ if(!keep.has(id)){ delete st.H[id]; delete st.S[id]; } }); changed=true; }
   }
@@ -16702,6 +16856,7 @@ function syncMergeAll(R, join){
     const res=syncMergeColl(spec.list(), RC[c], RD[c], syncSt(c), join);
     if(res.push) push=true;
     if(c==='log'){ stat.fromCloud=res.n.added+res.n.took; stat.onlyHere=res.n.onlyHere; stat.deleted=res.n.gone; stat.merged=res.n.merged; stat.same=res.n.same; }
+    if(c==='log' && res.changed){ try{ const out=new Set(res.out.map(x=>x[0])), del=RD[c]||{}; jrForget(spec.list().map(x=>x[0]).filter(id=>!out.has(id) && (+del[id]||0)>0)); }catch(e){} }   /* v5.77: a bet another device deleted is not lost */
     if(res.changed){ const again=spec.put(res.out); changed=true;
       const st=syncSt(c); spec.list().forEach(([id,v])=>{ st.H[id]=syncQuick(v); });   // what's here now is what the merge made — not a new edit
       if(Array.isArray(again) && again.length){ const t=Date.now(); again.forEach(id=>{ st.S[id]=t; }); push=true; } }   // v4.45: a Watch record or pick merged with this device's copy goes back up
@@ -17521,7 +17676,7 @@ function aiSettleKey(f){ return f.book+':'+f.id; }
 function aiSettleBtnHtml(f){ try{ return aiOn() ? '<div><button type="button" class="ghost sm ai-settle" data-k="'+esc(aiSettleKey(f))+'">✨ Check the book’s grade</button></div>' : ''; }catch(e){ return ''; } }
 function aiSettleRowHtml(f){ try{ const P=(window._aiSettle||{})[aiSettleKey(f)]; return P && aiOn() ? '<tr class="ai-prop-tr"><td colspan="8">'+P.html+'</td></tr>' : ''; }catch(e){ return ''; } }
 async function aiSettleAsk(k){ const f=(window._fills||[]).find(x=>aiSettleKey(x)===k); if(!f) return; window._aiSettle=window._aiSettle||{};
-  const S=(window._settlements||[]).find(s=>s.book===f.book && s.ref===f.ref && s.outcome && (!s.side || !f.side || s.side===f.side)); if(!S) return;
+  const S=(window._settlements||[]).find(s=>s.book===f.book && s.ref===f.ref && s.outcome && (!s.side || !f.side || s.side===f.side) && (!s.oid || s.oid===f.outcome)); if(!S) return;
   const b=linkedTo(f), fb=f.bet||{}, bet=b?aiBetInput(b):{player:fb.player||null, team:fb.team||fb.teamName||null, market:fb.statText||fb.kind||fillLabel(f).bet, line:fb.line!=null?fb.line:null, side:fb.side==='O'?'Over':fb.side==='U'?'Under':(fb.side||''), game:fillLabel(f).game, sport:fb.sport||'', date:fb.start?ctDay(Date.parse(fb.start)):''};
   window._aiSettle[k]={html:'<span class="meta">Checking the official result…</span>'}; renderMyBooks();
   const r=await aiCall('settle', {bet, bookResult:String(S.outcome)});
