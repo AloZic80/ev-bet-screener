@@ -15614,7 +15614,8 @@ function sideNameFit(teamName, x, tm){ const n=nrmT(teamName); if(!n || !x) retu
   if(AH) return 0;   /* the two teams of its game are known and those words name neither */
   const code=/^[A-Z0-9]{2,5}$/.test(tm||'') ? tm : ''; if(!code) return 0;
   const T=teamNamesFor(x.sport); if(T){ const r=teamWordsFit(n, code, T); if(r!=null) return r; }
-  if(!String(x.sport||'').trim()){ let any=null; try{ any=ODDS_TEAM_NAMES; }catch(e){ any=null; } if(any && Object.keys(any).some(k=>teamWordsFit(n, code, any[k])===1)) return 1; }   /* no sport on the row: a yes from a league's list counts, a no does not (that code may be another league's team) */
+  if(!String(x.sport||'').trim()){ let any=null; try{ any=ODDS_TEAM_NAMES; }catch(e){ any=null; }   /* no sport on the row: yes only when every league list that has this code says yes (DEN); a code two leagues share is "cannot tell" (CLE is the Browns and the Guardians); a no from a list never counts here */
+    if(any){ const rs=Object.keys(any).map(k=>teamWordsFit(n, code, any[k])).filter(r=>r!=null); if(rs.length && rs.every(r=>r===1)) return 1; if(rs.some(r=>r===1)) return -1; } }
   return codeMayBe(code, n) ? -1 : 0; }
 function sideNameOk(teamName, x, tm){ return sideNameFit(teamName, x, tm)===1; }
 function codesAlike(a, b){ a=String(a||''); b=String(b||''); return !!a && !!b && (a===b || (a.length>=2 && b.length>=2 && (a.startsWith(b) || b.startsWith(a)))); }   /* TB and TBL, GS and GSW: one book's code for the same team */
