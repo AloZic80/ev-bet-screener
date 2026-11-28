@@ -6,6 +6,8 @@
 | An apostrophe inside a single-quoted string | several | Write "it is" or `’`; the script-parse check before every test run |
 | A `//` comment in the middle of a long line cut the rest of the line | v3.64, v4.48 | Use `/* */` mid-line |
 | A bet placed at a book still shown as bettable (wording differs) | v4.25, v4.39, v4.40, v4.47 | `propSame`, `glTeamSame`, `fillPriorFor`; `tests/prop-prior-test.js`, `tests/novig-plus-test.js`, `tests/fill-prior-test.js` |
+| A book bet tied to a bet that says something else: From your books › Add opened the form on the list's first game and its away team, and Save tied the fill to it (a Novig tennis bet became "PIT Moneyline" and was graded on that game) | v5.76 and earlier (seen 2026-11-27, after the Autopilot began betting tennis) | The form picks no game or team for a book bet and checks the boxes against the book's words (`abFillMisfit`); named sides log by themselves (`fillSideName`); `tests/v577-novig-names-test.js` |
+| The same bet logged twice: once from the book's fill, once from its card | v5.72 (Isaiah Joe, 2026-11-27) | A card's Save checks the log (`saveDupOf`), as the + Add a bet form does (`abDupOf`); `tests/v577-novig-names-test.js` |
 | Clearing saved results to force a regrade lost them | v3.94 | Grade first, replace only when the new grade exists |
 | A warning that moved the board | v4.46 | Fixed bars only; `tests/board-scroll-test.js`, `tests/editor-stays-test.js` |
 | A test passed on a file being edited mid-run | v4.50 | Run the suite on a snapshot or stop editing |
