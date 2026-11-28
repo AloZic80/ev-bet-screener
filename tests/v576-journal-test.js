@@ -1,0 +1,32 @@
+// node tests/v576-journal-test.js — v5.76 (owner 2026-11-28: a bet he added vanished; "we need to save all bets and everything that shows up"): the backup journal and the Worker's receipt book.
+const path=require('path'); const INDEX=path.join(__dirname,'..','index.html');
+const { chromium } = require('playwright'); const fs=require('fs');
+const html=fs.readFileSync(process.argv[2]||INDEX,'utf8');
+let pass=0, fail=0; const check=(n,ok,got)=>{ ok?pass++:fail++; console.log((ok?'PASS ':'FAIL ')+n+(ok?'':'  → '+JSON.stringify(got))); };
+(async()=>{ const b=await chromium.launch(); const ctx=await b.newContext({timezoneId:'America/Chicago', viewport:{width:1400,height:1000}});
+  await ctx.addInitScript(()=>{ try{ if(sessionStorage.getItem('seeded')) return; sessionStorage.setItem('seeded','1'); localStorage.clear(); localStorage.setItem('mbev.pass','x'); }catch(e){} });
+  const p=await ctx.newPage(); const errs=[], asked=[]; p.on('pageerror',e=>errs.push(e.message));
+  const RC={fills:[{book:'novig',id:'726ff9591940',ts:Date.now()-3600e3,action:'buy',price:0.22,qty:4.44,cost:0.98,fee:0,ref:'m1',outcome:'o1',title:'V. Lepchenko Winner',seenAt:1}], settlements:[]};
+  await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html});
+    if(/espn\.com.*scoreboard/.test(u)) return r.fulfill({contentType:'application/json',body:'{"events":[]}'});
+    if(/\/mine\/receipts/.test(u)){ asked.push('receipts'); return r.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*'},body:JSON.stringify(RC)}); }
+    if(/\/mine\/fills/.test(u)) return r.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*'},body:JSON.stringify({fills:[],settlements:[],errors:{}})});
+    return r.abort(); });
+  await p.goto('http://app.test/'); await p.waitForTimeout(1500);
+  await p.evaluate(()=>{ logged.push({id:'t-a',name:'Test A',stake:2,odds:'+100',book:'Novig',result:'win',date:'2026-11-27'},{id:'t-b',name:'Test B',stake:3,odds:'+110',book:'Novig',date:'2026-11-27'}); saveLog(); jrWrite(); });
+  check('every bet in the log is also in the journal', await p.evaluate(()=>{ const J=JSON.parse(localStorage.getItem('mbev.logJournal')||'{}'); return !!J['t-a']&&!!J['t-b']; }), 0);
+  await p.evaluate(()=>{ const i=logged.findIndex(x=>x.id==='t-a'); logged.splice(i,1); saveLog(); renderLog(); }); await p.waitForTimeout(400);
+  let t=await p.evaluate(()=>({hid:document.getElementById('logLost').hidden, txt:document.getElementById('logLost').textContent}));
+  check('a bet that vanished from the log (not removed by you) is shown at the top of the Bet log, by name', !t.hid && /1 bet was in your log earlier and is gone/.test(t.txt) && /Test A/.test(t.txt), t);
+  await p.evaluate(()=>{ const bt=[...document.querySelectorAll('#logLost button')].find(x=>/Restore/.test(x.textContent)); bt.click(); }); await p.waitForTimeout(300);
+  check('Restore puts it back in the log, and the notice goes away', await p.evaluate(()=>logged.some(x=>x.id==='t-a'&&x.result==='win') && document.getElementById('logLost').hidden), 0);
+  await p.evaluate(()=>{ removeBet(logged.find(x=>x.id==='t-b'),0); }); await p.waitForTimeout(400);
+  check('a bet YOU remove is never flagged as lost', await p.evaluate(()=>document.getElementById('logLost').hidden && jrMissing().length===0), 0);
+  await p.evaluate(()=>{ const i=logged.findIndex(x=>x.id==='t-a'); logged.splice(i,1); saveLog(); renderLog(); }); await p.waitForTimeout(300);
+  await p.evaluate(()=>{ const bt=[...document.querySelectorAll('#logLost button')].find(x=>/Dismiss/.test(x.textContent)); bt.click(); }); await p.waitForTimeout(200);
+  check('Dismiss hides the notice but the backup copy stays', await p.evaluate(()=>document.getElementById('logLost').hidden && !!JSON.parse(localStorage.getItem('mbev.logJournal')||'{}')['t-a']), 0);
+  await p.evaluate(()=>syncFills(true)); await p.waitForTimeout(800);
+  check('the app asks the Worker for its receipt book', asked.length>=1, asked);
+  check('a fill that only the receipt book has (not in the live window) goes through the same steps as a fresh fill', await p.evaluate(()=>(window._fills||[]).some(f=>f.id==='726ff9591940') && (logged.some(b=>(b.fills||[]).includes('726ff9591940')) || fillPending.some(f=>f.id==='726ff9591940'))), await p.evaluate(()=>({f:(window._fills||[]).length,p:fillPending.length,l:logged.length})));
+  check('no page errors', !errs.length, errs);
+  console.log(`\n${pass} passed, ${fail} failed`); await b.close(); process.exit(fail?1:0); })();

@@ -38,7 +38,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.75</title>
+<title>0xBeta Screener v5.76</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -2302,7 +2302,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.75</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.76</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -3029,6 +3029,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 <div class="view" id="v-log">
 <div class="storage-warn" id="storageWarn" role="status" hidden></div><div class="meta cloud-line" id="cloudLine" role="status"></div><!-- v5.25 (ENG-2): a calm note over 80% -->
 <div class="panel look-out" id="lookOut" hidden></div>   <!-- v3.57: bets not graded yet, automatically or by you -->
+<div class="panel" id="logLost" hidden></div>   <!-- v5.76: bets that were in your log and are gone -->
 <div class="panel log-orders" id="logOrders" hidden></div>   <!-- v4.17: orders waiting at your books (not bets until they fill) -->
 <div class="panel" id="lcPanel">   <!-- v4.36: Augi's Bet log, step 3: his bet calendar, the day, cover bands, track by, import, on our log and math -->
   <h2>Bet calendar <span class="sub">by game day · tap a day</span></h2>
@@ -3284,7 +3285,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 
 </div>
 <script>
-const SCREENER_VERSION='v5.75';
+const SCREENER_VERSION='v5.76';
 /* v5.24 (step 5): DEV_APP is now defined once, in the head script at the top of this file (the first paint reads it too) */
 if(!DEV_APP) document.documentElement.setAttribute('data-viewas','easy');   // v5.24 (step 3b): a customer build is Easy whatever mbev.viewAs holds
 /* v5.24 (owner 11/20: "we need to differentiate already"; "for me in GOD mode, let me tell the difference of what they cant see and i can"): levels.
@@ -8097,7 +8098,28 @@ function logMakeRoom(){ const v=JSON.stringify(logged), put=()=>{ try{ localStor
   try{ const cut=ctDay(Date.now()-30*86400e3); let n=0; Object.keys(gradeHistory).forEach(k=>{ const d=String(k).slice(0,10); if(/^\d{4}-\d{2}-\d{2}$/.test(d) && d<cut){ delete gradeHistory[k]; n++; } });
     if(n){ try{ localStorage.setItem('mbev.gradehistory', JSON.stringify(gradeHistory)); }catch(e){} if(put()) return true; } }catch(e){}
   return false; }
-function saveLog(){ let ok=lsSafeSet('mbev.log',JSON.stringify(logged)); if(!ok) ok=logMakeRoom(); window._logSaveBad=!ok; saveFailNote(!ok);   /* v5.25 (ENG-2): more room before giving up; the state is kept so sync never deletes a bet that did not save */ if(typeof renderTodayBar==='function') setTimeout(renderTodayBar,0); if(document.body && document.body.dataset.view==='v-reports' && !window._rpPend){ window._rpPend=1; setTimeout(()=>{ window._rpPend=0; rpRender(); },50); }   /* v4.91 review: many saves in a row paint once */ /* v4.89: an open report follows every change to the log */ syncTouched(); }   // v3.82: no more silent failures
+/* v5.76 (owner 2026-11-28: a bet he added vanished from the Bet log; "we need to save all bets and everything that shows up"): a backup journal. Every bet that was ever in the log is also
+   kept here, apart from the log, and only ever added to. A bet that is in the journal, not in the log, and that you did not remove is shown at the top of the Bet log with Restore. */
+function jrAll(){ if(!window._jr){ try{ window._jr=JSON.parse(localStorage.getItem('mbev.logJournal')||'{}')||{}; }catch(e){ window._jr={}; } } return window._jr; }
+function jrWrite(){ window._jrT=0; const J=jrAll(); let txt=JSON.stringify(J);
+  try{ localStorage.setItem('mbev.logJournal',txt); return; }catch(e){}
+  Object.values(J).forEach(e=>{ if(e&&e.b&&e.b.snap) delete e.b.snap; }); txt=JSON.stringify(J);   /* room first from the oldest detail, never from the list of bets */
+  try{ localStorage.setItem('mbev.logJournal',txt); return; }catch(e){}
+  window._jrFull=true; }
+function jrNote(){ try{ const J=jrAll(); let ch=false;
+  (logged||[]).forEach(b=>{ if(!b||!b.id) return; const n=JSON.stringify(b).length, e=J[b.id]; if(!e){ J[b.id]={b:JSON.parse(JSON.stringify(b)),at:Date.now(),n:n}; ch=true; } else if(e.n!==n){ e.b=JSON.parse(JSON.stringify(b)); e.n=n; ch=true; } });
+  if(ch && !window._jrT) window._jrT=setTimeout(jrWrite,1500); }catch(e){ console.warn('journal',e); } }
+function jrMissing(){ try{ const J=jrAll(), have=new Set((logged||[]).map(b=>b&&b.id)), gone=new Set((removedBets||[]).filter(Boolean).map(b=>b.id));
+  return Object.values(J).filter(e=>e&&e.b&&e.b.id&&!e.ack&&!have.has(e.b.id)&&!gone.has(e.b.id)); }catch(e){ return []; } }
+function jrRender(){ const el=document.getElementById('logLost'); if(!el) return; const M=jrMissing();
+  if(!M.length){ el.hidden=true; el.textContent=''; return; }
+  el.hidden=false; el.textContent=''; const t=document.createElement('div'); t.className='meta';
+  t.textContent='\u26a0 '+M.length+' bet'+(M.length===1?' was':'s were')+' in your log earlier and '+(M.length===1?'is':'are')+' gone, and you did not remove '+(M.length===1?'it':'them')+': '+M.slice(0,4).map(e=>(e.b.name||e.b.player||'a bet')+(e.b.stake?' ($'+(+e.b.stake).toFixed(2)+')':'')).join('; ')+(M.length>4?' and '+(M.length-4)+' more':'')+'.';
+  const r=document.createElement('button'); r.type='button'; r.textContent='Restore '+(M.length===1?'it':'them'); r.onclick=function(){ M.forEach(e=>{ if(!logged.some(b=>b&&b.id===e.b.id)) logged.push(JSON.parse(JSON.stringify(e.b))); }); saveLog(); renderLog(); renderPerf(); refresh(); };
+  const d=document.createElement('button'); d.type='button'; d.textContent='Dismiss'; d.title='Stop showing this; the backup copy stays'; d.onclick=function(){ M.forEach(e=>{ e.ack=true; }); jrWrite(); jrRender(); };
+  el.appendChild(t); el.appendChild(r); el.appendChild(document.createTextNode(' ')); el.appendChild(d); }
+setTimeout(function(){ try{ jrNote(); jrRender(); }catch(e){} }, 3000);   /* v5.76: what is in the log at start is written to the journal too */
+function saveLog(){ try{ jrNote(); }catch(e){} let ok=lsSafeSet('mbev.log',JSON.stringify(logged)); if(!ok) ok=logMakeRoom(); window._logSaveBad=!ok; saveFailNote(!ok);   /* v5.25 (ENG-2): more room before giving up; the state is kept so sync never deletes a bet that did not save */ if(typeof renderTodayBar==='function') setTimeout(renderTodayBar,0); if(document.body && document.body.dataset.view==='v-reports' && !window._rpPend){ window._rpPend=1; setTimeout(()=>{ window._rpPend=0; rpRender(); },50); }   /* v4.91 review: many saves in a row paint once */ /* v4.89: an open report follows every change to the log */ syncTouched(); }   // v3.82: no more silent failures
 /* v5.25 (ENG-2, Build A): how full this browser's storage is (Chromium and Firefox give a site about 5,242,880 characters), and about how many more
    bets fit at the size of the bets already saved (plus the sync bookkeeping when sync is on). Settings shows it; the Bet log says so calmly over 80%. */
 function lsQuota(){ return 5242880; }
@@ -8207,7 +8229,7 @@ function resultBadge(b){
 let logRenderLater=false;
 function logEditorOpen(){ return !!document.querySelector('#logBody tr.pl-ed, #logBody tr.editor'); }
 setInterval(()=>{ if(logRenderLater && !logEditorOpen()){ logRenderLater=false; try{ renderLog(); }catch(e){} } }, 1000);
-function renderLog(){ setTimeout(()=>{ try{ csvDays(); }catch(e){} try{ lcRender(); }catch(e){ console.error(e); } try{ storageUseRender(); }catch(e){} },0);   /* v5.25: + storage used */   // v4.16: the CSV day list follows the log   // v4.36: and the bet calendar
+function renderLog(){ setTimeout(()=>{ try{ jrRender(); }catch(e){} try{ csvDays(); }catch(e){} try{ lcRender(); }catch(e){ console.error(e); } try{ storageUseRender(); }catch(e){} },0);   /* v5.25: + storage used */   // v4.16: the CSV day list follows the log   // v4.36: and the bet calendar
   if(logEditorOpen()){ logRenderLater=true; return; }   // v3.86
   const tb=document.getElementById('logBody'), empty=document.getElementById('logEmpty');
   tb.innerHTML='';
@@ -15667,6 +15689,11 @@ async function syncFills(force){
     const res=await fetch(API_BASE+'/mine/fills?since='+(Date.now()-days*86400e3), {headers:apiHeaders()});
     if(!res.ok){ window._fillReadCode=res.status; window._fillReadErr=res.status===401?'the Worker did not accept the screener passphrase':res.status===429?'the Worker is over its daily limit':res.status>=500?'the Worker had a problem (error '+res.status+')':'the Worker answered with error '+res.status; return; }   // v4.46: said now   // v5.13 (owner: Karens review): plain words, no raw HTTP text or JSON; the code is kept so a missing passphrase reads calmlyhere before
     const j=await res.json(); fillAt=Date.now(); window._fillReadErr=''; window._fillReadCode=0; window._fillOkAt=Date.now(); try{ if(wkPaused()){ const w=wkState(); w.pause=0; wkSave(); wkChipPaint(); } }catch(_){}   // v4.46: the Worker answered, so background checks go again
+    // v5.76: the Worker's receipt book (v3.91): every fill it ever saw, so a bet the log lost, or one older than the 3-day window, comes back through the same steps as a fresh fill
+    try{ if(force || !window._rcptAt || Date.now()-window._rcptAt>600000){ const rr=await fetch(API_BASE+'/mine/receipts?months=3', {headers:apiHeaders()}); if(rr.ok){ const rj=await rr.json(); window._rcpt={fills:rj.fills||[], settlements:rj.settlements||[]}; window._rcptAt=Date.now(); } }
+      if(window._rcpt){ j.fills=j.fills||[]; j.settlements=j.settlements||[]; const hf=new Set(j.fills.map(f=>f.book+':'+f.id)), hs=new Set(j.settlements.map(x=>x.book+':'+x.ref+':'+(x.side||'')));
+        window._rcpt.fills.forEach(f=>{ if(!hf.has(f.book+':'+f.id)){ j.fills.push(JSON.parse(JSON.stringify(f))); hf.add(f.book+':'+f.id); } });
+        window._rcpt.settlements.forEach(x=>{ const k=x.book+':'+x.ref+':'+(x.side||''); if(!hs.has(k)){ j.settlements.push(x); hs.add(k); } }); } }catch(e){ console.warn('receipts', e); }
     (j.fills||[]).forEach(normFillBet);   // v3.01
     let changed=false;
     window._fillErrors=j.errors||{};
