@@ -222,6 +222,13 @@ body{padding:12px}.sub{font-size:12px;margin-bottom:8px}.stat{flex:1 1 44%;min-w
 <div id="auReq" class="hint">Requests to the Worker today: checking…</div>
 <div id="auMsg" class="hint"></div>
 <div class="hint">The Worker loads The Odds API and OddsPapi by itself inside each limit, spread across the day, so you do not have to press Load. Once a day after 8 AM it also reads how every source is doing and tells you in plain words if something is broken (a phone alert only when something needs you). Pausing stops only these loads.</div></details></div>
+<div class="card" id="pxCard"><h2>ProphetX <span class="hint">read only</span></h2>
+<div class="ask"><button id="pxGo">Check ProphetX</button> <button id="pxRaw">Show the raw answer</button></div>
+<details class="hf-d" id="pxBox"><summary id="pxSum">ProphetX · not checked yet</summary>
+<div id="pxOut" class="hint">Press Check ProphetX. It asks ProphetX four short questions (balance, orders, fills, bonus lines) and shows what came back.</div>
+<pre id="pxPre" class="hint" style="display:none;white-space:pre-wrap;max-height:260px;overflow:auto"></pre>
+<div class="ask"><button id="pxCopy" style="display:none">Copy the raw answer</button></div>
+<div class="hint">The Worker can only read your ProphetX account. It cannot place or cancel an order there, and your keys never leave the Worker. Your user id is removed from the raw answer before it is shown here.</div></details></div>
 <div class="card" id="alCard"><h2>Phone alerts</h2>
 <div class="hint" id="alState">Checking…</div>
 <details class="hf-d" id="alBox"><summary>Set up or change phone alerts (you only do this once)</summary>
@@ -509,6 +516,22 @@ body{padding:12px}.sub{font-size:12px;margin-bottom:8px}.stat{flex:1 1 44%;min-w
   document.getElementById('psRun').onclick=async function(){ var m=document.getElementById('psMsg'); m.textContent='Screening the saved loads\u2026'; var r=await call('/props-screen/run','POST',{}); m.textContent=r.ok?('Done: '+(r.j.added||0)+' new.'):why(r); await psLoad(); };
   document.getElementById('psSave').onclick=async function(){ var m=document.getElementById('psMsg'); if(!PSL){ m.textContent='Nothing loaded yet.'; return; } if(!confirm('Save these limits for props? They change which props the Worker lists and alerts on. Nothing is ever placed.')) return; var r=await call('/props-screen/limits','POST',{limits:psRead()}); m.textContent=r.ok?'Saved.':why(r); await psLoad(); };
   document.getElementById('psReset').onclick=function(){ if(PSL) psFormPaint(PSL); document.getElementById('psMsg').textContent='Back to the saved values.'; };
+  /* v5.75 (owner 2026-11-28: "build NOW"): a read-only look at your ProphetX account from the Worker (v3.90): balance, open orders, fills and bonus lines. Nothing here can place an order. */
+  function pxClean(o){ if(Array.isArray(o)) return o.map(pxClean); if(o&&typeof o==='object'){ var n={}; Object.keys(o).forEach(function(k){ if(k==='user_id'||k==='details') return; n[k]=pxClean(o[k]); }); return n; } return o; }
+  function pxErr(k,t){ var s=String(t||''); if(/keys not set/i.test(s)) return 'the Worker has no ProphetX keys yet'; if(/401/.test(s)) return 'ProphetX did not accept the keys (one may be wrong or revoked)'; if(/429/.test(s)) return 'ProphetX said slow down; try again in a minute'; return s; }
+  async function pxCheck(){ var sum=document.getElementById('pxSum'), out=document.getElementById('pxOut'); sum.textContent='ProphetX \u00b7 checking\u2026'; var r=await call('/mine/prophetx');
+    if(r.ok && !(r.j && ('balance' in r.j))) r={ok:false,status:404};
+    if(!r.ok){ sum.textContent='ProphetX \u00b7 '+(r.noSync?'sign in first':(r.status===404?'not on the Worker yet':'no answer')); out.textContent=r.status===404?'The Worker does not have the ProphetX page yet (it needs Worker v3.90).':why(r); return; }
+    var j=r.j, b=j.balance, bad=Object.keys(j.errors||{}), lines=[];
+    lines.push(b?('Cash available '+money(b.available)+' \u00b7 in bets that are matched '+money(b.matched)+' \u00b7 held for open orders '+money(b.unmatched)+(b.credit?' \u00b7 credit '+money(b.credit):'')):'Balance: not shown'+(j.errors&&j.errors.balance?' ('+pxErr('balance',j.errors.balance)+')':''));
+    lines.push('Orders in the last 3 days: '+(j.orders||[]).length+' ('+(j.open||[]).length+' still open) \u00b7 fills: '+(j.fills||[]).length);
+    lines.push((j.promos||[]).length?('Bonus lines: '+j.promos.map(function(x){ return money(x.amount)+' on '+new Date(x.at).toLocaleDateString()+(x.text?' ('+x.text+')':''); }).join('; ')):'Bonus lines: none found in the last 60 days');
+    bad.forEach(function(k){ lines.push('Could not read '+k+': '+pxErr(k,j.errors[k])); });
+    out.textContent=''; lines.forEach(function(t){ var d=document.createElement('div'); d.textContent=t; out.appendChild(d); });
+    sum.textContent='ProphetX \u00b7 '+(b?money(b.available)+' available':'checked')+(bad.length?' \u00b7 '+bad.length+' problem'+(bad.length>1?'s':''):' \u00b7 all four answered'); sum.className=bad.length?'full':''; }
+  document.getElementById('pxGo').onclick=function(){ document.getElementById('pxBox').open=true; pxCheck(); };
+  document.getElementById('pxRaw').onclick=async function(){ document.getElementById('pxBox').open=true; var pre=document.getElementById('pxPre'), cp=document.getElementById('pxCopy'); pre.style.display='block'; pre.textContent='Asking\u2026'; var r=await call('/mine/prophetx/selftest'); if(!r.ok){ pre.textContent=r.status===404?'The Worker does not have the ProphetX page yet.':why(r); return; } pre.textContent=JSON.stringify(pxClean(r.j),null,1); cp.style.display=''; };
+  document.getElementById('pxCopy').onclick=function(){ var t=document.getElementById('pxPre').textContent; try{ navigator.clipboard.writeText(t); this.textContent='Copied'; }catch(e){ this.textContent='Select the text and copy it'; } };
   /* v5.72 (owner 2026-11-27: "i want to be able to change myself manually"): your own Autopilot limits, saved on the Worker with rails (a ceiling, raises from midnight, a change log) */
   var APL=null;
   async function apLLoad(){ var sum=document.getElementById('apLSum'), now=document.getElementById('apLNow'); if(!sum||!now) return; var r=await call('/autopilot/limits'); now.textContent='';
