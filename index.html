@@ -6017,7 +6017,7 @@ function easyForget(id){ const O=easyOwn(), o=O[id]; delete O[id]; easyOwnSave()
 function easyChanged(b, soft){ const o=easyOwn()[b.id], res=(soft && (b.result==='pending' || b.result==='?')) ? null : b.result; return !!(res || b.sold || b.fillRef || b.fillBook || (b.fills && b.fills.length) || b.autoFrom || (b.edits && b.edits.length) || !o || o.sig!==easySig(b)); }
 function easyStored(id){ try{ const a=JSON.parse(lsPlain('mbev.log')||'[]'); return Array.isArray(a) && a.some(x=>x && x.id===id); }catch(e){ return false; } }
 /* the log did not reach storage (S2): take the bet out of memory again so Today keeps the pick and nothing says Saved; the person is told in plain words (never swallowed) */
-function easyUnsave(b){ const i=(logged||[]).indexOf(b); if(i>=0){ logged.splice(i,1); syncMarkGone('log',[b&&b.id]); }   /* v5.25 round 2 (HS-1) */ saveLog(); try{ const t=document.getElementById('savedToast'); if(t) t.classList.remove('on'); }catch(e){} try{ renderLog(); renderPerf(); }catch(e){} refresh(); }
+function easyUnsave(b){ const i=(logged||[]).indexOf(b); if(i>=0){ logged.splice(i,1); syncMarkGone('log',[b&&b.id]); jrForget([b&&b.id]); }   /* v5.25 round 2 (HS-1) */   /* v5.77: taken out on purpose, not lost */ saveLog(); try{ const t=document.getElementById('savedToast'); if(t) t.classList.remove('on'); }catch(e){} try{ renderLog(); renderPerf(); }catch(e){} refresh(); }
 function easyAfterSave(nb, key){ if(!easyStored(nb.id)){ easyUnsave(nb); return {saved:false, reason:'storage'}; } easyMark(nb, key); return {saved:true, id:nb.id, key}; }
 /* I placed it: the app’s own bet form on a hidden host, then its own Save, so the saved bet is the same as a real "I bet this" tap with no edits (never addToLog directly). opt.host (a visible .pcard) = where the full form opens when the pick needs a look. Only one save at a time; the row is read again after the live-price wait */
 async function easyPlacedSave(r0, opt){ opt=opt||{}; const key=typeof r0==='string'?r0:pxKey(r0), pk=opt.pick || (typeof r0==='string'?null:{r:r0, rowBook:r0.book, rowRaw:r0.offeredRaw}), r=easyRowFor(key, pk);   /* v5.24 (step 5, review saves S1-2): the row this pick showed (its book and price), never another row of the same key */
@@ -8106,19 +8106,27 @@ function logMakeRoom(){ const v=JSON.stringify(logged), put=()=>{ try{ localStor
   return false; }
 /* v5.76 (owner 2026-11-28: a bet he added vanished from the Bet log; "we need to save all bets and everything that shows up"): a backup journal. Every bet that was ever in the log is also
    kept here, apart from the log, and only ever added to. A bet that is in the journal, not in the log, and that you did not remove is shown at the top of the Bet log with Restore. */
-function jrAll(){ if(!window._jr){ try{ window._jr=JSON.parse(localStorage.getItem('mbev.logJournal')||'{}')||{}; }catch(e){ window._jr={}; } } return window._jr; }
-function jrWrite(){ window._jrT=0; const J=jrAll(); let txt=JSON.stringify(J);
-  try{ localStorage.setItem('mbev.logJournal',txt); return; }catch(e){}
-  Object.values(J).forEach(e=>{ if(e&&e.b&&e.b.snap) delete e.b.snap; }); txt=JSON.stringify(J);   /* room first from the oldest detail, never from the list of bets */
-  try{ localStorage.setItem('mbev.logJournal',txt); return; }catch(e){}
-  window._jrFull=true; }
+/* v5.77 (the audit of v5.76): the journal never crowds out the log (it is packed like the log, it leaves 600,000 characters free, and it steps aside when there is no room: this
+   browser was at 99% two days before it arrived); a bet taken out on purpose by a path other than Remove (Easy's Undo, Clear the log, a sync merge) is not called "gone" (jrForget);
+   an edit that keeps the bet's length is copied too (a hash, it compared lengths); another tab's entries are kept; the snap is left out of the stored copy only when room is short. */
+function jrHash(t){ let h=5381; for(let i=0;i<t.length;i++) h=((h<<5)+h+t.charCodeAt(i))|0; return h; }
+function jrAll(){ if(!window._jr){ try{ window._jr=JSON.parse(lsPlain('mbev.logJournal')||'{}')||{}; }catch(e){ window._jr={}; } } return window._jr; }
+function jrForget(ids){ try{ const J=jrAll(); let ch=false; (ids||[]).forEach(id=>{ const e=id!=null ? J[id] : null; if(e && !e.ack){ e.ack=true; ch=true; } }); if(ch && !window._jrT) window._jrT=setTimeout(jrWrite,1500); }catch(e){} }
+function jrWrite(){ window._jrT=0; const J=jrAll(), KEEP=600000;
+  try{ const S=JSON.parse(lsPlain('mbev.logJournal')||'{}')||{}; Object.keys(S).forEach(k=>{ if(!J[k]) J[k]=S[k]; }); }catch(e){}
+  const room=()=>{ try{ return lsQuota()-(lsSize()-(localStorage.getItem('mbev.logJournal')||'').length); }catch(e){ return 0; } };
+  let txt=lsPack(JSON.stringify(J));
+  if(txt.length>room()-KEEP){ const slim={}; Object.keys(J).forEach(k=>{ const e=J[k]; slim[k]=(e&&e.b&&e.b.snap) ? Object.assign({}, e, {b:Object.assign({}, e.b, {snap:undefined})}) : e; }); txt=lsPack(JSON.stringify(slim)); }
+  if(txt.length>room()-KEEP){ try{ localStorage.removeItem('mbev.logJournal'); }catch(e){} window._jrFull=true; return; }
+  try{ localStorage.setItem('mbev.logJournal',txt); window._jrFull=false; }catch(e){ try{ localStorage.removeItem('mbev.logJournal'); }catch(_){} window._jrFull=true; } }
 function jrNote(){ try{ const J=jrAll(); let ch=false;
-  (logged||[]).forEach(b=>{ if(!b||!b.id) return; const n=JSON.stringify(b).length, e=J[b.id]; if(!e){ J[b.id]={b:JSON.parse(JSON.stringify(b)),at:Date.now(),n:n}; ch=true; } else if(e.n!==n){ e.b=JSON.parse(JSON.stringify(b)); e.n=n; ch=true; } });
+  (logged||[]).forEach(b=>{ if(!b||!b.id) return; const t=JSON.stringify(b), n=jrHash(t), e=J[b.id]; if(!e){ J[b.id]={b:JSON.parse(t),at:Date.now(),n:n}; ch=true; } else { if(e.n!==n){ e.b=JSON.parse(t); e.n=n; ch=true; } if(e.ack){ delete e.ack; ch=true; } } });
   if(ch && !window._jrT) window._jrT=setTimeout(jrWrite,1500); }catch(e){ console.warn('journal',e); } }
 function jrMissing(){ try{ const J=jrAll(), have=new Set((logged||[]).map(b=>b&&b.id)), gone=new Set((removedBets||[]).filter(Boolean).map(b=>b.id));
   return Object.values(J).filter(e=>e&&e.b&&e.b.id&&!e.ack&&!have.has(e.b.id)&&!gone.has(e.b.id)); }catch(e){ return []; } }
 function jrRender(){ const el=document.getElementById('logLost'); if(!el) return; const M=jrMissing();
-  if(!M.length){ el.hidden=true; el.textContent=''; return; }
+  if(!M.length){ if(window._jrFull){ el.hidden=false; el.textContent='The backup copy of your Bet log is paused: this browser\u2019s storage is nearly full, and the log itself comes first. Settings shows how full it is.'; return; }   /* v5.77: said, not silent */
+    el.hidden=true; el.textContent=''; return; }
   el.hidden=false; el.textContent=''; const t=document.createElement('div'); t.className='meta';
   t.textContent='\u26a0 '+M.length+' bet'+(M.length===1?' was':'s were')+' in your log earlier and '+(M.length===1?'is':'are')+' gone, and you did not remove '+(M.length===1?'it':'them')+': '+M.slice(0,4).map(e=>(e.b.name||e.b.player||'a bet')+(e.b.stake?' ($'+(+e.b.stake).toFixed(2)+')':'')).join('; ')+(M.length>4?' and '+(M.length-4)+' more':'')+'.';
   const r=document.createElement('button'); r.type='button'; r.textContent='Restore '+(M.length===1?'it':'them'); r.onclick=function(){ M.forEach(e=>{ if(!logged.some(b=>b&&b.id===e.b.id)) logged.push(JSON.parse(JSON.stringify(e.b))); }); saveLog(); renderLog(); renderPerf(); refresh(); };
@@ -12804,7 +12812,7 @@ function rpCsvDl(){ const S=rpSet(); if(!S.L.length && !S.Rm.length){ alert('No 
 document.getElementById('wipe').addEventListener('click',()=>{
   if(!logged.length) return;
   if(sure2('Delete all '+logged.length+' logged bets? This cannot be undone.'+(SY&&SY.on?' ☁ Sync is on: they are deleted on your other devices too.':''), 'Really delete all '+logged.length+' logged bets? Last chance. If you have not yet, press Cancel and use "Back up bet log" first.')){   /* v5.31: asked twice */
-    syncMarkGone('log', logged.map(b=>b&&b.id)); logged=[]; saveLog(); renderLog(); renderPerf(); refresh();   // v5.25 round 2 (HS-1)
+    syncMarkGone('log', logged.map(b=>b&&b.id)); jrForget(logged.map(b=>b&&b.id)); logged=[]; saveLog(); renderLog(); renderPerf(); refresh();   // v5.25 round 2 (HS-1)   // v5.77: cleared on purpose, not lost
   }
 });
 /* ============ closing-line grab (v2.50) ============
@@ -16782,7 +16790,7 @@ function syncDedupe(){
   logged.forEach(b=>(b.fills||[]).forEach(f=>{ const o=by.get(f); if(!o){ by.set(f,b); return; } if(o===b || drop.has(o.id) || drop.has(b.id)) return;
     const keep=(!!o.autoFrom===!!b.autoFrom) ? (String(o.id)<String(b.id)?o:b) : (o.autoFrom?b:o), lose=keep===o?b:o;
     keep.fills=[...new Set((keep.fills||[]).concat(lose.fills||[]))]; drop.add(lose.id); by.set(f,keep); }));
-  if(drop.size) logged=logged.filter(b=>!drop.has(b.id));
+  if(drop.size){ jrForget([...drop]); logged=logged.filter(b=>!drop.has(b.id)); }   /* v5.77: a copy merged into its twin is not lost */
   return drop.size; }
 function syncMergeAll(R, join){
   const M=SY.meta, C=syncColls(), RC=R.coll||{}, RD=R.del||{}, stat={fromCloud:0, onlyHere:0, dupes:0, deleted:0, merged:0, same:0, settings:''};
@@ -16793,7 +16801,7 @@ function syncMergeAll(R, join){
     Object.values(M.s).forEach(x=>{ x.m=0; });
     const rl=Object.values(RC.log||{}).map(x=>x&&x.v).filter(Boolean), rf=new Set(rl.flatMap(b=>b.fills||[])), rs=new Set(rl.map(betSig));
     const gone=new Set(Object.values(RC.removed||{}).map(x=>x&&x.v&&x.v.id).filter(Boolean)), before=logged.length;
-    logged=logged.filter(b=>!b || (RC.log||{})[b.id] || !((b.fills||[]).some(f=>rf.has(f)) || rs.has(betSig(b)) || gone.has(b.id)));
+    { const keep=logged.filter(b=>!b || (RC.log||{})[b.id] || !((b.fills||[]).some(f=>rf.has(f)) || rs.has(betSig(b)) || gone.has(b.id))); jrForget(logged.filter(b=>b && !keep.includes(b)).map(b=>b.id)); logged=keep; }   /* v5.77: a copy of a cloud bet left out at the join is not lost */
     stat.dupes=before-logged.length;
     if(stat.dupes){ const keep=new Set(logged.map(b=>b.id)), st=syncSt('log'); Object.keys(st.H).forEach(id=>{ if(!keep.has(id)){ delete st.H[id]; delete st.S[id]; } }); changed=true; }
   }
@@ -16801,6 +16809,7 @@ function syncMergeAll(R, join){
     const res=syncMergeColl(spec.list(), RC[c], RD[c], syncSt(c), join);
     if(res.push) push=true;
     if(c==='log'){ stat.fromCloud=res.n.added+res.n.took; stat.onlyHere=res.n.onlyHere; stat.deleted=res.n.gone; stat.merged=res.n.merged; stat.same=res.n.same; }
+    if(c==='log' && res.changed){ try{ const out=new Set(res.out.map(x=>x[0])), del=RD[c]||{}; jrForget(spec.list().map(x=>x[0]).filter(id=>!out.has(id) && (+del[id]||0)>0)); }catch(e){} }   /* v5.77: a bet another device deleted is not lost */
     if(res.changed){ const again=spec.put(res.out); changed=true;
       const st=syncSt(c); spec.list().forEach(([id,v])=>{ st.H[id]=syncQuick(v); });   // what's here now is what the merge made — not a new edit
       if(Array.isArray(again) && again.length){ const t=Date.now(); again.forEach(id=>{ st.S[id]=t; }); push=true; } }   // v4.45: a Watch record or pick merged with this device's copy goes back up

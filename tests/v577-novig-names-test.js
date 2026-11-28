@@ -139,5 +139,26 @@ async function boot(seed){ const b=await chromium.launch(); const ctx=await b.ne
     check('a team code inside a player’s name is not a match (NE in Sinner, ARI in Sakkari, SA in Samson)', r.sinnerNE===false && r.sakkariARI===false && r.samsonSA===false, r);
     check('the same words, a name inside a longer name, and team codes still match', r.same===true && r.inside===true && r.code===true, r);
     check('no page errors (6)', !S.W.errs.length, S.W.errs); await S.b.close(); }
+  // ---- 7. the backup journal (v5.76) checked again: no false alarm for a bet taken out on purpose, and the log's own room comes first ----
+  { const mk=(id,name,extra)=>Object.assign({id, name, market:'Moneyline', kind:'moneyline', sport:'NFL', team:name, game:'PIT @ DEN', date:dayCT(NOW), dateSet:true, stake:1, odds:'+100', book:'Novig', snap:{at:iso(NOW), note:'x'.repeat(200)}}, extra||{});
+    const S=await boot({'mbev.log':[mk('j-1','PIT'), mk('j-2','DEN'), mk('j-3','CHI'), mk('j-4','PHI')]});
+    await S.p.evaluate(()=>{ saveLog(); jrWrite(); });
+    await S.p.evaluate(()=>{ easyUnsave(logged.find(b=>b.id==='j-1')); }); await S.p.waitForTimeout(300);
+    check('Easy’s Undo takes a bet out on purpose: the journal does not call it gone', await S.p.evaluate(()=>!logged.some(b=>b.id==='j-1') && jrMissing().length===0 && document.getElementById('logLost').hidden), await S.p.evaluate(()=>jrMissing().map(e=>e.b.id)));
+    await S.p.evaluate(()=>{ const i=logged.findIndex(b=>b.id==='j-2'); logged.splice(i,1); saveLog(); renderLog(); }); await S.p.waitForTimeout(400);
+    check('a bet that simply disappears is still shown (the alarm itself still works)', await S.p.evaluate(()=>jrMissing().length===1 && jrMissing()[0].b.id==='j-2' && !document.getElementById('logLost').hidden), await S.p.evaluate(()=>jrMissing().map(e=>e.b.id)));
+    await S.p.evaluate(()=>{ [...document.querySelectorAll('#logLost button')].find(x=>/Restore/.test(x.textContent)).click(); }); await S.p.waitForTimeout(300);
+    await S.p.evaluate(()=>{ const L=logged.find(b=>b.id==='j-3'); L.odds='+200'; saveLog(); jrWrite(); });   // the same length as '+100'
+    check('an edit that keeps the bet’s length is copied to the journal too', await S.p.evaluate(()=>JSON.parse(lsPlain('mbev.logJournal'))['j-3'].b.odds==='+200'), await S.p.evaluate(()=>JSON.parse(lsPlain('mbev.logJournal'))['j-3'].b.odds));
+    await S.p.evaluate(()=>{ localStorage.setItem('zz.other', JSON.stringify({'t-9':{b:{id:'t-9',name:'Other tab'},at:1,n:1}})); const J=JSON.parse(lsPlain('mbev.logJournal')); J['t-9']={b:{id:'t-9',name:'Other tab'},at:1,n:1,ack:true}; localStorage.setItem('mbev.logJournal', JSON.stringify(J)); localStorage.removeItem('zz.other'); jrWrite(); });
+    check('an entry another tab wrote is kept when this tab writes', await S.p.evaluate(()=>!!JSON.parse(lsPlain('mbev.logJournal'))['t-9']), 0);
+    await S.p.evaluate(()=>{ document.querySelector('.tab[data-view="v-log"]').click(); document.getElementById('wipe').click(); }); await S.p.waitForTimeout(600);
+    check('Delete all (asked twice) is on purpose: no bet is called gone afterwards', await S.p.evaluate(()=>logged.length===0 && jrMissing().length===0), await S.p.evaluate(()=>[logged.length, jrMissing().map(e=>e.b.id)]));
+    // storage: with the browser nearly full the journal steps aside and the log still saves
+    const r=await S.p.evaluate(()=>{ logged.push({id:'s-1', name:'Room test', market:'Moneyline', kind:'moneyline', stake:1, odds:'+100', book:'Novig', date:'2026-11-27'}); const free=lsQuota()-lsSize(); try{ localStorage.setItem('zz.fill', 'x'.repeat(Math.max(0, free-300000))); }catch(e){ return {err:String(e)}; }
+      saveLog(); jrWrite(); const out={full:window._jrFull, journal:localStorage.getItem('mbev.logJournal'), logOk:window._logSaveBad===false && /Room test/.test(lsPlain('mbev.log')||''), left:lsQuota()-lsSize()}; localStorage.removeItem('zz.fill'); saveLog(); jrWrite(); out.after={full:window._jrFull, back:!!localStorage.getItem('mbev.logJournal')}; return out; });
+    check('with the browser’s storage nearly full the journal steps aside (it is not written) and the log itself still saves', r.full===true && r.journal===null && r.logOk===true, r);
+    check('and it comes back by itself once there is room', r.after && r.after.full===false && r.after.back===true, r.after);
+    check('no page errors (7)', !S.W.errs.length, S.W.errs); await S.b.close(); }
   console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail?1:0);
 })();
