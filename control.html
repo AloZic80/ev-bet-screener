@@ -197,6 +197,24 @@ body{padding:12px}.sub{font-size:12px;margin-bottom:8px}.stat{flex:1 1 44%;min-w
 <details class="hf-d" id="srcBox"><summary id="srcSum">Price sources · checking…</summary>
 <div id="hfSrc" class="hint">Checking…</div>
 <div class="hint">Hands-free asks Pinnacle first. If Pinnacle cannot answer (its day is used up, or it says slow down), it asks The Odds API for Pinnacle's prices instead. Each source has its own daily budget.</div></details></div>
+<div class="card" id="apLCard"><h2>Autopilot limits</h2>
+<details class="hf-d" id="apLBox"><summary id="apLSum">Limits · checking…</summary>
+<div id="apLNow" class="hint">Checking…</div>
+<div class="ask"><label class="hint">Daily budget ($) <input id="apLDaily" type="number" step="0.5" min="1" style="width:90px"></label> <label class="hint">One order ($) <input id="apLOrder" type="number" step="0.5" min="1" style="width:90px"></label><button id="apLSave">Save</button></div>
+<div id="apLMsg" class="hint"></div>
+<div class="hint" id="apLRails"></div>
+<div id="apLLog" class="hint"></div>
+<div class="hint">Lowering a limit takes effect at once. Raising one takes effect at the next midnight in Chicago, so a late-night change cannot surprise a game in progress. Nothing here can go past the ceiling the Worker keeps. Every change is logged below. It never touches the daily Proceed or the kill switch.</div></details></div>
+<div class="card" id="psCard"><h2>Props that pass La Contadora <span class="hint">report only</span></h2>
+<details class="hf-d" id="psBox"><summary id="psSum">Props · checking…</summary>
+<div id="psList" class="hint">Checking…</div>
+<div class="ask"><button id="psRun">Screen now</button></div>
+<details class="hf-d" id="psLim"><summary>Your limits for props (saved on the Worker)</summary>
+<div class="hint">The Worker cannot read the settings in your browser, so these are its own. A prop is listed only if it clears them. Nothing is placed: you press Bet yourself.</div>
+<div id="psForm"></div>
+<div class="ask"><button id="psSave">Save limits</button><button id="psReset">Back to the saved values</button></div>
+<div id="psMsg" class="hint"></div></details>
+<div class="hint">The Worker takes the props it already saved for the Board (newer than 6 hours), runs La Contadora\u2019s own math on them, and tells you which pass, the price to type ("OK up to") and the stake it would size. New passes send one phone alert, inside your daily limit and outside quiet hours.</div></details></div>
 <div class="card" id="auCard"><h2>Auto loads and data check</h2>
 <details class="hf-d" id="auBox"><summary id="auSum">Auto loads · checking…</summary>
 <div id="auBody" class="hint">Checking…</div>
@@ -204,6 +222,13 @@ body{padding:12px}.sub{font-size:12px;margin-bottom:8px}.stat{flex:1 1 44%;min-w
 <div id="auReq" class="hint">Requests to the Worker today: checking…</div>
 <div id="auMsg" class="hint"></div>
 <div class="hint">The Worker loads The Odds API and OddsPapi by itself inside each limit, spread across the day, so you do not have to press Load. Once a day after 8 AM it also reads how every source is doing and tells you in plain words if something is broken (a phone alert only when something needs you). Pausing stops only these loads.</div></details></div>
+<div class="card" id="pxCard"><h2>ProphetX <span class="hint">read only</span></h2>
+<div class="ask"><button id="pxGo">Check ProphetX</button> <button id="pxRaw">Show the raw answer</button></div>
+<details class="hf-d" id="pxBox"><summary id="pxSum">ProphetX · not checked yet</summary>
+<div id="pxOut" class="hint">Press Check ProphetX. It asks ProphetX four short questions (balance, orders, fills, bonus lines) and shows what came back.</div>
+<pre id="pxPre" class="hint" style="display:none;white-space:pre-wrap;max-height:260px;overflow:auto"></pre>
+<div class="ask"><button id="pxCopy" style="display:none">Copy the raw answer</button></div>
+<div class="hint">The Worker can only read your ProphetX account. It cannot place or cancel an order there, and your keys never leave the Worker. Your user id is removed from the raw answer before it is shown here.</div></details></div>
 <div class="card" id="alCard"><h2>Phone alerts</h2>
 <div class="hint" id="alState">Checking…</div>
 <details class="hf-d" id="alBox"><summary>Set up or change phone alerts (you only do this once)</summary>
@@ -473,6 +498,55 @@ body{padding:12px}.sub{font-size:12px;margin-bottom:8px}.stat{flex:1 1 44%;min-w
     var p=document.getElementById('auPause'); if(p) p.textContent=AU.on?'Pause auto loads':'Resume auto loads'; tabDots(); }
   document.getElementById('auWatch').onclick=async function(){ var m=document.getElementById('auMsg'); m.textContent='Checking every source (one short AI read, a few cents)\u2026'; var r=await call('/autoload/watch','POST',{}); m.textContent=r.ok?'Done.':why(r); await auLoad(); };
   document.getElementById('auPause').onclick=async function(){ var m=document.getElementById('auMsg'); var on=!(AU&&AU.on); if(!on&&!confirm('Pause auto loads? The Worker stops loading The Odds API and OddsPapi by itself until you resume. Your own presses of Load still work.')) return; var r=await call('/autoload/mode','POST',{on:on}); m.textContent=r.ok?(on?'Auto loads are on.':'Auto loads are paused.'):why(r); await auLoad(); };
+  /* v5.71 (owner 2026-11-27: "Build Stage B and need to setup the limits"): the props the Worker found that pass La Contadora (report only), and your limits for them */
+  var PS=null, PSL=null;
+  var PSF=[['floor','Lowest edge to list (%)',100,0.5],['ceiling','Highest edge to trust (%)',100,0.5],['priceMin','Lowest price (chance %)',100,1],['priceMax','Highest price (chance %)',100,1],['maxPerDay','Phone alerts a day',1,1],['quietFrom','Quiet hours start (hour, Chicago)',1,1],['quietTo','Quiet hours end (hour)',1,1],['bank','Bankroll for the stake shown ($, 0 = no stake)',1,10],['kelly','Kelly fraction (0 to 1)',1,0.05],['shrink','Edge shrink (0 to 1)',1,0.05],['sMax','Biggest stake ($)',1,1],['maxAgeH','Oldest saved load to use (hours)',1,1]];
+  function psOdds(a){ return a==null?'?':(a>0?'+'+a:String(a)); }
+  function psFormPaint(L){ var f=document.getElementById('psForm'); if(!f) return; f.textContent=''; var on=document.createElement('label'); on.className='bar-check'; var cb=document.createElement('input'); cb.type='checkbox'; cb.id='ps-on'; cb.checked=L.on!==false; on.appendChild(cb); on.appendChild(document.createTextNode(' Screen props (turn off to stop the list and the alerts)')); f.appendChild(on);
+    PSF.forEach(function(d){ var row=document.createElement('div'); row.style.margin='4px 0'; var lb=document.createElement('label'); lb.className='hint'; lb.textContent=d[1]+' '; var i=document.createElement('input'); i.type='number'; i.id='ps-'+d[0]; i.step=d[3]; i.style.width='90px'; i.value=+(L[d[0]]*d[2]).toFixed(3); lb.appendChild(i); row.appendChild(lb); f.appendChild(row); });
+    [['sports','Sports (NFL, NCAAF, NBA, NHL ...)'],['books','Books you bet (names, commas)']].forEach(function(d){ var row=document.createElement('div'); row.style.margin='4px 0'; var lb=document.createElement('label'); lb.className='hint'; lb.textContent=d[1]+' '; var i=document.createElement('input'); i.type='text'; i.id='ps-'+d[0]; i.style.width='min(100%,420px)'; i.value=(L[d[0]]||[]).join(', '); lb.appendChild(i); row.appendChild(lb); f.appendChild(row); }); }
+  function psRead(){ var o={ on:document.getElementById('ps-on').checked }; PSF.forEach(function(d){ var v=document.getElementById('ps-'+d[0]).value; if(v!=='') o[d[0]]=+v/d[2]; }); ['sports','books'].forEach(function(k){ o[k]=document.getElementById('ps-'+k).value.split(',').map(function(s){ return s.trim(); }).filter(Boolean); }); return o; }
+  async function psLoad(){ var sum=document.getElementById('psSum'), el=document.getElementById('psList'); if(!sum||!el) return; var r=await call('/props-screen/list'); el.textContent='';
+    if(!r.ok){ sum.textContent='Props \u00b7 '+(r.noSync?'sign in first':(r.status===404?'not on the Worker yet':'no answer')); sum.className=''; el.textContent=r.noSync?'Sign in on this device first.':(r.status===404?'The Worker does not have the props screen yet.':why(r)); return; }
+    PS=r.j; var n=(PS.picks||[]).length; sum.textContent='Props \u00b7 '+(PS.on?(n+' pass today \u00b7 alerts '+PS.alerted+' of '+PS.maxPerDay+(PS.lastRun?' \u00b7 last screened '+clock(Date.parse(PS.lastRun)):' \u00b7 not screened yet')):'off'); sum.className=PS.on?'':'full';
+    if(!PS.on){ el.textContent='Props screening is switched off in your limits.'; } else if(!n){ el.textContent=(PS.lastRun?'Nothing passes right now ('+(PS.screened||0)+' props checked from '+((PS.loads||[]).length)+' saved load'+((PS.loads||[]).length===1?'':'s')+').':'Nothing screened yet. Press Load once on the Board for each sport you use, then the Worker keeps them fresh.'); }
+    (PS.picks||[]).forEach(function(p){ var d=document.createElement('div'); d.style.margin='6px 0'; var b=document.createElement('b'); b.textContent=p.player+' '+(p.side==='O'?'Over':'Under')+' '+p.market; d.appendChild(b); d.appendChild(document.createTextNode(' \u00b7 '+p.sport+' \u00b7 '+p.book+' '+psOdds(p.odds)+' \u00b7 edge +'+(p.net*100).toFixed(1)+'% \u00b7 type '+psOdds(p.odds)+' or better, up to '+psOdds(p.okUpToOdds)+(p.stake?' \u00b7 stake about $'+(+p.stake).toFixed(2):''))); var g=document.createElement('div'); g.className='hint'; g.textContent=p.game+' \u00b7 listed '+clock(p.at); d.appendChild(g); el.appendChild(d); });
+    var wy=Object.entries(PS.why||{}).sort(function(a,b){ return b[1]-a[1]; }).slice(0,5); if(wy.length&&PS.lastRun){ var w=document.createElement('div'); w.className='hint'; w.textContent='Turned down: '+wy.map(function(x){ return x[1]+' '+x[0]; }).join(' \u00b7 '); el.appendChild(w); }
+    var l=await call('/props-screen/limits'); if(l.ok && l.j && l.j.limits){ PSL=l.j.limits; psFormPaint(PSL); } }
+  document.getElementById('psRun').onclick=async function(){ var m=document.getElementById('psMsg'); m.textContent='Screening the saved loads\u2026'; var r=await call('/props-screen/run','POST',{}); m.textContent=r.ok?('Done: '+(r.j.added||0)+' new.'):why(r); await psLoad(); };
+  document.getElementById('psSave').onclick=async function(){ var m=document.getElementById('psMsg'); if(!PSL){ m.textContent='Nothing loaded yet.'; return; } if(!confirm('Save these limits for props? They change which props the Worker lists and alerts on. Nothing is ever placed.')) return; var r=await call('/props-screen/limits','POST',{limits:psRead()}); m.textContent=r.ok?'Saved.':why(r); await psLoad(); };
+  document.getElementById('psReset').onclick=function(){ if(PSL) psFormPaint(PSL); document.getElementById('psMsg').textContent='Back to the saved values.'; };
+  /* v5.75 (owner 2026-11-28: "build NOW"): a read-only look at your ProphetX account from the Worker (v3.90): balance, open orders, fills and bonus lines. Nothing here can place an order. */
+  function pxClean(o){ if(Array.isArray(o)) return o.map(pxClean); if(o&&typeof o==='object'){ var n={}; Object.keys(o).forEach(function(k){ if(k==='user_id'||k==='details') return; n[k]=pxClean(o[k]); }); return n; } return o; }
+  function pxErr(k,t){ var s=String(t||''); if(/keys not set/i.test(s)) return 'the Worker has no ProphetX keys yet'; if(/401/.test(s)) return 'ProphetX did not accept the keys (one may be wrong or revoked)'; if(/429/.test(s)) return 'ProphetX said slow down; try again in a minute'; return s; }
+  async function pxCheck(){ var sum=document.getElementById('pxSum'), out=document.getElementById('pxOut'); sum.textContent='ProphetX \u00b7 checking\u2026'; var r=await call('/mine/prophetx');
+    if(r.ok && !(r.j && ('balance' in r.j))) r={ok:false,status:404};
+    if(!r.ok){ sum.textContent='ProphetX \u00b7 '+(r.noSync?'sign in first':(r.status===404?'not on the Worker yet':'no answer')); out.textContent=r.status===404?'The Worker does not have the ProphetX page yet (it needs Worker v3.90).':why(r); return; }
+    var j=r.j, b=j.balance, bad=Object.keys(j.errors||{}), lines=[];
+    lines.push(b?('Cash available '+money(b.available)+' \u00b7 in bets that are matched '+money(b.matched)+' \u00b7 held for open orders '+money(b.unmatched)+(b.credit?' \u00b7 credit '+money(b.credit):'')):'Balance: not shown'+(j.errors&&j.errors.balance?' ('+pxErr('balance',j.errors.balance)+')':''));
+    lines.push('Orders in the last 3 days: '+(j.orders||[]).length+' ('+(j.open||[]).length+' still open) \u00b7 fills: '+(j.fills||[]).length);
+    lines.push((j.promos||[]).length?('Bonus lines: '+j.promos.map(function(x){ return money(x.amount)+' on '+new Date(x.at).toLocaleDateString()+(x.text?' ('+x.text+')':''); }).join('; ')):'Bonus lines: none found in the last 60 days');
+    bad.forEach(function(k){ lines.push('Could not read '+k+': '+pxErr(k,j.errors[k])); });
+    out.textContent=''; lines.forEach(function(t){ var d=document.createElement('div'); d.textContent=t; out.appendChild(d); });
+    sum.textContent='ProphetX \u00b7 '+(b?money(b.available)+' available':'checked')+(bad.length?' \u00b7 '+bad.length+' problem'+(bad.length>1?'s':''):' \u00b7 all four answered'); sum.className=bad.length?'full':''; }
+  document.getElementById('pxGo').onclick=function(){ document.getElementById('pxBox').open=true; pxCheck(); };
+  document.getElementById('pxRaw').onclick=async function(){ document.getElementById('pxBox').open=true; var pre=document.getElementById('pxPre'), cp=document.getElementById('pxCopy'); pre.style.display='block'; pre.textContent='Asking\u2026'; var r=await call('/mine/prophetx/selftest'); if(!r.ok){ pre.textContent=r.status===404?'The Worker does not have the ProphetX page yet.':why(r); return; } pre.textContent=JSON.stringify(pxClean(r.j),null,1); cp.style.display=''; };
+  document.getElementById('pxCopy').onclick=function(){ var t=document.getElementById('pxPre').textContent; try{ navigator.clipboard.writeText(t); this.textContent='Copied'; }catch(e){ this.textContent='Select the text and copy it'; } };
+  /* v5.72 (owner 2026-11-27: "i want to be able to change myself manually"): your own Autopilot limits, saved on the Worker with rails (a ceiling, raises from midnight, a change log) */
+  var APL=null;
+  async function apLLoad(){ var sum=document.getElementById('apLSum'), now=document.getElementById('apLNow'); if(!sum||!now) return; var r=await call('/autopilot/limits'); now.textContent='';
+    if(r.ok && !(r.j && r.j.now)) r={ok:false,status:404};
+    if(!r.ok){ sum.textContent='Limits \u00b7 '+(r.noSync?'sign in first':(r.status===404?'not on the Worker yet':'no answer')); sum.className=''; now.textContent=r.noSync?'Sign in on this device first.':(r.status===404?'The Worker does not have your own limits yet. The daily budget is still the Cloudflare variable and an order is $1.':why(r)); return; }
+    APL=r.j; var pend=(APL.pending||[]).map(function(p){ return (p.field==='daily'?'daily budget':'one order')+' \u2192 $'+p.to+' from '+new Date(p.from).toLocaleString(); });
+    sum.textContent='Limits \u00b7 $'+APL.now.daily+' a day \u00b7 $'+APL.now.order+' an order'+(pend.length?' \u00b7 a raise is waiting for midnight':''); sum.className=pend.length?'full':'';
+    now.textContent='In force now: $'+APL.now.daily+' a day and $'+APL.now.order+' for each order'+(APL.usingDefaults?' (nothing saved yet: the Cloudflare variable and the $1 default)':'')+(pend.length?'. Waiting: '+pend.join('; '):'')+'.';
+    document.getElementById('apLRails').textContent='The Worker will never allow more than $'+APL.ceiling.daily+' a day or $'+APL.ceiling.order+' an order, and never less than $'+APL.floor.daily+'.';
+    var lg=document.getElementById('apLLog'); lg.textContent=''; (APL.log||[]).slice(0,8).forEach(function(x){ var d=document.createElement('div'); d.textContent=new Date(x.at).toLocaleString()+' \u00b7 '+x.device+' \u00b7 '+x.change; lg.appendChild(d); }); if(!(APL.log||[]).length) lg.textContent='No changes yet.';
+    var di=document.getElementById('apLDaily'), oi=document.getElementById('apLOrder'); if(document.activeElement!==di) di.value=APL.now.daily; if(document.activeElement!==oi) oi.value=APL.now.order; }
+  document.getElementById('apLSave').onclick=async function(){ var m=document.getElementById('apLMsg'); if(!APL){ m.textContent='Nothing loaded yet.'; return; } var d=+document.getElementById('apLDaily').value, o=+document.getElementById('apLOrder').value, body={}, said=[];
+    if(isFinite(d)&&d!==APL.now.daily){ body.daily=d; said.push('Daily budget $'+APL.now.daily+' \u2192 $'+d+(d>APL.now.daily?' (from midnight Chicago)':' (at once)')); } if(isFinite(o)&&o!==APL.now.order){ body.order=o; said.push('One order $'+APL.now.order+' \u2192 $'+o+(o>APL.now.order?' (from midnight Chicago)':' (at once)')); }
+    if(!said.length){ m.textContent='Nothing changed.'; return; } if(!confirm('Change your Autopilot limits?\n\n'+said.join('\n')+'\n\nThese control real orders at Novig. The Worker still keeps its own ceiling.')) return;
+    var r=await call('/autopilot/limits','POST',body); m.textContent=r.ok?('Saved: '+((r.j.changed||[]).join('; ')||'nothing changed')+'.'):why(r); await apLLoad(); };
   async function hfLoad(scanNow){ var r=await call('/handsfree/scan'+(scanNow?'?now=1':'')); if(!r.ok){ document.getElementById('hfBadgeTx').textContent='NO ANSWER'; document.getElementById('hfBadge').className='hf-badge off'; document.getElementById('hfSay').textContent=''; document.getElementById('hfMode').textContent=r.noSync?'Sign in on this device first (the card above).':(r.status===404?'The Worker does not have hands-free yet.':why(r)); return false; } HF=r.j; hfPaint(); hfSrcLoad(); limLoad(); return true; }
   async function hfSet(mode,label){ var r=await call('/handsfree/mode','POST',{mode:mode}); if(r.ok){ hfSay('Mode is now '+label+'.'); await hfLoad(false); } else hfSay(why(r),true); }
   document.getElementById('hfOff').onclick=function(){ hfSet('off','OFF'); };
@@ -492,7 +566,7 @@ body{padding:12px}.sub{font-size:12px;margin-bottom:8px}.stat{flex:1 1 44%;min-w
   function tabDots(){ var a=document.getElementById('dot-hf'), b=document.getElementById('dot-settings'); if(!a||!b) return; var st=(typeof S!=='undefined')?S:null, hf=(typeof HF!=='undefined')?HF:null; var red=!!(st&&st.killed), warn=!red&&!!(hf&&hf.mode==='live'&&st&&st.requireArm&&!st.armed); a.hidden=!(red||warn); a.className='tdot'+(red?' red':''); a.title=red?'Stopped':'Live but not armed today'; b.hidden=!SRCFULL; b.title='A price source is used up for today'; }
   function tabShow(name){ var ok=['hf','games','settings','other','all'].indexOf(name)>=0?name:'hf'; ['hf','games','settings','other'].forEach(function(n){ var t=document.getElementById('tab-'+n), p=document.getElementById('pane-'+n); if(t) t.setAttribute('aria-selected',n===ok?'true':'false'); if(t) t.tabIndex=(n===ok||(ok==='all'&&n==='hf'))?0:-1; if(p) p.hidden=!(n===ok||ok==='all'); });   /* the saved value all shows every section at once (used by the tests and for printing) */ try{ localStorage.setItem('mbev.ctl.tab',ok); }catch(e){} }
   (function(){ var order=['hf','games','settings','other']; order.forEach(function(n,i){ var t=document.getElementById('tab-'+n); t.onclick=function(){ tabShow(n); }; t.onkeydown=function(ev){ var k=ev.key==='ArrowRight'?1:ev.key==='ArrowLeft'?-1:0; if(!k) return; var m=order[(i+k+order.length)%order.length]; tabShow(m); document.getElementById('tab-'+m).focus(); ev.preventDefault(); }; }); tabShow(ls('mbev.ctl.tab')||'hf'); })();
-  hfLoad(false); auLoad();
+  hfLoad(false); auLoad(); psLoad(); apLLoad();
   /* v5.70 (owner 2026-11-27: 86,052 of the free plan's 100,000 requests used by 3 PM; "Build calm polling"): the page asks the Worker every 60 seconds while you use it, every 2 minutes after 2 minutes without a tap, every 5 minutes after 10, and not at all while the tab is hidden. Coming back or touching it after a pause asks once at once. */
   var lastTouch=Date.now(), lastPoll=0;
   function pollGap(){ var idle=Date.now()-lastTouch; return idle>600000?300000:(idle>120000?120000:60000); }

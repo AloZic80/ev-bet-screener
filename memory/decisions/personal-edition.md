@@ -42,3 +42,4 @@ Bet log › Import a screenshot (the Worker's `slips` job) and the improved + Ad
 
 ## The control page and hands-free are his own (owner, 2026-11-27)
 `control.html` (the Autopilot dashboard, Phone alerts, the Hands-free card with its match table, Price sources and Novig menu), the SwiftBar menu readout and the Worker's hands-free engine (`/handsfree/*`) are personal edition only. Owner: "yes, you can separate, i like that its for me and I could understand it. the APP i change a lot because i need to think about the user." So: keep that page and the engine separate from `index.html`; dense, monospace and plain-spoken is right for it; design the app (`index.html`) for the user. Nothing from them goes into a paid or newcomer build unless the owner says so.
+- ProphetX card and Worker `/mine/prophetx` (v5.75 / Worker v3.90): the owner's own ProphetX account, read only.

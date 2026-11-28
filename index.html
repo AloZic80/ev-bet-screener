@@ -38,7 +38,7 @@
   if(m==='desktop' && narrow && !embed){ var v=document.querySelector('meta[name="viewport"]'); if(v) v.setAttribute('content','width=1280'); }
   else if(m==='phone' && !narrow && !embed && window.top===window.self){ try{ window.stop(); }catch(e){} location.replace('phone.html'); }
 })();</script>
-<title>0xBeta Screener v5.70</title>
+<title>0xBeta Screener v5.75</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -2302,7 +2302,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 <div class="head">
   <div class="head-row">
     <div class="brandbox">
-      <h1>0xBeta Screener <span class="ver" id="verTag">v5.70</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
+      <h1>0xBeta Screener <span class="ver" id="verTag">v5.75</span><button type="button" class="sync-chip" id="syncChip" title="Your bets on every device (Settings)">☁ off</button></h1>
       <div class="date">Board for <input type="date" id="slate" aria-label="Board date"> <span class="built">· build 22 Sep 2026</span><span class="ver-m" id="verM"></span></div>
     </div>
     <div class="statbox">
@@ -3284,7 +3284,7 @@ html.jv-noanc, html.jv-noanc body, #jvPop{overflow-anchor:none}   /* v5.27 (roun
 
 </div>
 <script>
-const SCREENER_VERSION='v5.70';
+const SCREENER_VERSION='v5.75';
 /* v5.24 (step 5): DEV_APP is now defined once, in the head script at the top of this file (the first paint reads it too) */
 if(!DEV_APP) document.documentElement.setAttribute('data-viewas','easy');   // v5.24 (step 3b): a customer build is Easy whatever mbev.viewAs holds
 /* v5.24 (owner 11/20: "we need to differentiate already"; "for me in GOD mode, let me tell the difference of what they cant see and i can"): levels.
@@ -6988,6 +6988,33 @@ function openBetEditor(tr, r, opt){
   }
   ed.querySelectorAll('input,select').forEach(x=>{ x.addEventListener('input',showCheck); x.addEventListener('change',showCheck); });
   bookSel.addEventListener('change',bookDefault); modeSel.addEventListener('change',syncMode); bookDefault(); pmSync(null); showCheck();
+  /* v5.73 (owner 2026-11-27: "its not the same things i can manually put"; "build, keep the Limit field"): on an exchange (Polymarket US, Kalshi, Novig) the form asks what the book's slip says, the same words as TYPE THIS: Shares, your Limit, and what it Filled at.
+     Cost, the price and Pays back are worked out from them (the same math as What filled?) and put in the boxes below, so they match the slip. The Limit is kept with the bet and is not used in the math. */
+  { const pm=ed.querySelector('.eb-pm'); if(pm && !opt.edit){
+      const fill=document.createElement('span'); fill.className='eb-fill'; fill.hidden=true; fill.style.display='contents';
+      fill.innerHTML='<label title="What filled? Whole shares on Polymarket US (Kalshi: up to 2 decimals). The number TYPE THIS gave you, or what the slip says">Shares <input class="eb-fsh" type="number" step="0.01" min="0" style="width:80px"></label>'+
+        '<label title="The limit price you typed at the book. Kept with the bet; it is not used in the math">Limit ¢ <input class="eb-flim" type="number" step="1" min="1" max="99" style="width:70px"></label>'+
+        '<label title="The price per share it really filled at (the slip). It starts at your limit: lower it if you got a better price">Filled at ¢ <input class="eb-fat" type="number" step="1" min="1" max="99" style="width:70px"></label>'+
+        '<span class="meta eb-fill-note" role="status" style="flex-basis:100%"></span>';
+      pm.before(fill);
+      const fsh=fill.querySelector('.eb-fsh'), flim=fill.querySelector('.eb-flim'), fat=fill.querySelector('.eb-fat'), fnote=fill.querySelector('.eb-fill-note'); let fatTyped=false, prefilled=false;
+      const bkOf=()=>LIVE_BOOK(bookSel.value||''), isEx=()=>modeSel.value==='pct' && ['poly','kalshi','novig'].includes(bkOf());
+      const fmath=(bk,q,c)=>{ const L=c/100, cfg=cfgRead(); if(bk==='novig'){ if(!(q>0)) return null; return {cost:Math.ceil(q*L*(1+feeRate('Novig',L,cfg.fees))*100-1e-9)/100, payout:+q.toFixed(2)}; }
+        return easyFillMath({book:bookSel.value}, q, c); };
+      const setBox=(sel,v)=>{ const e=ed.querySelector(sel); if(e){ e.value=v; e.dispatchEvent(new Event('input',{bubbles:true})); } };
+      const calc=()=>{ const q=+fsh.value, c=+fat.value, bk=bkOf(); if(!(q>0) || !(c>=1 && c<=99)){ fnote.textContent=''; return; }
+        const M=fmath(bk,q,c); if(!M){ fnote.textContent=bk==='poly' && q!==Math.floor(q) ? 'Polymarket US sells whole shares.' : 'Check the shares and the price.'; return; }
+        setBox('.eb-cost', M.cost.toFixed(2)); setBox('.eb-pct', String(c)); setBox('.eb-win', M.payout.toFixed(2));
+        ed._own=Object.assign(ed._own||{}, {cost:true, pct:true, win:true});   /* the three boxes are the slip's own numbers, as when typed by hand (What filled? does the same), so Save keeps what they say */
+        fnote.textContent=q+' share'+(q===1?'':'s')+' at '+c+'¢ = $'+M.cost.toFixed(2)+' with the fee; pays back $'+M.payout.toFixed(2)+(+flim.value>0 && +flim.value<c?' · note: your limit is below what you say it filled at':''); };
+      const preset=()=>{ if(prefilled) return; prefilled=true; try{ const bk=bkOf();
+          if(bk==='kalshi'){ const k=kalFormFit(); if(k){ fsh.value=k.shares; flim.value=k.limitCents; fat.value=k.limitCents; } return; }   /* Kalshi: show the order the form already works out; its own boxes are left exactly as they were */
+          const st=+r.stake||0; if(bk!=='poly' || !(st>0) || r.fairProb==null) return; const mx=maxPriceFor(okProbR(r), r.book, cfgRead().eMin); if(mx==null) return;
+          const k=polyHow(r,st,mx); if(k){ fsh.value=k.shares; flim.value=k.lim; fat.value=k.lim; calc(); } }catch(e){} };
+      const show=()=>{ const on=isEx(); fill.hidden=!on; if(on) preset(); };
+      fat.addEventListener('input',()=>{ fatTyped=true; calc(); }); fsh.addEventListener('input',calc);
+      flim.addEventListener('input',()=>{ if(!fatTyped) fat.value=flim.value; calc(); });
+      bookSel.addEventListener('change',()=>{ prefilled=false; show(); }); modeSel.addEventListener('change',show); show(); } }
   ed._kalSync=()=>{ const ok=saveBtnEl.dataset.ok; pmSync(); showCheck(); if(ok!==undefined) saveBtnEl.dataset.ok=ok; };   // v5.05 (K6): + Add a bet calls it when its verdict's Kalshi order (ed._kalHost) changes; a second press already given (or a fill's "already placed") is kept
   bookSel.addEventListener('change',()=>{ if(/kalshi/i.test(bookSel.value||'')) ed._kalSync(); });   // v5.05 (K6): Kalshi picked from a book in odds: once its % mode is on, the boxes show the order
   if(lineIn) lineIn.addEventListener('input',()=>pmSync());   // v5.05 (K6): another line has no recommended order, so the Kalshi boxes go back to the card's stake (and come back with the line)
@@ -7133,6 +7160,7 @@ function openBetEditor(tr, r, opt){
       saveLog(); ed.remove(); renderLog(); renderPerf(); refresh();
       return;
     }
+    { const fr=ed.querySelector('.eb-fill'), fl=ed.querySelector('.eb-flim'); if(fr && !fr.hidden && fl && +fl.value>0) extra.limitC=+fl.value; }   // v5.73: the limit you typed at the book, kept with the bet
     { const kf=kalFormFit(); if(kf) extra.kalshiFit=kf; }   // v5.05 (K8): the Kalshi order this form showed is the one saved in snap.kalshiFee (not one worked out again from the cost)
     addToLog(Object.assign({}, r, extra));
     if(abFromFill && tr && tr.classList && tr.classList.contains('ab-host')){ const f=abFromFill, L=logged[logged.length-1]; abFromFill=null;   // v3.87: the book fill this came from
@@ -8117,6 +8145,7 @@ function addToLog(r){
   logged.push({
     id:(self.crypto&&crypto.randomUUID)?crypto.randomUUID():('b'+Date.now()+Math.random().toString(36).slice(2)),
     key:betKey(r), date:r.gameDay||document.getElementById('slate').value, dateSet:r.dateSet||undefined, towin:(r.towin>0)?r.towin:undefined,   // v3.52: the date you chose
+    limitC:r.limitC>0?r.limitC:undefined,   /* v5.73: the limit (in cents) typed at the exchange */
     gapRes:r.gapRes?true:undefined, lsml:r.lsmlN?true:undefined,   /* v4.68: a moneyline the model put 8+ points above the market is research (kept out of the scorecard); a long-shot moneyline counts toward its 3 a day */
     name:r.name, sport:r.sport, market:r.market, betnow:betNowOf(r), book:r.book, game:r.game,
     odds:r.offeredRaw, fair:r.fairRaw, gross:r.gross, net:r.net, stake:r.stake, mkt:r.mktProb!=null?r.mktProb:null,
