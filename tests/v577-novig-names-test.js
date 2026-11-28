@@ -21,9 +21,10 @@ const nfl=(id, t, away, home, as, hs)=>{ const post=NOW>t+3.5*H; return {id, dat
 const NFL=[nfl('e1', NFL_START, 'PIT', 'DEN', 17, 24), nfl('e2', NFL_START-60*60e3, 'CHI', 'PHI', 10, 23)];
 async function boot(seed){ const b=await chromium.launch(); const ctx=await b.newContext({timezoneId:'America/Chicago', viewport:{width:1400,height:1000}});
   await ctx.addInitScript(S=>{ try{ if(sessionStorage.getItem('seeded')) return; sessionStorage.setItem('seeded','1'); localStorage.clear(); localStorage.setItem('mbev.pass','x'); localStorage.setItem('mbev.fillV','95'); Object.entries(S||{}).forEach(([k,v])=>localStorage.setItem(k, typeof v==='string'?v:JSON.stringify(v))); }catch(e){} }, seed||{});
-  const p=await ctx.newPage(); const W={fills:[], settlements:[], errs:[]}; p.on('pageerror',e=>W.errs.push(e.message)); p.on('dialog',d=>d.accept());
+  const p=await ctx.newPage(); const W={fills:[], settlements:[], errs:[], urls:[]}; p.on('pageerror',e=>W.errs.push(e.message)); p.on('dialog',d=>d.accept());
   await p.route('**/*',r=>{ const u=r.request().url(); if(u.startsWith('http://app.test/')) return r.fulfill({contentType:'text/html',body:html});
     if(/espn\.com/.test(u)) return r.fulfill({contentType:'application/json',headers:CORS,body:JSON.stringify(/football\/nfl\/scoreboard/.test(u)?{week:{number:12},events:NFL}:{events:[]})});
+    if(/\/mine\//.test(u)) W.urls.push(u);
     if(/\/mine\/receipts/.test(u)) return r.fulfill({contentType:'application/json',headers:CORS,body:'{"fills":[],"settlements":[]}'});
     if(/\/mine\/fills/.test(u)) return r.fulfill({contentType:'application/json',headers:CORS,body:JSON.stringify({fills:W.fills, settlements:W.settlements, errors:{}, notes:{}})});
     if(/\/mine\/orders/.test(u)) return r.fulfill({contentType:'application/json',headers:CORS,body:'{"orders":[],"errors":{}}'});
@@ -160,5 +161,71 @@ async function boot(seed){ const b=await chromium.launch(); const ctx=await b.ne
     check('with the browser’s storage nearly full the journal steps aside (it is not written) and the log itself still saves', r.full===true && r.journal===null && r.logOk===true, r);
     check('and it comes back by itself once there is room', r.after && r.after.full===false && r.after.back===true, r.after);
     check('no page errors (7)', !S.W.errs.length, S.W.errs); await S.b.close(); }
+  // ---- 8. second review (2026-11-28): a side the book names in words against a bet already in the log under a team code; the other side of a market; the journal ----
+  { const st=NOW+20*H, row=(id,name,sport,game,extra)=>Object.assign({id, key:'k-'+id, name, market:'Moneyline', kind:'moneyline', sport, team:name, game, date:dayCT(st), dateSet:true, start:iso(st), stake:1, odds:'-120', book:'Novig', manual:true, srcType:'manual'}, extra||{});
+    const wordFill=(order, ref, words)=>fill(order, ref, 0, 0.5455, 1.83, 1, {sport:null, start:iso(st), title:words+' · '+words, desc:words, eventId:'ev-'+order, kind:'moneyline', teamName:words, team:null}, 1*H);   // what Worker v3.91 sends: words only, no league
+    // 8a. the league's own team list ties it: no second row
+    { const S=await boot({'mbev.log':[row('h-den','DEN','NFL','DEN @ PIT'), row('h-kc','KC','NFL','LV @ KC')]}); S.W.fills=[wordFill('ord-den','mkt-den','Denver Broncos'), wordFill('ord-kc2','mkt-kc2','Chiefs')]; await S.read(); const B=await S.bets();
+      check('“Denver Broncos” from the book is tied to the DEN bet already in the log, and “Chiefs” to KC: still two rows, none added', B.length===2 && (B.find(x=>x.id==='h-den').fills||[]).includes('o:ord-den') && (B.find(x=>x.id==='h-kc').fills||[]).includes('o:ord-kc2') && await S.p.evaluate(()=>fillPending.length)===0, B.map(x=>[x.id,x.name,x.fills]));
+      check('this app tells the Worker it understands Novig’s own results (nv=1) on both reads', S.W.urls.some(u=>/\/mine\/fills\?[^#]*nv=1/.test(u)) && S.W.urls.some(u=>/\/mine\/receipts\?[^#]*nv=1/.test(u)), S.W.urls.slice(0,4));
+      check('no page errors (8a)', !S.W.errs.length, S.W.errs); await S.b.close(); }
+    // 8b. no team list for that league: it cannot tell, so it waits (not tied on a guess, not added as a second row)
+    //     (the row's stake and price differ from the book bet's on purpose: the same cost to the cent, price and day would tie them by the older rule, fingerprintPending)
+    { const S=await boot({'mbev.log':[row('h-nba','DEN','NBA','DEN @ LAL',{stake:2, odds:'-105'})]}); S.W.fills=[wordFill('ord-nug','mkt-nug','Denver Nuggets')]; await S.read(); let B=await S.bets();
+      const P=await S.p.evaluate(()=>{ document.querySelector('.tab[data-view="v-log"]').click(); renderFromBooks(); const el=document.getElementById('fromBooks'); return {n:fillPending.length, text:el.textContent, tie:!!el.querySelector('.fb-tie'), add:!!el.querySelector('.fb-add')}; });
+      check('a bet named in words that MAY be a logged bet waits in From your books: one row in the log, not tied', B.length===1 && !(B[0].fills||[]).length && P.n===1, [B.length, B[0].fills, P.n]);
+      check('it names the row it may be and offers It is that bet next to Add', /This may be the bet already in your log: DEN Moneyline, \$2\.00/.test(P.text) && P.tie && P.add, P);
+      await S.read(); await S.read(); B=await S.bets(); check('more reads change nothing (still one row, still waiting)', B.length===1 && await S.p.evaluate(()=>fillPending.length)===1, B.length);
+      await S.p.evaluate(()=>document.querySelector('#fromBooks .fb-tie').click()); await S.p.waitForTimeout(500); B=await S.bets();
+      check('It is that bet ties them: one row, with the book bet on it, nothing left waiting', B.length===1 && (B[0].fills||[]).includes('o:ord-nug') && await S.p.evaluate(()=>fillPending.length)===0, B.map(x=>[x.id,x.fills]));
+      await S.read(); B=await S.bets(); check('and it stays tied on the next read', B.length===1 && (B[0].fills||[]).includes('o:ord-nug') && await S.p.evaluate(()=>fillPending.length)===0, B.map(x=>[x.id,x.fills]));
+      check('no page errors (8b)', !S.W.errs.length, S.W.errs); await S.b.close(); }
+    { const S=await boot({'mbev.log':[row('h-nba','DEN','NBA','DEN @ LAL',{stake:2, odds:'-105'})]}); S.W.fills=[wordFill('ord-nug','mkt-nug','Denver Nuggets')]; await S.read();
+      await S.p.evaluate(()=>{ document.querySelector('.tab[data-view="v-log"]').click(); renderFromBooks(); document.querySelector('#fromBooks .fb-add').click(); }); await S.p.waitForTimeout(600); let B=await S.bets();
+      check('Add adds it as a bet of its own under the book’s words (your press, your call)', B.length===2 && B.some(x=>x.name==='Denver Nuggets' && (x.fills||[]).includes('o:ord-nug')) && !(B.find(x=>x.id==='h-nba').fills||[]).length, B.map(x=>[x.id,x.name,x.fills]));
+      await S.read(); await S.read(); B=await S.bets(); check('and more reads add nothing after that', B.length===2 && await S.p.evaluate(()=>fillPending.length)===0, B.map(x=>[x.id,x.name,x.fills]));
+      check('no page errors (8c)', !S.W.errs.length, S.W.errs); await S.b.close(); }
+    // 8d. the rule itself
+    { const S=await boot(); const R=await S.p.evaluate(()=>{ const gi=(a,al,an,h,hl,hn)=>({teams:[{ha:'away', abbr:a, loc:al, nick:an, name:an},{ha:'home', abbr:h, loc:hl, nick:hn, name:hn}]});
+        const rams={kind:'moneyline', name:'LA', team:'LA', market:'Moneyline', sport:'NFL', game:'LA @ SEA', gameInfo:gi('LAR','Los Angeles','Rams','SEA','Seattle','Seahawks')}, bolts={kind:'moneyline', name:'LAC', team:'LAC', market:'Moneyline', sport:'NFL', game:'LAC @ DEN', gameInfo:gi('LAC','Los Angeles','Chargers','DEN','Denver','Broncos')};
+        const la={kind:'moneyline', name:'LAC', team:'LAC', market:'Moneyline', sport:'NFL', game:'LA @ LAC', gameInfo:gi('LAR','Los Angeles','Rams','LAC','Los Angeles','Chargers')};
+        const fb=w=>({kind:'moneyline', teamName:w, team:null}), M=(f,L)=>fillMisfitBet({book:'novig', bet:f}, Object.assign({manual:true}, L));
+        window._settlements=[{book:'novig', ref:'m1', oid:'m1-o1', side:null, outcome:'loss'}, {book:'novig', ref:'m1', oid:'m1-o0', side:null, outcome:'win'}];
+        const sf=o=>{ const x=settlementFor({fillBook:'novig', fillRef:'m1', fillOutcome:o}); return x?x.outcome:null; };
+        return {chargersVsRams:betMatches(fb('Los Angeles Chargers'), rams), chargersVsChargers:betMatches(fb('Los Angeles Chargers'), bolts), cityOnly:sideNameFit('Los Angeles', la, 'LAC'), nick:sideNameFit('Chargers', la, 'LAC'),
+          sox:sideNameFit('Sox', {name:'BOS', team:'BOS', sport:'MLB'}, 'BOS'), ny:sideNameFit('New York', {name:'NYG', team:'NYG', sport:'NFL'}, 'NYG'), sinner:sideNameFit('J. Sinner', {name:'NE', team:'NE', sport:'NFL'}, 'NE'), sinnerNoList:sideNameFit('J. Sinner', {name:'NE', team:'NE', sport:'NBA'}, 'NE'),
+          win:sf('m1-o0'), loss:sf('m1-o1'), none:sf(null),
+          otherTeam:M(fb('Chiefs'), {kind:'moneyline', name:'LV', team:'LV', sport:'NFL', game:'LV @ KC'}), otherGame:M(fb('V. Lepchenko'), {kind:'moneyline', name:'PIT', team:'PIT', sport:'NFL', game:'PIT @ DEN'}),
+          sameWords:M(fb('Denver Broncos'), {kind:'moneyline', name:'DEN', team:'DEN', sport:'NFL', game:'DEN @ PIT'}), noList:M(fb('V. Lepchenko'), {kind:'moneyline', name:'DEN', team:'DEN', sport:'NBA', game:'DEN @ LAL'}),
+          codes:M({kind:'moneyline', teamName:'TBL', team:'TBL'}, {kind:'moneyline', name:'TB', team:'TB', sport:'NHL', game:'TB @ FLA'}), codesOther:M({kind:'moneyline', teamName:'FLA', team:'FLA'}, {kind:'moneyline', name:'TB', team:'TB', sport:'NHL', game:'TB @ FLA'})}; });
+      check('“Los Angeles Chargers” is not the Rams (same city), and is the Chargers', R.chargersVsRams===false && R.chargersVsChargers===true, R);
+      check('a city or a nickname two teams share is “cannot tell” (Los Angeles, Sox, New York); a nickname one team has is that team', R.cityOnly===-1 && R.sox===-1 && R.ny===-1 && R.nick===1, R);
+      check('a player’s name is never a team code: no with the league’s list, no without it', R.sinner===0 && R.sinnerNoList===0, R);
+      check('a book result is taken only for the side the bet holds, whichever comes first in the list', R.win==='win' && R.loss==='loss' && R.none===null, R);
+      check('the repair list also finds a side named in words saved as the other team (Chiefs saved as LV) and a bet of another game (V. Lepchenko saved as PIT) without the league from the Worker', R.otherTeam==='team' && R.otherGame==='game', R);
+      check('and leaves alone the same team in other words, a league with no list, and two codes for one team (TB, TBL)', R.sameWords==='' && R.noList==='' && R.codes==='' && R.codesOther==='team', R);
+      check('no page errors (8d)', !S.W.errs.length, S.W.errs); await S.b.close(); }
+    // 8e. Fix it and a result you typed yourself
+    { const mine={id:'m-1', key:'km1', name:'PIT', market:'Moneyline', kind:'moneyline', sport:'NFL', team:'PIT', game:'PIT @ DEN', date:dayCT(NFL_START), dateSet:true, start:iso(NFL_START), stake:0.98, odds:'+355', book:'Novig', fills:['o:ord-lep'], fillBook:'novig', fillRef:'mkt-ten', fillOutcome:'mkt-ten-o0', fillQty:4.44, fillCost:0.98, fillFee:0, manual:true, srcType:'manual', result:'win', gradedBy:'manual', resultSrc:'you'};
+      const S=await boot({'mbev.log':[mine], 'mbev.fillSeen':{'novig:o:ord-lep':{s:'added',q:4.44}}}); S.W.fills=[fill('ord-lep','mkt-ten',0,0.22,4.44,0.9768,TEN_OLD)]; await S.read();
+      const r1=await S.p.evaluate(()=>{ const L=logged[0], f=window._fills[0], why=fillMisfitBet(f, L), how=fixFromFill(L, f); return {why, how, name:L.name, result:L.result, gradedBy:L.gradedBy, before:L.edits&&L.edits[0].before.result}; });
+      check('with no result from the book, Fix keeps the result you typed yourself (the Worker before v3.92 sends none)', r1.why==='game' && r1.how==='fixed' && r1.name==='V. Lepchenko' && r1.result==='win' && r1.gradedBy==='manual', r1);
+      check('no page errors (8e)', !S.W.errs.length, S.W.errs); await S.b.close(); }
+    { const mine={id:'m-2', key:'km2', name:'PIT', market:'Moneyline', kind:'moneyline', sport:'NFL', team:'PIT', game:'PIT @ DEN', date:dayCT(NFL_START), dateSet:true, start:iso(NFL_START), stake:0.98, odds:'+355', book:'Novig', fills:['o:ord-lep'], fillBook:'novig', fillRef:'mkt-ten', fillOutcome:'mkt-ten-o0', fillQty:4.44, fillCost:0.98, fillFee:0, manual:true, srcType:'manual', result:'loss', gradedBy:'manual', resultSrc:'you'};
+      const S=await boot({'mbev.log':[mine], 'mbev.fillSeen':{'novig:o:ord-lep':{s:'added',q:4.44}}}); S.W.fills=[F_TEN]; S.W.settlements=[{book:'novig', ref:'mkt-ten', oid:'mkt-ten-o0', side:null, outcome:'win', grade:'WIN', qty:4.44, cost:0.9768, payout:4.44, pnl:3.4632, ts:NOW-4*H}]; await S.read();
+      const r0=await S.p.evaluate(()=>({result:logged[0].result, gradedBy:logged[0].gradedBy}));
+      await S.p.evaluate(()=>{ document.querySelector('.tab[data-view="v-log"]').click(); }); await S.p.waitForTimeout(300); await S.p.evaluate(()=>{ document.querySelector('#logFix .fx-fix').click(); }); await S.p.waitForTimeout(1200); const B=await S.bets();
+      check('before Fix, a result you typed is not replaced by the book’s', r0.result==='loss' && r0.gradedBy==='manual', r0);
+      check('Fix it from Novig, with Novig’s own result in hand, takes Novig’s (WIN); what you had typed is kept in the bet’s history', B[0].name==='V. Lepchenko' && B[0].result==='win' && B[0].resultSrc==='Novig' && B[0].edits[0].before.result==='loss', B[0]);
+      check('no page errors (8f)', !S.W.errs.length, S.W.errs); await S.b.close(); }
+    // 8g. the journal and the three ways a bet is taken out for good
+    { const mk=(id,name)=>({id, key:'kj-'+id, name, market:'1.5 Points', kind:'prop', side:'O', sport:'NBA', date:dayCT(NOW), dateSet:true, stake:1, odds:'+100', book:'Novig'});   // props with no game: nothing grades them while the test runs
+      const S=await boot({'mbev.log':[mk('u-1','Player One'), mk('u-2','Player Two'), mk('u-3','Player Three'), mk('u-4','Player Four')]}); await S.p.evaluate(()=>{ saveLog(); jrWrite(); });
+      const r=await S.p.evaluate(async()=>{ const own=id=>{ const b=logged.find(x=>x.id===id); easyOwn()[id]={key:'k'+id, sig:easySig(b)}; easyOwnSave(); };
+        own('u-1'); const a=easyUndo('u-1'); own('u-2'); const b=easyRemoveBet('u-2');
+        removeBet(logged.find(x=>x.id==='u-3'), 0); document.querySelector('.tab[data-view="v-log"]').click(); try{ renderRemoved(); }catch(e){} const fb=document.querySelector('button.rm-forget'); if(fb) fb.click();
+        await new Promise(z=>setTimeout(z,300)); return {a, b, forgot:!!fb, left:logged.map(x=>x.id), removed:removedBets.map(x=>x.id), gone:jrMissing().map(e=>e.b.id), lostHidden:document.getElementById('logLost').hidden}; });
+      check('Easy’s Undo, Easy’s Remove and “forget” in the Removed list take a bet out on purpose: the journal calls none of them gone', r.left.join()==='u-4' && !r.removed.length && r.forgot && r.gone.length===0 && r.lostHidden, r);
+      check('no page errors (8g)', !S.W.errs.length, S.W.errs); await S.b.close(); } }
   console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail?1:0);
 })();

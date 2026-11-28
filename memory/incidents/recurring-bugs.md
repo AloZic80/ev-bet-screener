@@ -28,3 +28,5 @@
 - **Trent Walker Over 3.5 receptions, Bovada +100, $1.52, 11/13 (7ab6402c):** Alonzo's Bovada ticket PROPS-400252286 shows Stake $1.52, Odds 2.00,
   Winnings +$3.04. Bovada's "Winnings" in bet history is the **total return** (stake × decimal odds), not the profit. The typed To win $3.04 should be
   $1.52 (owner to fix in the Bet log). Rule for reports: on Bovada, To win = Winnings − Stake.
+- **A second row for a bet already in the log (found in review before v5.77 was published, 2026-11-28):** the book names a side in words ("Denver Broncos"), the log has it under a team code (DEN). A stricter name rule without a "cannot tell" answer turns every miss into a new row. Rule: yes / no / cannot tell, and "cannot tell" waits in From your books. Test: `tests/v577-novig-names-test.js` section 8 (it fails on the build before the fix).
+- **A result for the other side of a market:** a finder that matches a book result by book and market only (`settlementFor`) takes whichever row comes first when both outcomes are held. Rule: a result that names its outcome (`oid`) is taken only by the bet that holds that outcome. Same test, section 8d.
