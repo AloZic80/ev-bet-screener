@@ -26,10 +26,11 @@ Two independent reviewers read the two changes. They found real faults; all are 
 - **The other side of a market.** `settlementFor` (Check results) matched a book result by book and market only. With both outcomes held it took whichever row came first. Now a result that names its outcome is taken only by the bet holding that outcome, in all three places.
 - **Older copies of the app.** Worker v3.92 now sends Novig's results only to an app that asks (`nv=1`, v5.77 and later). A v5.76 copy still open on a phone gets exactly what v3.91 sent.
 - **The Worker's timer.** Cloudflare allows 50 outside calls per timer run, shared with hands-free. The new look-ups could have pushed the 5-minute pass from 27 calls at most to 46. It is held at 27. A refused results read is now retried after 5, 10, 20, 40 minutes, then hourly; an event Novig never returns after 30 minutes, 1, 2, 4, 8, 16 hours, then daily.
+- **A second look at the fixes** found one more wrong tie (a short name inside the words outranked the other team's exact name: "Florida State" was taken for Florida) and three small Worker points (the results read could lose its call to name look-ups; a wait was written down as an error every 5 minutes; no overall time allowance for look-ups). Fixed the same way, with checks.
 - **Smaller:** the repair list also finds a side named in words saved as the other team; Fix keeps a result typed by hand unless Novig's own result is in hand; two positions on one outcome (two wallets) are two receipts; the backup journal no longer calls a bet "gone" after Easy's Undo, Easy's Remove or "forget".
 
 ## Tests
-App: `tests/v577-novig-names-test.js` 76 checks; the full suite is 218 files (see the pull request for the run on the exact commit). Worker: `test/novig-results-test.mjs` 26 checks; all 22 Worker test files pass.
+App: `tests/v577-novig-names-test.js` 79 checks; the full suite is 218 files (see the pull request for the run on the exact commit). Worker: `test/novig-results-test.mjs` 29 checks; all 22 Worker test files pass.
 
 ## The numbers
 Example: V. Lepchenko, 4.44 contracts for $0.9768 (22.0%), Novig paid $4.44, profit $3.46. Saved wrong it read as a $0.98 loss on a football game: a $4.44 swing on a $1 bet.

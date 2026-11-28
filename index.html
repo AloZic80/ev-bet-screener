@@ -15592,11 +15592,10 @@ function betMatches(fb, x, strictSport){
    team code never matches a piece of a name: NE inside "Sinner"); else the league's own team list (NFL, MLB: DEN is "Denver Broncos", KC is "Chiefs"); else a short code
    that could be short for those words is "cannot tell": such a bet is never tied on a guess and never added as a second row, it waits in From your books. Hoisted. */
 function sideScore(t, n){ const full=nrmT(t.loc&&t.nick?t.loc+' '+t.nick:''), nm=nrmT(t.name), nick=nrmT(t.nick), loc=nrmT(t.loc), ab=nrmT(t.abbr), W=' '+n+' ';
-  if((full && n===full) || (nm && n===nm) || (ab && n===ab)) return 3;
-  if((full && W.includes(' '+full+' ')) || (nm && nm.length>4 && W.includes(' '+nm+' '))) return 3;
-  if(nick && nick.length>2 && W.includes(' '+nick+' ')) return 2;
-  if(loc && n===loc) return 1;
-  return 0; }
+  if((full && n===full) || (nm && n===nm) || (loc && n===loc) || (ab && n===ab)) return 4;   /* exactly one of its own names: "Florida State" is Florida State, never Florida */
+  if(full && W.includes(' '+full+' ')) return 3;
+  let part=0; [nick, nm].forEach(v=>{ if(v && v.length>2 && v!==loc && W.includes(' '+v+' ')) part=Math.max(part, 2+Math.min(0.9, v.length/100)); });   /* its nickname or short name inside the words (the longer one wins); its city alone inside the words is no sign ("Los Angeles Chargers") */
+  return part; }
 function teamNamesFor(sport){ let T=null; try{ T=ODDS_TEAM_NAMES; }catch(e){ T=null; } return (T && T[String(sport||'').toUpperCase()]) || null; }
 function teamWordsFit(n, code, T){ const full=nrmT((T&&T[code])||''); if(!full || !n) return null;   /* null: that code is not in this league's list */
   const W=' '+n+' ', F=' '+full+' ', twin=fn=>Object.keys(T).some(k=>k!==code && fn(' '+nrmT(T[k])+' '));
@@ -15615,6 +15614,7 @@ function sideNameFit(teamName, x, tm){ const n=nrmT(teamName); if(!n || !x) retu
   if(AH) return 0;   /* the two teams of its game are known and those words name neither */
   const code=/^[A-Z0-9]{2,5}$/.test(tm||'') ? tm : ''; if(!code) return 0;
   const T=teamNamesFor(x.sport); if(T){ const r=teamWordsFit(n, code, T); if(r!=null) return r; }
+  if(!String(x.sport||'').trim()){ let any=null; try{ any=ODDS_TEAM_NAMES; }catch(e){ any=null; } if(any && Object.keys(any).some(k=>teamWordsFit(n, code, any[k])===1)) return 1; }   /* no sport on the row: a yes from a league's list counts, a no does not (that code may be another league's team) */
   return codeMayBe(code, n) ? -1 : 0; }
 function sideNameOk(teamName, x, tm){ return sideNameFit(teamName, x, tm)===1; }
 function codesAlike(a, b){ a=String(a||''); b=String(b||''); return !!a && !!b && (a===b || (a.length>=2 && b.length>=2 && (a.startsWith(b) || b.startsWith(a)))); }   /* TB and TBL, GS and GSW: one book's code for the same team */
@@ -15637,7 +15637,7 @@ function sportFam(v){ const k=String(v||'').toUpperCase().replace(/[^A-Z]/g,'');
   if(/^(MLS|EPL|SOCCER|UCL|UEL|LALIGA|SERIEA|BUNDESLIGA|LIGUE|LIGAMX)/.test(k)) return 'SOCCER'; if(/^(MMA|UFC|BOXING)/.test(k)) return 'FIGHT'; if(/^(GOLF|PGA|LPGA)/.test(k)) return 'GOLF'; return ''; }
 function fillMisfitBet(f, L){ const b=f&&f.bet; if(!b || !L || L.fitOk || L.autoFrom || L.sold || !(b.kind==='moneyline'||b.kind==='spread') || !(L.manual || L.srcType==='manual')) return '';
   const t=glTeam(L)||normAbbr(L.team||L.name||''), fa=sportFam(b.sportName)||sportFam(b.league)||sportFam(b.sport), la=sportFam(L.sport);
-  if(b.team){ if(codesAlike(normAbbr(b.team), t)) return '';   /* the same side: it is that bet */
+  if(b.team){ const c=normAbbr(b.team), TL=teamNamesFor(L.sport); if(c===t || (codesAlike(c, t) && !(TL && TL[c] && TL[t]))) return '';   /* the same side: it is that bet (LA and LAC are two teams: the league's own list says so) */
     if(fa && la && fa!==la) return 'sport'; return t ? 'team' : ''; }
   if(!b.teamName) return '';
   const fit=sideNameFit(b.teamName, L, t); if(fit===1) return '';   /* the same side in words (a tennis bet typed by hand keeps the form's sport) */
